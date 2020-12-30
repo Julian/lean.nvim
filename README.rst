@@ -25,6 +25,9 @@ Features
 * `snippets.nvim <https://github.com/norcalli/snippets.nvim>`_ based
   implementation of unicode character insertion
 
+* `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
+  definitions for Lean
+
 
 Configuration
 -------------
