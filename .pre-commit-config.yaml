@@ -1,0 +1,12 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+    -   id: check-json
+    -   id: check-vcs-permalinks
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+-   repo: https://github.com/Calinou/pre-commit-luacheck
+    rev: v1.0.0
+    hooks:
+    -   id: luacheck
