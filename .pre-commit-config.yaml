@@ -3,6 +3,7 @@ repos:
     rev: v3.4.0
     hooks:
     -   id: check-json
+    -   id: check-yaml
     -   id: check-vcs-permalinks
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
