@@ -28,6 +28,8 @@ Features
 * `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
   definitions for Lean
 
+* Crude implementation of "try this:" suggestion replacement
+
 
 Configuration
 -------------
