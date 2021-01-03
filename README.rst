@@ -5,6 +5,15 @@ lean.nvim
 ``neovim`` support for the `Lean3 Theorem Prover
 <https://leanprover-community.github.io/>`_.
 
+Prerequisites
+-------------
+
+``lean.nvim`` currently requires `neovim 0.5 HEAD / nightly
+<https://github.com/neovim/neovim/releases/tag/nightly>`_.
+
+The normal `lean.vim <https://github.com/leanprover/lean.vim>`_ is also
+expected to be installed alongside to provide basic language support.
+
 Installation
 ------------
 
@@ -15,9 +24,9 @@ Install via your favorite plugin manager. E.g., with
 
     Plug 'Julian/lean.nvim'
 
-The normal `lean.vim <https://github.com/leanprover/lean.vim>`_ is
-expected to be installed alongside to provide basic language support.
-
+    Plug 'leanprover/lean.vim'
+    Plug 'neovim/nvim-lspconfig'
+    Plug 'norcalli/snippets.nvim'
 
 Features
 --------
@@ -31,7 +40,11 @@ Features
 * Crude implementation of "try this:" suggestion replacement
 
 
-Configuration
--------------
+Configuration & Usage
+---------------------
 
-TBD
+In e.g. your ``init.lua``:
+
+.. code-block:: lua
+
+    require('lean').setup{}
