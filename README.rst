@@ -67,7 +67,6 @@ In e.g. your ``init.lua``:
         -- for details though lean-language-server actually doesn't support all
         -- the options mentioned there yet.
         lsp = {
-            -- cmd = {"/Users/julian/Development/lean-client-js/lean-language-server/lib/index.js", "--stdio", "--", "-M", "4096"},
             on_attach = require('config.lsp').attached,
             cmd = {"lean-language-server", "--stdio", '--', "-M", "4096"},
         }
