@@ -50,11 +50,19 @@ In e.g. your ``init.lua``:
     require('lean').setup{
         -- Enable unicode snippet support?
         --
-        -- true (default) / false
-        snippets = true,
+        -- false to disable, otherwise a table of options described below
+        snippets = {,
+            extra = {
+                -- Add a \wknight translation to insert ♘
+                --
+                -- Note that the backslash is implied, and that you may also
+                -- use snippets.nvim directly to do this if so desired.
+                wknight = '♘',
+            },
+        }
         -- Enable the Lean language server?
         --
-        -- false to disable, otherwise should be a map of options to pass to
+        -- false to disable, otherwise should be a table of options to pass to
         --  `leanls`. See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls
         -- for details though lean-language-server actually doesn't support all
         -- the options mentioned there yet.
