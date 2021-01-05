@@ -37,7 +37,12 @@ Features
 * `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
   definitions for Lean
 
-* Crude implementation of "try this:" suggestion replacement
+* Initial implementations of some editing helpers (note: no mappings are
+  associated with these by default)
+
+    * "try this:" suggestion replacement
+
+    * ``sorry`` insertion corresponding to the number of open goals
 
 
 Configuration & Usage
