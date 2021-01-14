@@ -1,0 +1,5 @@
+describe('unicode', function()
+  it('passes a test', function()
+    assert.are.same(37, 37)
+  end)
+end)
