@@ -16,13 +16,17 @@ jobs:
             _neovim
           key: ${{ runner.os }}-x64-${{ hashFiles('todays-date') }}
 
-      - name: Prepare
+      - name: Install Lean dependencies
+        run: sudo npm install -g lean-language-server
+
+      - name: Install nvim dependencies
         run: |
           mkdir -p ~/.local/share/nvim/site/pack/vendor/start
           git clone --depth 1 https://github.com/neovim/nvim-lspconfig ~/.local/share/nvim/site/pack/vendor/start/nvim-lspconfig
           git clone --depth 1 https://github.com/norcalli/snippets.nvim ~/.local/share/nvim/site/pack/vendor/start/snippets.nvim
           git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/vendor/start/plenary.nvim
           ln -s $(pwd) ~/.local/share/nvim/site/pack/vendor/start
+
       - name: Run tests
         run: |
           curl -OL https://raw.githubusercontent.com/norcalli/bot-ci/master/scripts/github-actions-setup.sh
