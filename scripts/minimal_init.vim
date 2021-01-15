@@ -3,3 +3,4 @@ set rtp+=../plenary.nvim/
 set rtp+=../snippets.nvim/
 
 runtime! plugin/plenary.vim
+lua require('lean').setup{}
