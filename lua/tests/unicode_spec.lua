@@ -19,13 +19,12 @@ describe('translations', function()
   end)
 
   it('expands mid-word', function()
-    pending('norcalli/snippets.nvim#17')
+    pending('norcalli/snippets.nvim#17', function()
 
-    insert('(\\a<Tab>')
-    --[[ XXX: See nvim-lua/plenary.nvim#49
-    assert.is.equal('(α', vim.fn.nvim_get_current_line())
-    ]]
+      insert('(\\a<Tab>')
+      assert.is.equal('(α', vim.fn.nvim_get_current_line())
 
-    feed('ggdG')  -- FIXME: Start with clear buffers...
+      feed('ggdG')  -- FIXME: Start with clear buffers...
+    end)
   end)
 end)
