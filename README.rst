@@ -27,6 +27,7 @@ Install via your favorite plugin manager. E.g., with
     Plug 'leanprover/lean.vim'
     Plug 'neovim/nvim-lspconfig'
     Plug 'norcalli/snippets.nvim'
+    Plug 'nvim-lua/completion-nvim'
 
 Features
 --------
