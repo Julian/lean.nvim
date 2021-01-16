@@ -1,3 +1,6 @@
+set display=lastline  " Avoid neovim/neovim#11362
+set noswapfile
+
 set rtp+=.
 set rtp+=../completion-nvim/
 set rtp+=../nvim-lspconfig/
