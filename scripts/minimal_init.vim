@@ -7,6 +7,8 @@ set rtp+=../nvim-lspconfig/
 set rtp+=../plenary.nvim/
 set rtp+=../snippets.nvim/
 
+runtime! plugin/completion.vim
+runtime! plugin/lspconfig.vim
 runtime! plugin/plenary.vim
 
 lua <<EOF
