@@ -21,12 +21,11 @@ jobs:
 
       - name: Install nvim dependencies
         run: |
-          mkdir -p ~/.local/share/nvim/site/pack/vendor/start
-          git clone --depth 1 https://github.com/neovim/nvim-lspconfig ~/.local/share/nvim/site/pack/vendor/start/nvim-lspconfig
-          git clone --depth 1 https://github.com/norcalli/snippets.nvim ~/.local/share/nvim/site/pack/vendor/start/snippets.nvim
-          git clone --depth 1 https://github.com/nvim-lua/completion-nvim ~/.local/share/nvim/site/pack/vendor/start/completion-nvim
-          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/vendor/start/plenary.nvim
-          ln -s $(pwd) ~/.local/share/nvim/site/pack/vendor/start
+          mkdir packpath
+          git clone --depth 1 https://github.com/neovim/nvim-lspconfig packpath/nvim-lspconfig
+          git clone --depth 1 https://github.com/norcalli/snippets.nvim packpath/snippets.nvim
+          git clone --depth 1 https://github.com/nvim-lua/completion-nvim packpath/completion-nvim
+          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim packpath/plenary.nvim
 
       - name: Run tests
         run: |
