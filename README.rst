@@ -77,3 +77,17 @@ In e.g. your ``init.lua``:
             cmd = {"lean-language-server", "--stdio", '--', "-M", "4096"},
         }
     }
+
+Contributing
+------------
+
+Contributions are most welcome, as is just letting me know you use this at this
+point :)
+
+Running the tests can be done via the ``Makefile``:
+
+.. code-block:: sh
+
+    $ make test
+
+which will execute against a minimal ``vimrc`` isolated from your own setup.
