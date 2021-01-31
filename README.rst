@@ -29,6 +29,16 @@ Install via your favorite plugin manager. E.g., with
     Plug 'norcalli/snippets.nvim'
     Plug 'nvim-lua/completion-nvim'
 
+For LSP support in Lean 3, you also first need to install
+``lean-language-server``, which can be done via e.g.:
+
+.. code-block:: sh
+
+    $ npm install -g lean-language-server
+
+In the future, support may be added for automatically installing it as
+part of this plugin.
+
 Features
 --------
 
