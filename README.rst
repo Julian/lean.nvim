@@ -69,7 +69,7 @@ In e.g. your ``init.lua``:
         -- false to disable, otherwise a table of options described below
         snippets = {,
             extra = {
-                -- Add a \wknight translation to insert ♘
+                -- Add a \wknight abbreviation to insert ♘
                 --
                 -- Note that the backslash is implied, and that you may also
                 -- use snippets.nvim directly to do this if so desired.

@@ -17,11 +17,11 @@ end
 function lean.snippets.enable(opts)
   local this_file = debug.getinfo(2, "S").source:sub(2)
   local base_directory = vim.fn.fnamemodify(this_file, ":h:h:h")
-  local translations = base_directory .. '/vscode-lean/translations.json'
+  local abbreviations = base_directory .. '/vscode-lean/abbreviations.json'
 
   local lean_snippets = {}
 
-  for from, to in pairs(vim.fn.json_decode(vim.fn.readfile(translations))) do
+  for from, to in pairs(vim.fn.json_decode(vim.fn.readfile(abbreviations))) do
     lean_snippets["\\" .. from] = to
   end
 

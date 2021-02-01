@@ -1,6 +1,6 @@
 local insert = require('tests.helpers').insert
 
-describe('translations', function()
+describe('abbreviations', function()
   vim.fn.nvim_buf_set_option(0, 'filetype', 'lean')
 
   it('expands \\-prefixed predefined substitutions on tab', function()
