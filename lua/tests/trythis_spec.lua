@@ -7,13 +7,13 @@ describe('trythis', function()
   it('replaces a single try this', function()
     vim.api.nvim_buf_set_lines(0, 0, -1, false, {}) -- FIXME: setup
 
-    vim.wait(15000, vim.lsp.buf.server_ready)
+    vim.wait(5000, vim.lsp.buf.server_ready)
 
     insert [[
 meta def whatshouldIdo := (do tactic.trace "Try this: existsi 2; refl")
 example : ∃ n, n = 2 := by whatshouldIdo]]
 
-    vim.wait(15000, function()
+    vim.wait(5000, function()
       return not vim.tbl_isempty(vim.lsp.diagnostic.get_line_diagnostics())
     end)
 
