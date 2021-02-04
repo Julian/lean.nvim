@@ -83,7 +83,26 @@ In e.g. your ``init.lua``:
         -- for details though lean-language-server actually doesn't support all
         -- the options mentioned there yet.
         lsp = {
-            on_attach = require('config.lsp').attached,
+            on_attach = function(client, bufnr)
+                -- See https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
+                -- for detailed examples of what you may want to do here.
+                --
+                -- Mapping a key (typically K) to `vim.lsp.buf.hover()`
+                -- is highly recommended for Lean, since the hover LSP command
+                -- is where you'll see the current goal state.
+                --
+                -- You may furthermore want to add an `autocmd` to run it on
+                -- `CursorHoldI`, which will show the goal state any time the
+                -- cursor is unmoved in insert mode.
+                --
+                -- In the future, this plugin may offer a recommended "complete
+                -- setup" for easy enabling of the above.
+                local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
+                local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
+                buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
+                buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
+                buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+            end,
             cmd = {"lean-language-server", "--stdio", '--', "-M", "4096"},
         }
     }
