@@ -101,3 +101,14 @@ Running the tests can be done via the ``Makefile``:
     $ make test
 
 which will execute against a minimal ``vimrc`` isolated from your own setup.
+
+Some linting and style checking is done via `pre-commit
+<https://pre-commit.com/#install>`_, which once installed (via the linked
+instructions) can be run via:
+
+.. code-block:: sh
+
+    $ make lint
+
+or on each commit automatically by running ``pre-commit install`` in your
+repository checkout.
