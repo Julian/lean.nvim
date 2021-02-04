@@ -1,26 +1,17 @@
-local insert = require('tests.helpers').insert
+local helpers = require('tests.helpers')
+local clean_buffer = helpers.clean_buffer
 
 describe('trythis', function()
-  vim.api.nvim_exec('file testing123.lean', false)
-  vim.fn.nvim_buf_set_option(0, 'filetype', 'lean')
-
-  it('replaces a single try this', function()
-    vim.api.nvim_buf_set_lines(0, 0, -1, false, {}) -- FIXME: setup
-
-    vim.wait(5000, vim.lsp.buf.server_ready)
-
-    insert [[
+  it('replaces a single try this', clean_buffer([[
 meta def whatshouldIdo := (do tactic.trace "Try this: existsi 2; refl")
-example : ∃ n, n = 2 := by whatshouldIdo]]
-
-    vim.wait(5000, function()
-      return not vim.tbl_isempty(vim.lsp.diagnostic.get_line_diagnostics())
-    end)
+example : ∃ n, n = 2 := by whatshouldIdo]], function()
+    vim.api.nvim_command('normal G$')
+    helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.equal(
+    assert.is.same(
       'example : ∃ n, n = 2 := by existsi 2; refl',
       vim.fn.nvim_get_current_line()
     )
-  end)
+  end))
 end)

@@ -1,24 +1,15 @@
-local insert = require('tests.helpers').insert
+local helpers = require('tests.helpers')
+local clean_buffer = helpers.clean_buffer
 
 describe('sorry', function()
-  vim.api.nvim_exec('file testing123.lean', false)
-  vim.fn.nvim_buf_set_option(0, 'filetype', 'lean')
-
-  it('inserts sorries for each remaining goal', function()
-    vim.api.nvim_buf_set_lines(0, 0, -1, false, {}) -- FIXME: setup
-
-    vim.wait(5000, vim.lsp.buf.server_ready)
-
-    insert [[
+  it('inserts sorries for each remaining goal', clean_buffer([[
 def foo (n : nat) : n = n := begin
   induction n with d hd,
-end]]
+end]], function()
+    vim.api.nvim_command('normal! 3gg$')
+    helpers.wait_for_line_diagnostics()
 
-    vim.wait(5000, function()
-      return not vim.tbl_isempty(vim.lsp.diagnostic.get_line_diagnostics())
-    end)
-
-    vim.api.nvim_exec(':normal! 2gg$', false)
+    vim.api.nvim_command('normal! 2gg$')
     require('lean.sorry').fill()
     assert.is.same(
       [[
@@ -26,6 +17,19 @@ def foo (n : nat) : n = n := begin
   induction n with d hd,
   { sorry },
   { sorry },
-  end]], table.concat(vim.fn.getline(1, '$'), '\n'))
-  end)
+end]], table.concat(vim.fn.getline(1, '$'), '\n'))
+  end))
+
+  it('does nothing if there are no goals', clean_buffer([[
+def foo (n : nat) : n = n := begin
+  refl,
+end]], function()
+    vim.api.nvim_command('normal! 2gg$')
+    require('lean.sorry').fill()
+    assert.is.same(
+      [[
+def foo (n : nat) : n = n := begin
+  refl,
+end]], table.concat(vim.fn.getline(1, '$'), '\n'))
+  end))
 end)
