@@ -88,6 +88,17 @@ In e.g. your ``init.lua``:
         }
     }
 
+If you're using an ``init.vim``-only configuration setup, simply surround the
+above with:
+
+.. code-block:: vim
+
+    lua <<EOF
+        require('lean').setup{
+            ...
+        }
+    EOF
+
 Contributing
 ------------
 
