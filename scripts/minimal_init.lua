@@ -15,14 +15,4 @@ vim.api.nvim_exec([[
 ]], false)
 
 require('lean').setup{}
-
-function tab()
-  local _, expanded = require('snippets').lookup_snippet_at_cursor()
-  if expanded ~= nil then
-    require('snippets').expand_at_cursor()
-    return
-  end
-  require('completion').smart_tab()
-end
-
-vim.api.nvim_set_keymap('i', '<Tab>', '<Cmd>lua tab()<CR>', {})
+require('snippets').use_suggested_mappings(true)
