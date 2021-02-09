@@ -43,7 +43,7 @@ Features
 --------
 
 * `snippets.nvim <https://github.com/norcalli/snippets.nvim>`_ based
-  implementation of unicode character insertion
+  implementation of abbreviation (unicode character) insertion
 
 * `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
   definitions for Lean
@@ -64,10 +64,10 @@ In e.g. your ``init.lua``:
 .. code-block:: lua
 
     require('lean').setup{
-        -- Enable unicode snippet support?
+        -- Enable abbreviation support?
         --
         -- false to disable, otherwise a table of options described below
-        snippets = {,
+        abbreviations = {,
             extra = {
                 -- Add a \wknight abbreviation to insert ♘
                 --
