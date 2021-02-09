@@ -1,29 +1,37 @@
 local insert = require('tests.helpers').insert
 
 describe('abbreviations', function()
-  vim.fn.nvim_buf_set_option(0, 'filetype', 'lean')
+  describe('expansion', function()
+    vim.fn.nvim_buf_set_option(0, 'filetype', 'lean')
 
-  it('expands \\-prefixed predefined substitutions', function()
-    vim.api.nvim_buf_set_lines(0, 0, -1, false, {}) -- FIXME: setup
+    it('expands \\-prefixed predefined abbreviations', function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, {}) -- FIXME: setup
 
-    insert('\\a<C-k>')
-    assert.is.equal('α', vim.fn.nvim_get_current_line())
+      insert('\\a<C-k>')
+      assert.is.equal('α', vim.fn.nvim_get_current_line())
+    end)
+
+    it('does not autoexpand', function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, {}) -- FIXME: setup
+
+      insert('\\a')
+      assert.is.equal('\\a', vim.fn.nvim_get_current_line())
+    end)
+
+    it('expands mid-word', function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, {}) -- FIXME: setup
+
+      pending('norcalli/snippets.nvim#17', function()
+
+        insert('(\\a<C-k>')
+        assert.is.equal('(α', vim.fn.nvim_get_current_line())
+      end)
+    end)
   end)
 
-  it('does not autoexpand', function()
-    vim.api.nvim_buf_set_lines(0, 0, -1, false, {}) -- FIXME: setup
-
-    insert('\\a')
-    assert.is.equal('\\a', vim.fn.nvim_get_current_line())
-  end)
-
-  it('expands mid-word', function()
-    vim.api.nvim_buf_set_lines(0, 0, -1, false, {}) -- FIXME: setup
-
-    pending('norcalli/snippets.nvim#17', function()
-
-      insert('(\\a<C-k>')
-      assert.is.equal('(α', vim.fn.nvim_get_current_line())
+  describe('programmatic API', function()
+    it('provides access to loaded abbreviations', function()
+      assert.is.equal(require('lean').abbreviations.load()['\\a'], 'α')
     end)
   end)
 end)
