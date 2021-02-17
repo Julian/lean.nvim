@@ -13,9 +13,10 @@ function abbreviations.load()
 end
 
 local function snippets_nvim_enable(lean_abbreviations)
-  local snippets = require('snippets')
-  local all_snippets = snippets.snippets or {}
+  local has_snippets, snippets = pcall(require, 'snippets')
+  if not has_snippets then return end
 
+  local all_snippets = snippets.snippets or {}
   all_snippets.lean = lean_abbreviations
   snippets.snippets = all_snippets
 end
