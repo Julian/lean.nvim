@@ -24,9 +24,9 @@ Install via your favorite plugin manager. E.g., with
 
     Plug 'Julian/lean.nvim'
 
+    Plug 'hrsh7th/nvim-compe'
     Plug 'leanprover/lean.vim'
     Plug 'neovim/nvim-lspconfig'
-    Plug 'norcalli/snippets.nvim'
     Plug 'nvim-lua/completion-nvim'
 
 For LSP support in Lean 3, you also first need to install
@@ -42,8 +42,9 @@ part of this plugin.
 Features
 --------
 
-* `snippets.nvim <https://github.com/norcalli/snippets.nvim>`_ based
-  implementation of abbreviation (unicode character) insertion
+* abbreviation (unicode character) insertion using either
+  `nvim-compe <https://github.com/hrsh7th/nvim-compe>`_ or
+  `snippets.nvim <https://github.com/norcalli/snippets.nvim>`_
 
 * `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
   definitions for Lean
@@ -71,8 +72,9 @@ In e.g. your ``init.lua``:
             extra = {
                 -- Add a \wknight abbreviation to insert ♘
                 --
-                -- Note that the backslash is implied, and that you may also
-                -- use snippets.nvim directly to do this if so desired.
+                -- Note that the backslash is implied, and that you of
+                -- course may also use a snippet engine directly to do
+                -- this if so desired.
                 wknight = '♘',
             },
         }
