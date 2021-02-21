@@ -1,7 +1,8 @@
 local trythis = {}
 
 local function suggestions_from(diagnostic)
-  return diagnostic.message:gmatch("Try this:%s*([^\n]+)%s*\n")
+  local trimmed = diagnostic.message:gsub('^.-Try this:%s*', '')
+  return vim.gsplit(trimmed, 'Try this:')
 end
 
 --- Swap the first suggestion from Lean with the word under the cursor.
@@ -12,7 +13,7 @@ function trythis.swap()
   for _, diagnostic in ipairs(vim.lsp.diagnostic.get_line_diagnostics()) do
     -- luacheck: ignore
     for each in suggestions_from(diagnostic) do
-      local command = "normal ciw" .. each
+      local command = "normal! ciw" .. vim.trim(each)
       vim.cmd(command)
       return
     end

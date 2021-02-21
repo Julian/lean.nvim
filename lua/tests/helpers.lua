@@ -1,3 +1,4 @@
+local assert = require('luassert')
 local api = vim.api
 local helpers = {}
 
@@ -50,5 +51,13 @@ function helpers.wait_for_line_diagnostics()
   end)
   assert.message("Waited for line diagnostics but none came.").True(succeeded)
 end
+
+--- Assert about the entire buffer contents.
+local function has_buf_contents(_, arguments)
+  local buf = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n')
+  return arguments[1] == buf
+end
+
+assert:register('assertion', 'contents', has_buf_contents)
 
 return helpers
