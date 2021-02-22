@@ -27,7 +27,6 @@ Install via your favorite plugin manager. E.g., with
     Plug 'hrsh7th/nvim-compe'
     Plug 'leanprover/lean.vim'
     Plug 'neovim/nvim-lspconfig'
-    Plug 'nvim-lua/completion-nvim'
 
 For LSP support in Lean 3, you also first need to install
 ``lean-language-server``, which can be done via e.g.:
