@@ -17,6 +17,7 @@ local function compe_nvim_enable(compe, lean_abbreviations)
   compe.register_source('lean_abbreviations', Source)
 
   local Config = require('compe.config').get()
+  Config.source = Config.source or {}
   Config.source['lean_abbreviations'] = { disabled = false }
 end
 
