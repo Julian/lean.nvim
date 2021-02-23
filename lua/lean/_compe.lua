@@ -20,8 +20,8 @@ Source.get_metadata = function(_)
   return {
     priority = 100;
     filetypes = {'lean'};
-    dup = false;
-    sort = false;
+    dup = true;
+    sort = true;
     menu = '[LA]';
   }
 end
