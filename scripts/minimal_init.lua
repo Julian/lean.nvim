@@ -9,7 +9,6 @@ vim.o.runtimepath = vim.o.runtimepath .. ',' .. packpath .. ',' .. lean_nvim_dir
 vim.api.nvim_exec([[
   autocmd BufNewFile,BufRead *.lean setlocal filetype=lean
 
-  runtime! plugin/completion.vim
   runtime! plugin/lspconfig.vim
   runtime! plugin/plenary.vim
 ]], false)
