@@ -14,4 +14,3 @@ vim.api.nvim_exec([[
 ]], false)
 
 require('lean').setup{}
-require('snippets').use_suggested_mappings(true)
