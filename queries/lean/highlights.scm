@@ -1,6 +1,10 @@
 ; Variables
 (identifier) @variable
 
+;; Identifier naming conventions
+((identifier) @type
+ (#match? @type "^[A-Z]"))
+
 ;; Definitions
 
 (def
