@@ -63,6 +63,8 @@
 
 (comment) @comment
 (string) @string
+(interpolated_string) @string
+
 ; Reset highlighing in string interpolation
 (interpolation) @none
 
