@@ -23,12 +23,12 @@ For syntax highlighting and basic language support, you should either:
           .. code-block:: lua
 
               require('nvim-treesitter.parsers').get_parser_configs().lean = {
-              install_info = {
+                install_info = {
                   url = "https://github.com/Julian/tree-sitter-lean",
                   files = {"src/parser.c", "src/scanner.cc"},
                   branch = "main",
-              },
-              filetype = "lean",
+                },
+                filetype = "lean",
               }
 
        Note that many simple syntactical things are not yet implemented
