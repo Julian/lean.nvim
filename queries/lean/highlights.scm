@@ -22,15 +22,19 @@
 ; Tokens
 
 [
-  "-"
-  ":="
+  "$"
   "*"
+  "+"
+  "++"
+  "-"
+  "::"
+  ":="
   "="
-  ">"
   "=>"
+  ">"
   "←"
   "→"
-  "$"
+  "≠"
 ] @operator
 
 [
@@ -55,5 +59,15 @@
 (string) @string
 ; Reset highlighing in string interpolation
 (interpolation) @none
+
+["(" ")" "[" "]"] @punctuation.bracket
+
+(interpolation
+  "{" @punctuation.special
+  "}" @punctuation.special)
+
+["," "." ":"] @punctuation.delimiter
+
+
 ;; Error
 (ERROR) @error
