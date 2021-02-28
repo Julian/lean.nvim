@@ -62,6 +62,7 @@
 (number) @number
 
 (comment) @comment
+(char) @number
 (string) @string
 (interpolated_string) @string
 
