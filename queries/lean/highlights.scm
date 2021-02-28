@@ -17,6 +17,8 @@
   type: (identifier) @type
   field: (identifier) @method)
 
+(inductive_constructor) @constructor
+
 ["if" "then" "else"] @conditional
 
 ; Tokens
@@ -61,7 +63,7 @@
 ; Reset highlighing in string interpolation
 (interpolation) @none
 
-["(" ")" "[" "]"] @punctuation.bracket
+["(" ")" "[" "]" "⟨" "⟩"] @punctuation.bracket
 
 (interpolation
   "{" @punctuation.special
