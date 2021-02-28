@@ -17,7 +17,7 @@
   name: (identifier) @method)
 
 (parameters
-  (identifier) @parameter)
+  name: (identifier) @parameter)
 
 (inductive_constructor) @constructor
 
@@ -55,7 +55,9 @@
   "instance"
   "let"
   "match"
+  "namespace"
   "return"
+  "section"
   "structure"
   "try"
   "where"
