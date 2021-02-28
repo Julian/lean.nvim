@@ -13,9 +13,11 @@
 (apply
   name: (identifier) @function)
 
-(element_of
-  type: (identifier) @type
-  field: (identifier) @method)
+(field_of
+  name: (identifier) @method)
+
+(parameters
+  (identifier) @parameter)
 
 (inductive_constructor) @constructor
 
