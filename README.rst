@@ -11,8 +11,29 @@ Prerequisites
 ``lean.nvim`` currently requires `neovim 0.5 HEAD / nightly
 <https://github.com/neovim/neovim/releases/tag/nightly>`_.
 
-The normal `lean.vim <https://github.com/leanprover/lean.vim>`_ is also
-expected to be installed alongside to provide basic language support.
+For syntax highlighting and basic language support, you should either:
+
+    * Install the normal `lean.vim <https://github.com/leanprover/lean.vim>`_.
+
+    * or try the experimental support present via `tree-sitter-lean
+      <https://github.com/Julian/tree-sitter-lean>`_ by installing it and
+      `nvim-treesitter <https://github.com/nvim-treesitter/nvim-treesitter>`_
+      with e.g.:
+
+          .. code-block:: lua
+
+              require('nvim-treesitter.parsers').get_parser_configs().lean = {
+              install_info = {
+                  url = "https://github.com/Julian/tree-sitter-lean",
+                  files = {"src/parser.c", "src/scanner.cc"},
+                  branch = "main",
+              },
+              filetype = "lean",
+              }
+
+       Note that many simple syntactical things are not yet implemented
+       (help is of course welcome), and that ``tree-sitter-lean`` is lean
+       4-only.
 
 Installation
 ------------
