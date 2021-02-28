@@ -47,11 +47,14 @@
   "else"
   "finally"
   "fun"
+  "instance"
   "let"
+  "match"
   "return"
   "structure"
   "try"
   "where"
+  "with"
 ] @keyword
 
 [(true) (false)] @boolean
