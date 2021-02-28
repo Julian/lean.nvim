@@ -41,6 +41,7 @@
 ] @operator
 
 [
+  "λ"
   "catch"
   "def"
   "do"
