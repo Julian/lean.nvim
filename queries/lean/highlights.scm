@@ -23,6 +23,8 @@
 
 ["if" "then" "else"] @conditional
 
+["for"] @repeat
+
 (import) @include
 
 ; Tokens
@@ -51,13 +53,14 @@
 ] @operator
 
 [
-  "λ"
   "catch"
   "def"
   "do"
   "else"
   "finally"
+  "for"
   "fun"
+  "in"
   "instance"
   "let"
   "match"
@@ -68,6 +71,8 @@
   "try"
   "where"
   "with"
+  "λ"
+  (mutable_specifier)
 ] @keyword
 
 [(true) (false)] @boolean
