@@ -23,6 +23,8 @@
 
 ["if" "then" "else"] @conditional
 
+(import) @include
+
 ; Tokens
 
 [
