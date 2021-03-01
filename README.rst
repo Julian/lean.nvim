@@ -16,20 +16,8 @@ For syntax highlighting and basic language support, you should either:
     * Install the normal `lean.vim <https://github.com/leanprover/lean.vim>`_.
 
     * or try the experimental support present via `tree-sitter-lean
-      <https://github.com/Julian/tree-sitter-lean>`_ by installing it and
+      <https://github.com/Julian/tree-sitter-lean>`_ by installing
       `nvim-treesitter <https://github.com/nvim-treesitter/nvim-treesitter>`_
-      with e.g.:
-
-          .. code-block:: lua
-
-              require('nvim-treesitter.parsers').get_parser_configs().lean = {
-                install_info = {
-                  url = "https://github.com/Julian/tree-sitter-lean",
-                  files = {"src/parser.c", "src/scanner.cc"},
-                  branch = "main",
-                },
-                filetype = "lean",
-              }
 
        Note that many simple syntactical things are not yet implemented
        (help is of course welcome), and that ``tree-sitter-lean`` is lean
