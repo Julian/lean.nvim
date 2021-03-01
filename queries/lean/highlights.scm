@@ -69,6 +69,7 @@
 [(true) (false)] @boolean
 
 (number) @number
+(float) @float
 
 (comment) @comment
 (char) @number
