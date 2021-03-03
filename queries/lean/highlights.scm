@@ -72,6 +72,7 @@
   "where"
   "with"
   "λ"
+  (hash_command)
   (mutable_specifier)
 ] @keyword
 
