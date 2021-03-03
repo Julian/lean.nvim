@@ -61,6 +61,7 @@
   "for"
   "fun"
   "in"
+  "inductive"
   "instance"
   "let"
   "match"
