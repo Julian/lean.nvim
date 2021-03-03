@@ -10,6 +10,9 @@
 (def
   name: (identifier) @function)
 
+(def
+  attributes: (identifier) @function)
+
 (apply
   name: (identifier) @function)
 
