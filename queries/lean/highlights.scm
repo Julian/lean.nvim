@@ -2,6 +2,7 @@
 (identifier) @variable
 
 (function_type) @type
+(product_type) @type
 
 ;; Identifier naming conventions
 ((identifier) @type
