@@ -72,6 +72,7 @@
   "instance"
   "let"
   "match"
+  "open"
   "namespace"
   "return"
   "section"
