@@ -1,6 +1,8 @@
 ; Variables
 (identifier) @variable
 
+(function_type) @type
+
 ;; Identifier naming conventions
 ((identifier) @type
  (#match? @type "^[A-Z]"))
@@ -74,6 +76,7 @@
   "section"
   "structure"
   "try"
+  "variable"
   "where"
   "with"
   "λ"
