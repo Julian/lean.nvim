@@ -61,6 +61,7 @@
 
 [
   "catch"
+  "class"
   "constant"
   "def"
   "do"
