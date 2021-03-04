@@ -103,7 +103,7 @@
 ; Reset highlighing in string interpolation
 (interpolation) @none
 
-["(" ")" "[" "]" "⟨" "⟩"] @punctuation.bracket
+["(" ")" "[" "]" "{" "}" "⟨" "⟩"] @punctuation.bracket
 
 (interpolation
   "{" @punctuation.special
