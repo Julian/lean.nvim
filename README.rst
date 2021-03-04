@@ -2,7 +2,7 @@
 lean.nvim
 =========
 
-``neovim`` support for the `Lean3 Theorem Prover
+``neovim`` support for the `Lean Theorem Prover
 <https://leanprover-community.github.io/>`_.
 
 Prerequisites
