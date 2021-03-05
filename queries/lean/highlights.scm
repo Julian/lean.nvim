@@ -79,6 +79,7 @@
   "inductive"
   "instance"
   "let"
+  "let mut"
   "match"
   "namespace"
   "open"
