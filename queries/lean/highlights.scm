@@ -36,7 +36,6 @@
 ; Tokens
 
 [
-  "@"
   "!"
   "$"
   "%"
@@ -53,10 +52,14 @@
   "=="
   "=>"
   ">"
+  "@"
   "^"
   "||"
   "←"
   "→"
+  "↔"
+  "∧"
+  "∨"
   "≠"
 ] @operator
 
@@ -90,7 +93,6 @@
   "with"
   "λ"
   (hash_command)
-  (mutable_specifier)
 ] @keyword
 
 [(true) (false)] @boolean
