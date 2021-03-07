@@ -1,12 +1,18 @@
 ; Variables
 (identifier) @variable
 
-(function_type) @type
-(product_type) @type
-
 ;; Identifier naming conventions
 ((identifier) @type
  (#match? @type "^[A-Z]"))
+
+(function_type) @type
+(product_type) @type
+(inductive_type) @type
+
+(instance
+  class: (identifier) @type)
+(instance_field
+  return_type: (identifier) @type)
 
 ;; Definitions
 
@@ -136,6 +142,7 @@
 
 ["," "." ":"] @punctuation.delimiter
 
+(sorry) @error
 
 ;; Error
 (ERROR) @error
