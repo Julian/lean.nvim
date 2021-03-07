@@ -108,6 +108,7 @@
 [
   "exact"
   "rewrite"
+  "simp"
 ] @keyword
 
 [
