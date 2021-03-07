@@ -80,6 +80,7 @@
   "do"
   "else"
   "end"
+  "example"
   "export"
   "for"
   "fun"
