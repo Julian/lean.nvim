@@ -64,7 +64,7 @@
 ] @operator
 
 [
-  "catch"
+  "by"
   "class"
   "constant"
   "def"
@@ -72,22 +72,20 @@
   "else"
   "end"
   "export"
-  "finally"
   "for"
   "fun"
   "in"
   "inductive"
   "instance"
   "let"
-  "mut"
   "match"
   "namespace"
   "open"
+  "partial"
   "return"
   "section"
   "structure"
   "theorem"
-  "try"
   "universe"
   "variable"
   "where"
@@ -95,6 +93,19 @@
   "λ"
   (prelude)
   (hash_command)
+] @keyword
+
+[
+  "catch"
+  "exact"
+  "finally"
+  "rewrite"
+  "try"
+] @keyword
+
+[
+  "throw"
+  "mut"
 ] @keyword
 
 [(true) (false)] @boolean
