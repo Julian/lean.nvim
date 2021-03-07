@@ -99,6 +99,7 @@
   "λ"
   (hash_command)
   (prelude)
+  (sorry)
 ] @keyword
 
 [
