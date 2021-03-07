@@ -85,17 +85,20 @@
   "namespace"
   "open"
   "partial"
+  "private"
+  "protected"
   "return"
   "section"
   "structure"
   "theorem"
   "universe"
+  "unsafe"
   "variable"
   "where"
   "with"
   "λ"
-  (prelude)
   (hash_command)
+  (prelude)
 ] @keyword
 
 [
