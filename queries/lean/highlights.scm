@@ -110,12 +110,15 @@
 ] @keyword
 
 [
-  "catch"
   "exact"
-  "finally"
   "rewrite"
-  "try"
 ] @keyword
+
+[
+  "catch"
+  "finally"
+  "try"
+] @exception
 
 [
   "throw"
