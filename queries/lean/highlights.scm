@@ -93,6 +93,7 @@
   "where"
   "with"
   "λ"
+  (prelude)
   (hash_command)
 ] @keyword
 
