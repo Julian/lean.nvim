@@ -35,7 +35,7 @@
 
 ["if" "then" "else"] @conditional
 
-["for"] @repeat
+["for" "in" "do"] @repeat
 
 (import) @include
 
@@ -77,14 +77,10 @@
   "class"
   "constant"
   "def"
-  "do"
-  "else"
   "end"
   "example"
   "export"
-  "for"
   "fun"
-  "in"
   "inductive"
   "instance"
   "let"
