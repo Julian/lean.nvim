@@ -23,7 +23,7 @@
   name: (identifier) @method)
 
 (parameters
-  name: (identifier) @parameter)
+  type: (identifier) @type)
 
 (inductive_constructor) @constructor
 
