@@ -15,5 +15,4 @@ jobs:
         sudo apt-get update
         sudo apt-get install luarocks
         sudo luarocks install luacheck
-        sudo chown -R $USER /home/runner/.cache
     - uses: pre-commit/action@v2.0.0
