@@ -91,6 +91,7 @@
   "section"
   "structure"
   "universe"
+  "universes"
   "variable"
   "where"
   "with"
