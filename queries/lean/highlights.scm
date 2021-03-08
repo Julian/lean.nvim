@@ -108,7 +108,7 @@
   "inductive"
   "instance"
   "theorem"
-] @keyword.decl
+] @keyword
 
 [
   "noncomputable"
@@ -116,13 +116,13 @@
   "private"
   "protected"
   "unsafe"
-] @keyword.modifier
+] @keyword
 
 [
   "exact"
   "rewrite"
   "simp"
-] @keyword.tactic
+] @keyword
 
 [
   "catch"
@@ -148,6 +148,10 @@
 
 ; Reset highlighing in string interpolation
 (interpolation) @none
+
+(interpolation
+  "{" @punctuation.special
+  "}" @punctuation.special)
 
 ["(" ")" "[" "]" "{" "}" "⟨" "⟩"] @punctuation.bracket
 
