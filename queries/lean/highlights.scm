@@ -161,7 +161,7 @@
   "{" @punctuation.special
   "}" @punctuation.special)
 
-["," "." ":"] @punctuation.delimiter
+["," "." ":" ";"] @punctuation.delimiter
 
 (sorry) @error
 
