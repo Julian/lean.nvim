@@ -133,6 +133,7 @@
 
 [
   "throw"
+  "unless"
   "mut"
 ] @keyword
 
