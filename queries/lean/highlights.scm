@@ -80,28 +80,17 @@
 
 [
   "by"
-  "class"
-  "constant"
-  "def"
   "end"
-  "example"
   "export"
   "fun"
-  "inductive"
-  "instance"
   "let"
   "match"
   "namespace"
   "open"
-  "partial"
-  "private"
-  "protected"
   "return"
   "section"
   "structure"
-  "theorem"
   "universe"
-  "unsafe"
   "variable"
   "where"
   "with"
@@ -112,10 +101,28 @@
 ] @keyword
 
 [
+  "class"
+  "constant"
+  "def"
+  "example"
+  "inductive"
+  "instance"
+  "theorem"
+] @keyword.decl
+
+[
+  "noncomputable"
+  "partial"
+  "private"
+  "protected"
+  "unsafe"
+] @keyword.modifier
+
+[
   "exact"
   "rewrite"
   "simp"
-] @keyword
+] @keyword.tactic
 
 [
   "catch"
