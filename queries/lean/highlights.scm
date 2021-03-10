@@ -79,6 +79,7 @@
 ] @operator
 
 [
+  "attribute"
   "by"
   "end"
   "export"
