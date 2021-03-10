@@ -10,7 +10,7 @@ example : ∃ n, n = 2 := by whatshouldIdo]], function()
     require('lean.trythis').swap()
     assert.is.same(
       'example : ∃ n, n = 2 := by existsi 2; refl',
-      vim.fn.nvim_get_current_line()
+      vim.api.nvim_get_current_line()
     )
   end))
 
@@ -43,7 +43,7 @@ example : ∃ n, n = 2 := by whatshouldIdo]], function()
     require('lean.trythis').swap()
     assert.is.same(
       'example : ∃ n, n = 2 := by finish',
-      vim.fn.nvim_get_current_line()
+      vim.api.nvim_get_current_line()
     )
   end))
 end)
