@@ -7,7 +7,8 @@
 
 (function_type) @type
 (product_type) @type
-(inductive_type) @type
+(inductive_type
+  name: (identifier) @type)
 
 (instance
   class: (identifier) @type)
