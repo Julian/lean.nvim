@@ -84,6 +84,7 @@
   "by"
   "end"
   "export"
+  "extends"
   "fun"
   "let"
   "match"
