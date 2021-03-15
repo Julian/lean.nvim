@@ -10,6 +10,16 @@
 (inductive_type
   name: (identifier) @type)
 
+(structure_definition
+  name: (identifier) @type)
+(structure_definition
+  extends: (identifier) @type)
+
+(class
+  name: (identifier) @type)
+(class
+  extends: (identifier) @type)
+
 (instance
   class: (identifier) @type)
 (instance_field
