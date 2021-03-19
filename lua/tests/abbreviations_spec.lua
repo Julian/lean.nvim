@@ -9,6 +9,13 @@ describe('abbreviations', function()
         assert.is.equal('α', vim.api.nvim_get_current_line())
       end))
 
+      -- Really this needs to place the cursor too, but for now we just strip
+      it('handles placing the $CURSOR', helpers.clean_buffer('', function()
+        require('snippets').use_suggested_mappings(true)
+        helpers.insert('foo \\<><C-k>bar, baz')
+        assert.is.equal('foo ⟨bar, baz⟩', vim.api.nvim_get_current_line())
+      end))
+
       it('does not autoexpand', helpers.clean_buffer('', function()
         require('snippets').use_suggested_mappings(true)
         helpers.insert('\\a')

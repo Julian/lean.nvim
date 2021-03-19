@@ -1,5 +1,7 @@
 local abbreviations = {}
 
+local _CURSOR_MARKER = '$CURSOR'
+
 --- Load the Lean abbreviations as a Lua table.
 function abbreviations.load()
   local this_file = debug.getinfo(2, "S").source:sub(2)
@@ -22,6 +24,10 @@ local function compe_nvim_enable(compe, lean_abbreviations)
 end
 
 local function snippets_nvim_enable(snippets, lean_abbreviations)
+  for from, to in pairs(lean_abbreviations) do
+    lean_abbreviations[from] = to:gsub(_CURSOR_MARKER, '$0')
+  end
+
   local all_snippets = snippets.snippets or {}
   all_snippets.lean = lean_abbreviations
   snippets.snippets = all_snippets
