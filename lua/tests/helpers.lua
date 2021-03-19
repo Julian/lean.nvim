@@ -21,16 +21,12 @@ end
 --
 --  Yes c(lean) may be a double entendre, and no I don't feel bad.
 function helpers.clean_buffer(contents, callback)
-  -- FIXME: for some reason, even with nvim_buf_delete, I see messages
-  --        saying there are existing buffers with the same name when using a
-  --        non-incrementing name. And with not setting a name at all, or using
-  --        a scratch buffer, the LSP server doesn't start at all.
-  _clean_buffer_count = (_clean_buffer_count or 0) + 1
+  -- FIXME: With not setting a name at all, the LSP server doesn't start.
+  --        Not quite sure why.
 
   return function()
-    local bufnr = vim.api.nvim_create_buf(false, false)
-    api.nvim_buf_set_option(bufnr, 'swapfile', false)
-    api.nvim_buf_set_name(bufnr, 'unittest' .. _clean_buffer_count .. '.lean')
+    local bufnr = vim.api.nvim_create_buf(false, true)
+    api.nvim_buf_set_name(bufnr, 'unittest.lean')
     api.nvim_buf_set_option(bufnr, 'filetype', 'lean')
 
     api.nvim_buf_call(bufnr, function()
