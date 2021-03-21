@@ -170,10 +170,6 @@
 
 ["(" ")" "[" "]" "{" "}" "⟨" "⟩"] @punctuation.bracket
 
-(interpolation
-  "{" @punctuation.special
-  "}" @punctuation.special)
-
 ["|" "," "." ":" ";"] @punctuation.delimiter
 
 (sorry) @error
