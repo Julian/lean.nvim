@@ -1,3 +1,10 @@
+(open
+  namespace: (identifier) @namespace)
+(namespace
+  name: (identifier) @namespace)
+(section
+  name: (identifier) @namespace)
+
 ; Variables
 (identifier) @variable
 
@@ -37,7 +44,7 @@
   name: (identifier) @function)
 
 (field_of
-  name: (identifier) @method)
+  name: (identifier) @field)
 
 (parameters
   type: (identifier) @type)
@@ -156,7 +163,7 @@
 (float) @float
 
 (comment) @comment
-(char) @number
+(char) @character
 (string) @string
 (interpolated_string) @string
 (escape_sequence) @string.escape
