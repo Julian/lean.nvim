@@ -138,6 +138,21 @@ above with:
         }
     EOF
 
+Other Plugins
+-------------
+
+Particularly if you're also a VSCode user, there may be other plugins
+you're interested in. Below is a (hopelessly incomplete) list of a few:
+
+    * `nvim-lightbulb <https://github.com/kosayoda/nvim-lightbulb>`_ for
+      signalling when code actions are available
+
+    * `lspsaga.nvim <https://github.com/glepnir/lspsaga.nvim>`_ for an
+      extended LSP experience on top of the builtin one
+
+    * `lsp-status.nvim <https://github.com/nvim-lua/lsp-status.nvim>`_ for
+      showing LSP information in your status bar
+
 Contributing
 ------------
 
