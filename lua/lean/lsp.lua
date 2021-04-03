@@ -8,7 +8,6 @@ function M.enable(opts)
         -- Shift forward by 1, since in vim it's easier to reach word
         -- boundaries in normal mode.
         params.position.character = params.position.character + 1
-        print(vim.inspect(params))
         vim.lsp.buf_request(0, "$/lean/plainGoal", params)
       end;
       description = "Describe the current tactic state."
