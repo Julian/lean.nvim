@@ -1,4 +1,7 @@
-local lean = {lsp = {}, abbreviations = require('lean.abbreviations')}
+local lean = {
+  lsp = require('lean.lsp'),
+  abbreviations = require('lean.abbreviations'),
+}
 
 function lean.setup(opts)
   opts = opts or {}
@@ -11,10 +14,6 @@ function lean.setup(opts)
 
   local treesitter = opts.treesitter or {}
   if treesitter.enable ~= false then require('lean.treesitter').enable(treesitter) end
-end
-
-function lean.lsp.enable(opts)
-  require('lspconfig').leanls.setup(opts)
 end
 
 return lean

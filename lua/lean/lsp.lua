@@ -1,0 +1,40 @@
+local M = { handlers = {} }
+
+function M.enable(opts)
+  opts.commands = {
+    LeanPlainGoal = {
+      function ()
+        local params = vim.lsp.util.make_position_params()
+        vim.lsp.buf_request(0, "$/lean/plainGoal", params)
+      end;
+      description = "Describe the current tactic state."
+    };
+  }
+  opts.handlers = {
+    ["$/lean/plainGoal"] = M.handlers.plain_goal_handler;
+  }
+  require('lspconfig').leanls.setup(opts)
+end
+
+function M.handlers.plain_goal_handler (_, method, result)
+  vim.lsp.util.focusable_float(method, function()
+    if not (result and result.rendered) then
+      -- return { 'No information available' }
+      return
+    end
+    local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(result.rendered)
+    markdown_lines = vim.lsp.util.trim_empty_lines(markdown_lines)
+    if vim.tbl_isempty(markdown_lines) then
+      -- return { 'No information available' }
+      return
+    end
+    local bufnr, winnr = vim.lsp.util.fancy_floating_markdown(markdown_lines, {
+      pad_left = 1; pad_right = 1;
+    })
+    vim.lsp.util.close_preview_autocmd({"CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
+    return bufnr, winnr
+  end)
+end
+
+
+return M

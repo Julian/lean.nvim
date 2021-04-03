@@ -64,6 +64,12 @@ Features
 
     * ``sorry`` insertion corresponding to the number of open goals
 
+* LSP Commands
+
+    * ``:LeanPlainGoal`` for showing the tactic state (good for binding to
+      ``CursorHold``, and can be customized via
+      ``vim.lsp.handlers["$/lean/plainGoal"]``)
+
 
 Configuration & Usage
 ---------------------
