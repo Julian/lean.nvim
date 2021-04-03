@@ -1,0 +1,10 @@
+{
+  "contributes": {
+    "snippets": [
+      {
+        "language": "lean",
+        "path": "./snippets/lean.json"
+      }
+    ]
+  }
+}

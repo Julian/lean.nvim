@@ -70,6 +70,10 @@ Features
       ``CursorHold``, and can be customized via
       ``vim.lsp.handlers["$/lean/plainGoal"]``)
 
+* Simple snippets (in `VSCode-compatible format
+  <https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax>`_,
+  so usable with e.g. `vim-vsnip <https://github.com/hrsh7th/vim-vsnip>`_)
+
 
 Configuration & Usage
 ---------------------

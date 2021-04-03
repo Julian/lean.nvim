@@ -1,0 +1,12 @@
+{
+  "namespace": {
+    "prefix": "ns",
+    "body": ["namespace ${1:name}", "", "end $1"],
+    "description": "A new Lean namespace"
+  },
+  "section": {
+    "prefix": "section",
+    "body": ["section ${1:name}", "", "end $1"],
+    "description": "A new Lean section"
+  }
+}
