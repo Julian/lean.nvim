@@ -1,9 +1,9 @@
-local abbreviations = {}
+local M = {}
 
 local _CURSOR_MARKER = '$CURSOR'
 
 --- Load the Lean abbreviations as a Lua table.
-function abbreviations.load()
+function M.load()
   local this_file = debug.getinfo(2, "S").source:sub(2)
   local base_directory = vim.fn.fnamemodify(this_file, ":h:h:h")
   local path = base_directory .. '/vscode-lean/abbreviations.json'
@@ -33,11 +33,11 @@ local function snippets_nvim_enable(snippets, lean_abbreviations)
   snippets.snippets = all_snippets
 end
 
-function abbreviations.enable(opts)
-  local lean_abbreviations = abbreviations.load()
+function M.enable(opts)
+  local lean_abbreviations = M.load()
 
   for from, to in pairs(opts.extra or {}) do
-    abbreviations["\\" .. from] = to
+    lean_abbreviations["\\" .. from] = to
   end
 
   local has_snippets, snippets = pcall(require, 'snippets')
@@ -47,4 +47,4 @@ function abbreviations.enable(opts)
   if has_compe then compe_nvim_enable(compe, lean_abbreviations) end
 end
 
-return abbreviations
+return M
