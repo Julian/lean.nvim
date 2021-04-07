@@ -57,8 +57,10 @@ Features
 * `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
   definitions for Lean
 
-* Initial implementations of some editing helpers (note: no mappings are
-  associated with these by default)
+* Initial implementations of some editing helpers (note: no
+  mappings are associated with these by default unless you call
+  ``lean.use_suggested_mappings()`` or set ``mappings = true`` in the
+  configuration)
 
     * "try this:" suggestion replacement
 
@@ -96,6 +98,10 @@ In e.g. your ``init.lua``:
                 wknight = '♘',
             },
         }
+        -- Enable suggested mappings?
+        --
+        -- false by default, true to enable
+        mappings = false,
         -- Enable the Lean language server?
         --
         -- false to disable, otherwise should be a table of options to pass to
