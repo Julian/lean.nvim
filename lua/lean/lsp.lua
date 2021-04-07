@@ -22,13 +22,11 @@ end
 function M.handlers.plain_goal_handler (_, method, result)
   vim.lsp.util.focusable_float(method, function()
     if not (result and result.rendered) then
-      -- return { 'No information available' }
       return
     end
     local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(result.rendered)
     markdown_lines = vim.lsp.util.trim_empty_lines(markdown_lines)
     if vim.tbl_isempty(markdown_lines) then
-      -- return { 'No information available' }
       return
     end
     local bufnr, winnr = vim.lsp.util.fancy_floating_markdown(markdown_lines, {
@@ -38,6 +36,5 @@ function M.handlers.plain_goal_handler (_, method, result)
     return bufnr, winnr
   end)
 end
-
 
 return M
