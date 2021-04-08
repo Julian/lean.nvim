@@ -9,6 +9,9 @@ function lean.setup(opts)
   local abbreviations = opts.abbreviations or {}
   if abbreviations.enable ~= false then lean.abbreviations.enable(abbreviations) end
 
+  local infoview = opts.infoview or {}
+  if infoview.enable ~= false then require('lean.infoview').enable(infoview) end
+
   local lsp = opts.lsp or {}
   if lsp.enable ~= false then lean.lsp.enable(lsp) end
 
@@ -20,6 +23,9 @@ end
 
 function lean.use_suggested_mappings()
   local opts = {noremap = true, silent = true}
+  vim.api.nvim_set_keymap(
+    'n', '<LocalLeader>i', "<Cmd>lua require('lean.infoview').toggle()<CR>", opts
+  )
   vim.api.nvim_set_keymap(
     'n', '<LocalLeader>s', "<Cmd>lua require('lean.sorry').fill()<CR>", opts
   )
