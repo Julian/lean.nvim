@@ -64,8 +64,9 @@ function M.ensure_open()
     augroup LeanInfoViewUpdate
       autocmd!
       autocmd CursorHold *.lean lua require'lean.infoview'.update(%d)
+      autocmd CursorHoldI *.lean lua require'lean.infoview'.update(%d)
     augroup END
-  ]], bufnr), false)
+  ]], bufnr, bufnr), false)
 
   local current_window = vim.api.nvim_get_current_win()
 
