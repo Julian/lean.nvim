@@ -24,6 +24,9 @@ end
 function lean.use_suggested_mappings()
   local opts = {noremap = true, silent = true}
   vim.api.nvim_set_keymap(
+    'n', '<LocalLeader>3', "<Cmd>lua require('lean.lean3').init()<CR>", opts
+  )
+  vim.api.nvim_set_keymap(
     'n', '<LocalLeader>i', "<Cmd>lua require('lean.infoview').toggle()<CR>", opts
   )
   vim.api.nvim_set_keymap(
