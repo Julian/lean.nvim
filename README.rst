@@ -76,6 +76,9 @@ Features
   <https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax>`_,
   so usable with e.g. `vim-vsnip <https://github.com/hrsh7th/vim-vsnip>`_)
 
+You may find browsing `my own dotfiles
+<https://github.com/Julian/dotfiles/tree/main/.config/nvim>`_ useful for
+seeing how I use this plugin myself.
 
 Configuration & Usage
 ---------------------
