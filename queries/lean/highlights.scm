@@ -117,6 +117,7 @@
   "return"
   "section"
   "structure"
+  "syntax"
   "universe"
   "universes"
   "variable"
