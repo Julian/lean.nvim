@@ -117,7 +117,6 @@
   "return"
   "section"
   "structure"
-  "syntax"
   "universe"
   "universes"
   "variable"
@@ -127,6 +126,12 @@
   (hash_command)
   (prelude)
   (sorry)
+] @keyword
+
+[
+  "macro_rules"
+  "notation"
+  "syntax"
 ] @keyword
 
 [
