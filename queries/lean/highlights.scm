@@ -156,6 +156,7 @@
   "apply"
   "exact"
   "rewrite"
+  "rw"
   "simp"
   (trivial)
 ] @keyword
