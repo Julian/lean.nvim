@@ -153,9 +153,11 @@
 ] @keyword
 
 [
+  "apply"
   "exact"
   "rewrite"
   "simp"
+  (trivial)
 ] @keyword
 
 [
