@@ -3,11 +3,6 @@ local lean3 = require('lean.lean3')
 local M = {_infoview = nil}
 
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
-local _DEFAULT_BUF_OPTIONS = {
-  buflisted = false,
-  buftype = 'nofile',
-  swapfile = false,
-}
 local _DEFAULT_WIN_OPTIONS = {
   cursorline = false,
   number = false,
@@ -53,11 +48,7 @@ function M.is_open() return M._infoview ~= nil end
 function M.ensure_open()
   if M.is_open() then return M._infoview.bufnr end
 
-  local bufnr = vim.api.nvim_create_buf(false, false)
-
-  for name, value in pairs(_DEFAULT_BUF_OPTIONS) do
-    vim.api.nvim_buf_set_option(bufnr, name, value)
-  end
+  local bufnr = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_name(bufnr, _INFOVIEW_BUF_NAME)
 
   vim.api.nvim_exec(string.format([[
