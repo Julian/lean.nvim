@@ -7,7 +7,7 @@ endif
 
 let b:switch_definitions = [
     \ g:switch_builtins.true_false,
-    \ ["#check", "#reduce", "#eval", "#print"],
+    \ ["#check", "#eval", "#reduce"],
     \ ['\(begin\n\s*\)\@<!sorry', 'begin\r  sorry\rend'],
     \ ["tidy", "suggest", "hint", "linarith", "library_search"],
     \ ["rw", "simp", "simp?"],
