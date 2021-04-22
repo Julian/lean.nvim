@@ -14,7 +14,7 @@ function trythis.swap()
     -- luacheck: ignore
     for each in suggestions_from(diagnostic) do
       local command = "normal! ciw" .. vim.trim(each)
-      vim.cmd(command)
+      vim.api.nvim_command(command)
       return
     end
   end
