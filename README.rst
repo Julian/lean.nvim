@@ -54,9 +54,6 @@ Features
   `nvim-compe <https://github.com/hrsh7th/nvim-compe>`_ or
   `snippets.nvim <https://github.com/norcalli/snippets.nvim>`_
 
-* `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
-  definitions for Lean
-
 * Initial implementations of some editing helpers (note: no
   mappings are associated with these by default unless you call
   ``lean.use_suggested_mappings()`` or set ``mappings = true`` in the
@@ -71,6 +68,11 @@ Features
     * ``:LeanPlainGoal`` for showing the tactic state (good for binding to
       ``CursorHold``, and can be customized via
       ``vim.lsp.handlers["$/lean/plainGoal"]``)
+
+* An infauxview which can show persistent goal & tactic state
+
+* `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
+  definitions for Lean
 
 * Simple snippets (in `VSCode-compatible format
   <https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax>`_,
@@ -161,6 +163,9 @@ you're interested in. Below is a (hopelessly incomplete) list of a few:
 
     * `lsp-status.nvim <https://github.com/nvim-lua/lsp-status.nvim>`_ for
       showing LSP information in your status bar
+
+    * `lsp-trouble <https://github.com/folke/lsp-trouble.nvim>`_ for
+      showing a grouped view of diagnostics to pair with the "infauxview"
 
 Contributing
 ------------
