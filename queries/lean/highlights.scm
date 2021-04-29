@@ -29,30 +29,25 @@
   "example"
   "inductive"
   "class"
+
+  "deriving"
 ] @keyword
+
+(declaration
+  attributes: (identifier) @function)
 
 (abbrev
   name: (identifier) @type)
-(abbrev
-  attributes: (identifier) @function)
 (constant
   name: (identifier) @type)
-(constant
-  attributes: (identifier) @function)
 (def
   name: (identifier) @function)
-(def
-  attributes: (identifier) @function)
 (theorem
   name: (identifier) @function)
-(theorem
-  attributes: (identifier) @function)
 (instance
   name: (identifier) @function)
 (instance
   type: (identifier) @type)
-(instance
-  attributes: (identifier) @function)
 (axiom
   name: (identifier) @function)
 (class
