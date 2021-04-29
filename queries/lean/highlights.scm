@@ -17,28 +17,55 @@
 (inductive_type
   name: (identifier) @type)
 
-(structure_definition
+;; Declarations
+
+[
+  "abbrev"
+  "constant"
+  "def"
+  "theorem"
+  "instance"
+  "axiom"
+  "example"
+  "inductive"
+  "class"
+] @keyword
+
+(abbrev
   name: (identifier) @type)
-(structure_definition
-  extends: (identifier) @type)
-
-(class
+(abbrev
+  attributes: (identifier) @function)
+(constant
   name: (identifier) @type)
-(class
-  extends: (identifier) @type)
-
-(instance
-  class: (identifier) @type)
-(instance_field
-  return_type: (identifier) @type)
-
-;; Definitions
-
+(constant
+  attributes: (identifier) @function)
 (def
   name: (identifier) @function)
-
 (def
   attributes: (identifier) @function)
+(theorem
+  name: (identifier) @function)
+(theorem
+  attributes: (identifier) @function)
+(instance
+  name: (identifier) @function)
+(instance
+  type: (identifier) @type)
+(instance
+  attributes: (identifier) @function)
+(axiom
+  name: (identifier) @function)
+(class
+  name: (identifier) @type)
+(class
+  extends: (identifier) @type)
+(structure_definition
+  name: (identifier) @type)
+(structure_definition
+  extends: (identifier) @type)
+
+(where_decl
+  type: (identifier) @type)
 
 (apply
   name: (identifier) @function)
@@ -132,16 +159,6 @@
   "macro_rules"
   "notation"
   "syntax"
-] @keyword
-
-[
-  "class"
-  "constant"
-  "def"
-  "example"
-  "inductive"
-  "instance"
-  "theorem"
 ] @keyword
 
 [
