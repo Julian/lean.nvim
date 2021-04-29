@@ -1,3 +1,4 @@
+local DiagnosticSeverity = require('vim.lsp.protocol').DiagnosticSeverity
 local trythis = {}
 
 local function suggestions_from(diagnostic)
@@ -10,7 +11,10 @@ end
 --  Doesn't do any robust error checking, or allow rotating for later results
 --  yet.
 function trythis.swap()
-  for _, diagnostic in ipairs(vim.lsp.diagnostic.get_line_diagnostics()) do
+  local diagnostics = vim.lsp.diagnostic.get_line_diagnostics(
+    0, nil, { severity = DiagnosticSeverity.Information }
+  )
+  for _, diagnostic in ipairs(diagnostics) do
     -- luacheck: ignore
     for each in suggestions_from(diagnostic) do
       local command = "normal! ciw" .. vim.trim(each)
