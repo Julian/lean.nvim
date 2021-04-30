@@ -64,7 +64,7 @@ function M.ensure_open()
   vim.cmd "vsplit"
   vim.cmd(string.format("buffer %d", bufnr))
 
-  local winnr = vim.api.nvim_win_get_number(0)
+  local winnr = vim.api.nvim_get_current_win()
 
   for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
     vim.api.nvim_win_set_option(winnr, name, value)
