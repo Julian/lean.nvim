@@ -14,23 +14,25 @@
 
 (function_type) @type
 (product_type) @type
-(inductive_type
-  name: (identifier) @type)
 
 ;; Declarations
 
 [
   "abbrev"
-  "constant"
   "def"
   "theorem"
+  "constant"
   "instance"
   "axiom"
   "example"
   "inductive"
+  "structure"
   "class"
 
   "deriving"
+
+  "section"
+  "namespace"
 ] @keyword
 
 (declaration
@@ -38,25 +40,21 @@
 
 (abbrev
   name: (identifier) @type)
-(constant
-  name: (identifier) @type)
 (def
   name: (identifier) @function)
 (theorem
   name: (identifier) @function)
+(constant
+  name: (identifier) @type)
 (instance
   name: (identifier) @function)
 (instance
   type: (identifier) @type)
 (axiom
   name: (identifier) @function)
-(class
+(structure
   name: (identifier) @type)
-(class
-  extends: (identifier) @type)
-(structure_definition
-  name: (identifier) @type)
-(structure_definition
+(structure
   extends: (identifier) @type)
 
 (where_decl
@@ -71,7 +69,7 @@
 (parameters
   type: (identifier) @type)
 
-(inductive_constructor) @constructor
+(anonymous_constructor) @constructor
 
 ["if" "then" "else"] @conditional
 
@@ -134,11 +132,8 @@
   "fun"
   "let"
   "match"
-  "namespace"
   "open"
   "return"
-  "section"
-  "structure"
   "universe"
   "universes"
   "variable"
