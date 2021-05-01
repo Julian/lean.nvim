@@ -60,9 +60,6 @@
 (where_decl
   type: (identifier) @type)
 
-(apply
-  name: (identifier) @function)
-
 (field_of
   name: (identifier) @field)
 
