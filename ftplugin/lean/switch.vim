@@ -12,6 +12,8 @@ let b:switch_definitions = [
     \ ["tidy", "suggest", "hint", "linarith", "library_search"],
     \ ["rw", "simp", "simp?"],
     \ ["cases", "rcases", "obtain"],
+    \ ["norm_cast", "push_cast"],
+    \ ["inl", "inr"],
     \ ["tt", "ff"],
     \ ["=", "≠"],
     \ ["∈", "∉"],
