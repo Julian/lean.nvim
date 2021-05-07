@@ -1,6 +1,11 @@
 {
+  "obtain": {
+    "prefix": "obtain",
+    "body": ["obtain ⟨${1:name}, h$1⟩ := ${2:term}"],
+    "description": "The `obtain` tactic, with some autonaming"
+  },
   "namespace": {
-    "prefix": "ns",
+    "prefix": ["ns", "namespace"],
     "body": ["namespace ${1:name}", "", "end $1"],
     "description": "A new Lean namespace"
   },
