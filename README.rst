@@ -149,6 +149,10 @@ above with:
         }
     EOF
 
+You may find some small additional inspiration in my own
+`(Julian's) configuration here
+<https://github.com/Julian/dotfiles/tree/main/.config/nvim/lua/config>`_.
+
 Other Plugins
 -------------
 
