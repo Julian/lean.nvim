@@ -50,6 +50,7 @@ function M.ensure_open()
 
   local bufnr = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_name(bufnr, _INFOVIEW_BUF_NAME)
+  vim.api.nvim_buf_set_option(bufnr, 'filetype', 'lean')
 
   vim.api.nvim_exec(string.format([[
     augroup LeanInfoViewUpdate
@@ -63,6 +64,11 @@ function M.ensure_open()
 
   vim.cmd "vsplit"
   vim.cmd(string.format("buffer %d", bufnr))
+
+  -- We're cheating by calling this a Lean file, but tree-sitter won't
+  -- know how to deal with our cheating until we teach it, so turn it
+  -- off even for Lean 4.
+  pcall(vim.cmd, 'TSBufDisable highlight')
 
   local winnr = vim.api.nvim_get_current_win()
 
