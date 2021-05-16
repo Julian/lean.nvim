@@ -1,6 +1,6 @@
 local assert = require('luassert')
 local api = vim.api
-local helpers = {}
+local helpers = {_clean_buffer_counter = 1}
 
 
 --- Feed some keystrokes into the current buffer, replacing termcodes.
@@ -15,6 +15,15 @@ function helpers.insert(text)
   helpers.feed('i' .. text, 'x')
 end
 
+-- Even though we can delete a buffer, so should be able to reuse names,
+-- we do this to ensure if a test fails, future ones still get new "files".
+local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
+  local counter = helpers._clean_buffer_counter
+  helpers._clean_buffer_counter = helpers._clean_buffer_counter + 1
+  local unique_name = string.format('unittest-%d.lean', counter)
+  api.nvim_buf_set_name(bufnr, unique_name)
+end
+
 --- Create a clean Lean buffer with the given contents.
 --
 --  Waits for the LSP to be ready before proceeding with a given callback.
@@ -26,7 +35,7 @@ function helpers.clean_buffer(contents, callback)
 
   return function()
     local bufnr = vim.api.nvim_create_buf(false, true)
-    api.nvim_buf_set_name(bufnr, 'unittest.lean')
+    set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
     api.nvim_buf_set_option(bufnr, 'filetype', 'lean')
 
     api.nvim_buf_call(bufnr, function()
