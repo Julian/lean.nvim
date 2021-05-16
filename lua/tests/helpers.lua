@@ -60,7 +60,8 @@ end
 --- Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
   local buf = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n')
-  return arguments[1] == buf
+  assert.equal(arguments[1], buf)
+  return true
 end
 
 assert:register('assertion', 'contents', has_buf_contents)
