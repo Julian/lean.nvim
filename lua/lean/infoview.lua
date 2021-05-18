@@ -3,6 +3,10 @@ local lean3 = require('lean.lean3')
 local M = {_infoview = nil}
 
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
+local _DEFAULT_BUF_OPTIONS = {
+  bufhidden = 'wipe',
+  filetype = 'lean',
+}
 local _DEFAULT_WIN_OPTIONS = {
   cursorline = false,
   number = false,
@@ -30,7 +34,9 @@ function M.update(infoview_bufnr)
   end
 
   return _update(function(lines)
+    vim.api.nvim_buf_set_option(infoview_bufnr, 'modifiable', true)
     vim.api.nvim_buf_set_lines(infoview_bufnr, 0, -1, true, lines)
+    vim.api.nvim_buf_set_option(infoview_bufnr, 'modifiable', false)
   end)
 end
 
@@ -50,7 +56,9 @@ function M.ensure_open()
 
   local bufnr = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_name(bufnr, _INFOVIEW_BUF_NAME)
-  vim.api.nvim_buf_set_option(bufnr, 'filetype', 'lean')
+  for name, value in pairs(_DEFAULT_BUF_OPTIONS) do
+    vim.api.nvim_buf_set_option(bufnr, name, value)
+  end
 
   vim.api.nvim_exec(string.format([[
     augroup LeanInfoViewUpdate
