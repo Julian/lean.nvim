@@ -35,8 +35,8 @@
   "namespace"
 ] @keyword
 
-(declaration
-  attributes: (identifier) @function)
+(attributes
+  (identifier) @function)
 
 (abbrev
   name: (identifier) @type)
