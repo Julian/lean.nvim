@@ -1,6 +1,6 @@
 local lean3 = require('lean.lean3')
 
-local M = {_infoview = nil}
+local M = {_infoview = nil, _opts = {}}
 
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
 local _DEFAULT_BUF_OPTIONS = {
@@ -40,7 +40,8 @@ function M.update(infoview_bufnr)
   end)
 end
 
-function M.enable(_)
+function M.enable(opts)
+  M._opts = opts
   vim.api.nvim_exec([[
     augroup LeanInfoViewOpen
       autocmd!
@@ -84,6 +85,11 @@ function M.ensure_open()
     vim.api.nvim_win_set_option(winnr, name, value)
   end
   vim.api.nvim_set_current_win(current_window)
+
+  local max_width = M._opts.max_width or 79
+  if vim.api.nvim_win_get_width(winnr) > max_width then
+    vim.api.nvim_win_set_width(winnr, max_width)
+  end
 
   M._infoview = { bufnr = bufnr, winnr = winnr }
   return bufnr
