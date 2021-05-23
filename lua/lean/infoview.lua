@@ -5,7 +5,7 @@ local M = {_infoview = nil, _opts = {}}
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
 local _DEFAULT_BUF_OPTIONS = {
   bufhidden = 'wipe',
-  filetype = 'lean',
+  filetype = 'leaninfo',
 }
 local _DEFAULT_WIN_OPTIONS = {
   cursorline = false,
@@ -73,11 +73,6 @@ function M.ensure_open()
 
   vim.cmd "vsplit"
   vim.cmd(string.format("buffer %d", bufnr))
-
-  -- We're cheating by calling this a Lean file, but tree-sitter won't
-  -- know how to deal with our cheating until we teach it, so turn it
-  -- off even for Lean 4.
-  pcall(vim.cmd, 'TSBufDisable highlight')
 
   local winnr = vim.api.nvim_get_current_win()
 
