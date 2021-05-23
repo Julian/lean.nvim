@@ -66,8 +66,6 @@
 (binders
   type: (identifier) @type)
 
-(anonymous_constructor) @constructor
-
 ["if" "then" "else"] @conditional
 
 ["for" "in" "do"] @repeat
