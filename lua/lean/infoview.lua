@@ -15,6 +15,14 @@ local _DEFAULT_WIN_OPTIONS = {
   wrap = true,
 }
 
+local _SEVERITY = {
+  [0] = "other",
+  [1] = "error",
+  [2] = "warning",
+  [3] = "information",
+  [4] = "hint",
+}
+
 function M.update(infoview_bufnr)
   local _update = vim.b.lean3 and lean3.update_infoview or function(set_lines)
     local current_buffer = vim.api.nvim_get_current_buf()
@@ -27,15 +35,22 @@ function M.update(infoview_bufnr)
       local lines = {}
 
       if result and result.goals then
+        vim.list_extend(lines,
+          {#result.goals == 0 and '▶ goals accomplished 🎉' or
+            #result.goals == 1 and '▶ 1 goal' or
+            string.format('▶ %d goals', #result.goals)})
         for _, each in pairs(result.goals) do
-          vim.list_extend(lines, vim.split(each, '\n', true))
           vim.list_extend(lines, {''})
+          vim.list_extend(lines, vim.split(each, '\n', true))
         end
       end
 
-      for _, diags in pairs(vim.lsp.diagnostic.get_line_diagnostics(current_buffer, cursor[0])) do
-        vim.list_extend(lines, vim.split(diags.message, '\n', true))
-        vim.list_extend(lines, {''})
+      for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics(current_buffer, cursor[0])) do
+        local start = diag.range["start"]
+        local end_ = diag.range["end"]
+        vim.list_extend(lines, {'', string.format('▶ %d:%d-%d:%d: %s:',
+          start.line+1, start.character+1, end_.line+1, end_.character+1, _SEVERITY[diag.severity])})
+        vim.list_extend(lines, vim.split(diag.message, '\n', true))
       end
 
       set_lines(lines)
