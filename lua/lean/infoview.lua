@@ -17,18 +17,27 @@ local _DEFAULT_WIN_OPTIONS = {
 
 function M.update(infoview_bufnr)
   local _update = vim.b.lean3 and lean3.update_infoview or function(set_lines)
+    local current_buffer = vim.api.nvim_get_current_buf()
+    local cursor = vim.api.nvim_win_get_cursor(0)
     local params = vim.lsp.util.make_position_params()
     -- Shift forward by 1, since in vim it's easier to reach word
     -- boundaries in normal mode.
     params.position.character = params.position.character + 1
     vim.lsp.buf_request(0, "$/lean/plainGoal", params, function(_, _, result)
-      if not (result and result.goals) then
-        return
-      end
       local lines = {}
-      for _, each in pairs(result.goals) do
-        vim.list_extend(lines, vim.split(each, '\n', true))
+
+      if result and result.goals then
+        for _, each in pairs(result.goals) do
+          vim.list_extend(lines, vim.split(each, '\n', true))
+          vim.list_extend(lines, {''})
+        end
       end
+
+      for _, diags in pairs(vim.lsp.diagnostic.get_line_diagnostics(current_buffer, cursor[0])) do
+        vim.list_extend(lines, vim.split(diags.message, '\n', true))
+        vim.list_extend(lines, {''})
+      end
+
       set_lines(lines)
     end)
   end
