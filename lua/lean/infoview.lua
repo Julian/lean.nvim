@@ -71,7 +71,7 @@ function M.ensure_open()
 
   local current_window = vim.api.nvim_get_current_win()
 
-  vim.cmd "vsplit"
+  vim.cmd "botright vsplit"
   vim.cmd(string.format("buffer %d", bufnr))
 
   local winnr = vim.api.nvim_get_current_win()
