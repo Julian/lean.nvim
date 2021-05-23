@@ -63,7 +63,7 @@
 (field_of
   name: (identifier) @field)
 
-(parameters
+(binders
   type: (identifier) @type)
 
 (anonymous_constructor) @constructor
