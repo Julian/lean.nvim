@@ -12,7 +12,7 @@
 ((identifier) @type
  (#match? @type "^[A-Z]"))
 
-(function_type) @type
+(arrow) @type
 (product_type) @type
 
 ;; Declarations
