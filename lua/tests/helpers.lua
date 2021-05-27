@@ -30,9 +30,6 @@ end
 --
 --  Yes c(lean) may be a double entendre, and no I don't feel bad.
 function helpers.clean_buffer(contents, callback)
-  -- FIXME: With not setting a name at all, the LSP server doesn't start.
-  --        Not quite sure why.
-
   return function()
     local bufnr = vim.api.nvim_create_buf(false, true)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
