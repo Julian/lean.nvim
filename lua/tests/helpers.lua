@@ -1,4 +1,7 @@
 local assert = require('luassert')
+
+local infoview = require('lean.infoview')
+
 local api = vim.api
 local helpers = {_clean_buffer_counter = 1}
 
@@ -40,8 +43,16 @@ function helpers.clean_buffer(contents, callback)
       assert.message("LSP server was never ready.").True(succeeded)
 
       api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
-      callback()
+      local infoview_info = infoview.open()
+      callback{
+        source_file = { bufnr = bufnr },
+        infoview = {
+          bufnr = infoview_info.bufnr,
+          winnr = infoview_info.winnr,
+        },
+      }
     end)
+    infoview.close()
     vim.api.nvim_buf_delete(bufnr, { force = true })
   end
 end

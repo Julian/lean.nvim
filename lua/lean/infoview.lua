@@ -111,7 +111,7 @@ function M.ensure_open()
   end
 
   M._infoview = { bufnr = bufnr, winnr = winnr }
-  return bufnr
+  return M._infoview
 end
 
 M.open = M.ensure_open
