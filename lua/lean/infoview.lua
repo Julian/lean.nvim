@@ -6,6 +6,7 @@ local _INFOVIEW_BUF_NAME = 'lean://infoview'
 local _DEFAULT_BUF_OPTIONS = {
   bufhidden = 'wipe',
   filetype = 'leaninfo',
+  modifiable = false,
 }
 local _DEFAULT_WIN_OPTIONS = {
   cursorline = false,
