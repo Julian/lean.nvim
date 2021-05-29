@@ -32,7 +32,7 @@ function M.update(infoview_bufnr)
     -- Shift forward by 1, since in vim it's easier to reach word
     -- boundaries in normal mode.
     params.position.character = params.position.character + 1
-    vim.lsp.buf_request(0, "$/lean/plainGoal", params, function(_, _, result)
+    return vim.lsp.buf_request(0, "$/lean/plainGoal", params, function(_, _, result)
       local lines = {}
 
       if result and result.goals then
