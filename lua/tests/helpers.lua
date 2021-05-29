@@ -39,6 +39,9 @@ function helpers.clean_buffer(contents, callback)
     api.nvim_buf_set_option(bufnr, 'filetype', 'lean')
 
     api.nvim_buf_call(bufnr, function()
+      -- FIXME: For now all tests are against Lean 3
+      require 'lean.lean3'.init()
+
       local succeeded, _ = vim.wait(1000, vim.lsp.buf.server_ready)
       assert.message("LSP server was never ready.").True(succeeded)
 
