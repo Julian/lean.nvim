@@ -86,6 +86,23 @@ function M.ensure_open()
     vim.api.nvim_buf_set_option(bufnr, name, value)
   end
 
+  local current_window = vim.api.nvim_get_current_win()
+
+  vim.cmd "botright vsplit"
+  vim.cmd(string.format("buffer %d", bufnr))
+
+  local window = vim.api.nvim_get_current_win()
+
+  for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
+    vim.api.nvim_win_set_option(window, name, value)
+  end
+  vim.api.nvim_set_current_win(current_window)
+
+  local max_width = M._opts.max_width or 79
+  if vim.api.nvim_win_get_width(window) > max_width then
+    vim.api.nvim_win_set_width(window, max_width)
+  end
+
   vim.api.nvim_exec(string.format([[
     augroup LeanInfoViewUpdate
       autocmd!
@@ -94,24 +111,7 @@ function M.ensure_open()
     augroup END
   ]], bufnr, bufnr), false)
 
-  local current_window = vim.api.nvim_get_current_win()
-
-  vim.cmd "botright vsplit"
-  vim.cmd(string.format("buffer %d", bufnr))
-
-  local winnr = vim.api.nvim_get_current_win()
-
-  for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
-    vim.api.nvim_win_set_option(winnr, name, value)
-  end
-  vim.api.nvim_set_current_win(current_window)
-
-  local max_width = M._opts.max_width or 79
-  if vim.api.nvim_win_get_width(winnr) > max_width then
-    vim.api.nvim_win_set_width(winnr, max_width)
-  end
-
-  M._infoview = { bufnr = bufnr, winnr = winnr }
+  M._infoview = { bufnr = bufnr, window = window }
   return M._infoview
 end
 
@@ -133,8 +133,8 @@ function M.close()
     augroup END
   ]], false)
 
-  vim.api.nvim_win_close(infoview.winnr, false)
-  vim.api.nvim_buf_delete(infoview.bufnr, {})
+  vim.api.nvim_win_close(infoview.window, true)
+  vim.api.nvim_buf_delete(infoview.bufnr, { force = true })
 end
 
 function M.toggle()

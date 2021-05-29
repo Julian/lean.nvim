@@ -46,12 +46,13 @@ function helpers.clean_buffer(contents, callback)
       assert.message("LSP server was never ready.").True(succeeded)
 
       api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
+
       local infoview_info = infoview.open()
       callback{
         source_file = { bufnr = bufnr },
         infoview = {
           bufnr = infoview_info.bufnr,
-          winnr = infoview_info.winnr,
+          window = infoview_info.window,
         },
       }
     end)
