@@ -61,6 +61,11 @@ function M.update(infoview_bufnr)
   return _update(function(lines)
     vim.api.nvim_buf_set_option(infoview_bufnr, 'modifiable', true)
     vim.api.nvim_buf_set_lines(infoview_bufnr, 0, -1, true, lines)
+    -- HACK: This shouldn't really do anything, but I think there's a neovim
+    --       display bug. See #27 and neovim/neovim#14663. Specifically,
+    --       as of NVIM v0.5.0-dev+e0a01bdf7, without this, updating a long
+    --       infoview with shorter contents doesn't properly redraw.
+    vim.api.nvim_buf_call(infoview_bufnr, vim.fn.winline)
     vim.api.nvim_buf_set_option(infoview_bufnr, 'modifiable', false)
   end)
 end
