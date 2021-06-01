@@ -2,7 +2,6 @@ local M = {}
 
 function M.init()
   pcall(vim.cmd, 'TSBufDisable highlight')  -- tree-sitter-lean is lean4-only
-  vim.b.lean3 = true
 end
 
 function M.is_lean3_project()
