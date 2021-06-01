@@ -90,9 +90,7 @@ In e.g. your ``init.lua``:
 .. code-block:: lua
 
     require('lean').setup{
-        -- Enable abbreviation support?
-        --
-        -- false to disable, otherwise a table of options described below
+        -- Abbreviation support?
         abbreviations = {,
             extra = {
                 -- Add a \wknight abbreviation to insert ♘
@@ -102,6 +100,11 @@ In e.g. your ``init.lua``:
                 -- this if so desired.
                 wknight = '♘',
             },
+            -- change if you don't like the backslash
+            leader = '\\',
+            -- set true to enable
+            compe = false,
+            snippets = false,
         }
         -- Enable suggested mappings?
         --
