@@ -1,1 +1,1 @@
-autocmd BufRead,BufNewFile *.lean lua require'lean.lean3'.detect()
+autocmd BufRead,BufNewFile *.lean lua require'lean.ft'.detect()

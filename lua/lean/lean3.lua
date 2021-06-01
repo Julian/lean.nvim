@@ -1,23 +1,12 @@
 local M = {}
 
--- Ideally this obviously would use a TOML parser but yeah choosing to
--- do nasty things and not add the dependency for now. Also there's no
--- project root searching being done, maybe there should be.
-local _MARKER = '.*lean_version.*\".*:3.*'
-
 function M.init()
   pcall(vim.cmd, 'TSBufDisable highlight')  -- tree-sitter-lean is lean4-only
   vim.b.lean3 = true
 end
 
-function M.is_lean3_project(default)
-  default = default or false
-  local exists, result = pcall(vim.fn.readfile, "leanpkg.toml")
-  if not exists then return default end
-  for _, line in ipairs(result) do
-    if line:match(_MARKER) then return true end
-  end
-  return false
+function M.is_lean3_project()
+    return vim.bo.ft == "lean"
 end
 
 function M.detect()
