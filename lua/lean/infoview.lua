@@ -130,14 +130,17 @@ function M.close()
   if not M.is_open() then return end
   local src_buf = vim.api.nvim_get_current_buf()
 
-  M._infoviews_open[src_buf] = false
-
   if M._infoviews[src_buf].win then
-    vim.api.nvim_win_close(M._infoviews.win, true)
+    vim.api.nvim_win_close(M._infoviews[src_buf].win, true)
   end
-  if M._infoviews[src_buf].buf then
-    vim.api.nvim_buf_delete(M._infoviews.buf, { force = true })
-  end
+
+  -- NOTE: it seems this isn't necessary since unlisted buffers are deleted automatically?
+  --if M._infoviews[src_buf].buf then
+  --  vim.api.nvim_buf_delete(M._infoviews[src_buf].buf, { force = true })
+  --end
+
+  M._infoviews_open[src_buf] = false
+  M._infoviews[src_buf] = nil
 end
 
 function M.toggle()
