@@ -11,17 +11,18 @@ Prerequisites
 ``lean.nvim`` currently requires `neovim 0.5 HEAD / nightly
 <https://github.com/neovim/neovim/releases/tag/nightly>`_.
 
-For syntax highlighting and basic language support, you should either:
+NOTE: ``lean.nvim`` is incompatible with `lean.vim <https://github.com/leanprover/lean.vim>`,
+as it implements its own kind filetype detection. 
+You should NOT have ``lean.vim`` installed if using ``lean.nvim``.
 
-    * Install the normal `lean.vim <https://github.com/leanprover/lean.vim>`_.
+For lean4 syntax highlighting and basic language support, you should
+try the experimental support present via `tree-sitter-lean
+<https://github.com/Julian/tree-sitter-lean>`_ by installing
+`nvim-treesitter <https://github.com/nvim-treesitter/nvim-treesitter>`_
 
-    * or try the experimental support present via `tree-sitter-lean
-      <https://github.com/Julian/tree-sitter-lean>`_ by installing
-      `nvim-treesitter <https://github.com/nvim-treesitter/nvim-treesitter>`_
-
-       Note that many simple syntactical things are not yet implemented
-       (help is of course welcome), and that ``tree-sitter-lean`` is lean
-       4-only.
+Note that many simple syntactical things are not yet implemented
+(help is of course welcome), and that ``tree-sitter-lean`` is lean
+4-only.
 
 Installation
 ------------
