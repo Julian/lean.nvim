@@ -1,6 +1,6 @@
 local lean3 = require('lean.lean3')
 
-local M = {_infoview = nil, _opts = {}}
+local M = {_infoviews = {}, _infoviews_open = {}, _opts = {}}
 
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
 local _DEFAULT_BUF_OPTIONS = {
@@ -24,7 +24,46 @@ local _SEVERITY = {
   [4] = "hint",
 }
 
-function M.update(infoview_bufnr)
+function M.update(src_bufnr)
+  if M._infoviews_open[src_bufnr] == false then
+      return
+  end
+
+  local infoview_bufnr
+  local infoview = M._infoviews[src_bufnr]
+  if not infoview then
+    M._infoviews[src_bufnr] = {}
+
+    infoview_bufnr = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_name(infoview_bufnr, _INFOVIEW_BUF_NAME .. infoview_bufnr)
+    for name, value in pairs(_DEFAULT_BUF_OPTIONS) do
+      vim.api.nvim_buf_set_option(infoview_bufnr, name, value)
+    end
+
+    local current_window = vim.api.nvim_get_current_win()
+
+    vim.cmd "botright vsplit"
+    vim.cmd(string.format("buffer %d", infoview_bufnr))
+
+    local window = vim.api.nvim_get_current_win()
+
+    for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
+      vim.api.nvim_win_set_option(window, name, value)
+    end
+    vim.api.nvim_set_current_win(current_window)
+
+    local max_width = M._opts.max_width or 79
+    if vim.api.nvim_win_get_width(window) > max_width then
+      vim.api.nvim_win_set_width(window, max_width)
+    end
+
+    M._infoviews[src_bufnr].buf = infoview_bufnr
+    M._infoviews[src_bufnr].win = window
+
+  else
+    infoview_bufnr = infoview.buf
+  end
+
   local _update = vim.bo.ft == "lean" and lean3.update_infoview or function(set_lines)
     local current_buffer = vim.api.nvim_get_current_buf()
     local cursor = vim.api.nvim_win_get_cursor(0)
@@ -73,73 +112,32 @@ end
 function M.enable(opts)
   M._opts = opts
   vim.api.nvim_exec([[
-    augroup LeanInfoViewOpen
+    augroup LeanInfoViewUpdate
       autocmd!
-      autocmd BufWinEnter *.lean lua require'lean.infoview'.ensure_open()
+      autocmd CursorHold *.lean lua require'lean.infoview'.update(vim.api.nvim_get_current_buf())
+      autocmd CursorHoldI *.lean lua require'lean.infoview'.update(vim.api.nvim_get_current_buf())
     augroup END
   ]], false)
 end
 
-function M.is_open() return M._infoview ~= nil end
+function M.is_open() return M._infoviews_open[vim.api.nvim_get_current_buf()] ~= false end
 
-function M.ensure_open()
-  if M.is_open() then return M._infoview.bufnr end
-
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(bufnr, _INFOVIEW_BUF_NAME)
-  for name, value in pairs(_DEFAULT_BUF_OPTIONS) do
-    vim.api.nvim_buf_set_option(bufnr, name, value)
-  end
-
-  local current_window = vim.api.nvim_get_current_win()
-
-  vim.cmd "botright vsplit"
-  vim.cmd(string.format("buffer %d", bufnr))
-
-  local window = vim.api.nvim_get_current_win()
-
-  for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
-    vim.api.nvim_win_set_option(window, name, value)
-  end
-  vim.api.nvim_set_current_win(current_window)
-
-  local max_width = M._opts.max_width or 79
-  if vim.api.nvim_win_get_width(window) > max_width then
-    vim.api.nvim_win_set_width(window, max_width)
-  end
-
-  vim.api.nvim_exec(string.format([[
-    augroup LeanInfoViewUpdate
-      autocmd!
-      autocmd CursorHold *.lean lua require'lean.infoview'.update(%d)
-      autocmd CursorHoldI *.lean lua require'lean.infoview'.update(%d)
-    augroup END
-  ]], bufnr, bufnr), false)
-
-  M._infoview = { bufnr = bufnr, window = window }
-  return M._infoview
+function M.open()
+  M._infoviews_open[vim.api.nvim_get_current_buf()] = true
 end
-
-M.open = M.ensure_open
 
 function M.close()
   if not M.is_open() then return end
+  local src_buf = vim.api.nvim_get_current_buf()
 
-  local infoview = M._infoview
-  M._infoview = nil
+  M._infoviews_open[src_buf] = false
 
-  vim.api.nvim_exec([[
-    augroup LeanInfoViewOpen
-      autocmd!
-    augroup END
-
-    augroup LeanInfoViewUpdate
-      autocmd!
-    augroup END
-  ]], false)
-
-  vim.api.nvim_win_close(infoview.window, true)
-  vim.api.nvim_buf_delete(infoview.bufnr, { force = true })
+  if M._infoviews[src_buf].win then
+    vim.api.nvim_win_close(M._infoviews.win, true)
+  end
+  if M._infoviews[src_buf].buf then
+    vim.api.nvim_buf_delete(M._infoviews.buf, { force = true })
+  end
 end
 
 function M.toggle()
