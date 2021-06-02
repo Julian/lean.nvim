@@ -91,10 +91,20 @@ function M._insert_char_pre()
       end_right_gravity = true,
     })
     -- override only for the duration of the abbreviation (clashes with autocompletion plugins)
-    vim.api.nvim_buf_set_keymap(0, 'i', '<CR>', "<C-O>:lua require'lean.abbreviations'.convert()<CR><CR>", {noremap = true})
-    vim.api.nvim_buf_set_keymap(0, 'i', '<Tab>', "<C-O>:lua require'lean.abbreviations'.convert()<CR>", {noremap = true})
+    vim.api.nvim_buf_set_keymap(0, 'i', '<CR>', 'v:lua._lean_abbreviations_enter_expr()', {expr = true, noremap = true})
+    vim.api.nvim_buf_set_keymap(0, 'i', '<Tab>', 'v:lua._lean_abbreviations_tab_expr()', {expr = true, noremap = true})
     return
   end
+end
+
+function _G._lean_abbreviations_enter_expr()
+  M.convert(true)
+  return '\n'
+end
+
+function _G._lean_abbreviations_tab_expr()
+  M.convert(true)
+  return ' '
 end
 
 function M.convert_abbrev(abbrev)
