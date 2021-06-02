@@ -9,8 +9,8 @@ function lean.setup(opts)
   local abbreviations = opts.abbreviations or {}
   if abbreviations.enable ~= false then lean.abbreviations.enable(abbreviations) end
 
-  local infoview = opts.infoview or {}
-  if infoview.enable ~= false then require('lean.infoview').enable(infoview) end
+  local treesitter = opts.treesitter or {}
+  if treesitter.enable ~= false then require('lean.treesitter').enable(treesitter) end
 
   local lsp = opts.lsp or {}
   if lsp.enable ~= false then lean.lsp.enable(lsp) end
@@ -18,8 +18,8 @@ function lean.setup(opts)
   local lsp4 = opts.lsp4 or {}
   if lsp4.enable ~= false then lean.lsp.enable4(lsp4) end
 
-  local treesitter = opts.treesitter or {}
-  if treesitter.enable ~= false then require('lean.treesitter').enable(treesitter) end
+  local infoview = opts.infoview or {}
+  if infoview.enable ~= false then require('lean.infoview').enable(infoview) end
 
   if opts.mappings == true then lean.use_suggested_mappings() end
 end

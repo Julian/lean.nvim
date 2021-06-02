@@ -24,15 +24,19 @@ local _SEVERITY = {
   [4] = "hint",
 }
 
-function M.update(src_bufnr)
-  if M._infoviews_open[src_bufnr] == false then
+function M.update(src_winnr)
+  -- grace period for server startup (prevents initial handler error for lean3 files)
+  local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
+  if not succeeded then return end
+
+  if M._infoviews_open[src_winnr] == false then
       return
   end
 
   local infoview_bufnr
-  local infoview = M._infoviews[src_bufnr]
+  local infoview = M._infoviews[src_winnr]
   if not infoview then
-    M._infoviews[src_bufnr] = {}
+    M._infoviews[src_winnr] = {}
 
     infoview_bufnr = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_name(infoview_bufnr, _INFOVIEW_BUF_NAME .. infoview_bufnr)
@@ -57,8 +61,8 @@ function M.update(src_bufnr)
       vim.api.nvim_win_set_width(window, max_width)
     end
 
-    M._infoviews[src_bufnr].buf = infoview_bufnr
-    M._infoviews[src_bufnr].win = window
+    M._infoviews[src_winnr].buf = infoview_bufnr
+    M._infoviews[src_winnr].win = window
 
   else
     infoview_bufnr = infoview.buf
@@ -124,23 +128,24 @@ function M.is_open() return M._infoviews_open[vim.api.nvim_get_current_win()] ~=
 
 function M.open()
   M._infoviews_open[vim.api.nvim_get_current_win()] = true
+  return M._infoviews
 end
 
 function M.close()
   if not M.is_open() then return end
-  local src_buf = vim.api.nvim_get_current_win()
+  local src_win = vim.api.nvim_get_current_win()
 
-  if M._infoviews[src_buf].win then
-    vim.api.nvim_win_close(M._infoviews[src_buf].win, true)
+  if M._infoviews[src_win].win then
+    vim.api.nvim_win_close(M._infoviews[src_win].win, true)
   end
 
   -- NOTE: it seems this isn't necessary since unlisted buffers are deleted automatically?
-  --if M._infoviews[src_buf].buf then
-  --  vim.api.nvim_buf_delete(M._infoviews[src_buf].buf, { force = true })
+  --if M._infoviews[src_win].buf then
+  --  vim.api.nvim_buf_delete(M._infoviews[src_win].buf, { force = true })
   --end
 
-  M._infoviews_open[src_buf] = false
-  M._infoviews[src_buf] = nil
+  M._infoviews_open[src_win] = false
+  M._infoviews[src_win] = nil
 end
 
 function M.toggle()

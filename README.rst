@@ -88,12 +88,32 @@ Configuration & Usage
 In e.g. your ``init.lua``:
 
 .. code-block:: lua
+      on_attach = function(client, bufnr)
+        -- See https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
+        -- for detailed examples of what you may want to do here.
+        --
+        -- Mapping a key (typically K) to `vim.lsp.buf.hover()`
+        -- is highly recommended for Lean, since the hover LSP command
+        -- is where you'll see the current goal state.
+        --
+        -- You may furthermore want to add an `autocmd` to run it on
+        -- `CursorHoldI`, which will show the goal state any time the
+        -- cursor is unmoved in insert mode.
+        --
+        -- In the future, this plugin may offer a recommended "complete
+        -- setup" for easy enabling of the above.
+        local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
+        local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
+        buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
+        buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
+        buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+    end
 
     require('lean').setup{
         -- Enable abbreviation support?
         --
         -- false to disable, otherwise a table of options described below
-        abbreviations = {,
+        abbreviations = {
             extra = {
                 -- Add a \wknight abbreviation to insert ♘
                 --
@@ -102,7 +122,7 @@ In e.g. your ``init.lua``:
                 -- this if so desired.
                 wknight = '♘',
             },
-        }
+        },
         -- Enable suggested mappings?
         --
         -- false by default, true to enable
@@ -112,34 +132,21 @@ In e.g. your ``init.lua``:
             -- Clip the infoview to a maximum width
             max_width = 79,
         },
-        -- Enable the Lean language server?
+        -- Enable the Lean3/Lean4 language servers?
         --
         -- false to disable, otherwise should be a table of options to pass to
         --  `leanls`. See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls
         -- for details though lean-language-server actually doesn't support all
         -- the options mentioned there yet.
         lsp = {
-            on_attach = function(client, bufnr)
-                -- See https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
-                -- for detailed examples of what you may want to do here.
-                --
-                -- Mapping a key (typically K) to `vim.lsp.buf.hover()`
-                -- is highly recommended for Lean, since the hover LSP command
-                -- is where you'll see the current goal state.
-                --
-                -- You may furthermore want to add an `autocmd` to run it on
-                -- `CursorHoldI`, which will show the goal state any time the
-                -- cursor is unmoved in insert mode.
-                --
-                -- In the future, this plugin may offer a recommended "complete
-                -- setup" for easy enabling of the above.
-                local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
-                local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
-                buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
-                buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
-                buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
-            end,
+            on_attach = on_attach,
             cmd = {"lean-language-server", "--stdio", '--', "-M", "4096"},
+        }
+
+        -- replace the path below with a path to your Lean4 executable
+        lsp4 = {
+            on_attach = on_attach,
+            cmd = {"/path/to/lean4/executable/lean", "--server"},
         }
     }
 
