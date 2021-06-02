@@ -114,21 +114,21 @@ function M.enable(opts)
   vim.api.nvim_exec([[
     augroup LeanInfoViewUpdate
       autocmd!
-      autocmd CursorHold *.lean lua require'lean.infoview'.update(vim.api.nvim_get_current_buf())
-      autocmd CursorHoldI *.lean lua require'lean.infoview'.update(vim.api.nvim_get_current_buf())
+      autocmd CursorHold *.lean lua require'lean.infoview'.update(vim.api.nvim_get_current_win())
+      autocmd CursorHoldI *.lean lua require'lean.infoview'.update(vim.api.nvim_get_current_win())
     augroup END
   ]], false)
 end
 
-function M.is_open() return M._infoviews_open[vim.api.nvim_get_current_buf()] ~= false end
+function M.is_open() return M._infoviews_open[vim.api.nvim_get_current_win()] ~= false end
 
 function M.open()
-  M._infoviews_open[vim.api.nvim_get_current_buf()] = true
+  M._infoviews_open[vim.api.nvim_get_current_win()] = true
 end
 
 function M.close()
   if not M.is_open() then return end
-  local src_buf = vim.api.nvim_get_current_buf()
+  local src_buf = vim.api.nvim_get_current_win()
 
   if M._infoviews[src_buf].win then
     vim.api.nvim_win_close(M._infoviews[src_buf].win, true)
