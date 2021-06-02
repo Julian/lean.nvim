@@ -27,7 +27,7 @@ end
 function M.update_infoview(set_lines)
   local params = vim.lsp.util.make_position_params()
   return vim.lsp.buf_request(0, "textDocument/hover", params, function(_, _, result)
-    if not (result and result.contents) then
+    if not (type(result) == "table" and result.contents) then
       return
     end
     local lines = {}

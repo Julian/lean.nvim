@@ -35,7 +35,7 @@ function M.update(infoview_bufnr)
     return vim.lsp.buf_request(0, "$/lean/plainGoal", params, function(_, _, result)
       local lines = {}
 
-      if result and result.goals then
+      if type(result) == "table" and result.goals then
         vim.list_extend(lines,
           {#result.goals == 0 and '▶ goals accomplished 🎉' or
             #result.goals == 1 and '▶ 1 goal' or
