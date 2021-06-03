@@ -157,7 +157,7 @@ function M.enable_builtin()
       autocmd InsertLeave *.lean lua require'lean.abbreviations'.convert()
       autocmd BufLeave *.lean lua require'lean.abbreviations'.convert()
     augroup END
-    hi def leanAbbreviationMark cterm=underline
+    hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray
   ]], false)
   -- CursorMoved CursorMovedI as well?
 end
