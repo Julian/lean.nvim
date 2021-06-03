@@ -44,19 +44,19 @@ local function refresh_infos()
   end
 end
 
-function M.update(src_winnr)
+function M.update(src_idx)
   -- grace period for server startup (prevents initial handler error for lean3 files)
   local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
   if not succeeded then return end
 
-  if M._infoviews_open[src_winnr] == false then
+  if M._infoviews_open[src_idx] == false then
       return
   end
 
   local infoview_bufnr
-  local infoview = M._infoviews[src_winnr]
+  local infoview = M._infoviews[src_idx]
   if not infoview then
-    M._infoviews[src_winnr] = {}
+    M._infoviews[src_idx] = {}
 
     infoview_bufnr = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_name(infoview_bufnr, _INFOVIEW_BUF_NAME .. infoview_bufnr)
@@ -85,8 +85,8 @@ function M.update(src_winnr)
       vim.api.nvim_win_set_width(window, max_width)
     end
 
-    M._infoviews[src_winnr].buf = infoview_bufnr
-    M._infoviews[src_winnr].win = window
+    M._infoviews[src_idx].buf = infoview_bufnr
+    M._infoviews[src_idx].win = window
 
   else
     infoview_bufnr = infoview.buf
@@ -199,9 +199,9 @@ function M.close_all()
   end
 end
 
-function M.close_win(src_winnr)
-  if M._infoviews[src_winnr] then
-    vim.api.nvim_win_close(M._infoviews[src_winnr].win, true)
+function M.close_win(src_idx)
+  if M._infoviews[src_idx] then
+    vim.api.nvim_win_close(M._infoviews[src_idx].win, true)
   end
 
   -- NOTE: it seems this isn't necessary since unlisted buffers are deleted automatically?
@@ -209,8 +209,8 @@ function M.close_win(src_winnr)
   --  vim.api.nvim_buf_delete(M._infoviews[src_win].buf, { force = true })
   --end
 
-  M._infoviews_open[src_winnr] = false
-  M._infoviews[src_winnr] = nil
+  M._infoviews_open[src_idx] = false
+  M._infoviews[src_idx] = nil
   -- necessary because closing a window can cause others to resize
   refresh_infos()
 end
