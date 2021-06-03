@@ -50,9 +50,10 @@ part of this plugin.
 Features
 --------
 
-* abbreviation (unicode character) insertion using either
+* abbreviation (unicode character) insertion, can also provide a
   `nvim-compe <https://github.com/hrsh7th/nvim-compe>`_ or
   `snippets.nvim <https://github.com/norcalli/snippets.nvim>`_
+  source.
 
 * Initial implementations of some editing helpers (note: no
   mappings are associated with these by default unless you call
@@ -90,7 +91,7 @@ In e.g. your ``init.lua``:
 .. code-block:: lua
 
     require('lean').setup{
-        -- Abbreviation support?
+        -- Abbreviation support
         abbreviations = {,
             extra = {
                 -- Add a \wknight abbreviation to insert ♘
@@ -101,10 +102,12 @@ In e.g. your ``init.lua``:
                 wknight = '♘',
             },
             -- change if you don't like the backslash
+            -- (comma is a popular choice on French keyboards)
             leader = '\\',
-            -- set true to enable
-            compe = false,
-            snippets = false,
+            -- Set one of the following to true to enable abbreviations
+            compe = false, -- nvim-compe source
+            snippets = false, -- snippets.nvim source
+            enable = false, -- built-in expander
         }
         -- Enable suggested mappings?
         --
