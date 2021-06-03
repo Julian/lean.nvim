@@ -119,7 +119,7 @@ end
 
 function M.enable(opts)
   M._opts = opts
-  M._opts.one_per_tab = M._opts.one_per_tab or true
+  if M._opts.one_per_tab == nil then M._opts.one_per_tab = true end
   M.set_update()
 end
 
