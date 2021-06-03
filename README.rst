@@ -144,10 +144,9 @@ In e.g. your ``init.lua``:
             cmd = {"lean-language-server", "--stdio", '--', "-M", "4096"},
         }
 
-        -- replace the path below with a path to your Lean4 executable
         lsp4 = {
             on_attach = on_attach,
-            cmd = {"/path/to/lean4/executable/lean", "--server"},
+            cmd = {"lean", "--server"},
         }
     }
 
