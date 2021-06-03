@@ -93,6 +93,11 @@ In e.g. your ``init.lua``:
     require('lean').setup{
         -- Abbreviation support
         abbreviations = {,
+            -- Set one of the following to true to enable abbreviations
+            compe = false, -- nvim-compe source
+            snippets = false, -- snippets.nvim source
+            enable = false, -- built-in expander
+            -- additional abbreviations:
             extra = {
                 -- Add a \wknight abbreviation to insert ♘
                 --
@@ -104,10 +109,6 @@ In e.g. your ``init.lua``:
             -- change if you don't like the backslash
             -- (comma is a popular choice on French keyboards)
             leader = '\\',
-            -- Set one of the following to true to enable abbreviations
-            compe = false, -- nvim-compe source
-            snippets = false, -- snippets.nvim source
-            enable = false, -- built-in expander
         }
         -- Enable suggested mappings?
         --
