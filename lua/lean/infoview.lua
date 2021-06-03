@@ -24,6 +24,26 @@ local _SEVERITY = {
   [4] = "hint",
 }
 
+local function get_idx()
+  local src_win
+  if M._opts.one_per_tab then
+    src_win = vim.api.nvim_get_current_tabpage()
+  else
+    src_win = vim.api.nvim_get_current_win()
+  end
+  return src_win
+end
+
+local function refresh_infos()
+  for key, _ in pairs(M._infoviews) do
+    local window = M._infoviews[key].win
+    local max_width = M._opts.max_width or 79
+    if vim.api.nvim_win_get_width(window) > max_width then
+      vim.api.nvim_win_set_width(window, max_width)
+    end
+  end
+end
+
 function M.update(src_winnr)
   -- grace period for server startup (prevents initial handler error for lean3 files)
   local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
@@ -140,10 +160,12 @@ function M.set_update()
   ]], idx_call, idx_call), false)
 end
 
-function M.is_open() return M._infoviews_open[vim.api.nvim_get_current_win()] ~= false end
+function M.is_open()
+  return M._infoviews_open[get_idx()] ~= false
+end
 
 function M.open()
-  M._infoviews_open[vim.api.nvim_get_current_win()] = true
+  M._infoviews_open[get_idx()] = true
   return M._infoviews
 end
 
@@ -177,16 +199,6 @@ function M.close_all()
   end
 end
 
-local function refresh_infos()
-  for key, _ in pairs(M._infoviews) do
-    local window = M._infoviews[key].win
-    local max_width = M._opts.max_width or 79
-    if vim.api.nvim_win_get_width(window) > max_width then
-      vim.api.nvim_win_set_width(window, max_width)
-    end
-  end
-end
-
 function M.close_win(src_winnr)
   if M._infoviews[src_winnr] then
     vim.api.nvim_win_close(M._infoviews[src_winnr].win, true)
@@ -205,14 +217,8 @@ end
 
 function M.close()
   if not M.is_open() then return end
-  local src_win
-  if M._opts.one_per_tab then
-    src_win = vim.api.nvim_get_current_tabpage()
-  else
-    src_win = vim.api.nvim_get_current_win()
-  end
 
-  M.close_win(src_win)
+  M.close_win(get_idx())
 end
 
 function M.toggle()
