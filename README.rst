@@ -15,7 +15,7 @@ NOTE: ``lean.nvim`` is incompatible with `lean.vim <https://github.com/leanprove
 as it implements its own kind filetype detection. 
 You should NOT have ``lean.vim`` installed if using ``lean.nvim``.
 
-For lean4 syntax highlighting and basic language support, you should
+Syntax highlighting and basic language support is included, for Lean 4 you can also
 try the experimental support present via `tree-sitter-lean
 <https://github.com/Julian/tree-sitter-lean>`_ by installing
 `nvim-treesitter <https://github.com/nvim-treesitter/nvim-treesitter>`_
@@ -139,7 +139,7 @@ In e.g. your ``init.lua``:
         --  `leanls`. See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls
         -- for details though lean-language-server actually doesn't support all
         -- the options mentioned there yet.
-        lsp = {
+        lsp3 = {
             on_attach = on_attach,
             cmd = {"lean-language-server", "--stdio", '--', "-M", "4096"},
         }

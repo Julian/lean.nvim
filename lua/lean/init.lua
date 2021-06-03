@@ -12,8 +12,8 @@ function lean.setup(opts)
   local treesitter = opts.treesitter or {}
   if treesitter.enable ~= false then require('lean.treesitter').enable(treesitter) end
 
-  local lsp = opts.lsp or {}
-  if lsp.enable ~= false then lean.lsp.enable(lsp) end
+  local lsp3 = opts.lsp3 or {}
+  if lsp3.enable ~= false then lean.lsp.enable(lsp3) end
 
   local lsp4 = opts.lsp4 or {}
   if lsp4.enable ~= false then lean.lsp.enable4(lsp4) end
