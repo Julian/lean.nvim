@@ -6,6 +6,7 @@ local lean = {
 function lean.setup(opts)
   opts = opts or {}
 
+
   local abbreviations = opts.abbreviations or {}
   if abbreviations.enable ~= false then lean.abbreviations.enable(abbreviations) end
 
@@ -19,7 +20,10 @@ function lean.setup(opts)
   if lsp4.enable ~= false then lean.lsp.enable4(lsp4) end
 
   local infoview = opts.infoview or {}
-  if infoview.enable ~= false then require('lean.infoview').enable(infoview) end
+  if infoview.enable ~= false then
+    if opts.info_pertab then vim.g.lean_info_pertab = true else vim.g.lean_info_pertab = false end
+    require('lean.infoview').enable(infoview)
+  end
 
   if opts.mappings == true then lean.use_suggested_mappings() end
 end

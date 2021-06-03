@@ -46,7 +46,11 @@ function M.update(src_winnr)
 
     local current_window = vim.api.nvim_get_current_win()
 
-    vim.cmd "botright vsplit"
+    if vim.g.lean_info_pertab then
+      vim.cmd "botright vsplit"
+    else
+      vim.cmd "rightbelow vsplit"
+    end
     vim.cmd(string.format("buffer %d", infoview_bufnr))
 
     local window = vim.api.nvim_get_current_win()
@@ -115,13 +119,24 @@ end
 
 function M.enable(opts)
   M._opts = opts
-  vim.api.nvim_exec([[
+  M.set_update()
+end
+
+function M.set_update()
+  local idx_call
+  if vim.g.lean_info_pertab then
+    idx_call = "vim.api.nvim_get_current_tabpage()"
+  else
+    idx_call = "vim.api.nvim_get_current_win()"
+  end
+  -- TODO: update autocommand to use filetypes rather than extension
+  vim.api.nvim_exec(string.format([[
     augroup LeanInfoViewUpdate
       autocmd!
-      autocmd CursorHold *.lean lua require'lean.infoview'.update(vim.api.nvim_get_current_win())
-      autocmd CursorHoldI *.lean lua require'lean.infoview'.update(vim.api.nvim_get_current_win())
+      autocmd CursorHold *.lean lua require'lean.infoview'.update(%s)
+      autocmd CursorHoldI *.lean lua require'lean.infoview'.update(%s)
     augroup END
-  ]], false)
+  ]], idx_call, idx_call), false)
 end
 
 function M.is_open() return M._infoviews_open[vim.api.nvim_get_current_win()] ~= false end
@@ -131,12 +146,39 @@ function M.open()
   return M._infoviews
 end
 
-function M.close()
-  if not M.is_open() then return end
-  local src_win = vim.api.nvim_get_current_win()
+function M.set_pertab()
+  if vim.g.lean_info_pertab then return end
 
-  if M._infoviews[src_win].win then
-    vim.api.nvim_win_close(M._infoviews[src_win].win, true)
+  M.close_all_info()
+
+  vim.g.lean_info_pertab = true
+
+  M.set_update()
+end
+
+function M.set_perwindow()
+  if not vim.g.lean_info_pertab then return end
+
+  M.close_all_info()
+
+  vim.g.lean_info_pertab = false
+
+  M.set_update()
+end
+
+function M.close_all_info()
+  -- close all current infoviews
+  for key, _ in pairs(M._infoviews) do
+    M.close_win(key)
+  end
+  for key, _ in pairs(M._infoviews_open) do
+    M._infoviews_open[key] = nil
+  end
+end
+
+function M.close_win(src_winnr)
+  if M._infoviews[src_winnr] then
+    vim.api.nvim_win_close(M._infoviews[src_winnr].win, true)
   end
 
   -- NOTE: it seems this isn't necessary since unlisted buffers are deleted automatically?
@@ -144,8 +186,32 @@ function M.close()
   --  vim.api.nvim_buf_delete(M._infoviews[src_win].buf, { force = true })
   --end
 
-  M._infoviews_open[src_win] = false
-  M._infoviews[src_win] = nil
+  M._infoviews_open[src_winnr] = false
+  M._infoviews[src_winnr] = nil
+  -- necessary because closing a window can cause others to resize
+  M.refresh_infos()
+end
+
+function M.refresh_infos()
+  for key, _ in pairs(M._infoviews) do
+    local window = M._infoviews[key].win
+    local max_width = M._opts.max_width or 79
+    if vim.api.nvim_win_get_width(window) > max_width then
+      vim.api.nvim_win_set_width(window, max_width)
+    end
+  end
+end
+
+function M.close()
+  if not M.is_open() then return end
+  local src_win
+  if vim.g.lean_info_pertab then
+    src_win = vim.api.nvim_get_current_tabpage()
+  else
+    src_win = vim.api.nvim_get_current_win()
+  end
+
+  M.close_win(src_win)
 end
 
 function M.toggle()
