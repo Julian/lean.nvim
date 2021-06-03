@@ -8,10 +8,6 @@ endif
 let b:switch_definitions = [
     \ g:switch_builtins.true_false,
     \ ["#check", "#eval", "#reduce"],
-    \ ["tidy", "suggest", "hint", "linarith", "library_search"],
-    \ ["rw", "simp", "simp?"],
-    \ ["cases", "rcases", "obtain"],
-    \ ["norm_cast", "push_cast"],
     \ ["inl", "inr"],
     \ ["tt", "ff"],
     \ ["=", "≠"],
