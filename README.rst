@@ -94,9 +94,9 @@ In e.g. your ``init.lua``:
         -- Abbreviation support
         abbreviations = {,
             -- Set one of the following to true to enable abbreviations
+            builtin = false, -- built-in expander
             compe = false, -- nvim-compe source
             snippets = false, -- snippets.nvim source
-            enable = false, -- built-in expander
             -- additional abbreviations:
             extra = {
                 -- Add a \wknight abbreviation to insert ♘

@@ -178,7 +178,7 @@ function M.enable(opts)
     compe_nvim_enable(require('compe'), add_leader(M.leader, M.abbreviations))
   end
 
-  if opts.enable then
+  if opts.builtin then
     enable_builtin()
   end
 end
