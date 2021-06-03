@@ -13,4 +13,8 @@ vim.api.nvim_exec([[
   runtime! plugin/plenary.vim
 ]], false)
 
-require('lean').setup{}
+require('lean').setup{
+  abbreviations = {
+    snippets = true,
+  },
+}
