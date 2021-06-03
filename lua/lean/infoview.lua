@@ -46,7 +46,7 @@ function M.update(src_winnr)
 
     local current_window = vim.api.nvim_get_current_win()
 
-    if vim.g.lean_info_pertab then
+    if M._opts.one_per_tab then
       vim.cmd "botright vsplit"
     else
       vim.cmd "rightbelow vsplit"
@@ -119,12 +119,13 @@ end
 
 function M.enable(opts)
   M._opts = opts
+  M._opts.one_per_tab = M._opts.one_per_tab or true
   M.set_update()
 end
 
 function M.set_update()
   local idx_call
-  if vim.g.lean_info_pertab then
+  if M._opts.one_per_tab then
     idx_call = "vim.api.nvim_get_current_tabpage()"
   else
     idx_call = "vim.api.nvim_get_current_win()"
@@ -147,32 +148,42 @@ function M.open()
 end
 
 function M.set_pertab()
-  if vim.g.lean_info_pertab then return end
+  if M._opts.one_per_tab then return end
 
-  M.close_all_info()
+  M.close_all()
 
-  vim.g.lean_info_pertab = true
+  M._opts.one_per_tab = true
 
   M.set_update()
 end
 
 function M.set_perwindow()
-  if not vim.g.lean_info_pertab then return end
+  if not M._opts.one_per_tab then return end
 
-  M.close_all_info()
+  M.close_all()
 
-  vim.g.lean_info_pertab = false
+  M._opts.one_per_tab = false
 
   M.set_update()
 end
 
-function M.close_all_info()
+function M.close_all()
   -- close all current infoviews
   for key, _ in pairs(M._infoviews) do
     M.close_win(key)
   end
   for key, _ in pairs(M._infoviews_open) do
     M._infoviews_open[key] = nil
+  end
+end
+
+local function refresh_infos()
+  for key, _ in pairs(M._infoviews) do
+    local window = M._infoviews[key].win
+    local max_width = M._opts.max_width or 79
+    if vim.api.nvim_win_get_width(window) > max_width then
+      vim.api.nvim_win_set_width(window, max_width)
+    end
   end
 end
 
@@ -189,23 +200,13 @@ function M.close_win(src_winnr)
   M._infoviews_open[src_winnr] = false
   M._infoviews[src_winnr] = nil
   -- necessary because closing a window can cause others to resize
-  M.refresh_infos()
-end
-
-function M.refresh_infos()
-  for key, _ in pairs(M._infoviews) do
-    local window = M._infoviews[key].win
-    local max_width = M._opts.max_width or 79
-    if vim.api.nvim_win_get_width(window) > max_width then
-      vim.api.nvim_win_set_width(window, max_width)
-    end
-  end
+  refresh_infos()
 end
 
 function M.close()
   if not M.is_open() then return end
   local src_win
-  if vim.g.lean_info_pertab then
+  if M._opts.one_per_tab then
     src_win = vim.api.nvim_get_current_tabpage()
   else
     src_win = vim.api.nvim_get_current_win()
