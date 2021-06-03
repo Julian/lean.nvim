@@ -45,7 +45,7 @@ local function get_extmark_range(abbr_ns, id, buffer)
   return row, col, details and details.end_row, details and details.end_col
 end
 
-function M._clear_abbr_mark()
+local function _clear_abbr_mark()
   vim.api.nvim_buf_del_extmark(0, abbr_mark_ns, M.abbr_mark)
   M.abbr_mark = nil
   vim.api.nvim_buf_del_keymap(0, 'i', '<CR>')
@@ -67,7 +67,7 @@ function M._insert_char_pre()
     if row1 and row1 == row2 then
       local text = vim.api.nvim_buf_get_lines(0, row1, row1+1, true)[1]:sub(col1 + 1, col2)
       if text == M.leader then
-        M._clear_abbr_mark()
+        _clear_abbr_mark()
         local tmp_extmark = vim.api.nvim_buf_set_extmark(0, abbr_mark_ns, row1, col1,
           { end_line = row2, end_col = col2 })
         return vim.schedule(function()
@@ -107,11 +107,11 @@ function _G._lean_abbreviations_tab_expr()
   return ' '
 end
 
-function M.convert_abbrev(abbrev)
+local function convert_abbrev(abbrev)
   if abbrev:find(M.leader) ~= 1 then return abbrev end
   abbrev = abbrev:sub(#M.leader + 1)
   if abbrev:find(M.leader) == 1 then
-    return M.leader .. M.convert_abbrev(abbrev:sub(#M.leader + 1))
+    return M.leader .. convert_abbrev(abbrev:sub(#M.leader + 1))
   end
   local matchlen, fromlen, repl = 0, 99999, ""
   for from, to in pairs(M.abbreviations) do
@@ -128,13 +128,13 @@ function M.convert_abbrev(abbrev)
     end
   end
   if matchlen == 0 then return M.leader .. abbrev end
-  return repl .. M.convert_abbrev(abbrev:sub(matchlen + 1))
+  return repl .. convert_abbrev(abbrev:sub(matchlen + 1))
 end
 
 function M.convert(needs_schedule)
   if not M.abbr_mark then return end
   local row1, col1, row2, col2 = get_extmark_range(abbr_mark_ns, M.abbr_mark)
-  M._clear_abbr_mark()
+  _clear_abbr_mark()
   if not row1 then return end
 
   local tmp_extmark = vim.api.nvim_buf_set_extmark(0, abbr_mark_ns, row1, col1,
@@ -144,12 +144,12 @@ function M.convert(needs_schedule)
     if not row1 or row1 ~= row2 then return end
     vim.api.nvim_buf_del_extmark(0, abbr_mark_ns, tmp_extmark)
     local text = vim.api.nvim_buf_get_lines(0, row1, row1+1, true)[1]:sub(col1 + 1, col2)
-    vim.api.nvim_buf_set_text(0, row1, col1, row2, col2, {M.convert_abbrev(text)})
+    vim.api.nvim_buf_set_text(0, row1, col1, row2, col2, {convert_abbrev(text)})
   end
   if needs_schedule then vim.schedule(conv) else conv() end
 end
 
-function M.enable_builtin()
+local function enable_builtin()
   vim.api.nvim_exec([[
     augroup LeanAbbreviations
       autocmd!
@@ -179,7 +179,7 @@ function M.enable(opts)
   end
 
   if opts.enable then
-    M.enable_builtin()
+    enable_builtin()
   end
 end
 
