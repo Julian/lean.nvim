@@ -34,7 +34,7 @@ describe('abbreviations', function()
 
   describe('programmatic API', function()
     it('provides access to loaded abbreviations', function()
-      assert.is.equal('α', require('lean.abbreviations').load()['\\a'])
+      assert.is.equal('α', require('lean.abbreviations').load()['a'])
     end)
   end)
 end)
