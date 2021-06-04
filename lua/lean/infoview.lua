@@ -152,7 +152,7 @@ function M.set_autocmds()
       autocmd FileType lean4 lua require'lean.infoview'.set_update_autocmds()
       autocmd FileType lean lua require'lean.infoview'.set_closed_autocmds()
       autocmd FileType lean4 lua require'lean.infoview'.set_closed_autocmds()
-   augroup END
+    augroup END
   ]]), false)
 end
 
@@ -161,7 +161,7 @@ local function set_autocmds_guard(group, autocmds)
     augroup %s
       autocmd! %s * <buffer>
       %s
-   augroup END
+    augroup END
   ]], group, group, autocmds), false)
 end
 
@@ -189,7 +189,7 @@ function M.close_win_wrapper(src_winnr)
       if win == src_winnr then goto continue end
       local buf = vim.api.nvim_win_get_buf(win)
       local ft =  vim.api.nvim_buf_get_option(buf, "filetype")
-      if ft == "lean" or ft == "lean4" then print(buf) return end
+      if ft == "lean" or ft == "lean4" then return end
       ::continue::
     end
   end
