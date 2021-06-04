@@ -192,6 +192,16 @@ function M.close_win_wrapper(src_winnr)
   local src_idx = src_winnr
   if M._opts.one_per_tab then
     src_idx = vim.api.nvim_win_get_tabpage(src_idx)
+
+    -- do not close infoview if there are remaining lean files
+    -- in the tab
+    for _, win in pairs(vim.api.nvim_tabpage_list_wins(src_idx)) do
+      if win == src_winnr then goto continue end
+      local buf = vim.api.nvim_win_get_buf(win)
+      local ft =  vim.api.nvim_buf_get_option(buf, "filetype")
+      if ft == "lean" or ft == "lean4" then print(buf) return end
+      ::continue::
+    end
   end
 
   M.close_win(src_idx)
