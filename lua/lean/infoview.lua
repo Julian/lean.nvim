@@ -44,6 +44,30 @@ local function refresh_infos()
   end
 end
 
+local function close_win_raw(src_idx, erase)
+  if erase then
+    M._infoviews_open[src_idx] = nil
+  else
+    M._infoviews_open[src_idx] = false
+  end
+  M._infoviews[src_idx] = nil
+end
+
+local function close_win(src_idx, erase)
+  if M._infoviews[src_idx] then
+    vim.api.nvim_win_close(M._infoviews[src_idx].win, true)
+  end
+
+  -- NOTE: it seems this isn't necessary since unlisted buffers are deleted automatically?
+  --if M._infoviews[src_win].buf then
+  --  vim.api.nvim_buf_delete(M._infoviews[src_win].buf, { force = true })
+  --end
+
+  close_win_raw(src_idx, erase)
+  -- necessary because closing a window can cause others to resize
+  refresh_infos()
+end
+
 function M.update()
   -- grace period for server startup (prevents initial handler error for lean3 files)
   local src_idx = get_idx()
@@ -144,6 +168,9 @@ function M.enable(opts)
   M.set_autocmds()
 end
 
+-- TODO: once neovim implements autocmds in its lua api, we can make
+-- the publicly exposed functions used below into local ones
+
 function M.set_autocmds()
   vim.api.nvim_exec(string.format([[
     augroup LeanInfoView
@@ -174,11 +201,13 @@ end
 
 function M.set_closed_autocmds()
   set_autocmds_guard("LeanInfoViewClose", [[
-    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')))
+    autocmd QuitPre <buffer> lua require'lean.infoview'.close_win_wrapper(true)
+    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(false)
   ]])
 end
 
-function M.close_win_wrapper(src_winnr)
+function M.close_win_wrapper(close_info)
+  local src_winnr = vim.api.nvim_get_current_win()
   local src_idx = src_winnr
   if M._opts.one_per_tab then
     src_idx = vim.api.nvim_win_get_tabpage(src_idx)
@@ -194,7 +223,13 @@ function M.close_win_wrapper(src_winnr)
     end
   end
 
-  M.close_win(src_idx)
+  if close_info then
+    -- if closing with :q, close the infoview as well
+    close_win(src_idx, true)
+  else
+    -- if closing with ctrl+W, just detach the infoview and leave it there
+    close_win_raw(src_idx, true)
+  end
 end
 
 function M.is_open()
@@ -225,33 +260,17 @@ end
 function M.close_all()
   -- close all current infoviews
   for key, _ in pairs(M._infoviews) do
-    M.close_win(key)
+    close_win(key, false)
   end
   for key, _ in pairs(M._infoviews_open) do
     M._infoviews_open[key] = nil
   end
 end
 
-function M.close_win(src_idx)
-  if M._infoviews[src_idx] then
-    vim.api.nvim_win_close(M._infoviews[src_idx].win, true)
-  end
-
-  -- NOTE: it seems this isn't necessary since unlisted buffers are deleted automatically?
-  --if M._infoviews[src_win].buf then
-  --  vim.api.nvim_buf_delete(M._infoviews[src_win].buf, { force = true })
-  --end
-
-  M._infoviews_open[src_idx] = false
-  M._infoviews[src_idx] = nil
-  -- necessary because closing a window can cause others to resize
-  refresh_infos()
-end
-
 function M.close()
   if not M.is_open() then return end
 
-  M.close_win(get_idx())
+  close_win(get_idx(), false)
 end
 
 function M.toggle()
