@@ -2,23 +2,6 @@ local lean3 = require('lean.lean3')
 
 local M = {_infoviews = {}, _infoviews_open = {}, _opts = {}}
 
-
--- attempted this so we wouldn't have to worry about
--- indices being strings/numbers, seems like it doesn't work?
--- so I hardcoded tonumber() in the M.set_close autocmds
-
---local _infoviews_meta = {}
---
---function _infoviews_meta.__newindex(t, key, val)
---  rawset(t, tonumber(key), val)
---end
---
---function _infoviews_meta.__index(t, key)
---  rawget(t, tonumber(key))
---end
---
---setmetatable(M._infoviews, _infoviews_meta)
-
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
 local _DEFAULT_BUF_OPTIONS = {
   bufhidden = 'wipe',
@@ -61,8 +44,9 @@ local function refresh_infos()
   end
 end
 
-function M.update(src_idx)
+function M.update()
   -- grace period for server startup (prevents initial handler error for lean3 files)
+  local src_idx = get_idx()
   local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
   if not succeeded then return end
 
@@ -157,35 +141,41 @@ end
 function M.enable(opts)
   M._opts = opts
   if M._opts.one_per_tab == nil then M._opts.one_per_tab = true end
-  M.set_update()
-  M.set_close()
+  M.set_autocmds()
 end
 
-function M.set_update()
-  local idx_call
-  if M._opts.one_per_tab then
-    idx_call = "vim.api.nvim_get_current_tabpage()"
-  else
-    idx_call = "vim.api.nvim_get_current_win()"
-  end
-  -- TODO: update autocommand to use filetypes rather than extension
+function M.set_autocmds()
   vim.api.nvim_exec(string.format([[
-    augroup LeanInfoViewUpdate
+    augroup LeanInfoView
       autocmd!
-      autocmd CursorHold *.lean lua require'lean.infoview'.update(%s)
-      autocmd CursorHoldI *.lean lua require'lean.infoview'.update(%s)
-    augroup END
-  ]], idx_call, idx_call), false)
-end
-
-function M.set_close()
-  vim.api.nvim_exec(string.format([[
-    augroup LeanInfoViewClose
-      autocmd!
-      autocmd FileType lean autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')))
-      autocmd FileType lean4 autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')))
+      autocmd FileType lean lua require'lean.infoview'.set_update_autocmds()
+      autocmd FileType lean4 lua require'lean.infoview'.set_update_autocmds()
+      autocmd FileType lean lua require'lean.infoview'.set_closed_autocmds()
+      autocmd FileType lean4 lua require'lean.infoview'.set_closed_autocmds()
    augroup END
   ]]), false)
+end
+
+local function set_autocmds_guard(group, autocmds)
+  vim.api.nvim_exec(string.format([[
+    augroup %s
+      autocmd! %s * <buffer>
+      %s
+   augroup END
+  ]], group, group, autocmds), false)
+end
+
+function M.set_update_autocmds()
+  set_autocmds_guard("LeanInfoViewUpdate", [[
+    autocmd CursorHold <buffer> lua require'lean.infoview'.update()
+    autocmd CursorHoldI <buffer> lua require'lean.infoview'.update()
+  ]])
+end
+
+function M.set_closed_autocmds()
+  set_autocmds_guard("LeanInfoViewClose", [[
+    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')))
+  ]])
 end
 
 function M.close_win_wrapper(src_winnr)
@@ -222,8 +212,6 @@ function M.set_pertab()
   M.close_all()
 
   M._opts.one_per_tab = true
-
-  M.set_update()
 end
 
 function M.set_perwindow()
@@ -232,8 +220,6 @@ function M.set_perwindow()
   M.close_all()
 
   M._opts.one_per_tab = false
-
-  M.set_update()
 end
 
 function M.close_all()
