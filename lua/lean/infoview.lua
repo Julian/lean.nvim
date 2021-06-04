@@ -2,6 +2,23 @@ local lean3 = require('lean.lean3')
 
 local M = {_infoviews = {}, _infoviews_open = {}, _opts = {}}
 
+
+-- attempted this so we wouldn't have to worry about
+-- indices being strings/numbers, seems like it doesn't work?
+-- so I hardcoded tonumber() in the M.set_close autocmds
+
+--local _infoviews_meta = {}
+--
+--function _infoviews_meta.__newindex(t, key, val)
+--  rawset(t, tonumber(key), val)
+--end
+--
+--function _infoviews_meta.__index(t, key)
+--  rawget(t, tonumber(key))
+--end
+--
+--setmetatable(M._infoviews, _infoviews_meta)
+
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
 local _DEFAULT_BUF_OPTIONS = {
   bufhidden = 'wipe',
@@ -141,6 +158,7 @@ function M.enable(opts)
   M._opts = opts
   if M._opts.one_per_tab == nil then M._opts.one_per_tab = true end
   M.set_update()
+  M.set_close()
 end
 
 function M.set_update()
@@ -158,6 +176,25 @@ function M.set_update()
       autocmd CursorHoldI *.lean lua require'lean.infoview'.update(%s)
     augroup END
   ]], idx_call, idx_call), false)
+end
+
+function M.set_close()
+  vim.api.nvim_exec(string.format([[
+    augroup LeanInfoViewClose
+      autocmd!
+      autocmd FileType lean autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')))
+      autocmd FileType lean4 autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')))
+   augroup END
+  ]]), false)
+end
+
+function M.close_win_wrapper(src_winnr)
+  local src_idx = src_winnr
+  if M._opts.one_per_tab then
+    src_idx = vim.api.nvim_win_get_tabpage(src_idx)
+  end
+
+  M.close_win(src_idx)
 end
 
 function M.is_open()
