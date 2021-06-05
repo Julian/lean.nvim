@@ -51,6 +51,9 @@ local function close_win_raw(src_idx, erase)
     M._infoviews_open[src_idx] = false
   end
   M._infoviews[src_idx] = nil
+
+  -- necessary because closing a window can cause others to resize
+  refresh_infos()
 end
 
 local function close_win(src_idx, erase)
@@ -64,8 +67,6 @@ local function close_win(src_idx, erase)
   --end
 
   close_win_raw(src_idx, erase)
-  -- necessary because closing a window can cause others to resize
-  refresh_infos()
 end
 
 function M.update()
@@ -108,17 +109,14 @@ function M.update()
     ]], current_window), false)
     vim.api.nvim_set_current_win(current_window)
 
-    local max_width = M._opts.max_width or 79
-    if vim.api.nvim_win_get_width(window) > max_width then
-      vim.api.nvim_win_set_width(window, max_width)
-    end
-
     M._infoviews[src_idx].buf = infoview_bufnr
     M._infoviews[src_idx].win = window
 
   else
     infoview_bufnr = infoview.buf
   end
+
+  refresh_infos()
 
   local _update = vim.bo.ft == "lean" and lean3.update_infoview or function(set_lines)
     local current_buffer = vim.api.nvim_get_current_buf()
