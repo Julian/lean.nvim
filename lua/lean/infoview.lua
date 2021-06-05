@@ -201,13 +201,15 @@ end
 
 function M.set_closed_autocmds()
   set_autocmds_guard("LeanInfoViewClose", [[
-    autocmd QuitPre <buffer> lua require'lean.infoview'.close_win_wrapper(true)
-    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(false)
+    autocmd QuitPre <buffer> lua require'lean.infoview'.close_win_wrapper(-1, true)
+    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')), false)
   ]])
 end
 
-function M.close_win_wrapper(close_info)
-  local src_winnr = vim.api.nvim_get_current_win()
+function M.close_win_wrapper(src_winnr, close_info)
+  if src_winnr == -1 then
+    src_winnr = vim.api.nvim_get_current_win()
+  end
   local src_idx = src_winnr
   if M._opts.one_per_tab then
     src_idx = vim.api.nvim_win_get_tabpage(src_idx)
