@@ -12,7 +12,7 @@ Prerequisites
 <https://github.com/neovim/neovim/releases/tag/nightly>`_.
 
 NOTE: ``lean.nvim`` is incompatible with `lean.vim <https://github.com/leanprover/lean.vim>`_,
-as it implements its own kind filetype detection. 
+as it implements its own kind filetype detection.
 You should NOT have ``lean.vim`` installed if using ``lean.nvim``.
 
 Syntax highlighting and basic language support is included, for Lean 4 you can also
