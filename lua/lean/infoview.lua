@@ -103,6 +103,9 @@ function M.update()
     for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
       vim.api.nvim_win_set_option(window, name, value)
     end
+    vim.api.nvim_exec(string.format([[
+    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(%s, false)
+    ]], current_window), false)
     vim.api.nvim_set_current_win(current_window)
 
     local max_width = M._opts.max_width or 79
