@@ -105,7 +105,7 @@ function M.update()
       vim.api.nvim_win_set_option(window, name, value)
     end
     vim.api.nvim_exec(string.format([[
-    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(%s, false)
+    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(%s, false, true)
     ]], current_window), false)
     vim.api.nvim_set_current_win(current_window)
 
@@ -202,12 +202,12 @@ end
 
 function M.set_closed_autocmds()
   set_autocmds_guard("LeanInfoViewClose", [[
-    autocmd QuitPre <buffer> lua require'lean.infoview'.close_win_wrapper(-1, true)
-    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')), false)
+    autocmd QuitPre <buffer> lua require'lean.infoview'.close_win_wrapper(-1, true, false)
+    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')), false, false)
   ]])
 end
 
-function M.close_win_wrapper(src_winnr, close_info)
+function M.close_win_wrapper(src_winnr, close_info, already_closed)
   if src_winnr == -1 then
     src_winnr = vim.api.nvim_get_current_win()
   end
@@ -215,14 +215,16 @@ function M.close_win_wrapper(src_winnr, close_info)
   if M._opts.one_per_tab then
     src_idx = vim.api.nvim_win_get_tabpage(src_idx)
 
-    -- do not close infoview if there are remaining lean files
-    -- in the tab
-    for _, win in pairs(vim.api.nvim_tabpage_list_wins(src_idx)) do
-      if win == src_winnr then goto continue end
-      local buf = vim.api.nvim_win_get_buf(win)
-      local ft =  vim.api.nvim_buf_get_option(buf, "filetype")
-      if ft == "lean" or ft == "lean4" then return end
-      ::continue::
+    if not already_closed then
+      -- do not close infoview if there are remaining lean files
+      -- in the tab
+      for _, win in pairs(vim.api.nvim_tabpage_list_wins(src_idx)) do
+        if win == src_winnr then goto continue end
+        local buf = vim.api.nvim_win_get_buf(win)
+        local ft =  vim.api.nvim_buf_get_option(buf, "filetype")
+        if ft == "lean" or ft == "lean4" then return end
+        ::continue::
+      end
     end
   end
 
