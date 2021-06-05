@@ -25,7 +25,7 @@ syn keyword leanCommand universe universes example axioms constants
 syn keyword leanCommand meta parameter parameters variable variables
 syn keyword leanCommand reserve precedence postfix prefix notation infix infixl infixr
 
-syn keyword leanKeyword begin by end
+syn keyword leanKeyword by
 syn keyword leanKeyword forall fun Pi from have show assume suffices let if else then in with calc match do this
 syn keyword leanKeyword try catch finally for unless return mut continue break
 syn keyword leanKeyword Sort Prop Type

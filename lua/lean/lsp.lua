@@ -1,10 +1,10 @@
 local M = { handlers = {} }
 
-function M.enable(opts)
-  require('lspconfig').leanls.setup(opts)
+function M.enable3(opts)
+  require('lspconfig').lean3ls.setup(opts)
 end
 
-function M.enable4(opts)
+function M.enable(opts)
   opts.commands = {
     LeanPlainGoal = {
       function ()
@@ -20,7 +20,7 @@ function M.enable4(opts)
   opts.handlers = {
     ["$/lean/plainGoal"] = M.handlers.plain_goal_handler;
   }
-  require('lspconfig').lean4ls.setup(opts)
+  require('lspconfig').leanls.setup(opts)
 end
 
 function M.handlers.plain_goal_handler (_, method, result)

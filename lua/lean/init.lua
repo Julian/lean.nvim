@@ -14,10 +14,10 @@ function lean.setup(opts)
   if treesitter.enable ~= false then require('lean.treesitter').enable(treesitter) end
 
   local lsp3 = opts.lsp3 or {}
-  if lsp3.enable ~= false then lean.lsp.enable(lsp3) end
+  if lsp3.enable ~= false then lean.lsp.enable3(lsp3) end
 
   local lsp4 = opts.lsp4 or {}
-  if lsp4.enable ~= false then lean.lsp.enable4(lsp4) end
+  if lsp4.enable ~= false then lean.lsp.enable(lsp4) end
 
   local infoview = opts.infoview or {}
   if infoview.enable ~= false then require('lean.infoview').enable(infoview) end

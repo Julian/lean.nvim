@@ -1,5 +1,3 @@
-local lean3 = require('lean.lean3')
-
 local M = {_infoviews = {}, _infoviews_open = {}, _opts = {}}
 
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
@@ -73,7 +71,7 @@ function M.update()
   -- grace period for server startup (prevents initial handler error for lean3 files)
   local src_idx = get_idx()
   local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
-  if not succeeded then return end
+  if not succeeded then require"vim.lsp.log".info("FAILED TO GET SERVER") return end
 
   if M._infoviews_open[src_idx] == false then
       return
@@ -118,7 +116,7 @@ function M.update()
 
   refresh_infos()
 
-  local _update = vim.bo.ft == "lean" and lean3.update_infoview or function(set_lines)
+  local _update = vim.bo.ft == "lean3" and require('lean.lean3').update_infoview or function(set_lines)
     local current_buffer = vim.api.nvim_get_current_buf()
     local cursor = vim.api.nvim_win_get_cursor(0)
     local params = vim.lsp.util.make_position_params()
@@ -176,10 +174,10 @@ function M.set_autocmds()
   vim.api.nvim_exec(string.format([[
     augroup LeanInfoView
       autocmd!
+      autocmd FileType lean3 lua require'lean.infoview'.set_update_autocmds()
       autocmd FileType lean lua require'lean.infoview'.set_update_autocmds()
-      autocmd FileType lean4 lua require'lean.infoview'.set_update_autocmds()
+      autocmd FileType lean3 lua require'lean.infoview'.set_closed_autocmds()
       autocmd FileType lean lua require'lean.infoview'.set_closed_autocmds()
-      autocmd FileType lean4 lua require'lean.infoview'.set_closed_autocmds()
     augroup END
   ]]), false)
 end
@@ -222,7 +220,7 @@ function M.close_win_wrapper(src_winnr, close_info, already_closed)
         if win == src_winnr then goto continue end
         local buf = vim.api.nvim_win_get_buf(win)
         local ft =  vim.api.nvim_buf_get_option(buf, "filetype")
-        if ft == "lean" or ft == "lean4" then return end
+        if ft == "lean3" or ft == "lean" then return end
         ::continue::
       end
     end
