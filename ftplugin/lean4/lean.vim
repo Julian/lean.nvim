@@ -26,6 +26,5 @@ if exists('loaded_matchit') && !exists('b:match_words')
   let b:match_ignorecase = 0
 
   let b:match_words =
-        \  '\<begin\>:\<end$' .
         \ ',\<\%(namespace\|section\)\s\+\(.\{-}\)\>:\<end\s\+\1\>'
 endif
