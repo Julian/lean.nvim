@@ -24,6 +24,10 @@ Note that many simple syntactical things are not yet implemented
 (help is of course welcome), and that ``tree-sitter-lean`` is lean
 4-only.
 
+``lean.nvim`` currently supports both Lean 3 and Lean 4, 
+which can be used simultaneously in a single session. 
+However, support for Lean 3 may be removed in the future.
+
 Installation
 ------------
 
@@ -83,6 +87,17 @@ Features
 You may find browsing `my own dotfiles
 <https://github.com/Julian/dotfiles/tree/main/.config/nvim>`_ useful for
 seeing how I use this plugin myself.
+
+Infoview
+---------------------
+
+Infoviews can be used on a per-tab or per-window basis. 
+You can use the commands ``LeanInfoPerTab`` and ``LeanInfoPerWin`` to choose between them.
+
+The "correct" way to exit a Lean source window is to use ``:q`` with your cursor in that window.
+This will automatically close its corresponding infoview. Closing the source window directly 
+using, for example, ``CTRL-W + c``, will close the source window and leave the infoview in a "detached"
+state - this is a feature, not a bug!
 
 Configuration & Usage
 ---------------------
@@ -185,6 +200,17 @@ you're interested in. Below is a (hopelessly incomplete) list of a few:
 
     * `lsp-trouble <https://github.com/folke/lsp-trouble.nvim>`_ for
       showing a grouped view of diagnostics to pair with the "infauxview"
+
+Roadmap
+-------------
+
+Some features we plan to implement in the near future:
+
+* Pinnable and pausable infoview messages (à la VSCode)
+
+* Connection to true HTML infoviews (in a separate browser window)
+
+* ... suggestions welcome!
 
 Contributing
 ------------
