@@ -102,6 +102,7 @@ function M.update()
     end
 
     local current_window = vim.api.nvim_get_current_win()
+    local current_tab = vim.api.nvim_get_current_tabpage()
 
     if M._opts.one_per_tab then
       vim.cmd "botright vsplit"
@@ -116,8 +117,8 @@ function M.update()
       vim.api.nvim_win_set_option(window, name, value)
     end
     set_autocmds_guard("LeanInfoViewWindow", string.format([[
-      autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(%s, false, true)
-    ]], current_window), 0)
+      autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(%s, %s, false, true)
+    ]], current_window, current_tab), 0)
     vim.api.nvim_set_current_win(current_window)
 
     M._infoviews[src_idx].buf = infoview_bufnr
@@ -204,19 +205,22 @@ end
 
 function M.set_closed_autocmds()
   set_autocmds_guard("LeanInfoViewClose", [[
-    autocmd QuitPre <buffer> lua require'lean.infoview'.close_win_wrapper(-1, true, false)
+    autocmd QuitPre <buffer> lua require'lean.infoview'.close_win_wrapper(-1, -1, true, false)
     autocmd WinClosed <buffer> ]] ..
-    [[lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')), false, false)
+    [[lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')), -1, false, false)
   ]], 0)
 end
 
-function M.close_win_wrapper(src_winnr, close_info, already_closed)
+function M.close_win_wrapper(src_winnr, src_tabnr, close_info, already_closed)
   if src_winnr == -1 then
     src_winnr = vim.api.nvim_get_current_win()
   end
+  if src_tabnr == -1 then
+    src_tabnr = vim.api.nvim_win_get_tabpage(src_winnr)
+  end
   local src_idx = src_winnr
   if M._opts.one_per_tab then
-    src_idx = vim.api.nvim_win_get_tabpage(src_idx)
+    src_idx = src_tabnr
 
     if not already_closed then
       -- do not close infoview if there are remaining lean files
