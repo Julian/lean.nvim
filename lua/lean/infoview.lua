@@ -68,12 +68,19 @@ local function close_win(src_idx, erase)
 end
 
 local function set_autocmds_guard(group, autocmds, bufnum)
+  local buffer_string
+  if bufnum == 0 then
+    buffer_string = "<buffer>"
+  else
+    buffer_string = string.format("<buffer=%d>", bufnum)
+  end
+
   vim.api.nvim_exec(string.format([[
     augroup %s
-      autocmd! %s * <buffer=%d>
+      autocmd! %s * %s
       %s
     augroup END
-  ]], group, group, bufnum, autocmds), false)
+  ]], group, group, buffer_string, autocmds), false)
 end
 
 function M.update()
