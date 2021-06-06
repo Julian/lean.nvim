@@ -60,9 +60,13 @@ Features
   ``lean.use_suggested_mappings()`` or set ``mappings = true`` in the
   configuration)
 
-    * "try this:" suggestion replacement
+    * ``<LocalLeader>t``: "try this:" suggestion replacement
 
-    * ``sorry`` insertion corresponding to the number of open goals
+    * ``<LocalLeader>i``: toggle infoview
+
+    * ``<LocalLeader>s``: ``sorry`` insertion corresponding to the number of open goals
+
+    * ``<LocalLeader>3``: force a buffer into Lean 3 mode
 
 * LSP Commands
 
