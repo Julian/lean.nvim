@@ -198,7 +198,8 @@ end
 function M.set_closed_autocmds()
   set_autocmds_guard("LeanInfoViewClose", [[
     autocmd QuitPre <buffer> lua require'lean.infoview'.close_win_wrapper(-1, true, false)
-    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')), false, false)
+    autocmd WinClosed <buffer> ]] ..
+    [[lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')), false, false)
   ]])
 end
 
