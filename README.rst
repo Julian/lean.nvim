@@ -24,8 +24,8 @@ Note that many simple syntactical things are not yet implemented
 (help is of course welcome), and that ``tree-sitter-lean`` is lean
 4-only.
 
-``lean.nvim`` currently supports both Lean 3 and Lean 4, 
-which can be used simultaneously in a single session. 
+``lean.nvim`` currently supports both Lean 3 and Lean 4,
+which can be used simultaneously in a single session.
 However, support for Lean 3 may be removed in the future.
 
 Installation
@@ -91,11 +91,11 @@ seeing how I use this plugin myself.
 Infoview
 ---------------------
 
-Infoviews can be used on a per-tab or per-window basis. 
+Infoviews can be used on a per-tab or per-window basis.
 You can use the commands ``LeanInfoPerTab`` and ``LeanInfoPerWin`` to choose between them.
 
 The "correct" way to exit a Lean source window is to use ``:q`` with your cursor in that window.
-This will automatically close its corresponding infoview. Closing the source window directly 
+This will automatically close its corresponding infoview. Closing the source window directly
 using, for example, ``CTRL-W + c``, will close the source window and leave the infoview in a "detached"
 state - this is a feature, not a bug!
 
