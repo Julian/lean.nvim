@@ -67,6 +67,15 @@ local function close_win(src_idx, erase)
   close_win_raw(src_idx, erase)
 end
 
+local function set_autocmds_guard(group, autocmds, bufnum)
+  vim.api.nvim_exec(string.format([[
+    augroup %s
+      autocmd! %s * <buffer=%d>
+      %s
+    augroup END
+  ]], group, group, bufnum, autocmds), false)
+end
+
 function M.update()
   local src_idx = get_idx()
 
@@ -99,9 +108,9 @@ function M.update()
     for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
       vim.api.nvim_win_set_option(window, name, value)
     end
-    vim.api.nvim_exec(string.format([[
-    autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(%s, false, true)
-    ]], current_window), false)
+    set_autocmds_guard("LeanInfoViewWindow", string.format([[
+      autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(%s, false, true)
+    ]], current_window), 0)
     vim.api.nvim_set_current_win(current_window)
 
     M._infoviews[src_idx].buf = infoview_bufnr
@@ -179,20 +188,11 @@ function M.set_autocmds()
   ]]), false)
 end
 
-local function set_autocmds_guard(group, autocmds)
-  vim.api.nvim_exec(string.format([[
-    augroup %s
-      autocmd! %s * <buffer>
-      %s
-    augroup END
-  ]], group, group, autocmds), false)
-end
-
 function M.set_update_autocmds()
   set_autocmds_guard("LeanInfoViewUpdate", [[
     autocmd CursorHold <buffer> lua require'lean.infoview'.update()
     autocmd CursorHoldI <buffer> lua require'lean.infoview'.update()
-  ]])
+  ]], 0)
 end
 
 function M.set_closed_autocmds()
@@ -200,7 +200,7 @@ function M.set_closed_autocmds()
     autocmd QuitPre <buffer> lua require'lean.infoview'.close_win_wrapper(-1, true, false)
     autocmd WinClosed <buffer> ]] ..
     [[lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')), false, false)
-  ]])
+  ]], 0)
 end
 
 function M.close_win_wrapper(src_winnr, close_info, already_closed)
@@ -221,6 +221,14 @@ function M.close_win_wrapper(src_winnr, close_info, already_closed)
         if ft == "lean3" or ft == "lean" then return end
         ::continue::
       end
+    end
+  end
+
+  if not close_info and not already_closed then
+    -- this check is needed since apparently WinClosed can be triggered
+    -- multiple times for a single window close?
+    if M._infoviews[src_idx] ~= nil then
+      set_autocmds_guard("LeanInfoViewWindow", "", M._infoviews[src_idx].buf)
     end
   end
 
