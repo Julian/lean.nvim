@@ -12,7 +12,7 @@ Prerequisites
 <https://github.com/neovim/neovim/releases/tag/nightly>`_.
 
 NOTE: ``lean.nvim`` is incompatible with `lean.vim <https://github.com/leanprover/lean.vim>`_,
-as it implements its own kind filetype detection.
+as it implements its own kind of filetype detection.
 You should NOT have ``lean.vim`` installed if using ``lean.nvim``.
 
 Syntax highlighting and basic language support is included, for Lean 4 you can also
@@ -90,25 +90,25 @@ Configuration & Usage
 In e.g. your ``init.lua``:
 
 .. code-block:: lua
-      on_attach = function(client, bufnr)
-        -- See https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
-        -- for detailed examples of what you may want to do here.
-        --
-        -- Mapping a key (typically K) to `vim.lsp.buf.hover()`
-        -- is highly recommended for Lean, since the hover LSP command
-        -- is where you'll see the current goal state.
-        --
-        -- You may furthermore want to add an `autocmd` to run it on
-        -- `CursorHoldI`, which will show the goal state any time the
-        -- cursor is unmoved in insert mode.
-        --
-        -- In the future, this plugin may offer a recommended "complete
-        -- setup" for easy enabling of the above.
-        local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
-        local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
-        buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
-        buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
-        buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+    on_attach = function(client, bufnr)
+      -- See https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
+      -- for detailed examples of what you may want to do here.
+      --
+      -- Mapping a key (typically K) to `vim.lsp.buf.hover()`
+      -- is highly recommended for Lean, since the hover LSP command
+      -- is where you'll see the current goal state.
+      --
+      -- You may furthermore want to add an `autocmd` to run it on
+      -- `CursorHoldI`, which will show the goal state any time the
+      -- cursor is unmoved in insert mode.
+      --
+      -- In the future, this plugin may offer a recommended "complete
+      -- setup" for easy enabling of the above.
+      local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
+      local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
+      buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
+      buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
+      buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
     end
 
     require('lean').setup{
@@ -149,7 +149,7 @@ In e.g. your ``init.lua``:
         lsp3 = {
             on_attach = on_attach,
             cmd = {"lean-language-server", "--stdio", '--', "-M", "4096"},
-        }
+        },
 
         lsp = {
             on_attach = on_attach,
