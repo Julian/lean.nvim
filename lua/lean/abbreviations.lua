@@ -32,9 +32,10 @@ local function snippets_nvim_enable(snippets, lean_abbreviations)
     lean_abbreviations[from] = to:gsub(_CURSOR_MARKER, '$0')
   end
 
-  local all_snippets = snippets.snippets or {}
-  all_snippets.lean = lean_abbreviations
-  snippets.snippets = all_snippets
+  snippets.snippets = {
+      lean = lean_abbreviations,
+      lean3 = lean_abbreviations
+  }
 end
 
 local abbr_mark_ns = vim.api.nvim_create_namespace('leanAbbreviationMark')
