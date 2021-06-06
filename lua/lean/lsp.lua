@@ -5,7 +5,7 @@ function M.enable3(opts)
 end
 
 function M.enable(opts)
-  opts.commands = {
+  opts.commands = vim.tbl_extend("keep", opts.commands or {}, {
     LeanPlainGoal = {
       function ()
         local params = vim.lsp.util.make_position_params()
@@ -16,7 +16,7 @@ function M.enable(opts)
       end;
       description = "Describe the current tactic state."
     };
-  }
+  })
   opts.handlers = {
     ["$/lean/plainGoal"] = M.handlers.plain_goal_handler;
   }

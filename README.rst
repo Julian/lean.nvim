@@ -140,7 +140,7 @@ In e.g. your ``init.lua``:
             -- Clip the infoview to a maximum width
             max_width = 79,
         },
-        -- Enable the Lean3/Lean4 language servers?
+        -- Enable the Lean3(lsp3)/Lean4(lsp) language servers?
         --
         -- false to disable, otherwise should be a table of options to pass to
         --  `leanls`. See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls
@@ -151,7 +151,7 @@ In e.g. your ``init.lua``:
             cmd = {"lean-language-server", "--stdio", '--', "-M", "4096"},
         }
 
-        lsp4 = {
+        lsp = {
             on_attach = on_attach,
             cmd = {"lean", "--server"},
         }

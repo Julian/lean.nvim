@@ -68,10 +68,7 @@ local function close_win(src_idx, erase)
 end
 
 function M.update()
-  -- grace period for server startup (prevents initial handler error for lean3 files)
   local src_idx = get_idx()
-  local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
-  if not succeeded then require"vim.lsp.log".info("FAILED TO GET SERVER") return end
 
   if M._infoviews_open[src_idx] == false then
       return
