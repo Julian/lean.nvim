@@ -237,8 +237,9 @@ function M.is_open()
 end
 
 function M.open()
-  M._infoviews_open[get_idx()] = true
-  return M._infoviews
+  local src_idx = get_idx()
+  M._infoviews_open[src_idx] = true
+  return M._infoviews[src_idx]
 end
 
 function M.set_pertab()

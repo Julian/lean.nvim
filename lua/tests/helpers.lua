@@ -1,7 +1,5 @@
 local assert = require('luassert')
 
-local infoview = require('lean.infoview')
-
 local api = vim.api
 local helpers = {_clean_buffer_counter = 1}
 
@@ -23,7 +21,7 @@ end
 local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
   local counter = helpers._clean_buffer_counter
   helpers._clean_buffer_counter = helpers._clean_buffer_counter + 1
-  local unique_name = string.format('unittest-%d.lean', counter)
+  local unique_name = string.format('unittest-%d', counter)
   api.nvim_buf_set_name(bufnr, unique_name)
 end
 
@@ -36,34 +34,28 @@ function helpers.clean_buffer(contents, callback)
   return function()
     local bufnr = vim.api.nvim_create_buf(false, true)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
-    api.nvim_buf_set_option(bufnr, 'filetype', 'lean')
+
+    -- FIXME: For now all tests are against Lean 3
+    api.nvim_buf_set_option(bufnr, 'filetype', 'lean3')
 
     api.nvim_buf_call(bufnr, function()
-      -- FIXME: For now all tests are against Lean 3
-      require 'lean.lean3'.init()
 
-      local succeeded, _ = vim.wait(1000, vim.lsp.buf.server_ready)
+      local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
       assert.message("LSP server was never ready.").True(succeeded)
 
       api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
 
-      local infoview_info = infoview.open()
       callback{
         source_file = { bufnr = bufnr },
-        infoview = {
-          bufnr = infoview_info.bufnr,
-          window = infoview_info.window,
-        },
       }
     end)
-    infoview.close()
     vim.api.nvim_buf_delete(bufnr, { force = true })
   end
 end
 
 --- Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
-  local succeeded, _ = vim.wait(2000, function()
+  local succeeded, _ = vim.wait(5000, function()
     return not vim.tbl_isempty(vim.lsp.diagnostic.get_line_diagnostics())
   end)
   assert.message("Waited for line diagnostics but none came.").True(succeeded)
