@@ -68,13 +68,7 @@ Features
 
     * ``<LocalLeader>3``: force a buffer into Lean 3 mode
 
-* LSP Commands
-
-    * ``:LeanPlainGoal`` for showing the tactic state (good for binding to
-      ``CursorHold``, and can be customized via
-      ``vim.lsp.handlers["$/lean/plainGoal"]``)
-
-* An infauxview which can show persistent goal & tactic state
+* A basic infoview which can show persistent goal & tactic state
 
 * `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
   definitions for Lean
@@ -164,10 +158,6 @@ above with:
             ...
         }
     EOF
-
-You may find some small additional inspiration in my own
-`(Julian's) configuration here
-<https://github.com/Julian/dotfiles/tree/main/.config/nvim/lua/config>`_.
 
 Other Plugins
 -------------
