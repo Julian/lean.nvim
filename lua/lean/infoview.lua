@@ -22,6 +22,7 @@ local _SEVERITY = {
   [4] = "hint",
 }
 
+-- get infoview index (either window number or tabpage depending on per-win/per-tab mode)
 local function get_idx()
   local src_win
   if M._opts.one_per_tab then
@@ -42,6 +43,8 @@ local function refresh_infos()
   end
 end
 
+-- either erase infoview information from table (erase=true)
+-- or indicate it has been closed (erase=false)
 local function close_win_raw(src_idx, erase)
   if erase then
     M._infoviews_open[src_idx] = nil
@@ -54,6 +57,7 @@ local function close_win_raw(src_idx, erase)
   refresh_infos()
 end
 
+-- physically close infoview, then either erase it or mark it as closed
 local function close_win(src_idx, erase)
   if M._infoviews[src_idx] then
     vim.api.nvim_win_close(M._infoviews[src_idx].win, true)
@@ -67,6 +71,9 @@ local function close_win(src_idx, erase)
   close_win_raw(src_idx, erase)
 end
 
+-- create autocmds under the specified group and local to
+-- the given buffer; clears any existing autocmds
+-- from the buffer beforehand
 local function set_autocmds_guard(group, autocmds, bufnum)
   local buffer_string
   if bufnum == 0 then
@@ -116,6 +123,9 @@ function M.update()
     for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
       vim.api.nvim_win_set_option(window, name, value)
     end
+    -- This makes the infoview robust to manually being closed by the user
+    -- (though they technically shouldn't do this).
+    -- It makes sure that the infoview is erased from the table when this happens.
     set_autocmds_guard("LeanInfoViewWindow", string.format([[
       autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(%s, %s, false, true)
     ]], current_window, current_tab), 0)
@@ -197,6 +207,8 @@ function M.set_autocmds()
 end
 
 function M.set_update_autocmds()
+  -- guarding is necessary here because I noticed the FileType event being
+  -- triggered multiple times for a single file (not sure why)
   set_autocmds_guard("LeanInfoViewUpdate", [[
     autocmd CursorHold <buffer> lua require'lean.infoview'.update()
     autocmd CursorHoldI <buffer> lua require'lean.infoview'.update()
@@ -239,6 +251,7 @@ function M.close_win_wrapper(src_winnr, src_tabnr, close_info, already_closed)
     -- this check is needed since apparently WinClosed can be triggered
     -- multiple times for a single window close?
     if M._infoviews[src_idx] ~= nil then
+      -- remove these autocmds so the infoview can now be closed manually without issue
       set_autocmds_guard("LeanInfoViewWindow", "", M._infoviews[src_idx].buf)
     end
   end
@@ -247,7 +260,7 @@ function M.close_win_wrapper(src_winnr, src_tabnr, close_info, already_closed)
     -- if closing with :q, close the infoview as well
     close_win(src_idx, true)
   else
-    -- if closing with ctrl+W, just detach the infoview and leave it there
+    -- if closing with ctrl-W + c, just detach the infoview and leave it there
     close_win_raw(src_idx, true)
   end
 end
