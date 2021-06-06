@@ -57,13 +57,19 @@ Features
   source.
 
 * Initial implementations of some editing helpers (note: no
-  mappings are associated with these by default unless you call
-  ``lean.use_suggested_mappings()`` or set ``mappings = true`` in the
+  mappings are associated with these by default unless you
+  set ``mappings = true`` in the
   configuration)
 
-    * "try this:" suggestion replacement
+    * ``<LocalLeader>t``: "try this:" suggestion replacement
 
-    * ``sorry`` insertion corresponding to the number of open goals
+    * ``<LocalLeader>i``: toggle infoview
+
+    * ``<LocalLeader>pt``: set infoview per-tab mode
+
+    * ``<LocalLeader>pw``: set infoview per-window mode
+
+    * ``<LocalLeader>s``: ``sorry`` insertion corresponding to the number of open goals
 
 * LSP Commands
 
