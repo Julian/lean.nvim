@@ -92,7 +92,7 @@ In e.g. your ``init.lua``:
 
     require('lean').setup{
         -- Abbreviation support
-        abbreviations = {,
+        abbreviations = {
             -- Set one of the following to true to enable abbreviations
             builtin = false, -- built-in expander
             compe = false, -- nvim-compe source
@@ -109,7 +109,7 @@ In e.g. your ``init.lua``:
             -- change if you don't like the backslash
             -- (comma is a popular choice on French keyboards)
             leader = '\\',
-        }
+        },
         -- Enable suggested mappings?
         --
         -- false by default, true to enable
