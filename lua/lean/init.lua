@@ -1,6 +1,17 @@
 local lean = {
   lsp = require('lean.lsp'),
   abbreviations = require('lean.abbreviations'),
+
+  mappings = {
+    n = {
+      ["<LocalLeader>i"] = "<Cmd>lua require('lean.infoview').toggle()<CR>";
+      ["<LocalLeader>s"] = "<Cmd>lua require('lean.sorry').fill()<CR>";
+      ["<LocalLeader>t"] = "<Cmd>lua require('lean.trythis').swap()<CR>";
+      ["<LocalLeader>3"] = "<Cmd>lua require('lean.lean3').init()<CR>";
+    };
+    i = {
+    };
+  }
 }
 
 function lean.setup(opts)
@@ -21,20 +32,17 @@ function lean.setup(opts)
   if opts.mappings == true then lean.use_suggested_mappings() end
 end
 
-function lean.use_suggested_mappings()
-  local opts = {noremap = true, silent = true}
-  vim.api.nvim_set_keymap(
-    'n', '<LocalLeader>3', "<Cmd>lua require('lean.lean3').init()<CR>", opts
-  )
-  vim.api.nvim_set_keymap(
-    'n', '<LocalLeader>i', "<Cmd>lua require('lean.infoview').toggle()<CR>", opts
-  )
-  vim.api.nvim_set_keymap(
-    'n', '<LocalLeader>s', "<Cmd>lua require('lean.sorry').fill()<CR>", opts
-  )
-  vim.api.nvim_set_keymap(
-    'n', '<LocalLeader>t', "<Cmd>lua require('lean.trythis').swap()<CR>", opts
-  )
+function lean.use_suggested_mappings(buffer_local)
+  local opts = { noremap = true }
+  for mode, mode_mappings in pairs(lean.mappings) do
+    for lhs, rhs in pairs(mode_mappings) do
+      if buffer_local then
+        vim.api.nvim_buf_set_keymap(0, mode, lhs, rhs, opts)
+      else
+        vim.api.nvim_set_keymap(mode, lhs, rhs, opts)
+      end
+    end
+  end
 end
 
 return lean
