@@ -61,8 +61,8 @@ Features
   source.
 
 * Initial implementations of some editing helpers (note: no
-  mappings are associated with these by default unless you
-  set ``mappings = true`` in the
+  mappings are associated with these by default unless you call
+  ``lean.use_suggested_mappings()`` or set ``mappings = true`` in the
   configuration)
 
     * ``<LocalLeader>t``: "try this:" suggestion replacement
