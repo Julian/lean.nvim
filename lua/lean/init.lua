@@ -29,7 +29,11 @@ function lean.setup(opts)
   local treesitter = opts.treesitter or {}
   if treesitter.enable ~= false then require('lean.treesitter').enable(treesitter) end
 
-  if opts.mappings == true then lean.use_suggested_mappings() end
+  if opts.mappings == true then
+    vim.api.nvim_exec([[
+      autocmd FileType lean lua require'lean'.use_suggested_mappings(true)
+    ]], false)
+  end
 end
 
 function lean.use_suggested_mappings(buffer_local)
