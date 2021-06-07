@@ -6,6 +6,8 @@ local lean = {
     n = {
       ["<LocalLeader>i"] = "<Cmd>lua require('lean.infoview').toggle()<CR>";
       ["<LocalLeader>s"] = "<Cmd>lua require('lean.sorry').fill()<CR>";
+      ["<LocalLeader>pt"] = "<Cmd>lua require('lean.infoview').set_pertab()<CR>";
+      ["<LocalLeader>pw"] = "<Cmd>lua require('lean.infoview').set_perwindow()<CR>";
       ["<LocalLeader>t"] = "<Cmd>lua require('lean.trythis').swap()<CR>";
       ["<LocalLeader>3"] = "<Cmd>lua require('lean.lean3').init()<CR>";
     };
