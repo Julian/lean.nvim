@@ -105,20 +105,11 @@ Configuration & Usage
 In e.g. your ``init.lua``:
 
 .. code-block:: lua
+    -- If you don't already have an existing LSP setup, you may want
+    -- to reference the keybindings section of the nvim-lspconfig
+    -- documentation, which can be found at:
+    -- https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
     on_attach = function(client, bufnr)
-      -- See https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
-      -- for detailed examples of what you may want to do here.
-      --
-      -- Mapping a key (typically K) to `vim.lsp.buf.hover()`
-      -- is highly recommended for Lean, since the hover LSP command
-      -- is where you'll see the current goal state.
-      --
-      -- You may furthermore want to add an `autocmd` to run it on
-      -- `CursorHoldI`, which will show the goal state any time the
-      -- cursor is unmoved in insert mode.
-      --
-      -- In the future, this plugin may offer a recommended "complete
-      -- setup" for easy enabling of the above.
       local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
       local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
       buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
