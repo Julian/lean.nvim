@@ -163,6 +163,9 @@ you're interested in. Below is a (hopelessly incomplete) list of a few:
     * `lspsaga.nvim <https://github.com/glepnir/lspsaga.nvim>`_ for an
       extended LSP experience on top of the builtin one
 
+    * `goto-preview <https://github.com/rmagatti/goto-preview>`_ for
+      peeking definitions (instead of jumping to them)
+
     * `lsp-status.nvim <https://github.com/nvim-lua/lsp-status.nvim>`_ for
       showing LSP information in your status bar
 
