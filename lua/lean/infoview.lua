@@ -1,6 +1,6 @@
 local lean3 = require('lean.lean3')
 
-local M = {_infoview = nil, _opts = {}}
+local M = {_infoviews = {[0] = nil}, _opts = {}}
 
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
 local _DEFAULT_BUF_OPTIONS = {
@@ -23,6 +23,20 @@ local _SEVERITY = {
   [3] = "information",
   [4] = "hint",
 }
+
+-- Get the ID of the infoview corresponding to the current window.
+local function get_idx()
+  return 0
+end
+
+local function maybe_resize_infoviews()
+  local max_width = M._opts.max_width or 79
+  for _, infoview in pairs(M._infoviews) do
+    if vim.api.nvim_win_get_width(infoview.window) > max_width then
+      vim.api.nvim_win_set_width(infoview.window, max_width)
+    end
+  end
+end
 
 function M.update(infoview_bufnr)
   local _update = vim.b.lean3 and lean3.update_infoview or function(set_lines)
@@ -94,10 +108,10 @@ function M.enable(opts)
   ]], false)
 end
 
-function M.is_open() return M._infoview ~= nil end
+function M.is_open() return M._infoviews[get_idx()] ~= nil end
 
 function M.ensure_open()
-  if M.is_open() then return M._infoview.bufnr end
+  if M.is_open() then return M._infoviews[get_idx()].bufnr end
 
   local infoview_bufnr = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_name(infoview_bufnr, _INFOVIEW_BUF_NAME)
@@ -117,11 +131,6 @@ function M.ensure_open()
   end
   vim.api.nvim_set_current_win(current_window)
 
-  local max_width = M._opts.max_width or 79
-  if vim.api.nvim_win_get_width(window) > max_width then
-    vim.api.nvim_win_set_width(window, max_width)
-  end
-
   vim.api.nvim_exec(string.format([[
     augroup LeanInfoViewUpdate
       autocmd!
@@ -130,17 +139,30 @@ function M.ensure_open()
     augroup END
   ]], infoview_bufnr, infoview_bufnr), false)
 
-  M._infoview = { bufnr = infoview_bufnr, window = window }
-  return M._infoview
+  local infoview_idx = get_idx()
+  M._infoviews[infoview_idx] = { bufnr = infoview_bufnr, window = window }
+
+  maybe_resize_infoviews()
+
+  return M._infoviews[infoview_idx]
 end
 
 M.open = M.ensure_open
 
+-- Close all open infoviews (across all tabs).
+function M.close_all()
+  for _, _ in pairs(M._infoviews) do
+    M.close()
+  end
+end
+
+-- Close the infoview associated with the current window.
 function M.close()
   if not M.is_open() then return end
 
-  local infoview = M._infoview
-  M._infoview = nil
+  local infoview_idx = get_idx()
+  local infoview = M._infoviews[infoview_idx]
+  M._infoviews[infoview_idx] = nil
 
   vim.api.nvim_exec([[
     augroup LeanInfoViewOpen
