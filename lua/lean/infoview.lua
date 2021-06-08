@@ -146,19 +146,28 @@ function M.update()
     local params = vim.lsp.util.make_position_params()
     -- Shift forward by 1, since in vim it's easier to reach word
     -- boundaries in normal mode.
-    params.position.character = params.position.character + 1
-    return vim.lsp.buf_request(0, "$/lean/plainGoal", params, function(_, _, result)
+    local goal_params = vim.deepcopy(params)
+    goal_params.position.character = goal_params.position.character + 1
+    local update = function(goal, term_goal)
       local lines = {}
 
-      if type(result) == "table" and result.goals then
+      if type(goal) == "table" and goal.goals then
         vim.list_extend(lines,
-          {#result.goals == 0 and '▶ goals accomplished 🎉' or
-            #result.goals == 1 and '▶ 1 goal' or
-            string.format('▶ %d goals', #result.goals)})
-        for _, each in pairs(result.goals) do
+          {#goal.goals == 0 and '▶ goals accomplished 🎉' or
+            #goal.goals == 1 and '▶ 1 goal' or
+            string.format('▶ %d goals', #goal.goals)})
+        for _, each in pairs(goal.goals) do
           vim.list_extend(lines, {''})
           vim.list_extend(lines, vim.split(each, '\n', true))
         end
+      end
+
+      if type(term_goal) == "table" and term_goal.goal then
+        local start = term_goal.range["start"]
+        local end_ = term_goal.range["end"]
+        vim.list_extend(lines, {'', string.format('▶ expected type (%d:%d-%d:%d)',
+          start.line+1, start.character+1, end_.line+1, end_.character+1)})
+        vim.list_extend(lines, vim.split(term_goal.goal, '\n', true))
       end
 
       for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics(current_buffer, cursor[0])) do
@@ -170,6 +179,11 @@ function M.update()
       end
 
       set_lines(lines)
+    end
+    return vim.lsp.buf_request(0, "$/lean/plainGoal", goal_params, function(_, _, goal)
+      vim.lsp.buf_request(0, "$/lean/plainTermGoal", params, function(_, _, term_goal)
+        update(goal, term_goal)
+      end)
     end)
   end
 

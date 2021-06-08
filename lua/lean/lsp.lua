@@ -17,9 +17,9 @@ function M.enable(opts)
       description = "Describe the current tactic state."
     };
   })
-  opts.handlers = {
+  opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
     ["$/lean/plainGoal"] = M.handlers.plain_goal_handler;
-  }
+  })
   require('lspconfig').leanls.setup(opts)
 end
 
