@@ -24,13 +24,8 @@ local _SEVERITY = {
 
 -- get infoview index (either window number or tabpage depending on per-win/per-tab mode)
 local function get_idx()
-  local src_win
-  if M._opts.one_per_tab then
-    src_win = vim.api.nvim_get_current_tabpage()
-  else
-    src_win = vim.api.nvim_get_current_win()
-  end
-  return src_win
+  return M._opts.one_per_tab and vim.api.nvim_get_current_tabpage()
+    or vim.api.nvim_get_current_win()
 end
 
 local function refresh_infos()
@@ -46,11 +41,7 @@ end
 -- either erase infoview information from table (erase=true)
 -- or indicate it has been closed (erase=false)
 local function close_win_raw(src_idx, erase)
-  if erase then
-    M._infoviews_open[src_idx] = nil
-  else
-    M._infoviews_open[src_idx] = false
-  end
+  M._infoviews_open[src_idx] = erase and nil or false
   M._infoviews[src_idx] = nil
 
   -- necessary because closing a window can cause others to resize
@@ -75,12 +66,8 @@ end
 -- the given buffer; clears any existing autocmds
 -- from the buffer beforehand
 local function set_autocmds_guard(group, autocmds, bufnum)
-  local buffer_string
-  if bufnum == 0 then
-    buffer_string = "<buffer>"
-  else
-    buffer_string = string.format("<buffer=%d>", bufnum)
-  end
+  local buffer_string = bufnum == 0 and "<buffer>"
+    or string.format("<buffer=%d>", bufnum)
 
   vim.api.nvim_exec(string.format([[
     augroup %s
@@ -200,8 +187,8 @@ function M.update()
 end
 
 function M.enable(opts)
+  opts.one_per_tab = opts.one_per_tab or true
   M._opts = opts
-  if M._opts.one_per_tab == nil then M._opts.one_per_tab = true end
   M.set_autocmds()
 end
 
