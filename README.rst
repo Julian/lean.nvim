@@ -68,7 +68,14 @@ Features
 
     * ``<LocalLeader>3``: force a buffer into Lean 3 mode
 
-* A basic infoview which can show persistent goal & tactic state
+* A basic infoview which can show persistent goal, term & tactic state
+
+* Hover (preview) commands:
+
+    * ``:LeanPlainGoal`` for showing goal state in a preview window
+
+    * ``:LeanPlainTermGoal`` for showing term-mode type information
+      in a preview window
 
 * `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
   definitions for Lean
