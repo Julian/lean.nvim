@@ -19,22 +19,18 @@ function M.enable(opts)
   require('lspconfig').leanls.setup(opts)
 end
 
-function M.handlers.plain_goal_handler (_, method, result)
-  vim.lsp.util.focusable_float(method, function()
-    if not (result and result.rendered) then
-      return
-    end
-    local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(result.rendered)
-    markdown_lines = vim.lsp.util.trim_empty_lines(markdown_lines)
-    if vim.tbl_isempty(markdown_lines) then
-      return
-    end
-    local bufnr, winnr = vim.lsp.util.fancy_floating_markdown(markdown_lines, {
-      pad_left = 1; pad_right = 1;
-    })
-    vim.lsp.util.close_preview_autocmd({"CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
-    return bufnr, winnr
-  end)
+function M.handlers.plain_goal_handler (_, method, result, _, _, config)
+  config = config or {}
+  config.focus_id = method
+  if not (result and result.rendered) then
+    return
+  end
+  local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(result.rendered)
+  markdown_lines = vim.lsp.util.trim_empty_lines(markdown_lines)
+  if vim.tbl_isempty(markdown_lines) then
+    return
+  end
+  return vim.lsp.util.open_floating_preview(markdown_lines, "markdown", config)
 end
 
 return M
