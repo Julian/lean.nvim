@@ -1,3 +1,5 @@
+local lean3 = require('lean.lean3')
+
 local M = {_infoviews = {}, _infoviews_open = {}, _opts = {}}
 
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
@@ -22,18 +24,17 @@ local _SEVERITY = {
   [4] = "hint",
 }
 
--- get infoview index (either window number or tabpage depending on per-win/per-tab mode)
+-- Get the ID of the infoview corresponding to the current window.
 local function get_idx()
   return M._opts.one_per_tab and vim.api.nvim_get_current_tabpage()
     or vim.api.nvim_get_current_win()
 end
 
-local function refresh_infos()
-  for key, _ in pairs(M._infoviews) do
-    local window = M._infoviews[key].win
-    local max_width = M._opts.max_width or 79
-    if vim.api.nvim_win_get_width(window) > max_width then
-      vim.api.nvim_win_set_width(window, max_width)
+function M._maybe_resize_infoviews()
+  local max_width = M._opts.max_width or 79
+  for _, infoview in pairs(M._infoviews) do
+    if vim.api.nvim_win_get_width(infoview.window) > max_width then
+      vim.api.nvim_win_set_width(infoview.window, max_width)
     end
   end
 end
@@ -41,14 +42,14 @@ end
 -- physically close infoview, then erase it
 local function close_win(src_idx)
   if M._infoviews[src_idx] then
-    vim.api.nvim_win_close(M._infoviews[src_idx].win, true)
+    vim.api.nvim_win_close(M._infoviews[src_idx].window, true)
   end
 
   M._infoviews_open[src_idx] = nil
   M._infoviews[src_idx] = nil
 
   -- necessary because closing a window can cause others to resize
-  refresh_infos()
+  M._maybe_resize_infoviews()
 end
 
 -- create autocmds under the specified group and local to
@@ -108,15 +109,15 @@ function M.update()
     vim.api.nvim_set_current_win(current_window)
 
     M._infoviews[src_idx].buf = infoview_bufnr
-    M._infoviews[src_idx].win = window
+    M._infoviews[src_idx].window = window
+
+    M._maybe_resize_infoviews()
 
   else
     infoview_bufnr = infoview.buf
   end
 
-  refresh_infos()
-
-  local _update = vim.bo.ft == "lean3" and require('lean.lean3').update_infoview or function(set_lines)
+  local _update = vim.bo.ft == "lean3" and lean3.update_infoview or function(set_lines)
     local current_buffer = vim.api.nvim_get_current_buf()
     local cursor = vim.api.nvim_win_get_cursor(0)
     local params = vim.lsp.util.make_position_params()
@@ -276,7 +277,6 @@ function M.set_perwindow()
 end
 
 function M.close_all()
-  -- close all current infoviews
   for key, _ in pairs(M._infoviews) do
     close_win(key)
   end
@@ -285,6 +285,7 @@ function M.close_all()
   end
 end
 
+-- Close the infoview associated with the current window.
 function M.close()
   if not M.is_open() then return end
 
