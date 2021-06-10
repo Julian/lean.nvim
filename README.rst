@@ -75,7 +75,14 @@ Features
 
     * ``<LocalLeader>s``: ``sorry`` insertion corresponding to the number of open goals
 
-* A basic infoview which can show persistent goal & tactic state
+* A basic infoview which can show persistent goal, term & tactic state
+
+* Hover (preview) commands:
+
+    * ``:LeanPlainGoal`` for showing goal state in a preview window
+
+    * ``:LeanPlainTermGoal`` for showing term-mode type information
+      in a preview window
 
 * `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
   definitions for Lean
@@ -185,6 +192,9 @@ you're interested in. Below is a (hopelessly incomplete) list of a few:
 
     * `lspsaga.nvim <https://github.com/glepnir/lspsaga.nvim>`_ for an
       extended LSP experience on top of the builtin one
+
+    * `goto-preview <https://github.com/rmagatti/goto-preview>`_ for
+      peeking definitions (instead of jumping to them)
 
     * `lsp-status.nvim <https://github.com/nvim-lua/lsp-status.nvim>`_ for
       showing LSP information in your status bar
