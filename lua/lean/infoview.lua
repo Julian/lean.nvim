@@ -99,16 +99,16 @@ function M.is_open() return M._infoview ~= nil end
 function M.ensure_open()
   if M.is_open() then return M._infoview.bufnr end
 
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(bufnr, _INFOVIEW_BUF_NAME)
+  local infoview_bufnr = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_name(infoview_bufnr, _INFOVIEW_BUF_NAME)
   for name, value in pairs(_DEFAULT_BUF_OPTIONS) do
-    vim.api.nvim_buf_set_option(bufnr, name, value)
+    vim.api.nvim_buf_set_option(infoview_bufnr, name, value)
   end
 
   local current_window = vim.api.nvim_get_current_win()
 
   vim.cmd "botright vsplit"
-  vim.cmd(string.format("buffer %d", bufnr))
+  vim.cmd(string.format("buffer %d", infoview_bufnr))
 
   local window = vim.api.nvim_get_current_win()
 
@@ -128,9 +128,9 @@ function M.ensure_open()
       autocmd CursorHold *.lean lua require'lean.infoview'.update(%d)
       autocmd CursorHoldI *.lean lua require'lean.infoview'.update(%d)
     augroup END
-  ]], bufnr, bufnr), false)
+  ]], infoview_bufnr, infoview_bufnr), false)
 
-  M._infoview = { bufnr = bufnr, window = window }
+  M._infoview = { bufnr = infoview_bufnr, window = window }
   return M._infoview
 end
 
