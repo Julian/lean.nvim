@@ -169,7 +169,6 @@ function M.close()
   if not M.is_open() then return end
   local infoview = M._teardown(get_idx())
   vim.api.nvim_win_close(infoview.window, true)
-  vim.api.nvim_buf_delete(infoview.bufnr, { force = true })
 end
 
 -- Teardown internal state for an infoview window.
