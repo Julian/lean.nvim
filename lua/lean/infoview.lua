@@ -111,7 +111,9 @@ end
 function M.is_open() return M._infoviews[get_idx()] ~= nil end
 
 function M.ensure_open()
-  if M.is_open() then return M._infoviews[get_idx()].bufnr end
+  local infoview_idx = get_idx()
+
+  if M.is_open() then return M._infoviews[infoview_idx].bufnr end
 
   local infoview_bufnr = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_name(infoview_bufnr, _INFOVIEW_BUF_NAME)
@@ -129,6 +131,13 @@ function M.ensure_open()
   for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
     vim.api.nvim_win_set_option(window, name, value)
   end
+  -- Make sure we teardown even if someone manually :q's the infoview window.
+  vim.api.nvim_exec(string.format([[
+    augroup LeanInfoViewClose
+      autocmd!
+      autocmd WinClosed <buffer> lua require'lean.infoview'._teardown(%d)
+    augroup END
+  ]], infoview_idx), false)
   vim.api.nvim_set_current_win(current_window)
 
   vim.api.nvim_exec(string.format([[
@@ -139,7 +148,6 @@ function M.ensure_open()
     augroup END
   ]], infoview_bufnr, infoview_bufnr), false)
 
-  local infoview_idx = get_idx()
   M._infoviews[infoview_idx] = { bufnr = infoview_bufnr, window = window }
 
   maybe_resize_infoviews()
@@ -159,8 +167,13 @@ end
 -- Close the infoview associated with the current window.
 function M.close()
   if not M.is_open() then return end
+  local infoview = M._teardown(get_idx())
+  vim.api.nvim_win_close(infoview.window, true)
+  vim.api.nvim_buf_delete(infoview.bufnr, { force = true })
+end
 
-  local infoview_idx = get_idx()
+-- Teardown internal state for an infoview window.
+function M._teardown(infoview_idx)
   local infoview = M._infoviews[infoview_idx]
   M._infoviews[infoview_idx] = nil
 
@@ -173,9 +186,7 @@ function M.close()
       autocmd!
     augroup END
   ]], false)
-
-  vim.api.nvim_win_close(infoview.window, true)
-  vim.api.nvim_buf_delete(infoview.bufnr, { force = true })
+  return infoview
 end
 
 function M.toggle()
