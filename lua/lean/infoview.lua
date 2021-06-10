@@ -41,7 +41,7 @@ end
 -- either erase infoview information from table (erase=true)
 -- or indicate it has been closed (erase=false)
 local function close_win_raw(src_idx, erase)
-  M._infoviews_open[src_idx] = erase and nil or false
+  if erase then M._infoviews_open[src_idx] = nil else M._infoviews_open[src_idx] = false end
   M._infoviews[src_idx] = nil
 
   -- necessary because closing a window can cause others to resize
@@ -187,7 +187,7 @@ function M.update()
 end
 
 function M.enable(opts)
-  opts.one_per_tab = opts.one_per_tab or true
+  if opts.one_per_tab == nil then opts.one_per_tab = true end
   M._opts = opts
   M.set_autocmds()
 end
@@ -248,7 +248,7 @@ function M.close_win_wrapper(src_winnr, src_tabnr, close_info, already_closed)
     end
   end
 
-  if not close_info and not already_closed then
+  if not already_closed then
     -- this check is needed since apparently WinClosed can be triggered
     -- multiple times for a single window close?
     if M._infoviews[src_idx] ~= nil then
