@@ -29,7 +29,7 @@ local function get_idx()
   return 0
 end
 
-local function maybe_resize_infoviews()
+function M._maybe_resize_infoviews()
   local max_width = M._opts.max_width or 79
   for _, infoview in pairs(M._infoviews) do
     if vim.api.nvim_win_get_width(infoview.window) > max_width then
@@ -101,8 +101,9 @@ end
 function M.enable(opts)
   M._opts = opts
   vim.api.nvim_exec([[
-    augroup LeanInfoViewOpen
+    augroup LeanInfoview
       autocmd!
+      autocmd WinEnter * lua require'lean.infoview'._maybe_resize_infoviews()
       autocmd BufWinEnter *.lean lua require'lean.infoview'.ensure_open()
     augroup END
   ]], false)
@@ -133,7 +134,7 @@ function M.ensure_open()
   end
   -- Make sure we teardown even if someone manually :q's the infoview window.
   vim.api.nvim_exec(string.format([[
-    augroup LeanInfoViewClose
+    augroup LeanInfoviewClose
       autocmd!
       autocmd WinClosed <buffer> lua require'lean.infoview'._teardown(%d)
     augroup END
@@ -141,7 +142,7 @@ function M.ensure_open()
   vim.api.nvim_set_current_win(current_window)
 
   vim.api.nvim_exec(string.format([[
-    augroup LeanInfoViewUpdate
+    augroup LeanInfoviewUpdate
       autocmd!
       autocmd CursorHold *.lean lua require'lean.infoview'.update(%d)
       autocmd CursorHoldI *.lean lua require'lean.infoview'.update(%d)
@@ -150,7 +151,7 @@ function M.ensure_open()
 
   M._infoviews[infoview_idx] = { bufnr = infoview_bufnr, window = window }
 
-  maybe_resize_infoviews()
+  M._maybe_resize_infoviews()
 
   return M._infoviews[infoview_idx]
 end
@@ -177,11 +178,11 @@ function M._teardown(infoview_idx)
   M._infoviews[infoview_idx] = nil
 
   vim.api.nvim_exec([[
-    augroup LeanInfoViewOpen
+    augroup LeanInfoview
       autocmd!
     augroup END
 
-    augroup LeanInfoViewUpdate
+    augroup LeanInfoviewUpdate
       autocmd!
     augroup END
   ]], false)
