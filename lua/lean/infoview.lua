@@ -38,28 +38,17 @@ local function refresh_infos()
   end
 end
 
--- either erase infoview information from table (erase=true)
--- or indicate it has been closed (erase=false)
-local function close_win_raw(src_idx, erase)
-  if erase then M._infoviews_open[src_idx] = nil else M._infoviews_open[src_idx] = false end
-  M._infoviews[src_idx] = nil
-
-  -- necessary because closing a window can cause others to resize
-  refresh_infos()
-end
-
--- physically close infoview, then either erase it or mark it as closed
-local function close_win(src_idx, erase)
+-- physically close infoview, then erase it
+local function close_win(src_idx)
   if M._infoviews[src_idx] then
     vim.api.nvim_win_close(M._infoviews[src_idx].win, true)
   end
 
-  -- NOTE: it seems this isn't necessary since unlisted buffers are deleted automatically?
-  --if M._infoviews[src_win].buf then
-  --  vim.api.nvim_buf_delete(M._infoviews[src_win].buf, { force = true })
-  --end
+  M._infoviews_open[src_idx] = nil
+  M._infoviews[src_idx] = nil
 
-  close_win_raw(src_idx, erase)
+  -- necessary because closing a window can cause others to resize
+  refresh_infos()
 end
 
 -- create autocmds under the specified group and local to
@@ -257,13 +246,7 @@ function M.close_win_wrapper(src_winnr, src_tabnr, close_info, already_closed)
     end
   end
 
-  if close_info then
-    -- if closing with :q, close the infoview as well
-    close_win(src_idx, true)
-  else
-    -- if closing with ctrl-W + c, just detach the infoview and leave it there
-    close_win_raw(src_idx, true)
-  end
+  close_win(src_idx)
 end
 
 function M.is_open()
@@ -295,7 +278,7 @@ end
 function M.close_all()
   -- close all current infoviews
   for key, _ in pairs(M._infoviews) do
-    close_win(key, false)
+    close_win(key)
   end
   for key, _ in pairs(M._infoviews_open) do
     M._infoviews_open[key] = nil
@@ -305,7 +288,7 @@ end
 function M.close()
   if not M.is_open() then return end
 
-  close_win(get_idx(), false)
+  close_win(get_idx())
 end
 
 function M.toggle()
