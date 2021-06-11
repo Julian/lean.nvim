@@ -1,8 +1,6 @@
-local root_pattern = require('lspconfig.util').root_pattern
-
 local M = {}
 
-local find_project_root = root_pattern('leanpkg.toml')
+local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
 
 -- Ideally this obviously would use a TOML parser but yeah choosing to
 -- do nasty things and not add the dependency for now.
@@ -13,7 +11,7 @@ local _MARKER = '.*lean_version.*\".*:3.*'
 function M.detect()
   local project_root = find_project_root(vim.api.nvim_buf_get_name(0))
   if not project_root then vim.bo.ft = "lean" return end
-  local _, result = pcall(vim.fn.readfile, project_root .. '/leanpkg.toml')
+  local result = vim.fn.readfile(project_root .. '/leanpkg.toml')
   for _, line in ipairs(result) do
     if line:match(_MARKER) then require('lean.lean3').init() return end
   end
