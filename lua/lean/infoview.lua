@@ -104,7 +104,7 @@ function M.update()
     -- (though they technically shouldn't do this).
     -- It makes sure that the infoview is erased from the table when this happens.
     set_autocmds_guard("LeanInfoViewWindow", string.format([[
-      autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(%s, %s, false, true)
+      autocmd WinClosed <buffer> lua require'lean.infoview'.close_win_wrapper(%s, %s, true)
     ]], current_window, current_tab), 0)
     vim.api.nvim_set_current_win(current_window)
 
@@ -208,13 +208,13 @@ end
 
 function M.set_closed_autocmds()
   set_autocmds_guard("LeanInfoViewClose", [[
-    autocmd QuitPre <buffer> lua require'lean.infoview'.close_win_wrapper(-1, -1, true, false)
+    autocmd QuitPre <buffer> lua require'lean.infoview'.close_win_wrapper(-1, -1, false)
     autocmd WinClosed <buffer> ]] ..
-    [[lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')), -1, false, false)
+    [[lua require'lean.infoview'.close_win_wrapper(tonumber(vim.fn.expand('<afile>')), -1, false)
   ]], 0)
 end
 
-function M.close_win_wrapper(src_winnr, src_tabnr, close_info, already_closed)
+function M.close_win_wrapper(src_winnr, src_tabnr, already_closed)
   if src_winnr == -1 then
     src_winnr = vim.api.nvim_get_current_win()
   end
