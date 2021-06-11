@@ -15,7 +15,7 @@ function M.detect()
   if not project_root then vim.bo.ft = "lean" return end
   local _, result = pcall(vim.fn.readfile, project_root .. '/leanpkg.toml')
   for _, line in ipairs(result) do
-    if line:match(_MARKER) then vim.bo.ft = "lean3" return end
+    if line:match(_MARKER) then require('lean.lean3').init() return end
   end
   vim.bo.ft = "lean"
 end

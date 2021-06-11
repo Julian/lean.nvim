@@ -8,14 +8,11 @@ end
 
 function M.init()
   pcall(vim.cmd, 'TSBufDisable highlight')  -- tree-sitter-lean is lean4-only
+  vim.bo.ft = "lean3"
 end
 
 function M.is_lean3_project()
   return vim.bo.ft == "lean3"
-end
-
-function M.detect()
-  if M.is_lean3_project() then M.init() end
 end
 
 function M.update_infoview(set_lines)
