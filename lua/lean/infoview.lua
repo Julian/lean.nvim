@@ -280,8 +280,17 @@ end
 -- Close the infoview associated with the current window.
 function M.close()
   if not M.is_open() then return end
+  local infoview = M._teardown(get_idx())
+  vim.api.nvim_win_close(infoview.window, true)
+end
 
-  close_win(get_idx())
+-- Teardown internal state for an infoview window.
+function M._teardown(infoview_idx)
+  local infoview = M._infoviews[infoview_idx]
+  M._infoviews_open[infoview_idx] = nil
+  M._infoviews[infoview_idx] = nil
+
+  return infoview
 end
 
 function M.toggle()
