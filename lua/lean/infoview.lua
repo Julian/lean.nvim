@@ -1,4 +1,5 @@
 local lean3 = require('lean.lean3')
+local set_augroup = require('lean._nvimapi').set_augroup
 
 local M = {_infoviews = {[0] = nil}, _opts = {}}
 
@@ -100,13 +101,10 @@ end
 
 function M.enable(opts)
   M._opts = opts
-  vim.api.nvim_exec([[
-    augroup LeanInfoview
-      autocmd!
-      autocmd WinEnter * lua require'lean.infoview'._maybe_resize_infoviews()
-      autocmd BufWinEnter *.lean lua require'lean.infoview'.ensure_open()
-    augroup END
-  ]], false)
+  set_augroup("LeanInfoview", [[
+    autocmd WinEnter * lua require'lean.infoview'._maybe_resize_infoviews()
+    autocmd BufWinEnter *.lean lua require'lean.infoview'.ensure_open()
+  ]])
 end
 
 function M.is_open() return M._infoviews[get_idx()] ~= nil end
@@ -133,21 +131,15 @@ function M.ensure_open()
     vim.api.nvim_win_set_option(window, name, value)
   end
   -- Make sure we teardown even if someone manually :q's the infoview window.
-  vim.api.nvim_exec(string.format([[
-    augroup LeanInfoviewClose
-      autocmd!
-      autocmd WinClosed <buffer> lua require'lean.infoview'._teardown(%d)
-    augroup END
-  ]], infoview_idx), false)
+  set_augroup("LeanInfoviewClose", string.format([[
+    autocmd WinClosed <buffer> lua require'lean.infoview'._teardown(%d)
+  ]], infoview_idx))
   vim.api.nvim_set_current_win(current_window)
 
-  vim.api.nvim_exec(string.format([[
-    augroup LeanInfoviewUpdate
-      autocmd!
-      autocmd CursorHold *.lean lua require'lean.infoview'.update(%d)
-      autocmd CursorHoldI *.lean lua require'lean.infoview'.update(%d)
-    augroup END
-  ]], infoview_bufnr, infoview_bufnr), false)
+  set_augroup("LeanInfoviewUpdate", string.format([[
+    autocmd CursorHold *.lean lua require'lean.infoview'.update(%d)
+    autocmd CursorHoldI *.lean lua require'lean.infoview'.update(%d)
+  ]], infoview_bufnr, infoview_bufnr))
 
   M._infoviews[infoview_idx] = { bufnr = infoview_bufnr, window = window }
 
@@ -177,15 +169,9 @@ function M._teardown(infoview_idx)
   local infoview = M._infoviews[infoview_idx]
   M._infoviews[infoview_idx] = nil
 
-  vim.api.nvim_exec([[
-    augroup LeanInfoview
-      autocmd!
-    augroup END
+  set_augroup("LeanInfoview", "")
+  set_augroup("LeanInfoviewUpdate", "")
 
-    augroup LeanInfoviewUpdate
-      autocmd!
-    augroup END
-  ]], false)
   return infoview
 end
 
