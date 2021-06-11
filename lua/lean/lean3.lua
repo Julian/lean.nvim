@@ -1,4 +1,10 @@
-local M = {}
+local lspconfig = require('lspconfig')
+local M = {lsp = {}}
+
+function M.lsp.enable(opts)
+  -- REMOVEME: We can do this unconditionally once neovim/nvim-lspconfig#958 is merged
+  if lspconfig.lean3ls then lspconfig.lean3ls.setup(opts) end
+end
 
 function M.init()
   pcall(vim.cmd, 'TSBufDisable highlight')  -- tree-sitter-lean is lean4-only

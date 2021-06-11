@@ -49,7 +49,7 @@ function lean.setup(opts)
   end
 
   local lsp3 = opts.lsp3 or {}
-  if lsp3.enable ~= false then set_cmds(lsp3) lean.lsp.enable3(lsp3) end
+  if lsp3.enable ~= false then set_cmds(lsp3) require'lean.lean3'.lsp.enable(lsp3) end
 
   local lsp = opts.lsp or {}
   if lsp.enable ~= false then set_cmds(lsp) lean.lsp.enable(lsp) end

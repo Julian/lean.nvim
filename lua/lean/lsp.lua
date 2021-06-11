@@ -8,10 +8,6 @@ local function position_params()
   return params
 end
 
-function M.enable3(opts)
-  require('lspconfig').lean3ls.setup(opts)
-end
-
 function M.enable(opts)
   opts.commands = vim.tbl_extend("keep", opts.commands or {}, {
     LeanPlainGoal = {
