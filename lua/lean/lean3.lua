@@ -5,7 +5,7 @@ function M.init()
 end
 
 function M.is_lean3_project()
-    return vim.bo.ft == "lean3"
+  return vim.bo.ft == "lean3"
 end
 
 function M.detect()

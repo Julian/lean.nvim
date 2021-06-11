@@ -114,7 +114,7 @@ function M.update()
     infoview_bufnr = infoview.buf
   end
 
-  local _update = vim.bo.ft == "lean3" and lean3.update_infoview or function(set_lines)
+  local _update = lean3.is_lean3_project() and lean3.update_infoview or function(set_lines)
     local current_buffer = vim.api.nvim_get_current_buf()
     local cursor = vim.api.nvim_win_get_cursor(0)
     local params = vim.lsp.util.make_position_params()
