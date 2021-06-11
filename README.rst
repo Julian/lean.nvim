@@ -24,10 +24,6 @@ Note that many simple syntactical things are not yet implemented
 (help is of course welcome), and that ``tree-sitter-lean`` is lean
 4-only.
 
-``lean.nvim`` currently supports both Lean 3 and Lean 4,
-which can be used simultaneously in a single session.
-However, support for Lean 3 may be removed in the future.
-
 Installation
 ------------
 
