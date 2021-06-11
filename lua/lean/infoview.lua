@@ -47,9 +47,6 @@ local function close_win(src_idx)
 
   M._infoviews_open[src_idx] = nil
   M._infoviews[src_idx] = nil
-
-  -- necessary because closing a window can cause others to resize
-  M._maybe_resize_infoviews()
 end
 
 -- create autocmds under the specified group and local to
@@ -179,16 +176,11 @@ end
 function M.enable(opts)
   if opts.one_per_tab == nil then opts.one_per_tab = true end
   M._opts = opts
-  M.set_autocmds()
-end
 
--- TODO: once neovim implements autocmds in its lua api, we can make
--- the publicly exposed functions used below into local ones
-
-function M.set_autocmds()
   vim.api.nvim_exec(string.format([[
-    augroup LeanInfoView
+    augroup LeanInfoview
       autocmd!
+      autocmd WinEnter * lua require'lean.infoview'._maybe_resize_infoviews()
       autocmd FileType lean3 lua require'lean.infoview'.set_update_autocmds()
       autocmd FileType lean lua require'lean.infoview'.set_update_autocmds()
       autocmd FileType lean3 lua require'lean.infoview'.set_closed_autocmds()
