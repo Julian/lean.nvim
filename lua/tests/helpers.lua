@@ -1,6 +1,5 @@
 local assert = require('luassert')
 
-local infoview = require('lean.infoview')
 local lean = require('lean')
 
 local api = vim.api
@@ -11,14 +10,13 @@ local timeout = vim.env.LEAN_NVIM_TEST_TIMEOUT or 1000
 -- everything disabled by default to encourage unit testing
 local default_config = {
   abbreviations = {
-      builtin = false,
-      compe = false,
-      snippets = false,
+    builtin = false,
+    compe = false,
+    snippets = false,
   },
   mappings = false,
   infoview = {
-      -- will likely make this false later
-      enable = true
+    enable = false
   },
   lsp = {
     enable = false
@@ -71,17 +69,10 @@ function helpers.clean_buffer(contents, callback)
       end
 
       api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
-
-      local infoview_info = infoview.open()
       callback{
         source_file = { bufnr = bufnr },
-        infoview = {
-          bufnr = infoview_info.bufnr,
-          window = infoview_info.window,
-        },
       }
     end)
-    infoview.close()
     vim.api.nvim_buf_delete(bufnr, { force = true })
   end
 end
