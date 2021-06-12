@@ -5,6 +5,7 @@ local infoview = require('lean.infoview')
 local api = vim.api
 local helpers = {_clean_buffer_counter = 1}
 
+local timeout = vim.env.LEAN_NVIM_TEST_TIMEOUT or 1000
 
 --- Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(text, feed_opts)
@@ -42,7 +43,7 @@ function helpers.clean_buffer(contents, callback)
       -- FIXME: For now all tests are against Lean 3
       require 'lean.lean3'.init()
 
-      local succeeded, _ = vim.wait(1000, vim.lsp.buf.server_ready)
+      local succeeded, _ = vim.wait(timeout, vim.lsp.buf.server_ready)
       assert.message("LSP server was never ready.").True(succeeded)
 
       api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
@@ -63,7 +64,7 @@ end
 
 --- Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
-  local succeeded, _ = vim.wait(2000, function()
+  local succeeded, _ = vim.wait(timeout, function()
     return not vim.tbl_isempty(vim.lsp.diagnostic.get_line_diagnostics())
   end)
   assert.message("Waited for line diagnostics but none came.").True(succeeded)
