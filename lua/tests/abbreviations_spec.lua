@@ -1,11 +1,7 @@
 local helpers = require('tests.helpers')
 
 describe('abbreviations', function()
-  helpers.setup {
-    abbreviations = {
-      snippets = true,
-    }
-  }
+  helpers.setup { abbreviations = { snippets = true } }
   describe('expansion', function()
     describe('snippets.nvim', function()
       it('expands abbreviations', helpers.clean_buffer('', function()
