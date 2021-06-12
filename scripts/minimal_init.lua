@@ -12,9 +12,3 @@ vim.api.nvim_exec([[
   runtime! plugin/lspconfig.vim
   runtime! plugin/plenary.vim
 ]], false)
-
-require('lean').setup{
-  abbreviations = {
-    snippets = true,
-  },
-}

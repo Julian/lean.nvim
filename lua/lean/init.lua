@@ -17,23 +17,26 @@ local lean = {
 function lean.setup(opts)
   opts = opts or {}
 
-  local abbreviations = opts.abbreviations or {}
-  if abbreviations.enable ~= false then lean.abbreviations.enable(abbreviations) end
+  opts.abbreviations = opts.abbreviations or {}
+  if opts.abbreviations.enable ~= false then lean.abbreviations.enable(opts.abbreviations) end
 
-  local infoview = opts.infoview or {}
-  if infoview.enable ~= false then require('lean.infoview').enable(infoview) end
+  opts.infoview = opts.infoview or {}
+  if opts.infoview.enable ~= false then require('lean.infoview').enable(opts.infoview) end
 
-  local lsp = opts.lsp or {}
-  if lsp.enable ~= false then lean.lsp.enable(lsp) end
+  opts.lsp = opts.lsp or {}
+  if opts.lsp.enable ~= false then lean.lsp.enable(opts.lsp) end
 
-  local treesitter = opts.treesitter or {}
-  if treesitter.enable ~= false then require('lean.treesitter').enable(treesitter) end
+  opts.treesitter = opts.treesitter or {}
+  if opts.treesitter.enable ~= false then require('lean.treesitter').enable(opts.treesitter) end
 
   if opts.mappings == true then
     vim.api.nvim_exec([[
       autocmd FileType lean lua require'lean'.use_suggested_mappings(true)
     ]], false)
   end
+
+  -- needed for testing
+  lean.config = opts
 end
 
 function lean.use_suggested_mappings(buffer_local)
