@@ -1,11 +1,33 @@
 local assert = require('luassert')
 
 local infoview = require('lean.infoview')
+local lean = require('lean')
 
 local api = vim.api
 local helpers = {_clean_buffer_counter = 1}
 
 local timeout = vim.env.LEAN_NVIM_TEST_TIMEOUT or 1000
+
+-- everything disabled by default to encourage unit testing
+local default_config = {
+  abbreviations = {
+      builtin = false,
+      compe = false,
+      snippets = false,
+  },
+  mappings = false,
+  infoview = {
+      -- will likely make this false later
+      enable = true
+  },
+  lsp = {
+    enable = false
+  }
+}
+
+function helpers.setup(config)
+  require("lean").setup(vim.tbl_extend("keep", config, default_config))
+end
 
 --- Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(text, feed_opts)
@@ -43,8 +65,10 @@ function helpers.clean_buffer(contents, callback)
       -- FIXME: For now all tests are against Lean 3
       require 'lean.lean3'.init()
 
-      local succeeded, _ = vim.wait(timeout, vim.lsp.buf.server_ready)
-      assert.message("LSP server was never ready.").True(succeeded)
+      if lean.config.lsp.enable ~= false then
+        local succeeded, _ = vim.wait(timeout, vim.lsp.buf.server_ready)
+        assert.message("LSP server was never ready.").True(succeeded)
+      end
 
       api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
 
