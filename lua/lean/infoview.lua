@@ -112,7 +112,7 @@ function M.is_open() return M._infoviews[get_idx()] ~= nil end
 function M.ensure_open()
   local infoview_idx = get_idx()
 
-  if M.is_open() then return M._infoviews[infoview_idx].bufnr end
+  if M.is_open() then return M._infoviews[infoview_idx] end
 
   local infoview_bufnr = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_name(infoview_bufnr, _INFOVIEW_BUF_NAME)
