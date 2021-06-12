@@ -1,4 +1,5 @@
 local M = { handlers = {} }
+local util = require('lspconfig.util')
 
 function M.enable(opts)
   opts.commands = vim.tbl_extend("keep", opts.commands or {}, {
@@ -15,6 +16,18 @@ function M.enable(opts)
     ["$/lean/plainGoal"] = M.handlers.plain_goal_handler;
     ["$/lean/plainTermGoal"] = M.handlers.plain_term_goal_handler;
   })
+
+  -- TODO: delete both of these once neovim/nvim-lspconfig#958 is merged
+  opts.root_dir = function(fname)
+      return util.root_pattern('leanpkg.toml')(fname) or util.find_git_ancestor(fname) or util.path.dirname(fname)
+    end
+  opts.on_new_config = function(config, root)
+      if not util.path.is_file(root .. "/leanpkg.toml") then return end
+      if not config.cmd_cwd then
+        config.cmd_cwd = root
+      end
+    end;
+
   require('lspconfig').leanls.setup(opts)
 end
 
