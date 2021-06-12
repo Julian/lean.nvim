@@ -33,6 +33,7 @@ local function snippets_nvim_enable(snippets, lean_abbreviations)
   end
 
   local all_snippets = snippets.snippets or {}
+  all_snippets.lean3 = lean_abbreviations
   all_snippets.lean = lean_abbreviations
   snippets.snippets = all_snippets
 end

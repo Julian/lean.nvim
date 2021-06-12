@@ -2,7 +2,7 @@ local helpers = require('tests.helpers')
 local clean_buffer = helpers.clean_buffer
 
 describe('sorry', function()
-  helpers.setup { lsp = { enable = true } }
+  helpers.setup { lsp3 = { enable = true } }
   it('inserts sorries for each remaining goal', clean_buffer([[
 def foo (n : nat) : n = n := begin
   induction n with d hd,

@@ -8,6 +8,10 @@ lean.nvim
 Prerequisites
 -------------
 
+NOTE: ``lean.nvim`` is incompatible with ``lean.vim``, 
+as it implements its own kind of filetype detection.
+If using ``lean.nvim``, you should NOT have ``lean.vim`` installed.
+
 ``lean.nvim`` currently requires `neovim 0.5 HEAD / nightly
 <https://github.com/neovim/neovim/releases/tag/nightly>`_.
 
@@ -90,6 +94,18 @@ Configuration & Usage
 In e.g. your ``init.lua``:
 
 .. code-block:: lua
+    local function on_attach(client, bufnr) {
+        -- If you don't already have an existing LSP setup, you
+        -- may want to reference the keybindings section of the
+        -- aforementioned nvim-lspconfig documentation, which
+        -- can be found at:
+        -- https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
+        local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
+        local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
+        buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
+        buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
+        buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+    }
 
     require('lean').setup{
         -- Abbreviation support
@@ -120,26 +136,24 @@ In e.g. your ``init.lua``:
             -- Clip the infoview to a maximum width
             max_width = 79,
         },
-        -- Enable the Lean language server?
+
+        -- Enable the Lean 3/Lean 4 language servers?
         --
         -- false to disable, otherwise should be a table of options to pass to
         --  `leanls`. See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls
         -- for details though lean-language-server actually doesn't support all
         -- the options mentioned there yet.
-        lsp = {
-            on_attach = function(client, bufnr)
-                -- If you don't already have an existing LSP setup, you
-                -- may want to reference the keybindings section of the
-                -- aforementioned nvim-lspconfig documentation, which
-                -- can be found at:
-                -- https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
-                local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
-                local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
-                buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
-                buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
-                buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
-            end,
+
+        -- Lean 3
+        lsp3 = {
+            on_attach = on_attach
             cmd = {"lean-language-server", "--stdio", '--', "-M", "4096"},
+        },
+
+        -- Lean 4
+        lsp = {
+            on_attach = on_attach
+            cmd = {"lean", "--server"},
         }
     }
 

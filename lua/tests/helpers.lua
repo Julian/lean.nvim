@@ -18,6 +18,9 @@ local default_config = {
   infoview = {
     enable = false
   },
+  lsp3 = {
+    enable = false
+  },
   lsp = {
     enable = false
   }
@@ -57,13 +60,13 @@ function helpers.clean_buffer(contents, callback)
   return function()
     local bufnr = vim.api.nvim_create_buf(false, true)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
-    api.nvim_buf_set_option(bufnr, 'filetype', 'lean')
+    api.nvim_buf_set_option(bufnr, 'filetype', 'lean3')
 
     api.nvim_buf_call(bufnr, function()
       -- FIXME: For now all tests are against Lean 3
       require 'lean.lean3'.init()
 
-      if lean.config.lsp.enable ~= false then
+      if lean.config.lsp3.enable ~= false then
         local succeeded, _ = vim.wait(timeout, vim.lsp.buf.server_ready)
         assert.message("LSP server was never ready.").True(succeeded)
       end

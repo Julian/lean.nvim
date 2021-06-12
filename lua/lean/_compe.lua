@@ -19,7 +19,7 @@ end
 Source.get_metadata = function(_)
   return {
     priority = 100;
-    filetypes = {'lean'};
+    filetypes = {'lean3', 'lean'};
     dup = true;
     sort = true;
     menu = '[LA]';

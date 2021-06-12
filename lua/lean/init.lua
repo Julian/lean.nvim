@@ -23,6 +23,9 @@ function lean.setup(opts)
   opts.infoview = opts.infoview or {}
   if opts.infoview.enable ~= false then require('lean.infoview').enable(opts.infoview) end
 
+  opts.lsp3 = opts.lsp3 or {}
+  if opts.lsp3.enable ~= false then require('lspconfig').lean3ls.setup(opts.lsp3) end
+
   opts.lsp = opts.lsp or {}
   if opts.lsp.enable ~= false then lean.lsp.enable(opts.lsp) end
 
@@ -31,6 +34,7 @@ function lean.setup(opts)
 
   if opts.mappings == true then
     vim.api.nvim_exec([[
+      autocmd FileType lean3 lua require'lean'.use_suggested_mappings(true)
       autocmd FileType lean lua require'lean'.use_suggested_mappings(true)
     ]], false)
   end
