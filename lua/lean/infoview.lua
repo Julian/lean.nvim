@@ -1,4 +1,5 @@
 local lean3 = require('lean.lean3')
+local leanlsp = require('lean.lsp')
 local set_augroup = require('lean._nvimapi').set_augroup
 
 local M = {_infoviews = {[0] = nil}, _opts = {}}
@@ -80,8 +81,8 @@ function M.update(infoview_bufnr)
 
       set_lines(lines)
     end
-    return vim.lsp.buf_request(0, "$/lean/plainGoal", goal_params, function(_, _, goal)
-      vim.lsp.buf_request(0, "$/lean/plainTermGoal", params, function(_, _, term_goal)
+    return leanlsp.plain_goal(0, function(_, _, goal)
+      leanlsp.plain_term_goal(0, function(_, _, term_goal)
         update(goal, term_goal)
       end)
     end)

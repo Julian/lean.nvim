@@ -1,21 +1,13 @@
 local M = { handlers = {} }
 
-local function position_params()
-  -- Shift forward by 1, since in vim it's easier to reach word
-  -- boundaries in normal mode.
-  local params = vim.lsp.util.make_position_params()
-  params.position.character = params.position.character + 1
-  return params
-end
-
 function M.enable(opts)
   opts.commands = vim.tbl_extend("keep", opts.commands or {}, {
     LeanPlainGoal = {
-      function() vim.lsp.buf_request(0, "$/lean/plainGoal", position_params()) end;
+      M.plain_goal;
       description = "Describe the current tactic state."
     };
     LeanPlainTermGoal = {
-      function() vim.lsp.buf_request(0, "$/lean/plainTermGoal", position_params()) end;
+      M.plain_term_goal;
       description = "Describe the expected type of the current term."
     };
   })
@@ -24,6 +16,21 @@ function M.enable(opts)
     ["$/lean/plainTermGoal"] = M.handlers.plain_term_goal_handler;
   })
   require('lspconfig').leanls.setup(opts)
+end
+
+-- Fetch goal state information from the server.
+function M.plain_goal(bufnr, handler)
+  -- Shift forward by 1, since in vim it's easier to reach word
+  -- boundaries in normal mode.
+  local params = vim.lsp.util.make_position_params()
+  params.position.character = params.position.character + 1
+  return vim.lsp.buf_request(bufnr, "$/lean/plainGoal", params, handler)
+end
+
+-- Fetch term goal state information from the server.
+function M.plain_term_goal(bufnr, handler)
+  local params = vim.lsp.util.make_position_params()
+  return vim.lsp.buf_request(bufnr, "$/lean/plainTermGoal", params, handler)
 end
 
 function M.handlers.plain_goal_handler (_, method, result, _, _, config)
