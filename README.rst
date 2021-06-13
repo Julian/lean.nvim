@@ -8,10 +8,6 @@ lean.nvim
 Prerequisites
 -------------
 
-NOTE: ``lean.nvim`` is incompatible with ``lean.vim``,
-as it implements its own kind of filetype detection.
-If using ``lean.nvim``, you should NOT have ``lean.vim`` installed.
-
 ``lean.nvim`` currently requires `neovim 0.5 HEAD / nightly
 <https://github.com/neovim/neovim/releases/tag/nightly>`_.
 
@@ -37,15 +33,16 @@ Install via your favorite plugin manager. E.g., with
     Plug 'hrsh7th/nvim-compe'
     Plug 'neovim/nvim-lspconfig'
 
+``lean.nvim`` already includes syntax highlighting and Lean filetype
+support, so installing the ``lean.vim`` (i.e. non-neovim) plugin is not
+required or recommended.
+
 For LSP support in Lean 3, you also first need to install
 ``lean-language-server``, which can be done via e.g.:
 
 .. code-block:: sh
 
     $ npm install -g lean-language-server
-
-In the future, support may be added for automatically installing it as
-part of this plugin.
 
 Features
 --------
