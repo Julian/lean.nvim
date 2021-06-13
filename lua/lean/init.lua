@@ -7,7 +7,7 @@ local lean = {
       ["<LocalLeader>i"] = "<Cmd>lua require('lean.infoview').toggle()<CR>";
       ["<LocalLeader>s"] = "<Cmd>lua require('lean.sorry').fill()<CR>";
       ["<LocalLeader>t"] = "<Cmd>lua require('lean.trythis').swap()<CR>";
-      ["<LocalLeader>3"] = "<Cmd>lua require('lean.ft').init3()<CR>";
+      ["<LocalLeader>3"] = "<Cmd>lua require('lean.lean3').init()<CR>";
     };
     i = {
     };

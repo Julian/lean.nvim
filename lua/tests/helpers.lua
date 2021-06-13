@@ -61,7 +61,7 @@ function helpers.clean_buffer(contents, callback)
 
     api.nvim_buf_call(bufnr, function()
       -- FIXME: For now all tests are against Lean 3
-      require 'lean.ft'.init3()
+      require 'lean.lean3'.init()
 
       if lean.config.lsp.enable ~= false then
         local succeeded, _ = vim.wait(timeout, vim.lsp.buf.server_ready)
