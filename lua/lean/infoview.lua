@@ -15,6 +15,7 @@ local _DEFAULT_WIN_OPTIONS = {
   number = false,
   relativenumber = false,
   spell = false,
+  winfixwidth = true,
   wrap = true,
 }
 
@@ -29,15 +30,6 @@ local _SEVERITY = {
 -- Get the ID of the infoview corresponding to the current window.
 local function get_idx()
   return 0
-end
-
-function M._maybe_resize_infoviews()
-  local max_width = M._opts.max_width or 79
-  for _, infoview in pairs(M._infoviews) do
-    if vim.api.nvim_win_get_width(infoview.window) > max_width then
-      vim.api.nvim_win_set_width(infoview.window, max_width)
-    end
-  end
 end
 
 function M.update(infoview_bufnr)
@@ -101,9 +93,9 @@ function M.update(infoview_bufnr)
 end
 
 function M.enable(opts)
+  opts.width = opts.width or 50
   M._opts = opts
   set_augroup("LeanInfoview", [[
-    autocmd WinEnter * lua require'lean.infoview'._maybe_resize_infoviews()
     autocmd BufWinEnter *.lean lua require'lean.infoview'.ensure_open()
   ]])
 end
@@ -123,7 +115,7 @@ function M.ensure_open()
 
   local current_window = vim.api.nvim_get_current_win()
 
-  vim.cmd "botright vsplit"
+  vim.cmd("botright " .. M._opts.width .. "vsplit")
   vim.cmd(string.format("buffer %d", infoview_bufnr))
 
   local window = vim.api.nvim_get_current_win()
@@ -143,8 +135,6 @@ function M.ensure_open()
   ]], infoview_bufnr, infoview_bufnr))
 
   M._infoviews[infoview_idx] = { bufnr = infoview_bufnr, window = window }
-
-  M._maybe_resize_infoviews()
 
   return M._infoviews[infoview_idx]
 end
