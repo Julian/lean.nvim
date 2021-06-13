@@ -7,7 +7,7 @@ local packpath = lean_nvim_dir .. '/packpath/*'
 vim.o.runtimepath = vim.o.runtimepath .. ',' .. packpath .. ',' .. lean_nvim_dir
 
 vim.api.nvim_exec([[
-  autocmd BufNewFile,BufRead *.lean setlocal filetype=lean
+  autocmd BufNewFile,BufRead *.lean setlocal filetype=lean3
 
   runtime! plugin/lspconfig.vim
   runtime! plugin/plenary.vim
