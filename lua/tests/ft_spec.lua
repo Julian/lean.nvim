@@ -3,7 +3,7 @@ describe('filetype detection', function()
 
   it('recognizes a lean file',
     function(_)
-      vim.api.nvim_command("edit test/lean/test.lean")
+      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
       assert.is.same(vim.bo.ft, "lean")
     end)
 end)
