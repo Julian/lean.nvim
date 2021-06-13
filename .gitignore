@@ -1,3 +1,4 @@
 packpath/
 *.olean
 leanpkg.path
+/lua/tests/fixtures/example-lean4-project/build
