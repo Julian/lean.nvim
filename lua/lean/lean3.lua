@@ -1,10 +1,10 @@
 local M = {}
 
-local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
-
 -- Ideally this obviously would use a TOML parser but yeah choosing to
 -- do nasty things and not add the dependency for now.
 local _MARKER = '.*lean_version.*\".*:3.*'
+
+local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
 
 function M.init()
   pcall(vim.cmd, 'TSBufDisable highlight')  -- tree-sitter-lean is lean4-only
@@ -19,10 +19,6 @@ function M.is_lean3_project()
     if line:match(_MARKER) then return true end
   end
   return false
-end
-
-function M.detect()
-  if M.is_lean3_project() then M.init() end
 end
 
 function M.update_infoview(set_lines)

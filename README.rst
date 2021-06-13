@@ -11,17 +11,14 @@ Prerequisites
 ``lean.nvim`` currently requires `neovim 0.5 HEAD / nightly
 <https://github.com/neovim/neovim/releases/tag/nightly>`_.
 
-For syntax highlighting and basic language support, you should either:
+Syntax highlighting and basic language support is included, you can also
+try the experimental support present via `tree-sitter-lean
+<https://github.com/Julian/tree-sitter-lean>`_ by installing
+`nvim-treesitter <https://github.com/nvim-treesitter/nvim-treesitter>`_
 
-    * Install the normal `lean.vim <https://github.com/leanprover/lean.vim>`_.
-
-    * or try the experimental support present via `tree-sitter-lean
-      <https://github.com/Julian/tree-sitter-lean>`_ by installing
-      `nvim-treesitter <https://github.com/nvim-treesitter/nvim-treesitter>`_
-
-       Note that many simple syntactical things are not yet implemented
-       (help is of course welcome), and that ``tree-sitter-lean`` is lean
-       4-only.
+Note that many simple syntactical things are not yet implemented
+(help is of course welcome), and that ``tree-sitter-lean`` is lean
+4-only.
 
 Installation
 ------------
@@ -34,7 +31,6 @@ Install via your favorite plugin manager. E.g., with
     Plug 'Julian/lean.nvim'
 
     Plug 'hrsh7th/nvim-compe'
-    Plug 'leanprover/lean.vim'
     Plug 'neovim/nvim-lspconfig'
 
 For LSP support in Lean 3, you also first need to install
