@@ -1,1 +1,3 @@
 packpath/
+*.olean
+leanpkg.path

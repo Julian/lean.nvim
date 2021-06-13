@@ -1,3 +1,4 @@
+.PHONY: test nvim lint
 nvim:
 	nvim --noplugin -u scripts/minimal_init.lua $(ARGS)
 
