@@ -1,13 +1,64 @@
 local M = {}
 
+local _MEMOIZED = nil
 local _CURSOR_MARKER = '$CURSOR'
 
 --- Load the Lean abbreviations as a Lua table.
 function M.load()
+  if _MEMOIZED ~= nil then return _MEMOIZED end
   local this_file = debug.getinfo(2, "S").source:sub(2)
   local base_directory = vim.fn.fnamemodify(this_file, ":h:h:h")
   local path = base_directory .. '/vscode-lean/abbreviations.json'
-  return vim.fn.json_decode(vim.fn.readfile(path))
+  _MEMOIZED = vim.fn.json_decode(vim.fn.readfile(path))
+  return _MEMOIZED
+end
+
+--- Retrieve the table of abbreviations that would produce the given symbol.
+--
+--  Allows for trailing junk. E.g. `λean` will produce information about `λ`.
+--
+--  The result is a table keyed by the length of the prefix match, and
+--  whose value is sorted such that shorter abbreviation suggestions are
+--  first.
+function M.reverse_lookup(symbol_plus_unknown)
+  local reverse = {}
+  for key, value in pairs(M.load()) do
+    if vim.startswith(symbol_plus_unknown, value) then
+      reverse[#value] = reverse[#value] or {}
+      table.insert(reverse[#value], M.leader .. key)
+    end
+  end
+  for _, value in pairs(reverse) do
+    table.sort(value, function(a, b) return #a < #b or #a == #b and  a < b end)
+  end
+  return reverse
+end
+
+--- Show a preview window with the reverse-lookup of the current character.
+function M.show_reverse_lookup()
+  local col = vim.api.nvim_win_get_cursor(0)[2] + 1
+  local char = vim.api.nvim_get_current_line():sub(col)
+  local results = M.reverse_lookup(char)
+  local lines
+  if vim.tbl_isempty(results) then
+    lines = {
+      string.format("No abbreviation found for %q.", char);
+      "",
+      "Add one by modifying your invocation of:";
+      "  require'lean'.setup{ abbreviations = { extra = { ... } } }`";
+    }
+  else
+    lines = {}
+    for i=#char, 1, -1 do
+      if results[i] ~= nil then
+        table.insert(lines, string.format("Type %s with:", char:sub(1, i)))
+        for _, each in ipairs(results[i]) do
+          table.insert(lines, "  " .. each)
+        end
+      end
+    end
+  end
+  vim.lsp.util.open_floating_preview(lines)
 end
 
 local function add_leader(leader, abbrevs)
