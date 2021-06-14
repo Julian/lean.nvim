@@ -17,6 +17,10 @@ function M.detect()
       if line:match(_MARKER) then ft = "lean3" end
     end
   end
+  M.set(ft)
+end
+
+function M.set(ft)
   vim.api.nvim_command("setfiletype " .. ft)
   if vim.bo.ft == "lean3" then lean3.init() end
 end

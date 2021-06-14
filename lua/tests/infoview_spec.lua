@@ -5,10 +5,10 @@ describe('infoview', function()
   require('tests.helpers').setup { infoview = { enable = true } }
 
   local infoview_info = infoview.open()
-  it('starts with the window position at the top', clean_buffer('',
+  clean_buffer('starts with the window position at the top', '',
     function(_)
       local cursor = vim.api.nvim_win_get_cursor(infoview_info.window)
       assert.is.same(1, cursor[1])
-    end))
+    end)
   infoview.close()
 end)

@@ -9,6 +9,9 @@ local timeout = vim.env.LEAN_NVIM_TEST_TIMEOUT or 1000
 
 -- everything disabled by default to encourage unit testing
 local default_config = {
+  treesitter = {
+    enable = false
+  },
   abbreviations = {
     builtin = false,
     compe = false,
@@ -51,22 +54,28 @@ local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
   api.nvim_buf_set_name(bufnr, unique_name)
 end
 
---- Create a clean Lean buffer with the given contents.
+function helpers.clean_buffer(name, contents, callback)
+  helpers.clean_buffer_ft(name, "lean3", contents, callback)
+  helpers.clean_buffer_ft(name, "lean", contents, callback)
+end
+
+--- Create a clean Lean buffer of the given filetype with the given contents.
 --
 --  Waits for the LSP to be ready before proceeding with a given callback.
 --
 --  Yes c(lean) may be a double entendre, and no I don't feel bad.
-function helpers.clean_buffer(contents, callback)
-  return function()
+function helpers.clean_buffer_ft(name, ft, contents, callback)
+  name = ft == "lean" and "lean: " .. name or "lean3: " .. name
+--luacheck: ignore
+  it(name,
+  function()
     local bufnr = vim.api.nvim_create_buf(false, true)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
-    api.nvim_buf_set_option(bufnr, 'filetype', 'lean3')
 
     api.nvim_buf_call(bufnr, function()
-      -- FIXME: For now all tests are against Lean 3
-      require 'lean.lean3'.init()
-
-      if lean.config.lsp3.enable ~= false then
+      require("lean.ft").set(ft)
+      local this_lsp = ft == "lean" and lean.config.lsp or lean.config.lsp3
+      if this_lsp.enable ~= false then
         local succeeded, _ = vim.wait(timeout, vim.lsp.buf.server_ready)
         assert.message("LSP server was never ready.").True(succeeded)
       end
@@ -77,7 +86,7 @@ function helpers.clean_buffer(contents, callback)
       }
     end)
     vim.api.nvim_buf_delete(bufnr, { force = true })
-  end
+  end)
 end
 
 --- Wait a few seconds for line diagnostics, erroring if none arrive.
