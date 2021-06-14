@@ -122,6 +122,7 @@ Configuration & Usage
 In e.g. your ``init.lua``:
 
 .. code-block:: lua
+
     -- If you don't already have a preferred neovim LSP setup, you may want
     -- to reference the nvim-lspconfig documentation, which can be found at:
     -- https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
