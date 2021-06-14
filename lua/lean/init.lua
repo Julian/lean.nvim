@@ -8,6 +8,7 @@ local lean = {
       ["<LocalLeader>s"] = "<Cmd>lua require('lean.sorry').fill()<CR>";
       ["<LocalLeader>t"] = "<Cmd>lua require('lean.trythis').swap()<CR>";
       ["<LocalLeader>3"] = "<Cmd>lua require('lean.lean3').init()<CR>";
+      ["<LocalLeader>\\"] = "<Cmd>lua require('lean.abbreviations').show_reverse_lookup()<CR>";
     };
     i = {
     };

@@ -65,6 +65,8 @@ Features
 
     * ``<LocalLeader>3``: force a buffer into Lean 3 mode
 
+    * ``<LocalLeader>\``: show what abbreviation would produce the symbol under the cursor
+
 * A basic infoview which can show persistent goal, term & tactic state
 
 * Hover (preview) commands:
