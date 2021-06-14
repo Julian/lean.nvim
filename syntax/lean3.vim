@@ -115,6 +115,6 @@ hi def link leanSorry             Error
 syn sync minlines=200
 syn sync maxlines=500
 
-let b:current_syntax = "lean"
+let b:current_syntax = "lean3"
 
 " vim: ts=8 sw=8
