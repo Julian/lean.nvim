@@ -11,6 +11,8 @@ Prerequisites
 ``lean.nvim`` currently requires `neovim 0.5 HEAD / nightly
 <https://github.com/neovim/neovim/releases/tag/nightly>`_.
 
+On macOS, you can install it via ``brew install --head neovim``.
+
 Installation
 ------------
 
