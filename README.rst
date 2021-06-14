@@ -161,10 +161,12 @@ In e.g. your ``init.lua``:
         --
         -- false by default, true to enable
         mappings = false,
-        -- Enable the infauxview?
+        -- Enable the infoview?
+        --
+        -- false to disable, otherwise a table of options below.
         infoview = {
-            -- Clip the infoview to a maximum width
-            max_width = 79,
+            -- Use a wider or narrower infoview.
+            width = 50,
         },
 
         -- Enable the Lean language server(s)?
