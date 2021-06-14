@@ -54,9 +54,11 @@ local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
   api.nvim_buf_set_name(bufnr, unique_name)
 end
 
-function helpers.clean_buffer(name, contents, callback)
-  helpers.clean_buffer_ft(name, "lean3", contents, callback)
-  helpers.clean_buffer_ft(name, "lean", contents, callback)
+function helpers.clean_buffer(contents, callback)
+  return function ()
+    helpers.clean_buffer_ft("lean3", contents, callback)()
+    helpers.clean_buffer_ft("lean", contents, callback)()
+  end
 end
 
 --- Create a clean Lean buffer of the given filetype with the given contents.
@@ -64,11 +66,8 @@ end
 --  Waits for the LSP to be ready before proceeding with a given callback.
 --
 --  Yes c(lean) may be a double entendre, and no I don't feel bad.
-function helpers.clean_buffer_ft(name, ft, contents, callback)
-  name = ft == "lean" and "lean: " .. name or "lean3: " .. name
---luacheck: ignore
-  it(name,
-  function()
+function helpers.clean_buffer_ft(ft, contents, callback)
+  return function()
     local bufnr = vim.api.nvim_create_buf(false, true)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
 
@@ -86,7 +85,7 @@ function helpers.clean_buffer_ft(name, ft, contents, callback)
       }
     end)
     vim.api.nvim_buf_delete(bufnr, { force = true })
-  end)
+  end
 end
 
 --- Wait a few seconds for line diagnostics, erroring if none arrive.

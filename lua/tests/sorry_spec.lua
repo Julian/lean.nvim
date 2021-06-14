@@ -3,7 +3,7 @@ local clean_buffer_ft = helpers.clean_buffer_ft
 
 describe('sorry', function()
   helpers.setup { lsp3 = { enable = true } }
-  clean_buffer_ft('inserts sorries for each remaining goal', "lean3", [[
+  it('inserts sorries for each remaining goal', clean_buffer_ft("lean3", [[
 def foo (n : nat) : n = n := begin
   induction n with d hd,
 end]], function()
@@ -19,9 +19,9 @@ def foo (n : nat) : n = n := begin
   { sorry },
   { sorry },
 end]], table.concat(vim.fn.getline(1, '$'), '\n'))
-  end)
+  end))
 
-  clean_buffer_ft('does nothing if there are no goals', "lean3", [[
+  it('does nothing if there are no goals', clean_buffer_ft("lean3", [[
 def foo (n : nat) : n = n := begin
   refl,
 end]], function()
@@ -32,5 +32,5 @@ end]], function()
 def foo (n : nat) : n = n := begin
   refl,
 end]], table.concat(vim.fn.getline(1, '$'), '\n'))
-  end)
+  end))
 end)
