@@ -25,7 +25,7 @@ syn keyword leanCommand universe universes example axioms constants
 syn keyword leanCommand meta parameter parameters variable variables
 syn keyword leanCommand reserve precedence postfix prefix notation infix infixl infixr
 
-syn keyword leanKeyword by
+syn keyword leanKeyword begin by end
 syn keyword leanKeyword forall fun Pi from have show assume suffices let if else then in with calc match do this
 syn keyword leanKeyword try catch finally for unless return mut continue break
 syn keyword leanKeyword Sort Prop Type
@@ -37,12 +37,13 @@ syn match leanCommand "#print"
 syn keyword leanSorry sorry
 syn match leanSorry "#exit"
 
-syn region leanAttributeArgs start='\[' end='\]' contained keepend contains=leanString,leanNumber
+syn region leanAttributeArgs start='\[' end='\]' contained contains=leanString,leanNumber,leanAttributeArgs
 syn match leanCommandPrefix '@' nextgroup=leanAttributeArgs
 syn keyword leanCommandPrefix attribute skipwhite nextgroup=leanAttributeArgs
 
 " constants
 syn match leanOp "[:=><λ←→↔∀∃∧∨¬≤≥▸·+*-/;$|&%!×]"
+syn match leanOp '\([A-Za-z]\)\@<!?'
 
 " delimiters
 syn region leanEncl matchgroup=leanDelim start="#\[" end="\]" contains=TOP
@@ -59,7 +60,10 @@ syn keyword	leanTodo 	containedin=leanComment TODO FIXME BUG FIX
 
 syn match leanStringEscape '\\.' contained
 syn region leanString start='"' end='"' contains=leanInterpolation,leanStringEscape
-syn region leanInterpolation contained start='{' end='}' contains=TOP keepend
+" HACK: Lean 4 supports both interpolated and non-interpolated strings
+" We want "{" to be highlighted as a string (because it often occurs in
+" syntax definitions).
+syn region leanInterpolation contained start='{\(\s*"\)\@!' end='}' contains=TOP keepend
 
 syn match leanChar "'[^\\]'"
 syn match leanChar "'\\.'"
@@ -107,6 +111,9 @@ hi def link leanNumber            Number
 hi def link leanNameLiteral       Identifier
 
 hi def link leanSorry             Error
+
+syn sync minlines=200
+syn sync maxlines=500
 
 let b:current_syntax = "lean"
 
