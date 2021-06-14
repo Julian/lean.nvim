@@ -47,8 +47,10 @@ For Lean 3 support, in addition to the instructions above, you should:
 Lean 4
 ^^^^^^
 
-For Lean 4 support, in addition to the instructions
-above, there is experimental `nvim-treesitter
+For Lean 4 support, a recent Lean 4 nightly build is recommended (one at
+least from mid-June 2021).
+
+In addition to the instructions above, there is experimental `nvim-treesitter
 <https://github.com/nvim-treesitter/nvim-treesitter>`_ support being
 developed in `<https://github.com/Julian/tree-sitter-lean>`_ which can
 be used for enhanced indentation (TODO), text object (TODO), syntax
