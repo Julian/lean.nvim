@@ -11,15 +11,6 @@ Prerequisites
 ``lean.nvim`` currently requires `neovim 0.5 HEAD / nightly
 <https://github.com/neovim/neovim/releases/tag/nightly>`_.
 
-Syntax highlighting and basic language support is included, you can also
-try the experimental support present via `tree-sitter-lean
-<https://github.com/Julian/tree-sitter-lean>`_ by installing
-`nvim-treesitter <https://github.com/nvim-treesitter/nvim-treesitter>`_
-
-Note that many simple syntactical things are not yet implemented
-(help is of course welcome), and that ``tree-sitter-lean`` is lean
-4-only.
-
 Installation
 ------------
 
@@ -29,20 +20,54 @@ Install via your favorite plugin manager. E.g., with
 .. code-block:: vim
 
     Plug 'Julian/lean.nvim'
-
-    Plug 'hrsh7th/nvim-compe'
     Plug 'neovim/nvim-lspconfig'
+
+    " Optional, though highly recommended that you have some completion plugin
+    Plug 'hrsh7th/nvim-compe'
 
 ``lean.nvim`` already includes syntax highlighting and Lean filetype
 support, so installing the ``lean.vim`` (i.e. non-neovim) plugin is not
 required or recommended.
 
-For LSP support in Lean 3, you also first need to install
-``lean-language-server``, which can be done via e.g.:
+``lean.nvim`` supports both `Lean 3
+<https://github.com/leanprover-community/lean>`_ as well as the emerging
+`Lean 4 <https://github.com/leanprover/lean4>`_.
 
-.. code-block:: sh
+Lean 3
+^^^^^^
 
-    $ npm install -g lean-language-server
+For Lean 3 support, in addition to the instructions above, you should:
+
+    * Install ``lean-language-server``, which can be done via e.g.:
+
+        .. code-block:: sh
+
+            $ npm install -g lean-language-server
+
+Lean 4
+^^^^^^
+
+For Lean 4 support, in addition to the instructions
+above, there is experimental `nvim-treesitter
+<https://github.com/nvim-treesitter/nvim-treesitter>`_ support being
+developed in `<https://github.com/Julian/tree-sitter-lean>`_ which can
+be used for enhanced indentation (TODO), text object (TODO), syntax
+highlighting and querying but which is still very nascent.
+
+If you wish to try it, it can be installed by adding e.g.:
+
+.. code-block:: vim
+
+    Plug 'nvim-treesitter/nvim-treesitter'
+    Plug 'nvim-treesitter/nvim-treesitter-textobjects'
+
+if you do not already have tree sitter installed.
+
+As above, many simple syntactical things are not yet implemented (help
+is of course welcome). You likely will want to flip back and forth
+between it and the standard syntax highlighting via ``:TSBufDisable
+highlight`` whenever encountering misparsed terms. Bug reports (to the
+aforementioned repository) are also welcome.
 
 Features
 --------
@@ -93,12 +118,13 @@ Configuration & Usage
 In e.g. your ``init.lua``:
 
 .. code-block:: lua
+    -- If you don't already have a preferred neovim LSP setup, you may want
+    -- to reference the nvim-lspconfig documentation, which can be found at:
+    -- https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
+    -- For completeness (of showing this plugin's settings), we show
+    -- a barebones LSP attach handler (which will give you Lean LSP
+    -- functionality in attached buffers) here:
     local function on_attach(client, bufnr) {
-        -- If you don't already have an existing LSP setup, you
-        -- may want to reference the keybindings section of the
-        -- aforementioned nvim-lspconfig documentation, which
-        -- can be found at:
-        -- https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
         local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
         local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
         buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
@@ -136,24 +162,22 @@ In e.g. your ``init.lua``:
             max_width = 79,
         },
 
-        -- Enable the Lean 3/Lean 4 language servers?
+        -- Enable the Lean language server(s)?
         --
         -- false to disable, otherwise should be a table of options to pass to
-        --  `leanls`. See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls
-        -- for details though lean-language-server actually doesn't support all
-        -- the options mentioned there yet.
-
-        -- Lean 3
-        lsp3 = {
-            on_attach = on_attach
-            cmd = {"lean-language-server", "--stdio", '--', "-M", "4096"},
-        },
+        --  `leanls` and/or `lean3ls`.
+        --
+        -- See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls for details.
 
         -- Lean 4
         lsp = {
             on_attach = on_attach
-            cmd = {"lean", "--server"},
         }
+
+        -- Lean 3
+        lsp3 = {
+            on_attach = on_attach
+        },
     }
 
 If you're using an ``init.vim``-only configuration setup, simply surround the
