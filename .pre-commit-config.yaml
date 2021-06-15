@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.0.1
     hooks:
     -   id: check-json
     -   id: check-yaml
@@ -11,3 +11,8 @@ repos:
     rev: v1.0.0
     hooks:
     -   id: luacheck
+- repo: https://github.com/myint/rstcheck
+  rev: 3f92957478422df87bd730abde66f089cc1ee19b
+  hooks:
+  -   id: rstcheck
+      args: [--report=warning]
