@@ -61,22 +61,28 @@ function helpers.clean_buffer(contents, callback)
   end
 end
 
+function helpers.lsp_wait()
+  local succeeded, _ = vim.wait(timeout, vim.lsp.buf.server_ready)
+  assert.message("LSP server was never ready.").True(succeeded)
+end
+
 --- Create a clean Lean buffer of the given filetype with the given contents.
 --
 --  Waits for the LSP to be ready before proceeding with a given callback.
 --
 --  Yes c(lean) may be a double entendre, and no I don't feel bad.
-function helpers.clean_buffer_ft(ft, contents, callback)
+function helpers.clean_buffer_ft(ft, contents, callback, enter)
   return function()
     local bufnr = vim.api.nvim_create_buf(false, true)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
+    -- apparently necessary to trigger BufWinEnter
+    if enter then vim.api.nvim_set_current_buf(bufnr) end
 
     api.nvim_buf_call(bufnr, function()
       require("lean.ft").set(ft)
       local this_lsp = ft == "lean" and lean.config.lsp or lean.config.lsp3
       if this_lsp.enable ~= false then
-        local succeeded, _ = vim.wait(timeout, vim.lsp.buf.server_ready)
-        assert.message("LSP server was never ready.").True(succeeded)
+        helpers.lsp_wait()
       end
 
       api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
