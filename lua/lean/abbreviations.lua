@@ -1,3 +1,9 @@
+---@brief [[
+--- Support for abbreviations (unicode character replacement).
+---@brief ]]
+
+---@tag lean.abbreviations
+
 local M = {}
 
 local _MEMOIZED = nil
