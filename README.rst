@@ -24,8 +24,10 @@ Install via your favorite plugin manager. E.g., with
     Plug 'Julian/lean.nvim'
     Plug 'neovim/nvim-lspconfig'
 
-    " Optional, though highly recommended that you have some completion plugin
-    Plug 'hrsh7th/nvim-compe'
+    " Optional Dependencies:
+
+    Plug 'hrsh7th/nvim-compe'  " For LSP completion
+    Plug 'andrewradev/switch.vim'  " For Lean switch support
 
 ``lean.nvim`` already includes syntax highlighting and Lean filetype
 support, so installing the ``lean.vim`` (i.e. non-neovim) plugin is not
