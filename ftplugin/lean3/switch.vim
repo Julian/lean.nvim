@@ -8,7 +8,8 @@ endif
 let b:switch_definitions = [
     \ g:switch_builtins.true_false,
     \ ["#check", "#eval", "#reduce"],
-    \ ['\(begin\n\s*\)\@<!sorry', 'begin\r  sorry\rend'],
+    \ ['\(begin\n\s*\|by \)\@<!sorry', 'begin\r  sorry\rend'],
+    \ ['by sorry', 'by library_search'],
     \ ["tidy", "suggest", "hint", "linarith", "library_search"],
     \ ["rw", "simp", "simp?"],
     \ ["cases", "rcases", "obtain"],
