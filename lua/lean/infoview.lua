@@ -34,9 +34,6 @@ end
 
 function M.update(infoview_bufnr)
   local _update = vim.b.lean3 and lean3.update_infoview or function(set_lines)
-    local current_buffer = vim.api.nvim_get_current_buf()
-    local cursor = vim.api.nvim_win_get_cursor(0)
-
     local update = function(goal, term_goal)
       local lines = {}
 
@@ -59,7 +56,7 @@ function M.update(infoview_bufnr)
         vim.list_extend(lines, vim.split(term_goal.goal, '\n', true))
       end
 
-      for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics(current_buffer, cursor[0])) do
+      for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics()) do
         local start = diag.range["start"]
         local end_ = diag.range["end"]
         vim.list_extend(lines, {'', string.format('▶ %d:%d-%d:%d: %s:',
