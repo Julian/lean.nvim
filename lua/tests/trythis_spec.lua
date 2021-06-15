@@ -2,7 +2,7 @@ local helpers = require('tests.helpers')
 
 describe('trythis', function()
   helpers.setup { lsp3 = { enable = true } }
-  it('replaces a single try this', helpers.clean_buffer([[
+  it('replaces a single try this', helpers.clean_buffer_ft("lean3", [[
 meta def whatshouldIdo := (do tactic.trace "Try this: existsi 2; refl\n")
 example : ∃ n, n = 2 := by whatshouldIdo]], function()
     vim.api.nvim_command('normal G$')
@@ -16,7 +16,7 @@ example : ∃ n, n = 2 := by whatshouldIdo]], function()
   end))
 
   -- Emitted by e.g. pretty_cases
-  it('replaces multiline try this messages', helpers.clean_buffer([[
+  it('replaces multiline try this messages', helpers.clean_buffer_ft("lean3", [[
 meta def whatshouldIdo := (do tactic.trace "Try this: existsi 2,\nrefl,\n")
 example : ∃ n, n = 2 := by {
   whatshouldIdo
@@ -35,7 +35,7 @@ example : ∃ n, n = 2 := by {
 
   -- Emitted by e.g. hint
   -- luacheck: ignore
-  it('replaces squashed together try this messages', helpers.clean_buffer([[
+  it('replaces squashed together try this messages', helpers.clean_buffer_ft("lean3", [[
 meta def whatshouldIdo := (do tactic.trace "the following tactics solve the goal\n---\nTry this: finish\nTry this: tauto\n")
 example : ∃ n, n = 2 := by whatshouldIdo]], function()
     vim.api.nvim_command('normal G$')
