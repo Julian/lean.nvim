@@ -5,8 +5,6 @@ local lean = require('lean')
 local api = vim.api
 local helpers = {_clean_buffer_counter = 1}
 
-local timeout = vim.env.LEAN_NVIM_TEST_TIMEOUT or 1000
-
 -- everything disabled by default to encourage unit testing
 local default_config = {
   treesitter = {
@@ -62,7 +60,7 @@ function helpers.clean_buffer(contents, callback)
 end
 
 function helpers.lsp_wait()
-  local succeeded, _ = vim.wait(timeout, vim.lsp.buf.server_ready)
+  local succeeded, _ = vim.wait(10000, vim.lsp.buf.server_ready)
   assert.message("LSP server was never ready.").True(succeeded)
 end
 
@@ -96,7 +94,7 @@ end
 
 --- Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
-  local succeeded, _ = vim.wait(timeout * 2, function()
+  local succeeded, _ = vim.wait(5000, function()
     return not vim.tbl_isempty(vim.lsp.diagnostic.get_line_diagnostics())
   end)
   assert.message("Waited for line diagnostics but none came.").True(succeeded)

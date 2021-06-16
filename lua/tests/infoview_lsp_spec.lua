@@ -48,12 +48,12 @@ describe('infoview', function()
     helpers.lsp_wait()
     vim.wait(5000)
 
-    it('lean 4 term state',
+    it('term state',
     function(_)
       infoview_lsp_test({3, 23}, {"expected type", "⊢ Nat"})
     end)
 
-    it('lean 4 tactic state',
+    it('tactic state',
     function(_)
       infoview_lsp_test({6, 9}, {"1 goal", "p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
     end)
