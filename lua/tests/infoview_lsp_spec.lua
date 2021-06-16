@@ -27,7 +27,7 @@ describe('infoview', function()
     lsp3 = { enable = true },
   }
 
-  describe('lean 3', function()
+  it('lean 3', function()
     vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
     helpers.lsp_wait()
     vim.wait(5000)
@@ -43,7 +43,7 @@ describe('infoview', function()
     end)
   end)
 
-  describe('lean 4', function()
+  it('lean 4', function()
     vim.api.nvim_command("edit lua/tests/fixtures/example-lean4-project/Test.lean")
     helpers.lsp_wait()
     vim.wait(5000)
