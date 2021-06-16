@@ -1,6 +1,6 @@
-local M = {}
+local treesitter = {}
 
-function M.enable(opts)
+function treesitter.enable(opts)
   local has_treesitter, parsers = pcall(require, 'nvim-treesitter.parsers')
   if not has_treesitter then return end
 
@@ -13,4 +13,4 @@ function M.enable(opts)
   parsers.get_parser_configs().lean = opts
 end
 
-return M
+return treesitter

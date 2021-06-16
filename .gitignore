@@ -1,3 +1,4 @@
+doc/tags
 packpath/
 *.olean
 leanpkg.path

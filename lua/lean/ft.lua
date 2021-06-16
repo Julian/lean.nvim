@@ -1,4 +1,4 @@
-local M = {}
+local ft = {}
 
 local lean3 = require("lean.lean3")
 
@@ -8,21 +8,20 @@ local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
 -- do nasty things and not add the dependency for now.
 local _MARKER = '.*lean_version.*\".*:3.*'
 
-function M.detect()
-  local ft = "lean"
+function ft.detect()
   local project_root = find_project_root(vim.api.nvim_buf_get_name(0))
   if project_root then
     local result = vim.fn.readfile(project_root .. '/leanpkg.toml')
     for _, line in ipairs(result) do
-      if line:match(_MARKER) then ft = "lean3" end
+      if line:match(_MARKER) then return ft.set("lean3") end
     end
   end
-  M.set(ft)
+  ft.set("lean")
 end
 
-function M.set(ft)
-  vim.api.nvim_command("setfiletype " .. ft)
+function ft.set(filetype)
+  vim.api.nvim_command("setfiletype " .. filetype)
   if vim.bo.ft == "lean3" then lean3.init() end
 end
 
-return M
+return ft
