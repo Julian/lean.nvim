@@ -34,14 +34,14 @@ describe('infoview', function()
 
     it('shows term state',
     function(_)
-      local text = infoview_lsp_update({3, 23})
-      assert.has_all(text, {"⊢ ℕ"})
+      local text = infoview_lsp_update({5, 23})
+      assert.has_all(text, {"⊢ nat"})
     end)
 
     it('shows tactic state',
     function(_)
-      local text = infoview_lsp_update({7, 10})
-      assert.has_all(text, {"p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
+      local text = infoview_lsp_update({9, 10})
+      assert.has_all(text, {"p q : Prop", "h : or p q", "⊢ or q p"})
     end)
   end)
 

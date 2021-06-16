@@ -1,5 +1,7 @@
 import test.test1
 
+set_option pp.notation false
+
 def test1 : nat := test
 
 theorem test2 {p : Prop} {q : Prop} : p ∨ q → q ∨ p :=
