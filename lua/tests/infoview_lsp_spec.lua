@@ -9,12 +9,17 @@ local function infoview_lsp_update(pos)
     local infoview_info = infoview.open()
     local before = get_info_lines(infoview_info)
     vim.api.nvim_win_set_cursor(0, pos)
-    infoview.update(infoview_info.bufnr)
-    local result, _ = vim.wait(5000, function()
-      local curr = get_info_lines(infoview_info)
-      if curr == before then return false end
-      return true
-    end)
+    -- wait for server pass
+    local result, _ = vim.wait(10000, function()
+      infoview.update(infoview_info.bufnr)
+      -- wait for update data - will be empty if server pass incomplete
+      local update_result, _ = vim.wait(500, function()
+        local curr = get_info_lines(infoview_info)
+        if curr == before or curr == "" then return false end
+        return true
+      end)
+      return update_result
+    end, 1000)
     assert.message("infoview text did not update in time").is_true(result)
     return get_info_lines(infoview_info)
 end
@@ -29,7 +34,6 @@ describe('infoview', function()
   it('lean 3', function()
     vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
     helpers.lsp_wait()
-    vim.wait(5000)
 
     it('term state',
     function(_)
@@ -47,7 +51,6 @@ describe('infoview', function()
   it('lean 4', function()
     vim.api.nvim_command("edit lua/tests/fixtures/example-lean4-project/Test.lean")
     helpers.lsp_wait()
-    vim.wait(5000)
 
     it('term state',
     function(_)
