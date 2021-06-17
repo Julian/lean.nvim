@@ -5,19 +5,18 @@ local function get_info_lines(infoview_info)
   return table.concat(vim.api.nvim_buf_get_lines(infoview_info.bufnr, 0, -1, true), "\n")
 end
 
-local function infoview_lsp_test(pos, expected)
+local function infoview_lsp_update(pos)
     local infoview_info = infoview.open()
+    local before = get_info_lines(infoview_info)
     vim.api.nvim_win_set_cursor(0, pos)
     infoview.update(infoview_info.bufnr)
     local result, _ = vim.wait(5000, function()
-      for _, string in pairs(expected) do
-        local curr = get_info_lines(infoview_info)
-        if not curr:find(string) then return false end
-      end
+      local curr = get_info_lines(infoview_info)
+      if curr == before then return false end
       return true
     end)
-    assert.message( "expected: " .. vim.inspect(expected) ..  ", actual: " .. get_info_lines(infoview_info)
-    ).is_true(result)
+    assert.message("infoview text did not update in time").is_true(result)
+    return get_info_lines(infoview_info)
 end
 
 describe('infoview', function()
@@ -34,12 +33,14 @@ describe('infoview', function()
 
     it('term state',
     function(_)
-      infoview_lsp_test({3, 23}, {"⊢ ℕ"})
+      local text = infoview_lsp_update({3, 23})
+      assert.has_all(text, {"⊢ ℕ"})
     end)
 
     it('tactic state',
     function(_)
-      infoview_lsp_test({7, 10}, {"p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
+      local text = infoview_lsp_update({7, 10})
+      assert.has_all(text, {"p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
     end)
   end)
 
@@ -50,12 +51,14 @@ describe('infoview', function()
 
     it('term state',
     function(_)
-      infoview_lsp_test({3, 23}, {"expected type", "⊢ Nat"})
+      local text = infoview_lsp_update({3, 23})
+      assert.has_all(text, {"expected type", "⊢ Nat"})
     end)
 
     it('tactic state',
     function(_)
-      infoview_lsp_test({6, 9}, {"1 goal", "p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
+      local text = infoview_lsp_update({6, 9})
+      assert.has_all(text, {"1 goal", "p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
     end)
   end)
 

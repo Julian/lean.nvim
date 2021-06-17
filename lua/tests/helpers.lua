@@ -31,6 +31,17 @@ function helpers.setup(config)
   require("lean").setup(vim.tbl_extend("keep", config, default_config))
 end
 
+local function has_all(_, arguments)
+  local text = arguments[1]
+  local expected = arguments[2]
+  for _, string in pairs(expected) do
+    assert.has_match(string, text, nil, true)
+  end
+  return true
+end
+
+assert:register("assertion", "has_all", has_all)
+
 --- Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(text, feed_opts)
   feed_opts = feed_opts or 'n'
