@@ -1,3 +1,12 @@
+---@brief [[
+--- lean.nvim is a plugin providing Neovim support for the Lean interactive
+--- theorem prover, developed by Leonardo de Moura at Microsoft Research.
+---
+--- To find out more, see https://github.com/Julian/lean.nvim.
+---@brief ]]
+
+---@tag lean.nvim
+
 local lean = {
   lsp = require('lean.lsp'),
   abbreviations = require('lean.abbreviations'),
@@ -15,6 +24,8 @@ local lean = {
   }
 }
 
+--- Setup function to be run in your init.lua (or init.vim).
+---@param opts table: Configuration options
 function lean.setup(opts)
   opts = opts or {}
 
