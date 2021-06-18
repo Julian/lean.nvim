@@ -27,8 +27,10 @@ describe('infoview', function()
   }
 
   it('lean 3', function()
-    vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
-    helpers.lsp_wait()
+    before_each(function()
+      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
+      helpers.lsp_wait()
+    end)
 
     it('term state',
     function(_)
@@ -44,8 +46,10 @@ describe('infoview', function()
   end)
 
   it('lean 4', function()
-    vim.api.nvim_command("edit lua/tests/fixtures/example-lean4-project/Test.lean")
-    helpers.lsp_wait()
+    before_each(function()
+      vim.api.nvim_command("edit lua/tests/fixtures/example-lean4-project/Test.lean")
+      helpers.lsp_wait()
+    end)
 
     it('term state',
     function(_)
