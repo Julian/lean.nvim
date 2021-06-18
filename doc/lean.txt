@@ -16,13 +16,6 @@ lean.setup({opts})                                              *lean.setup()*
 
 
 ================================================================================
-M.tbl_repeat()                                                *M.tbl_repeat()*
-    Return an array-like table with a value repeated the given number of times.
-
-
-
-
-================================================================================
                                                             *lean.abbreviations*
 
 Support for abbreviations (unicode character replacement).
