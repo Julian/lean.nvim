@@ -5,7 +5,7 @@ local docgen = require('docgen')
 local docs = {}
 
 docs.test = function(input_dir, output_file)
-  local input_files = vim.fn.globpath(input_dir, "**/*.lua", false, true)
+  local input_files = vim.fn.globpath(input_dir, "**/[^_]*.lua", false, true)
 
   -- Always put init.lua first, then you can do other stuff.
   table.sort(input_files, function(a, b)
