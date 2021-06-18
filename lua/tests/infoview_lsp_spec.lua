@@ -1,27 +1,22 @@
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 
-local function get_info_lines(infoview_info)
-  return table.concat(vim.api.nvim_buf_get_lines(infoview_info.bufnr, 0, -1, true), "\n")
-end
-
 local function infoview_lsp_update(pos)
-    local infoview_info = infoview.open()
-    local before = get_info_lines(infoview_info)
+    local before = infoview.get_info_lines()
     vim.api.nvim_win_set_cursor(0, pos)
     -- wait for server pass
     local result, _ = vim.wait(10000, function()
-      infoview.update(infoview_info.bufnr)
+      infoview.update(infoview.open().bufnr)
       -- wait for update data - will be empty if server pass incomplete
       local update_result, _ = vim.wait(500, function()
-        local curr = get_info_lines(infoview_info)
+        local curr = infoview.get_info_lines()
         if curr == before or curr == "" then return false end
         return true
       end)
       return update_result
     end, 1000)
     assert.message("infoview text did not update in time").is_true(result)
-    return get_info_lines(infoview_info)
+    return infoview.get_info_lines()
 end
 
 describe('infoview', function()

@@ -9,7 +9,7 @@ describe('infoview', function()
   it('automatically opens', clean_buffer_ft('lean', '',
     function(_)
       assert.is_true(infoview.is_open())
-    end, true))
+    end))
 
   local infoview_info = infoview.open()
 

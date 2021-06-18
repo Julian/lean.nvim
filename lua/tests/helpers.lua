@@ -80,12 +80,12 @@ end
 --  Waits for the LSP to be ready before proceeding with a given callback.
 --
 --  Yes c(lean) may be a double entendre, and no I don't feel bad.
-function helpers.clean_buffer_ft(ft, contents, callback, enter)
+function helpers.clean_buffer_ft(ft, contents, callback)
   return function()
     local bufnr = vim.api.nvim_create_buf(false, true)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
     -- apparently necessary to trigger BufWinEnter
-    if enter then vim.api.nvim_set_current_buf(bufnr) end
+    vim.api.nvim_set_current_buf(bufnr)
 
     api.nvim_buf_call(bufnr, function()
       require("lean.ft").set(ft)
