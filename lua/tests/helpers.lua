@@ -70,8 +70,8 @@ function helpers.clean_buffer(contents, callback)
   end
 end
 
-function helpers.lsp_wait()
-  local succeeded, _ = vim.wait(10000, vim.lsp.buf.server_ready)
+function helpers.wait_for_ready_lsp()
+  local succeeded, _ = vim.wait(20000, vim.lsp.buf.server_ready)
   assert.message("LSP server was never ready.").True(succeeded)
 end
 
@@ -91,7 +91,7 @@ function helpers.clean_buffer_ft(ft, contents, callback)
       require("lean.ft").set(ft)
       local this_lsp = ft == "lean" and lean.config.lsp or lean.config.lsp3
       if this_lsp.enable ~= false then
-        helpers.lsp_wait()
+        helpers.wait_for_ready_lsp()
       end
 
       api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
