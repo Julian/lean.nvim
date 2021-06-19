@@ -163,6 +163,7 @@ function infoview.toggle()
   if infoview.is_open() then infoview.close() else infoview.open() end
 end
 
+--- Retrieve the current combined contents of the infoview as a string.
 function infoview.get_info_lines()
   if not infoview.is_open() then return end
   local infoview_info = infoview.open()
