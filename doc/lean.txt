@@ -37,6 +37,13 @@ abbreviations.show_reverse_lookup()      *abbreviations.show_reverse_lookup()*
 
 
 ================================================================================
+infoview.get_info_lines()                          *infoview.get_info_lines()*
+    Retrieve the current combined contents of the infoview as a string.
+
+
+
+
+================================================================================
 sorry.fill()                                                    *sorry.fill()*
     Fill the current cursor position with `sorry`s to discharge all goals.
 

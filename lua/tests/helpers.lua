@@ -5,8 +5,6 @@ local lean = require('lean')
 local api = vim.api
 local helpers = {_clean_buffer_counter = 1}
 
-local timeout = vim.env.LEAN_NVIM_TEST_TIMEOUT or 1000
-
 -- everything disabled by default to encourage unit testing
 local default_config = {
   treesitter = {
@@ -32,6 +30,17 @@ local default_config = {
 function helpers.setup(config)
   require("lean").setup(vim.tbl_extend("keep", config, default_config))
 end
+
+local function has_all(_, arguments)
+  local text = arguments[1]
+  local expected = arguments[2]
+  for _, string in pairs(expected) do
+    assert.has_match(string, text, nil, true)
+  end
+  return true
+end
+
+assert:register("assertion", "has_all", has_all)
 
 --- Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(text, feed_opts)
@@ -61,6 +70,11 @@ function helpers.clean_buffer(contents, callback)
   end
 end
 
+function helpers.wait_for_ready_lsp()
+  local succeeded, _ = vim.wait(20000, vim.lsp.buf.server_ready)
+  assert.message("LSP server was never ready.").True(succeeded)
+end
+
 --- Create a clean Lean buffer of the given filetype with the given contents.
 --
 --  Waits for the LSP to be ready before proceeding with a given callback.
@@ -70,13 +84,14 @@ function helpers.clean_buffer_ft(ft, contents, callback)
   return function()
     local bufnr = vim.api.nvim_create_buf(false, true)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
+    -- apparently necessary to trigger BufWinEnter
+    vim.api.nvim_set_current_buf(bufnr)
 
     api.nvim_buf_call(bufnr, function()
       require("lean.ft").set(ft)
       local this_lsp = ft == "lean" and lean.config.lsp or lean.config.lsp3
       if this_lsp.enable ~= false then
-        local succeeded, _ = vim.wait(timeout, vim.lsp.buf.server_ready)
-        assert.message("LSP server was never ready.").True(succeeded)
+        helpers.wait_for_ready_lsp()
       end
 
       api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
@@ -90,7 +105,7 @@ end
 
 --- Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
-  local succeeded, _ = vim.wait(timeout * 2, function()
+  local succeeded, _ = vim.wait(5000, function()
     return not vim.tbl_isempty(vim.lsp.diagnostic.get_line_diagnostics())
   end)
   assert.message("Waited for line diagnostics but none came.").True(succeeded)
