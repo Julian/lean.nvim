@@ -19,13 +19,12 @@ local function infoview_lsp_update(pos)
     return infoview.get_info_lines()
 end
 
+helpers.setup {
+  infoview = { enable = true },
+  lsp = { enable = true },
+  lsp3 = { enable = true },
+}
 describe('infoview', function()
-  helpers.setup {
-    infoview = { enable = true },
-    lsp = { enable = true },
-    lsp3 = { enable = true },
-  }
-
   it('lean 3', function()
     before_each(function()
       vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")

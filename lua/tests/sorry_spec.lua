@@ -1,11 +1,9 @@
 local helpers = require('tests.helpers')
-local clean_buffer_ft = helpers.clean_buffer_ft
+local clean_buffer = helpers.clean_buffer
 
+helpers.setup { lsp3 = { enable = true } }
 describe('sorry', function()
-
-  helpers.setup { lsp3 = { enable = true } }
-
-  it('inserts sorries for each remaining goal', clean_buffer_ft("lean3", [[
+  it('inserts sorries for each remaining goal', clean_buffer("lean3", [[
 def foo (n : nat) : n = n := begin
   induction n with d hd,
 end]], function()
@@ -24,7 +22,7 @@ end]], table.concat(vim.fn.getline(1, '$'), '\n'))
   end))
 
   it('indents sorry blocks when needed',
-    clean_buffer_ft("lean3", [[
+    clean_buffer("lean3", [[
 def foo (n : nat) : n = n := begin
   induction n with d hd,
 
@@ -44,7 +42,7 @@ def foo (n : nat) : n = n := begin
 end]], table.concat(vim.fn.getline(1, '$'), '\n'))
   end))
 
-  it('does nothing if there are no goals', clean_buffer_ft("lean3", [[
+  it('does nothing if there are no goals', clean_buffer("lean3", [[
 def foo (n : nat) : n = n := begin
   refl,
 end]], function()
