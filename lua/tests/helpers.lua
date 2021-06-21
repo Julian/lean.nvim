@@ -63,13 +63,6 @@ local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
   api.nvim_buf_set_name(bufnr, unique_name)
 end
 
-function helpers.clean_buffer(contents, callback)
-  return function ()
-    helpers.clean_buffer_ft("lean3", contents, callback)()
-    helpers.clean_buffer_ft("lean", contents, callback)()
-  end
-end
-
 function helpers.wait_for_ready_lsp()
   local succeeded, _ = vim.wait(20000, vim.lsp.buf.server_ready)
   assert.message("LSP server was never ready.").True(succeeded)
@@ -80,7 +73,7 @@ end
 --  Waits for the LSP to be ready before proceeding with a given callback.
 --
 --  Yes c(lean) may be a double entendre, and no I don't feel bad.
-function helpers.clean_buffer_ft(ft, contents, callback)
+function helpers.clean_buffer(ft, contents, callback)
   return function()
     local bufnr = vim.api.nvim_create_buf(false, true)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)

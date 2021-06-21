@@ -1,13 +1,12 @@
 local infoview = require('lean.infoview')
 local get_num_wins = function() return #vim.api.nvim_list_wins() end
 
+require('tests.helpers').setup {
+  infoview = { enable = true },
+  lsp = { enable = true },
+  lsp3 = { enable = true },
+}
 describe('infoview', function()
-  require('tests.helpers').setup {
-    infoview = { enable = true },
-    lsp = { enable = true },
-    lsp3 = { enable = true },
-  }
-
   vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
 
   local infoview_info = infoview.open()

@@ -1,12 +1,11 @@
 local infoview = require('lean.infoview')
-local clean_buffer_ft = require('tests.helpers').clean_buffer_ft
+local clean_buffer = require('tests.helpers').clean_buffer
 
+require('tests.helpers').setup { infoview = { enable = true } }
 describe('infoview', function()
-  require('tests.helpers').setup { infoview = { enable = true } }
-
   local src_win = vim.api.nvim_get_current_win()
 
-  it('automatically opens', clean_buffer_ft('lean', '',
+  it('automatically opens', clean_buffer('lean', '',
     function(_)
       assert.is_true(infoview.is_open())
     end))
