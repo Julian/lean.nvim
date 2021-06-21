@@ -56,5 +56,10 @@ trythis.swap()                                                *trythis.swap()*
 
 
 
+trythis.trim_unnecessary_mode_switching()*trythis.trim_unnecessary_mode_switching()*
+    Trim unnecessary switching between tactic and term modes.
+
+
+
 
  vim:tw=78:ts=8:ft=help:norl:
