@@ -3,13 +3,14 @@ local M = {}
 -- Create autocmds under the specified group, clearing it first.
 --
 -- REPLACEME: once neovim/neovim#14661 is merged.
-function M.set_augroup(name, autocmds)
+function M.set_augroup(name, autocmds, buffer)
+  local buffer_string = buffer and "<buffer>" or ""
   vim.api.nvim_exec(string.format([[
     augroup %s
-      autocmd!
+      autocmd! %s * %s
       %s
     augroup END
-  ]], name, autocmds), false)
+  ]], name, name, buffer_string, autocmds), false)
 end
 
 return M
