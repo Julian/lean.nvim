@@ -110,7 +110,6 @@ function infoview.buf_setup()
     autocmd WinEnter <buffer> lua require'lean.infoview'.set_update()
     autocmd BufEnter <buffer> lua require'lean.infoview'.set_update()
   ]], true)
-  infoview.set_update()
 end
 
 function infoview.set_update()

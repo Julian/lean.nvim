@@ -11,8 +11,8 @@ describe('infoview', function()
   local infoview_info = infoview.open()
 
   local function update_enabled(state, _)
-    local cursor_hold = string.find(vim.api.nvim_exec("autocmd CursorHold", true), "LeanInfoviewUpdate")
-    local cursor_hold_i = string.find(vim.api.nvim_exec("autocmd CursorHoldI", true), "LeanInfoviewUpdate")
+    local cursor_hold = string.find(vim.api.nvim_exec("autocmd CursorHold <buffer>", true), "LeanInfoviewUpdate")
+    local cursor_hold_i = string.find(vim.api.nvim_exec("autocmd CursorHoldI <buffer>", true), "LeanInfoviewUpdate")
     if state.mod then
       return cursor_hold and cursor_hold_i
     end
@@ -60,7 +60,7 @@ describe('infoview', function()
     it('remains open on BufWinEnter',
     function(_)
       local num_wins = get_num_wins()
-      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test/test1.lean")
+      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
       assert.is_true(vim.api.nvim_win_is_valid(infoview_info.window))
       assert.is.equal(num_wins, get_num_wins())
     end)
@@ -98,6 +98,7 @@ describe('infoview', function()
 
   vim.api.nvim_command("tabedit lua/tests/fixtures/example-lean4-project/Test.lean")
 
+  local new_buf = vim.api.nvim_get_current_buf()
   local new_win = vim.api.nvim_get_current_win()
   local new_infoview_info = infoview.open()
 
@@ -110,6 +111,25 @@ describe('infoview', function()
       assert.is_false(vim.api.nvim_win_is_valid(new_infoview_info.window))
       assert.is.equal(num_wins - 1, get_num_wins())
       assert.is_falsy(infoview.is_open())
+    end)
+
+    it('CursorHold(I) disabled independently',
+    function(_)
+      assert.is_not.update_enabled()
+      vim.api.nvim_set_current_win(win)
+      assert.is.update_enabled()
+    end)
+
+    it('CursorHold(I) updated on BufEnter',
+    function(_)
+      vim.api.nvim_set_current_buf(new_buf)
+      assert.is.update_enabled()
+    end)
+
+    it('CursorHold(I) updated on WinEnter',
+    function(_)
+      vim.api.nvim_set_current_win(new_win)
+      assert.is_not.update_enabled()
     end)
 
     it('remains closed on BufWinEnter',
@@ -138,6 +158,25 @@ describe('infoview', function()
       vim.api.nvim_command("edit lua/tests/fixtures/example-lean4-project/Test/Test1.lean")
       assert.is_true(vim.api.nvim_win_is_valid(new_infoview_info.window))
       assert.is.equal(num_wins, get_num_wins())
+    end)
+
+    it('does not set CursorHold(I) on irrelevant file BufEnter',
+    function(_)
+      vim.api.nvim_command("edit temp")
+      assert.is_not.update_enabled()
+    end)
+
+    it('does not set CursorHold(I) when re-opening on irrelevant file',
+    function(_)
+      infoview.close()
+      new_infoview_info = infoview.open()
+      assert.is_not.update_enabled()
+    end)
+
+    it('updates CursorHold(I) on relevant file BufEnter',
+    function(_)
+      vim.api.nvim_set_current_buf(new_buf)
+      assert.update_enabled()
     end)
 
     vim.api.nvim_command("tabnew")
