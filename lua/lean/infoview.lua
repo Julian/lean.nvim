@@ -96,13 +96,13 @@ function infoview.enable(opts)
 end
 
 function infoview.set_autocmds()
-  vim.api.nvim_exec(string.format([[
+  vim.api.nvim_exec([[
     augroup LeanInfoviewInit
       autocmd!
       autocmd FileType lean3 lua require'lean.infoview'.buf_setup()
       autocmd FileType lean lua require'lean.infoview'.buf_setup()
     augroup END
-  ]]), false)
+  ]], false)
 end
 
 function infoview.buf_setup()
