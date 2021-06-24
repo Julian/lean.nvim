@@ -6,7 +6,7 @@ local function infoview_lsp_update(pos)
     vim.api.nvim_win_set_cursor(0, pos)
     -- wait for server pass
     local result, _ = vim.wait(10000, function()
-      infoview.update(infoview.open().bufnr)
+      infoview.update()
       -- wait for update data - will be empty if server pass incomplete
       local update_result, _ = vim.wait(500, function()
         local curr = infoview.get_info_lines()
@@ -63,4 +63,26 @@ describe('infoview', function()
     end)
   end)
 
+  local win = vim.api.nvim_get_current_win()
+
+  vim.api.nvim_command("tabnew")
+
+  local winnew = vim.api.nvim_get_current_win()
+
+  it('new tab', function()
+    before_each(function()
+      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
+      helpers.wait_for_ready_lsp()
+    end)
+
+    it('maintains separate infoview text',
+    function(_)
+      local text = infoview_lsp_update({3, 23})
+      assert.has_all(text, {"⊢ ℕ"})
+      vim.api.nvim_set_current_win(win)
+      text = infoview_lsp_update({3, 23})
+      assert.has_all(text, {"expected type", "⊢ Nat"})
+      vim.api.nvim_set_current_win(winnew)
+    end)
+  end)
 end)

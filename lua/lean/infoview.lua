@@ -2,7 +2,7 @@ local lean3 = require('lean.lean3')
 local leanlsp = require('lean.lsp')
 local set_augroup = require('lean._nvimapi').set_augroup
 
-local infoview = {_infoviews = {[0] = nil}, _opts = {}}
+local infoview = {_infoviews = {}, _opts = {}}
 
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
 local _DEFAULT_BUF_OPTIONS = {
@@ -29,10 +29,11 @@ local _SEVERITY = {
 
 -- Get the ID of the infoview corresponding to the current window.
 local function get_idx()
-  return 0
+  return vim.api.nvim_win_get_tabpage(0)
 end
 
-function infoview.update(infoview_bufnr)
+function infoview.update()
+  local infoview_bufnr = infoview.open().bufnr
   local _update = vim.b.lean3 and lean3.update_infoview or function(set_lines)
     local update = function(goal, term_goal)
       local lines = {}
@@ -91,6 +92,36 @@ function infoview.enable(opts)
   set_augroup("LeanInfoview", [[
     autocmd BufWinEnter *.lean lua require'lean.infoview'.ensure_open()
   ]])
+  infoview.set_autocmds()
+end
+
+function infoview.set_autocmds()
+  vim.api.nvim_exec([[
+    augroup LeanInfoviewInit
+      autocmd!
+      autocmd FileType lean3 lua require'lean.infoview'.buf_setup()
+      autocmd FileType lean lua require'lean.infoview'.buf_setup()
+    augroup END
+  ]], false)
+end
+
+function infoview.buf_setup()
+  set_augroup("LeanInfoviewSetUpdate", [[
+    autocmd WinEnter <buffer> lua require'lean.infoview'.set_update()
+    autocmd BufEnter <buffer> lua require'lean.infoview'.set_update()
+  ]], true)
+end
+
+function infoview.set_update()
+  if not (vim.bo.ft == "lean" or vim.bo.ft == "lean3") then return end
+  if infoview.is_open() then
+    set_augroup("LeanInfoviewUpdate", [[
+      autocmd CursorHold <buffer> lua require'lean.infoview'.update()
+      autocmd CursorHoldI <buffer> lua require'lean.infoview'.update()
+    ]], true)
+  else
+    set_augroup("LeanInfoviewUpdate", "", true)
+  end
 end
 
 function infoview.is_open() return infoview._infoviews[get_idx()] ~= nil end
@@ -101,7 +132,7 @@ function infoview.ensure_open()
   if infoview.is_open() then return infoview._infoviews[infoview_idx] end
 
   local infoview_bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(infoview_bufnr, _INFOVIEW_BUF_NAME)
+  vim.api.nvim_buf_set_name(infoview_bufnr, _INFOVIEW_BUF_NAME .. ":" .. infoview_idx)
   for name, value in pairs(_DEFAULT_BUF_OPTIONS) do
     vim.api.nvim_buf_set_option(infoview_bufnr, name, value)
   end
@@ -122,13 +153,9 @@ function infoview.ensure_open()
   ]], infoview_idx))
   vim.api.nvim_set_current_win(current_window)
 
-  set_augroup("LeanInfoviewUpdate", string.format([[
-    autocmd CursorHold *.lean lua require'lean.infoview'.update(%d)
-    autocmd CursorHoldI *.lean lua require'lean.infoview'.update(%d)
-  ]], infoview_bufnr, infoview_bufnr))
-
   infoview._infoviews[infoview_idx] = { bufnr = infoview_bufnr, window = window }
 
+  infoview.set_update()
   return infoview._infoviews[infoview_idx]
 end
 
@@ -146,6 +173,7 @@ function infoview.close()
   if not infoview.is_open() then return end
   local current_infoview = infoview._teardown(get_idx())
   vim.api.nvim_win_close(current_infoview.window, true)
+  infoview.set_update()
 end
 
 -- Teardown internal state for an infoview window.
@@ -154,7 +182,6 @@ function infoview._teardown(infoview_idx)
   infoview._infoviews[infoview_idx] = nil
 
   set_augroup("LeanInfoview", "")
-  set_augroup("LeanInfoviewUpdate", "")
 
   return current_infoview
 end
