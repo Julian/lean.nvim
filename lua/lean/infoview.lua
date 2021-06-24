@@ -40,6 +40,8 @@ function infoview.update()
   end
 
   return _update(function(lines)
+    if vim.tbl_isempty(lines) then lines = { "No info found. " } end
+
     vim.api.nvim_buf_set_option(infoview_bufnr, 'modifiable', true)
     vim.api.nvim_buf_set_lines(infoview_bufnr, 0, -1, true, lines)
     -- HACK: This shouldn't really do anything, but I think there's a neovim
