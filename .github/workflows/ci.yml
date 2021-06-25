@@ -40,6 +40,10 @@ jobs:
         run: |
           cd lua/tests/fixtures/example-lean3-project/ && leanpkg configure && leanpkg build
 
+      - name: Build Lean 4 fixture
+        run: |
+          cd lua/tests/fixtures/example-lean4-project/ && leanpkg configure && leanpkg build
+
       - name: Install the Lean LSP
         run: sudo npm install -g lean-language-server
         if: contains(matrix.lean-version, 'lean:3')
