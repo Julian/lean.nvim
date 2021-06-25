@@ -10,7 +10,7 @@ local function infoview_lsp_update(pos)
       -- wait for update data - will be empty if server pass incomplete
       local update_result, _ = vim.wait(500, function()
         local curr = infoview.get_info_lines()
-        if curr == before or curr == "" then return false end
+        if curr == before or infoview.is_empty() then return false end
         return true
       end)
       return update_result

@@ -1,9 +1,11 @@
+local components = require('lean.infoview.components')
 local lean3 = require('lean.lean3')
 local leanlsp = require('lean.lsp')
 local set_augroup = require('lean._nvimapi').set_augroup
 
 local infoview = {_infoviews = {}, _opts = {}}
 
+local _NOTHING_TO_SHOW = { "No info found." }
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
 local _DEFAULT_BUF_OPTIONS = {
   bufhidden = 'wipe',
@@ -19,14 +21,6 @@ local _DEFAULT_WIN_OPTIONS = {
   wrap = true,
 }
 
-local _SEVERITY = {
-  [0] = "other",
-  [1] = "error",
-  [2] = "warning",
-  [3] = "information",
-  [4] = "hint",
-}
-
 -- Get the ID of the infoview corresponding to the current window.
 local function get_idx()
   return vim.api.nvim_win_get_tabpage(0)
@@ -35,46 +29,20 @@ end
 function infoview.update()
   local infoview_bufnr = infoview.open().bufnr
   local _update = vim.b.lean3 and lean3.update_infoview or function(set_lines)
-    local update = function(goal, term_goal)
-      local lines = {}
-
-      if type(goal) == "table" and goal.goals then
-        vim.list_extend(lines,
-          {#goal.goals == 0 and '▶ goals accomplished 🎉' or
-            #goal.goals == 1 and '▶ 1 goal' or
-            string.format('▶ %d goals', #goal.goals)})
-        for _, each in pairs(goal.goals) do
-          vim.list_extend(lines, {''})
-          vim.list_extend(lines, vim.split(each, '\n', true))
-        end
-      end
-
-      if type(term_goal) == "table" and term_goal.goal then
-        local start = term_goal.range["start"]
-        local end_ = term_goal.range["end"]
-        vim.list_extend(lines, {'', string.format('▶ expected type (%d:%d-%d:%d)',
-          start.line+1, start.character+1, end_.line+1, end_.character+1)})
-        vim.list_extend(lines, vim.split(term_goal.goal, '\n', true))
-      end
-
-      for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics()) do
-        local start = diag.range["start"]
-        local end_ = diag.range["end"]
-        vim.list_extend(lines, {'', string.format('▶ %d:%d-%d:%d: %s:',
-          start.line+1, start.character+1, end_.line+1, end_.character+1, _SEVERITY[diag.severity])})
-        vim.list_extend(lines, vim.split(diag.message, '\n', true))
-      end
-
-      set_lines(lines)
-    end
     return leanlsp.plain_goal(0, function(_, _, goal)
       leanlsp.plain_term_goal(0, function(_, _, term_goal)
-        update(goal, term_goal)
+        local lines = components.goal(goal)
+        table.insert(lines, '')
+        vim.list_extend(lines, components.term_goal(term_goal))
+        vim.list_extend(lines, components.diagnostics())
+        set_lines(lines)
       end)
     end)
   end
 
   return _update(function(lines)
+    if vim.tbl_isempty(lines) then lines = _NOTHING_TO_SHOW end
+
     vim.api.nvim_buf_set_option(infoview_bufnr, 'modifiable', true)
     vim.api.nvim_buf_set_lines(infoview_bufnr, 0, -1, true, lines)
     -- HACK: This shouldn't really do anything, but I think there's a neovim
@@ -195,6 +163,11 @@ function infoview.get_info_lines()
   if not infoview.is_open() then return end
   local infoview_info = infoview.open()
   return table.concat(vim.api.nvim_buf_get_lines(infoview_info.bufnr, 0, -1, true), "\n")
+end
+
+--- Is the infoview not showing anything?
+function infoview.is_empty()
+  return vim.deep_equal(infoview.get_info_lines(), table.concat(_NOTHING_TO_SHOW, "\n"))
 end
 
 return infoview
