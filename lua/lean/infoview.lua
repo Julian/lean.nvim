@@ -5,6 +5,7 @@ local set_augroup = require('lean._nvimapi').set_augroup
 
 local infoview = {_infoviews = {}, _opts = {}}
 
+local _NOTHING_TO_SHOW = { "No info found." }
 local _INFOVIEW_BUF_NAME = 'lean://infoview'
 local _DEFAULT_BUF_OPTIONS = {
   bufhidden = 'wipe',
@@ -40,7 +41,7 @@ function infoview.update()
   end
 
   return _update(function(lines)
-    if vim.tbl_isempty(lines) then lines = { "No info found. " } end
+    if vim.tbl_isempty(lines) then lines = _NOTHING_TO_SHOW end
 
     vim.api.nvim_buf_set_option(infoview_bufnr, 'modifiable', true)
     vim.api.nvim_buf_set_lines(infoview_bufnr, 0, -1, true, lines)
@@ -162,6 +163,11 @@ function infoview.get_info_lines()
   if not infoview.is_open() then return end
   local infoview_info = infoview.open()
   return table.concat(vim.api.nvim_buf_get_lines(infoview_info.bufnr, 0, -1, true), "\n")
+end
+
+--- Is the infoview not showing anything?
+function infoview.is_empty()
+  return vim.deep_equal(infoview.get_info_lines(), _NOTHING_TO_SHOW)
 end
 
 return infoview
