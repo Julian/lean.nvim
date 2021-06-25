@@ -167,7 +167,7 @@ end
 
 --- Is the infoview not showing anything?
 function infoview.is_empty()
-  return vim.deep_equal(infoview.get_info_lines(), _NOTHING_TO_SHOW)
+  return vim.deep_equal(infoview.get_info_lines(), table.concat(_NOTHING_TO_SHOW, "\n"))
 end
 
 return infoview

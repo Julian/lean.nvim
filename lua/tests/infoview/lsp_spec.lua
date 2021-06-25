@@ -10,7 +10,7 @@ local function infoview_lsp_update(pos)
       -- wait for update data - will be empty if server pass incomplete
       local update_result, _ = vim.wait(500, function()
         local curr = infoview.get_info_lines()
-        if curr == before or curr == "" then return false end
+        if curr == before or infoview.is_empty() then return false end
         return true
       end)
       return update_result
@@ -33,13 +33,6 @@ describe('infoview', function()
 
     it('shows term state',
     function(_)
-      -- FIXME: This wait is because this test case is the first one executed
-      --        and without it, the infoview gets updated with an empty
-      --        response if the update happens before the Lean 3 server is up.
-      --        To reproduce manually, compare:
-      --          nvim example-lean3-project/test.lean +'sleep 500m' +'normal 3gg' +'normal 23|'
-      --        with what happens without the sleep (where the window is empty).
-      vim.wait(1000)
       local text = infoview_lsp_update({3, 23})
       assert.has_all(text, {"⊢ ℕ"})
     end)
