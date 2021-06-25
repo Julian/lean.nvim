@@ -56,10 +56,8 @@ end
 
 function infoview.enable(opts)
   opts.width = opts.width or 50
+  if opts.autoopen == nil then opts.autoopen = true end
   infoview._opts = opts
-  set_augroup("LeanInfoview", [[
-    autocmd BufWinEnter *.lean lua require'lean.infoview'.ensure_open()
-  ]])
   infoview.set_autocmds()
 end
 
@@ -82,6 +80,7 @@ end
 
 function infoview.set_update()
   if not (vim.bo.ft == "lean" or vim.bo.ft == "lean3") then return end
+  infoview.ensure_open()
   if infoview.is_open() then
     set_augroup("LeanInfoviewUpdate", [[
       autocmd CursorHold <buffer> lua require'lean.infoview'.update()
@@ -92,15 +91,39 @@ function infoview.set_update()
   end
 end
 
-function infoview.is_open() return infoview._infoviews[get_idx()] ~= nil end
+function infoview.is_open(idx)
+  idx = idx or get_idx()
+  local this_infoview = infoview._infoviews[idx]
+  return this_infoview and this_infoview.open and this_infoview.data
+end
 
-function infoview.ensure_open()
-  local infoview_idx = get_idx()
+function infoview.is_closed(idx)
+  idx = idx or get_idx()
+  local this_infoview = infoview._infoviews[idx]
+  return this_infoview and not this_infoview.open and this_infoview
+end
 
-  if infoview.is_open() then return infoview._infoviews[infoview_idx] end
+-- Set whether a new infoview is automatically opened on new tab.
+function infoview.set_autoopen(autoopen)
+  infoview._opts.autoopen = autoopen
+end
+
+function infoview.ensure_open(idx)
+  idx = idx or get_idx()
+
+  if infoview.is_open(idx) then return infoview._infoviews[idx].data end
+
+  if not infoview._infoviews[idx] then
+    infoview._infoviews[idx] = {data = nil, open = infoview._opts.autoopen}
+  end
+
+  if infoview.is_closed(idx) then return end
+
+  infoview._infoviews[idx].data = {}
 
   local infoview_bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(infoview_bufnr, _INFOVIEW_BUF_NAME .. ":" .. infoview_idx)
+  infoview._infoviews[idx].data.bufnr = infoview_bufnr
+  vim.api.nvim_buf_set_name(infoview_bufnr, _INFOVIEW_BUF_NAME .. ":" .. idx)
   for name, value in pairs(_DEFAULT_BUF_OPTIONS) do
     vim.api.nvim_buf_set_option(infoview_bufnr, name, value)
   end
@@ -111,6 +134,7 @@ function infoview.ensure_open()
   vim.cmd(string.format("buffer %d", infoview_bufnr))
 
   local window = vim.api.nvim_get_current_win()
+  infoview._infoviews[idx].data.window = window
 
   for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
     vim.api.nvim_win_set_option(window, name, value)
@@ -118,38 +142,44 @@ function infoview.ensure_open()
   -- Make sure we teardown even if someone manually :q's the infoview window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer> lua require'lean.infoview'._teardown(%d)
-  ]], infoview_idx))
+  ]], idx))
+
   vim.api.nvim_set_current_win(current_window)
 
-  infoview._infoviews[infoview_idx] = { bufnr = infoview_bufnr, window = window }
-
   infoview.set_update()
-  return infoview._infoviews[infoview_idx]
+
+  return infoview._infoviews[idx].data
 end
 
-infoview.open = infoview.ensure_open
+function infoview.open(idx)
+  idx = idx or get_idx()
+  local infoview_closed = infoview.is_closed(idx)
+  if infoview_closed then infoview_closed.open = true end
+  return infoview.ensure_open(idx)
+end
 
 -- Close all open infoviews (across all tabs).
 function infoview.close_all()
-  for _, _ in pairs(infoview._infoviews) do
-    infoview.close()
+  for idx, _ in pairs(infoview._infoviews) do
+    infoview.close(idx)
   end
 end
 
 -- Close the infoview associated with the current window.
-function infoview.close()
-  if not infoview.is_open() then return end
-  local current_infoview = infoview._teardown(get_idx())
+function infoview.close(idx)
+  idx = idx or get_idx()
+  -- abort if closed or uninitialized
+  if not infoview.is_open(idx) then return end
+  local current_infoview = infoview._teardown(idx)
   vim.api.nvim_win_close(current_infoview.window, true)
   infoview.set_update()
 end
 
 -- Teardown internal state for an infoview window.
 function infoview._teardown(infoview_idx)
-  local current_infoview = infoview._infoviews[infoview_idx]
-  infoview._infoviews[infoview_idx] = nil
-
-  set_augroup("LeanInfoview", "")
+  local current_infoview = infoview._infoviews[infoview_idx].data
+  infoview._infoviews[infoview_idx].data = nil
+  infoview._infoviews[infoview_idx].open = false
 
   return current_infoview
 end

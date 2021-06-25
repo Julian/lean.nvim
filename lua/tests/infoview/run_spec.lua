@@ -1,5 +1,6 @@
 local infoview = require('lean.infoview')
-local get_num_wins = function() return #vim.api.nvim_list_wins() end
+local ihelpers = require('tests.infoview.helpers')
+local get_num_wins = ihelpers.get_num_wins
 
 require('tests.helpers').setup {
   infoview = { enable = true },
@@ -33,15 +34,25 @@ describe('infoview', function()
       infoview.close()
       assert.is_false(vim.api.nvim_win_is_valid(infoview_info.window))
       assert.is.equal(num_wins - 1, get_num_wins())
-      assert.is_falsy(infoview.is_open())
+      assert.is_not.open_state()
     end)
 
-    it('remains closed on BufWinEnter',
+    it('remains closed on BufEnter',
     function(_)
       local num_wins = get_num_wins()
       vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test/test1.lean")
       assert.is.equal(num_wins, get_num_wins())
+      assert.is_not.open_state()
     end)
+
+    it('remains closed on WinEnter',
+    function(_)
+      local num_wins = get_num_wins()
+      vim.api.nvim_command("split lua/tests/fixtures/example-lean3-project/test.lean")
+      assert.is.equal(num_wins + 1, get_num_wins())
+      assert.is_not.open_state()
+    end)
+    vim.api.nvim_command("close")
 
     it('CursorHold(I) disabled when closed',
     function(_)
@@ -54,7 +65,7 @@ describe('infoview', function()
       infoview_info = infoview.open()
       assert.is_true(vim.api.nvim_win_is_valid(infoview_info.window))
       assert.is.equal(num_wins + 1, get_num_wins())
-      assert.is_truthy(infoview.is_open())
+      assert.open_state()
     end)
 
     it('remains open on BufWinEnter',
@@ -78,7 +89,7 @@ describe('infoview', function()
       assert.is_false(vim.api.nvim_win_is_valid(infoview_info.window))
       assert.is.equal(num_wins - 1, get_num_wins())
       assert.is.equal(win, vim.api.nvim_get_current_win())
-      assert.is_falsy(infoview.is_open())
+      assert.is_not.open_state()
     end)
 
     it('manual close succeeds and updates internal state',
@@ -90,7 +101,7 @@ describe('infoview', function()
       assert.is_false(vim.api.nvim_win_is_valid(infoview_info.window))
       assert.is.equal(num_wins - 1, get_num_wins())
       assert.is.equal(win, vim.api.nvim_get_current_win())
-      assert.is_falsy(infoview.is_open())
+      assert.is_not.open_state()
     end)
   end)
 
@@ -110,7 +121,7 @@ describe('infoview', function()
       assert.is_true(vim.api.nvim_win_is_valid(infoview_info.window))
       assert.is_false(vim.api.nvim_win_is_valid(new_infoview_info.window))
       assert.is.equal(num_wins - 1, get_num_wins())
-      assert.is_falsy(infoview.is_open())
+      assert.is_not.open_state()
     end)
 
     it('CursorHold(I) disabled independently',
@@ -149,7 +160,7 @@ describe('infoview', function()
       assert.is_false(vim.api.nvim_win_is_valid(infoview_info.window))
       assert.is_true(vim.api.nvim_win_is_valid(new_infoview_info.window))
       assert.is.equal(num_wins + 1, get_num_wins())
-      assert.is_truthy(infoview.is_open())
+      assert.open_state()
     end)
 
     it('remains open on BufWinEnter',
@@ -179,12 +190,55 @@ describe('infoview', function()
       assert.update_enabled()
     end)
 
+    vim.api.nvim_command("edit temp")
     vim.api.nvim_command("tabnew")
-    pending('opens automatically after having closen previous infoviews',
+    it('opens automatically after having closen previous infoviews',
     function(_)
       local num_wins = get_num_wins()
       vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test/test1.lean")
-      assert.is_true(infoview.is_open())
+      assert.open_state()
+      assert.is.equal(num_wins + 1, get_num_wins())
+      assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
+    end)
+
+    vim.api.nvim_command("edit temp")
+    vim.api.nvim_command("tabnew")
+    infoview.set_autoopen(false)
+    it('auto-open disable',
+    function(_)
+      local num_wins = get_num_wins()
+      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test/test1.lean")
+      assert.is_not.open_state()
+      assert.is.equal(num_wins, get_num_wins())
+      assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+    end)
+
+    it('open after auto-open disable',
+    function(_)
+      local num_wins = get_num_wins()
+      new_infoview_info = infoview.open()
+      assert.open_state()
+      assert.is.equal(num_wins + 1, get_num_wins())
+      assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
+    end)
+
+    it('close after auto-open disable',
+    function(_)
+      local num_wins = get_num_wins()
+      infoview.close()
+      assert.is_not.open_state()
+      assert.is.equal(num_wins - 1, get_num_wins())
+      assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+    end)
+
+    vim.api.nvim_command("edit temp")
+    vim.api.nvim_command("tabnew")
+    infoview.set_autoopen(true)
+    it('auto-open enable',
+    function(_)
+      local num_wins = get_num_wins()
+      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test/test1.lean")
+      assert.open_state()
       assert.is.equal(num_wins + 1, get_num_wins())
       assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
     end)

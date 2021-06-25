@@ -1,5 +1,6 @@
 local infoview = require('lean.infoview')
-local get_num_wins = function() return #vim.api.nvim_list_wins() end
+local ihelpers = require('tests.infoview.helpers')
+local get_num_wins = ihelpers.get_num_wins
 
 require('tests.helpers').setup { infoview = { enable = true } }
 describe('infoview', function()
@@ -9,7 +10,7 @@ describe('infoview', function()
     it('automatically opens',
       function(_)
         vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
-        assert.is_true(infoview.is_open())
+        assert.open_state()
         assert.is.equal(num_wins + 1, get_num_wins())
         assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
       end)
@@ -36,6 +37,11 @@ describe('infoview', function()
 
   local orig_infoview_info = infoview.open()
 
+  -- I believe the reason why this is necessary is that on :tabnew,
+  -- it opens with the current buffer before switching to an empty one,
+  -- so without this it would trigger WinEnter with the Lean buffer
+  -- and thus open the infoview
+  vim.api.nvim_command("edit temp")
   vim.api.nvim_command("tabnew")
   describe("new tab", function()
     local src_win = vim.api.nvim_get_current_win()
@@ -43,7 +49,7 @@ describe('infoview', function()
     it('automatically opens',
       function(_)
         vim.api.nvim_command("edit lua/tests/fixtures/example-lean4-project/Test.lean")
-        assert.is_true(infoview.is_open())
+        assert.open_state()
         assert.is.equal(num_wins + 1, get_num_wins())
         assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
       end)
