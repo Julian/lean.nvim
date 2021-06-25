@@ -42,6 +42,11 @@ infoview.get_info_lines()                          *infoview.get_info_lines()*
 
 
 
+infoview.is_empty()                                      *infoview.is_empty()*
+    Is the infoview not showing anything?
+
+
+
 
 ================================================================================
                                                       *lean.infoview.components*
