@@ -39,7 +39,7 @@ describe('infoview', function()
       --        To reproduce manually, compare:
       --          nvim example-lean3-project/test.lean +'sleep 500m' +'normal 3gg' +'normal 23|'
       --        with what happens without the sleep (where the window is empty).
-      vim.wait(500)
+      vim.wait(1000)
       local text = infoview_lsp_update({3, 23})
       assert.has_all(text, {"⊢ ℕ"})
     end)
