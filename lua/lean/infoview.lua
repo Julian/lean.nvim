@@ -85,7 +85,7 @@ function infoview.set_update()
       autocmd CursorHold <buffer> lua require'lean.infoview'.update()
       autocmd CursorHoldI <buffer> lua require'lean.infoview'.update()
     ]], true)
-  else
+  elseif infoview.is_closed() then
     set_augroup("LeanInfoviewUpdate", "", true)
   end
 end
