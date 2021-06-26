@@ -74,13 +74,12 @@ end
 function infoview.buf_setup()
   set_augroup("LeanInfoviewSetUpdate", [[
     autocmd WinEnter <buffer> lua require'lean.infoview'.set_update()
-    autocmd BufEnter <buffer> lua require'lean.infoview'.set_update()
+    autocmd BufEnter <buffer> lua require'lean.infoview'.ensure_open() require'lean.infoview'.set_update()
   ]], true)
 end
 
 function infoview.set_update()
   if not (vim.bo.ft == "lean" or vim.bo.ft == "lean3") then return end
-  infoview.ensure_open()
   if infoview.is_open() then
     set_augroup("LeanInfoviewUpdate", [[
       autocmd CursorHold <buffer> lua require'lean.infoview'.update()

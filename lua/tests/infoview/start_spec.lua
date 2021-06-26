@@ -37,11 +37,6 @@ describe('infoview', function()
 
   local orig_infoview_info = infoview.open()
 
-  -- I believe the reason why this is necessary is that on :tabnew,
-  -- it opens with the current buffer before switching to an empty one,
-  -- so without this it would trigger WinEnter with the Lean buffer
-  -- and thus open the infoview
-  vim.api.nvim_command("edit temp")
   vim.api.nvim_command("tabnew")
   describe("new tab", function()
     local src_win = vim.api.nvim_get_current_win()

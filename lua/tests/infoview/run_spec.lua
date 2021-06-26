@@ -190,7 +190,6 @@ describe('infoview', function()
       assert.update_enabled()
     end)
 
-    vim.api.nvim_command("edit temp")
     vim.api.nvim_command("tabnew")
     it('opens automatically after having closen previous infoviews',
     function(_)
@@ -201,7 +200,6 @@ describe('infoview', function()
       assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
     end)
 
-    vim.api.nvim_command("edit temp")
     vim.api.nvim_command("tabnew")
     infoview.set_autoopen(false)
     it('auto-open disable',
@@ -231,7 +229,6 @@ describe('infoview', function()
       assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     end)
 
-    vim.api.nvim_command("edit temp")
     vim.api.nvim_command("tabnew")
     infoview.set_autoopen(true)
     it('auto-open enable',
@@ -241,6 +238,14 @@ describe('infoview', function()
       assert.open_state()
       assert.is.equal(num_wins + 1, get_num_wins())
       assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
+    end)
+
+    it('no auto-open for irrelevant file',
+    function(_)
+      local num_wins = get_num_wins()
+      vim.api.nvim_command("tabedit temp")
+      assert.is.equal(num_wins + 1, get_num_wins())
+      assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     end)
   end)
 end)
