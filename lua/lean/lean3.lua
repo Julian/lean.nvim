@@ -1,5 +1,5 @@
 local components = require('lean.infoview.components')
-local lean3 = {}
+local lean3 = { lsp = {} }
 
 -- Split a Lean 3 server response on goals.
 --
@@ -18,9 +18,28 @@ local lean3 = {}
 --    * the number of problems you have after using regex to solve a problem
 local _GOAL_MARKER = vim.regex('⊢ .\\{-}\n\\(\\s\\+.\\{-}\\(\n\\|$\\)\\)*\\zs')
 
+--- Force a buffer to be treated as Lean 3.
 function lean3.init()
   pcall(vim.cmd, 'TSBufDisable highlight')  -- tree-sitter-lean is lean4-only
   vim.b.lean3 = true
+end
+
+--- Enable the Lean 3 LSP.
+--- Generally called by enabling the `lsp3` section in the configuration passed
+--- to `lean.setup`.
+---@param opts table: configuration options for the `lean3ls` language server
+---@field extra_argv table: additional command line options to pass to `lean-language-server`
+function lean3.lsp.enable(opts)
+  require('lspconfig.lean3ls')
+  opts.cmd = opts.cmd or vim.deepcopy(
+    require('lspconfig/configs').lean3ls.document_config.default_config.cmd
+  )
+  local extra_argv = opts.extra_argv or { "-M", "4096" }
+  table.insert(opts.cmd, '--')
+  vim.list_extend(opts.cmd, extra_argv)
+  opts.extra_argv = nil
+
+  require('lspconfig').lean3ls.setup(opts)
 end
 
 --- Convert a Lean 3 response to one that the Lean 4 server would respond with.

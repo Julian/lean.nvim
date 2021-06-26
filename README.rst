@@ -187,7 +187,12 @@ In e.g. your ``init.lua``:
 
         -- Lean 3
         lsp3 = {
-            on_attach = on_attach
+            on_attach = on_attach,
+
+            -- Additional options not passed directly to lspconfig
+            --
+            -- Extra CLI arguments to pass to `lean-language-server`
+            extra_argv = { "-M", "4096" }
         },
     }
 
