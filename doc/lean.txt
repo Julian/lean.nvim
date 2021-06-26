@@ -77,6 +77,26 @@ components.diagnostics()                            *components.diagnostics()*
 
 
 ================================================================================
+lean3.init()                                                    *lean3.init()*
+    Force a buffer to be treated as Lean 3.
+
+
+
+lean3.lsp.enable({opts})                                  *lean3.lsp.enable()*
+    Enable the Lean 3 LSP. Generally called by enabling the `lsp3` section in
+    the configuration passed to `lean.setup`.
+
+
+    Parameters: ~
+        {opts} (table)  configuration options for the `lean3ls` language server
+
+    Fields: ~
+        {extra_argv} (table)  additional command line options to pass to
+                              `lean-language-server`
+
+
+
+================================================================================
 sorry.fill()                                                    *sorry.fill()*
     Fill the current cursor position with `sorry`s to discharge all goals.
 
