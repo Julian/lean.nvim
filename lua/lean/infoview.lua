@@ -32,7 +32,7 @@ function infoview.update()
     return leanlsp.plain_goal(0, function(_, _, goal)
       leanlsp.plain_term_goal(0, function(_, _, term_goal)
         local lines = components.goal(goal)
-        table.insert(lines, '')
+        if not vim.tbl_isempty(lines) then table.insert(lines, '') end
         vim.list_extend(lines, components.term_goal(term_goal))
         vim.list_extend(lines, components.diagnostics())
         set_lines(lines)
