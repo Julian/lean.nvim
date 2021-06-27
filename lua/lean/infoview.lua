@@ -91,31 +91,32 @@ function infoview.set_update()
 end
 
 function infoview.is_open(idx)
-  idx = idx or get_idx()
-  local this_infoview = infoview._infoviews[idx]
-  return this_infoview and this_infoview.open and this_infoview.data
+  local this_infoview = infoview._infoviews[idx or get_idx()]
+  return this_infoview and this_infoview.data
 end
 
 function infoview.is_closed(idx)
-  idx = idx or get_idx()
-  local this_infoview = infoview._infoviews[idx]
-  return this_infoview and not this_infoview.open and this_infoview
+  local this_infoview = infoview._infoviews[idx or get_idx()]
+  return this_infoview and not this_infoview.autoopen
 end
 
 -- Set whether a new infoview is automatically opened on new tab.
-function infoview.set_autoopen(autoopen)
-  infoview._opts.autoopen = autoopen
-end
+function infoview.set_autoopen(autoopen) infoview._opts.autoopen = autoopen end
 
 function infoview.ensure_open(idx)
   idx = idx or get_idx()
 
-  if infoview.is_open(idx) then return infoview._infoviews[idx].data end
-
   if not infoview._infoviews[idx] then
-    infoview._infoviews[idx] = {data = nil, open = infoview._opts.autoopen}
+    -- initialize infoview
+    infoview._infoviews[idx] = {
+      -- to hold window and buffer data
+      data = nil,
+      -- should the infoview be opened on a call to ensure_open()?
+      autoopen = infoview._opts.autoopen
+    }
   end
 
+  if infoview.is_open(idx) then return infoview._infoviews[idx].data end
   if infoview.is_closed(idx) then return end
 
   infoview._infoviews[idx].data = {}
@@ -146,14 +147,12 @@ function infoview.ensure_open(idx)
   vim.api.nvim_set_current_win(current_window)
 
   infoview.set_update()
-
   return infoview._infoviews[idx].data
 end
 
 function infoview.open(idx)
   idx = idx or get_idx()
-  local infoview_closed = infoview.is_closed(idx)
-  if infoview_closed then infoview_closed.open = true end
+  if infoview.is_closed(idx) then infoview._infoviews[idx].autoopen = true end
   return infoview.ensure_open(idx)
 end
 
@@ -178,7 +177,7 @@ end
 function infoview._teardown(infoview_idx)
   local current_infoview = infoview._infoviews[infoview_idx].data
   infoview._infoviews[infoview_idx].data = nil
-  infoview._infoviews[infoview_idx].open = false
+  infoview._infoviews[infoview_idx].autoopen = false
 
   return current_infoview
 end
