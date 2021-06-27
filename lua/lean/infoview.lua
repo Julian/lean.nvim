@@ -56,7 +56,7 @@ end
 
 function infoview.enable(opts)
   opts.width = opts.width or 50
-  if opts.autoopen == nil then opts.autoopen = true end
+  if opts.enable == nil then opts.enable = true end
   infoview._opts = opts
   infoview.set_autocmds()
 end
@@ -101,7 +101,7 @@ function infoview.is_closed(idx)
 end
 
 -- Set whether a new infoview is automatically opened on new tab.
-function infoview.set_autoopen(autoopen) infoview._opts.autoopen = autoopen end
+function infoview.set_autoopen(autoopen) infoview._opts.enable = autoopen end
 
 function infoview.ensure_open(idx)
   idx = idx or get_idx()
@@ -112,7 +112,7 @@ function infoview.ensure_open(idx)
       -- to hold window and buffer data
       data = nil,
       -- should the infoview be opened on a call to ensure_open()?
-      autoopen = infoview._opts.autoopen
+      autoopen = infoview._opts.enable
     }
   end
 

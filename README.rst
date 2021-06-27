@@ -172,7 +172,7 @@ In e.g. your ``init.lua``:
             -- Use a wider or narrower infoview.
             width = 50,
             -- automatically open infoview on new tab?
-            autoopen = true,
+            enable = true,
         },
 
         -- Enable the Lean language server(s)?
