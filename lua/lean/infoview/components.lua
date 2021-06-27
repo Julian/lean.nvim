@@ -9,9 +9,21 @@ local DiagnosticSeverity = vim.lsp.protocol.DiagnosticSeverity
 local components = {}
 
 
--- Format a heading.
+--- Format a heading.
 local function H(contents)
   return string.format('▶ %s', contents)
+end
+
+--- Convert an LSP range to a human-readable, (1,1)-indexed string.
+---
+--- The (1, 1) indexing is to match the interface used interactively for
+--- `gg` and `|`.
+local function range_to_string(range)
+  return string.format('%d:%d-%d:%d',
+    range["start"].line + 1,
+    range["start"].character + 1,
+    range["end"].line + 1,
+    range["end"].character + 1)
 end
 
 --- The current (tactic) goal state.
@@ -38,14 +50,8 @@ end
 function components.term_goal(term_goal)
   if type(term_goal) ~= "table" or not term_goal.goal then return {} end
 
-  local start = term_goal.range["start"]
-  local end_ = term_goal.range["end"]
   local lines = {
-    H(string.format('expected type (%d:%d-%d:%d)',
-      start.line + 1,
-      start.character + 1,
-      end_.line + 1,
-      end_.character + 1))
+    H(string.format('expected type (%s)', range_to_string(term_goal.range)))
   }
   vim.list_extend(lines, vim.split(term_goal.goal, '\n', true))
 
@@ -57,15 +63,11 @@ function components.diagnostics()
   local lines = {}
 
   for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics()) do
-    local start = diag.range["start"]
-    local end_ = diag.range["end"]
     vim.list_extend(lines,
-      {'', H(string.format('%d:%d-%d:%d: %s:',
-      start.line + 1,
-      start.character + 1,
-      end_.line + 1,
-      end_.character + 1,
-      DiagnosticSeverity[diag.severity]:lower()))})
+      {'',
+        H(string.format('%s: %s:',
+          range_to_string(diag.range),
+          DiagnosticSeverity[diag.severity]:lower()))})
     vim.list_extend(lines, vim.split(diag.message, '\n', true))
   end
 
