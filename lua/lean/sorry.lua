@@ -13,11 +13,11 @@ local function calculate_indent(line)
 end
 
 --- Fill the current cursor position with `sorry`s to discharge all goals.
---
---  I.e., given 3 current goals, with 2 in front of the cursor will insert:
---       { foo },<cursor>
---       { sorry },
---       { sorry },
+---
+--- I.e., given 3 current goals, with 2 in front of the cursor, will insert:
+---      { foo },<cursor>
+---      { sorry },
+---      { sorry },
 function sorry.fill()
   local params = vim.lsp.util.make_position_params()
   local responses = vim.lsp.buf_request_sync(0, 'textDocument/hover', params)
