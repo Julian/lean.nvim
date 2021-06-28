@@ -80,6 +80,9 @@ components.diagnostics()                            *components.diagnostics()*
 sorry.fill()                                                    *sorry.fill()*
     Fill the current cursor position with `sorry`s to discharge all goals.
 
+    I.e., given 3 current goals, with 2 in front of the cursor, will insert: {
+    foo },<cursor> { sorry }, { sorry },
+
 
 
 
