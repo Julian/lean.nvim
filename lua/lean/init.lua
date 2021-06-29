@@ -33,7 +33,7 @@ function lean.setup(opts)
   if opts.abbreviations.enable ~= false then lean.abbreviations.enable(opts.abbreviations) end
 
   opts.infoview = opts.infoview or {}
-  if opts.infoview.enable ~= false then require('lean.infoview').enable(opts.infoview) end
+  require('lean.infoview').enable(opts.infoview)
 
   opts.lsp3 = opts.lsp3 or {}
   if opts.lsp3.enable ~= false then require('lspconfig').lean3ls.setup(opts.lsp3) end
