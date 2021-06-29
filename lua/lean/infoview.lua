@@ -21,7 +21,7 @@ local _DEFAULT_WIN_OPTIONS = {
   wrap = true,
 }
 
--- Get the ID of the infoview corresponding to the current window.
+--- Get the ID of the infoview corresponding to the current window.
 local function get_idx()
   return vim.api.nvim_win_get_tabpage(0)
 end
@@ -58,17 +58,10 @@ function infoview.enable(opts)
   opts.width = opts.width or 50
   if opts.enable == nil then opts.enable = true end
   infoview._opts = opts
-  infoview.set_autocmds()
-end
-
-function infoview.set_autocmds()
-  vim.api.nvim_exec([[
-    augroup LeanInfoviewInit
-      autocmd!
-      autocmd FileType lean3 lua require'lean.infoview'.buf_setup()
-      autocmd FileType lean lua require'lean.infoview'.buf_setup()
-    augroup END
-  ]], false)
+  set_augroup("LeanInfoviewInit", [[
+    autocmd FileType lean3 lua require'lean.infoview'.buf_setup()
+    autocmd FileType lean lua require'lean.infoview'.buf_setup()
+  ]])
 end
 
 function infoview.buf_setup()
@@ -100,7 +93,7 @@ function infoview.is_closed(idx)
   return this_infoview and not this_infoview.autoopen
 end
 
--- Set whether a new infoview is automatically opened on new tab.
+--- Set whether a new infoview is automatically opened on new tab.
 function infoview.set_autoopen(autoopen) infoview._opts.enable = autoopen end
 
 function infoview.ensure_open(idx)
@@ -156,14 +149,14 @@ function infoview.open(idx)
   return infoview.ensure_open(idx)
 end
 
--- Close all open infoviews (across all tabs).
+--- Close all open infoviews (across all tabs).
 function infoview.close_all()
   for idx, _ in pairs(infoview._infoviews) do
     infoview.close(idx)
   end
 end
 
--- Close the infoview associated with the current window.
+--- Close the infoview associated with the current window.
 function infoview.close(idx)
   idx = idx or get_idx()
   -- abort if closed or uninitialized
@@ -173,7 +166,7 @@ function infoview.close(idx)
   infoview.set_update()
 end
 
--- Teardown internal state for an infoview window.
+--- Teardown internal state for an infoview window.
 function infoview._teardown(infoview_idx)
   local current_infoview = infoview._infoviews[infoview_idx].data
   infoview._infoviews[infoview_idx].data = nil
