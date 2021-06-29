@@ -171,6 +171,8 @@ In e.g. your ``init.lua``:
         infoview = {
             -- Use a wider or narrower infoview.
             width = 50,
+            -- automatically open infoview on entering lean buffer in new tab?
+            enable = true,
         },
 
         -- Enable the Lean language server(s)?
