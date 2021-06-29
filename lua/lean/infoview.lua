@@ -58,17 +58,10 @@ function infoview.enable(opts)
   opts.width = opts.width or 50
   if opts.enable == nil then opts.enable = true end
   infoview._opts = opts
-  infoview.set_autocmds()
-end
-
-function infoview.set_autocmds()
-  vim.api.nvim_exec([[
-    augroup LeanInfoviewInit
-      autocmd!
-      autocmd FileType lean3 lua require'lean.infoview'.buf_setup()
-      autocmd FileType lean lua require'lean.infoview'.buf_setup()
-    augroup END
-  ]], false)
+  set_augroup("LeanInfoviewInit", [[
+    autocmd FileType lean3 lua require'lean.infoview'.buf_setup()
+    autocmd FileType lean lua require'lean.infoview'.buf_setup()
+  ]])
 end
 
 function infoview.buf_setup()
