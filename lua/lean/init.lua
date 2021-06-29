@@ -44,6 +44,9 @@ function lean.setup(opts)
   opts.treesitter = opts.treesitter or {}
   if opts.treesitter.enable ~= false then require('lean.treesitter').enable(opts.treesitter) end
 
+  opts.progress_bars = opts.progress_bars or {}
+  if opts.progress_bars ~= false then require'lean.progress_bars'.enable(opts.progress_bars) end
+
   if opts.mappings == true then
     vim.api.nvim_exec([[
       autocmd FileType lean3 lua require'lean'.use_suggested_mappings(true)

@@ -172,6 +172,13 @@ In e.g. your ``init.lua``:
             -- Use a wider or narrower infoview.
             width = 50,
         },
+        -- Enable the progress bars?
+        --
+        -- false to disable, otherwise a table of options below.
+        progress_bars = {
+            -- Use a different priority for the signs.
+            priority = 10,
+        },
 
         -- Enable the Lean language server(s)?
         --
