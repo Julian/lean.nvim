@@ -161,19 +161,22 @@ In e.g. your ``init.lua``:
             -- (comma is a popular choice on French keyboards)
             leader = '\\',
         },
+
         -- Enable suggested mappings?
         --
         -- false by default, true to enable
         mappings = false,
-        -- Enable the infoview?
+
+        -- Enable infoview support?
         --
         -- false to disable, otherwise a table of options below.
         infoview = {
             -- Use a wider or narrower infoview.
             width = 50,
-            -- automatically open infoview on entering lean buffer in new tab?
-            enable = true,
+            -- automatically open an infoview on entering a Lean buffer?
+            autoopen = true,
         },
+
         -- Enable the progress bars?
         --
         -- false to disable, otherwise a table of options below.
