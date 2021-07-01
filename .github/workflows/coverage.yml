@@ -65,3 +65,6 @@ jobs:
       - name: Run tests
         run: make test
         if: runner.os == 'macOS'
+
+      - name: Upload to codecov.io
+        run: bash <(curl -s https://codecov.io/bash) -t 1cbb8732-b172-4681-b4cb-2f11b5d70875
