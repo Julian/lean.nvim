@@ -1,0 +1,67 @@
+name: Coverage
+
+on: [push, pull_request]
+
+jobs:
+  coverage:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        lean-version:
+          - "leanprover-community/lean:3.30.0"
+    steps:
+      - uses: actions/checkout@v2
+      - run: date +%F > todays-date
+      - name: Restore cache for today's nightly.
+        uses: actions/cache@v2
+        with:
+          path: |
+            _neovim
+          key: ${{ runner.os }}-x64-${{ hashFiles('todays-date') }}
+
+      - name: Install elan
+        run: |
+            curl https://raw.githubusercontent.com/Kha/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain "${{ matrix.lean-version }}" -y
+            echo "$HOME/.elan/bin/" >> $GITHUB_PATH
+        if: runner.os == 'Linux'
+
+      - name: Install neovim and elan
+        run: |
+          brew update
+          brew install --head neovim
+          brew install elan
+          elan toolchain install "${{ matrix.lean-version }}"
+          elan default "${{ matrix.lean-version }}"
+        if: runner.os == 'macOS'
+
+      - name: Build Lean 3 fixture
+        run: |
+          cd lua/tests/fixtures/example-lean3-project/ && leanpkg configure && leanpkg build
+
+      - name: Build Lean 4 fixture
+        run: |
+          cd lua/tests/fixtures/example-lean4-project/ && leanpkg configure && leanpkg build
+
+      - name: Install the Lean LSP
+        run: sudo npm install -g lean-language-server
+        if: contains(matrix.lean-version, 'lean:3')
+
+      - name: Install nvim dependencies
+        run: |
+          mkdir packpath
+          git clone --depth 1 https://github.com/neovim/nvim-lspconfig packpath/nvim-lspconfig
+          git clone --depth 1 https://github.com/norcalli/snippets.nvim packpath/snippets.nvim
+          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim packpath/plenary.nvim
+
+      - name: Run tests with coverage
+        run: |
+          curl -OL https://raw.githubusercontent.com/norcalli/bot-ci/master/scripts/github-actions-setup.sh
+          source github-actions-setup.sh nightly-x64
+          make coverage
+        if: runner.os == 'Linux'
+
+      - name: Run tests
+        run: make test
+        if: runner.os == 'macOS'
