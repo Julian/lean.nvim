@@ -55,6 +55,9 @@ jobs:
           git clone --depth 1 https://github.com/norcalli/snippets.nvim packpath/snippets.nvim
           git clone --depth 1 https://github.com/nvim-lua/plenary.nvim packpath/plenary.nvim
 
+      - name: Install luarocks
+        run: sudo apt-get install -y luarocks
+
       - name: Run tests with coverage
         run: |
           curl -OL https://raw.githubusercontent.com/norcalli/bot-ci/master/scripts/github-actions-setup.sh
