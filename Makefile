@@ -11,7 +11,7 @@ test:
 
 coverage:
 	$(MAKE) LEAN_NVIM_COVERAGE=1 test
-	luapath/bin/luacov
+	luacov
 	cat luacov.report.out
 
 install-luacov:
