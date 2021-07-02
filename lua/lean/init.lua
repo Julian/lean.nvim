@@ -42,7 +42,7 @@ function lean.setup(opts)
   if opts.treesitter.enable ~= false then require'lean.treesitter'.enable(opts.treesitter) end
 
   opts.progress_bars = opts.progress_bars or {}
-  if opts.progress_bars ~= false then require'lean.progress_bars'.enable(opts.progress_bars) end
+  if opts.progress_bars.enable ~= false then require'lean.progress_bars'.enable(opts.progress_bars) end
 
   if opts.mappings == true then
     vim.api.nvim_exec([[
