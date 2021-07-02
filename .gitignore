@@ -1,6 +1,10 @@
-doc/tags
-packpath/
-/packpath
-*.olean
 leanpkg.path
+*.olean
+
+/luapath
+/packpath
+
 /lua/tests/fixtures/example-lean4-project/build
+
+doc/tags
+luacov.*.out

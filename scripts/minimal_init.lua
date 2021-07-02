@@ -10,3 +10,12 @@ vim.api.nvim_exec([[
   runtime! plugin/lspconfig.vim
   runtime! plugin/plenary.vim
 ]], false)
+
+-- plenary forks subprocesses, so enable coverage here when appropriate
+if vim.env.LEAN_NVIM_COVERAGE then
+  local luapath = lean_nvim_dir .. '/luapath'
+  package.path = package.path .. ';' .. luapath .. '/share/lua/5.1/?.lua;'
+                                     .. luapath .. '/share/lua/5.1/?/init.lua;;'
+  package.cpath = package.cpath .. ';' .. luapath .. '/lib/lua/5.1/?.so;'
+  require('luacov')
+end

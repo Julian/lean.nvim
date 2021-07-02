@@ -9,5 +9,14 @@ docgen:
 test:
 	nvim --headless --noplugin -u scripts/minimal_init.lua -c "PlenaryBustedDirectory lua/tests/ { minimal_init = './scripts/minimal_init.lua' }"
 
+coverage:
+	$(MAKE) LEAN_NVIM_COVERAGE=1 test
+	luacov
+	cat luacov.report.out
+
+install-luacov:
+	luarocks --lua-version 5.1 install --tree luapath/ luacov
+	@echo Run 'make coverage' now to enable coverage collection.
+
 lint:
 	pre-commit run --all-files
