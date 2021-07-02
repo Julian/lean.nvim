@@ -12,8 +12,7 @@ end]], function()
 
     vim.api.nvim_command('normal! 2gg$')
     require('lean.sorry').fill()
-    assert.is.same(
-      [[
+    assert.is.same([[
 def foo (n : nat) : n = n := begin
   induction n with d hd,
   { sorry },
@@ -32,8 +31,7 @@ end]], function()
 
     vim.api.nvim_command('normal! 3gg0')
     require('lean.sorry').fill()
-    assert.is.same(
-      [[
+    assert.is.same([[
 def foo (n : nat) : n = n := begin
   induction n with d hd,
 
@@ -48,8 +46,7 @@ def foo (n : nat) : n = n := begin
 end]], function()
     vim.api.nvim_command('normal! 2gg$')
     require('lean.sorry').fill()
-    assert.is.same(
-      [[
+    assert.is.same([[
 def foo (n : nat) : n = n := begin
   refl,
 end]], table.concat(vim.fn.getline(1, '$'), '\n'))
