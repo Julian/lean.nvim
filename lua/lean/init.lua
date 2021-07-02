@@ -8,16 +8,13 @@
 ---@tag lean.nvim
 
 local lean = {
-  lsp = require('lean.lsp'),
-  abbreviations = require('lean.abbreviations'),
-
   mappings = {
     n = {
-      ["<LocalLeader>i"] = "<Cmd>lua require('lean.infoview').get_current_infoview():toggle()<CR>";
-      ["<LocalLeader>s"] = "<Cmd>lua require('lean.sorry').fill()<CR>";
-      ["<LocalLeader>t"] = "<Cmd>lua require('lean.trythis').swap()<CR>";
-      ["<LocalLeader>3"] = "<Cmd>lua require('lean.lean3').init()<CR>";
-      ["<LocalLeader>\\"] = "<Cmd>lua require('lean.abbreviations').show_reverse_lookup()<CR>";
+      ["<LocalLeader>i"] = "<Cmd>lua require'lean.infoview'.get_current_infoview():toggle()<CR>";
+      ["<LocalLeader>s"] = "<Cmd>lua require'lean.sorry'.fill()<CR>";
+      ["<LocalLeader>t"] = "<Cmd>lua require'lean.trythis'.swap()<CR>";
+      ["<LocalLeader>3"] = "<Cmd>lua require'lean.lean3'.init()<CR>";
+      ["<LocalLeader>\\"] = "<Cmd>lua require'lean.abbreviations'.show_reverse_lookup()<CR>";
     };
     i = {
     };
@@ -30,19 +27,19 @@ function lean.setup(opts)
   opts = opts or {}
 
   opts.abbreviations = opts.abbreviations or {}
-  if opts.abbreviations.enable ~= false then lean.abbreviations.enable(opts.abbreviations) end
+  if opts.abbreviations.enable ~= false then require'lean.abbreviations'.enable(opts.abbreviations) end
 
   opts.infoview = opts.infoview or {}
   if opts.infoview.enable ~= false then require'lean.infoview'.enable(opts.infoview) end
 
   opts.lsp3 = opts.lsp3 or {}
-  if opts.lsp3.enable ~= false then require('lspconfig').lean3ls.setup(opts.lsp3) end
+  if opts.lsp3.enable ~= false then require'lspconfig'.lean3ls.setup(opts.lsp3) end
 
   opts.lsp = opts.lsp or {}
-  if opts.lsp.enable ~= false then lean.lsp.enable(opts.lsp) end
+  if opts.lsp.enable ~= false then require'lean.lsp'.enable(opts.lsp) end
 
   opts.treesitter = opts.treesitter or {}
-  if opts.treesitter.enable ~= false then require('lean.treesitter').enable(opts.treesitter) end
+  if opts.treesitter.enable ~= false then require'lean.treesitter'.enable(opts.treesitter) end
 
   opts.progress_bars = opts.progress_bars or {}
   if opts.progress_bars ~= false then require'lean.progress_bars'.enable(opts.progress_bars) end
