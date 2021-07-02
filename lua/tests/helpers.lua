@@ -31,17 +31,6 @@ function helpers.setup(config)
   require("lean").setup(vim.tbl_extend("keep", config, default_config))
 end
 
-local function has_all(_, arguments)
-  local text = arguments[1]
-  local expected = arguments[2]
-  for _, string in pairs(expected) do
-    assert.has_match(string, text, nil, true)
-  end
-  return true
-end
-
-assert:register("assertion", "has_all", has_all)
-
 --- Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(text, feed_opts)
   feed_opts = feed_opts or 'n'
@@ -104,6 +93,9 @@ function helpers.wait_for_line_diagnostics()
   assert.message("Waited for line diagnostics but none came.").True(succeeded)
 end
 
+--- The number of current windows.
+function helpers.get_num_wins() return #vim.api.nvim_list_wins() end
+
 --- Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
   local buf = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n')
@@ -112,5 +104,21 @@ local function has_buf_contents(_, arguments)
 end
 
 assert:register('assertion', 'contents', has_buf_contents)
+
+local function has_all(_, arguments)
+  local text = arguments[1]
+  local expected = arguments[2]
+  for _, string in pairs(expected) do
+    assert.has_match(string, text, nil, true)
+  end
+  return true
+end
+
+assert:register("assertion", "has_all", has_all)
+assert:register(
+  "assertion",
+  "open_infoview",
+  function() return require('lean.infoview').get_current_infoview().is_open end
+)
 
 return helpers

@@ -13,7 +13,7 @@ local lean = {
 
   mappings = {
     n = {
-      ["<LocalLeader>i"] = "<Cmd>lua require('lean.infoview').toggle()<CR>";
+      ["<LocalLeader>i"] = "<Cmd>lua require('lean.infoview').get_current_infoview():toggle()<CR>";
       ["<LocalLeader>s"] = "<Cmd>lua require('lean.sorry').fill()<CR>";
       ["<LocalLeader>t"] = "<Cmd>lua require('lean.trythis').swap()<CR>";
       ["<LocalLeader>3"] = "<Cmd>lua require('lean.lean3').init()<CR>";
@@ -33,7 +33,7 @@ function lean.setup(opts)
   if opts.abbreviations.enable ~= false then lean.abbreviations.enable(opts.abbreviations) end
 
   opts.infoview = opts.infoview or {}
-  if opts.infoview.enable ~= false then require('lean.infoview').enable(opts.infoview) end
+  if opts.infoview.enable ~= false then require'lean.infoview'.enable(opts.infoview) end
 
   opts.lsp3 = opts.lsp3 or {}
   if opts.lsp3.enable ~= false then require('lspconfig').lean3ls.setup(opts.lsp3) end
@@ -56,6 +56,11 @@ function lean.setup(opts)
 
   -- needed for testing
   lean.config = opts
+end
+
+--- Is the current buffer a lean buffer?
+function lean.is_lean_buffer()
+  return vim.bo.ft == "lean" or vim.bo.ft == "lean3"
 end
 
 function lean.use_suggested_mappings(buffer_local)

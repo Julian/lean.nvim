@@ -14,6 +14,11 @@ lean.setup({opts})                                              *lean.setup()*
         {opts} (table)  Configuration options
 
 
+lean.is_lean_buffer()                                  *lean.is_lean_buffer()*
+    Is the current buffer a lean buffer?
+
+
+
 
 ================================================================================
                                                             *lean.abbreviations*
@@ -37,13 +42,34 @@ abbreviations.show_reverse_lookup()      *abbreviations.show_reverse_lookup()*
 
 
 ================================================================================
-infoview.get_info_lines()                          *infoview.get_info_lines()*
-    Retrieve the current combined contents of the infoview as a string.
+infoview.get_current_infoview()              *infoview.get_current_infoview()*
+    Get the infoview corresponding to the current window.
 
 
 
-infoview.is_empty()                                      *infoview.is_empty()*
-    Is the infoview not showing anything?
+infoview.close_all()                                    *infoview.close_all()*
+    Close all open infoviews (across all tabs).
+
+
+
+infoview.enable()                                          *infoview.enable()*
+    Enable and open the infoview across all Lean buffers.
+
+
+
+infoview.make_buffer_focusable()            *infoview.make_buffer_focusable()*
+    Configure the infoview to update when this buffer is active.
+
+
+
+infoview.set_autoopen()                              *infoview.set_autoopen()*
+    Set whether a new infoview is automatically opened when entering Lean
+    buffers.
+
+
+
+infoview.maybe_autoopen()                          *infoview.maybe_autoopen()*
+    Open an infoview for the current buffer if it isn't already open.
 
 
 
