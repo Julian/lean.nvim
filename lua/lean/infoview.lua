@@ -84,14 +84,14 @@ function Infoview:open()
 end
 
 --- Close this infoview.
-function Infoview:close(win_already_closed)
+function Infoview:close()
   if not self.is_open then
     -- in case it is nil
     self.is_open = false
     return
   end
 
-  if not win_already_closed then vim.api.nvim_win_close(self.window, true) end
+  vim.api.nvim_win_close(self.window, true)
   self.bufnr = nil
   self.window = nil
   self.is_open = false
@@ -183,7 +183,7 @@ end
 --- An infoview was closed, either directly via `Infoview.close` or manually.
 --- Will be triggered via a `WinClosed` autocmd.
 function infoview.__was_closed(id)
-  infoview._by_id[id]:close(true)
+  infoview._by_id[id]:close()
 end
 
 --- Enable and open the infoview across all Lean buffers.
