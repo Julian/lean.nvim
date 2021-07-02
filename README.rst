@@ -168,21 +168,21 @@ In e.g. your ``init.lua``:
         -- false by default, true to enable
         mappings = false,
 
-        -- Enable infoview support?
-        --
-        -- false to disable, otherwise a table of options below.
+        -- Infoview support
         infoview = {
-            -- Use a wider or narrower infoview.
-            width = 50,
+            -- enable the infoview?
+            enable = true,
             -- automatically open an infoview on entering a Lean buffer?
             autoopen = true,
+            -- set the infoview windows' widths
+            width = 50,
         },
 
-        -- Enable the progress bars?
-        --
-        -- false to disable, otherwise a table of options below.
+        -- Progress bar support
         progress_bars = {
-            -- Use a different priority for the signs.
+            -- enable the progress bars?
+            enable = true
+            -- use a different priority for the signs
             priority = 10,
         },
 

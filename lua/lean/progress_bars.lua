@@ -1,5 +1,5 @@
 local M = {}
-local options = {}
+local options = { _DEFAULTS = { priority = 10, character = '⋯' } }
 
 local progress_sign = 'leanSignProgress'
 local sign_ns = 'leanSignProgress'
@@ -8,7 +8,7 @@ local sign_ns = 'leanSignProgress'
 local proc_infos = {}
 
 local function update(bufnr)
-  vim.fn.sign_unplace(sign_ns, {buffer=bufnr})
+  vim.fn.sign_unplace(sign_ns, { buffer = bufnr })
   for _, proc_info in ipairs(proc_infos[bufnr]) do
     local start_line = proc_info.range.start.line + 1
     local end_line = proc_info.range['end'].line + 1
@@ -37,12 +37,12 @@ local function on_file_progress(err, _, params, _, _, _)
 end
 
 function M.enable(opts)
-  options.priority = opts.priority or 10
+  options = vim.tbl_extend("force", options._DEFAULTS, opts)
   vim.fn.sign_define(progress_sign, {
-    text = '#',
+    text = options.character,
     texthl = 'leanSignProgress',
   })
-  vim.cmd([[ hi def leanSignProgress guifg=orange ctermfg=215 ]])
+  vim.cmd[[ hi def leanSignProgress guifg=orange ctermfg=215 ]]
   vim.lsp.handlers['$/lean/fileProgress'] = on_file_progress
 end
 
