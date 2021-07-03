@@ -117,8 +117,89 @@ function Infoview:focus_on_current_buffer()
   end
 end
 
---- Update this infoview's contents given the new set of lines.
-function Infoview:update(lines)
+function Infoview:__init_req_configs(category)
+  if self.req_id == nil then self.req_id = 0 end
+  if self.req_configs == nil then self.req_configs = {} end
+  if self.req_configs[category] == nil then self.req_configs[category] = {} end
+end
+
+--- Returns a wrapper on `vim.lsp.buf_request` that saves a request-specific config
+--- in the infoview state that can be used to, e.g., cancel a request's callback.
+---@param category string: "category" under which to save the request config
+function Infoview:stateful_request(category)
+  return function(bufnr, method, params, handler)
+    self:__init_req_configs(category)
+
+    -- initialize request state
+    local config = {
+      -- should this request's callback be allowed to execute?
+      enable = true
+    }
+    local id = self.req_id
+    self.req_id = self.req_id + 1
+    self.req_configs[category][id] = config
+
+    local map, cancel_func = vim.lsp.buf_request(bufnr, method, params, function(...)
+        if not config.enable then goto teardown end
+
+        handler(...)
+
+        ::teardown::
+        self.req_configs[category][id] = nil
+      end)
+
+    config.map = map
+    config.cancel_func = cancel_func
+    return map, cancel_func
+  end
+end
+
+--- Cancels all requests of the given category.
+---@param category string: "category" of requests to cancel
+function Infoview:cancel_requests(category)
+  self:__init_req_configs(category)
+
+  for id, config in pairs(self.req_configs[category]) do
+    config.enable = false
+    -- NOTE: this won't do anything until the Lean server supports cancellation requests
+    config.cancel_func()
+    -- once it does, we will need the following, as the callback could be cleared
+    -- and there will be no teardown:
+    self.req_configs[category][id] = nil
+  end
+end
+
+--- Update this infoview's contents given the current position.
+function Infoview:update()
+  self:cancel_requests("msg")
+  local buf_request = self:stateful_request("msg")
+  local update = vim.b.lean3 and lean3.update_infoview(buf_request) or function(set_lines)
+    return leanlsp.plain_goal(0, function(_, _, goal)
+      leanlsp.plain_term_goal(0, function(_, _, term_goal)
+        local lines = components.goal(goal)
+        if not vim.tbl_isempty(lines) then table.insert(lines, '') end
+        vim.list_extend(lines, components.term_goal(term_goal))
+        vim.list_extend(lines, components.diagnostics())
+        set_lines(lines)
+      end, buf_request)
+    end, buf_request)
+  end
+  update(function(lines) self:set_state({msg = lines}) end)
+end
+
+--- Simulates React's setState() method by merging the given table into the state
+--- and updating the physical display.
+function Infoview:set_state(table)
+  for key, value in pairs(table) do self[key] = value end
+  self:render()
+end
+
+--- Update this infoview's physical contents.
+function Infoview:render()
+  if not self.is_open then return end
+
+  local lines = self.msg
+
   if vim.tbl_isempty(lines) then lines = _NOTHING_TO_SHOW end
 
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', true)
@@ -134,20 +215,7 @@ end
 --- Update the infoview contents appropriately for Lean 4 or 3.
 --- Normally will be called on each CursorHold for a buffer containing Lean.
 function infoview.__update()
-  local id = get_id()
-  local update = vim.b.lean3 and lean3.update_infoview or function(set_lines)
-    return leanlsp.plain_goal(0, function(_, _, goal)
-      leanlsp.plain_term_goal(0, function(_, _, term_goal)
-        local lines = components.goal(goal)
-        if not vim.tbl_isempty(lines) then table.insert(lines, '') end
-        vim.list_extend(lines, components.term_goal(term_goal))
-        vim.list_extend(lines, components.diagnostics())
-        set_lines(lines)
-      end)
-    end)
-  end
-
-  update(function(lines) infoview._by_id[id]:update(lines) end)
+  infoview._by_id[get_id()]:update()
 end
 
 --- Retrieve the contents of the infoview as a table.
