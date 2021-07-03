@@ -6,10 +6,10 @@ local lean_nvim_dir = vim.fn.fnamemodify(__file__, ':p:h:h')
 local packpath = lean_nvim_dir .. '/packpath/*'
 vim.o.runtimepath = vim.o.runtimepath .. ',' .. packpath .. ',' .. lean_nvim_dir
 
-vim.api.nvim_exec([[
+vim.cmd[[
   runtime! plugin/lspconfig.vim
   runtime! plugin/plenary.vim
-]], false)
+]]
 
 -- plenary forks subprocesses, so enable coverage here when appropriate
 if vim.env.LEAN_NVIM_COVERAGE then

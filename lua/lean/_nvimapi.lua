@@ -5,12 +5,12 @@ local M = {}
 -- REPLACEME: once neovim/neovim#14661 is merged.
 function M.set_augroup(name, autocmds, buffer)
   local buffer_string = buffer and "<buffer>" or ""
-  vim.api.nvim_exec(string.format([[
+  vim.cmd(string.format([[
     augroup %s
       autocmd! %s * %s
       %s
     augroup END
-  ]], name, name, buffer_string, autocmds), false)
+  ]], name, name, buffer_string, autocmds))
 end
 
 return M

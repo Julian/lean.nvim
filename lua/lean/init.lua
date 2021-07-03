@@ -45,10 +45,10 @@ function lean.setup(opts)
   if opts.progress_bars.enable ~= false then require'lean.progress_bars'.enable(opts.progress_bars) end
 
   if opts.mappings == true then
-    vim.api.nvim_exec([[
+    vim.cmd[[
       autocmd FileType lean3 lua require'lean'.use_suggested_mappings(true)
       autocmd FileType lean lua require'lean'.use_suggested_mappings(true)
-    ]], false)
+    ]]
   end
 
   -- needed for testing

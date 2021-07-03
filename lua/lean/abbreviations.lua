@@ -208,7 +208,7 @@ function abbreviations.convert(needs_schedule)
 end
 
 local function enable_builtin()
-  vim.api.nvim_exec([[
+  vim.cmd[[
     augroup LeanAbbreviations
       autocmd!
       autocmd InsertCharPre *.lean lua require'lean.abbreviations'._insert_char_pre()
@@ -216,7 +216,7 @@ local function enable_builtin()
       autocmd BufLeave *.lean lua require'lean.abbreviations'.convert()
     augroup END
     hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray
-  ]], false)
+  ]]
   -- CursorMoved CursorMovedI as well?
 end
 
