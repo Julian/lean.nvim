@@ -10,7 +10,7 @@ syn match leanInfoWarning "^▶.*: warning:$"
 syn match leanInfoInfo "^▶.*: information:$"
 
 hi def link leanInfoGoals Title
-hi def leanInfoGoalCase ctermfg=cyan guifg=Cyan
+hi def link leanInfoGoalCase Statement
 hi def link leanInfoGoalHyp Type
 hi def link leanInfoGoalVDash Operator
 hi def link leanInfoExpectedType Special
