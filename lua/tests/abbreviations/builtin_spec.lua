@@ -8,7 +8,7 @@ describe('builtin abbreviations', function()
   describe(ft, function()
     it('autoexpands abbreviations', helpers.clean_buffer(ft, '', function()
       helpers.insert('\\a')
-      assert.is.equal('α', vim.api.nvim_get_current_line())
+      assert.contents.are('α')
     end))
 
     -- Really this needs to place the cursor too, but for now we just strip
@@ -21,7 +21,7 @@ describe('builtin abbreviations', function()
 
     it('expands mid-word', helpers.clean_buffer(ft, '', function()
       helpers.insert('(\\a')
-      assert.is.equal('(α', vim.api.nvim_get_current_line())
+      assert.contents.are('(α')
     end))
   end)
 end)
