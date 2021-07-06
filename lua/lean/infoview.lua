@@ -70,7 +70,7 @@ function Infoview:open()
   -- Make sure we notice even if someone manually :q's the infoview window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer> lua require'lean.infoview'.__was_closed(%d)
-  ]], self.id))
+  ]], self.id), 0)
 
   vim.api.nvim_set_current_win(window_before_split)
 
@@ -91,6 +91,7 @@ function Infoview:close()
     return
   end
 
+  set_augroup("LeanInfoviewClose", "", self.bufnr)
   vim.api.nvim_win_close(self.window, true)
   self.bufnr = nil
   self.window = nil
@@ -111,9 +112,9 @@ function Infoview:focus_on_current_buffer()
     set_augroup("LeanInfoviewUpdate", [[
       autocmd CursorHold <buffer> lua require'lean.infoview'.__update()
       autocmd CursorHoldI <buffer> lua require'lean.infoview'.__update()
-    ]], true)
+    ]], 0)
   else
-    set_augroup("LeanInfoviewUpdate", "", true)
+    set_augroup("LeanInfoviewUpdate", "", 0)
   end
 end
 
@@ -204,7 +205,7 @@ function infoview.make_buffer_focusable()
     autocmd BufEnter <buffer> lua require'lean.infoview'.maybe_autoopen()
     autocmd BufEnter,WinEnter <buffer> lua if require'lean.infoview'.get_current_infoview()]] ..
     [[ then require'lean.infoview'.get_current_infoview():focus_on_current_buffer() end
-  ]], true)
+  ]], 0)
 end
 
 --- Set whether a new infoview is automatically opened when entering Lean buffers.
