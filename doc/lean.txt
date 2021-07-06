@@ -42,6 +42,20 @@ abbreviations.show_reverse_lookup()      *abbreviations.show_reverse_lookup()*
 
 
 ================================================================================
+                                                                   *lean.finder*
+
+Grep-like searching across specified Lean directories.
+
+Supports either `telescope.nvim` or `denite.nvim` as the underlying
+implementation.
+
+finder.start()                                                *finder.start()*
+    Start finding something within the configured paths.
+
+
+
+
+================================================================================
 infoview.get_current_infoview()              *infoview.get_current_infoview()*
     Get the infoview corresponding to the current window.
 
