@@ -88,11 +88,12 @@ Features
   ``lean.use_suggested_mappings()`` or set ``mappings = true`` in the
   configuration)
 
-    * ``<LocalLeader>t``: "try this:" suggestion replacement
 
     * ``<LocalLeader>i``: toggle infoview
 
     * ``<LocalLeader>s``: ``sorry`` insertion corresponding to the number of open goals
+
+    * ``<LocalLeader>t``: "try this:" suggestion replacement
 
     * ``<LocalLeader>3``: force a buffer into Lean 3 mode
 
@@ -140,65 +141,61 @@ In e.g. your ``init.lua``:
     }
 
     require('lean').setup{
-        -- Abbreviation support
-        abbreviations = {
-            -- Set one of the following to true to enable abbreviations
-            builtin = false, -- built-in expander
-            compe = false, -- nvim-compe source
-            snippets = false, -- snippets.nvim source
-            -- additional abbreviations:
-            extra = {
-                -- Add a \wknight abbreviation to insert ♘
-                --
-                -- Note that the backslash is implied, and that you of
-                -- course may also use a snippet engine directly to do
-                -- this if so desired.
-                wknight = '♘',
-            },
-            -- change if you don't like the backslash
-            -- (comma is a popular choice on French keyboards)
-            leader = '\\',
+      -- Enable the Lean language server(s)?
+      --
+      -- false to disable, otherwise should be a table of options to pass to
+      --  `leanls` and/or `lean3ls`.
+      --
+      -- See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls for details.
+
+      -- Lean 4
+      lsp = { on_attach = on_attach }
+
+      -- Lean 3
+      lsp3 = { on_attach = on_attach },
+
+      -- Abbreviation support
+      abbreviations = {
+        -- Set one of the following to true to enable abbreviations
+        builtin = false, -- built-in expander
+        compe = false, -- nvim-compe source
+        snippets = false, -- snippets.nvim source
+        -- additional abbreviations:
+        extra = {
+          -- Add a \wknight abbreviation to insert ♘
+          --
+          -- Note that the backslash is implied, and that you of
+          -- course may also use a snippet engine directly to do
+          -- this if so desired.
+          wknight = '♘',
         },
+        -- Change if you don't like the backslash
+        -- (comma is a popular choice on French keyboards)
+        leader = '\\',
+      },
 
-        -- Enable suggested mappings?
-        --
-        -- false by default, true to enable
-        mappings = false,
+      -- Enable suggested mappings?
+      --
+      -- false by default, true to enable
+      mappings = false,
 
-        -- Infoview support
-        infoview = {
-            -- enable the infoview?
-            enable = true,
-            -- automatically open an infoview on entering a Lean buffer?
-            autoopen = true,
-            -- set the infoview windows' widths
-            width = 50,
-        },
+      -- Infoview support
+      infoview = {
+        -- Enable the infoview?
+        enable = true,
+        -- Automatically open an infoview on entering a Lean buffer?
+        autoopen = true,
+        -- Set the infoview windows' widths
+        width = 50,
+      },
 
-        -- Progress bar support
-        progress_bars = {
-            -- enable the progress bars?
-            enable = true
-            -- use a different priority for the signs
-            priority = 10,
-        },
-
-        -- Enable the Lean language server(s)?
-        --
-        -- false to disable, otherwise should be a table of options to pass to
-        --  `leanls` and/or `lean3ls`.
-        --
-        -- See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls for details.
-
-        -- Lean 4
-        lsp = {
-            on_attach = on_attach
-        }
-
-        -- Lean 3
-        lsp3 = {
-            on_attach = on_attach
-        },
+      -- Progress bar support
+      progress_bars = {
+        -- Enable the progress bars?
+        enable = true
+        -- Use a different priority for the signs
+        priority = 10,
+      },
     }
 
 If you're using an ``init.vim``-only configuration setup, simply surround the
