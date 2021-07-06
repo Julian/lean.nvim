@@ -39,8 +39,9 @@ function helpers.feed(text, feed_opts)
 end
 
 --- Insert some text into the current buffer.
-function helpers.insert(text)
-  helpers.feed('i' .. text, 'x')
+function helpers.insert(text, feed_opts)
+  feed_opts = feed_opts or 'x'
+  helpers.feed('i' .. text, feed_opts)
 end
 
 -- Even though we can delete a buffer, so should be able to reuse names,
