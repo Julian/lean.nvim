@@ -10,6 +10,7 @@
 local lean = {
   mappings = {
     n = {
+      ["<LocalLeader>f"] = "<Cmd>lua require'lean.finder'.start()<CR>";
       ["<LocalLeader>i"] = "<Cmd>lua require'lean.infoview'.get_current_infoview():toggle()<CR>";
       ["<LocalLeader>s"] = "<Cmd>lua require'lean.sorry'.fill()<CR>";
       ["<LocalLeader>t"] = "<Cmd>lua require'lean.trythis'.swap()<CR>";
@@ -43,6 +44,9 @@ function lean.setup(opts)
 
   opts.progress_bars = opts.progress_bars or {}
   if opts.progress_bars.enable ~= false then require'lean.progress_bars'.enable(opts.progress_bars) end
+
+  opts.finder = opts.finder or {}
+  if opts.finder.enable ~= false then require'lean.finder'.enable(opts.finder) end
 
   if opts.mappings == true then
     vim.cmd[[
