@@ -25,10 +25,9 @@ Install via your favorite plugin manager. E.g., with
 
     " Optional Dependencies:
 
-    Plug 'hrsh7th/nvim-compe'             " For LSP completion
-    Plug 'hrsh7th/vim-vsnip'              " For snippets
-    Plug 'nvim-telescope/telescope.nvim'  " For Lean live grep support
-    Plug 'andrewradev/switch.vim'         " For Lean switch support
+    Plug 'hrsh7th/nvim-compe'  " For LSP completion
+    Plug 'hrsh7th/vim-vsnip'   " For snippets
+    Plug 'andrewradev/switch.vim'  " For Lean switch support
 
 ``lean.nvim`` already includes syntax highlighting and Lean filetype
 support, so installing the ``lean.vim`` (i.e. non-neovim) plugin is not
@@ -89,7 +88,6 @@ Features
   ``lean.use_suggested_mappings()`` or set ``mappings = true`` in the
   configuration)
 
-    * ``<LocalLeader>f``: live grep within the configured ``finder`` directories
 
     * ``<LocalLeader>i``: toggle infoview
 
@@ -151,7 +149,7 @@ In e.g. your ``init.lua``:
       -- See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls for details.
 
       -- Lean 4
-      lsp = { on_attach = on_attach },
+      lsp = { on_attach = on_attach }
 
       -- Lean 3
       lsp3 = { on_attach = on_attach },
@@ -194,30 +192,10 @@ In e.g. your ``init.lua``:
       -- Progress bar support
       progress_bars = {
         -- Enable the progress bars?
-        enable = true,
+        enable = true
         -- Use a different priority for the signs
         priority = 10,
       },
-
-      -- Lean finder (live grep)
-      finder = {
-        -- Enable the finder?
-        enable = true,
-
-        -- What implementation should be used?
-        --
-        -- Valid values are:
-        --     * "telescope" (for telescope.nvim)
-        --     * "denite" (for denite.nvim)
-        implementation = 'telescope',
-
-        -- What paths should be live-grepped?
-        --
-        -- By default, the current working directory is the only configured
-        -- path, but adding a path to a `mathlib` repository checkout is
-        -- a good idea.
-        paths = { '.' },
-      }
     }
 
 If you're using an ``init.vim``-only configuration setup, simply surround the
