@@ -1,7 +1,9 @@
 .PHONY: docgen nvim lint test
 
+SETUP = "lua require'lean'.setup{}"
+
 nvim:
-	nvim --noplugin -u scripts/minimal_init.lua $(ARGS)
+	nvim --noplugin -u scripts/minimal_init.lua -c $(SETUP) $(ARGS)
 
 docgen:
 	nvim --headless --noplugin -u scripts/minimal_init.lua -c "luafile ./scripts/gendocs.lua" -c "qa"
