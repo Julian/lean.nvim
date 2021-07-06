@@ -162,7 +162,9 @@ end
 
 function _G._lean_abbreviations_tab_expr()
   abbreviations.convert(true)
-  return ' '
+  -- FIXME: Really we want return '', i.e. to do nothing and just expand,
+  --        but that seems to not do anything...
+  return vim.api.nvim_replace_termcodes('<Left><Right>', true, false, true)
 end
 
 local function convert_abbrev(abbrev)
