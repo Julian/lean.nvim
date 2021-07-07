@@ -42,19 +42,22 @@ local function upconvert_lsp_goal_to_lean4(response)
   return { goals = goals }
 end
 
-function lean3.update_infoview(set_lines)
-  local params = vim.lsp.util.make_position_params()
-  return vim.lsp.buf_request(0, "textDocument/hover", params, function(_, _, result)
-    local lines = {}
-    if result and type(result) == "table" and not vim.tbl_isempty(result.contents) then
-      vim.list_extend(
-        lines,
-        components.goal(upconvert_lsp_goal_to_lean4(result)))
-    end
-    vim.list_extend(lines, components.diagnostics())
+function lean3.update_infoview(buf_request)
+  buf_request = buf_request or vim.lsp.buf_request
+  return function(set_lines)
+    local params = vim.lsp.util.make_position_params()
+    return buf_request(0, "textDocument/hover", params, function(_, _, result)
+      local lines = {}
+      if result and type(result) == "table" and not vim.tbl_isempty(result.contents) then
+        vim.list_extend(
+          lines,
+          components.goal(upconvert_lsp_goal_to_lean4(result)))
+      end
+      vim.list_extend(lines, components.diagnostics())
 
-    set_lines(lines)
-  end)
+      set_lines(lines)
+    end)
+  end
 end
 
 return lean3

@@ -19,18 +19,20 @@ function lsp.enable(opts)
 end
 
 -- Fetch goal state information from the server.
-function lsp.plain_goal(bufnr, handler)
+function lsp.plain_goal(bufnr, handler, buf_request)
+  buf_request = buf_request or vim.lsp.buf_request
   -- Shift forward by 1, since in vim it's easier to reach word
   -- boundaries in normal mode.
   local params = vim.lsp.util.make_position_params()
   params.position.character = params.position.character + 1
-  return vim.lsp.buf_request(bufnr, "$/lean/plainGoal", params, handler)
+  return buf_request(bufnr, "$/lean/plainGoal", params, handler)
 end
 
 -- Fetch term goal state information from the server.
-function lsp.plain_term_goal(bufnr, handler)
+function lsp.plain_term_goal(bufnr, handler, buf_request)
+  buf_request = buf_request or vim.lsp.buf_request
   local params = vim.lsp.util.make_position_params()
-  return vim.lsp.buf_request(bufnr, "$/lean/plainTermGoal", params, handler)
+  return buf_request(bufnr, "$/lean/plainTermGoal", params, handler)
 end
 
 function lsp.handlers.plain_goal_handler (_, method, result, _, _, config)
