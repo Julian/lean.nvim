@@ -247,4 +247,20 @@ describe('infoview', function()
       assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     end)
   end)
+
+  it('close_all succeeds',
+  function(_)
+    local num_wins = get_num_wins()
+    infoview.close_all()
+
+    -- should be exactly 3 open at the moment
+    assert.is.equal(num_wins - 3, get_num_wins())
+
+    for _, tab in pairs(vim.api.nvim_list_tabpages()) do
+      vim.api.nvim_set_current_tabpage(tab)
+      if infoview.get_current_infoview() then
+        assert.is_not.open_infoview()
+      end
+    end
+  end)
 end)
