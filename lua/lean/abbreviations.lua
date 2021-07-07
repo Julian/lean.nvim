@@ -4,6 +4,8 @@
 
 ---@tag lean.abbreviations
 
+local set_augroup = require('lean._nvimapi').set_augroup
+
 local abbreviations = {}
 
 local _MEMOIZED = nil
@@ -210,15 +212,12 @@ function abbreviations.convert(needs_schedule)
 end
 
 local function enable_builtin()
-  vim.cmd[[
-    augroup LeanAbbreviations
-      autocmd!
-      autocmd InsertCharPre *.lean lua require'lean.abbreviations'._insert_char_pre()
-      autocmd InsertLeave *.lean lua require'lean.abbreviations'.convert()
-      autocmd BufLeave *.lean lua require'lean.abbreviations'.convert()
-    augroup END
-    hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray
-  ]]
+  set_augroup("LeanAbbreviations", [[
+    autocmd InsertCharPre *.lean lua require'lean.abbreviations'._insert_char_pre()
+    autocmd InsertLeave *.lean lua require'lean.abbreviations'.convert()
+    autocmd BufLeave *.lean lua require'lean.abbreviations'.convert()
+  ]])
+  vim.cmd[[hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray]]
   -- CursorMoved CursorMovedI as well?
 end
 
