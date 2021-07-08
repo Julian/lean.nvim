@@ -118,8 +118,30 @@ function Infoview:focus_on_current_buffer()
   end
 end
 
---- Update this infoview's contents given the new set of lines.
-function Infoview:update(lines)
+--- Update this infoview's contents given the current position.
+function Infoview:update()
+  local update = vim.b.lean3 and lean3.update_infoview or function(set_lines)
+    return leanlsp.plain_goal(0, function(_, _, goal)
+      leanlsp.plain_term_goal(0, function(_, _, term_goal)
+        local lines = components.goal(goal)
+        if not vim.tbl_isempty(lines) then table.insert(lines, '') end
+        vim.list_extend(lines, components.term_goal(term_goal))
+        vim.list_extend(lines, components.diagnostics())
+        set_lines(lines)
+      end)
+    end)
+  end
+  update(function(lines)
+    self.msg = lines
+    self:render()
+  end)
+end
+
+--- Update this infoview's physical contents.
+function Infoview:render()
+  if not self.is_open then return end
+  local lines = self.msg
+
   if vim.tbl_isempty(lines) then lines = _NOTHING_TO_SHOW end
 
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', true)
@@ -135,20 +157,7 @@ end
 --- Update the infoview contents appropriately for Lean 4 or 3.
 --- Normally will be called on each CursorHold for a buffer containing Lean.
 function infoview.__update()
-  local id = get_id()
-  local update = vim.b.lean3 and lean3.update_infoview or function(set_lines)
-    return leanlsp.plain_goal(0, function(_, _, goal)
-      leanlsp.plain_term_goal(0, function(_, _, term_goal)
-        local lines = components.goal(goal)
-        if not vim.tbl_isempty(lines) then table.insert(lines, '') end
-        vim.list_extend(lines, components.term_goal(term_goal))
-        vim.list_extend(lines, components.diagnostics())
-        set_lines(lines)
-      end)
-    end)
-  end
-
-  update(function(lines) infoview._by_id[id]:update(lines) end)
+  infoview._by_id[get_id()]:update()
 end
 
 --- Retrieve the contents of the infoview as a table.
