@@ -9,7 +9,7 @@ local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
 local _MARKER = '.*lean_version.*\".*:3.*'
 
 function ft.detect()
-  local project_root = find_project_root(require('lspconfig.util').path.dirname(vim.api.nvim_buf_get_name(0)))
+  local project_root = find_project_root(vim.api.nvim_buf_get_name(0))
   if project_root then
     local result = vim.fn.readfile(project_root .. '/leanpkg.toml')
     for _, line in ipairs(result) do
