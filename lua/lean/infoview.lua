@@ -2,7 +2,7 @@ local components = require('lean.infoview.components')
 local lean3 = require('lean.lean3')
 local leanlsp = require('lean.lsp')
 local is_lean_buffer = require('lean').is_lean_buffer
-local set_augroup = require('lean._nvimapi').set_augroup
+local set_augroup = require('lean._util').set_augroup
 
 local infoview = { _by_id = {} }
 local options = { _DEFAULTS = { autoopen = true, width = 50 } }

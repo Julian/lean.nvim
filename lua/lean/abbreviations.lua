@@ -4,7 +4,7 @@
 
 ---@tag lean.abbreviations
 
-local set_augroup = require('lean._nvimapi').set_augroup
+local set_augroup = require('lean._util').set_augroup
 
 local abbreviations = {}
 
