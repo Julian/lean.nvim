@@ -149,7 +149,7 @@ In e.g. your ``init.lua``:
       -- See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls for details.
 
       -- Lean 4
-      lsp = { on_attach = on_attach }
+      lsp = { on_attach = on_attach },
 
       -- Lean 3
       lsp3 = { on_attach = on_attach },
@@ -192,7 +192,7 @@ In e.g. your ``init.lua``:
       -- Progress bar support
       progress_bars = {
         -- Enable the progress bars?
-        enable = true
+        enable = true,
         -- Use a different priority for the signs
         priority = 10,
       },
