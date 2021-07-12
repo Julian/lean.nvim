@@ -12,6 +12,9 @@ docgen:
 test:
 	nvim --headless --noplugin -u scripts/minimal_init.lua -c "PlenaryBustedDirectory lua/tests/ { minimal_init = './scripts/minimal_init.lua' }"
 
+test_seq:
+	nvim --headless --noplugin -u scripts/minimal_init.lua -c "PlenaryBustedDirectory lua/tests/ { sequential = true; sequential_quit = true; minimal_init = './scripts/minimal_init.lua' }"
+
 coverage:
 	$(MAKE) LEAN_NVIM_COVERAGE=1 test
 	luacov
