@@ -12,9 +12,9 @@ return {
   },
   lean3_project = {
     path = root .. '/example-lean3-project',
-    some_existing_file = root .. '/example-lean3-project/test.lean',
-    some_nonexisting_file = root .. '/example-lean3-project/does_not_exist.lean',
-    some_nested_existing_file = root .. '/example-lean3-project/test/test1.lean',
-    some_nested_nonexisting_file = root .. '/example-lean3-project/test/does_not_exist.lean'
+    some_existing_file = root .. '/example-lean3-project/src/foo.lean',
+    some_nonexisting_file = root .. '/example-lean3-project/src/does_not_exist.lean',
+    some_nested_existing_file = root .. '/example-lean3-project/src/bar/baz.lean',
+    some_nested_nonexisting_file = root .. '/example-lean3-project/src/bar/does_not_exist.lean'
   },
 }

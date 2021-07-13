@@ -1,4 +1,4 @@
-import test.test1
+import foo
 
 def test1 : nat := test
 

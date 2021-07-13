@@ -39,7 +39,7 @@ describe('infoview', function()
   infoview.get_current_infoview():open()
   it('lean 3', function()
     before_each(function()
-      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
+      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/src/bar/baz.lean")
       helpers.wait_for_ready_lsp()
     end)
 
@@ -83,7 +83,7 @@ describe('infoview', function()
 
   it('new tab', function()
     before_each(function()
-      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
+      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/src/bar/baz.lean")
       helpers.wait_for_ready_lsp()
     end)
 
