@@ -1,5 +1,6 @@
 local infoview = require('lean.infoview')
 local get_num_wins = require('tests.helpers').get_num_wins
+local fixtures = require('tests.fixtures')
 
 require('tests.helpers').setup { infoview = { enable = true } }
 describe('infoview', function()
@@ -8,7 +9,7 @@ describe('infoview', function()
     local num_wins = get_num_wins()
     it('automatically opens',
       function(_)
-        vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
+        vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
         assert.open_infoview()
         assert.is.equal(num_wins + 1, get_num_wins())
         assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
@@ -42,7 +43,7 @@ describe('infoview', function()
     local num_wins = get_num_wins()
     it('automatically opens',
       function(_)
-        vim.api.nvim_command("edit lua/tests/fixtures/example-lean4-project/Test.lean")
+        vim.api.nvim_command('edit ' .. fixtures.lean_project.some_existing_file)
         assert.open_infoview()
         assert.is.equal(num_wins + 1, get_num_wins())
         assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))

@@ -1,5 +1,6 @@
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
+local fixtures = require('tests.fixtures')
 
 local function infoview_lsp_update(pos)
   local current_infoview = infoview.get_current_infoview()
@@ -27,7 +28,7 @@ helpers.setup {
 }
 describe('infoview', function()
   it('immediate close', function()
-    vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
+    vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
     helpers.wait_for_ready_lsp()
     infoview.__update()
     infoview.get_current_infoview():close()

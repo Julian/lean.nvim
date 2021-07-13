@@ -1,11 +1,12 @@
 local infoview = require('lean.infoview')
 local get_num_wins = require('tests.helpers').get_num_wins
+local fixtures = require('tests.fixtures')
 
 require('tests.helpers').setup {
   infoview = { enable = true },
 }
 describe('infoview', function()
-  vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test.lean")
+  vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
 
   local win = vim.api.nvim_get_current_win()
   local infoview_info = infoview.get_current_infoview():open()
