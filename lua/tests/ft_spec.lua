@@ -1,4 +1,3 @@
-require('tests.helpers').setup {}
 describe('filetype detection', function()
   describe('lean 3', function()
     describe('existing', function()
