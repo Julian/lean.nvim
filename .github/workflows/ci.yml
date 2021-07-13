@@ -30,7 +30,8 @@ jobs:
       - name: Install neovim and elan
         run: |
           brew update
-          brew install elan neovim
+          brew install elan
+          brew install --head neovim
           elan toolchain install "${{ matrix.lean-version }}"
           elan default "${{ matrix.lean-version }}"
         if: runner.os == 'macOS'
