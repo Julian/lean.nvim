@@ -65,7 +65,7 @@ end
 --  Yes c(lean) may be a double entendre, and no I don't feel bad.
 function helpers.clean_buffer(ft, contents, callback)
   return function()
-    local bufnr = vim.api.nvim_create_buf(false, true)
+    local bufnr = vim.api.nvim_create_buf(false, false)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
     -- apparently necessary to trigger BufWinEnter
     vim.api.nvim_set_current_buf(bufnr)
