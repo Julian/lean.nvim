@@ -1,4 +1,5 @@
 -- Stuff that should live in some standard library.
+local Job = require("plenary.job")
 
 local M = {}
 
@@ -29,41 +30,24 @@ end
 --- Unlike `system()`, we don't mix stdout and stderr, and unlike
 --- `vim.loop.spawn`, we wait for process exit and collect the output.
 --- @return table: the lines of stdout of the exited process
-function M.subprocess_check_output(cmd, opts, timeout)
-  if not timeout then timeout = 10000 end
-  local lines, stderr_lines
+function M.subprocess_check_output(opts, timeout)
+  timeout = timeout or 10000
 
-  opts = vim.tbl_extend(
-    "keep", opts or {}, {
-      stdout_buffered = true,
-      stderr_buffered = true,
-      on_stdout = function(_, data) lines = data end,
-      on_stderr = function(_, data) stderr_lines = data end
-    }
-  )
+  local job = Job:new(opts)
 
-  local job = vim.fn.jobstart(cmd, opts)
-  local return_code = vim.fn.jobwait({ job }, timeout)[1]
-  local error
+  job:start()
+  if not job:wait(timeout) then return end
 
-  if return_code == 0 then
-    return lines
-  elseif return_code == -1 then
-    error = string.format(
-      "%s failed to finish executing within %0.2f seconds.",
-      vim.inspect(cmd),
-      timeout / 1000
-    )
-  else
-    error = string.format(
-      "%s exited with non-zero exit status %d.\nstderr contained:\n%s",
-      vim.inspect(cmd),
-      return_code,
-      table.concat(stderr_lines, '\n')
-    )
+  if job.code == 0 then
+    return job:result()
   end
 
-  vim.api.nvim_err_writeln(error)
+  error(string.format(
+    "%s exited with non-zero exit status %d.\nstderr contained:\n%s",
+    vim.inspect(job.command),
+    job.code,
+    table.concat(job:stderr_result(), '\n')
+  ))
 end
 
 return M
