@@ -15,9 +15,10 @@ describe('lean.current_search_paths', function()
       local paths = lean.current_search_paths()
       -- via its leanpkg.path:
       assert.has_all(
-        table.concat(paths, "\n"),
-        { "/lib/lean",                  -- Lean standard library
-          fixtures.lean_project.path }  -- the project itself
+        table.concat(paths, '\n') .. '\n',
+        { "/lib/lean\n",                                      -- standard library
+          fixtures.lean_project.path .. '\n',                 -- the project itself
+          fixtures.lean_project.path .. '/foo\n' }  -- its dependency
       )
     end)
   end
@@ -30,9 +31,9 @@ describe('lean.current_search_paths', function()
       local paths = lean.current_search_paths()
       -- via its leanpkg.path:
       assert.has_all(
-        table.concat(paths, "\n"),
-        { "/lib/lean/library",           -- Lean 3 standard library
-          fixtures.lean3_project.path }  -- the project itself
+        table.concat(paths, '\n') .. '\n',
+        { '/lib/lean/library\n',                     -- Lean 3 standard library
+          fixtures.lean3_project.path .. '/src\n' }  -- the project itself
       )
     end)
   end
