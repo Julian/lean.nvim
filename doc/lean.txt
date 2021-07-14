@@ -19,6 +19,14 @@ lean.is_lean_buffer()                                  *lean.is_lean_buffer()*
 
 
 
+lean.current_search_paths()                      *lean.current_search_paths()*
+    Return the current Lean search path.
+
+    Includes both the Lean core libraries as well as project-specific
+    directories.
+
+
+
 
 ================================================================================
                                                             *lean.abbreviations*
@@ -101,6 +109,8 @@ components.diagnostics()                            *components.diagnostics()*
 
 
 
+
+================================================================================
 
 ================================================================================
 sorry.fill()                                                    *sorry.fill()*

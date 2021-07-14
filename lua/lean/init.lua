@@ -7,6 +7,8 @@
 
 ---@tag lean.nvim
 
+local subprocess_check_output = require('lean._util').subprocess_check_output
+
 local lean = {
   mappings = {
     n = {
@@ -55,11 +57,6 @@ function lean.setup(opts)
   lean.config = opts
 end
 
---- Is the current buffer a lean buffer?
-function lean.is_lean_buffer()
-  return vim.bo.ft == "lean" or vim.bo.ft == "lean3"
-end
-
 function lean.use_suggested_mappings(buffer_local)
   local opts = { noremap = true }
   for mode, mode_mappings in pairs(lean.mappings) do
@@ -71,6 +68,43 @@ function lean.use_suggested_mappings(buffer_local)
       end
     end
   end
+end
+
+--- Is the current buffer a lean buffer?
+function lean.is_lean_buffer()
+  return vim.bo.ft == "lean" or vim.bo.ft == "lean3"
+end
+
+--- Return the current Lean search path.
+---
+--- Includes both the Lean core libraries as well as project-specific
+--- directories.
+function lean.current_search_paths()
+  local paths
+
+  if vim.bo.ft == "lean3" then
+    paths = require'lean.lean3'.__current_search_paths()
+  else
+    local root = vim.lsp.buf.list_workspace_folders()[1]
+    -- print-paths emits a colon-separated list of .lean paths on the second line
+    local all_paths = subprocess_check_output(
+      { command = "leanpkg", args = {"print-paths"}, cwd = root }
+    )[2]
+
+    paths = vim.tbl_map(
+      function(path) return root .. '/' .. path end,
+      vim.split(all_paths, ':')
+    )
+    vim.list_extend(
+      paths,
+      subprocess_check_output{ command = "lean", args = {"--print-libdir"}, cwd = root }
+    )
+  end
+
+  return vim.tbl_map(
+    vim.fn.simplify,
+    vim.tbl_filter(function(path) return path ~= "" and require("lspconfig.util").path.is_dir(path) end, paths)
+  )
 end
 
 return lean

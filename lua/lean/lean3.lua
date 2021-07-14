@@ -1,4 +1,6 @@
 local components = require('lean.infoview.components')
+local subprocess_check_output = require('lean._util').subprocess_check_output
+
 local lean3 = {}
 
 -- Split a Lean 3 server response on goals.
@@ -40,6 +42,16 @@ local function upconvert_lsp_goal_to_lean4(response)
     end
   end
   return { goals = goals }
+end
+
+--- Return the current Lean 3 search path.
+---
+--- Includes both the Lean 3 core libraries as well as project-specific
+--- directories (i.e. equivalent to what is reported by `lean --path`).
+function lean3.__current_search_paths()
+  local root = vim.lsp.buf.list_workspace_folders()[1]
+  local result = subprocess_check_output{command = "lean", args = {"--path"}, cwd = root }
+  return vim.fn.json_decode(table.concat(result, '')).path
 end
 
 function lean3.update_infoview(set_lines)

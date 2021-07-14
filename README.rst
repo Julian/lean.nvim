@@ -115,9 +115,11 @@ Features
   <https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax>`_,
   so usable with e.g. `vim-vsnip <https://github.com/hrsh7th/vim-vsnip>`_)
 
-You may find browsing `my own dotfiles
-<https://github.com/Julian/dotfiles/tree/main/.config/nvim>`_ useful for
-seeing how I use this plugin myself.
+* Lean library search path access via
+  ``lean.current_search_path()``, suitable for use with e.g.
+  `telescope.nvim <https://github.com/nvim-telescope/telescope.nvim/>`_ for
+  live grepping. See the wiki for `a sample configuration
+  <https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#live-grep>`_.
 
 Configuration & Usage
 ---------------------
