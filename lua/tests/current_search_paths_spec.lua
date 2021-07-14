@@ -30,12 +30,15 @@ describe('lean.current_search_paths', function()
       helpers.wait_for_ready_lsp()
 
       local paths = lean.current_search_paths()
-      assert.are_equal(2, #paths)
+      assert.are_equal(3, #paths)
       -- via its leanpkg.path:
       assert.has_all(
         table.concat(paths, '\n') .. '\n',
-        { '/lib/lean/library\n',                     -- Lean 3 standard library
-          fixtures.lean3_project.path .. '/src\n' }  -- the project itself
+        {
+          '/lib/lean/library\n',                     -- Lean 3 standard library
+          fixtures.lean3_project.path .. '/src\n',   -- the project itself
+          fixtures.lean3_project.path .. '/_target/deps/mathlib/src\n'    -- the project itself
+        }
       )
     end)
   end

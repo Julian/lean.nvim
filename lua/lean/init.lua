@@ -103,7 +103,7 @@ function lean.current_search_paths()
 
   return vim.tbl_map(
     vim.fn.simplify,
-    vim.tbl_filter(function(path) return path ~= "" end, paths)
+    vim.tbl_filter(function(path) return path ~= "" and require("lspconfig.util").path.is_dir(path) end, paths)
   )
 end
 
