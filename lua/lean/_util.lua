@@ -30,7 +30,7 @@ end
 --- `vim.loop.spawn`, we wait for process exit and collect the output.
 --- @return table: the lines of stdout of the exited process
 function M.subprocess_check_output(cmd, opts, timeout)
-  if not timeout then timeout = 5000 end
+  if not timeout then timeout = 10000 end
   local lines, stderr_lines
 
   opts = vim.tbl_extend(
