@@ -1,55 +1,19 @@
 local fixtures = require('tests.fixtures')
 
-describe('filetype detection', function()
-  describe('lean 3', function()
-    describe('existing', function()
-      it('root file', function(_)
-          vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
-          assert.is.same("lean3", vim.bo.ft)
-        end)
-
-      it('nested file', function(_)
-        vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_nested_existing_file)
-        assert.is.same('lean3', vim.bo.ft)
-      end)
+describe('lean 3', function()
+  for kind, path in unpack(fixtures.lean3_project.files_it) do
+    it('filetype detection ' .. kind, function()
+      vim.api.nvim_command('edit ' .. path)
+      assert.is.same('lean3', vim.bo.ft)
     end)
+  end
+end)
 
-    describe('new', function()
-      it('root file', function(_)
-          vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_nonexisting_file)
-          assert.is.same('lean3', vim.bo.ft)
-        end)
-
-      it('nested file', function(_)
-        vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_nested_nonexisting_file)
-        assert.is.same('lean3', vim.bo.ft)
-      end)
+describe('lean 4', function()
+  for kind, path in unpack(fixtures.lean_project.files_it) do
+    it('filetype detection ' .. kind, function()
+      vim.api.nvim_command('edit ' .. path)
+      assert.is.same('lean', vim.bo.ft)
     end)
-  end)
-
-  describe('lean 4', function()
-    describe('existing', function()
-      it('root file', function(_)
-        vim.api.nvim_command('edit ' .. fixtures.lean_project.some_existing_file)
-        assert.is.same('lean', vim.bo.ft)
-      end)
-
-      it('nested file', function(_)
-        vim.api.nvim_command('edit ' .. fixtures.lean_project.some_nested_existing_file)
-        assert.is.same('lean', vim.bo.ft)
-      end)
-    end)
-
-    describe('new', function()
-      it('root file', function(_)
-        vim.api.nvim_command('edit ' .. fixtures.lean_project.some_nonexisting_file)
-        assert.is.same('lean', vim.bo.ft)
-      end)
-
-      it('nested file', function(_)
-        vim.api.nvim_command('edit ' .. fixtures.lean_project.some_nested_nonexisting_file)
-        assert.is.same('lean', vim.bo.ft)
-      end)
-    end)
-  end)
+  end
 end)
