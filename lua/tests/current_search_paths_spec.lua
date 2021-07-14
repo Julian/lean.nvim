@@ -13,6 +13,7 @@ describe('lean.current_search_paths', function()
       helpers.wait_for_ready_lsp()
 
       local paths = lean.current_search_paths()
+      assert.are_equal(3, #paths)
       -- via its leanpkg.path:
       assert.has_all(
         table.concat(paths, '\n') .. '\n',
@@ -29,6 +30,7 @@ describe('lean.current_search_paths', function()
       helpers.wait_for_ready_lsp()
 
       local paths = lean.current_search_paths()
+      assert.are_equal(2, #paths)
       -- via its leanpkg.path:
       assert.has_all(
         table.concat(paths, '\n') .. '\n',
