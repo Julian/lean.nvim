@@ -220,9 +220,6 @@ you're interested in. Below is a (hopelessly incomplete) list of a few:
     * `nvim-lightbulb <https://github.com/kosayoda/nvim-lightbulb>`_ for
       signalling when code actions are available
 
-    * `lspsaga.nvim <https://github.com/glepnir/lspsaga.nvim>`_ for an
-      extended LSP experience on top of the builtin one
-
     * `goto-preview <https://github.com/rmagatti/goto-preview>`_ for
       peeking definitions (instead of jumping to them)
 
