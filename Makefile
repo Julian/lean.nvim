@@ -9,7 +9,11 @@ nvim:
 docgen:
 	nvim --headless --noplugin -u scripts/minimal_init.lua -c "luafile ./scripts/gendocs.lua" -c "qa"
 
-test:
+build-test-fixtures:
+	cd ./lua/tests/fixtures/example-lean3-project/ && leanpkg build
+	cd ./lua/tests/fixtures/example-lean4-project/ && leanpkg build
+
+test: build-test-fixtures
 	./lua/tests/scripts/run_tests.sh
 
 coverage:
