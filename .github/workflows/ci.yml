@@ -51,9 +51,9 @@ jobs:
         run: |
           curl -OL https://raw.githubusercontent.com/norcalli/bot-ci/master/scripts/github-actions-setup.sh
           source github-actions-setup.sh nightly-x64
-          make test
+          make test_seq
         if: runner.os == 'Linux'
 
       - name: Run tests
-        run: make test
+        run: make test_seq
         if: runner.os == 'macOS'
