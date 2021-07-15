@@ -10,7 +10,7 @@ docgen:
 	nvim --headless --noplugin -u scripts/minimal_init.lua -c "luafile ./scripts/gendocs.lua" -c "qa"
 
 test:
-	nvim --headless --noplugin -u scripts/minimal_init.lua -c "PlenaryBustedDirectory lua/tests/ { minimal_init = './scripts/minimal_init.lua' }"
+	./lua/tests/scripts/run_tests.sh
 
 coverage:
 	$(MAKE) LEAN_NVIM_COVERAGE=1 test
