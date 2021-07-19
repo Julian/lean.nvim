@@ -122,11 +122,6 @@ components.diagnostics()                            *components.diagnostics()*
 
 
 ================================================================================
-lean3.detect()                                                *lean3.detect()*
-    Detect whether the current buffer is a Lean 3 file.
-
-
-
 
 ================================================================================
 sorry.fill()                                                    *sorry.fill()*
