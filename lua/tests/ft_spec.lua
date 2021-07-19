@@ -1,19 +1,17 @@
 local fixtures = require('tests.fixtures')
 
-describe('lean 3', function()
-  for kind, path in unpack(fixtures.lean3_project.files_it) do
-    it('filetype detection ' .. kind, function()
+describe('ft.detect', function()
+  for kind, path in unpack(fixtures.lean_project.files_it) do
+    it('detects ' .. kind .. ' lean 4 files', function()
       vim.api.nvim_command('edit ' .. path)
-      assert.is.same('lean3', vim.bo.ft)
+      assert.is.same('lean', vim.opt.filetype:get())
     end)
   end
-end)
 
-describe('lean 4', function()
-  for kind, path in unpack(fixtures.lean_project.files_it) do
-    it('filetype detection ' .. kind, function()
+  for kind, path in unpack(fixtures.lean3_project.files_it) do
+    it('detects ' .. kind .. ' lean 3 files', function()
       vim.api.nvim_command('edit ' .. path)
-      assert.is.same('lean', vim.bo.ft)
+      assert.is.same('lean3', vim.opt.filetype:get())
     end)
   end
 end)
