@@ -71,9 +71,9 @@ function helpers.clean_buffer(ft, contents, callback)
     vim.api.nvim_set_current_buf(bufnr)
     vim.opt_local.bufhidden = "hide"
     vim.opt_local.swapfile = false
+    vim.opt.filetype = ft
 
     api.nvim_buf_call(bufnr, function()
-      vim.opt.filetype = ft
       if not vim.tbl_isempty(vim.lsp.buf_get_clients()) then
         helpers.wait_for_ready_lsp()
       end
