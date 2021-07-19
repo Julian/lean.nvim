@@ -26,7 +26,7 @@ local _PROJECT_MARKER = '.*lean_version.*\".*:3.*'
 local _GOAL_MARKER = vim.regex('⊢ .\\{-}\n\\(\\s\\+.\\{-}\\(\n\\|$\\)\\)*\\zs')
 
 --- Detect whether the current buffer is a Lean 3 file.
-function lean3.detect()
+function lean3.__detect()
   local path = vim.api.nvim_buf_get_name(0)
 
   local project_root = find_project_root(path)
