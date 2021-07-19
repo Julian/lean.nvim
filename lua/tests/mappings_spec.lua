@@ -8,12 +8,12 @@ describe(ft .. ' mappings', function()
   function()
     lean.use_suggested_mappings(true)
     assert.is.same(
-      lean.mappings.n['<LocalLeader>3'],
-      vim.fn.maparg("<LocalLeader>3", 'n')
+      lean.mappings.n['<LocalLeader>i'],
+      vim.fn.maparg("<LocalLeader>i", 'n')
     )
 
     vim.cmd('new')
-    assert.is.same('', vim.fn.maparg("<LocalLeader>3", 'n'))
+    assert.is.same('', vim.fn.maparg("<LocalLeader>i", 'n'))
     vim.cmd('bwipeout')
   end))
 end)

@@ -40,11 +40,6 @@ function lean3.detect()
   return false
 end
 
-function lean3.init()
-  pcall(vim.cmd, 'TSBufDisable highlight')  -- tree-sitter-lean is lean4-only
-  vim.b.lean3 = true
-end
-
 --- Convert a Lean 3 response to one that the Lean 4 server would respond with.
 local function upconvert_lsp_goal_to_lean4(response)
   local goals = {}

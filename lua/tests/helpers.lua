@@ -73,7 +73,7 @@ function helpers.clean_buffer(ft, contents, callback)
     vim.opt_local.swapfile = false
 
     api.nvim_buf_call(bufnr, function()
-      require("lean.ft").set(ft)
+      vim.opt.filetype = ft
       if not vim.tbl_isempty(vim.lsp.buf_get_clients()) then
         helpers.wait_for_ready_lsp()
       end

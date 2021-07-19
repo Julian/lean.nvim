@@ -120,7 +120,7 @@ end
 
 --- Update this infoview's contents given the current position.
 function Infoview:update()
-  local update = vim.b.lean3 and lean3.update_infoview or function(set_lines)
+  local update = vim.opt.filetype:get() == "lean3" and lean3.update_infoview or function(set_lines)
     return leanlsp.plain_goal(0, function(_, _, goal)
       leanlsp.plain_term_goal(0, function(_, _, term_goal)
         local lines = components.goal(goal)
