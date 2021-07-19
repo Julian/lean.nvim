@@ -38,6 +38,14 @@ describe('builtin abbreviations', function()
         wait_for_expansion()
         assert.contents.are('ε')
       end))
+
+      it('inserts nothing on <Tab> mid-line',
+        helpers.clean_buffer(ft, 'foo bar baz quux,', function()
+          vim.cmd('normal $')
+          helpers.insert(' \\comp<Tab> spam')
+          wait_for_expansion()
+          assert.contents.are('foo bar baz quux ∘ spam,')
+        end))
     end)
 
     -- Really this needs to place the cursor too, but for now we just strip

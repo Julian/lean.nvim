@@ -1,10 +1,11 @@
-vim.o.display = 'lastline'  -- Avoid neovim/neovim#11362
-vim.o.directory = ''
+vim.opt.display = 'lastline'  -- Avoid neovim/neovim#11362
+vim.opt.directory = ''
 
 local __file__ = debug.getinfo(1).source:match("@(.*)$")
 local lean_nvim_dir = vim.fn.fnamemodify(__file__, ':p:h:h')
 local packpath = lean_nvim_dir .. '/packpath/*'
-vim.o.runtimepath = vim.o.runtimepath .. ',' .. packpath .. ',' .. lean_nvim_dir
+vim.opt.runtimepath:append(packpath)
+vim.opt.runtimepath:append(lean_nvim_dir)
 
 vim.cmd[[
   runtime! plugin/lspconfig.vim
