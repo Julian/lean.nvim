@@ -28,7 +28,7 @@ local default_config = {
 }
 
 function helpers.setup(config)
-  require("lean").setup(vim.tbl_extend("keep", config, default_config))
+  lean.setup(vim.tbl_extend("keep", config, default_config))
 end
 
 --- Feed some keystrokes into the current buffer, replacing termcodes.
@@ -74,8 +74,7 @@ function helpers.clean_buffer(ft, contents, callback)
 
     api.nvim_buf_call(bufnr, function()
       require("lean.ft").set(ft)
-      local this_lsp = ft == "lean" and lean.config.lsp or lean.config.lsp3
-      if this_lsp.enable ~= false then
+      if not vim.tbl_isempty(vim.lsp.buf_get_clients()) then
         helpers.wait_for_ready_lsp()
       end
 
