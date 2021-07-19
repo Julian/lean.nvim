@@ -69,6 +69,8 @@ function helpers.clean_buffer(ft, contents, callback)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
     -- apparently necessary to trigger BufWinEnter
     vim.api.nvim_set_current_buf(bufnr)
+    vim.opt_local.bufhidden = "hide"
+    vim.opt_local.swapfile = false
 
     api.nvim_buf_call(bufnr, function()
       require("lean.ft").set(ft)
