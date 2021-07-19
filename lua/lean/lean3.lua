@@ -1,8 +1,13 @@
+local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
+
 local components = require('lean.infoview.components')
 local subprocess_check_output = require('lean._util').subprocess_check_output
 
 local lean3 = {}
 
+-- Ideally this obviously would use a TOML parser but yeah choosing to
+-- do nasty things and not add the dependency for now.
+local _PROJECT_MARKER = '.*lean_version.*\".*:3.*'
 -- Split a Lean 3 server response on goals.
 --
 -- Looks for ⊢, but ignores indented following lines for multi-line
@@ -19,6 +24,21 @@ local lean3 = {}
 --    * the only even prime number
 --    * the number of problems you have after using regex to solve a problem
 local _GOAL_MARKER = vim.regex('⊢ .\\{-}\n\\(\\s\\+.\\{-}\\(\n\\|$\\)\\)*\\zs')
+
+--- Detect whether the current buffer is a Lean 3 file.
+function lean3.detect()
+  local path = vim.api.nvim_buf_get_name(0)
+
+  local project_root = find_project_root(path)
+  if project_root then
+    local result = vim.fn.readfile(project_root .. '/leanpkg.toml')
+    for _, line in ipairs(result) do
+      if line:match(_PROJECT_MARKER) then return true end
+    end
+  end
+
+  return false
+end
 
 function lean3.init()
   pcall(vim.cmd, 'TSBufDisable highlight')  -- tree-sitter-lean is lean4-only
