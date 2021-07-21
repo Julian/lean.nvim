@@ -22,7 +22,7 @@ local function infoview_lsp_update(pos)
 end
 
 helpers.setup {
-  infoview = { enable = true },
+  infoview = { autoopen = true },
   lsp = { enable = true },
   lsp3 = { enable = true },
 }
