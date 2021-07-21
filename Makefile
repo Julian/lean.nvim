@@ -1,4 +1,4 @@
-.PHONY: docgen nvim lint test
+.PHONY: docgen nvim lint test _test
 
 SETUP_TABLE="{}"
 SETUP = "lua require'lean'.setup$(SETUP_TABLE)"
@@ -14,6 +14,9 @@ build-test-fixtures:
 	cd ./lua/tests/fixtures/example-lean4-project/ && leanpkg build
 
 test: build-test-fixtures
+	./lua/tests/scripts/run_tests.sh
+
+_test:
 	./lua/tests/scripts/run_tests.sh
 
 coverage:
