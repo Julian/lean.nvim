@@ -185,6 +185,8 @@ In e.g. your ``init.lua``:
       infoview = {
         -- Automatically open an infoview on entering a Lean buffer?
         autoopen = true,
+        -- Automatically close and infoview when leaving from its last associated Lean file?
+        autoclose = true,
         -- Set the infoview windows' widths
         width = 50,
       },

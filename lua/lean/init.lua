@@ -70,8 +70,8 @@ function lean.use_suggested_mappings(buffer_local)
 end
 
 --- Is the current buffer a lean buffer?
-function lean.is_lean_buffer()
-  local filetype = vim.opt.filetype:get()
+function lean.is_lean_buffer(buffer)
+  local filetype = vim.api.nvim_buf_get_option(buffer or 0, "ft")
   return filetype == "lean" or filetype == "lean3"
 end
 
