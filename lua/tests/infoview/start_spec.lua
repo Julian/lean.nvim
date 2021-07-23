@@ -1,20 +1,11 @@
 local infoview = require('lean.infoview')
-local get_num_wins = require('tests.helpers').get_num_wins
 local fixtures = require('tests.fixtures')
 
-require('tests.helpers').setup { infoview = { enable = true } }
+require('tests.helpers').setup { infoview = { autoopen = true } }
 describe('infoview', function()
   describe("startup", function()
     local src_win = vim.api.nvim_get_current_win()
-    local num_wins = get_num_wins()
-    it('automatically opens',
-      function(_)
-        vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
-        assert.open_infoview()
-        assert.is.equal(num_wins + 1, get_num_wins())
-        assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
-      end)
-
+    vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
     local infoview_info = infoview.get_current_infoview():open()
 
     it('created valid infoview',
@@ -40,15 +31,7 @@ describe('infoview', function()
   vim.api.nvim_command("tabnew")
   describe("new tab", function()
     local src_win = vim.api.nvim_get_current_win()
-    local num_wins = get_num_wins()
-    it('automatically opens',
-      function(_)
-        vim.api.nvim_command('edit ' .. fixtures.lean_project.some_existing_file)
-        assert.open_infoview()
-        assert.is.equal(num_wins + 1, get_num_wins())
-        assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
-      end)
-
+    vim.api.nvim_command('edit ' .. fixtures.lean_project.some_existing_file)
     local infoview_info = infoview.get_current_infoview():open()
 
     it('created valid distinct infoview',

@@ -183,8 +183,6 @@ In e.g. your ``init.lua``:
 
       -- Infoview support
       infoview = {
-        -- Enable the infoview?
-        enable = true,
         -- Automatically open an infoview on entering a Lean buffer?
         autoopen = true,
         -- Set the infoview windows' widths

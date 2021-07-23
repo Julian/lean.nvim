@@ -17,7 +17,7 @@ local default_config = {
   },
   mappings = false,
   infoview = {
-    enable = false
+    autoopen = false
   },
   lsp3 = {
     enable = false

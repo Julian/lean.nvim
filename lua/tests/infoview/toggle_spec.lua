@@ -2,7 +2,7 @@ local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
 
 require('tests.helpers').setup {
-  infoview = { enable = true },
+  infoview = { autoopen = true },
 }
 describe('Infoview.toggle', function()
   vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
