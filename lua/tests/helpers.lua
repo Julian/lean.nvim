@@ -28,7 +28,7 @@ local default_config = {
 }
 
 function helpers.setup(config)
-  lean.setup(vim.tbl_extend("keep", config, default_config))
+  lean.setup(vim.tbl_deep_extend("keep", config, default_config))
 end
 
 --- Feed some keystrokes into the current buffer, replacing termcodes.
