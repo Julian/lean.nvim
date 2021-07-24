@@ -76,19 +76,15 @@ infoview.enable()                                          *infoview.enable()*
 
 
 
-infoview.make_buffer_focusable()            *infoview.make_buffer_focusable()*
-    Configure the infoview to update when this buffer is active.
-
-
-
 infoview.set_autoopen()                              *infoview.set_autoopen()*
     Set whether a new infoview is automatically opened when entering Lean
     buffers.
 
 
 
-infoview.maybe_autoopen()                          *infoview.maybe_autoopen()*
-    Open an infoview for the current buffer if it isn't already open.
+infoview.set_autoclose()                            *infoview.set_autoclose()*
+    Set whether an infoview is automatically closed when leaving from its last
+    associated Lean file.
 
 
 
