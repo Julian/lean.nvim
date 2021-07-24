@@ -101,8 +101,8 @@ function helpers.get_num_wins() return #vim.api.nvim_list_wins() end
 
 local last_num_wins
 
-function helpers.set_num_wins() last_num_wins = helpers.get_num_wins() end
-helpers.set_num_wins()
+local function set_num_wins() last_num_wins = helpers.get_num_wins() end
+set_num_wins()
 
 --- Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
@@ -216,20 +216,20 @@ local function open_infoview(state, arguments)
   end
   state.failure_message = table.concat(failure_message, "\n")
 
-  helpers.set_num_wins()
+  set_num_wins()
 
   return result
 end
 
 local function close_win()
   local result = helpers.get_num_wins() == last_num_wins - 1
-  helpers.set_num_wins()
+  set_num_wins()
   return result
 end
 
 local function new_win()
   local result = helpers.get_num_wins() == last_num_wins + 1
-  helpers.set_num_wins()
+  set_num_wins()
   return result
 end
 
