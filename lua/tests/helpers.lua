@@ -207,8 +207,8 @@ local function open_infoview(state, arguments)
     else
       -- make sure the previous window was closed
       result = this_infoview.is_open or
-        vim.api.nvim_buf_is_valid(prev_buf) or
-        vim.api.nvim_win_is_valid(prev_win) or
+        (not prev_buf) or vim.api.nvim_buf_is_valid(prev_buf) or
+        (not prev_win) or vim.api.nvim_win_is_valid(prev_win) or
         helpers.get_num_wins() ~= last_num_wins - 1
     end
     prev_buf = nil
