@@ -9,7 +9,7 @@ describe('infoview', function()
   it('automatically opens',
     function(_)
       vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
-      assert.open_infoview()
+      assert.opened_infoview()
     end)
 
   it('new tab automatically opens',
@@ -17,13 +17,13 @@ describe('infoview', function()
       vim.api.nvim_command('tabnew')
       assert.new_win()
       vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
-      assert.open_infoview()
+      assert.opened_infoview()
     end)
 
   it('can be closed after autoopen',
     function(_)
       infoview.get_current_infoview():close()
-      assert.is_not.open_infoview()
+      assert.closed_infoview()
     end)
 
   it('opens automatically after having closen previous infoviews',
@@ -31,7 +31,7 @@ describe('infoview', function()
     vim.api.nvim_command("tabnew")
     assert.new_win()
     vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test/test1.lean")
-    assert.open_infoview()
+    assert.opened_infoview()
   end)
 
   it('auto-open disable',
@@ -40,19 +40,19 @@ describe('infoview', function()
     infoview.set_autoopen(false)
     assert.new_win()
     vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test/test1.lean")
-    assert.is_not.open_infoview(false, true)
+    assert.unopened_infoview()
   end)
 
   it('open after auto-open disable',
   function(_)
     infoview.get_current_infoview():open()
-    assert.open_infoview()
+    assert.opened_infoview()
   end)
 
   it('close after auto-open disable',
   function(_)
     infoview.get_current_infoview():close()
-    assert.is_not.open_infoview()
+    assert.closed_infoview()
   end)
 
   it('auto-open re-enable',
@@ -61,7 +61,7 @@ describe('infoview', function()
     infoview.set_autoopen(true)
     assert.new_win()
     vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test/test1.lean")
-    assert.open_infoview()
+    assert.opened_infoview()
   end)
 
   it('no auto-open for irrelevant file',

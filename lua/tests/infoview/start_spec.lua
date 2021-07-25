@@ -8,7 +8,7 @@ describe('infoview', function()
     it('created valid infoview',
       function(_)
         vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
-        assert.open_infoview()
+        assert.opened_infoview()
       end)
 
     it('starts with the window position at the top',
@@ -32,7 +32,7 @@ describe('infoview', function()
         assert.new_win()
         src_win = vim.api.nvim_get_current_win()
         vim.api.nvim_command('edit ' .. fixtures.lean_project.some_existing_file)
-        assert.open_infoview()
+        assert.opened_infoview()
       end)
 
     it('starts with the window position at the top',

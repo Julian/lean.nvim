@@ -152,7 +152,7 @@ local function change_infoview(state, _)
   return result
 end
 
-local function open_infoview(state, arguments)
+local function opened_infoview(state, arguments)
   local result
   local this_infoview = infoview.get_current_infoview()
 
@@ -243,7 +243,22 @@ local function new_win()
 end
 
 assert:register("assertion", "has_all", has_all)
-assert:register("assertion", "open_infoview", open_infoview)
+assert:register("assertion", "opened_infoview", opened_infoview)
+assert:register("assertion", "opened_infoview_kept", function(state, _)
+  return opened_infoview(state, {true, false})
+end)
+assert:register("assertion", "closed_infoview", function(state, _)
+  state.mod = false
+  return opened_infoview(state, {false, false})
+end)
+assert:register("assertion", "closed_infoview_kept", function(state, _)
+  state.mod = false
+  return opened_infoview(state, {true, false})
+end)
+assert:register("assertion", "unopened_infoview", function(state, _)
+  state.mod = false
+  return opened_infoview(state, {false, true})
+end)
 assert:register("assertion", "change_infoview", change_infoview)
 assert:register("assertion", "close_win", close_win)
 assert:register("assertion", "new_win", new_win)

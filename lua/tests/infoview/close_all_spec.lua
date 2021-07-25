@@ -8,27 +8,27 @@ describe('infoview', function()
   function(_)
     vim.api.nvim_command("edit temp.lean")
     infoview.get_current_infoview():open()
-    assert.open_infoview()
+    assert.opened_infoview()
 
     vim.api.nvim_command("tabnew")
     assert.new_win()
     vim.api.nvim_command("edit temp.lean")
     infoview.get_current_infoview():open()
-    assert.open_infoview()
+    assert.opened_infoview()
 
     vim.api.nvim_command("tabnew")
     assert.new_win()
     vim.api.nvim_command("edit temp.lean")
     infoview.get_current_infoview():open()
-    assert.open_infoview()
+    assert.opened_infoview()
     infoview.get_current_infoview():close()
-    assert.is_not.open_infoview()
+    assert.closed_infoview()
 
     vim.api.nvim_command("tabnew")
     assert.new_win()
     vim.api.nvim_command("edit temp.lean")
     infoview.get_current_infoview():open()
-    assert.open_infoview()
+    assert.opened_infoview()
 
 
     local already_closed = false
@@ -45,7 +45,7 @@ describe('infoview', function()
       end
     end,
     function()
-      assert.is_not.open_infoview(already_closed)
+      assert.is_not.opened_infoview(already_closed)
       already_closed = false
     end
     )
