@@ -160,9 +160,9 @@ local function open_infoview(state, arguments)
 
   local failure_message = {}
 
+  local buf = this_infoview.bufnr
+  local win = this_infoview.window
   if state.mod then
-    local buf = this_infoview.bufnr
-    local win = this_infoview.window
     vim.list_extend(failure_message,
     {
       "Failed to open: ",
@@ -188,32 +188,38 @@ local function open_infoview(state, arguments)
       prev_buf_max = buf
       prev_win_max = win
     end
-    prev_buf = buf
-    prev_win = win
   else
     vim.list_extend(failure_message,
     {
       "Failed to close: ",
       "maintain: " .. vim.inspect(maintain),
-      ("prev_buf_max: %d, prev_buf: %s, buf valid: %s"):format(prev_buf_max, vim.inspect(prev_buf),
+      ("buf: %s, prev_buf: %s, buf valid: %s"):format(vim.inspect(buf), vim.inspect(prev_buf),
         prev_buf and vim.inspect(vim.api.nvim_buf_is_valid(prev_buf))),
-      ("prev_win_max: %d, prev_win: %s, win valid: %s"):format(prev_win_max, vim.inspect(prev_win),
+      ("win: %s, prev_win: %s, win valid: %s"):format(vim.inspect(win), vim.inspect(prev_win),
         prev_win and vim.inspect(vim.api.nvim_win_is_valid(prev_win))),
       "is_open: " .. vim.inspect(this_infoview.is_open),
       ("num_wins: %d, last_num_wins: %d"):format(helpers.get_num_wins(), last_num_wins)
     })
     if maintain then
-      result = this_infoview.is_open or helpers.get_num_wins() ~= last_num_wins
+      result = buf or win or prev_win or prev_buf or this_infoview.is_open
+        or helpers.get_num_wins() ~= last_num_wins
     else
-      -- make sure the previous window was closed
-      result = this_infoview.is_open or
-        (not prev_buf) or vim.api.nvim_buf_is_valid(prev_buf) or
-        (not prev_win) or vim.api.nvim_win_is_valid(prev_win) or
-        helpers.get_num_wins() ~= last_num_wins - 1
+      local unopened = arguments[2]
+      if unopened then
+        -- if not previously opened, we don't care about prev_win or prev_buf being accurate
+        result = buf or win or this_infoview.is_open
+          or helpers.get_num_wins() ~= last_num_wins
+      else
+        -- make sure the previous window was closed
+        result = this_infoview.is_open or buf or win or
+          (not prev_buf) or vim.api.nvim_buf_is_valid(prev_buf) or
+          (not prev_win) or vim.api.nvim_win_is_valid(prev_win) or
+          helpers.get_num_wins() ~= last_num_wins - 1
+      end
     end
-    prev_buf = nil
-    prev_win = nil
   end
+  prev_buf = buf
+  prev_win = win
   state.failure_message = table.concat(failure_message, "\n")
 
   set_num_wins()

@@ -40,7 +40,7 @@ describe('infoview', function()
     infoview.set_autoopen(false)
     assert.new_win()
     vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/test/test1.lean")
-    assert.is_not.open_infoview(true)
+    assert.is_not.open_infoview(false, true)
   end)
 
   it('open after auto-open disable',
