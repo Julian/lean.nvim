@@ -184,11 +184,9 @@ function Infoview:is_empty()
 end
 
 --- Close all open infoviews (across all tabs).
-function infoview.close_all(pre_close_hook, post_close_hook)
+function infoview.close_all()
   for _, each in pairs(infoview._by_id) do
-    if pre_close_hook then pre_close_hook(each) end
     each:close()
-    if post_close_hook then post_close_hook(each) end
   end
 end
 

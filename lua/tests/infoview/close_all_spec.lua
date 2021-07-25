@@ -4,51 +4,60 @@ require('tests.helpers').setup {
   infoview = {},
 }
 describe('infoview', function()
-  it('close_all succeeds',
-  function(_)
-    vim.api.nvim_command("edit temp.lean")
-    infoview.get_current_infoview():open()
-    assert.opened_infoview()
+  describe('close_all succeeds', function()
+    it('single infoview',
+    function(_)
+      local info_changes = {}
 
-    vim.api.nvim_command("tabnew")
-    assert.new_win()
-    vim.api.nvim_command("edit temp.lean")
-    infoview.get_current_infoview():open()
-    assert.opened_infoview()
+      vim.api.nvim_command("edit temp.lean")
+      infoview.get_current_infoview():open()
+      assert.opened_infoview()
+      info_changes[vim.api.nvim_win_get_tabpage(0)] = "closed"
 
-    vim.api.nvim_command("tabnew")
-    assert.new_win()
-    vim.api.nvim_command("edit temp.lean")
-    infoview.get_current_infoview():open()
-    assert.opened_infoview()
-    infoview.get_current_infoview():close()
-    assert.closed_infoview()
+      infoview.close_all()
 
-    vim.api.nvim_command("tabnew")
-    assert.new_win()
-    vim.api.nvim_command("edit temp.lean")
-    infoview.get_current_infoview():open()
-    assert.opened_infoview()
+      assert.updated_infoviews(info_changes)
+    end)
+
+    it('multiple infoviews, not all opened',
+    function(_)
+      local info_changes = {}
+
+      vim.api.nvim_command("tabnew")
+      assert.created_win()
+      vim.api.nvim_command("edit temp.lean")
+      infoview.get_current_infoview():open()
+      assert.opened_infoview()
+      info_changes[vim.api.nvim_win_get_tabpage(0)] = "closed"
+
+      vim.api.nvim_command("tabnew")
+      assert.created_win()
+      vim.api.nvim_command("edit temp.lean")
+      infoview.get_current_infoview():open()
+      assert.opened_infoview()
+      info_changes[vim.api.nvim_win_get_tabpage(0)] = "closed"
+
+      vim.api.nvim_command("tabnew")
+      assert.created_win()
+      vim.api.nvim_command("edit temp.lean")
+      infoview.get_current_infoview():open()
+      assert.opened_infoview()
+      infoview.get_current_infoview():close()
+      assert.closed_infoview()
+      -- can actually omit this because it would be inferred by assert.updated_infoviews()
+      info_changes[vim.api.nvim_win_get_tabpage(0)] = "closed_kept"
+
+      vim.api.nvim_command("tabnew")
+      assert.created_win()
+      vim.api.nvim_command("edit temp.lean")
+      infoview.get_current_infoview():open()
+      assert.opened_infoview()
+      info_changes[vim.api.nvim_win_get_tabpage(0)] = "closed"
 
 
-    local already_closed = false
-    local already_closed_count = 0
-    infoview.close_all(
-    function(info)
-      if info.window ~= vim.api.nvim_get_current_win() then
-        vim.api.nvim_set_current_win(info.window)
-        assert.change_infoview()
-      end
-      if not info.is_open then
-        already_closed = true
-        already_closed_count = already_closed_count + 1
-      end
-    end,
-    function()
-      assert.is_not.opened_infoview(already_closed)
-      already_closed = false
-    end
-    )
-    assert.equals(1, already_closed_count)
+      infoview.close_all()
+
+      assert.updated_infoviews(info_changes)
+    end)
   end)
 end)

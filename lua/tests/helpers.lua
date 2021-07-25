@@ -96,14 +96,6 @@ function helpers.wait_for_line_diagnostics()
   assert.message("Waited for line diagnostics but none came.").True(succeeded)
 end
 
---- The number of current windows.
-function helpers.get_num_wins() return #vim.api.nvim_list_wins() end
-
-local last_num_wins
-
-local function set_num_wins() last_num_wins = helpers.get_num_wins() end
-set_num_wins()
-
 --- Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
   local buf = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n')
@@ -122,161 +114,226 @@ local function has_all(_, arguments)
   return true
 end
 
-local prev_buf_max = -1
-local prev_win_max = -1
-local prev_buf
-local prev_win
+--- The number of current windows.
+function helpers.get_num_wins() return #vim.api.nvim_list_wins() end
 
-local function change_infoview(state, _)
-  local this_infoview = infoview.get_current_infoview()
-  local buf = this_infoview.bufnr
-  local win = this_infoview.window
-  local result =
-    ((not buf and not this_infoview.is_open) or (buf and prev_buf ~= buf and this_infoview.is_open
-      and vim.api.nvim_buf_is_valid(buf))) and
-    ((not win and not this_infoview.is_open) or (win and prev_win ~= win and this_infoview.is_open
-      and vim.api.nvim_win_is_valid(win))) and
-    helpers.get_num_wins() == last_num_wins
-  prev_buf = buf
-  prev_win = win
-  state.failure_message = table.concat({
-    "Failed to change: ",
-    ("prev_buf: %s, buf: %s, buf valid: %s"):format(vim.inspect(prev_buf), vim.inspect(buf),
-      vim.inspect(buf and vim.api.nvim_buf_is_valid(buf))),
-    ("prev_win: %s, win: %s, win valid: %s"):format(vim.inspect(prev_win), vim.inspect(win),
-      vim.inspect(win and vim.api.nvim_win_is_valid(win))),
-    "is_open: " .. vim.inspect(this_infoview.is_open),
-    ("num_wins: %d, last_num_wins: %d"):format(helpers.get_num_wins(), last_num_wins)
-  }, "\n")
+local last_wins = {}
+local last_win = nil
+local last_win_max = -1
 
-  return result
-end
-
-local function opened_infoview(failure_message, maintain)
-  local result
-  local this_infoview = infoview.get_current_infoview()
-
-  local buf = this_infoview.bufnr
-  local win = this_infoview.window
-
-  vim.list_extend(failure_message,
-  {
-    "Failed to open: ",
-    "maintain: " .. vim.inspect(maintain),
-    ("prev_buf_max: %s, buf: %s, prev_buf: %s, buf valid: %s"):format(vim.inspect(prev_buf_max),
-      vim.inspect(buf), vim.inspect(prev_buf),
-      vim.inspect(buf and vim.api.nvim_buf_is_valid(buf))),
-    ("prev_win_max: %s, win: %s, prev_win: %s, win valid: %s"):format(vim.inspect(prev_win_max),
-      vim.inspect(win), vim.inspect(prev_win),
-      vim.inspect(win and vim.api.nvim_win_is_valid(win))),
-    "is_open: " .. vim.inspect(this_infoview.is_open),
-    ("num_wins: %d, last_num_wins: %d"):format(helpers.get_num_wins(), last_num_wins)
-  })
-  if maintain then
-    result = this_infoview.is_open and
-      buf and prev_buf == buf and vim.api.nvim_buf_is_valid(buf) and
-      win and prev_win == win and vim.api.nvim_win_is_valid(win) and
-      helpers.get_num_wins() == last_num_wins
-  else
-    -- make sure this is a brand new buffer/window
-    result = this_infoview.is_open and
-      prev_buf_max < buf and vim.api.nvim_buf_is_valid(buf) and
-      prev_win_max < win and vim.api.nvim_win_is_valid(win) and
-      helpers.get_num_wins() == last_num_wins + 1
-    prev_buf_max = buf
-    prev_win_max = win
+local function get_wins()
+  local wins = {}
+  for _, win in pairs(vim.api.nvim_list_wins()) do
+    wins[win] = true
   end
 
-  prev_buf = buf
-  prev_win = win
-
-  return result
+  return wins
 end
 
-local function closed_infoview(failure_message, maintain, unopened)
-  local result
-  local this_infoview = infoview.get_current_infoview()
+local function update_wins(_, arguments)
+  -- inductive hypothesis: last_wins is accurate to immediately before creating/closing any of the given windows
+  local expected_wins = vim.deepcopy(last_wins)
 
-  local buf = this_infoview.bufnr
-  local win = this_infoview.window
+  local opened_wins = arguments[1] or {}
+  local closed_wins = arguments[2] or {}
 
-  vim.list_extend(failure_message,
-  {
-    "Failed to close: ",
-    "maintain: " .. vim.inspect(maintain),
-    ("buf: %s, prev_buf: %s, buf valid: %s"):format(vim.inspect(buf), vim.inspect(prev_buf),
-      prev_buf and vim.inspect(vim.api.nvim_buf_is_valid(prev_buf))),
-    ("win: %s, prev_win: %s, win valid: %s"):format(vim.inspect(win), vim.inspect(prev_win),
-      prev_win and vim.inspect(vim.api.nvim_win_is_valid(prev_win))),
-    "is_open: " .. vim.inspect(this_infoview.is_open),
-    ("num_wins: %d, last_num_wins: %d"):format(helpers.get_num_wins(), last_num_wins)
-  })
-  if maintain then
-    result = not buf and not win and not prev_win and not prev_buf and not this_infoview.is_open
-      and helpers.get_num_wins() == last_num_wins
+  -- for ensuring no collisions
+  local opened_win_set = {}
+
+  for _, opened_win in pairs(opened_wins) do
+    -- should be an actual window
+    assert.is_truthy(vim.api.nvim_win_is_valid(opened_win))
+
+    -- should be brand new
+    assert.is_truthy(opened_win > last_win_max)
+    assert.is_falsy(opened_win_set[opened_win])
+
+    expected_wins[opened_win] = true
+    opened_win_set[opened_win] = true
+  end
+
+  for _, closed_win in pairs(closed_wins) do
+    -- should not be a window
+    assert.is_falsy(vim.api.nvim_win_is_valid(closed_win))
+
+    -- should have previously existed (should not pass a random previously/never closed window)
+    assert.is_truthy(expected_wins[closed_win])
+
+    expected_wins[closed_win] = nil
+  end
+
+  assert.message("expected: " .. vim.inspect(expected_wins) .. "\n got: " .. vim.inspect(get_wins())).is_truthy(
+    vim.deep_equal(expected_wins, get_wins()))
+
+  for _, opened_win in pairs(opened_wins) do
+    if opened_win > last_win_max then last_win_max = opened_win end
+  end
+
+  -- maintain IH
+  last_wins = get_wins()
+
+  -- also maintain IH for closed_win
+  last_win = vim.api.nvim_get_current_win()
+
+  return true
+end
+
+local function created_win(_, arguments)
+  local new_wins = arguments[1]
+  if new_wins then
+    assert.update_wins(arguments[1], nil)
   else
-    vim.list_extend(failure_message, {"unopened: " .. vim.inspect(unopened)})
-    if unopened then
-      -- if not previously opened, we don't care about prev_win or prev_buf being accurate
-      result = not buf and not win and not this_infoview.is_open
-        and helpers.get_num_wins() == last_num_wins
-    else
-      -- make sure the previous window was closed
-      result = not this_infoview.is_open and not buf and not win and
-        prev_buf and not vim.api.nvim_buf_is_valid(prev_buf) and
-        prev_win and not vim.api.nvim_win_is_valid(prev_win) and
-        helpers.get_num_wins() == last_num_wins - 1
+    assert.changed_win()
+    assert.update_wins({vim.api.nvim_get_current_win()}, nil)
+  end
+
+  return true
+end
+
+local function closed_win(_, arguments)
+  local closed_wins = arguments[1]
+  if closed_wins then
+    assert.update_wins(nil, arguments[1])
+  else
+    -- inductive hypothesis: in addition to that of update_wins,
+    -- last_win must be the window we were in immediately before closing
+    assert.changed_win()
+    assert.update_wins(nil, {last_win})
+  end
+
+  return true
+end
+
+local function changed_win(_, _)
+  -- no nested assertion to allow for negation
+  return last_win ~= vim.api.nvim_get_current_win()
+end
+
+
+local function opened_infoview(_, arguments)
+  local this_info = arguments[1]
+
+  assert.is_truthy(this_info.is_open)
+  assert.is_truthy(this_info.bufnr)
+  assert.is_truthy(this_info.window)
+  assert.is_falsy(this_info.prev_buf)
+  assert.is_falsy(this_info.prev_win)
+
+  return true
+end
+
+local function opened_infoview_kept(_, arguments)
+  local this_info = arguments[1]
+
+  assert.is_truthy(this_info.is_open)
+  assert.is_truthy(this_info.bufnr)
+  assert.is_truthy(this_info.window)
+  assert.is_truthy(this_info.bufnr == this_info.prev_buf)
+  assert.is_truthy(this_info.window == this_info.prev_win)
+
+  return true
+end
+
+local function closed_infoview(_, arguments)
+  local this_info = arguments[1]
+
+  assert.is_falsy(this_info.is_open)
+  assert.is_falsy(this_info.bufnr)
+  assert.is_falsy(this_info.window)
+  assert.is_truthy(this_info.prev_buf)
+  assert.is_truthy(this_info.prev_win)
+
+  return true
+end
+
+local function closed_infoview_kept(_, arguments)
+  local this_info = arguments[1]
+
+  assert.is_falsy(this_info.is_open)
+  assert.is_falsy(this_info.bufnr)
+  assert.is_falsy(this_info.window)
+  assert.is_falsy(this_info.prev_buf)
+  assert.is_falsy(this_info.prev_win)
+
+  return true
+end
+
+local function infoview_check(list)
+  local opened_wins = {}
+  local closed_wins = {}
+
+  for _, id in pairs(vim.api.nvim_list_tabpages()) do
+    local check = list[id]
+
+    local this_info = infoview._by_id[id]
+
+    -- infer check
+    if not check then
+      if this_info.prev_check == "opened" then
+        check = "opened_kept"
+      elseif this_info.prev_check == "opened_kept" then
+        check = "opened_kept"
+      elseif this_info.prev_check == "closed" then
+        check = "closed_kept"
+      elseif this_info.prev_check == "closed_kept" then
+        check = "closed_kept"
+      end
     end
+
+    if check == "opened" then
+      vim.list_extend(opened_wins, {this_info.window})
+      assert.opened_infoview_state(this_info)
+    elseif check == "opened_kept" then
+      assert.opened_infoview_kept_state(this_info)
+    elseif check == "closed" then
+      vim.list_extend(closed_wins, {this_info.prev_win})
+      assert.closed_infoview_state(this_info)
+    elseif check == "closed_kept" then
+      assert.closed_infoview_kept_state(this_info)
+    end
+
+    this_info.prev_buf = this_info.bufnr
+    this_info.prev_win = this_info.window
+    this_info.prev_check = check
   end
 
-  prev_buf = buf
-  prev_win = win
+  assert.update_wins(opened_wins, closed_wins)
 
-  return result
-end
-
-local function close_win()
-  local result = helpers.get_num_wins() == last_num_wins - 1
-  set_num_wins()
-  return result
-end
-
-local function new_win()
-  local result = helpers.get_num_wins() == last_num_wins + 1
-  set_num_wins()
-  return result
-end
-
-local function infoview_check(state, checker, ...)
-  local failure_message = {}
-
-  local result = checker(failure_message, ...)
-
-  state.failure_message = table.concat(failure_message, "\n")
-
-  set_num_wins()
-
-  return result
+  return true
 end
 
 assert:register("assertion", "has_all", has_all)
-assert:register("assertion", "opened_infoview", function(state, _)
-  return infoview_check(state, opened_infoview, false)
+assert:register("assertion", "updated_infoviews", function(_, arguments)
+  return infoview_check(arguments[1] or {})
 end)
-assert:register("assertion", "opened_infoview_kept", function(state, _)
-  return infoview_check(state, opened_infoview, true)
+assert:register("assertion", "opened_infoview", function(_, arguments)
+  return infoview_check(arguments[1] or {[vim.api.nvim_win_get_tabpage(0)] = "opened"})
 end)
-assert:register("assertion", "closed_infoview", function(state, _)
-  return infoview_check(state, closed_infoview, false, false)
+assert:register("assertion", "opened_infoview_kept", function(_, arguments)
+  return infoview_check(arguments[1] or {[vim.api.nvim_win_get_tabpage(0)] = "opened_kept"})
 end)
-assert:register("assertion", "closed_infoview_kept", function(state, _)
-  return infoview_check(state, closed_infoview, true, false)
+assert:register("assertion", "closed_infoview", function(_, arguments)
+  return infoview_check(arguments[1] or {[vim.api.nvim_win_get_tabpage(0)] = "closed"})
 end)
-assert:register("assertion", "unopened_infoview", function(state, _)
-  return infoview_check(state, closed_infoview, false, true)
+assert:register("assertion", "closed_infoview_kept", function(_, arguments)
+  return infoview_check(arguments[1] or {[vim.api.nvim_win_get_tabpage(0)] = "closed_kept"})
 end)
-assert:register("assertion", "change_infoview", change_infoview)
-assert:register("assertion", "close_win", close_win)
-assert:register("assertion", "new_win", new_win)
+assert:register("assertion", "unopened_infoview", function(_, arguments)
+  return infoview_check(arguments[1] or {[vim.api.nvim_win_get_tabpage(0)] = "closed_kept"})
+end)
+
+-- internal state checks
+assert:register("assertion", "opened_infoview_state", opened_infoview)
+assert:register("assertion", "opened_infoview_kept_state", opened_infoview_kept)
+assert:register("assertion", "closed_infoview_state", closed_infoview)
+assert:register("assertion", "closed_infoview_kept_state", closed_infoview_kept)
+
+assert:register("assertion", "update_wins", update_wins)
+assert:register("assertion", "closed_win", closed_win)
+assert:register("assertion", "created_win", created_win)
+assert:register("assertion", "changed_win", changed_win)
+
+-- initialize on very first nvim window (base case satisfied pretty trivially)
+assert.created_win()
 
 return helpers

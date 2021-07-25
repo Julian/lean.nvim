@@ -29,7 +29,7 @@ describe('infoview', function()
     it('created valid distinct infoview',
       function(_)
         vim.api.nvim_command("tabnew")
-        assert.new_win()
+        assert.created_win()
         src_win = vim.api.nvim_get_current_win()
         vim.api.nvim_command('edit ' .. fixtures.lean_project.some_existing_file)
         assert.opened_infoview()
