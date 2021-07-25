@@ -139,7 +139,7 @@ local function change_infoview(state, _)
     helpers.get_num_wins() == last_num_wins
   prev_buf = buf
   prev_win = win
-  state.failure_message = {
+  state.failure_message = table.concat({
     "Failed to change: ",
     ("prev_buf: %s, buf: %s, buf valid: %s"):format(vim.inspect(prev_buf), vim.inspect(buf),
       vim.inspect(buf and vim.api.nvim_buf_is_valid(buf))),
@@ -147,7 +147,7 @@ local function change_infoview(state, _)
       vim.inspect(win and vim.api.nvim_win_is_valid(win))),
     "is_open: " .. vim.inspect(this_infoview.is_open),
     ("num_wins: %d, last_num_wins: %d"):format(helpers.get_num_wins(), last_num_wins)
-  }
+  }, "\n")
 
   return result
 end
@@ -167,9 +167,11 @@ local function open_infoview(state, arguments)
     {
       "Failed to open: ",
       "maintain: " .. vim.inspect(maintain),
-      ("prev_buf_max: %d, buf: %d, buf valid: %s"):format(prev_buf_max, buf,
+      ("prev_buf_max: %s, buf: %s, prev_buf: %s, buf valid: %s"):format(vim.inspect(prev_buf_max),
+        vim.inspect(buf), vim.inspect(prev_buf),
         vim.inspect(buf and vim.api.nvim_buf_is_valid(buf))),
-      ("prev_win_max: %d, win: %d, win valid: %s"):format(prev_win_max, win,
+      ("prev_win_max: %s, win: %s, prev_win: %s, win valid: %s"):format(vim.inspect(prev_win_max),
+        vim.inspect(win), vim.inspect(prev_win),
         vim.inspect(win and vim.api.nvim_win_is_valid(win))),
       "is_open: " .. vim.inspect(this_infoview.is_open),
       ("num_wins: %d, last_num_wins: %d"):format(helpers.get_num_wins(), last_num_wins)
@@ -205,6 +207,7 @@ local function open_infoview(state, arguments)
         or helpers.get_num_wins() ~= last_num_wins
     else
       local unopened = arguments[2]
+      vim.list_extend(failure_message, {"unopened: " .. vim.inspect(unopened)})
       if unopened then
         -- if not previously opened, we don't care about prev_win or prev_buf being accurate
         result = buf or win or this_infoview.is_open
