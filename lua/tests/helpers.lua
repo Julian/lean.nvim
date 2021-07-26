@@ -204,14 +204,19 @@ local function closed_win(_, arguments)
   return true
 end
 
-local function changed_win(state, _)
-  -- no nested assertion to allow for negation
-  local result = last_win ~= vim.api.nvim_get_current_win()
-  if state.mod and result then last_win = vim.api.nvim_get_current_win() end
+local function changed_win(_, _)
+  assert.are_not.equal(last_win, vim.api.nvim_get_current_win())
 
-  return result
+  assert.update_wins()
+  return true
 end
 
+local function kept_win(_, _)
+  assert.are_equal(last_win, vim.api.nvim_get_current_win())
+
+  assert.update_wins()
+  return true
+end
 
 local function opened_infoview(_, arguments)
   local this_info = arguments[1]
@@ -335,6 +340,7 @@ assert:register("assertion", "update_wins", update_wins)
 assert:register("assertion", "closed_win", closed_win)
 assert:register("assertion", "created_win", created_win)
 assert:register("assertion", "changed_win", changed_win)
+assert:register("assertion", "kept_win", kept_win)
 
 -- initialize on very first nvim window (base case satisfied pretty trivially)
 assert.created_win()
