@@ -183,7 +183,7 @@ local function created_win(_, arguments)
   if new_wins then
     assert.update_wins(arguments[1], nil)
   else
-    assert.changed_win()
+    assert.are_not.equal(last_win, vim.api.nvim_get_current_win())
     assert.update_wins({vim.api.nvim_get_current_win()}, nil)
   end
 
@@ -197,16 +197,19 @@ local function closed_win(_, arguments)
   else
     -- inductive hypothesis: in addition to that of update_wins,
     -- last_win must be the window we were in immediately before closing
-    assert.changed_win()
+    assert.are_not.equal(last_win, vim.api.nvim_get_current_win())
     assert.update_wins(nil, {last_win})
   end
 
   return true
 end
 
-local function changed_win(_, _)
+local function changed_win(state, _)
   -- no nested assertion to allow for negation
-  return last_win ~= vim.api.nvim_get_current_win()
+  local result = last_win ~= vim.api.nvim_get_current_win()
+  if state.mod and result then last_win = vim.api.nvim_get_current_win() end
+
+  return result
 end
 
 
