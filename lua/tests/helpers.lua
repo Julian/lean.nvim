@@ -265,13 +265,13 @@ local function infoview_check(list)
   local opened_wins = {}
   local closed_wins = {}
 
-  for _, id in pairs(vim.api.nvim_list_tabpages()) do
+  for id, this_info in pairs(infoview._by_id) do
     local check = list[id]
 
-    local this_info = infoview._by_id[id]
-
-    -- infer check
     if not check then
+      -- all unspecified infoviews must have previously been accounted for
+      assert.is_truthy(this_info.prev_check)
+      -- infer check
       if this_info.prev_check == "opened" then
         check = "opened_kept"
       elseif this_info.prev_check == "opened_kept" then
