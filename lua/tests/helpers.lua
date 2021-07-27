@@ -324,25 +324,26 @@ local function infoview_check(list)
   return true
 end
 
+local function get_infoview_assertion(check)
+  return function(_, arguments)
+    local check_map = {}
+    local list = arguments[1] or {vim.api.nvim_win_get_tabpage(0)}
+    for _, id in pairs(list) do
+      check_map[id] = check
+    end
+    return infoview_check(check_map)
+  end
+end
+
 assert:register("assertion", "has_all", has_all)
 assert:register("assertion", "updated_infoviews", function(_, arguments)
   return infoview_check(arguments[1] or {})
 end)
-assert:register("assertion", "opened_infoview", function(_, arguments)
-  return infoview_check(arguments[1] or {[vim.api.nvim_win_get_tabpage(0)] = "opened"})
-end)
-assert:register("assertion", "opened_infoview_kept", function(_, arguments)
-  return infoview_check(arguments[1] or {[vim.api.nvim_win_get_tabpage(0)] = "opened_kept"})
-end)
-assert:register("assertion", "closed_infoview", function(_, arguments)
-  return infoview_check(arguments[1] or {[vim.api.nvim_win_get_tabpage(0)] = "closed"})
-end)
-assert:register("assertion", "closed_infoview_kept", function(_, arguments)
-  return infoview_check(arguments[1] or {[vim.api.nvim_win_get_tabpage(0)] = "closed_kept"})
-end)
-assert:register("assertion", "unopened_infoview", function(_, arguments)
-  return infoview_check(arguments[1] or {[vim.api.nvim_win_get_tabpage(0)] = "closed_kept"})
-end)
+assert:register("assertion", "opened_infoview", get_infoview_assertion("opened"))
+assert:register("assertion", "opened_infoview_kept", get_infoview_assertion("opened_kept"))
+assert:register("assertion", "closed_infoview", get_infoview_assertion("closed"))
+assert:register("assertion", "closed_infoview_kept", get_infoview_assertion("closed_kept"))
+assert:register("assertion", "unopened_infoview", get_infoview_assertion("closed_kept"))
 
 -- internal state checks
 assert:register("assertion", "opened_infoview_state", opened_infoview)
