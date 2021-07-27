@@ -48,15 +48,17 @@ local function upconvert_lsp_goal_to_lean4(response)
   local goals = {}
   for _, contents in ipairs(response.contents) do
     if contents.language == 'lean' and contents.value ~= 'no goals' then
-      -- strip 'N goals' from the front (which is present for multiple goals)
-      local rest_of_goals = contents.value:gsub('^%d+ goals?\n', '')
+      if contents.value:match('⊢') then
+        -- strip 'N goals' from the front (which is present for multiple goals)
+        local rest_of_goals = contents.value:gsub('^%d+ goals?\n', '')
 
-      repeat
-        local end_of_goal = _GOAL_MARKER:match_str(rest_of_goals)
-        table.insert(goals, vim.trim(rest_of_goals:sub(1, end_of_goal)))
-        if not end_of_goal then break end
-        rest_of_goals = rest_of_goals:sub(end_of_goal + 1)
-      until rest_of_goals == ""
+        repeat
+          local end_of_goal = _GOAL_MARKER:match_str(rest_of_goals)
+          table.insert(goals, vim.trim(rest_of_goals:sub(1, end_of_goal)))
+          if not end_of_goal then break end
+          rest_of_goals = rest_of_goals:sub(end_of_goal + 1)
+        until rest_of_goals == ""
+      end
     end
   end
   return { goals = goals }

@@ -54,6 +54,14 @@ describe('infoview', function()
       local text = infoview_lsp_update({7, 10})
       assert.has_all(text, {"p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
     end)
+
+    it('only counts goals as goals, not hovered terms',
+    function(_)
+      -- hover for Lean 3 will also return information about `nat`, which is
+      -- under the cursor, but we shouldn't count that as a goal.
+      local text = infoview_lsp_update({3, 14})
+      assert.equal(text, '▶ 1 goal\n\n⊢ Type 1')
+    end)
   end)
 
   it('lean 4', function()
