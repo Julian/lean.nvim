@@ -266,15 +266,19 @@ local function closed_infoview_kept(_, arguments)
   return true
 end
 
+local last_info_ids = {}
+
 local function infoview_check(list)
   local opened_wins = {}
   local closed_wins = {}
+
+  local info_ids = {}
 
   for id, this_info in pairs(infoview._by_id) do
     local check = list[id]
 
     if not check then
-      -- all unspecified infoviews must have previously been accounted for
+      -- all unspecified infoviews must have been previously checked
       assert.is_truthy(this_info.prev_check)
       -- infer check
       if this_info.prev_check == "opened" then
@@ -286,8 +290,6 @@ local function infoview_check(list)
       elseif this_info.prev_check == "closed_kept" then
         check = "closed_kept"
       end
-    else
-      this_info.checked = true
     end
 
     if check == "opened" then
@@ -305,14 +307,17 @@ local function infoview_check(list)
     this_info.prev_buf = this_info.bufnr
     this_info.prev_win = this_info.window
     this_info.prev_check = check
+
+    info_ids[id] = true
   end
 
-  -- make sure all specified infoviews were hit
-  for id, check in pairs(list) do
-    assert.is_truthy(infoview._by_id[id].checked)
-    assert.are_equal(check, infoview._by_id[id].prev_check)
-    infoview._by_id[id].checked = nil
-  end
+  -- all previous infoviews must have been checked
+  for id, _ in pairs(last_info_ids) do assert.is_truthy(info_ids[id]) end
+
+  -- all specified infoviews must have been checked
+  for id, _ in pairs(list) do assert.is_truthy(info_ids[id]) end
+
+  last_info_ids = info_ids
 
   assert.update_wins(opened_wins, closed_wins)
 
