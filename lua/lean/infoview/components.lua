@@ -31,13 +31,11 @@ end
 function components.goal(goal)
   if type(goal) ~= "table" or not goal.goals then return {} end
 
-  if #goal.goals == 0 then
-    return { H('goals accomplished 🎉') }
-  elseif #goal.goals == 1 then
-    return vim.split(goal.goals[1], '\n', true)
-  end
-
-  local lines = { H(string.format('%d goals', #goal.goals)) }
+  local lines = {
+    #goal.goals == 0 and H('goals accomplished 🎉') or
+    #goal.goals == 1 and H('1 goal') or
+    H(string.format('%d goals', #goal.goals))
+  }
 
   for _, each in pairs(goal.goals) do
     vim.list_extend(lines, {''})
