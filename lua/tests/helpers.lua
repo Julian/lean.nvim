@@ -157,7 +157,7 @@ local function update_wins(_, arguments)
     assert.is_falsy(vim.api.nvim_win_is_valid(closed_win))
 
     -- should have previously existed (should not pass a random previously/never closed window)
-    assert.is_truthy(expected_wins[closed_win])
+    assert.is_truthy(last_wins[closed_win])
 
     expected_wins[closed_win] = nil
   end
