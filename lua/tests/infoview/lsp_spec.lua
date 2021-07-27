@@ -60,7 +60,7 @@ describe('infoview', function()
       -- hover for Lean 3 will also return information about `nat`, which is
       -- under the cursor, but we shouldn't count that as a goal.
       local text = infoview_lsp_update({3, 14})
-      assert.equal(text, '▶ 1 goal\n\n⊢ Type 1')
+      assert.equal(text, '⊢ Type 1')
     end)
   end)
 
@@ -79,7 +79,7 @@ describe('infoview', function()
     it('shows tactic state',
     function(_)
       local text = infoview_lsp_update({6, 9})
-      assert.has_all(text, {"1 goal", "p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
+      assert.has_all(text, {'p q : Prop', 'h : p ∨ q', "⊢ q ∨ p"})
     end)
   end)
 
