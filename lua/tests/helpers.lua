@@ -114,9 +114,12 @@ local function has_all(_, arguments)
   return true
 end
 
+assert:register("assertion", "has_all", has_all)
+
 --- The number of current windows.
 function helpers.get_num_wins() return #vim.api.nvim_list_wins() end
 
+local NVIM_PREFIX = "nvim_handle_tracker_"
 local last_handles = {["win"] = {}, ["buf"] = {}}
 local last_handle = {["win"] = nil, ["buf"] = nil}
 local last_handle_max = {["win"] = -1, ["buf"] = -1}
@@ -145,12 +148,35 @@ local function get_handles(htype)
   return handles
 end
 
-local function update_handles(htype, opened_handles, closed_handles)
-  -- inductive hypothesis: last_handles is accurate to immediately before creating/closing any of the given handles
-  local expected_handles = vim.deepcopy(last_handles[htype])
+local function track_handles(state, _)
+  -- inductive hypothesis: last_handles and last_handle are accurate
+  -- to immediately before creating/closing any of the given handles
 
+  local htype = rawget(state, NVIM_PREFIX .. "htype")
+  assert.is_not_nil(htype)
+  local changed = rawget(state, NVIM_PREFIX .. "changed") or false
+
+  local opened_handles = rawget(state, NVIM_PREFIX .. "created")
+  if opened_handles == true then
+    changed = true
+    opened_handles = {handle_current(htype)}
+  end
   opened_handles = opened_handles or {}
+
+  local closed_handles = rawget(state, NVIM_PREFIX .. "removed") or {}
+  if closed_handles == true then
+    changed = true
+    closed_handles = {last_handle[htype]}
+  end
   closed_handles = closed_handles or {}
+
+  if changed then
+    assert.are_not.equal(last_handle[htype], handle_current(htype))
+  else
+    assert.equal(last_handle[htype], handle_current(htype))
+  end
+
+  local expected_handles = vim.deepcopy(last_handles[htype])
 
   -- for ensuring no collisions
   local opened_handle_set = {}
@@ -171,7 +197,7 @@ local function update_handles(htype, opened_handles, closed_handles)
     -- should not be a handle
     assert.is_falsy(handle_valid(htype, closed_handle))
 
-    -- should have previously existed (should not pass a random previously/never closed handle)
+    -- should have previously existed (should not pass a random previously/never removed handle)
     assert.is_truthy(last_handles[htype][closed_handle])
 
     expected_handles[closed_handle] = nil
@@ -186,44 +212,27 @@ local function update_handles(htype, opened_handles, closed_handles)
 
   -- maintain IH
   last_handles[htype] = get_handles(htype)
-
-  -- also maintain IH for closed_handle
   last_handle[htype] = handle_current(htype)
 
   return true
 end
 
-local function created_handle(htype, new_handles)
-  if new_handles then
-    return update_handles(htype, new_handles, nil)
-  else
-    assert.are_not.equal(last_handle[htype], handle_current(htype))
-    return update_handles(htype, {handle_current(htype)}, nil)
-  end
-end
+assert:register("modifier", "win", function(state, _, _) rawset(state, NVIM_PREFIX .. "htype", "win") end)
+assert:register("modifier", "buf", function(state, _, _) rawset(state, NVIM_PREFIX .. "htype", "buf") end)
+assert:register("modifier", "created", function(state, arguments, _)
+  rawset(state, NVIM_PREFIX .. "created", arguments and arguments[1] or true)
+end)
+assert:register("modifier", "removed", function(state, arguments, _)
+  rawset(state, NVIM_PREFIX .. "removed", arguments and arguments[1] or true)
+end)
+assert:register("modifier", "stayed", function(state, _, _)
+  rawset(state, NVIM_PREFIX .. "changed", false)
+end)
+assert:register("modifier", "left", function(state, _, _)
+  rawset(state, NVIM_PREFIX .. "changed", true)
+end)
 
-local function closed_handle(htype, closed_handles)
-  if closed_handles then
-    return update_handles(htype, nil, closed_handles)
-  else
-    -- inductive hypothesis: in addition to that of update_handles,
-    -- last_handle must be the handledow we were in immediately before closing
-    assert.are_not.equal(last_handle[htype], handle_current(htype))
-    return update_handles(htype, nil, {last_handle[htype]})
-  end
-end
-
-local function changed_handle(htype, opened_handles, closed_handles)
-  assert.are_not.equal(last_handle[htype], handle_current(htype))
-
-  return update_handles(htype, opened_handles, closed_handles)
-end
-
-local function kept_handle(htype, opened_handles, closed_handles)
-  assert.are_equal(last_handle[htype], handle_current(htype))
-
-  return update_handles(htype, opened_handles, closed_handles)
-end
+assert:register("assertion", "tracked", track_handles)
 
 local function opened_infoview(_, arguments)
   local this_info = arguments[1]
@@ -275,7 +284,34 @@ end
 
 local last_info_ids = {}
 
-local function infoview_check(list, check_win, check_buf)
+local LEAN_NVIM_PREFIX = "lean_nvim_infoview_tracker_"
+
+local checks = {"opened", "opened_kept", "closed", "closed_kept"}
+
+for _, check in pairs(checks) do
+  assert:register("modifier", check, function(state, arguments)
+    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {vim.api.nvim_win_get_tabpage(0)})
+  end)
+end
+
+assert:register("modifier", "no_win_track", function(state, _)
+  rawset(state, LEAN_NVIM_PREFIX .. "check_win", false)
+end)
+assert:register("modifier", "no_buf_track", function(state, _)
+  rawset(state, LEAN_NVIM_PREFIX .. "check_buf", false)
+end)
+
+local function infoview_check(state, _)
+  local list = {}
+
+  for _, check in pairs(checks) do
+    local handles = rawget(state, LEAN_NVIM_PREFIX .. check) or {}
+    for _, id in pairs(handles) do
+      assert.is_nil(list[id])
+      list[id] = check
+    end
+  end
+
   local opened_wins = {}
   local closed_wins = {}
   local opened_bufs = {}
@@ -302,16 +338,14 @@ local function infoview_check(list, check_win, check_buf)
     end
 
     if check == "opened" then
-      -- in case window/buffer opened already checked
-      if check_win then vim.list_extend(opened_wins, {this_info.window}) end
-      if check_buf then vim.list_extend(opened_bufs, {this_info.bufnr}) end
+      vim.list_extend(opened_wins, {this_info.window})
+      vim.list_extend(opened_bufs, {this_info.bufnr})
       assert.opened_infoview_state(this_info)
     elseif check == "opened_kept" then
       assert.opened_infoview_kept_state(this_info)
     elseif check == "closed" then
-      -- in case window/buffer closed already checked
-      if check_win then vim.list_extend(closed_wins, {this_info.prev_win}) end
-      if check_buf then vim.list_extend(closed_bufs, {this_info.prev_buf}) end
+      vim.list_extend(closed_wins, {this_info.prev_win})
+      vim.list_extend(closed_bufs, {this_info.prev_buf})
       assert.closed_infoview_state(this_info)
     elseif check == "closed_kept" then
       assert.closed_infoview_kept_state(this_info)
@@ -332,44 +366,19 @@ local function infoview_check(list, check_win, check_buf)
 
   last_info_ids = info_ids
 
-  assert.update_wins(opened_wins, closed_wins)
-  assert.update_bufs(opened_bufs, closed_bufs)
+  local check_win = rawget(state, LEAN_NVIM_PREFIX .. "check_win")
+  if check_win == nil then check_win = true end
+  local check_buf = rawget(state, LEAN_NVIM_PREFIX .. "check_buf")
+  if check_buf == nil then check_buf = true end
+
+  -- in case window/buffer created/removed already checked
+  if check_win then assert.win.removed(closed_wins).created(opened_wins).tracked() end
+  if check_buf then assert.buf.removed(closed_bufs).created(opened_bufs).tracked() end
 
   return true
 end
 
-local function get_infoview_assertion(check, check_win, check_buf)
-  if check_win == nil then check_win = true end
-  if check_buf == nil then check_buf = true end
-
-  return function(_, arguments)
-    local check_map = {}
-    local list = arguments[1] or {vim.api.nvim_win_get_tabpage(0)}
-    for _, id in pairs(list) do
-      check_map[id] = check
-    end
-    return infoview_check(check_map, check_win, check_buf)
-  end
-end
-
-assert:register("assertion", "has_all", has_all)
-assert:register("assertion", "updated_infoviews", function(_, arguments)
-  local check_win, check_buf
-  if arguments[2] == nil then check_win = true end
-  if arguments[3] == nil then check_buf = true end
-  return infoview_check(arguments[1] or {}, check_win, check_buf)
-end)
-assert:register("assertion", "opened_infoview_win", get_infoview_assertion("opened", true, false))
-assert:register("assertion", "opened_infoview_buf", get_infoview_assertion("opened", false, true))
-assert:register("assertion", "opened_infoview_none", get_infoview_assertion("opened", false, false))
-assert:register("assertion", "opened_infoview", get_infoview_assertion("opened"))
-assert:register("assertion", "opened_infoview_kept", get_infoview_assertion("opened_kept"))
-assert:register("assertion", "closed_infoview_win", get_infoview_assertion("closed", true, false))
-assert:register("assertion", "closed_infoview_buf", get_infoview_assertion("closed", false, true))
-assert:register("assertion", "closed_infoview_none", get_infoview_assertion("closed", false, false))
-assert:register("assertion", "closed_infoview", get_infoview_assertion("closed"))
-assert:register("assertion", "closed_infoview_kept", get_infoview_assertion("closed_kept"))
-assert:register("assertion", "unopened_infoview", get_infoview_assertion("closed_kept"))
+assert:register("assertion", "infoview", infoview_check)
 
 -- internal state checks
 assert:register("assertion", "opened_infoview_state", opened_infoview)
@@ -377,26 +386,8 @@ assert:register("assertion", "opened_infoview_kept_state", opened_infoview_kept)
 assert:register("assertion", "closed_infoview_state", closed_infoview)
 assert:register("assertion", "closed_infoview_kept_state", closed_infoview_kept)
 
-for _, htype in pairs({"buf", "win"}) do
-  assert:register("assertion", "update_" .. htype .. "s", function (_, arguments)
-    return update_handles(htype, arguments[1], arguments[2])
-  end)
-  assert:register("assertion", "closed_" .. htype, function (_, arguments)
-    return closed_handle(htype, arguments[1])
-  end)
-  assert:register("assertion", "created_" .. htype, function (_, arguments)
-    return created_handle(htype, arguments[1])
-  end)
-  assert:register("assertion", "changed_" .. htype, function (_, arguments)
-    return changed_handle(htype, arguments[1], arguments[2])
-  end)
-  assert:register("assertion", "kept_" .. htype, function (_, arguments)
-    return kept_handle(htype, arguments[1], arguments[2])
-  end)
-end
-
 -- initialize on very first nvim window/buffer (base case satisfied pretty trivially)
-assert.created_win()
-assert.created_buf()
+assert.win.created.tracked()
+assert.buf.created.tracked()
 
 return helpers
