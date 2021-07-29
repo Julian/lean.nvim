@@ -117,105 +117,112 @@ end
 --- The number of current windows.
 function helpers.get_num_wins() return #vim.api.nvim_list_wins() end
 
-local last_wins = {}
-local last_win = nil
-local last_win_max = -1
+local last_handles = {["win"] = {}, ["buf"] = {}}
+local last_handle = {["win"] = nil, ["buf"] = nil}
+local last_handle_max = {["win"] = -1, ["buf"] = -1}
 
-local function get_wins()
-  local wins = {}
-  for _, win in pairs(vim.api.nvim_list_wins()) do
-    wins[win] = true
-  end
-
-  return wins
+local handle_current = function(htype)
+  if htype == "win" then return vim.api.nvim_get_current_win() end
+  if htype == "buf" then return vim.api.nvim_get_current_buf() end
 end
 
-local function update_wins(_, arguments)
-  -- inductive hypothesis: last_wins is accurate to immediately before creating/closing any of the given windows
-  local expected_wins = vim.deepcopy(last_wins)
+local handle_list = function(htype)
+  if htype == "win" then return vim.api.nvim_list_wins() end
+  if htype == "buf" then return vim.api.nvim_list_bufs() end
+end
 
-  local opened_wins = arguments[1] or {}
-  local closed_wins = arguments[2] or {}
+local handle_valid = function(htype, handle)
+  if htype == "win" then return vim.api.nvim_win_is_valid(handle) end
+  if htype == "buf" then return vim.api.nvim_buf_is_valid(handle) end
+end
+
+local function get_handles(htype)
+  local handles = {}
+  for _, handle in pairs(handle_list(htype)) do
+    handles[handle] = true
+  end
+
+  return handles
+end
+
+local function update_handles(htype, opened_handles, closed_handles)
+  -- inductive hypothesis: last_handles is accurate to immediately before creating/closing any of the given handles
+  local expected_handles = vim.deepcopy(last_handles[htype])
+
+  opened_handles = opened_handles or {}
+  closed_handles = closed_handles or {}
 
   -- for ensuring no collisions
-  local opened_win_set = {}
+  local opened_handle_set = {}
 
-  for _, opened_win in pairs(opened_wins) do
-    -- should be an actual window
-    assert.is_truthy(vim.api.nvim_win_is_valid(opened_win))
+  for _, opened_handle in pairs(opened_handles) do
+    -- should be an actual handle
+    assert.is_truthy(handle_valid(htype, opened_handle))
 
     -- should be brand new
-    assert.is_truthy(opened_win > last_win_max)
-    assert.is_falsy(opened_win_set[opened_win])
+    assert.is_truthy(opened_handle > last_handle_max[htype])
+    assert.is_falsy(opened_handle_set[opened_handle])
 
-    expected_wins[opened_win] = true
-    opened_win_set[opened_win] = true
+    expected_handles[opened_handle] = true
+    opened_handle_set[opened_handle] = true
   end
 
-  for _, closed_win in pairs(closed_wins) do
-    -- should not be a window
-    assert.is_falsy(vim.api.nvim_win_is_valid(closed_win))
+  for _, closed_handle in pairs(closed_handles) do
+    -- should not be a handle
+    assert.is_falsy(handle_valid(htype, closed_handle))
 
-    -- should have previously existed (should not pass a random previously/never closed window)
-    assert.is_truthy(last_wins[closed_win])
+    -- should have previously existed (should not pass a random previously/never closed handle)
+    assert.is_truthy(last_handles[htype][closed_handle])
 
-    expected_wins[closed_win] = nil
+    expected_handles[closed_handle] = nil
   end
 
-  assert.message("expected: " .. vim.inspect(expected_wins) .. "\n got: " .. vim.inspect(get_wins())).is_truthy(
-    vim.deep_equal(expected_wins, get_wins()))
+  assert.message("expected: " .. vim.inspect(expected_handles) .. "\n got: "
+    .. vim.inspect(get_handles(htype))).is_truthy(vim.deep_equal(expected_handles, get_handles(htype)))
 
-  for _, opened_win in pairs(opened_wins) do
-    if opened_win > last_win_max then last_win_max = opened_win end
+  for _, opened_handle in pairs(opened_handles) do
+    if opened_handle > last_handle_max[htype] then last_handle_max[htype] = opened_handle end
   end
 
   -- maintain IH
-  last_wins = get_wins()
+  last_handles[htype] = get_handles(htype)
 
-  -- also maintain IH for closed_win
-  last_win = vim.api.nvim_get_current_win()
+  -- also maintain IH for closed_handle
+  last_handle[htype] = handle_current(htype)
 
   return true
 end
 
-local function created_win(_, arguments)
-  local new_wins = arguments[1]
-  if new_wins then
-    assert.update_wins(arguments[1], nil)
+local function created_handle(htype, new_handles)
+  if new_handles then
+    return update_handles(htype, new_handles, nil)
   else
-    assert.are_not.equal(last_win, vim.api.nvim_get_current_win())
-    assert.update_wins({vim.api.nvim_get_current_win()}, nil)
+    assert.are_not.equal(last_handle[htype], handle_current(htype))
+    return update_handles(htype, {handle_current(htype)}, nil)
   end
-
-  return true
 end
 
-local function closed_win(_, arguments)
-  local closed_wins = arguments[1]
-  if closed_wins then
-    assert.update_wins(nil, arguments[1])
+local function closed_handle(htype, closed_handles)
+  if closed_handles then
+    return update_handles(htype, nil, closed_handles)
   else
-    -- inductive hypothesis: in addition to that of update_wins,
-    -- last_win must be the window we were in immediately before closing
-    assert.are_not.equal(last_win, vim.api.nvim_get_current_win())
-    assert.update_wins(nil, {last_win})
+    -- inductive hypothesis: in addition to that of update_handles,
+    -- last_handle must be the handledow we were in immediately before closing
+    assert.are_not.equal(last_handle[htype], handle_current(htype))
+    return update_handles(htype, nil, {last_handle[htype]})
   end
-
-  return true
 end
 
-local function changed_win(_, _)
-  assert.are_not.equal(last_win, vim.api.nvim_get_current_win())
+local function changed_handle(htype, opened_handles, closed_handles)
+  assert.are_not.equal(last_handle[htype], handle_current(htype))
 
-  assert.update_wins()
-  return true
+  return update_handles(htype, opened_handles, closed_handles)
 end
 
-local function kept_win(_, _)
-  assert.are_equal(last_win, vim.api.nvim_get_current_win())
+local function kept_handle(htype, opened_handles, closed_handles)
+  assert.are_equal(last_handle[htype], handle_current(htype))
 
-  assert.update_wins()
-  return true
+  return update_handles(htype, opened_handles, closed_handles)
 end
 
 local function opened_infoview(_, arguments)
@@ -268,9 +275,11 @@ end
 
 local last_info_ids = {}
 
-local function infoview_check(list)
+local function infoview_check(list, check_win, check_buf)
   local opened_wins = {}
   local closed_wins = {}
+  local opened_bufs = {}
+  local closed_bufs = {}
 
   local info_ids = {}
 
@@ -293,12 +302,16 @@ local function infoview_check(list)
     end
 
     if check == "opened" then
-      vim.list_extend(opened_wins, {this_info.window})
+      -- in case window/buffer opened already checked
+      if check_win then vim.list_extend(opened_wins, {this_info.window}) end
+      if check_buf then vim.list_extend(opened_bufs, {this_info.bufnr}) end
       assert.opened_infoview_state(this_info)
     elseif check == "opened_kept" then
       assert.opened_infoview_kept_state(this_info)
     elseif check == "closed" then
-      vim.list_extend(closed_wins, {this_info.prev_win})
+      -- in case window/buffer closed already checked
+      if check_win then vim.list_extend(closed_wins, {this_info.prev_win}) end
+      if check_buf then vim.list_extend(closed_bufs, {this_info.prev_buf}) end
       assert.closed_infoview_state(this_info)
     elseif check == "closed_kept" then
       assert.closed_infoview_kept_state(this_info)
@@ -320,27 +333,40 @@ local function infoview_check(list)
   last_info_ids = info_ids
 
   assert.update_wins(opened_wins, closed_wins)
+  assert.update_bufs(opened_bufs, closed_bufs)
 
   return true
 end
 
-local function get_infoview_assertion(check)
+local function get_infoview_assertion(check, check_win, check_buf)
+  if check_win == nil then check_win = true end
+  if check_buf == nil then check_buf = true end
+
   return function(_, arguments)
     local check_map = {}
     local list = arguments[1] or {vim.api.nvim_win_get_tabpage(0)}
     for _, id in pairs(list) do
       check_map[id] = check
     end
-    return infoview_check(check_map)
+    return infoview_check(check_map, check_win, check_buf)
   end
 end
 
 assert:register("assertion", "has_all", has_all)
 assert:register("assertion", "updated_infoviews", function(_, arguments)
-  return infoview_check(arguments[1] or {})
+  local check_win, check_buf
+  if arguments[2] == nil then check_win = true end
+  if arguments[3] == nil then check_buf = true end
+  return infoview_check(arguments[1] or {}, check_win, check_buf)
 end)
+assert:register("assertion", "opened_infoview_win", get_infoview_assertion("opened", true, false))
+assert:register("assertion", "opened_infoview_buf", get_infoview_assertion("opened", false, true))
+assert:register("assertion", "opened_infoview_none", get_infoview_assertion("opened", false, false))
 assert:register("assertion", "opened_infoview", get_infoview_assertion("opened"))
 assert:register("assertion", "opened_infoview_kept", get_infoview_assertion("opened_kept"))
+assert:register("assertion", "closed_infoview_win", get_infoview_assertion("closed", true, false))
+assert:register("assertion", "closed_infoview_buf", get_infoview_assertion("closed", false, true))
+assert:register("assertion", "closed_infoview_none", get_infoview_assertion("closed", false, false))
 assert:register("assertion", "closed_infoview", get_infoview_assertion("closed"))
 assert:register("assertion", "closed_infoview_kept", get_infoview_assertion("closed_kept"))
 assert:register("assertion", "unopened_infoview", get_infoview_assertion("closed_kept"))
@@ -351,13 +377,26 @@ assert:register("assertion", "opened_infoview_kept_state", opened_infoview_kept)
 assert:register("assertion", "closed_infoview_state", closed_infoview)
 assert:register("assertion", "closed_infoview_kept_state", closed_infoview_kept)
 
-assert:register("assertion", "update_wins", update_wins)
-assert:register("assertion", "closed_win", closed_win)
-assert:register("assertion", "created_win", created_win)
-assert:register("assertion", "changed_win", changed_win)
-assert:register("assertion", "kept_win", kept_win)
+for _, htype in pairs({"buf", "win"}) do
+  assert:register("assertion", "update_" .. htype .. "s", function (_, arguments)
+    return update_handles(htype, arguments[1], arguments[2])
+  end)
+  assert:register("assertion", "closed_" .. htype, function (_, arguments)
+    return closed_handle(htype, arguments[1])
+  end)
+  assert:register("assertion", "created_" .. htype, function (_, arguments)
+    return created_handle(htype, arguments[1])
+  end)
+  assert:register("assertion", "changed_" .. htype, function (_, arguments)
+    return changed_handle(htype, arguments[1], arguments[2])
+  end)
+  assert:register("assertion", "kept_" .. htype, function (_, arguments)
+    return kept_handle(htype, arguments[1], arguments[2])
+  end)
+end
 
--- initialize on very first nvim window (base case satisfied pretty trivially)
+-- initialize on very first nvim window/buffer (base case satisfied pretty trivially)
 assert.created_win()
+assert.created_buf()
 
 return helpers

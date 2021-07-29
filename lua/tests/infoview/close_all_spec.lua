@@ -24,6 +24,7 @@ describe('infoview', function()
       local info_changes = {}
 
       vim.api.nvim_command("tabnew")
+      assert.created_buf()
       assert.created_win()
       vim.api.nvim_command("edit temp.lean")
       infoview.get_current_infoview():open()
@@ -31,6 +32,7 @@ describe('infoview', function()
       info_changes[vim.api.nvim_win_get_tabpage(0)] = "closed"
 
       vim.api.nvim_command("tabnew")
+      assert.created_buf()
       assert.created_win()
       vim.api.nvim_command("edit temp.lean")
       infoview.get_current_infoview():open()
@@ -38,6 +40,7 @@ describe('infoview', function()
       info_changes[vim.api.nvim_win_get_tabpage(0)] = "closed"
 
       vim.api.nvim_command("tabnew")
+      assert.created_buf()
       assert.created_win()
       vim.api.nvim_command("edit temp.lean")
       infoview.get_current_infoview():open()
@@ -48,6 +51,7 @@ describe('infoview', function()
       info_changes[vim.api.nvim_win_get_tabpage(0)] = "closed_kept"
 
       vim.api.nvim_command("tabnew")
+      assert.created_buf()
       assert.created_win()
       vim.api.nvim_command("edit temp.lean")
       infoview.get_current_infoview():open()
