@@ -135,8 +135,8 @@ local handle_list = function(htype)
 end
 
 local handle_valid = function(htype, handle)
-  if htype == "win" then return vim.api.nvim_win_is_valid(handle) end
-  if htype == "buf" then return vim.api.nvim_buf_is_valid(handle) end
+  if htype == "win" then return handle and vim.api.nvim_win_is_valid(handle) end
+  if htype == "buf" then return handle and vim.api.nvim_buf_is_valid(handle) end
 end
 
 local function get_handles(htype)
