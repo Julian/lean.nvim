@@ -8,12 +8,12 @@ describe('infoview', function()
       function(_)
         vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
         infoview.get_current_infoview():open()
-        assert.kept_win({infoview.get_current_infoview().window})
+        assert.win.stayed.created({infoview.get_current_infoview().window}).tracked()
       end)
 
     it('created valid infoview',
       function(_)
-        assert.opened_infoview_buf()
+        assert.no_win_track.opened.infoview()
       end)
 
     it('starts with the window position at the top',
@@ -28,16 +28,16 @@ describe('infoview', function()
     it('cursor stays in source window on open',
       function(_)
         vim.api.nvim_command("tabnew")
-        assert.created_buf()
-        assert.created_win()
+        assert.buf.created.tracked()
+        assert.win.created.tracked()
         vim.api.nvim_command('edit ' .. fixtures.lean_project.some_existing_file)
         infoview.get_current_infoview():open()
-        assert.kept_win({infoview.get_current_infoview().window})
+        assert.win.stayed.created({infoview.get_current_infoview().window}).tracked()
       end)
 
     it('created valid infoview',
       function(_)
-        assert.opened_infoview_buf()
+        assert.no_win_track.opened.infoview()
       end)
 
     it('starts with the window position at the top',

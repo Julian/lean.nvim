@@ -8,12 +8,12 @@ describe('infoview', function()
   it('does not automatically open',
     function(_)
       vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
-      assert.unopened_infoview()
+      assert.closed_kept.infoview()
     end)
 
   it('can be opened after no autoopen',
     function(_)
       infoview.get_current_infoview():open()
-      assert.opened_infoview()
+      assert.opened.infoview()
     end)
 end)
