@@ -234,63 +234,112 @@ end)
 
 assert:register("assertion", "tracked", track_handles)
 
-local function opened_infoview(_, arguments)
-  local this_info = arguments[1]
+local last_infoview_ids = {}
+local last_info_ids = {}
 
-  assert.is_truthy(this_info.is_open)
-  assert.is_truthy(this_info.bufnr)
-  assert.is_truthy(this_info.window)
-  assert.is_falsy(this_info.prev_buf)
-  assert.is_falsy(this_info.prev_win)
+local function opened_initialized_infoview(_, arguments)
+  local this_infoview = arguments[1]
+
+  assert.is_nil(last_infoview_ids[this_infoview.id])
+
+  assert.is_truthy(this_infoview.is_open)
+  assert.is_truthy(this_infoview.window)
+  assert.is_falsy(this_infoview.prev_win)
+  assert.is_truthy(this_infoview.info)
+  assert.is_falsy(this_infoview.prev_info)
+
+  return true
+end
+
+local function closed_initialized_infoview(_, arguments)
+  local this_infoview = arguments[1]
+
+  assert.is_nil(last_infoview_ids[this_infoview.id])
+
+  assert.is_falsy(this_infoview.is_open)
+  assert.is_falsy(this_infoview.window)
+  assert.is_falsy(this_infoview.prev_win)
+  assert.is_truthy(this_infoview.info)
+  assert.is_falsy(this_infoview.prev_info)
+
+  return true
+end
+
+local function opened_infoview(_, arguments)
+  local this_infoview = arguments[1]
+
+  assert.is_truthy(this_infoview.is_open)
+  assert.is_truthy(this_infoview.window)
+  assert.is_falsy(this_infoview.prev_win)
+  assert.is_truthy(this_infoview.info)
+  assert.are_equal(this_infoview.info, this_infoview.prev_info)
 
   return true
 end
 
 local function opened_infoview_kept(_, arguments)
-  local this_info = arguments[1]
+  local this_infoview = arguments[1]
 
-  assert.is_truthy(this_info.is_open)
-  assert.is_truthy(this_info.bufnr)
-  assert.is_truthy(this_info.window)
-  assert.is_truthy(this_info.bufnr == this_info.prev_buf)
-  assert.is_truthy(this_info.window == this_info.prev_win)
+  assert.is_truthy(this_infoview.is_open)
+  assert.is_truthy(this_infoview.window)
+  assert.are_equal(this_infoview.window, this_infoview.prev_win)
+  assert.is_truthy(this_infoview.info)
+  assert.are_equal(this_infoview.info, this_infoview.prev_info)
 
   return true
 end
 
 local function closed_infoview(_, arguments)
-  local this_info = arguments[1]
+  local this_infoview = arguments[1]
 
-  assert.is_falsy(this_info.is_open)
-  assert.is_falsy(this_info.bufnr)
-  assert.is_falsy(this_info.window)
-  assert.is_truthy(this_info.prev_buf)
-  assert.is_truthy(this_info.prev_win)
+  assert.is_falsy(this_infoview.is_open)
+  assert.is_falsy(this_infoview.window)
+  assert.is_truthy(this_infoview.prev_win)
+  assert.is_truthy(this_infoview.info)
+  assert.are_equal(this_infoview.info, this_infoview.prev_info)
 
   return true
 end
 
 local function closed_infoview_kept(_, arguments)
-  local this_info = arguments[1]
+  local this_infoview = arguments[1]
 
-  assert.is_falsy(this_info.is_open)
-  assert.is_falsy(this_info.bufnr)
-  assert.is_falsy(this_info.window)
-  assert.is_falsy(this_info.prev_buf)
-  assert.is_falsy(this_info.prev_win)
+  assert.is_falsy(this_infoview.is_open)
+  assert.is_falsy(this_infoview.window)
+  assert.is_falsy(this_infoview.prev_win)
+  assert.is_truthy(this_infoview.info)
+  assert.are_equal(this_infoview.info, this_infoview.prev_info)
 
   return true
 end
 
-local last_info_ids = {}
+local function opened_info(_, arguments)
+  local this_info = arguments[1]
+
+  assert.is_nil(last_info_ids[this_info.id])
+
+  assert.is_truthy(this_info.bufnr)
+  assert.is_falsy(this_info.prev_buf)
+
+  return true
+end
+
+local function opened_info_kept(_, arguments)
+  local this_info = arguments[1]
+
+  assert.is_truthy(this_info.bufnr)
+  assert.are_equal(this_info.bufnr, this_info.prev_buf)
+
+  return true
+end
 
 local LEAN_NVIM_PREFIX = "lean_nvim_infoview_tracker_"
 
-local checks = {"opened", "opened_kept", "closed", "closed_kept"}
+local checks = {"opened", "initopened", "opened_kept", "closed", "initclosed", "closed_kept"}
 
 for _, check in pairs(checks) do
   assert:register("modifier", check, function(state, arguments)
-    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {vim.api.nvim_win_get_tabpage(0)})
+    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {infoview.get_current_infoview().id})
   end)
 end
 
@@ -302,13 +351,14 @@ assert:register("modifier", "no_buf_track", function(state, _)
 end)
 
 local function infoview_check(state, _)
-  local list = {}
+  local infoview_list = {}
+  local info_list = {}
 
   for _, check in pairs(checks) do
     local handles = rawget(state, LEAN_NVIM_PREFIX .. check) or {}
     for _, id in pairs(handles) do
-      assert.is_nil(list[id])
-      list[id] = check
+      assert.is_nil(infoview_list[id])
+      infoview_list[id] = check
     end
   end
 
@@ -317,54 +367,109 @@ local function infoview_check(state, _)
   local opened_bufs = {}
   local closed_bufs = {}
 
+  local infoview_ids = {}
   local info_ids = {}
 
-  for id, this_info in pairs(infoview._by_id) do
-    local check = list[id]
+  --- INFOVIEW CHECK
+
+  for id, this_infoview in pairs(infoview._by_id) do
+    local check = infoview_list[id]
 
     if not check then
       -- all unspecified infoviews must have been previously checked
+      assert.is_truthy(this_infoview.prev_check)
+      -- infer check
+      if this_infoview.prev_check == "opened" then
+        check = "opened_kept"
+      elseif this_infoview.prev_check == "initopened" then
+        check = "opened_kept"
+      elseif this_infoview.prev_check == "opened_kept" then
+        check = "opened_kept"
+      elseif this_infoview.prev_check == "closed" then
+        check = "closed_kept"
+      elseif this_infoview.prev_check == "initclosed" then
+        check = "closed_kept"
+      elseif this_infoview.prev_check == "closed_kept" then
+        check = "closed_kept"
+      end
+    end
+
+    if check == "opened" then
+      vim.list_extend(opened_wins, {this_infoview.window})
+      assert.opened_infoview_state(this_infoview)
+    elseif check == "initopened" then
+      vim.list_extend(opened_wins, {this_infoview.window})
+      assert.opened_initialized_infoview_state(this_infoview)
+      assert.is_nil(info_list[this_infoview.info])
+      info_list[this_infoview.info] = "opened"
+    elseif check == "opened_kept" then
+      assert.opened_infoview_kept_state(this_infoview)
+    elseif check == "closed" then
+      vim.list_extend(closed_wins, {this_infoview.prev_win})
+      assert.closed_infoview_state(this_infoview)
+    elseif check == "initclosed" then
+      assert.closed_initialized_infoview_state(this_infoview)
+      assert.is_nil(info_list[this_infoview.info])
+      info_list[this_infoview.info] = "opened"
+    elseif check == "closed_kept" then
+      assert.closed_infoview_kept_state(this_infoview)
+    end
+
+    this_infoview.prev_info = this_infoview.info
+    this_infoview.prev_win = this_infoview.window
+    this_infoview.prev_check = check
+
+    infoview_ids[id] = true
+  end
+
+  -- all previous infoviews must have been checked
+  for id, _ in pairs(last_infoview_ids) do assert.is_truthy(infoview_ids[id]) end
+
+  -- all specified infoviews must have been checked
+  for id, _ in pairs(infoview_list) do assert.is_truthy(infoview_ids[id]) end
+
+  last_infoview_ids = infoview_ids
+
+  ---
+
+  --- INFO CHECK
+
+  for id, this_info in pairs(infoview._info_by_id) do
+    local check = info_list[id]
+
+    if not check then
+      -- all unspecified infos must have been previously checked
       assert.is_truthy(this_info.prev_check)
       -- infer check
       if this_info.prev_check == "opened" then
         check = "opened_kept"
       elseif this_info.prev_check == "opened_kept" then
         check = "opened_kept"
-      elseif this_info.prev_check == "closed" then
-        check = "closed_kept"
-      elseif this_info.prev_check == "closed_kept" then
-        check = "closed_kept"
       end
     end
 
     if check == "opened" then
-      vim.list_extend(opened_wins, {this_info.window})
       vim.list_extend(opened_bufs, {this_info.bufnr})
-      assert.opened_infoview_state(this_info)
+      assert.opened_info_state(this_info)
     elseif check == "opened_kept" then
-      assert.opened_infoview_kept_state(this_info)
-    elseif check == "closed" then
-      vim.list_extend(closed_wins, {this_info.prev_win})
-      vim.list_extend(closed_bufs, {this_info.prev_buf})
-      assert.closed_infoview_state(this_info)
-    elseif check == "closed_kept" then
-      assert.closed_infoview_kept_state(this_info)
+      assert.opened_info_kept_state(this_info)
     end
 
     this_info.prev_buf = this_info.bufnr
-    this_info.prev_win = this_info.window
     this_info.prev_check = check
 
     info_ids[id] = true
   end
 
-  -- all previous infoviews must have been checked
+  -- all previous infos must have been checked
   for id, _ in pairs(last_info_ids) do assert.is_truthy(info_ids[id]) end
 
-  -- all specified infoviews must have been checked
-  for id, _ in pairs(list) do assert.is_truthy(info_ids[id]) end
+  -- all specified infos must have been checked
+  for id, _ in pairs(info_list) do assert.is_truthy(info_ids[id]) end
 
   last_info_ids = info_ids
+
+  ---
 
   local check_win = rawget(state, LEAN_NVIM_PREFIX .. "check_win")
   if check_win == nil then check_win = true end
@@ -382,8 +487,12 @@ assert:register("assertion", "infoview", infoview_check)
 
 -- internal state checks
 assert:register("assertion", "opened_infoview_state", opened_infoview)
+assert:register("assertion", "opened_initialized_infoview_state", opened_initialized_infoview)
+assert:register("assertion", "opened_info_state", opened_info)
 assert:register("assertion", "opened_infoview_kept_state", opened_infoview_kept)
+assert:register("assertion", "opened_info_kept_state", opened_info_kept)
 assert:register("assertion", "closed_infoview_state", closed_infoview)
+assert:register("assertion", "closed_initialized_infoview_state", closed_initialized_infoview)
 assert:register("assertion", "closed_infoview_kept_state", closed_infoview_kept)
 
 -- initialize on very first nvim window/buffer (base case satisfied pretty trivially)

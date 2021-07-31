@@ -13,7 +13,7 @@ describe('infoview', function()
 
     it('created valid infoview',
       function(_)
-        assert.no_win_track.opened.infoview()
+        assert.no_win_track.initopened.infoview()
       end)
 
     it('starts with the window position at the top',
@@ -31,6 +31,7 @@ describe('infoview', function()
         assert.buf.created.tracked()
         assert.win.created.tracked()
         vim.api.nvim_command('edit ' .. fixtures.lean_project.some_existing_file)
+        assert.initclosed.infoview()
         infoview.get_current_infoview():open()
         assert.win.stayed.created({infoview.get_current_infoview().window}).tracked()
       end)

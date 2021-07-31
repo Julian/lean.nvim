@@ -9,7 +9,7 @@ describe('infoview', function()
   it('automatically opens',
     function(_)
       vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
-      assert.opened.infoview()
+      assert.initopened.infoview()
     end)
 
   it('new tab automatically opens',
@@ -18,7 +18,7 @@ describe('infoview', function()
       assert.buf.created.tracked()
       assert.win.created.tracked()
       vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_nested_existing_file)
-      assert.opened.infoview()
+      assert.initopened.infoview()
     end)
 
   it('can be closed after autoopen',
@@ -33,8 +33,8 @@ describe('infoview', function()
     assert.buf.created.tracked()
     assert.win.created.tracked()
     vim.api.nvim_command("edit " .. fixtures.lean3_project.some_existing_file)
-    assert.buf.left.created({infoview.get_current_infoview().bufnr}).tracked()
-    assert.no_buf_track.opened.infoview()
+    assert.buf.left.created({infoview.get_current_info().bufnr}).tracked()
+    assert.no_buf_track.initopened.infoview()
   end)
 
   it('auto-open disable',
@@ -44,8 +44,8 @@ describe('infoview', function()
     assert.win.created.tracked()
     infoview.set_autoopen(false)
     vim.api.nvim_command("edit " .. fixtures.lean3_project.some_nested_existing_file)
-    assert.buf.left.tracked()
-    assert.closed_kept.infoview()
+    assert.buf.left.created({infoview.get_current_info().bufnr}).tracked()
+    assert.no_buf_track.initclosed.infoview()
   end)
 
   it('open after auto-open disable',
@@ -67,8 +67,8 @@ describe('infoview', function()
     assert.win.created.tracked()
     infoview.set_autoopen(true)
     vim.api.nvim_command("edit " .. fixtures.lean3_project.some_existing_file)
-    assert.buf.left.created({infoview.get_current_infoview().bufnr}).tracked()
-    assert.no_buf_track.opened.infoview()
+    assert.buf.left.created({infoview.get_current_info().bufnr}).tracked()
+    assert.no_buf_track.initopened.infoview()
   end)
 
   it('no auto-open for irrelevant file',

@@ -7,7 +7,7 @@ require('tests.helpers').setup {
 describe('Infoview.toggle', function()
   it('closes an open infoview', function()
     vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
-    assert.opened.infoview()
+    assert.initopened.infoview()
     infoview.get_current_infoview():toggle()
     assert.closed.infoview()
   end)

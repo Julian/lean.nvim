@@ -3,22 +3,22 @@ local helpers = require('tests.helpers')
 local fixtures = require('tests.fixtures')
 
 local function infoview_lsp_update(pos)
-  local current_infoview = infoview.get_current_infoview()
-  local before = current_infoview:get_contents()
+  local current_info = infoview.get_current_info()
+  local before = current_info:get_contents()
   vim.api.nvim_win_set_cursor(0, pos)
   -- wait for server pass
   local result, _ = vim.wait(10000, function()
     infoview.__update()
     -- wait for update data - will be empty if server pass incomplete
     local update_result, _ = vim.wait(500, function()
-      local curr = current_infoview:get_contents()
-      if curr == before or current_infoview:is_empty() then return false end
+      local curr = current_info:get_contents()
+      if curr == before or current_info:is_empty() then return false end
       return true
     end)
     return update_result
   end, 1000)
-  assert.message("infoview text did not update in time").is_true(result)
-  return current_infoview:get_contents()
+  assert.message("info text did not update in time").is_true(result)
+  return current_info:get_contents()
 end
 
 helpers.setup {

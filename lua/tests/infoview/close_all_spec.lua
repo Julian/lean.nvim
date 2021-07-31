@@ -1,13 +1,12 @@
 local infoview = require('lean.infoview')
 
-require('tests.helpers').setup {
-  infoview = {},
-}
+require('tests.helpers').setup {}
 describe('infoview', function()
   describe('close_all succeeds', function()
     it('single infoview',
     function(_)
       vim.api.nvim_command("edit temp.lean")
+      assert.initclosed.infoview()
       infoview.get_current_infoview():open()
       assert.opened.infoview()
 
@@ -21,44 +20,40 @@ describe('infoview', function()
       vim.api.nvim_command("tabnew")
       assert.buf.created.tracked()
       assert.win.created.tracked()
-      vim.api.nvim_command("edit temp.lean")
-      assert.buf.left.tracked()
-      assert.win.stayed.tracked()
+      vim.api.nvim_command("edit temp1.lean")
+      assert.initclosed.infoview()
       infoview.get_current_infoview():open()
       assert.opened.infoview()
-      local tab1 = vim.api.nvim_win_get_tabpage(0)
+      local tab1 = infoview.get_current_infoview().id
 
       vim.api.nvim_command("tabnew")
       assert.buf.created.tracked()
       assert.win.created.tracked()
-      vim.api.nvim_command("edit temp.lean")
-      assert.buf.left.tracked()
-      assert.win.stayed.tracked()
+      vim.api.nvim_command("edit temp2.lean")
+      assert.initclosed.infoview()
       infoview.get_current_infoview():open()
       assert.opened.infoview()
-      local tab2 = vim.api.nvim_win_get_tabpage(0)
+      local tab2 = infoview.get_current_infoview().id
 
       vim.api.nvim_command("tabnew")
       assert.buf.created.tracked()
       assert.win.created.tracked()
-      vim.api.nvim_command("edit temp.lean")
-      assert.buf.left.tracked()
-      assert.win.stayed.tracked()
+      vim.api.nvim_command("edit temp3.lean")
+      assert.initclosed.infoview()
       infoview.get_current_infoview():open()
       assert.opened.infoview()
       infoview.get_current_infoview():close()
       assert.closed_infoview()
-      local tab3 = vim.api.nvim_win_get_tabpage(0)
+      local tab3 = infoview.get_current_infoview().id
 
       vim.api.nvim_command("tabnew")
       assert.buf.created.tracked()
       assert.win.created.tracked()
-      vim.api.nvim_command("edit temp.lean")
-      assert.buf.left.tracked()
-      assert.win.stayed.tracked()
+      vim.api.nvim_command("edit temp4.lean")
+      assert.initclosed.infoview()
       infoview.get_current_infoview():open()
       assert.opened.infoview()
-      local tab4 = vim.api.nvim_win_get_tabpage(0)
+      local tab4 = infoview.get_current_infoview().id
 
       infoview.close_all()
 
