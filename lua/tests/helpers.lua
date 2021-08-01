@@ -96,6 +96,37 @@ function helpers.wait_for_line_diagnostics()
   assert.message("Waited for line diagnostics but none came.").True(succeeded)
 end
 
+--- Wait a few seconds for server progress to complete on the current buffer, erroring if it doesn't.
+function helpers.wait_for_server_progress(hover_match)
+  -- if Lean 4, we can just check the reported progress
+  if vim.bo.ft == "lean" then
+    local succeeded, _ = vim.wait(10000, function()
+      return require"lean.progress_bars".proc_infos[vim.api.nvim_get_current_buf()] and
+             vim.tbl_isempty(require"lean.progress_bars".proc_infos[vim.api.nvim_get_current_buf()])
+    end)
+    assert.message("Waited for server progress to complete but never did.").True(succeeded)
+  -- if Lean 3, there's no concrete indication, so we'll wait for a hover to match the given hover_match
+  else
+    assert.is_not_nil(hover_match)
+    local result, _ = vim.wait(10000, function()
+      local results = vim.lsp.buf_request_sync(0, "textDocument/hover", vim.lsp.util.make_position_params(), 1000)
+      local text = ""
+      for _, result_table in pairs(results) do
+        if result_table and result_table.error then
+          error("error waiting for server progress: " .. vim.inspect(result_table.error))
+        else
+          local this_result = result_table.result
+          -- we can expect a language-labeled MarkedString[] from Lean 3
+          for _, hover in pairs(this_result.contents) do text = text .. "\n" .. hover.value end
+        end
+      end
+
+      if text:find(hover_match, nil, true) then return true else return false end
+    end)
+    assert.is_truthy(result)
+  end
+end
+
 --- Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
   local buf = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n')
@@ -107,6 +138,8 @@ assert:register('assertion', 'contents', has_buf_contents)
 
 local function has_all(_, arguments)
   local text = arguments[1]
+
+  if type(text) == "table" then text = table.concat(text, "\n") end
   local expected = arguments[2]
   for _, string in pairs(expected) do
     assert.has_match(string, text, nil, true)
@@ -336,10 +369,17 @@ end
 local LEAN_NVIM_PREFIX = "lean_nvim_infoview_tracker_"
 
 local checks = {"opened", "initopened", "opened_kept", "closed", "initclosed", "closed_kept"}
+local info_checks = {"info_opened", "info_opened_kept", "info_text_changed"}
 
 for _, check in pairs(checks) do
   assert:register("modifier", check, function(state, arguments)
     rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {infoview.get_current_infoview().id})
+  end)
+end
+
+for _, check in pairs(info_checks) do
+  assert:register("modifier", check, function(state, arguments)
+    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {infoview.get_current_info().id})
   end)
 end
 
@@ -359,6 +399,14 @@ local function infoview_check(state, _)
     for _, id in pairs(handles) do
       assert.is_nil(infoview_list[id])
       infoview_list[id] = check
+    end
+  end
+
+  for _, check in pairs(info_checks) do
+    local handles = rawget(state, LEAN_NVIM_PREFIX .. check) or {}
+    for _, id in pairs(handles) do
+      assert.is_nil(info_list[id])
+      info_list[id] = check
     end
   end
 
@@ -401,7 +449,7 @@ local function infoview_check(state, _)
       vim.list_extend(opened_wins, {this_infoview.window})
       assert.opened_initialized_infoview_state(this_infoview)
       assert.is_nil(info_list[this_infoview.info])
-      info_list[this_infoview.info] = "opened"
+      info_list[this_infoview.info] = "info_opened"
     elseif check == "opened_kept" then
       assert.opened_infoview_kept_state(this_infoview)
     elseif check == "closed" then
@@ -410,7 +458,7 @@ local function infoview_check(state, _)
     elseif check == "initclosed" then
       assert.closed_initialized_infoview_state(this_infoview)
       assert.is_nil(info_list[this_infoview.info])
-      info_list[this_infoview.info] = "opened"
+      info_list[this_infoview.info] = "info_opened"
     elseif check == "closed_kept" then
       assert.closed_infoview_kept_state(this_infoview)
     end
@@ -441,20 +489,34 @@ local function infoview_check(state, _)
       -- all unspecified infos must have been previously checked
       assert.is_truthy(this_info.prev_check)
       -- infer check
-      if this_info.prev_check == "opened" then
-        check = "opened_kept"
-      elseif this_info.prev_check == "opened_kept" then
-        check = "opened_kept"
-      end
+      check = "info_opened_kept"
     end
 
-    if check == "opened" then
+    if check == "info_opened" then
       vim.list_extend(opened_bufs, {this_info.bufnr})
       assert.opened_info_state(this_info)
-    elseif check == "opened_kept" then
+    else
       assert.opened_info_kept_state(this_info)
     end
 
+    local function check_change(change)
+      local changed, _ = vim.wait(change and 1000 or 500, function()
+        return not vim.deep_equal(this_info.msg, this_info.prev_msg)
+      end)
+      if change then
+        assert.message("expected info text change but did not occur").is_truthy(changed)
+      else
+        assert.message("expected info text not to change but did change").is_falsy(changed)
+      end
+    end
+
+    if check == "info_text_changed" then
+      check_change(true)
+    else
+      check_change(false)
+    end
+
+    this_info.prev_msg = this_info.msg
     this_info.prev_buf = this_info.bufnr
     this_info.prev_check = check
 

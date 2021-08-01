@@ -2,107 +2,87 @@ local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 local fixtures = require('tests.fixtures')
 
-local function infoview_lsp_update(pos)
-  local current_info = infoview.get_current_info()
-  local before = current_info:get_contents()
-  vim.api.nvim_win_set_cursor(0, pos)
-  -- wait for server pass
-  local result, _ = vim.wait(10000, function()
-    infoview.__update()
-    -- wait for update data - will be empty if server pass incomplete
-    local update_result, _ = vim.wait(500, function()
-      local curr = current_info:get_contents()
-      if curr == before or current_info:is_empty() then return false end
-      return true
-    end)
-    return update_result
-  end, 1000)
-  assert.message("info text did not update in time").is_true(result)
-  return current_info:get_contents()
-end
-
 helpers.setup {
   infoview = { autoopen = true },
   lsp = { enable = true },
   lsp3 = { enable = true },
 }
 describe('infoview', function()
-  it('immediate close', function()
-    vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
-    helpers.wait_for_ready_lsp()
-    infoview.__update()
-    infoview.get_current_infoview():close()
-    vim.wait(5000, function()
-      assert.is_not.has_match("Error", vim.api.nvim_exec("messages", true), nil, true)
-    end)
-  end)
-  infoview.get_current_infoview():open()
-  it('lean 3', function()
-    before_each(function()
-      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/src/bar/baz.lean")
-      helpers.wait_for_ready_lsp()
-    end)
-
+  describe('lean 4', function()
     it('shows term state',
     function(_)
-      local text = infoview_lsp_update({3, 23})
-      assert.has_all(text, {"⊢ ℕ"})
+      vim.api.nvim_command("edit " .. fixtures.lean_project.some_existing_file)
+      assert.initopened.infoview()
+      helpers.wait_for_ready_lsp()
+      vim.api.nvim_win_set_cursor(0, {3, 23})
+      helpers.wait_for_server_progress()
+      infoview.__update()
+      assert.info_text_changed.infoview()
+      assert.has_all(infoview.get_current_info().msg, {"expected type", "⊢ Nat"})
     end)
 
     it('shows tactic state',
     function(_)
-      local text = infoview_lsp_update({7, 10})
-      assert.has_all(text, {"p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
+      vim.api.nvim_win_set_cursor(0, {6, 9})
+      infoview.__update()
+      assert.info_text_changed.infoview()
+      assert.has_all(infoview.get_current_info().msg, {"1 goal", "p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
+    end)
+  end)
+
+  describe('lean 3', function()
+    it('shows term state',
+    function(_)
+      vim.api.nvim_command("edit " .. fixtures.lean3_project.some_nested_existing_file)
+      assert.buf.created.tracked()
+      helpers.wait_for_ready_lsp()
+      vim.api.nvim_win_set_cursor(0, {12, 15})
+      helpers.wait_for_server_progress("no goals")
+      vim.api.nvim_win_set_cursor(0, {3, 23})
+      infoview.__update()
+      assert.info_text_changed.infoview()
+      assert.has_all(infoview.get_current_info().msg, {"⊢ ℕ"})
+    end)
+
+    it('shows tactic state',
+    function(_)
+      vim.api.nvim_win_set_cursor(0, {7, 10})
+      infoview.__update()
+      assert.info_text_changed.infoview()
+      assert.has_all(infoview.get_current_info().msg, {"p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
     end)
 
     it('only counts goals as goals, not hovered terms',
     function(_)
       -- hover for Lean 3 will also return information about `nat`, which is
       -- under the cursor, but we shouldn't count that as a goal.
-      local text = infoview_lsp_update({3, 14})
-      assert.equal(text, '▶ 1 goal\n\n⊢ Type 1')
+      vim.api.nvim_win_set_cursor(0, {3, 14})
+      infoview.__update()
+      assert.info_text_changed.infoview()
+      assert.equal(table.concat(infoview.get_current_info().msg, "\n"), '▶ 1 goal\n\n⊢ Type 1')
     end)
   end)
 
-  it('lean 4', function()
-    before_each(function()
-      vim.api.nvim_command("edit lua/tests/fixtures/example-lean4-project/Test.lean")
-      helpers.wait_for_ready_lsp()
-    end)
-
-    it('shows term state',
-    function(_)
-      local text = infoview_lsp_update({3, 23})
-      assert.has_all(text, {"expected type", "⊢ Nat"})
-    end)
-
-    it('shows tactic state',
-    function(_)
-      local text = infoview_lsp_update({6, 9})
-      assert.has_all(text, {"1 goal", "p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
-    end)
-  end)
-
-  local win = vim.api.nvim_get_current_win()
-
-  vim.api.nvim_command("tabnew")
-
-  local winnew = vim.api.nvim_get_current_win()
-
-  it('new tab', function()
-    before_each(function()
-      vim.api.nvim_command("edit lua/tests/fixtures/example-lean3-project/src/bar/baz.lean")
-      helpers.wait_for_ready_lsp()
-    end)
-
+  describe('new tab', function()
     it('maintains separate infoview text',
     function(_)
-      local text = infoview_lsp_update({3, 23})
-      assert.has_all(text, {"⊢ ℕ"})
-      vim.api.nvim_set_current_win(win)
-      text = infoview_lsp_update({3, 23})
-      assert.has_all(text, {"expected type", "⊢ Nat"})
-      vim.api.nvim_set_current_win(winnew)
+      vim.api.nvim_win_set_cursor(0, {3, 23})
+      infoview.__update()
+      assert.info_text_changed.infoview()
+      assert.has_all(infoview.get_current_info().msg, {"⊢ ℕ"})
+      vim.api.nvim_command("tabnew")
+      assert.win.created.tracked()
+      assert.buf.created.tracked()
+      vim.api.nvim_command("edit " .. fixtures.lean_project.some_existing_file)
+      assert.buf.left.created({infoview.get_current_info().bufnr}).tracked()
+      assert.no_buf_track.initopened.infoview()
+      vim.api.nvim_win_set_cursor(0, {3, 23})
+      helpers.wait_for_server_progress()
+      infoview.__update()
+      assert.info_text_changed.infoview()
+      assert.has_all(infoview.get_current_info().msg, {"expected type", "⊢ Nat"})
+      vim.api.nvim_command("tabprevious")
+      assert.has_all(infoview.get_current_info().msg, {"⊢ ℕ"})
     end)
   end)
 end)
