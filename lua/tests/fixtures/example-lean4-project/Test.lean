@@ -11,3 +11,7 @@ theorem test2 : p ∨ q → q ∨ p := by
   | inr h2 =>
     apply Or.inl
     assumption
+
+def num_test : Nat := 111
+
+#print num_test

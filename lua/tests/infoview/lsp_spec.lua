@@ -28,12 +28,21 @@ describe('infoview', function()
       assert.info_text_changed.infoview()
       assert.has_all(infoview.get_current_infoview().info.msg, {"1 goal", "p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
     end)
+
+    it('picks up on textDocument/didChange following update call',
+    function(_)
+      vim.api.nvim_win_set_cursor(0, {17, 15})
+      infoview.__update()
+      vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def num_test : Nat := 123"})
+      assert.info_text_changed.infoview()
+      assert.has_all(infoview.get_current_infoview().info.msg, {"def num_test : Nat :=\n123"})
+    end)
   end)
 
   describe('lean 3', function()
     it('shows term state',
     function(_)
-      vim.api.nvim_command("edit " .. fixtures.lean3_project.some_nested_existing_file)
+      vim.api.nvim_command("edit! " .. fixtures.lean3_project.some_nested_existing_file)
       assert.buf.created.tracked()
       helpers.wait_for_ready_lsp()
       vim.api.nvim_win_set_cursor(0, {12, 15})
