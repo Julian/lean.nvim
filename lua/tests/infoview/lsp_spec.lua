@@ -37,6 +37,16 @@ describe('infoview', function()
       assert.info_text_changed.infoview()
       assert.has_all(infoview.get_current_infoview().info.msg, {"def num_test : Nat :=\n123"})
     end)
+
+    pending('re-issues on ContentModified',
+    function(_)
+      vim.api.nvim_win_set_cursor(0, {17, 15})
+      vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def num_test : Nat := 321"})
+      infoview.__update()
+      vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def num_test : Nat := 333"})
+      assert.info_text_changed.infoview()
+      assert.has_all(infoview.get_current_infoview().info.msg, {"def num_test : Nat :=\n333"})
+    end)
   end)
 
   describe('lean 3', function()
