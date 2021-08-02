@@ -4,11 +4,18 @@ local leanlsp = require('lean.lsp')
 local is_lean_buffer = require('lean').is_lean_buffer
 local set_augroup = require('lean._util').set_augroup
 
-local infoview = { _by_id = {} }
+local infoview = {
+  -- mapping from infoview IDs to infoviews
+  _by_id = {},
+  -- mapping from tabpage handles to infoviews
+  _by_tabpage = {},
+  -- mapping from info IDs to infos
+  _info_by_id = {},
+}
 local options = { _DEFAULTS = { autoopen = true, width = 50 } }
 
 local _DEFAULT_BUF_OPTIONS = {
-  bufhidden = 'wipe',
+  bufhidden = 'hide',
   filetype = 'leaninfo',
   modifiable = false,
 }
@@ -22,25 +29,23 @@ local _DEFAULT_WIN_OPTIONS = {
 }
 local _NOTHING_TO_SHOW = { "No info found." }
 
---- An individual infoview.
-local Infoview = {}
+--- An individual info.
+local Info = {}
 
---- Get the ID of the infoview corresponding to the current window.
-local function get_id()
-  return vim.api.nvim_win_get_tabpage(0)
-end
+--- A "view" on an info (i.e. window).
+local Infoview = {}
 
 --- Get the infoview corresponding to the current window.
 function infoview.get_current_infoview()
-  return infoview._by_id[get_id()]
+  return infoview._by_tabpage[vim.api.nvim_win_get_tabpage(0)]
 end
 
 --- Create a new infoview.
----@param id number: the new ID associated with the infoview
 ---@param width number: the width of the new infoview
 ---@param open boolean: whether to open the infoview after initializing
-function Infoview:new(id, width, open)
-  local new_infoview = {id = id, width = width}
+function Infoview:new(width, open)
+  local new_infoview = {id = #infoview._by_id + 1, width = width, info = Info:new()}
+  table.insert(infoview._by_id, new_infoview)
   self.__index = self
   setmetatable(new_infoview, self)
 
@@ -53,16 +58,10 @@ end
 function Infoview:open()
   if self.is_open then return vim.deepcopy(self) end
 
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(bufnr, "lean://infoview/" .. self.id)
-  for name, value in pairs(_DEFAULT_BUF_OPTIONS) do
-    vim.api.nvim_buf_set_option(bufnr, name, value)
-  end
-
   local window_before_split = vim.api.nvim_get_current_win()
 
   vim.cmd("botright " .. self.width .. "vsplit")
-  vim.cmd(string.format("buffer %d", bufnr))
+  vim.cmd(string.format("buffer %d", self.info.bufnr))
   local window = vim.api.nvim_get_current_win()
   for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
     vim.api.nvim_win_set_option(window, name, value)
@@ -74,7 +73,6 @@ function Infoview:open()
 
   vim.api.nvim_set_current_win(window_before_split)
 
-  self.bufnr = bufnr
   self.window = window
   self.is_open = true
 
@@ -93,7 +91,6 @@ function Infoview:close()
 
   set_augroup("LeanInfoviewClose", "", self.bufnr)
   vim.api.nvim_win_close(self.window, true)
-  self.bufnr = nil
   self.window = nil
   self.is_open = false
 
@@ -105,7 +102,7 @@ function Infoview:toggle()
   if self.is_open then self:close() else self:open() end
 end
 
---- Set the currently active Lean buffer to update the infoview.
+--- Set the currently active Lean buffer to update the info.
 function Infoview:focus_on_current_buffer()
   if not is_lean_buffer() then return end
   if self.is_open then
@@ -118,8 +115,23 @@ function Infoview:focus_on_current_buffer()
   end
 end
 
---- Update this infoview's contents given the current position.
-function Infoview:update()
+function Info:new()
+  local new_info = {id = #infoview._info_by_id + 1, bufnr = vim.api.nvim_create_buf(false, true)}
+  table.insert(infoview._info_by_id, new_info)
+
+  self.__index = self
+  setmetatable(new_info, self)
+
+  vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
+  for name, value in pairs(_DEFAULT_BUF_OPTIONS) do
+    vim.api.nvim_buf_set_option(new_info.bufnr, name, value)
+  end
+
+  return new_info
+end
+
+--- Update this info's contents given the current position.
+function Info:update()
   local update = vim.opt.filetype:get() == "lean3" and lean3.update_infoview or function(set_lines)
     return leanlsp.plain_goal(0, function(_, _, goal)
       leanlsp.plain_term_goal(0, function(_, _, term_goal)
@@ -137,9 +149,8 @@ function Infoview:update()
   end)
 end
 
---- Update this infoview's physical contents.
-function Infoview:render()
-  if not self.is_open then return end
+--- Update this info's physical contents.
+function Info:render()
   local lines = self.msg
 
   if vim.tbl_isempty(lines) then lines = _NOTHING_TO_SHOW end
@@ -154,32 +165,26 @@ function Infoview:render()
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', false)
 end
 
---- Update the infoview contents appropriately for Lean 4 or 3.
+--- Update the info contents appropriately for Lean 4 or 3.
 --- Normally will be called on each CursorHold for a buffer containing Lean.
 function infoview.__update()
-  infoview._by_id[get_id()]:update()
+  infoview.get_current_infoview().info:update()
 end
 
---- Retrieve the contents of the infoview as a table.
-function Infoview:get_lines(start_line, end_line)
-  if not self.is_open then return end
-
+--- Retrieve the contents of the info as a table.
+function Info:get_lines(start_line, end_line)
   start_line = start_line or 0
   end_line = end_line or -1
   return vim.api.nvim_buf_get_lines(self.bufnr, start_line, end_line, true)
 end
 
---- Retrieve the current combined contents of the infoview as a string.
-function Infoview:get_contents()
-  if not self.is_open then return end
-
+--- Retrieve the current combined contents of the info as a string.
+function Info:get_contents()
   return table.concat(self:get_lines(), "\n")
 end
 
---- Is the infoview not showing anything?
-function Infoview:is_empty()
-  if not self.is_open then return end
-
+--- Is the info not showing anything?
+function Info:is_empty()
   return vim.deep_equal(self:get_lines(), _NOTHING_TO_SHOW)
 end
 
@@ -224,8 +229,10 @@ end
 
 --- Open an infoview for the current buffer if it isn't already open.
 function infoview.maybe_autoopen()
-  local id = get_id()
-  if not infoview._by_id[id] then infoview._by_id[id] = Infoview:new(id, options.width, options.autoopen) end
+  local tabpage = vim.api.nvim_win_get_tabpage(0)
+  if not infoview._by_tabpage[tabpage] then
+    infoview._by_tabpage[tabpage] = Infoview:new(options.width, options.autoopen)
+  end
 end
 
 return infoview
