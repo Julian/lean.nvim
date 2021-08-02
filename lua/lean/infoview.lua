@@ -7,7 +7,7 @@ local set_augroup = require('lean._util').set_augroup
 local infoview = {
   -- mapping from infoview IDs to infoviews
   _by_id = {},
-  -- mapping from tabpages to infoview IDs
+  -- mapping from tabpage handles to infoviews
   _by_tabpage = {},
   -- mapping from info IDs to infos
   _info_by_id = {},
@@ -31,34 +31,21 @@ local _NOTHING_TO_SHOW = { "No info found." }
 
 --- An individual info.
 local Info = {}
-local next_info_id = 0
 
 --- A "view" on an info (i.e. window).
 local Infoview = {}
-local next_infoview_id = 0
-
---- Get the ID of the current infoview.
-local function get_id()
-  return infoview._by_tabpage[vim.api.nvim_win_get_tabpage(0)]
-end
 
 --- Get the infoview corresponding to the current window.
 function infoview.get_current_infoview()
-  return infoview._by_id[get_id()]
-end
-
---- Get the info corresponding to the current window.
-function infoview.get_current_info()
-  return infoview._info_by_id[infoview.get_current_infoview().info]
+  return infoview._by_tabpage[vim.api.nvim_win_get_tabpage(0)]
 end
 
 --- Create a new infoview.
 ---@param width number: the width of the new infoview
 ---@param open boolean: whether to open the infoview after initializing
 function Infoview:new(width, open)
-  local new_infoview = {id = next_infoview_id, width = width, info = Info:new().id}
-  infoview._by_id[next_infoview_id] = new_infoview
-  next_infoview_id = next_infoview_id + 1
+  local new_infoview = {id = #infoview._by_id + 1, width = width, info = Info:new()}
+  table.insert(infoview._by_id, new_infoview)
   self.__index = self
   setmetatable(new_infoview, self)
 
@@ -74,7 +61,7 @@ function Infoview:open()
   local window_before_split = vim.api.nvim_get_current_win()
 
   vim.cmd("botright " .. self.width .. "vsplit")
-  vim.cmd(string.format("buffer %d", infoview._info_by_id[self.info].bufnr))
+  vim.cmd(string.format("buffer %d", self.info.bufnr))
   local window = vim.api.nvim_get_current_win()
   for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
     vim.api.nvim_win_set_option(window, name, value)
@@ -129,9 +116,8 @@ function Infoview:focus_on_current_buffer()
 end
 
 function Info:new()
-  local new_info = {id = next_info_id, bufnr = vim.api.nvim_create_buf(false, true)}
-  infoview._info_by_id[next_info_id] = new_info
-  next_info_id = next_info_id + 1
+  local new_info = {id = #infoview._info_by_id + 1, bufnr = vim.api.nvim_create_buf(false, true)}
+  table.insert(infoview._info_by_id, new_info)
 
   self.__index = self
   setmetatable(new_info, self)
@@ -182,7 +168,7 @@ end
 --- Update the info contents appropriately for Lean 4 or 3.
 --- Normally will be called on each CursorHold for a buffer containing Lean.
 function infoview.__update()
-  infoview._info_by_id[infoview._by_id[get_id()].info]:update()
+  infoview.get_current_infoview().info:update()
 end
 
 --- Retrieve the contents of the info as a table.
@@ -245,7 +231,7 @@ end
 function infoview.maybe_autoopen()
   local tabpage = vim.api.nvim_win_get_tabpage(0)
   if not infoview._by_tabpage[tabpage] then
-    infoview._by_tabpage[tabpage] = Infoview:new(options.width, options.autoopen).id
+    infoview._by_tabpage[tabpage] = Infoview:new(options.width, options.autoopen)
   end
 end
 

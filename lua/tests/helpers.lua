@@ -278,7 +278,7 @@ local function opened_initialized_infoview(_, arguments)
   assert.is_truthy(this_infoview.is_open)
   assert.is_truthy(this_infoview.window)
   assert.is_falsy(this_infoview.prev_win)
-  assert.is_truthy(this_infoview.info)
+  assert.is_truthy(this_infoview.info.id)
   assert.is_falsy(this_infoview.prev_info)
 
   return true
@@ -292,7 +292,7 @@ local function closed_initialized_infoview(_, arguments)
   assert.is_falsy(this_infoview.is_open)
   assert.is_falsy(this_infoview.window)
   assert.is_falsy(this_infoview.prev_win)
-  assert.is_truthy(this_infoview.info)
+  assert.is_truthy(this_infoview.info.id)
   assert.is_falsy(this_infoview.prev_info)
 
   return true
@@ -304,8 +304,8 @@ local function opened_infoview(_, arguments)
   assert.is_truthy(this_infoview.is_open)
   assert.is_truthy(this_infoview.window)
   assert.is_falsy(this_infoview.prev_win)
-  assert.is_truthy(this_infoview.info)
-  assert.are_equal(this_infoview.info, this_infoview.prev_info)
+  assert.is_truthy(this_infoview.info.id)
+  assert.are_equal(this_infoview.info.id, this_infoview.prev_info)
 
   return true
 end
@@ -316,8 +316,8 @@ local function opened_infoview_kept(_, arguments)
   assert.is_truthy(this_infoview.is_open)
   assert.is_truthy(this_infoview.window)
   assert.are_equal(this_infoview.window, this_infoview.prev_win)
-  assert.is_truthy(this_infoview.info)
-  assert.are_equal(this_infoview.info, this_infoview.prev_info)
+  assert.is_truthy(this_infoview.info.id)
+  assert.are_equal(this_infoview.info.id, this_infoview.prev_info)
 
   return true
 end
@@ -328,8 +328,8 @@ local function closed_infoview(_, arguments)
   assert.is_falsy(this_infoview.is_open)
   assert.is_falsy(this_infoview.window)
   assert.is_truthy(this_infoview.prev_win)
-  assert.is_truthy(this_infoview.info)
-  assert.are_equal(this_infoview.info, this_infoview.prev_info)
+  assert.is_truthy(this_infoview.info.id)
+  assert.are_equal(this_infoview.info.id, this_infoview.prev_info)
 
   return true
 end
@@ -340,8 +340,8 @@ local function closed_infoview_kept(_, arguments)
   assert.is_falsy(this_infoview.is_open)
   assert.is_falsy(this_infoview.window)
   assert.is_falsy(this_infoview.prev_win)
-  assert.is_truthy(this_infoview.info)
-  assert.are_equal(this_infoview.info, this_infoview.prev_info)
+  assert.is_truthy(this_infoview.info.id)
+  assert.are_equal(this_infoview.info.id, this_infoview.prev_info)
 
   return true
 end
@@ -379,7 +379,7 @@ end
 
 for _, check in pairs(info_checks) do
   assert:register("modifier", check, function(state, arguments)
-    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {infoview.get_current_info().id})
+    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {infoview.get_current_infoview().info.id})
   end)
 end
 
@@ -448,8 +448,8 @@ local function infoview_check(state, _)
     elseif check == "initopened" then
       vim.list_extend(opened_wins, {this_infoview.window})
       assert.opened_initialized_infoview_state(this_infoview)
-      assert.is_nil(info_list[this_infoview.info])
-      info_list[this_infoview.info] = "info_opened"
+      assert.is_nil(info_list[this_infoview.info.id])
+      info_list[this_infoview.info.id] = "info_opened"
     elseif check == "opened_kept" then
       assert.opened_infoview_kept_state(this_infoview)
     elseif check == "closed" then
@@ -457,13 +457,13 @@ local function infoview_check(state, _)
       assert.closed_infoview_state(this_infoview)
     elseif check == "initclosed" then
       assert.closed_initialized_infoview_state(this_infoview)
-      assert.is_nil(info_list[this_infoview.info])
-      info_list[this_infoview.info] = "info_opened"
+      assert.is_nil(info_list[this_infoview.info.id])
+      info_list[this_infoview.info.id] = "info_opened"
     elseif check == "closed_kept" then
       assert.closed_infoview_kept_state(this_infoview)
     end
 
-    this_infoview.prev_info = this_infoview.info
+    this_infoview.prev_info = this_infoview.info.id
     this_infoview.prev_win = this_infoview.window
     this_infoview.prev_check = check
 
@@ -500,7 +500,7 @@ local function infoview_check(state, _)
     end
 
     local function check_change(change)
-      local changed, _ = vim.wait(change and 1000 or 500, function()
+      local changed, _ = vim.wait(change and 1000 or 300, function()
         return not vim.deep_equal(this_info.msg, this_info.prev_msg)
       end)
       if change then
