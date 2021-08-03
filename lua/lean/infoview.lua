@@ -3,7 +3,7 @@ local lean3 = require('lean.lean3')
 local leanlsp = require('lean.lsp')
 local is_lean_buffer = require('lean').is_lean_buffer
 local set_augroup = require('lean._util').set_augroup
-local a = require('plenary.async.async')
+local a = require('plenary.async')
 
 local infoview = {
   -- mapping from infoview IDs to infoviews

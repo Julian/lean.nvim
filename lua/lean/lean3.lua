@@ -3,7 +3,7 @@ local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
 local components = require('lean.infoview.components')
 local subprocess_check_output = require('lean._util').subprocess_check_output
 
-local a = require('plenary.async.async')
+local a = require('plenary.async')
 
 local lean3 = {}
 
