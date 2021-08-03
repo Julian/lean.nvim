@@ -3,6 +3,8 @@ local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
 local components = require('lean.infoview.components')
 local subprocess_check_output = require('lean._util').subprocess_check_output
 
+local a = require('plenary.async.async')
+
 local lean3 = {}
 
 -- Ideally this obviously would use a TOML parser but yeah choosing to
@@ -74,19 +76,16 @@ function lean3.__current_search_paths()
   return vim.fn.json_decode(table.concat(result, '')).path
 end
 
-function lean3.update_infoview(set_lines)
-  local params = vim.lsp.util.make_position_params()
-  return vim.lsp.buf_request(0, "textDocument/hover", params, function(_, _, result)
-    local lines = {}
-    if result and type(result) == "table" and not vim.tbl_isempty(result.contents) then
-      vim.list_extend(
-        lines,
-        components.goal(upconvert_lsp_goal_to_lean4(result)))
-    end
-    vim.list_extend(lines, components.diagnostics())
-
-    set_lines(lines)
-  end)
+local buf_request = a.wrap(vim.lsp.buf_request, 4)
+function lean3.update_infoview()
+  local _, _, result = buf_request(0, "textDocument/hover", vim.lsp.util.make_position_params())
+  local lines = {}
+  if result and type(result) == "table" and not vim.tbl_isempty(result.contents) then
+    vim.list_extend(
+      lines,
+      components.goal(upconvert_lsp_goal_to_lean4(result)))
+  end
+  return vim.list_extend(lines, components.diagnostics())
 end
 
 return lean3

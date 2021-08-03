@@ -3,6 +3,7 @@ local lean3 = require('lean.lean3')
 local leanlsp = require('lean.lsp')
 local is_lean_buffer = require('lean').is_lean_buffer
 local set_augroup = require('lean._util').set_augroup
+local a = require('plenary.async.async')
 
 local infoview = {
   -- mapping from infoview IDs to infoviews
@@ -130,23 +131,26 @@ function Info:new()
   return new_info
 end
 
+local plain_goal = a.wrap(leanlsp.plain_goal, 2)
+local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 2)
+
 --- Update this info's contents given the current position.
 function Info:update()
-  local update = vim.opt.filetype:get() == "lean3" and lean3.update_infoview or function(set_lines)
-    return leanlsp.plain_goal(0, function(_, _, goal)
-      leanlsp.plain_term_goal(0, function(_, _, term_goal)
-        local lines = components.goal(goal)
-        if not vim.tbl_isempty(lines) then table.insert(lines, '') end
-        vim.list_extend(lines, components.term_goal(term_goal))
-        vim.list_extend(lines, components.diagnostics())
-        set_lines(lines)
-      end)
-    end)
-  end
-  update(function(lines)
+  a.void(function()
+    local lines
+    if vim.opt.filetype:get() == "lean3" then
+      lines = lean3.update_infoview()
+    else
+      local _, _, goal = plain_goal(0)
+      local _, _, term_goal = plain_term_goal(0)
+      lines = components.goal(goal)
+      if not vim.tbl_isempty(lines) then table.insert(lines, '') end
+      vim.list_extend(lines, components.term_goal(term_goal))
+      vim.list_extend(lines, components.diagnostics())
+    end
     self.msg = lines
     self:render()
-  end)
+  end)()
 end
 
 --- Update this info's physical contents.
