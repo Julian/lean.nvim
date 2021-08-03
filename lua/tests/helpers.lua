@@ -172,13 +172,31 @@ local handle_valid = function(htype, handle)
   if htype == "buf" then return handle and vim.api.nvim_buf_is_valid(handle) end
 end
 
-local function get_handles(htype)
-  local handles = {}
-  for _, handle in pairs(handle_list(htype)) do
-    handles[handle] = true
+local function to_set(list)
+  local set = {}
+  for _, item in pairs(list) do
+    set[item] = true
   end
 
-  return handles
+  return set
+end
+
+local function get_handles(htype) return to_set(handle_list(htype)) end
+
+local tracked_pending_state = {}
+
+local function track_pending_handles(state, _)
+  local htype = rawget(state, NVIM_PREFIX .. "htype")
+  assert.message("must specify handle type").is_not_nil(htype)
+
+  -- enforce only calling once (for readability)
+  assert.message("pending tracker assertion state should be set only once").is_nil(tracked_pending_state[htype])
+  -- must apply .use_pending modifier to actual tracked() call (for readability)
+  assert.message(".use_pending should only be used on an actual tracked() assertion").is_nil(
+    rawget(state, NVIM_PREFIX .. "use_pending"))
+
+  tracked_pending_state[htype] = state
+  return true
 end
 
 local function track_handles(state, _)
@@ -187,20 +205,21 @@ local function track_handles(state, _)
 
   local htype = rawget(state, NVIM_PREFIX .. "htype")
   assert.is_not_nil(htype)
+
+  if rawget(state, NVIM_PREFIX .. "use_pending") then
+    assert.message("no pending tracker assertion state set").is_not_nil(tracked_pending_state[htype])
+    state = vim.tbl_deep_extend("keep", state, tracked_pending_state[htype])
+    tracked_pending_state[htype] = nil
+  else
+    assert.message("ignored pending tracker assertion state").is_nil(tracked_pending_state[htype])
+  end
+
   local changed = rawget(state, NVIM_PREFIX .. "changed") or false
 
   local opened_handles = rawget(state, NVIM_PREFIX .. "created")
-  if opened_handles == true then
-    changed = true
-    opened_handles = {handle_current(htype)}
-  end
   opened_handles = opened_handles or {}
 
   local closed_handles = rawget(state, NVIM_PREFIX .. "removed") or {}
-  if closed_handles == true then
-    changed = true
-    closed_handles = {last_handle[htype]}
-  end
   closed_handles = closed_handles or {}
 
   if changed then
@@ -214,7 +233,7 @@ local function track_handles(state, _)
   -- for ensuring no collisions
   local opened_handle_set = {}
 
-  for _, opened_handle in pairs(opened_handles) do
+  for opened_handle, _ in pairs(opened_handles) do
     -- should be an actual handle
     assert.is_truthy(handle_valid(htype, opened_handle))
 
@@ -226,7 +245,7 @@ local function track_handles(state, _)
     opened_handle_set[opened_handle] = true
   end
 
-  for _, closed_handle in pairs(closed_handles) do
+  for closed_handle, _ in pairs(closed_handles) do
     -- should not be a handle
     assert.is_falsy(handle_valid(htype, closed_handle))
 
@@ -239,7 +258,7 @@ local function track_handles(state, _)
   assert.message("expected: " .. vim.inspect(expected_handles) .. "\n got: "
     .. vim.inspect(get_handles(htype))).is_truthy(vim.deep_equal(expected_handles, get_handles(htype)))
 
-  for _, opened_handle in pairs(opened_handles) do
+  for opened_handle, _ in pairs(opened_handles) do
     if opened_handle > last_handle_max[htype] then last_handle_max[htype] = opened_handle end
   end
 
@@ -252,19 +271,39 @@ end
 
 assert:register("modifier", "win", function(state, _, _) rawset(state, NVIM_PREFIX .. "htype", "win") end)
 assert:register("modifier", "buf", function(state, _, _) rawset(state, NVIM_PREFIX .. "htype", "buf") end)
+
 assert:register("modifier", "created", function(state, arguments, _)
-  rawset(state, NVIM_PREFIX .. "created", arguments and arguments[1] or true)
+  local created = rawget(state, NVIM_PREFIX .. "created") or {}
+  if arguments and arguments[1] then
+    created = vim.tbl_extend("keep", to_set(arguments[1]), created)
+  else
+    created = vim.tbl_extend("keep", {[handle_current(rawget(state, NVIM_PREFIX .. "htype"))] = true}, created)
+    rawset(state, NVIM_PREFIX .. "changed", true)
+  end
+  rawset(state, NVIM_PREFIX .. "created", created)
 end)
 assert:register("modifier", "removed", function(state, arguments, _)
-  rawset(state, NVIM_PREFIX .. "removed", arguments and arguments[1] or true)
+  local removed = rawget(state, NVIM_PREFIX .. "removed") or {}
+  if arguments and arguments[1] then
+    removed = vim.tbl_extend("keep", to_set(arguments[1]), removed)
+  else
+    removed = vim.tbl_extend("keep", {[last_handle[rawget(state, NVIM_PREFIX .. "htype")]] = true}, removed)
+    rawset(state, NVIM_PREFIX .. "changed", true)
+  end
+  rawset(state, NVIM_PREFIX .. "removed", removed)
 end)
+
 assert:register("modifier", "stayed", function(state, _, _)
   rawset(state, NVIM_PREFIX .. "changed", false)
 end)
 assert:register("modifier", "left", function(state, _, _)
   rawset(state, NVIM_PREFIX .. "changed", true)
 end)
+assert:register("modifier", "use_pending", function(state, _, _)
+  rawset(state, NVIM_PREFIX .. "use_pending", true)
+end)
 
+assert:register("assertion", "tracked_pending", track_pending_handles)
 assert:register("assertion", "tracked", track_handles)
 
 local last_infoview_ids = {}
@@ -383,11 +422,11 @@ for _, check in pairs(info_checks) do
   end)
 end
 
-assert:register("modifier", "no_win_track", function(state, _)
-  rawset(state, LEAN_NVIM_PREFIX .. "check_win", false)
+assert:register("modifier", "use_pendingbuf", function(state, _, _)
+  rawset(state, LEAN_NVIM_PREFIX .. "buf_use_pending", true)
 end)
-assert:register("modifier", "no_buf_track", function(state, _)
-  rawset(state, LEAN_NVIM_PREFIX .. "check_buf", false)
+assert:register("modifier", "use_pendingwin", function(state, _, _)
+  rawset(state, LEAN_NVIM_PREFIX .. "win_use_pending", true)
 end)
 
 local function infoview_check(state, _)
@@ -533,14 +572,16 @@ local function infoview_check(state, _)
 
   ---
 
-  local check_win = rawget(state, LEAN_NVIM_PREFIX .. "check_win")
-  if check_win == nil then check_win = true end
-  local check_buf = rawget(state, LEAN_NVIM_PREFIX .. "check_buf")
-  if check_buf == nil then check_buf = true end
-
-  -- in case window/buffer created/removed already checked
-  if check_win then assert.win.removed(closed_wins).created(opened_wins).tracked() end
-  if check_buf then assert.buf.removed(closed_bufs).created(opened_bufs).tracked() end
+  if rawget(state, LEAN_NVIM_PREFIX .. "win_use_pending") then
+    assert.win.use_pending.removed(closed_wins).created(opened_wins).tracked()
+  else
+    assert.win.removed(closed_wins).created(opened_wins).tracked()
+  end
+  if rawget(state, LEAN_NVIM_PREFIX .. "buf_use_pending") then
+    assert.buf.use_pending.removed(closed_bufs).created(opened_bufs).tracked()
+  else
+    assert.buf.removed(closed_bufs).created(opened_bufs).tracked()
+  end
 
   return true
 end
