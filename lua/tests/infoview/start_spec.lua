@@ -8,12 +8,12 @@ describe('infoview', function()
       function(_)
         vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
         infoview.get_current_infoview():open()
-        assert.win.stayed.created({infoview.get_current_infoview().window}).tracked()
+        assert.win.stayed.tracked_pending()
       end)
 
     it('created valid infoview',
       function(_)
-        assert.no_win_track.initopened.infoview()
+        assert.use_pendingwin.initopened.infoview()
       end)
 
     it('starts with the window position at the top',
@@ -33,12 +33,12 @@ describe('infoview', function()
         vim.api.nvim_command('edit ' .. fixtures.lean_project.some_existing_file)
         assert.initclosed.infoview()
         infoview.get_current_infoview():open()
-        assert.win.stayed.created({infoview.get_current_infoview().window}).tracked()
+        assert.win.stayed.tracked_pending()
       end)
 
     it('created valid infoview',
       function(_)
-        assert.no_win_track.opened.infoview()
+        assert.use_pendingwin.opened.infoview()
       end)
 
     it('starts with the window position at the top',
