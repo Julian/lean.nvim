@@ -22,6 +22,7 @@ Install via your favorite plugin manager. E.g., with
 
     Plug 'Julian/lean.nvim'
     Plug 'neovim/nvim-lspconfig'
+    Plug 'nvim-lua/plenary.nvim'
 
     " Optional Dependencies:
 
