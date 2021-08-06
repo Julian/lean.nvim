@@ -17,19 +17,6 @@ local infoview = {
 }
 local options = { _DEFAULTS = { autoopen = true, width = 50 } }
 
-local _DEFAULT_BUF_OPTIONS = {
-  bufhidden = 'hide',
-  filetype = 'leaninfo',
-  modifiable = false,
-}
-local _DEFAULT_WIN_OPTIONS = {
-  cursorline = false,
-  number = false,
-  relativenumber = false,
-  spell = false,
-  winfixwidth = true,
-  wrap = true,
-}
 local _NOTHING_TO_SHOW = { "No info found." }
 
 --- An individual pin.
@@ -69,9 +56,7 @@ function Infoview:open()
   vim.cmd("botright " .. self.width .. "vsplit")
   vim.cmd(string.format("buffer %d", self.info.bufnr))
   local window = vim.api.nvim_get_current_win()
-  for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
-    vim.api.nvim_win_set_option(window, name, value)
-  end
+
   -- Make sure we notice even if someone manually :q's the infoview window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer> lua require'lean.infoview'.__was_closed(%d)
@@ -134,9 +119,7 @@ function Info:new()
   setmetatable(new_info, self)
 
   vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
-  for name, value in pairs(_DEFAULT_BUF_OPTIONS) do
-    vim.api.nvim_buf_set_option(new_info.bufnr, name, value)
-  end
+  vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
 
   return new_info
 end
