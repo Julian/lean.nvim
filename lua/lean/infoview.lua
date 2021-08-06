@@ -12,6 +12,8 @@ local infoview = {
   _by_tabpage = {},
   -- mapping from info IDs to infos
   _info_by_id = {},
+  -- mapping from pin IDs to pins
+  _pin_by_id = {},
 }
 local options = { _DEFAULTS = { autoopen = true, width = 50 } }
 
@@ -29,6 +31,9 @@ local _DEFAULT_WIN_OPTIONS = {
   wrap = true,
 }
 local _NOTHING_TO_SHOW = { "No info found." }
+
+--- An individual pin.
+local Pin = {}
 
 --- An individual info.
 local Info = {}
@@ -117,7 +122,12 @@ function Infoview:focus_on_current_buffer()
 end
 
 function Info:new()
-  local new_info = {id = #infoview._info_by_id + 1, bufnr = vim.api.nvim_create_buf(false, true)}
+  local new_info = {
+    id = #infoview._info_by_id + 1,
+    bufnr = vim.api.nvim_create_buf(false, true),
+    pin = Pin:new()
+  }
+  new_info.pin:add_parent_info(new_info)
   table.insert(infoview._info_by_id, new_info)
 
   self.__index = self
@@ -134,28 +144,9 @@ end
 local plain_goal = a.wrap(leanlsp.plain_goal, 2)
 local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 2)
 
---- Update this info's contents given the current position.
-function Info:update()
-  a.void(function()
-    local lines
-    if vim.opt.filetype:get() == "lean3" then
-      lines = lean3.update_infoview()
-    else
-      local _, _, goal = plain_goal(0)
-      local _, _, term_goal = plain_term_goal(0)
-      lines = components.goal(goal)
-      if not vim.tbl_isempty(lines) then table.insert(lines, '') end
-      vim.list_extend(lines, components.term_goal(term_goal))
-      vim.list_extend(lines, components.diagnostics())
-    end
-    self.msg = lines
-    self:render()
-  end)()
-end
-
 --- Update this info's physical contents.
 function Info:render()
-  local lines = self.msg
+  local lines = self.pin.msg
 
   if vim.tbl_isempty(lines) then lines = _NOTHING_TO_SHOW end
 
@@ -169,10 +160,46 @@ function Info:render()
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', false)
 end
 
+function Pin:new()
+  local new_pin = {id = #infoview._pin_by_id + 1, parent_infos = {}}
+  table.insert(infoview._pin_by_id, new_pin)
+
+  self.__index = self
+  setmetatable(new_pin, self)
+
+  return new_pin
+end
+
+function Pin:add_parent_info(info)
+  self.parent_infos[info.id] = true
+end
+
+--- Update this pin's contents given the current position.
+function Pin:update()
+  a.void(function()
+    local lines
+    if vim.opt.filetype:get() == "lean3" then
+      lines = lean3.update_infoview()
+    else
+      local _, _, goal = plain_goal(0)
+      local _, _, term_goal = plain_term_goal(0)
+      lines = components.goal(goal)
+      if not vim.tbl_isempty(lines) then table.insert(lines, '') end
+      vim.list_extend(lines, components.term_goal(term_goal))
+      vim.list_extend(lines, components.diagnostics())
+    end
+    self.msg = lines
+
+    for parent_id, _ in pairs(self.parent_infos) do
+      infoview._info_by_id[parent_id]:render()
+    end
+  end)()
+end
+
 --- Update the info contents appropriately for Lean 4 or 3.
 --- Normally will be called on each CursorHold for a buffer containing Lean.
 function infoview.__update()
-  infoview.get_current_infoview().info:update()
+  infoview.get_current_infoview().info.pin:update()
 end
 
 --- Retrieve the contents of the info as a table.

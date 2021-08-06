@@ -325,6 +325,7 @@ assert:register("assertion", "tracked", track_handles)
 
 local last_infoview_ids = {}
 local last_info_ids = {}
+local last_pin_ids = {}
 
 local function opened_initialized_infoview(_, arguments)
   local this_infoview = arguments[1]
@@ -422,10 +423,27 @@ local function opened_info_kept(_, arguments)
   return true
 end
 
+local function opened_pin(_, arguments)
+  local this_pin = arguments[1]
+
+  assert.is_nil(last_pin_ids[this_pin.id])
+
+  return true
+end
+
+local function opened_pin_kept(_, arguments)
+  local this_pin = arguments[1]
+
+  assert.is_not_nil(last_pin_ids[this_pin.id])
+
+  return true
+end
+
 local LEAN_NVIM_PREFIX = "lean_nvim_infoview_tracker_"
 
 local checks = {"opened", "initopened", "opened_kept", "closed", "initclosed", "closed_kept"}
-local info_checks = {"info_opened", "info_opened_kept", "info_text_changed"}
+local info_checks = {"info_opened", "info_opened_kept"}
+local pin_checks = {"pin_opened", "pin_opened_kept", "pin_text_changed"}
 
 for _, check in pairs(checks) do
   assert:register("modifier", check, function(state, arguments)
@@ -439,6 +457,12 @@ for _, check in pairs(info_checks) do
   end)
 end
 
+for _, check in pairs(pin_checks) do
+  assert:register("modifier", check, function(state, arguments)
+    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {infoview.get_current_infoview().info.pin.id})
+  end)
+end
+
 assert:register("modifier", "use_pendingbuf", function(state, _, _)
   rawset(state, LEAN_NVIM_PREFIX .. "buf_use_pending", true)
 end)
@@ -449,6 +473,7 @@ end)
 local function infoview_check(state, _)
   local infoview_list = {}
   local info_list = {}
+  local pin_list = {}
 
   for _, check in pairs(checks) do
     local handles = rawget(state, LEAN_NVIM_PREFIX .. check) or {}
@@ -466,6 +491,14 @@ local function infoview_check(state, _)
     end
   end
 
+  for _, check in pairs(pin_checks) do
+    local handles = rawget(state, LEAN_NVIM_PREFIX .. check) or {}
+    for _, id in pairs(handles) do
+      assert.is_nil(pin_list[id])
+      pin_list[id] = check
+    end
+  end
+
   local opened_wins = {}
   local closed_wins = {}
   local opened_bufs = {}
@@ -473,6 +506,7 @@ local function infoview_check(state, _)
 
   local infoview_ids = {}
   local info_ids = {}
+  local pin_ids = {}
 
   --- INFOVIEW CHECK
 
@@ -551,28 +585,12 @@ local function infoview_check(state, _)
     if check == "info_opened" then
       vim.list_extend(opened_bufs, {this_info.bufnr})
       assert.opened_info_state(this_info)
+      assert.is_nil(pin_list[this_info.pin.id])
+      pin_list[this_info.pin.id] = "pin_opened"
     else
       assert.opened_info_kept_state(this_info)
     end
 
-    local function check_change(change)
-      local changed, _ = vim.wait(change and 1000 or 300, function()
-        return not vim.deep_equal(this_info.msg, this_info.prev_msg)
-      end)
-      if change then
-        assert.message("expected info text change but did not occur").is_truthy(changed)
-      else
-        assert.message("expected info text not to change but did change").is_falsy(changed)
-      end
-    end
-
-    if check == "info_text_changed" then
-      check_change(true)
-    else
-      check_change(false)
-    end
-
-    this_info.prev_msg = this_info.msg
     this_info.prev_buf = this_info.bufnr
     this_info.prev_check = check
 
@@ -586,6 +604,57 @@ local function infoview_check(state, _)
   for id, _ in pairs(info_list) do assert.is_truthy(info_ids[id]) end
 
   last_info_ids = info_ids
+
+  ---
+
+  --- PIN CHECK
+
+  for id, this_pin in pairs(infoview._pin_by_id) do
+    local check = pin_list[id]
+
+    if not check then
+      -- all unspecified pins must have been previously checked
+      assert.is_truthy(this_pin.prev_check)
+      -- infer check
+      check = "pin_opened_kept"
+    end
+
+    if check == "pin_opened" then
+      assert.opened_pin_state(this_pin)
+    else
+      assert.opened_pin_kept_state(this_pin)
+    end
+
+    local function check_change(change)
+      local changed, _ = vim.wait(change and 1000 or 300, function()
+        return not vim.deep_equal(this_pin.msg, this_pin.prev_msg)
+      end)
+      if change then
+        assert.message("expected pin text change but did not occur").is_truthy(changed)
+      else
+        assert.message("expected pin text not to change but did change").is_falsy(changed)
+      end
+    end
+
+    if check == "pin_text_changed" then
+      check_change(true)
+    else
+      check_change(false)
+    end
+
+    this_pin.prev_msg = this_pin.msg
+    this_pin.prev_check = check
+
+    pin_ids[id] = true
+  end
+
+  -- all previous pins must have been checked
+  for id, _ in pairs(last_pin_ids) do assert.is_truthy(pin_ids[id]) end
+
+  -- all specified pins must have been checked
+  for id, _ in pairs(pin_list) do assert.is_truthy(pin_ids[id]) end
+
+  last_pin_ids = pin_ids
 
   ---
 
@@ -609,8 +678,10 @@ assert:register("assertion", "infoview", infoview_check)
 assert:register("assertion", "opened_infoview_state", opened_infoview)
 assert:register("assertion", "opened_initialized_infoview_state", opened_initialized_infoview)
 assert:register("assertion", "opened_info_state", opened_info)
+assert:register("assertion", "opened_pin_state", opened_pin)
 assert:register("assertion", "opened_infoview_kept_state", opened_infoview_kept)
 assert:register("assertion", "opened_info_kept_state", opened_info_kept)
+assert:register("assertion", "opened_pin_kept_state", opened_pin_kept)
 assert:register("assertion", "closed_infoview_state", closed_infoview)
 assert:register("assertion", "closed_initialized_infoview_state", closed_initialized_infoview)
 assert:register("assertion", "closed_infoview_kept_state", closed_infoview_kept)
