@@ -28,6 +28,7 @@ end
 
 Source.determine = function(_, context)
   return compe.helper.determine(context, {
+    keyword_pattern = [[\%(\\\|\w\)\+$]],
     trigger_characters = { '\\' };
   })
 end
