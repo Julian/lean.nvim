@@ -18,7 +18,8 @@ local default_config = {
   },
   mappings = false,
   infoview = {
-    autoopen = false
+    autoopen = false,
+    autopause = true
   },
   lsp3 = {
     enable = false
@@ -113,8 +114,7 @@ function helpers.wait_for_server_progress(hover_match)
   -- if Lean 4, we can just check the reported progress
   if vim.bo.ft == "lean" then
     local succeeded, _ = vim.wait(10000, function()
-      return require"lean.progress_bars".proc_infos[vim.api.nvim_get_current_buf()] and
-             vim.tbl_isempty(require"lean.progress_bars".proc_infos[vim.api.nvim_get_current_buf()])
+      return require"lean.progress".is_processing(vim.uri_from_bufnr(vim.api.nvim_get_current_buf()))
     end)
     assert.message("Waited for lean 4 server progress to complete but never did.").True(succeeded)
   -- if Lean 3, there's no concrete indication, so we'll wait for a hover to match the given hover_match
@@ -458,8 +458,10 @@ end
 local LEAN_NVIM_PREFIX = "lean_nvim_infoview_tracker_"
 
 local checks = {"opened", "initopened", "opened_kept", "closed", "initclosed", "closed_kept"}
-local info_checks = {"info_opened", "info_opened_kept"}
-local pin_checks = {"pin_opened", "pin_opened_kept", "pin_text_changed"}
+local info_checks = {"infoopened", "infoopened_kept"}
+local pin_checks = {"pinopened", "pinopened_kept"}
+local pin_text_checks = {"pin_text_changed", "pin_text_kept"}
+local pin_pos_checks = {"pin_pos_changed", "pin_pos_kept"}
 
 for _, check in pairs(checks) do
   assert:register("modifier", check, function(state, arguments)
@@ -469,11 +471,26 @@ end
 
 for _, check in pairs(info_checks) do
   assert:register("modifier", check, function(state, arguments)
-    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {infoview.get_current_infoview().info.id})
+    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1]
+      or {infoview.get_current_infoview().info.id})
   end)
 end
 
 for _, check in pairs(pin_checks) do
+  assert:register("modifier", check, function(state, arguments)
+    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1]
+      or {infoview.get_current_infoview().info.pin.id})
+  end)
+end
+
+for _, check in pairs(pin_text_checks) do
+  assert:register("modifier", check, function(state, arguments)
+    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1]
+      or {infoview.get_current_infoview().info.pin.id})
+  end)
+end
+
+for _, check in pairs(pin_pos_checks) do
   assert:register("modifier", check, function(state, arguments)
     rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1]
       or {infoview.get_current_infoview().info.pin.id})
@@ -491,6 +508,8 @@ local function infoview_check(state, _)
   local infoview_list = {}
   local info_list = {}
   local pin_list = {}
+  local pin_text_list = {}
+  local pin_pos_list = {}
 
   for _, check in pairs(checks) do
     local handles = rawget(state, LEAN_NVIM_PREFIX .. check) or {}
@@ -513,6 +532,22 @@ local function infoview_check(state, _)
     for _, id in pairs(handles) do
       assert.is_nil(pin_list[id])
       pin_list[id] = check
+    end
+  end
+
+  for _, check in pairs(pin_text_checks) do
+    local handles = rawget(state, LEAN_NVIM_PREFIX .. check) or {}
+    for _, id in pairs(handles) do
+      assert.is_nil(pin_text_list[id])
+      pin_text_list[id] = check
+    end
+  end
+
+  for _, check in pairs(pin_pos_checks) do
+    local handles = rawget(state, LEAN_NVIM_PREFIX .. check) or {}
+    for _, id in pairs(handles) do
+      assert.is_nil(pin_pos_list[id])
+      pin_pos_list[id] = check
     end
   end
 
@@ -556,7 +591,9 @@ local function infoview_check(state, _)
       vim.list_extend(opened_wins, {this_infoview.window})
       assert.opened_initialized_infoview_state(this_infoview)
       assert.is_nil(info_list[this_infoview.info.id])
-      info_list[this_infoview.info.id] = "info_opened"
+      info_list[this_infoview.info.id] = "infoopened"
+      assert.is_nil(pin_pos_list[this_infoview.info.pin.id])
+      pin_pos_list[this_infoview.info.pin.id] = "pin_pos_changed"
     elseif check == "opened_kept" then
       assert.opened_infoview_kept_state(this_infoview)
     elseif check == "closed" then
@@ -565,7 +602,9 @@ local function infoview_check(state, _)
     elseif check == "initclosed" then
       assert.closed_initialized_infoview_state(this_infoview)
       assert.is_nil(info_list[this_infoview.info.id])
-      info_list[this_infoview.info.id] = "info_opened"
+      info_list[this_infoview.info.id] = "infoopened"
+      assert.is_nil(pin_pos_list[this_infoview.info.pin.id])
+      pin_pos_list[this_infoview.info.pin.id] = "pin_pos_changed"
     elseif check == "closed_kept" then
       assert.closed_infoview_kept_state(this_infoview)
     end
@@ -596,14 +635,21 @@ local function infoview_check(state, _)
       -- all unspecified infos must have been previously checked
       assert.is_truthy(this_info.prev_check)
       -- infer check
-      check = "info_opened_kept"
+      check = "infoopened_kept"
     end
 
-    if check == "info_opened" then
+    if check == "infoopened" then
       vim.list_extend(opened_bufs, {this_info.bufnr})
       assert.opened_info_state(this_info)
       assert.is_nil(pin_list[this_info.pin.id])
-      pin_list[this_info.pin.id] = "pin_opened"
+      pin_list[this_info.pin.id] = "pinopened"
+      -- assume text and pos kept if unspecified
+      if pin_text_list[this_info.pin.id] == nil then
+        pin_text_list[this_info.pin.id] = "pin_text_kept"
+      end
+      if pin_pos_list[this_info.pin.id] == nil then
+        pin_pos_list[this_info.pin.id] = "pin_pos_kept"
+      end
     else
       assert.opened_info_kept_state(this_info)
     end
@@ -628,39 +674,68 @@ local function infoview_check(state, _)
 
   for id, this_pin in pairs(infoview._pin_by_id) do
     local check = pin_list[id]
+    local text_check = pin_text_list[id]
+    local pos_check = pin_pos_list[id]
 
     if not check then
       -- all unspecified pins must have been previously checked
       assert.is_truthy(this_pin.prev_check)
       -- infer check
-      check = "pin_opened_kept"
+      check = "pinopened_kept"
     end
 
-    if check == "pin_opened" then
+    if not text_check then
+      assert.is_truthy(this_pin.prev_text_check)
+      -- infer text check
+      text_check = "pin_text_kept"
+    end
+
+    if not pos_check then
+      assert.is_truthy(this_pin.prev_pos_check)
+      -- infer pos check
+      pos_check = "pin_pos_kept"
+    end
+
+    if check == "pinopened" then
       assert.opened_pin_state(this_pin)
     else
       assert.opened_pin_kept_state(this_pin)
     end
 
+    if pos_check == "pin_pos_changed" then
+      assert.message("expected pin position change but did not occur").is_not_truthy(
+        vim.deep_equal(this_pin.position_params, this_pin.prev_position_params))
+    else
+      assert.message("expected pin position not to change but did change\nbefore: "
+        .. vim.inspect(this_pin.prev_position_params) .. "\nafter: "
+        .. vim.inspect(this_pin.position_params)).is_truthy(
+        vim.deep_equal(this_pin.position_params, this_pin.prev_position_params))
+    end
+
     local function check_change(change)
       local changed, _ = vim.wait(change and 1000 or 300, function()
         return not vim.deep_equal(this_pin.msg, this_pin.prev_msg)
-      end)
+      end, 50)
       if change then
-        assert.message("expected pin text change but did not occur").is_truthy(changed)
+        assert.message("expected pin text change but did not occur; text: "
+          .. vim.inspect(this_pin.msg)).is_truthy(changed)
       else
         assert.message("expected pin text not to change but did change").is_falsy(changed)
       end
     end
 
-    if check == "pin_text_changed" then
+    if text_check == "pin_text_changed" then
       check_change(true)
     else
       check_change(false)
     end
 
+    this_pin.prev_position_params = vim.deepcopy(this_pin.position_params)
     this_pin.prev_msg = this_pin.msg
+
     this_pin.prev_check = check
+    this_pin.prev_text_check = text_check
+    this_pin.prev_pos_check = pos_check
 
     pin_ids[id] = true
   end

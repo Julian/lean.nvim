@@ -50,4 +50,48 @@ function M.subprocess_check_output(opts, timeout)
   ))
 end
 
+function M.after_or_equal(pos, other_pos)
+  if pos.line > other_pos.line then return true end
+  if pos.line == other_pos.line and pos.character >= other_pos.character then return true end
+  return false
+end
+
+function M.update_position(pos, changes)
+  local new_pos = vim.deepcopy(pos)
+
+  for _, change in pairs(changes) do
+    local start_pos = change.range["start"]
+    local end_pos = change.range["end"]
+    if not M.after_or_equal(new_pos, start_pos) then goto next_change end
+
+    local new_lines = vim.split(change.text, "\n")
+    if new_pos.line >= end_pos.line then
+      local orig_line_offset = new_pos.line - end_pos.line
+      local new_end_line = start_pos.line + (#new_lines - 1)
+      new_pos.line = new_end_line + orig_line_offset
+
+      if new_pos.line == end_pos.line then
+        -- change range is exclusive, so okay if ==
+        if new_pos.character >= end_pos.character then
+          local orig_char_offset = new_pos.character - end_pos.character
+          local new_end_char = #new_lines == 1 and (start_pos.character + #new_lines[1])
+            or #(new_lines[#new_lines])
+          new_pos.character = new_end_char + orig_char_offset
+        else
+          -- within modified range, invalidate
+          new_pos = nil
+          return new_pos
+        end
+      end
+    else
+      -- within modified range, invalidate
+      new_pos = nil
+      return new_pos
+    end
+    ::next_change::
+  end
+
+  return new_pos
+end
+
 return M

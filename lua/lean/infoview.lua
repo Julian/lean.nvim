@@ -15,7 +15,7 @@ local infoview = {
   -- mapping from pin IDs to pins
   _pin_by_id = {},
 }
-local options = { _DEFAULTS = { autoopen = true, width = 50 } }
+local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false } }
 
 local _NOTHING_TO_SHOW = { "No info found." }
 
@@ -106,7 +106,7 @@ function Info:new()
   local new_info = {
     id = #infoview._info_by_id + 1,
     bufnr = vim.api.nvim_create_buf(false, true),
-    pin = Pin:new()
+    pin = Pin:new(options.autopause)
   }
   new_info.pin:add_parent_info(new_info)
   table.insert(infoview._info_by_id, new_info)
@@ -120,11 +120,43 @@ function Info:new()
   return new_info
 end
 
+local paused_txt = "[PAUSED]"
+
 --- Update this info's physical contents.
 function Info:render()
-  local lines = self.pin.msg
+  local function render_pin(pin, current)
+    local pin_lines = {}
 
-  if vim.tbl_isempty(lines) then lines = _NOTHING_TO_SHOW end
+    local header
+    if not current then
+      header = "-- PIN " .. tostring(pin.id) .. (pin.paused and " " .. paused_txt or "")
+    elseif pin.paused then
+      header = "-- " .. paused_txt
+    end
+
+    if not current and pin.position_params then
+      local bufnr = vim.fn.bufnr(vim.uri_to_fname(pin.position_params.textDocument.uri))
+      local filename
+      if bufnr ~= -1 then
+        filename = vim.fn.bufname(bufnr)
+      else
+        filename = pin.position_params.textDocument.uri
+      end
+      header = header .. (": file %s at line %d, character %d"):format(filename,
+        pin.position_params.position.line + 1, pin.position_params.position.character + 1)
+    end
+
+    if header then table.insert(pin_lines, header) end
+    if not pin.msg or vim.tbl_isempty(pin.msg) then
+      vim.list_extend(pin_lines, _NOTHING_TO_SHOW)
+    else
+      vim.list_extend(pin_lines, pin.msg)
+    end
+
+    return pin_lines
+  end
+
+  local lines = render_pin(self.pin, true)
 
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', true)
   vim.api.nvim_buf_set_lines(self.bufnr, 0, -1, true, lines)
@@ -136,8 +168,8 @@ function Info:render()
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', false)
 end
 
-function Pin:new()
-  local new_pin = {id = #infoview._pin_by_id + 1, parent_infos = {}, tick = 0}
+function Pin:new(paused)
+  local new_pin = {id = #infoview._pin_by_id + 1, parent_infos = {}, paused = paused, tick = 0}
   table.insert(infoview._pin_by_id, new_pin)
 
   self.__index = self
@@ -150,39 +182,35 @@ function Pin:add_parent_info(info)
   self.parent_infos[info.id] = true
 end
 
-local plain_goal = a.wrap(leanlsp.plain_goal, 2)
-local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 2)
+function Pin:_set_position_params(params)
+  self.position_params = params
+end
 
-local wait_timer = a.wrap(vim.loop.timer_start, 4)
+--- Update this pin's current position.
+function Pin:set_position_params(params)
+  self:_set_position_params(params)
+  self:update()
+end
 
---- Update this pin's contents given the current position.
-function Pin:update()
+function Pin:toggle_pause() if not self.paused then self:pause() else self:unpause() end end
+
+function Pin:unpause()
+  if not self.paused then return end
+  self.paused = false
+  self:update()
+end
+
+function Pin:pause()
+  if self.paused then return end
+  self.paused = true
+  self:update()
+end
+
+function Pin:update(force)
   a.void(function()
-    self.tick = (self.tick + 1) % 1000
-    local this_tick = self.tick
-
-    wait_timer(vim.loop.new_timer(), 100, 0)
-    a.util.scheduler()
-    if self.tick ~= this_tick then return end
-
-    local lines
-    if vim.opt.filetype:get() == "lean3" then
-      lines = lean3.update_infoview()
-    else
-      local _, _, goal = plain_goal(0)
-      if self.tick ~= this_tick then return end
-
-      local _, _, term_goal = plain_term_goal(0)
-      if self.tick ~= this_tick then return end
-
-      lines = components.goal(goal)
-      if not vim.tbl_isempty(lines) then table.insert(lines, '') end
-      vim.list_extend(lines, components.term_goal(term_goal))
-      vim.list_extend(lines, components.diagnostics())
+    if force or not self.paused then
+      self:_update()
     end
-    if self.tick ~= this_tick then return end
-
-    self.msg = lines
 
     for parent_id, _ in pairs(self.parent_infos) do
       infoview._info_by_id[parent_id]:render()
@@ -190,10 +218,56 @@ function Pin:update()
   end)()
 end
 
---- Update the info contents appropriately for Lean 4 or 3.
---- Normally will be called on each CursorMoved for a buffer containing Lean.
-function infoview.__update()
-  infoview.get_current_infoview().info.pin:update()
+local plain_goal = a.wrap(leanlsp.plain_goal, 3)
+local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
+
+local wait_timer = a.wrap(vim.loop.timer_start, 4)
+
+--- async function to update this pin's contents given the current position.
+function Pin:_update()
+  self.tick = (self.tick + 1) % 1000
+  local this_tick = self.tick
+
+  wait_timer(vim.loop.new_timer(), 100, 0)
+  a.util.scheduler()
+  if self.tick ~= this_tick then return end
+
+  if not self.position_params then
+    self.msg = {"Pin position invalidated."}
+    return
+  end
+
+  local params = vim.deepcopy(self.position_params)
+
+  local buf = vim.fn.bufnr(vim.uri_to_fname(self.position_params.textDocument.uri))
+  if buf == -1 then
+    self.msg = {"No corresponding buffer found."}
+    return
+  end
+
+  local lines
+
+  if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
+    lines = lean3.update_infoview(buf, params)
+  else
+    if require"lean.progress".is_processing_at(params) then
+      lines = {"Processing file..."}
+    else
+      local _, _, goal = plain_goal(params, buf)
+      if self.tick ~= this_tick then return end
+
+      local _, _, term_goal = plain_term_goal(params, buf)
+      if self.tick ~= this_tick then return end
+
+      lines = components.goal(goal)
+      if not vim.tbl_isempty(lines) then table.insert(lines, '') end
+      vim.list_extend(lines, components.term_goal(term_goal))
+      vim.list_extend(lines, components.diagnostics())
+    end
+  end
+  if self.tick ~= this_tick then return end
+
+  self.msg = lines
 end
 
 --- Retrieve the contents of the info as a table.
@@ -226,9 +300,53 @@ function infoview.__was_closed(id)
   infoview._by_id[id]:close()
 end
 
+--- Update the info contents appropriately for Lean 4 or 3.
+--- Normally will be called on each CursorHold for a buffer containing Lean.
+function infoview.__update()
+  infoview.get_current_infoview().info.pin:set_position_params(vim.lsp.util.make_position_params())
+end
+
+--- Update pins corresponding to the given $/lean/fileProgress parameters.
+function infoview.__update_progress(params)
+  if infoview.enabled then
+    for _, pin in pairs(infoview._pin_by_id) do
+      if pin.position_params and pin.position_params.textDocument.uri == params.textDocument.uri then
+        pin:update()
+      end
+    end
+  end
+end
+
+--- Update pins position according to the given textDocument/didChange parameters.
+function infoview.__update_pin_positions(params)
+  for _, pin in pairs(infoview._pin_by_id) do
+    if not pin.position_params or not pin.position_params.textDocument.uri == params.textDocument.uri then
+      goto next_pin
+    end
+
+    local pos = pin.position_params.position
+    local new_pos = require'lean._util'.update_position(pos, params.contentChanges)
+
+    if not vim.deep_equal(pos, new_pos) then
+      if new_pos then
+        local new_params = vim.deepcopy(pin.position_params)
+        new_params.position = new_pos
+        pin:_set_position_params(new_params)
+        vim.schedule_wrap(function() pin:update() end)()
+      else
+        pin:_set_position_params(nil)
+        vim.schedule_wrap(function() pin:update() end)()
+      end
+    end
+
+    ::next_pin::
+  end
+end
+
 --- Enable and open the infoview across all Lean buffers.
 function infoview.enable(opts)
   options = vim.tbl_extend("force", options._DEFAULTS, opts)
+  infoview.enabled = true
   set_augroup("LeanInfoviewInit", [[
     autocmd FileType lean3 lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
     autocmd FileType lean lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
@@ -258,6 +376,11 @@ end
 --- Set whether a new infoview is automatically opened when entering Lean buffers.
 function infoview.set_autoopen(autoopen)
   options.autoopen = autoopen
+end
+
+--- Set whether a new pin is automatically paused.
+function infoview.set_autopause(autopause)
+  options.autopause = autopause
 end
 
 --- Open an infoview for the current buffer if it isn't already open.

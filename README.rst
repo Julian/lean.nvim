@@ -92,6 +92,8 @@ Features
 
     * ``<LocalLeader>i``: toggle infoview
 
+    * ``<LocalLeader>p``: pause infoview
+
     * ``<LocalLeader>s``: ``sorry`` insertion corresponding to the number of open goals
 
     * ``<LocalLeader>t``: "try this:" suggestion replacement

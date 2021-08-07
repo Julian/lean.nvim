@@ -8,6 +8,7 @@ syn match leanInfoExpectedType "^▶ expected type.*"
 syn match leanInfoError "^▶.*: error:$"
 syn match leanInfoWarning "^▶.*: warning:$"
 syn match leanInfoInfo "^▶.*: information:$"
+syn match leanInfoComment "--.*"
 
 hi def link leanInfoGoals Title
 hi def link leanInfoGoalCase Statement
@@ -18,3 +19,4 @@ hi def link leanInfoExpectedType Special
 hi def link leanInfoError LspDiagnosticsDefaultError
 hi def link leanInfoWarning LspDiagnosticsDefaultWarning
 hi def link leanInfoInfo LspDiagnosticsDefaultInformation
+hi def link leanInfoComment Comment
