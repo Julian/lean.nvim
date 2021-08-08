@@ -110,6 +110,7 @@ function helpers.wait_for_server_progress(hover_match)
     assert.is_not_nil(hover_match)
     local result, _ = vim.wait(10000, function()
       local results = vim.lsp.buf_request_sync(0, "textDocument/hover", vim.lsp.util.make_position_params(), 1000)
+      if not results then return false end
       local text = ""
       for _, result_table in pairs(results) do
         if result_table and result_table.error then
