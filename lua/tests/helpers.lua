@@ -199,6 +199,18 @@ local function track_pending_handles(state, _)
   return true
 end
 
+local function to_string_idx(tbl)
+  local new = {}
+  for key, value in pairs(tbl) do new[tostring(key)] = value end
+  return new
+end
+
+local function to_num_idx(tbl)
+  local new = {}
+  for key, value in pairs(tbl) do new[tonumber(key)] = value end
+  return new
+end
+
 local function track_handles(state, _)
   -- inductive hypothesis: last_handles and last_handle are accurate
   -- to immediately before creating/closing any of the given handles
@@ -218,9 +230,11 @@ local function track_handles(state, _)
 
   local opened_handles = rawget(state, NVIM_PREFIX .. "created")
   opened_handles = opened_handles or {}
+  opened_handles = to_num_idx(opened_handles)
 
   local closed_handles = rawget(state, NVIM_PREFIX .. "removed") or {}
   closed_handles = closed_handles or {}
+  closed_handles = to_num_idx(closed_handles)
 
   if changed then
     assert.are_not.equal(last_handle[htype], handle_current(htype))
@@ -275,9 +289,10 @@ assert:register("modifier", "buf", function(state, _, _) rawset(state, NVIM_PREF
 assert:register("modifier", "created", function(state, arguments, _)
   local created = rawget(state, NVIM_PREFIX .. "created") or {}
   if arguments and arguments[1] then
-    created = vim.tbl_extend("keep", to_set(arguments[1]), created)
+    created = vim.tbl_extend("keep", to_string_idx(to_set(arguments[1])), created)
   else
-    created = vim.tbl_extend("keep", {[handle_current(rawget(state, NVIM_PREFIX .. "htype"))] = true}, created)
+    created = vim.tbl_extend("keep", to_string_idx{[handle_current(rawget(state, NVIM_PREFIX .. "htype"))]
+    = true}, created)
     rawset(state, NVIM_PREFIX .. "changed", true)
   end
   rawset(state, NVIM_PREFIX .. "created", created)
@@ -285,9 +300,10 @@ end)
 assert:register("modifier", "removed", function(state, arguments, _)
   local removed = rawget(state, NVIM_PREFIX .. "removed") or {}
   if arguments and arguments[1] then
-    removed = vim.tbl_extend("keep", to_set(arguments[1]), removed)
+    removed = vim.tbl_extend("keep", to_string_idx(to_set(arguments[1])), removed)
   else
-    removed = vim.tbl_extend("keep", {[last_handle[rawget(state, NVIM_PREFIX .. "htype")]] = true}, removed)
+    removed = vim.tbl_extend("keep", to_string_idx{[last_handle[rawget(state, NVIM_PREFIX .. "htype")]] = true},
+      removed)
     rawset(state, NVIM_PREFIX .. "changed", true)
   end
   rawset(state, NVIM_PREFIX .. "removed", removed)
