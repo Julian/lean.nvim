@@ -12,6 +12,5 @@ theorem test2 : p ∨ q → q ∨ p := by
     apply Or.inl
     assumption
 
-def num_test : Nat := 111
-
-#print num_test
+def new_test : Bool := by
+  exact false

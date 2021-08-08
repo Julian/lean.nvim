@@ -29,23 +29,14 @@ describe('infoview', function()
       assert.has_all(infoview.get_current_infoview().info.msg, {"1 goal", "p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
     end)
 
-    it('picks up on textDocument/didChange following update call',
-    function(_)
-      vim.api.nvim_win_set_cursor(0, {17, 15})
-      infoview.__update()
-      vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def num_test : Nat := 123"})
-      assert.info_text_changed.infoview()
-      assert.has_all(infoview.get_current_infoview().info.msg, {"def num_test : Nat :=\n123"})
-    end)
-
     pending('re-issues on ContentModified',
     function(_)
-      vim.api.nvim_win_set_cursor(0, {17, 15})
-      vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def num_test : Nat := 321"})
+      vim.api.nvim_win_set_cursor(0, {16, 1})
+      vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def new_test : Prop := by"})
       infoview.__update()
-      vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def num_test : Nat := 333"})
+      vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def new_test : Nat := by"})
       assert.info_text_changed.infoview()
-      assert.has_all(infoview.get_current_infoview().info.msg, {"def num_test : Nat :=\n333"})
+      assert.has_all(infoview.get_current_infoview().info.msg, {"1 goal\n\n⊢ Nat"})
     end)
   end)
 
