@@ -144,6 +144,7 @@
   "macro_rules"
   "notation"
   "syntax"
+  "elab"
 ] @keyword
 
 [
