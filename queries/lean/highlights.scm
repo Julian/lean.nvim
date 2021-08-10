@@ -60,7 +60,7 @@
 (where_decl
   type: (identifier) @type)
 
-(field_of
+(proj
   name: (identifier) @field)
 
 (binders
