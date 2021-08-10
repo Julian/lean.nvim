@@ -13,7 +13,7 @@
  (#match? @type "^[A-Z]"))
 
 (arrow) @type
-(product_type) @type
+(product) @type
 
 ;; Declarations
 
