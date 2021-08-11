@@ -144,8 +144,13 @@
 ] @keyword
 
 [
-  "macro_rules"
+  "prefix"
+  "infix"
+  "infixl"
+  "infixr"
+  "postfix"
   "notation"
+  "macro_rules"
   "syntax"
   "elab"
 ] @keyword
