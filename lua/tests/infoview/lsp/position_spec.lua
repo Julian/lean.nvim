@@ -123,4 +123,22 @@ describe('infoview pin', function()
       assert.is_nil(infoview.get_current_infoview().info.pin.position_params)
     end)
   end)
+  describe('while debouncing', function()
+    it('does not update position immediately',
+    function(_)
+      assert.pin_pos_changed.infoview()
+
+      local client = vim.lsp.buf_get_clients(0)[1]
+      client.config.flags.debounce_text_changes = 1000
+      vim.api.nvim_buf_set_lines(1, 2, 3, true, {"def test1 : Nat :=a test"})
+      assert.pin_pos_kept.infoview()
+
+      -- should update on eventual text_document/didChange and apply combined changes
+      vim.api.nvim_buf_set_lines(1, 2, 3, true, {"def test1 : Nat :=aa test"})
+      vim.wait(1000)
+      assert.pin_pos_changed.infoview()
+      assert.are_equal(2, infoview.get_current_infoview().info.pin.position_params.position.line)
+      assert.are_equal(20, infoview.get_current_infoview().info.pin.position_params.position.character)
+    end)
+  end)
 end)
