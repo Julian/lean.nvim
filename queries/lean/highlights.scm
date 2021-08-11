@@ -178,8 +178,11 @@
   "try"
 ] @exception
 
+((apply
+  name: (identifier) @exception)
+ (#match? @exception "throw"))
+
 [
-  "throw"
   "unless"
   "mut"
 ] @keyword
