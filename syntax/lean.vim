@@ -21,7 +21,7 @@ syn match leanDeclarationName ' *«[^»]*»' contained
 syn keyword leanDeclaration lemma theorem def definition axiom axioms constant abbrev abbreviation
         \ inductive coinductive structure class instance skipwhite nextgroup=leanDeclarationName
 
-syn keyword leanCommand universe universes example axioms constants
+syn keyword leanCommand universe example axioms constants
 syn keyword leanCommand meta parameter parameters variable variables
 syn keyword leanCommand reserve precedence postfix prefix notation infix infixl infixr
 

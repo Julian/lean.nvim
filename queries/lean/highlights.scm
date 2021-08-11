@@ -130,7 +130,6 @@
   "open"
   "return"
   "universe"
-  "universes"
   "variable"
   "where"
   "with"
