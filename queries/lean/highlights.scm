@@ -119,6 +119,10 @@
 ] @operator
 
 [
+  "@&"
+] @operator
+
+[
   "attribute"
   "by"
   "end"
