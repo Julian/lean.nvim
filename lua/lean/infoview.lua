@@ -262,7 +262,7 @@ function infoview.make_buffer_focusable()
   -- a file open in a tab with an infoview and move to a
   -- new window in a new tab with that same file but no infoview
   set_augroup("LeanInfoviewSetFocus", [[
-    autocmd BufEnter <buffer> lua require'lean.infoview'.maybe_autoopen()
+    autocmd BufEnter <buffer> lua require'lean.infoview'.maybe_autoopen() require'lean.infoview'.__update()
     autocmd BufEnter,WinEnter <buffer> lua if require'lean.infoview'.get_current_infoview()]] ..
     [[ then require'lean.infoview'.get_current_infoview():focus_on_current_buffer() end
   ]], 0)
