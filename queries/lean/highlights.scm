@@ -130,6 +130,7 @@
   "extends"
   "fun"
   "let"
+  "have"
   "match"
   "open"
   "return"
@@ -153,6 +154,7 @@
   "macro_rules"
   "syntax"
   "elab"
+  "builtin_initialize"
 ] @keyword
 
 [
