@@ -459,7 +459,8 @@ end
 
 for _, check in pairs(pin_checks) do
   assert:register("modifier", check, function(state, arguments)
-    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {infoview.get_current_infoview().info.pin.id})
+    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1]
+      or {infoview.get_current_infoview().info.pin.id})
   end)
 end
 

@@ -4,8 +4,8 @@ local fixtures = require('tests.fixtures')
 require('tests.helpers').setup {}
 describe('infoview', function()
   local function update_enabled(state, _)
-    local cursor_hold = string.find(vim.api.nvim_exec("autocmd CursorHold <buffer>", true), "LeanInfoviewUpdate")
-    local cursor_hold_i = string.find(vim.api.nvim_exec("autocmd CursorHoldI <buffer>", true), "LeanInfoviewUpdate")
+    local cursor_hold = string.find(vim.api.nvim_exec("autocmd CursorMoved <buffer>", true), "LeanInfoviewUpdate")
+    local cursor_hold_i = string.find(vim.api.nvim_exec("autocmd CursorMovedI <buffer>", true), "LeanInfoviewUpdate")
     if state.mod then
       return cursor_hold and cursor_hold_i
     end
@@ -14,7 +14,7 @@ describe('infoview', function()
 
   assert:register("assertion", "update_enabled", update_enabled)
 
-  describe('CursorHold(I)', function()
+  describe('CursorMoved(I)', function()
     it('enabled when opened',
     function(_)
       vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)

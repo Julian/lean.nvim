@@ -113,8 +113,8 @@ function Infoview:focus_on_current_buffer()
   if not is_lean_buffer() then return end
   if self.is_open then
     set_augroup("LeanInfoviewUpdate", [[
-      autocmd CursorHold <buffer> lua require'lean.infoview'.__update()
-      autocmd CursorHoldI <buffer> lua require'lean.infoview'.__update()
+      autocmd CursorMoved <buffer> lua require'lean.infoview'.__update()
+      autocmd CursorMovedI <buffer> lua require'lean.infoview'.__update()
     ]], 0)
   else
     set_augroup("LeanInfoviewUpdate", "", 0)
@@ -141,9 +141,6 @@ function Info:new()
   return new_info
 end
 
-local plain_goal = a.wrap(leanlsp.plain_goal, 2)
-local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 2)
-
 --- Update this info's physical contents.
 function Info:render()
   local lines = self.pin.msg
@@ -161,7 +158,7 @@ function Info:render()
 end
 
 function Pin:new()
-  local new_pin = {id = #infoview._pin_by_id + 1, parent_infos = {}}
+  local new_pin = {id = #infoview._pin_by_id + 1, parent_infos = {}, tick = 0}
   table.insert(infoview._pin_by_id, new_pin)
 
   self.__index = self
@@ -174,20 +171,38 @@ function Pin:add_parent_info(info)
   self.parent_infos[info.id] = true
 end
 
+local plain_goal = a.wrap(leanlsp.plain_goal, 2)
+local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 2)
+
+local wait_timer = a.wrap(vim.loop.timer_start, 4)
+
 --- Update this pin's contents given the current position.
 function Pin:update()
   a.void(function()
+    self.tick = (self.tick + 1) % 1000
+    local this_tick = self.tick
+
+    wait_timer(vim.loop.new_timer(), 100, 0)
+    a.util.scheduler()
+    if self.tick ~= this_tick then return end
+
     local lines
     if vim.opt.filetype:get() == "lean3" then
       lines = lean3.update_infoview()
     else
       local _, _, goal = plain_goal(0)
+      if self.tick ~= this_tick then return end
+
       local _, _, term_goal = plain_term_goal(0)
+      if self.tick ~= this_tick then return end
+
       lines = components.goal(goal)
       if not vim.tbl_isempty(lines) then table.insert(lines, '') end
       vim.list_extend(lines, components.term_goal(term_goal))
       vim.list_extend(lines, components.diagnostics())
     end
+    if self.tick ~= this_tick then return end
+
     self.msg = lines
 
     for parent_id, _ in pairs(self.parent_infos) do
@@ -197,7 +212,7 @@ function Pin:update()
 end
 
 --- Update the info contents appropriately for Lean 4 or 3.
---- Normally will be called on each CursorHold for a buffer containing Lean.
+--- Normally will be called on each CursorMoved for a buffer containing Lean.
 function infoview.__update()
   infoview.get_current_infoview().info.pin:update()
 end
