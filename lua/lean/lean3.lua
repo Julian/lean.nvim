@@ -64,7 +64,7 @@ function lean3.update_infoview(bufnr, params)
   if result and type(result) == "table" then
     vim.list_extend(lines, components.goal(result))
   end
-  return vim.list_extend(lines, components.diagnostics())
+  return vim.list_extend(lines, components.diagnostics(bufnr, params.position.line))
 end
 
 return lean3

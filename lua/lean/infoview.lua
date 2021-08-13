@@ -106,7 +106,8 @@ function Info:new()
   local new_info = {
     id = #infoview._info_by_id + 1,
     bufnr = vim.api.nvim_create_buf(false, true),
-    pin = Pin:new(options.autopause)
+    pin = Pin:new(options.autopause),
+    pins = {}
   }
   new_info.pin:add_parent_info(new_info)
   table.insert(infoview._info_by_id, new_info)
@@ -118,6 +119,19 @@ function Info:new()
   vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
 
   return new_info
+end
+
+function Info:add_pin()
+  table.insert(self.pins, self.pin)
+  self.pin = Pin:new(options.autopause)
+  self.pin:add_parent_info(self)
+  self:render()
+end
+
+function Info:clear_pins()
+  for _, pin in pairs(self.pins) do pin:remove_parent_info(self) end
+
+  self.pins = {}
 end
 
 local paused_txt = "[PAUSED]"
@@ -158,6 +172,12 @@ function Info:render()
 
   local lines = render_pin(self.pin, true)
 
+  for _, pin in pairs(self.pins) do
+    vim.list_extend(lines, {""})
+    vim.list_extend(lines, render_pin(pin, false))
+    vim.list_extend(lines, {"--"})
+  end
+
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', true)
   vim.api.nvim_buf_set_lines(self.bufnr, 0, -1, true, lines)
   -- HACK: This shouldn't really do anything, but I think there's a neovim
@@ -181,6 +201,25 @@ end
 function Pin:add_parent_info(info)
   self.parent_infos[info.id] = true
 end
+
+local extmark_ns = vim.api.nvim_create_namespace("LeanNvimPinExtmarks")
+
+function Pin:_teardown()
+  if self.extmark then vim.api.nvim_buf_del_extmark(self.extmark_buf, extmark_ns, self.extmark) end
+  infoview._pin_by_id[self.id] = nil
+end
+
+function Pin:remove_parent_info(info)
+  self.parent_infos[info.id] = nil
+  if vim.tbl_isempty(self.parent_infos) then self:_teardown() end
+end
+
+local pin_hl_group = "LeanNvimPin"
+vim.highlight.create(pin_hl_group, {
+  cterm = 'underline',
+  ctermbg = '3',
+  gui   = 'underline',
+}, true)
 
 function Pin:_set_position_params(params)
   self.position_params = params
@@ -245,6 +284,9 @@ function Pin:_update()
     return
   end
 
+  local line = params.position.line
+  local col = params.position.character
+
   local lines
 
   if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
@@ -262,10 +304,27 @@ function Pin:_update()
       lines = components.goal(goal)
       if not vim.tbl_isempty(lines) then table.insert(lines, '') end
       vim.list_extend(lines, components.term_goal(term_goal))
-      vim.list_extend(lines, components.diagnostics())
+      vim.list_extend(lines, components.diagnostics(buf, line))
     end
   end
   if self.tick ~= this_tick then return end
+
+  -- hard to reproduce, but technically if debouncing textDocument/didChange, params may be out of date
+  -- (only up-to-date from the server's perspective), hence we aren't strict with nvim_buf_get_lines()
+  -- so we can get the mark "close enough" if needed
+  local buf_lines = vim.api.nvim_buf_get_lines(buf, line, line + 1, false)
+  local end_col = ((#buf_lines > 0) and (col < #(buf_lines[1]))) and col + 1 or col
+
+  self.extmark = vim.api.nvim_buf_set_extmark(buf, extmark_ns,
+    line, col,
+    {
+      id = self.extmark;
+      end_col = end_col;
+      hl_group = pin_hl_group;
+      virt_text = {{"<-- PIN " .. tostring(self.id), "Comment"}};
+      virt_text_pos = "right_align";
+    })
+  self.extmark_buf = buf
 
   self.msg = lines
 end

@@ -94,6 +94,10 @@ Features
 
     * ``<LocalLeader>p``: pause infoview
 
+    * ``<LocalLeader>x``: place pin
+
+    * ``<LocalLeader>c``: clear all current pins
+
     * ``<LocalLeader>s``: ``sorry`` insertion corresponding to the number of open goals
 
     * ``<LocalLeader>t``: "try this:" suggestion replacement

@@ -59,10 +59,10 @@ function components.term_goal(term_goal)
 end
 
 --- Diagnostic information for the current line from the Lean server.
-function components.diagnostics()
+function components.diagnostics(bufnr, line)
   local lines = {}
 
-  for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics()) do
+  for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics(bufnr, line)) do
     vim.list_extend(lines,
       {'',
         H(string.format('%s: %s:',

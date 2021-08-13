@@ -15,6 +15,10 @@ local lean = {
     n = {
       ["<LocalLeader>i"] = "<Cmd>lua require'lean.infoview'.get_current_infoview():toggle()<CR>";
       ["<LocalLeader>p"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info.pin:toggle_pause()<CR>";
+      ["<LocalLeader>x"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info:add_pin()" ..
+                           " require'lean.infoview'.__update()<CR>";
+      ["<LocalLeader>c"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info:clear_pins()" ..
+                           " require'lean.infoview'.__update()<CR>";
       ["<LocalLeader>s"] = "<Cmd>lua require'lean.sorry'.fill()<CR>";
       ["<LocalLeader>t"] = "<Cmd>lua require'lean.trythis'.swap()<CR>";
       ["<LocalLeader>\\"] = "<Cmd>lua require'lean.abbreviations'.show_reverse_lookup()<CR>";
