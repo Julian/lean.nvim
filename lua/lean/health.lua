@@ -33,7 +33,7 @@ end
 local function check_for_timers()
   if not vim.tbl_isempty(vim.fn.timer_info()) then
     health.report.warn(
-      'You have active timers, which can degrade infoview (CursorHold) ' ..
+      'You have active timers, which can degrade infoview (CursorMoved) ' ..
       'performance. See https://github.com/Julian/lean.nvim/issues/92.'
     )
   end
