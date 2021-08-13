@@ -221,13 +221,30 @@ vim.highlight.create(pin_hl_group, {
   gui   = 'underline',
 }, true)
 
-function Pin:_set_position_params(params)
-  self.position_params = params
-end
-
 --- Update this pin's current position.
 function Pin:set_position_params(params)
-  self:_set_position_params(params)
+  self.position_params = params
+
+  local buf = vim.fn.bufnr(vim.uri_to_fname(self.position_params.textDocument.uri))
+  local line = params.position.line
+  local col = params.position.character
+
+  if buf ~= -1 then
+    local buf_lines = vim.api.nvim_buf_get_lines(buf, line, line + 1, false)
+    local end_col = ((#buf_lines > 0) and (col < #(buf_lines[1]))) and col + 1 or col
+
+    self.extmark = vim.api.nvim_buf_set_extmark(buf, extmark_ns,
+      line, col,
+      {
+        id = self.extmark;
+        end_col = end_col;
+        hl_group = pin_hl_group;
+        virt_text = {{"<-- PIN " .. tostring(self.id), "Comment"}};
+        virt_text_pos = "right_align";
+      })
+    self.extmark_buf = buf
+  end
+
   self:update()
 end
 
@@ -285,7 +302,6 @@ function Pin:_update()
   end
 
   local line = params.position.line
-  local col = params.position.character
 
   local lines
 
@@ -308,23 +324,6 @@ function Pin:_update()
     end
   end
   if self.tick ~= this_tick then return end
-
-  -- hard to reproduce, but technically if debouncing textDocument/didChange, params may be out of date
-  -- (only up-to-date from the server's perspective), hence we aren't strict with nvim_buf_get_lines()
-  -- so we can get the mark "close enough" if needed
-  local buf_lines = vim.api.nvim_buf_get_lines(buf, line, line + 1, false)
-  local end_col = ((#buf_lines > 0) and (col < #(buf_lines[1]))) and col + 1 or col
-
-  self.extmark = vim.api.nvim_buf_set_extmark(buf, extmark_ns,
-    line, col,
-    {
-      id = self.extmark;
-      end_col = end_col;
-      hl_group = pin_hl_group;
-      virt_text = {{"<-- PIN " .. tostring(self.id), "Comment"}};
-      virt_text_pos = "right_align";
-    })
-  self.extmark_buf = buf
 
   self.msg = lines
 end
@@ -378,27 +377,34 @@ end
 
 --- Update pins position according to the given textDocument/didChange parameters.
 function infoview.__update_pin_positions(params)
-  for _, pin in pairs(infoview._pin_by_id) do
-    if not pin.position_params or not pin.position_params.textDocument.uri == params.textDocument.uri then
-      goto next_pin
-    end
+  local function update_pin(pin)
+    if not pin.extmark then return end
+
+    local buf = vim.fn.bufnr(vim.uri_to_fname(pin.position_params.textDocument.uri))
+    if buf == -1 then return end
+
+    local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, pin.extmark, {})
 
     local pos = pin.position_params.position
-    local new_pos = require'lean._util'.update_position(pos, params.contentChanges)
+    local new_pos = vim.deepcopy(pos)
+    new_pos.line = extmark_pos[1]
+    new_pos.character = extmark_pos[2]
 
     if not vim.deep_equal(pos, new_pos) then
       if new_pos then
         local new_params = vim.deepcopy(pin.position_params)
         new_params.position = new_pos
-        pin:_set_position_params(new_params)
-        vim.schedule_wrap(function() pin:update() end)()
+        pin:set_position_params(new_params)
       else
-        pin:_set_position_params(nil)
-        vim.schedule_wrap(function() pin:update() end)()
+        pin:set_position_params(nil)
       end
     end
+  end
 
-    ::next_pin::
+  for _, pin in pairs(infoview._pin_by_id) do
+    if pin.position_params and pin.position_params.textDocument.uri == params.textDocument.uri then
+      vim.schedule_wrap(function() update_pin(pin) end)()
+    end
   end
 end
 

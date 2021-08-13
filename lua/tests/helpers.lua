@@ -702,35 +702,37 @@ local function infoview_check(state, _)
       assert.opened_pin_kept_state(this_pin)
     end
 
-    if pos_check == "pin_pos_changed" then
-      assert.message("expected pin position change but did not occur").is_not_truthy(
-        vim.deep_equal(this_pin.position_params, this_pin.prev_position_params))
-    else
-      assert.message("expected pin position not to change but did change\nbefore: "
-        .. vim.inspect(this_pin.prev_position_params) .. "\nafter: "
-        .. vim.inspect(this_pin.position_params)).is_truthy(
-        vim.deep_equal(this_pin.position_params, this_pin.prev_position_params))
-    end
-
-    local function check_change(change)
+    local function check_change(get_before, get_after, change, type)
+      vim.wait(100)
       local changed, _ = vim.wait(change and 1000 or 300, function()
-        return not vim.deep_equal(this_pin.msg, this_pin.prev_msg)
+        return not vim.deep_equal(get_before(), get_after())
       end, 50)
       if change then
-        assert.message("expected pin text change but did not occur; text: "
-          .. vim.inspect(this_pin.msg)).is_truthy(changed)
+        assert.message("expected pin " .. type .. " change but did not occur:"
+          .. vim.inspect(get_after())).is_truthy(changed)
       else
-        assert.message("expected pin text not to change but did change").is_falsy(changed)
+        assert.message("expected pin " .. type .. " not to change but did change\nbefore: "
+          .. vim.inspect(get_before()) .. "\nafter: "
+          .. vim.inspect(get_after())).is_falsy(changed)
       end
     end
 
-    if text_check == "pin_text_changed" then
-      check_change(true)
+    if pos_check == "pin_pos_changed" then
+      check_change(function() return this_pin.prev_position_params end,
+        function() return this_pin.position_params end, true, "position")
     else
-      check_change(false)
+      check_change(function() return this_pin.prev_position_params end,
+        function() return this_pin.position_params end, false, "position")
     end
 
     this_pin.prev_position_params = vim.deepcopy(this_pin.position_params)
+
+    if text_check == "pin_text_changed" then
+      check_change(function() return this_pin.prev_msg end, function() return this_pin.msg end, true, "text")
+    else
+      check_change(function() return this_pin.prev_msg end, function() return this_pin.msg end, false, "text")
+    end
+
     this_pin.prev_msg = this_pin.msg
 
     this_pin.prev_check = check
