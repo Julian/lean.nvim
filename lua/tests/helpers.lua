@@ -459,7 +459,7 @@ local LEAN_NVIM_PREFIX = "lean_nvim_infoview_tracker_"
 
 local checks = {"opened", "initopened", "opened_kept", "closed", "initclosed", "closed_kept"}
 local info_checks = {"infoopened", "infoopened_kept"}
-local pin_checks = {"pinopened", "pinopened_kept"}
+local pin_checks = {"pinopened", "pinopened_kept", "pindeleted"}
 local pin_text_checks = {"pin_text_changed", "pin_text_kept"}
 local pin_pos_checks = {"pin_pos_changed", "pin_pos_kept"}
 
@@ -643,13 +643,6 @@ local function infoview_check(state, _)
       assert.opened_info_state(this_info)
       assert.is_nil(pin_list[this_info.pin.id])
       pin_list[this_info.pin.id] = "pinopened"
-      -- assume text and pos kept if unspecified
-      if pin_text_list[this_info.pin.id] == nil then
-        pin_text_list[this_info.pin.id] = "pin_text_kept"
-      end
-      if pin_pos_list[this_info.pin.id] == nil then
-        pin_pos_list[this_info.pin.id] = "pin_pos_kept"
-      end
     else
       assert.opened_info_kept_state(this_info)
     end
@@ -673,9 +666,10 @@ local function infoview_check(state, _)
   --- PIN CHECK
 
   for id, this_pin in pairs(infoview._pin_by_id) do
+
+    -- EXISTENCE CHECK
+
     local check = pin_list[id]
-    local text_check = pin_text_list[id]
-    local pos_check = pin_pos_list[id]
 
     if not check then
       -- all unspecified pins must have been previously checked
@@ -684,23 +678,24 @@ local function infoview_check(state, _)
       check = "pinopened_kept"
     end
 
-    if not text_check then
-      assert.is_truthy(this_pin.prev_text_check)
-      -- infer text check
-      text_check = "pin_text_kept"
-    end
-
-    if not pos_check then
-      assert.is_truthy(this_pin.prev_pos_check)
-      -- infer pos check
-      pos_check = "pin_pos_kept"
-    end
-
     if check == "pinopened" then
       assert.opened_pin_state(this_pin)
-    else
+      -- assume text and pos kept if unspecified
+      if pin_text_list[id] == nil then
+        pin_text_list[id] = "pin_text_kept"
+      end
+      if pin_pos_list[id] == nil then
+        pin_pos_list[id] = "pin_pos_kept"
+      end
+    elseif check == "pinopened_kept" then
       assert.opened_pin_kept_state(this_pin)
+    else
+      assert.message("encountered deleted pin").is_truthy(false)
     end
+
+    this_pin.prev_check = check
+
+    --
 
     local function check_change(get_before, get_after, change, type)
       vim.wait(100)
@@ -708,13 +703,23 @@ local function infoview_check(state, _)
         return not vim.deep_equal(get_before(), get_after())
       end, 50)
       if change then
-        assert.message("expected pin " .. type .. " change but did not occur:"
-          .. vim.inspect(get_after())).is_truthy(changed)
+        assert.message("expected pin " .. tostring(id) .. " " .. type .. " change but did not occur:"
+          .. vim.inspect(get_before())).is_truthy(changed)
       else
-        assert.message("expected pin " .. type .. " not to change but did change\nbefore: "
+        assert.message("expected pin " .. tostring(id) .. " " .. type .. " not to change but did change\nbefore: "
           .. vim.inspect(get_before()) .. "\nafter: "
           .. vim.inspect(get_after())).is_falsy(changed)
       end
+    end
+
+    -- POSITION CHECK
+
+    local pos_check = pin_pos_list[id]
+
+    if not pos_check then
+      assert.is_truthy(this_pin.prev_pos_check)
+      -- infer pos check
+      pos_check = "pin_pos_kept"
     end
 
     if pos_check == "pin_pos_changed" then
@@ -726,6 +731,19 @@ local function infoview_check(state, _)
     end
 
     this_pin.prev_position_params = vim.deepcopy(this_pin.position_params)
+    this_pin.prev_pos_check = pos_check
+
+    --
+
+    -- TEXT CHECK
+
+    local text_check = pin_text_list[id]
+
+    if not text_check then
+      assert.is_truthy(this_pin.prev_text_check)
+      -- infer text check
+      text_check = "pin_text_kept"
+    end
 
     if text_check == "pin_text_changed" then
       check_change(function() return this_pin.prev_msg end, function() return this_pin.msg end, true, "text")
@@ -734,19 +752,30 @@ local function infoview_check(state, _)
     end
 
     this_pin.prev_msg = this_pin.msg
-
-    this_pin.prev_check = check
     this_pin.prev_text_check = text_check
-    this_pin.prev_pos_check = pos_check
 
     pin_ids[id] = true
+
+    --
+
   end
 
-  -- all previous pins must have been checked
-  for id, _ in pairs(last_pin_ids) do assert.is_truthy(pin_ids[id]) end
+  -- all previous undeleted pins must have been checked
+  for id, _ in pairs(last_pin_ids) do
+    if pin_list[id] ~= "pindeleted" then
+      assert.is_truthy(pin_ids[id])
+    end
+  end
 
   -- all specified pins must have been checked
-  for id, _ in pairs(pin_list) do assert.is_truthy(pin_ids[id]) end
+  for id, _ in pairs(pin_list) do
+    if pin_list[id] == "pindeleted" then
+      assert.truthy(last_pin_ids[id])
+      assert.is_falsy(pin_ids[id])
+    else
+      assert.is_truthy(pin_ids[id])
+    end
+  end
 
   last_pin_ids = pin_ids
 
