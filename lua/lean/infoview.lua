@@ -123,6 +123,7 @@ end
 
 function Info:add_pin()
   table.insert(self.pins, self.pin)
+  self.pin:show_extmark()
   self.pin = Pin:new(options.autopause)
   self.pin:add_parent_info(self)
   self:render()
@@ -225,7 +226,15 @@ vim.highlight.create(pin_hl_group, {
 function Pin:set_position_params(params)
   self.position_params = params
 
-  local buf = vim.fn.bufnr(vim.uri_to_fname(self.position_params.textDocument.uri))
+  self:update_extmark()
+  self:update()
+end
+
+function Pin:update_extmark()
+  local params = self.position_params
+  if not params then return end
+
+  local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   local line = params.position.line
   local col = params.position.character
 
@@ -238,17 +247,27 @@ function Pin:set_position_params(params)
       {
         id = self.extmark;
         end_col = end_col;
-        hl_group = pin_hl_group;
-        virt_text = {{"<-- PIN " .. tostring(self.id), "Comment"}};
+        hl_group = self.extmark_hl_group;
+        virt_text = self.extmark_virt_text;
         virt_text_pos = "right_align";
       })
     self.extmark_buf = buf
   end
-
-  self:update()
 end
 
 function Pin:toggle_pause() if not self.paused then self:pause() else self:unpause() end end
+
+function Pin:show_extmark()
+  self.extmark_hl_group = pin_hl_group
+  self.extmark_virt_text = {{"<-- PIN " .. tostring(self.id), "Comment"}};
+  self:update_extmark()
+end
+
+function Pin:hide_extmark()
+  self.extmark_hl_group = nil
+  self.extmark_virt_text = nil
+  self:update_extmark()
+end
 
 function Pin:unpause()
   if not self.paused then return end
