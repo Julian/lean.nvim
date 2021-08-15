@@ -230,6 +230,7 @@ function Pin:set_position_params(params)
   self:update()
 end
 
+--- Update pin extmark based on position, used when resetting pin position.
 function Pin:update_extmark()
   local params = self.position_params
   if not params then return end
@@ -254,6 +255,29 @@ function Pin:update_extmark()
     self.extmark_buf = buf
   end
 end
+
+--- Update pin position based on extmark, used when changing text.
+function Pin:update_position()
+  local extmark = self.extmark
+  if not extmark then return end
+
+  local buf = self.extmark_buf
+  if buf == -1 then return end
+
+  local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, extmark, {})
+
+  local pos = self.position_params.position
+  local new_pos = vim.deepcopy(pos)
+  new_pos.line = extmark_pos[1]
+  new_pos.character = extmark_pos[2]
+
+  if not vim.deep_equal(pos, new_pos) then
+    local new_params = vim.deepcopy(self.position_params)
+    new_params.position = new_pos
+    self:set_position_params(new_params)
+  end
+end
+
 
 function Pin:toggle_pause() if not self.paused then self:pause() else self:unpause() end end
 
@@ -283,7 +307,7 @@ end
 
 function Pin:update(force)
   a.void(function()
-    if force or not self.paused then
+    if self.position_params and (force or not self.paused) then
       self:_update()
     end
 
@@ -307,18 +331,15 @@ function Pin:_update()
   a.util.scheduler()
   if self.tick ~= this_tick then return end
 
-  if not self.position_params then
-    self.msg = {"Pin position invalidated."}
-    return
-  end
+  local params = self.position_params
 
-  local params = vim.deepcopy(self.position_params)
-
-  local buf = vim.fn.bufnr(vim.uri_to_fname(self.position_params.textDocument.uri))
+  local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   if buf == -1 then
     self.msg = {"No corresponding buffer found."}
     return
   end
+
+  --- TODO if changes are currently being debounced for this buffer, add debounce timer delay
 
   local line = params.position.line
 
@@ -394,35 +415,11 @@ function infoview.__update_progress(params)
   end
 end
 
---- Update pins position according to the given textDocument/didChange parameters.
-function infoview.__update_pin_positions(params)
-  local function update_pin(pin)
-    if not pin.extmark then return end
-
-    local buf = vim.fn.bufnr(vim.uri_to_fname(pin.position_params.textDocument.uri))
-    if buf == -1 then return end
-
-    local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, pin.extmark, {})
-
-    local pos = pin.position_params.position
-    local new_pos = vim.deepcopy(pos)
-    new_pos.line = extmark_pos[1]
-    new_pos.character = extmark_pos[2]
-
-    if not vim.deep_equal(pos, new_pos) then
-      if new_pos then
-        local new_params = vim.deepcopy(pin.position_params)
-        new_params.position = new_pos
-        pin:set_position_params(new_params)
-      else
-        pin:set_position_params(nil)
-      end
-    end
-  end
-
+--- on_lines callback to update pins position according to the given textDocument/didChange parameters.
+function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
   for _, pin in pairs(infoview._pin_by_id) do
-    if pin.position_params and pin.position_params.textDocument.uri == params.textDocument.uri then
-      vim.schedule_wrap(function() update_pin(pin) end)()
+    if pin.position_params and pin.position_params.textDocument.uri == vim.uri_from_bufnr(bufnr) then
+      vim.schedule_wrap(function() pin:update_position() end)()
     end
   end
 end
@@ -443,7 +440,7 @@ function infoview.make_buffer_focusable(name)
   if bufnr == -1 then return end
   if bufnr == vim.api.nvim_get_current_buf() then
     -- because FileType can happen after BufEnter
-    infoview.maybe_autoopen() infoview.__update()
+    infoview.__bufenter()
     infoview.get_current_infoview():focus_on_current_buffer()
   end
 
@@ -451,7 +448,7 @@ function infoview.make_buffer_focusable(name)
   -- a file open in a tab with an infoview and move to a
   -- new window in a new tab with that same file but no infoview
   set_augroup("LeanInfoviewSetFocus", string.format([[
-    autocmd BufEnter <buffer=%d> lua require'lean.infoview'.maybe_autoopen() require'lean.infoview'.__update()
+    autocmd BufEnter <buffer=%d> lua require'lean.infoview'.__bufenter()
     autocmd BufEnter,WinEnter <buffer=%d> lua if require'lean.infoview'.get_current_infoview()]] ..
     [[ then require'lean.infoview'.get_current_infoview():focus_on_current_buffer() end
   ]], bufnr, bufnr), 0)
@@ -467,8 +464,21 @@ function infoview.set_autopause(autopause)
   options.autopause = autopause
 end
 
+local attached_buffers = {}
+
+--- Callback when entering a Lean buffer.
+function infoview.__bufenter()
+  infoview.__maybe_autoopen()
+  local bufnr = vim.api.nvim_get_current_buf()
+  if not attached_buffers[bufnr] then
+    vim.api.nvim_buf_attach(bufnr, false, {on_lines = infoview.__update_pin_positions;})
+    attached_buffers[bufnr] = true
+  end
+  infoview.__update()
+end
+
 --- Open an infoview for the current buffer if it isn't already open.
-function infoview.maybe_autoopen()
+function infoview.__maybe_autoopen()
   local tabpage = vim.api.nvim_win_get_tabpage(0)
   if not infoview._by_tabpage[tabpage] then
     infoview._by_tabpage[tabpage] = Infoview:new(options.width, options.autoopen)

@@ -39,18 +39,10 @@ function lean.setup(opts)
   opts.infoview = opts.infoview or {}
   require'lean.infoview'.enable(opts.infoview)
 
-  local function update_pin_positions(type, method, params)
-    if type == "notify" and method == "textDocument/didChange" then
-      require'lean.infoview'.__update_pin_positions(params)
-    end
-  end
-
   opts.lsp3 = opts.lsp3 or {}
-  opts.lsp3.on_client = update_pin_positions
   if opts.lsp3.enable ~= false then require'lspconfig'.lean3ls.setup(opts.lsp3) end
 
   opts.lsp = opts.lsp or {}
-  opts.lsp.on_client = update_pin_positions
   if opts.lsp.enable ~= false then require'lean.lsp'.enable(opts.lsp) end
 
   opts.treesitter = opts.treesitter or {}
