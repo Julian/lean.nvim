@@ -87,8 +87,8 @@ infoview.set_autoopen()                              *infoview.set_autoopen()*
 
 
 
-infoview.maybe_autoopen()                          *infoview.maybe_autoopen()*
-    Open an infoview for the current buffer if it isn't already open.
+infoview.set_autopause()                            *infoview.set_autopause()*
+    Set whether a new pin is automatically paused.
 
 
 
