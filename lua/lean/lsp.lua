@@ -37,7 +37,7 @@ end
 function lsp.handlers.definition_handler (err, method, result, client_id, bufnr, config)
   vim.lsp.handlers['textDocument/definition'](err, method, result, client_id, bufnr, config)
   -- auto-enable LSP for standard library files
-  if vim.lsp.buf_get_clients(0)[client_id] == nil and vim.bo.ft == "lean" then
+  if #vim.lsp.buf_get_clients(0) == 0 and vim.bo.ft == "lean" then
     vim.lsp.buf_attach_client(0, client_id)
   end
 end
