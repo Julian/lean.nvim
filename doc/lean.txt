@@ -61,39 +61,6 @@ health.check()                                                *health.check()*
 
 
 ================================================================================
-infoview.get_current_infoview()              *infoview.get_current_infoview()*
-    Get the infoview corresponding to the current window.
-
-
-
-infoview.close_all()                                    *infoview.close_all()*
-    Close all open infoviews (across all tabs).
-
-
-
-infoview.enable()                                          *infoview.enable()*
-    Enable and open the infoview across all Lean buffers.
-
-
-
-infoview.make_buffer_focusable()            *infoview.make_buffer_focusable()*
-    Configure the infoview to update when this buffer is active.
-
-
-
-infoview.set_autoopen()                              *infoview.set_autoopen()*
-    Set whether a new infoview is automatically opened when entering Lean
-    buffers.
-
-
-
-infoview.maybe_autoopen()                          *infoview.maybe_autoopen()*
-    Open an infoview for the current buffer if it isn't already open.
-
-
-
-
-================================================================================
                                                       *lean.infoview.components*
 
 Infoview components which can be assembled to show various information about
@@ -122,6 +89,82 @@ components.diagnostics()                            *components.diagnostics()*
 
 
 ================================================================================
+
+================================================================================
+RpcRef                                                                *RpcRef*
+
+
+
+Session                                                              *Session*
+
+
+    Fields: ~
+        {bufnr}           (number)
+        {uri}             (string)
+        {closed}          (boolean)
+        {on_connected}    (function)
+        {keepalive_timer} (any)
+
+
+TextDocumentPositionParams : 
+
+---@param pos TextDocumentPositionParams
+---@param method string
+---@return any result
+---*TextDocumentPositionParams*
+    return any error
+
+    Parents: ~
+        |
+
+---@param pos TextDocumentPositionParams
+---@param method string
+---@return any result
+---|
+
+
+Subsession                                                        *Subsession*
+
+
+    Fields: ~
+        {refs} (table<string, RpcRef>)
+        {pos}  (TextDocumentPositionParams)
+        {sess} (Session)
+
+
+InfoWithCtx                                                      *InfoWithCtx*
+
+
+
+CodeWithInfos                                                  *CodeWithInfos*
+
+
+
+InteractiveHypothesis                                  *InteractiveHypothesis*
+
+
+    Fields: ~
+        {names} (string)
+        {type}  (CodeWithInfos)
+        {val}   (CodeWithInfos|nil)
+
+
+InteractiveGoal                                              *InteractiveGoal*
+
+
+    Fields: ~
+        {hyps}     (InteractiveHypothesis[])
+        {type}     (CodeWithInfos)
+        {userName} (string|nil)
+
+
+InteractiveGoals                                            *InteractiveGoals*
+
+
+    Fields: ~
+        {goals} (InteractiveGoal[])
+
+
 
 ================================================================================
 sorry.fill()                                                    *sorry.fill()*
