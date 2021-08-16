@@ -10,7 +10,7 @@ local lean3 = {}
 -- Ideally this obviously would use a TOML parser but yeah choosing to
 -- do nasty things and not add the dependency for now.
 local _PROJECT_MARKER = '.*lean_version.*\".*:3.*'
-local _STANDARD_LIBRARY_PATHS = '.*/lean--3.+/lib/'
+local _STANDARD_LIBRARY_PATHS = '.*/[^/]*lean[%-]+3.+/lib/'
 
 -- Split a Lean 3 server response on goals.
 --
@@ -31,7 +31,7 @@ local _GOAL_MARKER = vim.regex('⊢ .\\{-}\n\\(\\s\\+.\\{-}\\(\n\\|$\\)\\)*\\zs'
 
 --- Detect whether the current buffer is a Lean 3 file.
 function lean3.__detect()
-  local path = vim.api.nvim_buf_get_name(0)
+  local path = vim.fn.bufname("%")
   if path:match(_STANDARD_LIBRARY_PATHS) then return true end
 
   local project_root = find_project_root(path)

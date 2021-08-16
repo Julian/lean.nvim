@@ -14,6 +14,7 @@ function lsp.enable(opts)
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
     ["$/lean/plainGoal"] = lsp.handlers.plain_goal_handler;
     ["$/lean/plainTermGoal"] = lsp.handlers.plain_term_goal_handler;
+    ["textDocument/definition"] = lsp.handlers.definition_handler;
   })
   require('lspconfig').leanls.setup(opts)
 end
@@ -31,6 +32,14 @@ end
 function lsp.plain_term_goal(bufnr, handler)
   local params = vim.lsp.util.make_position_params()
   return vim.lsp.buf_request(bufnr, "$/lean/plainTermGoal", params, handler)
+end
+
+function lsp.handlers.definition_handler (err, method, result, client_id, bufnr, config)
+  vim.lsp.handlers['textDocument/definition'](err, method, result, client_id, bufnr, config)
+  -- auto-enable LSP for standard library files
+  if vim.lsp.buf_get_clients(0)[client_id] == nil and vim.bo.ft == "lean" then
+    vim.lsp.buf_attach_client(0, client_id)
+  end
 end
 
 function lsp.handlers.plain_goal_handler (_, method, result, _, _, config)
