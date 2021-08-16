@@ -4,15 +4,20 @@ local leanlsp = require('lean.lsp')
 local is_lean_buffer = require('lean').is_lean_buffer
 local set_augroup = require('lean._util').set_augroup
 local a = require('plenary.async')
+local rpc = require'lean.rpc'
 
 local infoview = {
   -- mapping from infoview IDs to infoviews
+  ---@type table<number, Infoview>
   _by_id = {},
   -- mapping from tabpage handles to infoviews
+  ---@type table<any, Infoview>
   _by_tabpage = {},
   -- mapping from info IDs to infos
+  ---@type table<number, Info>
   _info_by_id = {},
   -- mapping from pin IDs to pins
+  ---@type table<number, Pin>
   _pin_by_id = {},
 }
 local options = { _DEFAULTS = { autoopen = true, width = 50 } }
@@ -33,15 +38,28 @@ local _DEFAULT_WIN_OPTIONS = {
 local _NOTHING_TO_SHOW = { "No info found." }
 
 --- An individual pin.
+---@class Pin
+---@field id number
+---@field parent_infos table<number, boolean>
 local Pin = {}
 
 --- An individual info.
+---@class Info
+---@field id number
+---@field bufnr number
+---@field pin Pin
 local Info = {}
 
 --- A "view" on an info (i.e. window).
+---@class Infoview
+---@field id number
+---@field bufnr number
+---@field width number
+---@field info Info
 local Infoview = {}
 
 --- Get the infoview corresponding to the current window.
+---@return Infoview
 function infoview.get_current_infoview()
   return infoview._by_tabpage[vim.api.nvim_win_get_tabpage(0)]
 end
@@ -49,6 +67,7 @@ end
 --- Create a new infoview.
 ---@param width number: the width of the new infoview
 ---@param open boolean: whether to open the infoview after initializing
+---@return Infoview
 function Infoview:new(width, open)
   local new_infoview = {id = #infoview._by_id + 1, width = width, info = Info:new()}
   table.insert(infoview._by_id, new_infoview)
@@ -99,6 +118,7 @@ function Infoview:close()
   vim.api.nvim_win_close(self.window, true)
   self.window = nil
   self.is_open = false
+  self.info:close()
 
   self:focus_on_current_buffer()
 end
@@ -121,6 +141,7 @@ function Infoview:focus_on_current_buffer()
   end
 end
 
+---@return Info
 function Info:new()
   local new_info = {
     id = #infoview._info_by_id + 1,
@@ -141,6 +162,10 @@ function Info:new()
   return new_info
 end
 
+function Info:close()
+  self.pin:close()
+end
+
 --- Update this info's physical contents.
 function Info:render()
   local lines = self.pin.msg
@@ -157,6 +182,7 @@ function Info:render()
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', false)
 end
 
+---@return Pin
 function Pin:new()
   local new_pin = {id = #infoview._pin_by_id + 1, parent_infos = {}, tick = 0}
   table.insert(infoview._pin_by_id, new_pin)
@@ -167,6 +193,13 @@ function Pin:new()
   return new_pin
 end
 
+function Pin:close()
+  if self.sess ~= nil then
+    self.sess:close()
+  end
+end
+
+---@param info Info
 function Pin:add_parent_info(info)
   self.parent_infos[info.id] = true
 end
@@ -175,6 +208,52 @@ local plain_goal = a.wrap(leanlsp.plain_goal, 2)
 local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 2)
 
 local wait_timer = a.wrap(vim.loop.timer_start, 4)
+
+function Pin:reset_rpc()
+  if self.sess ~= nil then
+    self.sess:close()
+  end
+  self.sess = rpc.open()
+end
+
+---@param goal InteractiveGoal
+local function format_interactive_term_goal(goal)
+  if not goal then return '' end
+
+  local res = {} ---@type string[]
+
+  ---@param t CodeWithInfos
+  local function text(t)
+    if t.text ~= nil then
+      table.insert(res, t.text)
+    elseif t.append ~= nil then
+      for _, s in ipairs(t.append) do
+        text(s)
+      end
+    elseif t.tag ~= nil then
+      text(t.tag[2])
+    end
+  end
+
+  for _, hyp in ipairs(goal.hyps) do
+    table.insert(res, hyp.names) -- FIXME
+    table.insert(res, ' : ')
+    text(hyp.type)
+    if hyp.val ~= nil then
+      table.insert(res, ' := ')
+      text(hyp.val)
+    end
+    table.insert(res, '\n')
+  end
+  table.insert(res, '⊢ ')
+  text(goal.type)
+
+  local pos = { line = 0, character = 0 } -- FIXME
+  return {
+    range = { start = pos, ["end"] = pos },
+    goal = table.concat(res),
+  }
+end
 
 --- Update this pin's contents given the current position.
 function Pin:update()
@@ -190,10 +269,18 @@ function Pin:update()
     if vim.opt.filetype:get() == "lean3" then
       lines = lean3.update_infoview()
     else
+      self:reset_rpc()
+
       local _, _, goal = plain_goal(0)
       if self.tick ~= this_tick then return end
 
-      local _, _, term_goal = plain_term_goal(0)
+      local term_goal, term_goal_err =
+        self.sess:getInteractiveTermGoal(vim.lsp.util.make_position_params())
+      if term_goal_err then
+        _, _, term_goal = plain_term_goal(0)
+      else
+        term_goal = format_interactive_term_goal(term_goal)
+      end
       if self.tick ~= this_tick then return end
 
       lines = components.goal(goal)
@@ -243,6 +330,7 @@ end
 
 --- An infoview was closed, either directly via `Infoview.close` or manually.
 --- Will be triggered via a `WinClosed` autocmd.
+---@param id number
 function infoview.__was_closed(id)
   infoview._by_id[id]:close()
 end
