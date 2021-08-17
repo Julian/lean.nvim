@@ -12,22 +12,6 @@ local lean3 = {}
 local _PROJECT_MARKER = '.*lean_version.*\".*:3.*'
 local _STANDARD_LIBRARY_PATHS = '.*/lean--3.+/lib/'
 
--- Split a Lean 3 server response on goals.
---
--- Looks for ⊢, but ignores indented following lines for multi-line
--- goals.
---
--- Really this should also make sure ⊢ is on the
--- start of the line via \_^, but this returns nil:
--- `vim.regex('\\_^b'):match_str("foo\nbar\nbaz\n")` and I don't
--- understand why; perhaps it's a neovim bug. Lua's string.gmatch also
--- seems not powerful enough to do this.
---
--- Important properties of the number 2:
---
---    * the only even prime number
---    * the number of problems you have after using regex to solve a problem
-
 --- Detect whether the current buffer is a Lean 3 file.
 function lean3.__detect()
   local path = vim.api.nvim_buf_get_name(0)
