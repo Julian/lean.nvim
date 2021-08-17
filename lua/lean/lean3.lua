@@ -27,7 +27,6 @@ local _STANDARD_LIBRARY_PATHS = '.*/lean--3.+/lib/'
 --
 --    * the only even prime number
 --    * the number of problems you have after using regex to solve a problem
-local _GOAL_MARKER = vim.regex('⊢ .\\{-}\n\\(\\s\\+.\\{-}\\(\n\\|$\\)\\)*\\zs')
 
 --- Detect whether the current buffer is a Lean 3 file.
 function lean3.__detect()
@@ -45,27 +44,6 @@ function lean3.__detect()
   return false
 end
 
---- Convert a Lean 3 response to one that the Lean 4 server would respond with.
-local function upconvert_lsp_goal_to_lean4(response)
-  local goals = {}
-  for _, contents in ipairs(response.contents) do
-    if contents.language == 'lean' and contents.value ~= 'no goals' then
-      if contents.value:match('⊢') then
-        -- strip 'N goals' from the front (which is present for multiple goals)
-        local rest_of_goals = contents.value:gsub('^%d+ goals?\n', '')
-
-        repeat
-          local end_of_goal = _GOAL_MARKER:match_str(rest_of_goals)
-          table.insert(goals, vim.trim(rest_of_goals:sub(1, end_of_goal)))
-          if not end_of_goal then break end
-          rest_of_goals = rest_of_goals:sub(end_of_goal + 1)
-        until rest_of_goals == ""
-      end
-    end
-  end
-  return { goals = goals }
-end
-
 --- Return the current Lean 3 search path.
 ---
 --- Includes both the Lean 3 core libraries as well as project-specific
@@ -78,12 +56,10 @@ end
 
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
 function lean3.update_infoview()
-  local _, _, result = buf_request(0, "textDocument/hover", vim.lsp.util.make_position_params())
+  local _, _, result = buf_request(0, "$/lean/plainGoal", vim.lsp.util.make_position_params())
   local lines = {}
-  if result and type(result) == "table" and not vim.tbl_isempty(result.contents) then
-    vim.list_extend(
-      lines,
-      components.goal(upconvert_lsp_goal_to_lean4(result)))
+  if result and type(result) == "table" then
+    vim.list_extend(lines, components.goal(result))
   end
   return vim.list_extend(lines, components.diagnostics())
 end
