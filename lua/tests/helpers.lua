@@ -118,7 +118,11 @@ function helpers.wait_for_server_progress(hover_match)
         else
           local this_result = result_table.result
           -- we can expect a language-labeled MarkedString[] from Lean 3
-          for _, hover in pairs(this_result.contents) do text = text .. "\n" .. hover.value end
+          for _, hover in pairs(this_result.contents) do
+            if type(hover) == "table" and hover.value then text = text .. "\n" .. hover.value
+            elseif type(hover) == "string" then text = text .. "\n" .. hover
+            end
+          end
         end
       end
 
