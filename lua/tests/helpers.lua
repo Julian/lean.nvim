@@ -84,7 +84,7 @@ function helpers.clean_buffer(ft, contents, callback)
         source_file = { bufnr = bufnr },
       }
     end)
-    vim.api.nvim_buf_delete(bufnr, { force = true })
+    --vim.api.nvim_buf_delete(bufnr, { force = true })
   end
 end
 
