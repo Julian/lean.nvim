@@ -14,8 +14,11 @@ local _PROJECT_MARKER = '.*lean_version.*\".*:3.*'
 local _STANDARD_LIBRARY_PATHS = '.*/[^/]*lean[%-]+3.+/lib/'
 
 --- Detect whether the current buffer is a Lean 3 file using regex matching.
-function lean3.__detect_regex()
-  local path = vim.uri_to_fname(vim.uri_from_bufnr(0))
+function lean3.__detect_regex(filename)
+  local bufnr = vim.fn.bufnr(filename)
+  if bufnr == -1 then return end
+
+  local path = vim.uri_to_fname(vim.uri_from_bufnr(bufnr))
   if path:match(_STANDARD_LIBRARY_PATHS) then return true end
 
   local project_root = find_project_root(path)
@@ -30,8 +33,11 @@ function lean3.__detect_regex()
 end
 
 --- Detect whether the current buffer is a Lean 3 file using elan.
-function lean3.__detect_elan()
-  local path = vim.uri_to_fname(vim.uri_from_bufnr(0))
+function lean3.__detect_elan(filename)
+  local bufnr = vim.fn.bufnr(filename)
+  if bufnr == -1 then return end
+
+  local path = vim.uri_to_fname(vim.uri_from_bufnr(bufnr))
   local version_string = (require"lean._util".subprocess_check_output
     { command = "lean", args = {"--version"}, cwd = dirname(path) })[1]
   local _, _, version_num = version_string:find("version (%d+)%.%d+%.%d+")
