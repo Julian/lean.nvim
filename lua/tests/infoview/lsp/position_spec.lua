@@ -13,7 +13,7 @@ local lines
 describe('infoview pin', function()
   it('setup', function()
       --- setup
-      vim.api.nvim_command("edit " .. fixtures.lean_project.some_existing_file)
+      helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
       helpers.wait_for_ready_lsp()
       helpers.wait_for_server_progress()
       vim.api.nvim_win_set_cursor(0, {3, 18})

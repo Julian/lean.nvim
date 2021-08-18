@@ -11,7 +11,7 @@ describe('infoview', function()
   describe('lean 4', function()
     it('shows processing message initially',
     function(_)
-      vim.api.nvim_command("edit " .. fixtures.lean_project.some_existing_file)
+      helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
       helpers.wait_for_ready_lsp()
       vim.api.nvim_win_set_cursor(0, {3, 23})
       infoview.__update()
