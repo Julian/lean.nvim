@@ -234,25 +234,29 @@ end
 function infoview.enable(opts)
   options = vim.tbl_extend("force", options._DEFAULTS, opts)
   set_augroup("LeanInfoviewInit", [[
-    autocmd FileType lean3 lua require'lean.infoview'.make_buffer_focusable()
-    autocmd FileType lean lua require'lean.infoview'.make_buffer_focusable()
+    autocmd FileType lean3 lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
+    autocmd FileType lean lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
   ]])
 end
 
 --- Configure the infoview to update when this buffer is active.
-function infoview.make_buffer_focusable()
-  -- because FileType can happen after BufEnter
-  infoview.maybe_autoopen() infoview.__update()
-  infoview.get_current_infoview():focus_on_current_buffer()
+function infoview.make_buffer_focusable(name)
+  local bufnr = vim.fn.bufnr(name)
+  if bufnr == -1 then return end
+  if bufnr == vim.api.nvim_get_current_buf() then
+    -- because FileType can happen after BufEnter
+    infoview.maybe_autoopen() infoview.__update()
+    infoview.get_current_infoview():focus_on_current_buffer()
+  end
 
   -- WinEnter is necessary for the edge case where you have
   -- a file open in a tab with an infoview and move to a
   -- new window in a new tab with that same file but no infoview
-  set_augroup("LeanInfoviewSetFocus", [[
-    autocmd BufEnter <buffer> lua require'lean.infoview'.maybe_autoopen() require'lean.infoview'.__update()
-    autocmd BufEnter,WinEnter <buffer> lua if require'lean.infoview'.get_current_infoview()]] ..
+  set_augroup("LeanInfoviewSetFocus", string.format([[
+    autocmd BufEnter <buffer=%d> lua require'lean.infoview'.maybe_autoopen() require'lean.infoview'.__update()
+    autocmd BufEnter,WinEnter <buffer=%d> lua if require'lean.infoview'.get_current_infoview()]] ..
     [[ then require'lean.infoview'.get_current_infoview():focus_on_current_buffer() end
-  ]], 0)
+  ]], bufnr, bufnr), 0)
 end
 
 --- Set whether a new infoview is automatically opened when entering Lean buffers.
