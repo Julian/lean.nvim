@@ -10,7 +10,7 @@ local lean3 = {}
 -- Ideally this obviously would use a TOML parser but yeah choosing to
 -- do nasty things and not add the dependency for now.
 local _PROJECT_MARKER = '.*lean_version.*\".*:3.*'
-local _STANDARD_LIBRARY_PATHS = '.*/lean--3.+/lib/'
+local _STANDARD_LIBRARY_PATHS = '.*/[^/]*lean[%-]+3.+/lib/'
 
 --- Detect whether the current buffer is a Lean 3 file.
 function lean3.__detect()
