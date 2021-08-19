@@ -1,13 +1,14 @@
 local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
+local helpers = require('tests.helpers')
 
-require('tests.helpers').setup {
+helpers.setup {
   infoview = { autoopen = false },
 }
 describe('infoview', function()
   it('does not automatically open',
     function(_)
-      vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
+      helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
       assert.initclosed.infoview()
     end)
 

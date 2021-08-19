@@ -20,11 +20,11 @@ end
 ---      { sorry },
 function sorry.fill()
   local params = vim.lsp.util.make_position_params()
-  local responses = vim.lsp.buf_request_sync(0, 'textDocument/hover', params)
+  local responses = vim.lsp.buf_request_sync(0, '$/lean/plainGoal', params)
 
   for _, response in pairs(responses) do
-    if vim.tbl_isempty(response.result.contents) then return end
-    local goals = response.result.contents[1].value:match('(%d+) goal')
+    if not response.result or not response.result.goals or vim.tbl_isempty(response.result.goals) then return end
+    local goals = #response.result.goals
     if goals then
       local index = vim.api.nvim_win_get_cursor(0)[1]
       local lines = tbl_repeat(calculate_indent(index) .. "{ sorry },", goals)

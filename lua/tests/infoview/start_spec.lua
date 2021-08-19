@@ -1,12 +1,13 @@
 local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
+local helpers = require('tests.helpers')
 
-require('tests.helpers').setup {}
+helpers.setup {}
 describe('infoview', function()
   describe("startup", function()
     it('cursor stays in source window on open',
       function(_)
-        vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
+        helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
         infoview.get_current_infoview():open()
         assert.win.stayed.tracked_pending()
       end)
@@ -30,7 +31,7 @@ describe('infoview', function()
         vim.api.nvim_command("tabnew")
         assert.buf.created.tracked()
         assert.win.created.tracked()
-        vim.api.nvim_command('edit ' .. fixtures.lean_project.some_existing_file)
+        helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
         assert.initclosed.infoview()
         infoview.get_current_infoview():open()
         assert.win.stayed.tracked_pending()

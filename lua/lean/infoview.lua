@@ -22,19 +22,6 @@ local infoview = {
 }
 local options = { _DEFAULTS = { autoopen = true, width = 50 } }
 
-local _DEFAULT_BUF_OPTIONS = {
-  bufhidden = 'hide',
-  filetype = 'leaninfo',
-  modifiable = false,
-}
-local _DEFAULT_WIN_OPTIONS = {
-  cursorline = false,
-  number = false,
-  relativenumber = false,
-  spell = false,
-  winfixwidth = true,
-  wrap = true,
-}
 local _NOTHING_TO_SHOW = { "No info found." }
 
 --- An individual pin.
@@ -88,9 +75,7 @@ function Infoview:open()
   vim.cmd("botright " .. self.width .. "vsplit")
   vim.cmd(string.format("buffer %d", self.info.bufnr))
   local window = vim.api.nvim_get_current_win()
-  for name, value in pairs(_DEFAULT_WIN_OPTIONS) do
-    vim.api.nvim_win_set_option(window, name, value)
-  end
+
   -- Make sure we notice even if someone manually :q's the infoview window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer> lua require'lean.infoview'.__was_closed(%d)
@@ -155,9 +140,7 @@ function Info:new()
   setmetatable(new_info, self)
 
   vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
-  for name, value in pairs(_DEFAULT_BUF_OPTIONS) do
-    vim.api.nvim_buf_set_option(new_info.bufnr, name, value)
-  end
+  vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
 
   return new_info
 end
@@ -339,21 +322,29 @@ end
 function infoview.enable(opts)
   options = vim.tbl_extend("force", options._DEFAULTS, opts)
   set_augroup("LeanInfoviewInit", [[
-    autocmd FileType lean3 lua require'lean.infoview'.make_buffer_focusable()
-    autocmd FileType lean lua require'lean.infoview'.make_buffer_focusable()
+    autocmd FileType lean3 lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
+    autocmd FileType lean lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
   ]])
 end
 
 --- Configure the infoview to update when this buffer is active.
-function infoview.make_buffer_focusable()
+function infoview.make_buffer_focusable(name)
+  local bufnr = vim.fn.bufnr(name)
+  if bufnr == -1 then return end
+  if bufnr == vim.api.nvim_get_current_buf() then
+    -- because FileType can happen after BufEnter
+    infoview.maybe_autoopen() infoview.__update()
+    infoview.get_current_infoview():focus_on_current_buffer()
+  end
+
   -- WinEnter is necessary for the edge case where you have
   -- a file open in a tab with an infoview and move to a
   -- new window in a new tab with that same file but no infoview
-  set_augroup("LeanInfoviewSetFocus", [[
-    autocmd BufEnter <buffer> lua require'lean.infoview'.maybe_autoopen() require'lean.infoview'.__update()
-    autocmd BufEnter,WinEnter <buffer> lua if require'lean.infoview'.get_current_infoview()]] ..
+  set_augroup("LeanInfoviewSetFocus", string.format([[
+    autocmd BufEnter <buffer=%d> lua require'lean.infoview'.maybe_autoopen() require'lean.infoview'.__update()
+    autocmd BufEnter,WinEnter <buffer=%d> lua if require'lean.infoview'.get_current_infoview()]] ..
     [[ then require'lean.infoview'.get_current_infoview():focus_on_current_buffer() end
-  ]], 0)
+  ]], bufnr, bufnr), 0)
 end
 
 --- Set whether a new infoview is automatically opened when entering Lean buffers.

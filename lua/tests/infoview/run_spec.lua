@@ -1,12 +1,13 @@
 local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
+local helpers = require('tests.helpers')
 
-require('tests.helpers').setup{}
+helpers.setup{}
 describe('infoview', function()
   describe('initial', function()
     it('opens',
     function(_)
-      vim.api.nvim_command("edit " .. fixtures.lean3_project.some_existing_file)
+      helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
       assert.initclosed.infoview()
       infoview.get_current_infoview():open()
       assert.opened.infoview()
@@ -20,7 +21,8 @@ describe('infoview', function()
 
     it('remains open on WinEnter',
     function(_)
-      vim.api.nvim_command("split " .. fixtures.lean3_project.some_nested_existing_file)
+      vim.api.nvim_command("split")
+      helpers.edit_lean_buffer(fixtures.lean3_project.some_nested_existing_file)
       assert.buf.created.tracked()
       assert.win.created.tracked()
       assert.opened_kept.infoview()
@@ -32,7 +34,7 @@ describe('infoview', function()
 
     it('closes',
     function(_)
-      vim.api.nvim_command('edit ' .. fixtures.lean3_project.some_existing_file)
+      helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
       assert.opened_kept.infoview()
       infoview.get_current_infoview():close()
       assert.closed.infoview()
@@ -47,7 +49,8 @@ describe('infoview', function()
 
     it('remains closed on WinEnter',
     function(_)
-      vim.api.nvim_command("split " .. fixtures.lean3_project.some_existing_file)
+      vim.api.nvim_command("split")
+      helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
       assert.win.created.tracked()
       assert.buf.left.tracked()
       assert.closed_kept.infoview()
@@ -92,7 +95,7 @@ describe('infoview', function()
       vim.api.nvim_command("tabnew")
       assert.win.created.tracked()
       assert.buf.created.tracked()
-      vim.api.nvim_command("edit " .. fixtures.lean_project.some_existing_file)
+      helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
       assert.initclosed.infoview()
       infoview.get_current_infoview():open()
       assert.opened.infoview()

@@ -84,7 +84,7 @@ function helpers.clean_buffer(ft, contents, callback)
         source_file = { bufnr = bufnr },
       }
     end)
-    vim.api.nvim_buf_delete(bufnr, { force = true })
+    --vim.api.nvim_buf_delete(bufnr, { force = true })
   end
 end
 
@@ -96,6 +96,18 @@ function helpers.wait_for_line_diagnostics()
   assert.message("Waited for line diagnostics but none came.").True(succeeded)
 end
 
+function helpers.wait_for_filetype()
+  local result, _ = vim.wait(10000, function()
+    return require"lean".is_lean_buffer()
+  end)
+  assert.message("never got filetype").is_truthy(result)
+end
+
+function helpers.edit_lean_buffer(filename)
+  vim.api.nvim_command("edit! " .. filename)
+  helpers.wait_for_filetype()
+end
+
 --- Wait a few seconds for server progress to complete on the current buffer, erroring if it doesn't.
 function helpers.wait_for_server_progress(hover_match)
   -- if Lean 4, we can just check the reported progress
@@ -104,7 +116,7 @@ function helpers.wait_for_server_progress(hover_match)
       return require"lean.progress_bars".proc_infos[vim.api.nvim_get_current_buf()] and
              vim.tbl_isempty(require"lean.progress_bars".proc_infos[vim.api.nvim_get_current_buf()])
     end)
-    assert.message("Waited for server progress to complete but never did.").True(succeeded)
+    assert.message("Waited for lean 4 server progress to complete but never did.").True(succeeded)
   -- if Lean 3, there's no concrete indication, so we'll wait for a hover to match the given hover_match
   else
     assert.is_not_nil(hover_match)
@@ -118,13 +130,17 @@ function helpers.wait_for_server_progress(hover_match)
         else
           local this_result = result_table.result
           -- we can expect a language-labeled MarkedString[] from Lean 3
-          for _, hover in pairs(this_result.contents) do text = text .. "\n" .. hover.value end
+          for _, hover in pairs(this_result.contents) do
+            if type(hover) == "table" and hover.value then text = text .. "\n" .. hover.value
+            elseif type(hover) == "string" then text = text .. "\n" .. hover
+            end
+          end
         end
       end
 
       if text:find(hover_match, nil, true) then return true else return false end
     end)
-    assert.is_truthy(result)
+    assert.message("Waited for lean 3 server progress to complete but never did.").is_truthy(result)
   end
 end
 
