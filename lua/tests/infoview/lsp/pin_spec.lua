@@ -46,5 +46,11 @@ describe('infoview pin', function()
       infoview.get_current_infoview().info:clear_pins()
       assert.pindeleted{old_pin.id}.infoview()
     end)
+
+    it('can be created again',
+    function(_)
+      infoview.get_current_infoview().info:add_pin()
+      assert.pinopened.infoview()
+    end)
   end)
 end)

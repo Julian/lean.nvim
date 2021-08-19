@@ -20,7 +20,7 @@ local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false }
 local _NOTHING_TO_SHOW = { "No info found." }
 
 --- An individual pin.
-local Pin = {}
+local Pin = {next_id = 0}
 
 --- An individual info.
 local Info = {}
@@ -190,8 +190,9 @@ function Info:render()
 end
 
 function Pin:new(paused)
-  local new_pin = {id = #infoview._pin_by_id + 1, parent_infos = {}, paused = paused, tick = 0}
-  table.insert(infoview._pin_by_id, new_pin)
+  local new_pin = {id = self.next_id, parent_infos = {}, paused = paused, tick = 0}
+  self.next_id = self.next_id + 1
+  infoview._pin_by_id[new_pin.id] = new_pin
 
   self.__index = self
   setmetatable(new_pin, self)
