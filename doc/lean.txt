@@ -66,20 +66,31 @@ health.check()                                                *health.check()*
 Infoview components which can be assembled to show various information about
 the current Lean module or state.
 
-components.goal({goal})                                    *components.goal()*
+components.goal({div}, {goal})                             *components.goal()*
     The current (tactic) goal state.
 
 
     Parameters: ~
+        {div}  (table)  the current div
         {goal} (table)  a Lean4 `plainGoal` LSP response
 
 
-components.term_goal({term_goal})                     *components.term_goal()*
+components.term_goal({div}, {term_goal})              *components.term_goal()*
     The current (term) goal state.
 
 
     Parameters: ~
+        {div}       (table)  the current div
         {term_goal} (table)  a Lean4 `plainTermGoal` LSP response
+
+
+components.interactive_term_goal({div}, {goal})*components.interactive_term_goal()*
+    The current (term) goal state.
+
+
+    Parameters: ~
+        {div}  (table)            the current div
+        {goal} (InteractiveGoal)
 
 
 components.diagnostics()                            *components.diagnostics()*
