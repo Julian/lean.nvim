@@ -218,16 +218,16 @@ function Pin:update()
     a.util.scheduler()
     if self.tick ~= this_tick then return end
 
-    local lines
+    self.div = html.Div:new()
+
     if vim.opt.filetype:get() == "lean3" then
-      lines = lean3.update_infoview()
+      lean3.update_infoview(self.div)
     else
       self:reset_rpc()
 
       local _, _, goal = plain_goal(0)
       if self.tick ~= this_tick then return end
 
-      self.div = html.Div:new()
       components.goal(self.div, goal)
 
       local term_goal, term_goal_err =
@@ -241,8 +241,9 @@ function Pin:update()
       if self.tick ~= this_tick then return end
 
       components.diagnostics(self.div)
-      lines = vim.split(self.div:render(), "\n")
     end
+
+    local lines = vim.split(self.div:render(), "\n")
     if self.tick ~= this_tick then return end
 
     self.msg = lines
