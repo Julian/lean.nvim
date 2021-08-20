@@ -53,6 +53,46 @@ function components.term_goal(div, term_goal)
   div:end_div()
 end
 
+---@param goal InteractiveGoal
+function components.interactive_term_goal(div, goal)
+  if not goal then return end
+
+  div:start_div({state = goal}, 'Term State\n', "term_state")
+  ---@param t CodeWithInfos
+  local function text(t)
+    if t.text ~= nil then
+      div:start_div({t = t}, t.text, "text")
+      div:end_div()
+    elseif t.append ~= nil then
+      for _, s in ipairs(t.append) do
+        text(s)
+      end
+    elseif t.tag ~= nil then
+      div:start_div({tag = t.tag}, nil, "tag")
+      text(t.tag[2])
+      div:end_div()
+    end
+  end
+
+  for _, hyp in ipairs(goal.hyps) do
+    div:start_div({hyp = hyp}, hyp.names .. ' : ', "hyp") -- FIXME
+    text(hyp.type)
+    if hyp.val ~= nil then
+      div:start_div({val = hyp.val}, " := ", "hyp_val")
+      text(hyp.val)
+      div:end_div()
+    end
+    div:start_div({}, "\n")
+    div:end_div()
+    div:end_div()
+  end
+  div:start_div({goal = goal.type}, '⊢ ', "goal")
+  text(goal.type)
+  div:end_div()
+  div:end_div()
+end
+
+
 --- Diagnostic information for the current line from the Lean server.
 function components.diagnostics(div)
   for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics()) do

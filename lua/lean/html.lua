@@ -1,21 +1,23 @@
 --- An HTML-style div
 ---@class Div
+---@field tags table
 ---@field text string
+---@field name string
 ---@field divs table
 ---@field div_stack table
 local Div = {}
 Div.__index = Div
 
-function Div:new(tags, text)
-  return setmetatable({tags = tags or {}, text = text or "", divs = {}, div_stack = {}}, self)
+function Div:new(tags, text, name)
+  return setmetatable({tags = tags or {}, text = text or "", name = name or "", divs = {}, div_stack = {}}, self)
 end
 
 function Div:add_div(div)
   table.insert(self.divs, div)
 end
 
-function Div:start_div(tags, text)
-  local new_div = Div:new(tags, text)
+function Div:start_div(tags, text, name)
+  local new_div = Div:new(tags, text, name)
   local last_div = self.div_stack[#self.div_stack]
   if last_div then
     last_div:add_div(new_div)
@@ -50,8 +52,8 @@ function Div:div_from_pos(pos, stack)
   local search_pos = pos - #text
 
   for _, div in ipairs(self.divs) do
-    local div_text, div_found, div_stack = div:div_from_pos(search_pos, new_stack)
-    if div_found then
+    local div_text, div_stack = div:div_from_pos(search_pos, new_stack)
+    if div_stack then
       return nil, div_stack
     end
     text = text .. div_text

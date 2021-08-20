@@ -2,7 +2,8 @@ local components = require('lean.infoview.components')
 local lean3 = require('lean.lean3')
 local leanlsp = require('lean.lsp')
 local is_lean_buffer = require('lean').is_lean_buffer
-local set_augroup = require('lean._util').set_augroup
+local util = require('lean._util')
+local set_augroup = util.set_augroup
 local a = require('plenary.async')
 local rpc = require'lean.rpc'
 local html = require'lean.html'
@@ -130,6 +131,7 @@ function Info:new()
     bufnr = vim.api.nvim_create_buf(false, true),
     pin = Pin:new()
   }
+  util.load_mappings(require"lean".info_mappings, new_info.bufnr)
   new_info.pin:add_parent_info(new_info)
   table.insert(infoview._info_by_id, new_info)
 
@@ -140,6 +142,19 @@ function Info:new()
   vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
 
   return new_info
+end
+
+function Info:widget()
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local lines = vim.api.nvim_buf_get_lines(self.bufnr, 0, pos[1] - 1, true)
+  local raw_pos = 0
+  for _, line in pairs(lines) do
+    raw_pos = raw_pos + #line + 1
+  end
+  raw_pos = raw_pos + pos[2] + 1
+
+  local _, div_stack = self.div:div_from_pos(raw_pos)
+  require"vim.lsp.util".open_floating_preview(vim.split(vim.inspect(div_stack[#div_stack]), "\n"), nil, {})
 end
 
 function Info:close()
@@ -193,45 +208,6 @@ function Pin:reset_rpc()
   self.sess = rpc.open()
 end
 
----@param goal InteractiveGoal
-local function format_interactive_term_goal(goal)
-  if not goal then return '' end
-
-  local res = {} ---@type string[]
-
-  ---@param t CodeWithInfos
-  local function text(t)
-    if t.text ~= nil then
-      table.insert(res, t.text)
-    elseif t.append ~= nil then
-      for _, s in ipairs(t.append) do
-        text(s)
-      end
-    elseif t.tag ~= nil then
-      text(t.tag[2])
-    end
-  end
-
-  for _, hyp in ipairs(goal.hyps) do
-    table.insert(res, hyp.names) -- FIXME
-    table.insert(res, ' : ')
-    text(hyp.type)
-    if hyp.val ~= nil then
-      table.insert(res, ' := ')
-      text(hyp.val)
-    end
-    table.insert(res, '\n')
-  end
-  table.insert(res, '⊢ ')
-  text(goal.type)
-
-  local pos = { line = 0, character = 0 } -- FIXME
-  return {
-    range = { start = pos, ["end"] = pos },
-    goal = table.concat(res),
-  }
-end
-
 --- Update this pin's contents given the current position.
 function Pin:update()
   a.void(function()
@@ -251,18 +227,19 @@ function Pin:update()
       local _, _, goal = plain_goal(0)
       if self.tick ~= this_tick then return end
 
+      self.div = html.Div:new()
+      components.goal(self.div, goal)
+
       local term_goal, term_goal_err =
         self.sess:getInteractiveTermGoal(vim.lsp.util.make_position_params())
       if term_goal_err then
         _, _, term_goal = plain_term_goal(0)
+        components.term_goal(self.div, term_goal)
       else
-        term_goal = format_interactive_term_goal(term_goal)
+        components.interactive_term_goal(self.div, term_goal)
       end
       if self.tick ~= this_tick then return end
 
-      self.div = html.Div:new()
-      components.goal(self.div, goal)
-      components.term_goal(self.div, term_goal)
       components.diagnostics(self.div)
       lines = vim.split(self.div:render(), "\n")
     end

@@ -6,8 +6,9 @@
 ---@brief ]]
 
 ---@tag lean.nvim
+local util = require('lean._util')
 
-local subprocess_check_output = require('lean._util').subprocess_check_output
+local subprocess_check_output = util.subprocess_check_output
 
 local lean = {
   mappings = {
@@ -16,6 +17,13 @@ local lean = {
       ["<LocalLeader>s"] = "<Cmd>lua require'lean.sorry'.fill()<CR>";
       ["<LocalLeader>t"] = "<Cmd>lua require'lean.trythis'.swap()<CR>";
       ["<LocalLeader>\\"] = "<Cmd>lua require'lean.abbreviations'.show_reverse_lookup()<CR>";
+    };
+    i = {
+    };
+  };
+  info_mappings = {
+    n = {
+      ["<LocalLeader><space>"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info:widget()<CR>";
     };
     i = {
     };
@@ -57,16 +65,8 @@ function lean.setup(opts)
 end
 
 function lean.use_suggested_mappings(buffer_local)
-  local opts = { noremap = true }
-  for mode, mode_mappings in pairs(lean.mappings) do
-    for lhs, rhs in pairs(mode_mappings) do
-      if buffer_local then
-        vim.api.nvim_buf_set_keymap(0, mode, lhs, rhs, opts)
-      else
-        vim.api.nvim_set_keymap(mode, lhs, rhs, opts)
-      end
-    end
-  end
+  local buffer = buffer_local and 0
+  util.load_mappings(lean.mappings, buffer)
 end
 
 --- Is the current buffer a lean buffer?

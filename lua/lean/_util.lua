@@ -66,4 +66,17 @@ function M.setmt__gc(t, mt)
   return setmetatable(t, mt)
 end
 
+function M.load_mappings(mappings, buffer)
+  local opts = { noremap = true }
+  for mode, mode_mappings in pairs(mappings) do
+    for lhs, rhs in pairs(mode_mappings) do
+      if buffer then
+        vim.api.nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts)
+      else
+        vim.api.nvim_set_keymap(mode, lhs, rhs, opts)
+      end
+    end
+  end
+end
+
 return M
