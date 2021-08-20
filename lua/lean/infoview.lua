@@ -5,6 +5,7 @@ local is_lean_buffer = require('lean').is_lean_buffer
 local set_augroup = require('lean._util').set_augroup
 local a = require('plenary.async')
 local rpc = require'lean.rpc'
+local html = require'lean.html'
 
 local infoview = {
   -- mapping from infoview IDs to infoviews
@@ -147,7 +148,9 @@ end
 
 --- Update this info's physical contents.
 function Info:render()
-  local lines = self.pin.msg
+  self.div = html.Div:new()
+  self.div:add_div(self.pin.div)
+  local lines = vim.split(self.div:render(), "\n")
 
   if vim.tbl_isempty(lines) then lines = _NOTHING_TO_SHOW end
 
@@ -257,10 +260,11 @@ function Pin:update()
       end
       if self.tick ~= this_tick then return end
 
-      lines = components.goal(goal)
-      if not vim.tbl_isempty(lines) then table.insert(lines, '') end
-      vim.list_extend(lines, components.term_goal(term_goal))
-      vim.list_extend(lines, components.diagnostics())
+      self.div = html.Div:new()
+      components.goal(self.div, goal)
+      components.term_goal(self.div, term_goal)
+      components.diagnostics(self.div)
+      lines = vim.split(self.div:render(), "\n")
     end
     if self.tick ~= this_tick then return end
 
