@@ -68,8 +68,6 @@ end
 
 --- Open this infoview if it isn't already open
 function Infoview:open()
-  if self.is_open then return vim.deepcopy(self) end
-
   local window_before_split = vim.api.nvim_get_current_win()
 
   vim.cmd("botright " .. self.width .. "vsplit")
@@ -87,8 +85,6 @@ function Infoview:open()
   self.is_open = true
 
   self:focus_on_current_buffer()
-
-  return vim.deepcopy(self)
 end
 
 --- Close this infoview.
