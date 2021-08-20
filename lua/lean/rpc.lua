@@ -1,5 +1,6 @@
 local rpc = {}
 local lsp = require'plenary.async.lsp'
+local util = require'lean._util'
 local control = require'plenary.async.control'
 
 ---@class RpcRef
@@ -86,7 +87,8 @@ local function connect(bufnr)
 end
 vim.lsp.handlers['$/lean/rpc/connected'] = function(err, _, params, _, _, _)
   if err ~= nil then return end
-  local bufnr = vim.uri_to_bufnr(params.uri)
+  local bufnr = util.uri_to_existing_bufnr(params.uri)
+  if not bufnr then return end
   sessions[bufnr]:connected(params.sessionId)
 end
 

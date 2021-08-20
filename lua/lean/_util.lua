@@ -50,4 +50,11 @@ function M.subprocess_check_output(opts, timeout)
   ))
 end
 
+function M.uri_to_existing_bufnr(uri)
+  local path = vim.uri_to_fname(uri)
+  local bufnr = vim.fn.bufnr(path)
+  if vim.fn.bufnr ~= -1 then return bufnr end
+  return nil
+end
+
 return M
