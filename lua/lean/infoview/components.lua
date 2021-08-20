@@ -27,7 +27,8 @@ local function range_to_string(range)
 end
 
 --- The current (tactic) goal state.
----@param goal table a Lean4 `plainGoal` LSP response
+---@param div table: the current div
+---@param goal table: a Lean4 `plainGoal` LSP response
 function components.goal(div, goal)
   if type(goal) ~= "table" or not goal.goals then return end
 
@@ -44,6 +45,7 @@ function components.goal(div, goal)
 end
 
 --- The current (term) goal state.
+---@param div table: the current div
 ---@param term_goal table: a Lean4 `plainTermGoal` LSP response
 function components.term_goal(div, term_goal)
   if type(term_goal) ~= "table" or not term_goal.goal then return end
@@ -53,6 +55,8 @@ function components.term_goal(div, term_goal)
   div:end_div()
 end
 
+--- The current (term) goal state.
+---@param div table: the current div
 ---@param goal InteractiveGoal
 function components.interactive_term_goal(div, goal)
   if not goal then return end
