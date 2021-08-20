@@ -177,9 +177,7 @@ function Pin:new()
 end
 
 function Pin:close()
-  if self.sess ~= nil then
-    self.sess:close()
-  end
+  self.sess = nil
 end
 
 ---@param info Info
@@ -193,9 +191,6 @@ local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 2)
 local wait_timer = a.wrap(vim.loop.timer_start, 4)
 
 function Pin:reset_rpc()
-  if self.sess ~= nil then
-    self.sess:close()
-  end
   self.sess = rpc.open()
 end
 

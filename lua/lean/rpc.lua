@@ -98,11 +98,19 @@ end
 ---@field sess Session
 local Subsession = {}
 Subsession.__index = Subsession
+Subsession.__gc = vim.schedule_wrap(function (self)
+  if self.sess.closed then return end
+  local refs = {}
+  for _, ref in pairs(self.refs) do
+    table.insert(refs, ref)
+  end
+  self.sess:release(refs)
+end)
 
 ---@param sess Session
 ---@param pos TextDocumentPositionParams
 function Subsession:new(sess, pos)
-  return setmetatable({ sess = sess, pos = pos, refs = {} }, self)
+  return util.setmt__gc({ sess = sess, pos = pos, refs = {} }, self)
 end
 
 ---@param method string
@@ -123,15 +131,6 @@ function Subsession:call(method, params)
   local res, err = self.sess:call(self.pos, method, params)
   register(res)
   return res, err
-end
-
-function Subsession:close()
-  if self.sess.closed then return end
-  local refs = {}
-  for _, ref in pairs(self.refs) do
-    table.insert(refs, ref)
-  end
-  self.sess:release(refs)
 end
 
 function rpc.open()

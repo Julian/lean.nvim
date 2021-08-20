@@ -57,4 +57,13 @@ function M.uri_to_existing_bufnr(uri)
   return nil
 end
 
+-- Lua 5.1 workaround copied from stackoverflow.com/questions/27426704 !!!
+function M.setmt__gc(t, mt)
+  -- luacheck: ignore
+  local prox = newproxy(true)
+  getmetatable(prox).__gc = function() mt.__gc(t) end
+  t[prox] = true
+  return setmetatable(t, mt)
+end
+
 return M
