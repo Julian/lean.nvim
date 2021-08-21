@@ -15,7 +15,7 @@ local infoview = {
   -- mapping from pin IDs to pins
   _pin_by_id = {},
 }
-local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false } }
+local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, show_processing = true } }
 
 local _NOTHING_TO_SHOW = { "No info found." }
 
@@ -350,7 +350,9 @@ function Pin:_update()
     lines = lean3.update_infoview(buf, params)
   else
     if require"lean.progress".is_processing_at(params) then
-      lines = {"Processing file..."}
+      if options.show_processing then
+        lines = {"Processing file..."}
+      end
     else
       local _, _, goal = plain_goal(params, buf)
       if self.tick ~= this_tick then return end

@@ -19,7 +19,8 @@ local default_config = {
   mappings = false,
   infoview = {
     autoopen = false,
-    autopause = true
+    autopause = true,
+    show_processing = false
   },
   lsp3 = {
     enable = false
