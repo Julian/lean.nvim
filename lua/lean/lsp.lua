@@ -65,7 +65,7 @@ function lsp.handlers.file_progress_handler(err, _, params, _, _, _)
 
   require"lean.progress".update(params)
 
-  require"lean.infoview".__update_progress(params.textDocument.uri)
+  require"lean.infoview".__update_event(params.textDocument.uri)
 
   require"lean.progress_bars".update(params)
 end
