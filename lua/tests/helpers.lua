@@ -444,6 +444,7 @@ local function opened_pin(_, arguments)
   local this_pin = arguments[1]
 
   assert.is_nil(last_pin_ids[this_pin.id])
+  assert.is_nil(this_pin.prev_div)
 
   return true
 end
@@ -681,6 +682,7 @@ local function infoview_check(state, _)
 
     if check == "pinopened" then
       assert.opened_pin_state(this_pin)
+      this_pin.prev_div = this_pin.div
       -- assume text and pos kept if unspecified
       if pin_text_list[id] == nil then
         pin_text_list[id] = "pin_text_kept"
@@ -747,12 +749,14 @@ local function infoview_check(state, _)
     end
 
     if text_check == "pin_text_changed" then
-      check_change(function() return this_pin.prev_msg end, function() return this_pin.msg end, true, "text")
+      check_change(function() return this_pin.prev_div:render() end,
+        function() return this_pin.div:render() end, true, "text")
     else
-      check_change(function() return this_pin.prev_msg end, function() return this_pin.msg end, false, "text")
+      check_change(function() return this_pin.prev_div:render() end,
+        function() return this_pin.div:render() end, false, "text")
     end
 
-    this_pin.prev_msg = this_pin.msg
+    this_pin.prev_div = this_pin.div
     this_pin.prev_text_check = text_check
 
     pin_ids[id] = true

@@ -2,17 +2,24 @@ local components = require('lean.infoview.components')
 local lean3 = require('lean.lean3')
 local leanlsp = require('lean.lsp')
 local is_lean_buffer = require('lean').is_lean_buffer
-local set_augroup = require('lean._util').set_augroup
+local util = require('lean._util')
+local set_augroup = util.set_augroup
 local a = require('plenary.async')
+local html = require'lean.html'
+local lsp = require'plenary.async.lsp'
 
 local infoview = {
   -- mapping from infoview IDs to infoviews
+  ---@type table<number, Infoview>
   _by_id = {},
   -- mapping from tabpage handles to infoviews
+  ---@type table<any, Infoview>
   _by_tabpage = {},
   -- mapping from info IDs to infos
+  ---@type table<number, Info>
   _info_by_id = {},
   -- mapping from pin IDs to pins
+  ---@type table<number, Pin>
   _pin_by_id = {},
 }
 local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, show_processing = true } }
@@ -20,15 +27,28 @@ local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, 
 local _NOTHING_TO_SHOW = { "No info found." }
 
 --- An individual pin.
+---@class Pin
+---@field id number
+---@field parent_infos table<number, boolean>
 local Pin = {next_id = 1}
 
 --- An individual info.
+---@class Info
+---@field id number
+---@field bufnr number
+---@field pin Pin
 local Info = {}
 
 --- A "view" on an info (i.e. window).
+---@class Infoview
+---@field id number
+---@field bufnr number
+---@field width number
+---@field info Info
 local Infoview = {}
 
 --- Get the infoview corresponding to the current window.
+---@return Infoview
 function infoview.get_current_infoview()
   return infoview._by_tabpage[vim.api.nvim_win_get_tabpage(0)]
 end
@@ -36,6 +56,7 @@ end
 --- Create a new infoview.
 ---@param width number: the width of the new infoview
 ---@param open boolean: whether to open the infoview after initializing
+---@return Infoview
 function Infoview:new(width, open)
   local new_infoview = {id = #infoview._by_id + 1, width = width, info = Info:new()}
   table.insert(infoview._by_id, new_infoview)
@@ -102,6 +123,7 @@ function Infoview:focus_on_current_buffer()
   end
 end
 
+---@return Info
 function Info:new()
   local new_info = {
     id = #infoview._info_by_id + 1,
@@ -109,6 +131,7 @@ function Info:new()
     pin = Pin:new(options.autopause),
     pins = {}
   }
+  util.load_mappings(require"lean".info_mappings, new_info.bufnr)
   new_info.pin:add_parent_info(new_info)
   table.insert(infoview._info_by_id, new_info)
 
@@ -119,6 +142,30 @@ function Info:new()
   vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
 
   return new_info
+end
+
+function Info:widget()
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local lines = vim.api.nvim_buf_get_lines(self.bufnr, 0, pos[1] - 1, true)
+  local raw_pos = 0
+  for _, line in pairs(lines) do
+    raw_pos = raw_pos + #line + 1
+  end
+  raw_pos = raw_pos + pos[2] + 1
+
+  local _, div_stack = self.div:div_from_pos(raw_pos)
+  local pin
+  for i = #div_stack, 1, -1 do
+    if div_stack[i].name == "pin" then
+      pin = div_stack[i].tags.pin break
+    end
+  end
+  a.void(function()
+    local buf = util.uri_to_existing_bufnr(pin.position_params.textDocument.uri)
+    if not buf then return end
+    local _, _, result = lsp.buf_request(buf, "$/lean/discoverWidget", pin.position_params)
+    require"vim.lsp.util".open_floating_preview(vim.split(vim.inspect(result), "\n"), nil, {})
+  end)()
 end
 
 function Info:add_pin()
@@ -139,9 +186,8 @@ local paused_txt = "[PAUSED]"
 
 --- Update this info's physical contents.
 function Info:render()
+  self.div = html.Div:new({info = self}, "", "info")
   local function render_pin(pin, current)
-    local pin_lines = {}
-
     local header
     if not current then
       header = "-- PIN " .. tostring(pin.id) .. (pin.paused and " " .. paused_txt or "")
@@ -157,27 +203,25 @@ function Info:render()
       else
         filename = pin.position_params.textDocument.uri
       end
-      header = header .. (": file %s at line %d, character %d"):format(filename,
+      header = header .. (": file %s at line %d, character %d\n"):format(filename,
         pin.position_params.position.line + 1, pin.position_params.position.character + 1)
     end
 
-    if header then table.insert(pin_lines, header) end
-    if not pin.msg or vim.tbl_isempty(pin.msg) then
-      vim.list_extend(pin_lines, _NOTHING_TO_SHOW)
-    else
-      vim.list_extend(pin_lines, pin.msg)
-    end
+    local pin_div = html.Div:new({}, header, "pin_wrapper")
+    if pin.div then pin_div:add_div(pin.div) end
 
-    return pin_lines
+    self.div:add_div(pin_div)
   end
 
-  local lines = render_pin(self.pin, true)
+  render_pin(self.pin, true)
 
   for _, pin in pairs(self.pins) do
-    vim.list_extend(lines, {""})
-    vim.list_extend(lines, render_pin(pin, false))
-    vim.list_extend(lines, {"--"})
+    self.div:add_div(html.Div:new({}, "\n\n", "pin_spacing"))
+    render_pin(pin, false)
+    self.div:add_div(html.Div:new({}, "\n--", "close_pin"))
   end
+
+  local lines = vim.split(self.div:render(), "\n")
 
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', true)
   vim.api.nvim_buf_set_lines(self.bufnr, 0, -1, true, lines)
@@ -189,8 +233,10 @@ function Info:render()
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', false)
 end
 
+---@return Pin
 function Pin:new(paused)
-  local new_pin = {id = self.next_id, parent_infos = {}, paused = paused, tick = 0}
+  local new_pin = {id = self.next_id, parent_infos = {}, paused = paused, tick = 0,
+    div = html.Div:new({pin = self}, "", "pin")}
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
 
@@ -200,6 +246,7 @@ function Pin:new(paused)
   return new_pin
 end
 
+---@param info Info
 function Pin:add_parent_info(info)
   self.parent_infos[info.id] = true
 end
@@ -280,7 +327,6 @@ function Pin:update_position(delay)
   self:set_position_params(new_params, delay)
 end
 
-
 function Pin:toggle_pause() if not self.paused then self:pause() else self:unpause() end end
 
 function Pin:show_extmark()
@@ -335,9 +381,12 @@ function Pin:_update(delay)
 
   local params = self.position_params
 
+  self.div = html.Div:new({pin = self}, "", "pin")
+
   local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   if buf == -1 then
-    self.msg = {"No corresponding buffer found."}
+    self.div:start_div({}, "No corresponding buffer found.", "no-buffer-msg")
+    self.div:end_div()
     return
   end
 
@@ -345,30 +394,37 @@ function Pin:_update(delay)
 
   local line = params.position.line
 
-  local lines
-
   if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
-    lines = lean3.update_infoview(buf, params)
+    lean3.update_infoview(self.div, buf, params)
   else
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then
-        lines = {"Processing file..."}
+        self.div:start_div({}, "Processing file...", "processing-msg")
+        self.div:end_div()
       end
     else
       local _, _, goal = plain_goal(params, buf)
       if self.tick ~= this_tick then return end
+      components.goal(self.div, goal)
 
       local _, _, term_goal = plain_term_goal(params, buf)
+      if goal and term_goal then
+        self.div:add_div(html.Div:new({}, "\n\n", "plain_goal-term_goal-separator"))
+      end
+      components.term_goal(self.div, term_goal)
+
+      if not goal and not term_goal then
+        self.div:add_div(html.Div:new({}, "No tactic/term data found.", "no-tactic-term"))
+      end
+
       if self.tick ~= this_tick then return end
 
-      lines = components.goal(goal)
-      if not vim.tbl_isempty(lines) then table.insert(lines, '') end
-      vim.list_extend(lines, components.term_goal(term_goal))
-      vim.list_extend(lines, components.diagnostics(buf, line))
+      components.diagnostics(self.div, buf, line)
     end
   end
   if self.tick ~= this_tick then return end
 
+  local lines = vim.split(self.div:render(), "\n")
   self.msg = lines
 end
 
@@ -398,6 +454,7 @@ end
 
 --- An infoview was closed, either directly via `Infoview.close` or manually.
 --- Will be triggered via a `WinClosed` autocmd.
+---@param id number
 function infoview.__was_closed(id)
   infoview._by_id[id]:close()
 end

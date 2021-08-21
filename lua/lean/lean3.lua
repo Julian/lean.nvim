@@ -57,14 +57,13 @@ function lean3.__current_search_paths()
 end
 
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
-function lean3.update_infoview(bufnr, params)
+function lean3.update_infoview(div, bufnr, params)
   params = vim.deepcopy(params)
   local _, _, result = buf_request(bufnr, "$/lean/plainGoal", params)
-  local lines = {}
   if result and type(result) == "table" then
-    vim.list_extend(lines, components.goal(result))
+    components.goal(div, result)
   end
-  return vim.list_extend(lines, components.diagnostics(bufnr, params.position.line))
+  components.diagnostics(div, bufnr, params.position.line)
 end
 
 function lean3.lsp_enable(opts)

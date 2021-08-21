@@ -25,6 +25,13 @@ local lean = {
     };
     i = {
     };
+  };
+  info_mappings = {
+    n = {
+      ["<LocalLeader><space>"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info:widget()<CR>";
+    };
+    i = {
+    };
   }
 }
 
@@ -63,16 +70,8 @@ function lean.setup(opts)
 end
 
 function lean.use_suggested_mappings(buffer_local)
-  local opts = { noremap = true }
-  for mode, mode_mappings in pairs(lean.mappings) do
-    for lhs, rhs in pairs(mode_mappings) do
-      if buffer_local then
-        vim.api.nvim_buf_set_keymap(0, mode, lhs, rhs, opts)
-      else
-        vim.api.nvim_set_keymap(mode, lhs, rhs, opts)
-      end
-    end
-  end
+  local buffer = buffer_local and 0
+  util.load_mappings(lean.mappings, buffer)
 end
 
 --- Is the current buffer a lean buffer?
