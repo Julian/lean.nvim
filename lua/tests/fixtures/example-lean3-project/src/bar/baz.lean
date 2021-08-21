@@ -11,3 +11,6 @@ begin
     apply or.inl,
     assumption,
 end
+
+def new_test : bool := by
+  exact false

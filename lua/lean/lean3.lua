@@ -67,4 +67,11 @@ function lean3.update_infoview(bufnr, params)
   return vim.list_extend(lines, components.diagnostics(bufnr, params.position.line))
 end
 
+function lean3.lsp_enable(opts)
+  opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
+    ['textDocument/publishDiagnostics'] = require"lean.lsp".handlers.diagnostics_handler;
+  })
+  require'lspconfig'.lean3ls.setup(opts)
+end
+
 return lean3

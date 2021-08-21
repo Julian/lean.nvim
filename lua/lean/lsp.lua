@@ -15,6 +15,7 @@ function lsp.enable(opts)
     ["$/lean/plainGoal"] = lsp.handlers.plain_goal_handler;
     ["$/lean/plainTermGoal"] = lsp.handlers.plain_term_goal_handler;
     ['$/lean/fileProgress'] = lsp.handlers.file_progress_handler;
+    ['textDocument/publishDiagnostics'] = lsp.handlers.diagnostics_handler;
   })
   require('lspconfig').leanls.setup(opts)
 end
@@ -64,9 +65,15 @@ function lsp.handlers.file_progress_handler(err, _, params, _, _, _)
 
   require"lean.progress".update(params)
 
-  require"lean.infoview".__update_progress(params)
+  require"lean.infoview".__update_progress(params.textDocument.uri)
 
   require"lean.progress_bars".update(params)
+end
+
+function lsp.handlers.diagnostics_handler (err, method, params, client_id, bufnr, config)
+  require"vim.lsp.handlers"['textDocument/publishDiagnostics'](err, method, params, client_id, bufnr, config)
+
+  require"lean.infoview".__update_event(params.uri)
 end
 
 return lsp

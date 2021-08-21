@@ -407,11 +407,11 @@ function infoview.__update()
   infoview.get_current_infoview().info.pin:set_position_params(vim.lsp.util.make_position_params())
 end
 
---- Update pins corresponding to the given $/lean/fileProgress parameters.
-function infoview.__update_progress(params)
+--- Update pins corresponding to the given URI.
+function infoview.__update_event(uri)
   if infoview.enabled then
     for _, pin in pairs(infoview._pin_by_id) do
-      if pin.position_params and pin.position_params.textDocument.uri == params.textDocument.uri then
+      if pin.position_params and pin.position_params.textDocument.uri == uri then
         pin:update()
       end
     end
