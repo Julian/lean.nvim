@@ -20,7 +20,7 @@ local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, 
 local _NOTHING_TO_SHOW = { "No info found." }
 
 --- An individual pin.
-local Pin = {next_id = 0}
+local Pin = {next_id = 1}
 
 --- An individual info.
 local Info = {}
