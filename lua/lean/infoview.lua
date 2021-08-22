@@ -237,12 +237,12 @@ function Pin:update_extmark()
   if not params then return end
 
   local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
-  local line = params.position.line
-  local col = params.position.character
 
   if buf ~= -1 then
-    local buf_lines = vim.api.nvim_buf_get_lines(buf, line, line + 1, false)
-    local end_col = ((#buf_lines > 0) and (col < #(buf_lines[1]))) and col + 1 or col
+    local line = params.position.line
+    local buf_line = vim.api.nvim_buf_get_lines(buf, line, line + 1, false)[1]
+    local col = buf_line and vim.str_byteindex(buf_line, params.position.character) or 0
+    local end_col = buf_line and ((col < #buf_line) and col + 1 or col) or 0
 
     self.extmark = vim.api.nvim_buf_set_extmark(buf, extmark_ns,
       line, col,
@@ -269,8 +269,10 @@ function Pin:update_position()
 
   local pos = self.position_params.position
   local new_pos = vim.deepcopy(pos)
+
   new_pos.line = extmark_pos[1]
-  new_pos.character = extmark_pos[2]
+  local buf_line = vim.api.nvim_buf_get_lines(buf, new_pos.line, new_pos.line + 1, false)[1]
+  new_pos.character = buf_line and vim.str_utfindex(buf_line, extmark_pos[2]) or new_pos.character
 
   if not vim.deep_equal(pos, new_pos) then
     local new_params = vim.deepcopy(self.position_params)
