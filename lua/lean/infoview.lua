@@ -224,11 +224,11 @@ vim.highlight.create(pin_hl_group, {
 }, true)
 
 --- Update this pin's current position.
-function Pin:set_position_params(params)
+function Pin:set_position_params(params, delay)
   self.position_params = params
 
   self:update_extmark()
-  self:update()
+  self:update(false, delay)
 end
 
 --- Update pin extmark based on position, used when resetting pin position.
@@ -258,7 +258,7 @@ function Pin:update_extmark()
 end
 
 --- Update pin position based on extmark, used when changing text.
-function Pin:update_position()
+function Pin:update_position(delay)
   local extmark = self.extmark
   if not extmark then return end
 
@@ -277,7 +277,7 @@ function Pin:update_position()
   if not vim.deep_equal(pos, new_pos) then
     local new_params = vim.deepcopy(self.position_params)
     new_params.position = new_pos
-    self:set_position_params(new_params)
+    self:set_position_params(new_params, delay)
   end
 end
 
@@ -308,10 +308,10 @@ function Pin:pause()
   self:update()
 end
 
-function Pin:update(force)
+function Pin:update(force, delay)
   a.void(function()
     if self.position_params and (force or not self.paused) then
-      self:_update()
+      self:_update(delay)
     end
 
     for parent_id, _ in pairs(self.parent_infos) do
@@ -326,11 +326,11 @@ local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 local wait_timer = a.wrap(vim.loop.timer_start, 4)
 
 --- async function to update this pin's contents given the current position.
-function Pin:_update()
+function Pin:_update(delay)
   self.tick = (self.tick + 1) % 1000
   local this_tick = self.tick
 
-  wait_timer(vim.loop.new_timer(), 100, 0)
+  wait_timer(vim.loop.new_timer(), delay or 100, 0)
   a.util.scheduler()
   if self.tick ~= this_tick then return end
 
@@ -424,7 +424,7 @@ end
 function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
   for _, pin in pairs(infoview._pin_by_id) do
     if pin.position_params and pin.position_params.textDocument.uri == vim.uri_from_bufnr(bufnr) then
-      vim.schedule_wrap(function() pin:update_position() end)()
+      vim.schedule_wrap(function() pin:update_position(500) end)()
     end
   end
 end
