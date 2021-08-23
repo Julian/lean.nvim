@@ -56,12 +56,72 @@ function lean3.__current_search_paths()
   return vim.fn.json_decode(table.concat(result, '')).path
 end
 
+local function is_widget_element(result)
+  return type(result) == 'table' and result.t;
+end
+
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
-function lean3.update_infoview(div, bufnr, params)
+function lean3.update_infoview(div, bufnr, params, widget)
+  local list_first = false
+  local any_string_before = false
+  local after_paren = false
+
+  local function parse_widget(result)
+    if type(result) == "string" then
+      result = result:gsub('^%s*(.-)%s$', '%1')
+
+      local separator = (list_first and (any_string_before and "\n" or "") or
+        ((not after_paren and #result > 0 and result ~= ")" and result ~= ",") and " " or ""))
+      div:start_div({}, separator, "html-string-separator")
+      div:end_div()
+
+      div:start_div({s = result}, result, "html-string")
+      div:end_div()
+
+      list_first = false
+      any_string_before = true
+      after_paren = false
+
+      if result == "(" then after_paren = true end
+    elseif is_widget_element(result) then
+      local tag = result.t
+      local children = result.c
+      local tooltip = result.tt
+
+      if tag == "label" or tag == "select" or tag == "option" then return end
+
+      --div:start_div({element = result}, "<" .. tag .. ">", "element")
+      --div:end_div()
+      div:start_div({element = result}, "", "element")
+      if tag == "li" then list_first = true end
+
+      for _, child in pairs(children) do
+        parse_widget(child)
+      end
+
+      if tooltip then parse_widget(tooltip) end
+
+      if tag == "li" then list_first = false end
+      div:end_div()
+      --div:start_div({element = result}, "</" .. tag .. ">", "element")
+      --div:end_div()
+    else
+      for _, child in pairs(result.c) do
+        parse_widget(child)
+      end
+    end
+  end
+
   params = vim.deepcopy(params)
-  local _, _, result = buf_request(bufnr, "$/lean/plainGoal", params)
-  if result and type(result) == "table" then
-    components.goal(div, result)
+  if widget == true then
+    local err, _, result = buf_request(bufnr, "$/lean/discoverWidget", params)
+    if not err and result and result.widget and result.widget.html then parse_widget(result.widget.html) end
+  --elseif type(widget) == 'table' then
+  else
+    local _, _, result = buf_request(bufnr, "$/lean/plainGoal", params)
+    if result and type(result) == "table" then
+      components.goal(div, result)
+    end
   end
   components.diagnostics(div, bufnr, params.position.line)
 end

@@ -6,7 +6,6 @@ local util = require('lean._util')
 local set_augroup = util.set_augroup
 local a = require('plenary.async')
 local html = require'lean.html'
-local lsp = require'plenary.async.lsp'
 
 local infoview = {
   -- mapping from infoview IDs to infoviews
@@ -22,7 +21,8 @@ local infoview = {
   ---@type table<number, Pin>
   _pin_by_id = {},
 }
-local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, show_processing = true } }
+local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, show_processing = true,
+  widget = true} }
 
 local _NOTHING_TO_SHOW = { "No info found." }
 
@@ -30,6 +30,7 @@ local _NOTHING_TO_SHOW = { "No info found." }
 ---@class Pin
 ---@field id number
 ---@field parent_infos table<number, boolean>
+---@field widget boolean
 local Pin = {next_id = 1}
 
 --- An individual info.
@@ -128,7 +129,7 @@ function Info:new()
   local new_info = {
     id = #infoview._info_by_id + 1,
     bufnr = vim.api.nvim_create_buf(false, true),
-    pin = Pin:new(options.autopause),
+    pin = Pin:new(options.autopause, options.widget),
     pins = {}
   }
   util.load_mappings(require"lean".info_mappings, new_info.bufnr)
@@ -154,24 +155,14 @@ function Info:widget()
   raw_pos = raw_pos + pos[2] + 1
 
   local _, div_stack = self.div:div_from_pos(raw_pos)
-  local pin
-  for i = #div_stack, 1, -1 do
-    if div_stack[i].name == "pin" then
-      pin = div_stack[i].tags.pin break
-    end
-  end
-  a.void(function()
-    local buf = util.uri_to_existing_bufnr(pin.position_params.textDocument.uri)
-    if not buf then return end
-    local _, _, result = lsp.buf_request(buf, "$/lean/discoverWidget", pin.position_params)
-    require"vim.lsp.util".open_floating_preview(vim.split(vim.inspect(result), "\n"), nil, {})
-  end)()
+
+  require"vim.lsp.util".open_floating_preview(vim.split(vim.inspect(div_stack[#div_stack]), "\n"), nil, {})
 end
 
 function Info:add_pin()
   table.insert(self.pins, self.pin)
   self.pin:show_extmark()
-  self.pin = Pin:new(options.autopause)
+  self.pin = Pin:new(options.autopause, options.widget)
   self.pin:add_parent_info(self)
   self:render()
 end
@@ -234,9 +225,9 @@ function Info:render()
 end
 
 ---@return Pin
-function Pin:new(paused)
+function Pin:new(paused, widget)
   local new_pin = {id = self.next_id, parent_infos = {}, paused = paused, tick = 0,
-    div = html.Div:new({pin = self}, "", "pin")}
+    div = html.Div:new({pin = self}, "", "pin"), widget = widget}
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
 
@@ -395,7 +386,7 @@ function Pin:_update(delay)
   local line = params.position.line
 
   if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
-    lean3.update_infoview(self.div, buf, params)
+    lean3.update_infoview(self.div, buf, params, self.widget)
   else
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then
