@@ -10,7 +10,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         lean-version:
-          - "leanprover-community/lean:3.30.0"
+          - "leanprover-community/lean:3.32.1"
     steps:
       - uses: actions/checkout@v2
       - run: date +%F > todays-date
