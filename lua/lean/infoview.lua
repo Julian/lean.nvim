@@ -156,7 +156,43 @@ function Info:widget()
 
   local _, div_stack = self.div:div_from_pos(raw_pos)
 
-  require"vim.lsp.util".open_floating_preview(vim.split(vim.inspect(div_stack[#div_stack]), "\n"), nil, {})
+  -- TODO move to lean3.lua
+
+  local function get_parent_div(name)
+    for i = #div_stack, 1, -1 do
+      local this_div = div_stack[i]
+      if this_div.name == name then
+        return this_div
+      end
+    end
+  end
+
+  local pin_div = get_parent_div("pin")
+  if not pin_div then return end
+  local pin = pin_div.tags.pin
+
+  local widget_div = get_parent_div("widget")
+  if not widget_div then return end
+  local widget = widget_div.tags.widget
+
+  local element_div = get_parent_div("element")
+  if not element_div then return end
+
+  local events = element_div.tags.element.e
+  if not events then return end
+
+  local on_click = events["onClick"]
+  if not on_click then return end
+
+  pin:update(false, nil, {
+    widget = widget,
+    kind = "onClick",
+    handler = on_click,
+    args = { type = 'unit' },
+    textDocument = pin.position_params.textDocument
+  })
+
+  --require"vim.lsp.util".open_floating_preview(vim.split(vim.inspect(div_stack[#div_stack]), "\n"), nil, {})
 end
 
 function Info:add_pin()
@@ -344,10 +380,10 @@ function Pin:pause()
   self:update()
 end
 
-function Pin:update(force, delay)
+function Pin:update(force, delay, widget_event)
   a.void(function()
     if self.position_params and (force or not self.paused) then
-      self:_update(delay)
+      self:_update(delay, widget_event)
     end
 
     for parent_id, _ in pairs(self.parent_infos) do
@@ -362,7 +398,7 @@ local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 local wait_timer = a.wrap(vim.loop.timer_start, 4)
 
 --- async function to update this pin's contents given the current position.
-function Pin:_update(delay)
+function Pin:_update(delay, widget_event)
   self.tick = (self.tick + 1) % 1000
   local this_tick = self.tick
 
@@ -386,7 +422,7 @@ function Pin:_update(delay)
   local line = params.position.line
 
   if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
-    lean3.update_infoview(self.div, buf, params, self.widget)
+    lean3.update_infoview(self.div, buf, params, widget_event or self.widget)
   else
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then

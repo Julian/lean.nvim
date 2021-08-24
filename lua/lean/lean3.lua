@@ -61,7 +61,7 @@ local function is_widget_element(result)
 end
 
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
-function lean3.update_infoview(div, bufnr, params, widget)
+function lean3.update_infoview(div, bufnr, params, use_widget)
   local list_first = false
   local any_string_before = false
   local after_paren = false
@@ -113,10 +113,22 @@ function lean3.update_infoview(div, bufnr, params, widget)
   end
 
   params = vim.deepcopy(params)
-  if widget == true then
-    local err, _, result = buf_request(bufnr, "$/lean/discoverWidget", params)
-    if not err and result and result.widget and result.widget.html then parse_widget(result.widget.html) end
-  --elseif type(widget) == 'table' then
+  if use_widget then
+    local err, result
+    if use_widget == true then
+      local _err, _, _result = buf_request(bufnr, "$/lean/discoverWidget", params)
+      err, result = _err, _result
+    elseif type(use_widget) == 'table' then
+      local _err, _, _result = buf_request(bufnr, "$/lean/widgetEvent", use_widget)
+      err, result = _err, _result
+      if result.record then result = result.record end
+    end
+
+    if not err and result and result.widget and result.widget.html then
+      div:start_div({widget = result.widget}, "", "widget")
+      parse_widget(result.widget.html)
+      div:end_div()
+    end
   else
     local _, _, result = buf_request(bufnr, "$/lean/plainGoal", params)
     if result and type(result) == "table" then
