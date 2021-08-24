@@ -22,7 +22,7 @@ local infoview = {
   _pin_by_id = {},
 }
 local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, show_processing = true,
-  widget = true} }
+  use_widget = true} }
 
 local _NOTHING_TO_SHOW = { "No info found." }
 
@@ -30,7 +30,7 @@ local _NOTHING_TO_SHOW = { "No info found." }
 ---@class Pin
 ---@field id number
 ---@field parent_infos table<number, boolean>
----@field widget boolean
+---@field use_widget boolean
 local Pin = {next_id = 1}
 
 --- An individual info.
@@ -129,7 +129,7 @@ function Info:new()
   local new_info = {
     id = #infoview._info_by_id + 1,
     bufnr = vim.api.nvim_create_buf(false, true),
-    pin = Pin:new(options.autopause, options.widget),
+    pin = Pin:new(options.autopause, options.use_widget),
     pins = {}
   }
   util.load_mappings(require"lean".info_mappings, new_info.bufnr)
@@ -156,49 +156,17 @@ function Info:widget()
 
   local _, div_stack = self.div:div_from_pos(raw_pos)
 
-  -- TODO move to lean3.lua
-
-  local function get_parent_div(name)
-    for i = #div_stack, 1, -1 do
-      local this_div = div_stack[i]
-      if this_div.name == name then
-        return this_div
-      end
-    end
-  end
-
-  local pin_div = get_parent_div("pin")
+  local pin_div = html.util.get_parent_div(div_stack, "pin")
   if not pin_div then return end
   local pin = pin_div.tags.pin
 
-  local widget_div = get_parent_div("widget")
-  if not widget_div then return end
-  local widget = widget_div.tags.widget
-
-  local element_div = get_parent_div("element")
-  if not element_div then return end
-
-  local events = element_div.tags.element.e
-  if not events then return end
-
-  local on_click = events["onClick"]
-  if not on_click then return end
-
-  pin:update(false, nil, {
-    widget = widget,
-    kind = "onClick",
-    handler = on_click,
-    args = { type = 'unit' },
-    textDocument = pin.position_params.textDocument
-  })
-
-  --require"vim.lsp.util".open_floating_preview(vim.split(vim.inspect(div_stack[#div_stack]), "\n"), nil, {})
+  require("lean.lean3").widget(pin, div_stack)
 end
 
 function Info:add_pin()
   table.insert(self.pins, self.pin)
   self.pin:show_extmark()
-  self.pin = Pin:new(options.autopause, options.widget)
+  self.pin = Pin:new(options.autopause, options.use_widget)
   self.pin:add_parent_info(self)
   self:render()
 end
@@ -261,9 +229,9 @@ function Info:render()
 end
 
 ---@return Pin
-function Pin:new(paused, widget)
+function Pin:new(paused, use_widget)
   local new_pin = {id = self.next_id, parent_infos = {}, paused = paused, tick = 0,
-    div = html.Div:new({pin = self}, "", "pin"), widget = widget}
+    div = html.Div:new({pin = self}, "", "pin"), use_widget = use_widget}
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
 
@@ -380,16 +348,20 @@ function Pin:pause()
   self:update()
 end
 
-function Pin:update(force, delay, widget_event)
+function Pin:update(force, delay, lean3_opts)
   a.void(function()
     if self.position_params and (force or not self.paused) then
-      self:_update(delay, widget_event)
+      self:_update(delay, lean3_opts)
     end
 
-    for parent_id, _ in pairs(self.parent_infos) do
-      infoview._info_by_id[parent_id]:render()
-    end
+    self:render_parents()
   end)()
+end
+
+function Pin:render_parents()
+  for parent_id, _ in pairs(self.parent_infos) do
+    infoview._info_by_id[parent_id]:render()
+  end
 end
 
 local plain_goal = a.wrap(leanlsp.plain_goal, 3)
@@ -398,7 +370,7 @@ local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 local wait_timer = a.wrap(vim.loop.timer_start, 4)
 
 --- async function to update this pin's contents given the current position.
-function Pin:_update(delay, widget_event)
+function Pin:_update(delay, lean3_opts)
   self.tick = (self.tick + 1) % 1000
   local this_tick = self.tick
 
@@ -422,7 +394,7 @@ function Pin:_update(delay, widget_event)
   local line = params.position.line
 
   if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
-    lean3.update_infoview(self.div, buf, params, widget_event or self.widget)
+    lean3.update_infoview(self.div, buf, params, self.use_widget, lean3_opts)
   else
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then

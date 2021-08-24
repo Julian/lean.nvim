@@ -63,4 +63,13 @@ function Div:div_from_pos(pos, stack)
   return text, nil
 end
 
-return {Div = Div}
+local function get_parent_div(div_stack, name)
+  for i = #div_stack, 1, -1 do
+    local this_div = div_stack[i]
+    if this_div.name == name then
+      return this_div
+    end
+  end
+end
+
+return {Div = Div, util = { get_parent_div = get_parent_div }}

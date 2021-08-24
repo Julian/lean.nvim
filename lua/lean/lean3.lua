@@ -6,6 +6,8 @@ local subprocess_check_output = require('lean._util').subprocess_check_output
 
 local a = require('plenary.async')
 
+local html = require'lean.html'
+
 local lean3 = {}
 
 -- Ideally this obviously would use a TOML parser but yeah choosing to
@@ -60,8 +62,31 @@ local function is_widget_element(result)
   return type(result) == 'table' and result.t;
 end
 
+function lean3.widget(pin, div_stack)
+  local widget_div = html.util.get_parent_div(div_stack, "widget")
+  if not widget_div then return end
+  local widget = widget_div.tags.widget
+
+  local element_div = html.util.get_parent_div(div_stack, "element")
+  if not element_div then return end
+
+  local events = element_div.tags.element.e
+  if not events then return end
+
+  local on_click = events["onClick"]
+  if not on_click then return end
+
+  pin:update(false, nil, {widget_event = {
+    widget = widget,
+    kind = "onClick",
+    handler = on_click,
+    args = { type = 'unit' },
+    textDocument = pin.position_params.textDocument
+  }})
+end
+
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
-function lean3.update_infoview(div, bufnr, params, use_widget)
+function lean3.update_infoview(div, bufnr, params, use_widget, opts)
   local list_first = false
   local any_string_before = false
   local after_paren = false
@@ -115,11 +140,11 @@ function lean3.update_infoview(div, bufnr, params, use_widget)
   params = vim.deepcopy(params)
   if use_widget then
     local err, result
-    if use_widget == true then
+    if not (opts and opts.widget_event) then
       local _err, _, _result = buf_request(bufnr, "$/lean/discoverWidget", params)
       err, result = _err, _result
-    elseif type(use_widget) == 'table' then
-      local _err, _, _result = buf_request(bufnr, "$/lean/widgetEvent", use_widget)
+    else
+      local _err, _, _result = buf_request(bufnr, "$/lean/widgetEvent", opts.widget_event)
       err, result = _err, _result
       if result.record then result = result.record end
     end
