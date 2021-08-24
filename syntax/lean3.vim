@@ -33,6 +33,7 @@ syn keyword leanCommand set_option run_cmd
 syn match leanCommand "#eval"
 syn match leanCommand "#check"
 syn match leanCommand "#print"
+syn match leanCommand "#reduce"
 
 syn keyword leanSorry sorry
 syn match leanSorry "#exit"
