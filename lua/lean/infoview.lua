@@ -242,7 +242,8 @@ function Pin:update_extmark()
     local line = params.position.line
     local buf_line = vim.api.nvim_buf_get_lines(buf, line, line + 1, false)[1]
     local col = buf_line and vim.str_byteindex(buf_line, params.position.character) or 0
-    local end_col = buf_line and ((col < #buf_line) and col + 1 or col) or 0
+    local end_col = buf_line and ((col < #buf_line) and
+      vim.str_byteindex(buf_line, params.position.character + 1) or col) or 0
 
     self.extmark = vim.api.nvim_buf_set_extmark(buf, extmark_ns,
       line, col,
