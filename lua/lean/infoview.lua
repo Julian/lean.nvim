@@ -275,11 +275,9 @@ function Pin:update_position(delay)
   local buf_line = vim.api.nvim_buf_get_lines(buf, new_pos.line, new_pos.line + 1, false)[1]
   new_pos.character = buf_line and vim.str_utfindex(buf_line, extmark_pos[2]) or new_pos.character
 
-  if not vim.deep_equal(pos, new_pos) then
-    local new_params = vim.deepcopy(self.position_params)
-    new_params.position = new_pos
-    self:set_position_params(new_params, delay)
-  end
+  local new_params = vim.deepcopy(self.position_params)
+  new_params.position = new_pos
+  self:set_position_params(new_params, delay)
 end
 
 
