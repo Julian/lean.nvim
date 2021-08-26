@@ -191,7 +191,6 @@ function Pin:new()
 end
 
 function Pin:close()
-  self.sess = nil
 end
 
 ---@param info Info
@@ -203,10 +202,6 @@ local plain_goal = a.wrap(leanlsp.plain_goal, 2)
 local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 2)
 
 local wait_timer = a.wrap(vim.loop.timer_start, 4)
-
-function Pin:reset_rpc()
-  self.sess = rpc.open()
-end
 
 --- Update this pin's contents given the current position.
 function Pin:update()
@@ -223,7 +218,7 @@ function Pin:update()
     if vim.opt.filetype:get() == "lean3" then
       lean3.update_infoview(self.div)
     else
-      self:reset_rpc()
+      local sess = rpc.open()
 
       local _, _, goal = plain_goal(0)
       if self.tick ~= this_tick then return end
@@ -231,7 +226,7 @@ function Pin:update()
       components.goal(self.div, goal)
 
       local term_goal, term_goal_err =
-        self.sess:getInteractiveTermGoal(vim.lsp.util.make_position_params())
+        sess:getInteractiveTermGoal(vim.lsp.util.make_position_params())
       if term_goal_err then
         _, _, term_goal = plain_term_goal(0)
         components.term_goal(self.div, term_goal)
@@ -251,6 +246,8 @@ function Pin:update()
     for parent_id, _ in pairs(self.parent_infos) do
       infoview._info_by_id[parent_id]:render()
     end
+
+    collectgarbage() -- TODO: is this a performance bottleneck?
   end)()
 end
 

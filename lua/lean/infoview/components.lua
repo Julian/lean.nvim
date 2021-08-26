@@ -18,6 +18,7 @@ end
 ---
 --- The (1, 1) indexing is to match the interface used interactively for
 --- `gg` and `|`.
+---@param range LspRange
 local function range_to_string(range)
   return string.format('%d:%d-%d:%d',
     range["start"].line + 1,
@@ -55,35 +56,39 @@ function components.term_goal(div, term_goal)
   div:end_div()
 end
 
+---@param div Div
+---@param t CodeWithInfos
+function components.code_with_infos(div, t)
+  if t.text ~= nil then
+    div:start_div({t = t}, t.text, "text")
+    div:end_div()
+  elseif t.append ~= nil then
+    for _, s in ipairs(t.append) do
+      components.code_with_infos(div, s)
+    end
+  elseif t.tag ~= nil then
+    div:start_div({tag = t.tag}, nil, "tag")
+    components.code_with_infos(div, t.tag[2])
+    div:end_div()
+  end
+end
+
 --- The current (term) goal state.
 ---@param div table: the current div
----@param goal InteractiveGoal
+---@param goal InteractiveTermGoal
 function components.interactive_term_goal(div, goal)
   if not goal then return end
 
-  div:start_div({state = goal}, 'Term State\n', "term_state")
-  ---@param t CodeWithInfos
-  local function text(t)
-    if t.text ~= nil then
-      div:start_div({t = t}, t.text, "text")
-      div:end_div()
-    elseif t.append ~= nil then
-      for _, s in ipairs(t.append) do
-        text(s)
-      end
-    elseif t.tag ~= nil then
-      div:start_div({tag = t.tag}, nil, "tag")
-      text(t.tag[2])
-      div:end_div()
-    end
-  end
+  div:start_div({state = goal},
+    H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
+    "term_state")
 
   for _, hyp in ipairs(goal.hyps) do
-    div:start_div({hyp = hyp}, hyp.names .. ' : ', "hyp") -- FIXME
-    text(hyp.type)
+    div:start_div({hyp = hyp}, table.concat(hyp.names, ' ') .. ' : ', "hyp")
+    components.code_with_infos(div, hyp.type)
     if hyp.val ~= nil then
       div:start_div({val = hyp.val}, " := ", "hyp_val")
-      text(hyp.val)
+      components.code_with_infos(div, hyp.val)
       div:end_div()
     end
     div:start_div({}, "\n")
@@ -91,7 +96,7 @@ function components.interactive_term_goal(div, goal)
     div:end_div()
   end
   div:start_div({goal = goal.type}, '⊢ ', "goal")
-  text(goal.type)
+  components.code_with_infos(div, goal.type)
   div:end_div()
   div:end_div()
 end
