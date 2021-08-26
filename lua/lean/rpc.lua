@@ -55,7 +55,6 @@ end
 function Session:release_now(refs)
   for _, ptr in ipairs(refs) do table.insert(self.to_release, ptr) end
   if self.closed or #self.to_release == 0 then return end
-  print('releasing ' .. #self.to_release)
   vim.lsp.buf_notify(self.bufnr, '$/lean/rpc/release', {
     uri = self.uri,
     sessionId = self.session_id,
@@ -183,10 +182,13 @@ end
 
 ---@class InfoWithCtx
 
+---@class CodeToken
+---@field info InfoWithCtx
+
 ---@class CodeWithInfos
 ---@field text? string
 ---@field append? CodeWithInfos[]
----@field tag? {[1]: InfoWithCtx, [2]: CodeWithInfos}
+---@field tag? {[1]: CodeToken, [2]: CodeWithInfos}
 
 ---@class InteractiveHypothesis
 ---@field names string[]
@@ -218,6 +220,18 @@ end
 ---@return any error
 function Subsession:getInteractiveTermGoal(pos)
   return self:call('Lean.Widget.getInteractiveTermGoal', pos)
+end
+
+---@class InfoPopup
+---@field type CodeWithInfos|nil
+---@field exprExplicit CodeWithInfos|nil
+---@field doc string|nil
+
+---@param i InfoWithCtx
+---@return InfoPopup
+---@return any error
+function Subsession:infoToInteractive(i)
+  return self:call('Lean.Widget.InteractiveDiagnostics.infoToInteractive', i)
 end
 
 return rpc

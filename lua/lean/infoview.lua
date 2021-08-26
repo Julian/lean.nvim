@@ -154,7 +154,34 @@ function Info:widget()
   raw_pos = raw_pos + pos[2] + 1
 
   local _, div_stack = self.div:div_from_pos(raw_pos)
-  require"vim.lsp.util".open_floating_preview(vim.split(vim.inspect(div_stack[#div_stack]), "\n"), nil, {})
+
+  local sess = nil
+  for _, div in ipairs(div_stack) do
+    sess = sess or div.tags.rpc_sess
+  end
+
+  for i = #div_stack, 1, -1 do
+    local info_with_ctx = div_stack[i].tags.info_with_ctx
+    if info_with_ctx ~= nil then
+      return a.void(function()
+        local info_popup = sess:infoToInteractive(info_with_ctx)
+        local div = html.Div:new()
+        if info_popup['type'] ~= nil then
+          components.code_with_infos(div, info_popup['type'])
+          div:add_div(html.Div:new({}, '\n'))
+        end
+        if info_popup.exprExplicit ~= nil then
+          components.code_with_infos(div, info_popup.exprExplicit)
+          div:add_div(html.Div:new({}, '\n'))
+        end
+        if info_popup.doc ~= nil then
+          div:start_div({}, info_popup.doc, 'docstring') -- TODO: render markdown
+          div:end_div()
+        end
+        require"vim.lsp.util".open_floating_preview(vim.split(div:render(), "\n"), nil, {})
+      end)()
+    end
+  end
 end
 
 function Info:close()
@@ -219,6 +246,7 @@ function Pin:update()
       lean3.update_infoview(self.div)
     else
       local sess = rpc.open()
+      self.div.tags.rpc_sess = sess
 
       local _, _, goal = plain_goal(0)
       if self.tick ~= this_tick then return end

@@ -23,7 +23,7 @@ local lean = {
   };
   info_mappings = {
     n = {
-      ["<LocalLeader><space>"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info:widget()<CR>";
+      ["<CR>"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info:widget()<CR>";
     };
     i = {
     };

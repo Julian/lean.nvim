@@ -41,7 +41,7 @@ end
 
 function Div:div_from_pos(pos, stack)
   stack = stack or {}
-  local new_stack = vim.fn.copy(stack)
+  local new_stack = {unpack(stack)}
   table.insert(new_stack, self)
 
   local text = self.text

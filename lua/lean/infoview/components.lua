@@ -60,14 +60,14 @@ end
 ---@param t CodeWithInfos
 function components.code_with_infos(div, t)
   if t.text ~= nil then
-    div:start_div({t = t}, t.text, "text")
+    div:start_div({}, t.text, "text")
     div:end_div()
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
       components.code_with_infos(div, s)
     end
   elseif t.tag ~= nil then
-    div:start_div({tag = t.tag}, nil, "tag")
+    div:start_div({info_with_ctx = t.tag[1].info}, nil, "info_with_ctx")
     components.code_with_infos(div, t.tag[2])
     div:end_div()
   end
