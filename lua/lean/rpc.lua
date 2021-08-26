@@ -6,7 +6,7 @@ local control = require'plenary.async.control'
 ---@class RpcRef
 
 ---@class Session
----@field bufnr number
+---@field client any vim.lsp.client object
 ---@field uri string
 ---@field closed boolean
 ---@field connected boolean
@@ -18,12 +18,12 @@ local control = require'plenary.async.control'
 local Session = {}
 Session.__index = Session
 
----@param bufnr number
+---@param client any vim.lsp.client object
 ---@param uri string
 ---@return Session
-function Session:new(bufnr, uri)
+function Session:new(client, uri)
   self = setmetatable({
-    bufnr = bufnr,
+    client = client,
     uri = uri,
     session_id = nil,
     connected = nil,
@@ -35,8 +35,8 @@ function Session:new(bufnr, uri)
   }, self)
   self.keepalive_timer = vim.loop.new_timer()
   self.keepalive_timer:start(20000, 20000, vim.schedule_wrap(function()
-    if self.session_id ~= nil then
-      vim.lsp.buf_notify(self.bufnr, '$/lean/rpc/keepAlive', {
+    if self.session_id ~= nil and self.client ~= nil then
+      self.client.notify('$/lean/rpc/keepAlive', {
         uri = self.uri,
         sessionId = self.session_id,
       })
@@ -49,13 +49,14 @@ function Session:close()
   self:release_now{}
   self.keepalive_timer:close()
   self.closed = true
+  self.client = nil
 end
 
 ---@param refs RpcRef[]
 function Session:release_now(refs)
   for _, ptr in ipairs(refs) do table.insert(self.to_release, ptr) end
-  if self.closed or #self.to_release == 0 then return end
-  vim.lsp.buf_notify(self.bufnr, '$/lean/rpc/release', {
+  if self.closed or #self.to_release == 0 or self.client == nil then return end
+  self.client.notify('$/lean/rpc/release', {
     uri = self.uri,
     sessionId = self.session_id,
     refs = self.to_release,
@@ -99,7 +100,7 @@ function Session:call(pos, method, params)
   if self.connect_err ~= nil then
     return nil, self.connect_err
   end
-  local err, _, result = lsp.buf_request(self.bufnr, '$/lean/rpc/call',
+  local err, _, result = a.wrap(self.client.request, 3)('$/lean/rpc/call',
     vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params }))
   if err ~= nil and err.code == -32900 then
     self.closed = true
@@ -127,12 +128,29 @@ end
 ---@type table<number, Session>
 local sessions = {}
 
+--- Finds the vim.lsp.client object for the Lean 4 server associated to the
+--- given bufnr.
+local function get_lean4_server(bufnr)
+  for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
+    if client.name == 'leanls' then
+      return client
+    end
+  end
+end
+
 ---@param bufnr number
 ---@result any error
 local function connect(bufnr)
+  local client = get_lean4_server(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
-  local sess = Session:new(bufnr, uri)
+  local sess = Session:new(client, uri)
   sessions[bufnr] = sess
+  if client == nil then
+    sess.connected = true
+    local err = 'Lean 4 LSP server not found'
+    sess.connect_err = err
+    return err
+  end
   a.void(function()
     local err, _, result = lsp.buf_request(bufnr, '$/lean/rpc/connect', {uri = uri})
     sess.connected = true
