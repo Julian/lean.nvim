@@ -7,6 +7,8 @@ local set_augroup = util.set_augroup
 local a = require('plenary.async')
 local html = require'lean.html'
 
+local wait_timer = a.wrap(vim.loop.timer_start, 4)
+
 local infoview = {
   -- mapping from infoview IDs to infoviews
   ---@type table<number, Infoview>
@@ -130,7 +132,8 @@ function Info:new()
     id = #infoview._info_by_id + 1,
     bufnr = vim.api.nvim_create_buf(false, true),
     pin = Pin:new(options.autopause, options.use_widget),
-    pins = {}
+    pins = {},
+    cursorhold_tick = 0,
   }
   util.load_mappings(require"lean".info_mappings, new_info.bufnr)
   new_info.pin:add_parent_info(new_info)
@@ -141,26 +144,60 @@ function Info:new()
 
   vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
   vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
+  set_augroup("LeanInfoWidget", string.format([[
+    autocmd CursorMoved <buffer=%d> lua require'lean.infoview'._info_by_id[%d]:__cursor_hold()
+    autocmd BufEnter <buffer=%d> lua require'lean.infoview'._info_by_id[%d]:__cursor_hold()
+  ]], new_info.bufnr, new_info.id, new_info.bufnr, new_info.id), 0)
 
   return new_info
 end
 
-function Info:widget()
-  local pos = vim.api.nvim_win_get_cursor(0)
-  local lines = vim.api.nvim_buf_get_lines(self.bufnr, 0, pos[1] - 1, true)
-  local raw_pos = 0
-  for _, line in pairs(lines) do
-    raw_pos = raw_pos + #line + 1
-  end
-  raw_pos = raw_pos + pos[2] + 1
+function Info:__widget(event, pos)
+  if not pos then return end
+  local raw_pos = html.util.pos_to_raw_pos(pos, vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true))
+  if not raw_pos then return end
 
   local _, div_stack = self.div:div_from_pos(raw_pos)
+  if not div_stack then return end
 
   local pin_div = html.util.get_parent_div(div_stack, "pin")
   if not pin_div then return end
   local pin = pin_div.tags.pin
 
-  require("lean.lean3").widget(pin, div_stack)
+  lean3.widget(pin, div_stack, event)
+end
+
+function Info:__click()
+  a.void(function() self:__widget("onClick", vim.api.nvim_win_get_cursor(0)) end)()
+end
+
+function Info:__cursor_hold()
+  self.cursorhold_tick = (self.cursorhold_tick + 1) % 1000
+  local this_tick = self.cursorhold_tick
+
+  a.void(function()
+    wait_timer(vim.loop.new_timer(), 100, 0)
+    a.util.scheduler()
+    if self.cursorhold_tick ~= this_tick or vim.api.nvim_get_current_buf() ~= self.bufnr then return end
+
+    local clickable_div = html.util.buf_get_parent_div(vim.api.nvim_win_get_cursor(0), self.bufnr, self.div,
+      function(div)
+        return div.name == "element" and div.tags.element.e and div.tags.element.e["onClick"]
+      end)
+
+    if clickable_div == self.prev_clickable_div then return end
+
+    if clickable_div then
+      clickable_div.hlgroup = "LspReferenceRead"
+    end
+
+    if self.prev_clickable_div then
+      self.prev_clickable_div.hlgroup = nil
+    end
+
+    self.prev_clickable_div = clickable_div
+    self:_render()
+  end)()
 end
 
 function Info:add_pin()
@@ -178,6 +215,8 @@ function Info:clear_pins()
 end
 
 local paused_txt = "[PAUSED]"
+
+local info_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
 
 --- Update this info's physical contents.
 function Info:render()
@@ -216,7 +255,13 @@ function Info:render()
     self.div:add_div(html.Div:new({}, "\n--", "close_pin"))
   end
 
-  local lines = vim.split(self.div:render(), "\n")
+  self:_render()
+end
+
+function Info:_render()
+  local text, hls = self.div:render()
+
+  local lines = vim.split(text, "\n")
 
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', true)
   vim.api.nvim_buf_set_lines(self.bufnr, 0, -1, true, lines)
@@ -226,6 +271,18 @@ function Info:render()
   --       infoview with shorter contents doesn't properly redraw.
   vim.api.nvim_buf_call(self.bufnr, vim.fn.winline)
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', false)
+
+  for _, hl in pairs(hls) do
+    local start_pos = html.util.raw_pos_to_pos(hl.start, lines)
+    local end_pos = html.util.raw_pos_to_pos(hl["end"], lines)
+    vim.highlight.range(
+      self.bufnr,
+      info_ns,
+      hl.hlgroup,
+      start_pos,
+      {end_pos[1], end_pos[2] + 1}
+    )
+  end
 end
 
 ---@return Pin
@@ -348,15 +405,15 @@ function Pin:pause()
   self:update()
 end
 
-function Pin:update(force, delay, lean3_opts)
-  a.void(function()
-    if self.position_params and (force or not self.paused) then
-      self:_update(delay, lean3_opts)
-    end
+function Pin:_update(force, delay, lean3_opts)
+  if self.position_params and (force or not self.paused) then
+    self:__update(delay, lean3_opts)
+  end
 
-    self:render_parents()
-  end)()
+  self:render_parents()
 end
+
+Pin.update = a.void(Pin._update)
 
 function Pin:render_parents()
   for parent_id, _ in pairs(self.parent_infos) do
@@ -367,10 +424,8 @@ end
 local plain_goal = a.wrap(leanlsp.plain_goal, 3)
 local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 
-local wait_timer = a.wrap(vim.loop.timer_start, 4)
-
 --- async function to update this pin's contents given the current position.
-function Pin:_update(delay, lean3_opts)
+function Pin:__update(delay, lean3_opts)
   self.tick = (self.tick + 1) % 1000
   local this_tick = self.tick
 

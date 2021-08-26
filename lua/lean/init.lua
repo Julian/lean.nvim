@@ -28,7 +28,7 @@ local lean = {
   };
   info_mappings = {
     n = {
-      ["<LocalLeader><space>"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info:widget()<CR>";
+      ["K"] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__click()<CR>]]
     };
     i = {
     };

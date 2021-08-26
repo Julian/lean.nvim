@@ -62,50 +62,53 @@ local function is_widget_element(result)
   return type(result) == 'table' and result.t;
 end
 
-function lean3.widget(pin, div_stack)
+function lean3.widget(pin, div_stack, event)
   local widget_div = html.util.get_parent_div(div_stack, "widget")
   if not widget_div then return end
   local widget = widget_div.tags.widget
 
-  local element_div = html.util.get_parent_div(div_stack, "element")
-  if not element_div then return end
+  local div = html.util.get_parent_div(div_stack, function(div)
+    return div.name == "element" and div.tags.element.e and div.tags.element.e[event]
+  end)
+  if not div then return end
 
-  local events = element_div.tags.element.e
-  if not events then return end
-
-  local on_click = events["onClick"]
-  if not on_click then return end
-
-  pin:update(false, nil, {widget_event = {
+  pin:_update(false, 0, {widget_event = {
     widget = widget,
-    kind = "onClick",
-    handler = on_click,
+    kind = event,
+    handler = div.tags.element.e[event],
     args = { type = 'unit' },
     textDocument = pin.position_params.textDocument
   }})
 end
+
+local class_to_hlgroup = {
+  ["expr-boundary highlight"] = "LspReferenceRead"
+}
 
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
 function lean3.update_infoview(div, bufnr, params, use_widget, opts)
   local list_first = false
   local any_string_before = false
   local after_paren = false
+  local tooltip_prelude = false
 
-  local function parse_widget(result)
+  local function parse_widget(result, hlgroup)
     if type(result) == "string" then
       result = result:gsub('^%s*(.-)%s$', '%1')
 
       local separator = (list_first and (any_string_before and "\n" or "") or
-        ((not after_paren and #result > 0 and result ~= ")" and result ~= ",") and " " or ""))
+        ((not after_paren and not tooltip_prelude and #result > 0 and result ~= ")" and result ~= ",")
+        and " " or ""))
       div:start_div({}, separator, "html-string-separator")
       div:end_div()
 
-      div:start_div({s = result}, result, "html-string")
+      div:start_div({s = result}, result, "html-string", hlgroup)
       div:end_div()
 
       list_first = false
       any_string_before = true
       after_paren = false
+      tooltip_prelude = false
 
       if result == "(" then after_paren = true end
     elseif is_widget_element(result) then
@@ -116,15 +119,23 @@ function lean3.update_infoview(div, bufnr, params, use_widget, opts)
       if tag == "label" or tag == "select" or tag == "option" then return end
 
       --div:start_div({element = result}, "<" .. tag .. ">", "element")
+      --div:start_div({element = result}, "<" .. tag .. " " .. vim.inspect(result.a) .. ">", "element")
       --div:end_div()
       div:start_div({element = result}, "", "element")
       if tag == "li" then list_first = true end
 
       for _, child in pairs(children) do
-        parse_widget(child)
+        parse_widget(child, class_to_hlgroup[result.a and result.a.className] or hlgroup)
       end
 
-      if tooltip then parse_widget(tooltip) end
+      if tooltip then
+        div:start_div({element = result}, " [", "tooltip")
+        tooltip_prelude = true
+        parse_widget(tooltip)
+        div:start_div({element = result}, "]", "tooltip-close")
+        div:end_div()
+        div:end_div()
+      end
 
       if tag == "li" then list_first = false end
       div:end_div()
@@ -146,7 +157,7 @@ function lean3.update_infoview(div, bufnr, params, use_widget, opts)
     else
       local _err, _, _result = buf_request(bufnr, "$/lean/widgetEvent", opts.widget_event)
       err, result = _err, _result
-      if result.record then result = result.record end
+      if result and result.record then result = result.record end
     end
 
     if not err and result and result.widget and result.widget.html then
