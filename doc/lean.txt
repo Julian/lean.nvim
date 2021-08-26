@@ -89,8 +89,8 @@ components.interactive_term_goal({div}, {goal})*components.interactive_term_goal
 
 
     Parameters: ~
-        {div}  (table)            the current div
-        {goal} (InteractiveGoal)
+        {div}  (table)                the current div
+        {goal} (InteractiveTermGoal)
 
 
 components.diagnostics()                            *components.diagnostics()*
@@ -110,41 +110,62 @@ Session                                                              *Session*
 
 
     Fields: ~
-        {bufnr}           (number)
+        {client}          ()
         {uri}             (string)
         {closed}          (boolean)
+        {connected}       (boolean)
+        {connect_err}     (any|nil)
         {on_connected}    (function)
         {keepalive_timer} (any)
+        {to_release}      (RfcPtr[])
+        {release_timer}   (any)
 
 
-TextDocumentPositionParams : 
+TextDocumentIdentifier                                *TextDocumentIdentifier*
 
----@param pos TextDocumentPositionParams
----@param method string
----@return any result
----*TextDocumentPositionParams*
-    return any error
 
-    Parents: ~
-        |
 
----@param pos TextDocumentPositionParams
----@param method string
----@return any result
----|
+LspPosition                                                      *LspPosition*
+
+
+    Fields: ~
+        {line}      (integer)
+        {character} (integer)
+
+
+LspRange                                                            *LspRange*
+
+
+    Fields: ~
+        {start} (LspPosition)
+        {end}   (LspPosition)
+
+
+TextDocumentPositionParams                        *TextDocumentPositionParams*
+
+
+    Fields: ~
+        {textDocument} (TextDocumentIdentifier)
+        {position}     (LspPosition)
 
 
 Subsession                                                        *Subsession*
 
 
     Fields: ~
-        {refs} (table<string, RpcRef>)
         {pos}  (TextDocumentPositionParams)
         {sess} (Session)
 
 
 InfoWithCtx                                                      *InfoWithCtx*
 
+
+
+CodeToken                                                          *CodeToken*
+
+
+    Fields: ~
+        {info} (InfoWithCtx)
 
 
 CodeWithInfos                                                  *CodeWithInfos*
@@ -155,7 +176,7 @@ InteractiveHypothesis                                  *InteractiveHypothesis*
 
 
     Fields: ~
-        {names} (string)
+        {names} (string[])
         {type}  (CodeWithInfos)
         {val}   (CodeWithInfos|nil)
 
@@ -174,6 +195,24 @@ InteractiveGoals                                            *InteractiveGoals*
 
     Fields: ~
         {goals} (InteractiveGoal[])
+
+
+InteractiveTermGoal                                      *InteractiveTermGoal*
+
+
+    Fields: ~
+        {hyps}  (InteractiveHypothesis[])
+        {type}  (CodeWithInfos)
+        {range} (LspRange)
+
+
+InfoPopup                                                          *InfoPopup*
+
+
+    Fields: ~
+        {type}         (CodeWithInfos|nil)
+        {exprExplicit} (CodeWithInfos|nil)
+        {doc}          (string|nil)
 
 
 
