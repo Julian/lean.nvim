@@ -18,19 +18,28 @@ function Div:add_div(div)
   table.insert(self.divs, div)
 end
 
-function Div:start_div(tags, text, name, hlgroup)
-  local new_div = Div:new(tags, text, name, hlgroup)
+function Div:insert_new_div(new_div)
   local last_div = self.div_stack[#self.div_stack]
   if last_div then
     last_div:add_div(new_div)
   else
     self:add_div(new_div)
   end
+end
+
+function Div:start_div(tags, text, name, hlgroup)
+  local new_div = Div:new(tags, text, name, hlgroup)
+  self:insert_new_div(new_div)
   table.insert(self.div_stack, new_div)
 end
 
 function Div:end_div()
   table.remove(self.div_stack)
+end
+
+function Div:insert_div(tags, text, name, hlgroup)
+  self:start_div(tags, text, name, hlgroup)
+  self:end_div()
 end
 
 function Div:render()
@@ -100,7 +109,10 @@ local function pos_to_raw_pos(pos, lines)
     if not lines[i] then return end
     raw_pos = raw_pos + #(lines[i]) + 1
   end
-  if not lines[pos[1]] or pos[2] + 1 > #lines[pos[1]] then return end
+  if not lines[pos[1]] or (#lines[pos[1]] == 0 and pos[2] ~= 0) or
+    (#lines[pos[1]] > 0 and pos[2] + 1 > #lines[pos[1]]) then
+    return
+  end
   raw_pos = raw_pos + pos[2] + 1
   return raw_pos
 end
