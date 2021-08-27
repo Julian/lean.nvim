@@ -49,6 +49,11 @@ function Div:render()
   return text, hls
 end
 
+function Div:set_hlgroup(hlgroup)
+  self.prev_hlgroup = self.hlgroup
+  self.hlgroup = hlgroup
+end
+
 function Div:div_from_pos(pos, stack)
   stack = stack or {}
   table.insert(stack, self)
@@ -124,5 +129,43 @@ local function buf_get_parent_div(pos, bufnr, div, check)
   return get_parent_div(div_stack, check), div_stack
 end
 
+local function is_event_div_check(eventName)
+  return function (div)
+    if not div.tags.event then return false end
+    local event = div.tags.event[eventName]
+    if event then return true end
+    return false
+  end
+end
+
+function Div:event(pos, eventName, ...)
+  local _, div_stack = self:div_from_pos(pos)
+  if not div_stack then return end
+
+  local event_div = get_parent_div(div_stack, is_event_div_check(eventName))
+
+  if event_div then event_div.tags.event[eventName](...) end
+end
+
+function Div:hover(pos, check, hlgroup)
+  local _, div_stack = self:div_from_pos(pos)
+  if not div_stack then return end
+
+  local hover_div = get_parent_div(div_stack, check)
+
+  if hover_div == self.prev_hover_div then return end
+
+  if hover_div then
+    hover_div:set_hlgroup(hlgroup)
+  end
+
+  if self.prev_hover_div then
+    self.prev_hover_div:set_hlgroup(self.prev_hover_div.prev_hlgroup)
+  end
+
+  self.prev_hover_div = hover_div
+end
+
 return {Div = Div, util = { get_parent_div = get_parent_div,
-pos_to_raw_pos = pos_to_raw_pos, raw_pos_to_pos = raw_pos_to_pos, buf_get_parent_div = buf_get_parent_div }}
+pos_to_raw_pos = pos_to_raw_pos, raw_pos_to_pos = raw_pos_to_pos,
+buf_get_parent_div = buf_get_parent_div, is_event_div_check = is_event_div_check }}

@@ -133,7 +133,6 @@ function Info:new()
     bufnr = vim.api.nvim_create_buf(false, true),
     pin = Pin:new(options.autopause, options.use_widget),
     pins = {},
-    cursorhold_tick = 0,
   }
   util.load_mappings(require"lean".info_mappings, new_info.bufnr)
   new_info.pin:add_parent_info(new_info)
@@ -152,52 +151,16 @@ function Info:new()
   return new_info
 end
 
-function Info:__widget(event, pos)
-  if not pos then return end
-  local raw_pos = html.util.pos_to_raw_pos(pos, vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true))
-  if not raw_pos then return end
-
-  local _, div_stack = self.div:div_from_pos(raw_pos)
-  if not div_stack then return end
-
-  local pin_div = html.util.get_parent_div(div_stack, "pin")
-  if not pin_div then return end
-  local pin = pin_div.tags.pin
-
-  lean3.widget(pin, div_stack, event)
-end
-
 function Info:__click()
-  a.void(function() self:__widget("onClick", vim.api.nvim_win_get_cursor(0)) end)()
+  self.div:event(html.util.pos_to_raw_pos(vim.api.nvim_win_get_cursor(0),
+    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), "onClick")
 end
 
 function Info:__cursor_hold()
-  self.cursorhold_tick = (self.cursorhold_tick + 1) % 1000
-  local this_tick = self.cursorhold_tick
+  self.div:hover(html.util.pos_to_raw_pos(vim.api.nvim_win_get_cursor(0),
+    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), html.util.is_event_div_check("onClick"), "LspReferenceRead")
 
-  a.void(function()
-    wait_timer(vim.loop.new_timer(), 100, 0)
-    a.util.scheduler()
-    if self.cursorhold_tick ~= this_tick or vim.api.nvim_get_current_buf() ~= self.bufnr then return end
-
-    local clickable_div = html.util.buf_get_parent_div(vim.api.nvim_win_get_cursor(0), self.bufnr, self.div,
-      function(div)
-        return div.name == "element" and div.tags.element.e and div.tags.element.e["onClick"]
-      end)
-
-    if clickable_div == self.prev_clickable_div then return end
-
-    if clickable_div then
-      clickable_div.hlgroup = "LspReferenceRead"
-    end
-
-    if self.prev_clickable_div then
-      self.prev_clickable_div.hlgroup = nil
-    end
-
-    self.prev_clickable_div = clickable_div
-    self:_render()
-  end)()
+  self:_render()
 end
 
 function Info:add_pin()
@@ -449,7 +412,7 @@ function Pin:__update(delay, lean3_opts)
   local line = params.position.line
 
   if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
-    lean3.update_infoview(self.div, buf, params, self.use_widget, lean3_opts)
+    lean3.update_infoview(self, self.div, buf, params, self.use_widget, lean3_opts)
   else
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then

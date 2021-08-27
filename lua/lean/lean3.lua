@@ -6,8 +6,6 @@ local subprocess_check_output = require('lean._util').subprocess_check_output
 
 local a = require('plenary.async')
 
-local html = require'lean.html'
-
 local lean3 = {}
 
 -- Ideally this obviously would use a TOML parser but yeah choosing to
@@ -62,35 +60,17 @@ local function is_widget_element(result)
   return type(result) == 'table' and result.t;
 end
 
-function lean3.widget(pin, div_stack, event)
-  local widget_div = html.util.get_parent_div(div_stack, "widget")
-  if not widget_div then return end
-  local widget = widget_div.tags.widget
-
-  local div = html.util.get_parent_div(div_stack, function(div)
-    return div.name == "element" and div.tags.element.e and div.tags.element.e[event]
-  end)
-  if not div then return end
-
-  pin:_update(false, 0, {widget_event = {
-    widget = widget,
-    kind = event,
-    handler = div.tags.element.e[event],
-    args = { type = 'unit' },
-    textDocument = pin.position_params.textDocument
-  }})
-end
-
 local class_to_hlgroup = {
   ["expr-boundary highlight"] = "LspReferenceRead"
 }
 
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
-function lean3.update_infoview(div, bufnr, params, use_widget, opts)
+function lean3.update_infoview(pin, div, bufnr, params, use_widget, opts)
   local list_first = false
   local any_string_before = false
   local after_paren = false
   local tooltip_prelude = false
+  local widget
 
   local function parse_widget(result, hlgroup)
     if type(result) == "string" then
@@ -115,13 +95,30 @@ function lean3.update_infoview(div, bufnr, params, use_widget, opts)
       local tag = result.t
       local children = result.c
       local tooltip = result.tt
+      local events = {}
+
+      if result.e then
+        for event, handler in pairs(result.e) do
+          events[event] = function()
+            a.void(function()
+              pin:_update(false, 0, {widget_event = {
+                widget = widget,
+                kind = event,
+                handler = handler,
+                args = { type = 'unit' },
+                textDocument = pin.position_params.textDocument
+              }})
+            end)()
+          end
+        end
+      end
 
       if tag == "label" or tag == "select" or tag == "option" then return end
 
       --div:start_div({element = result}, "<" .. tag .. ">", "element")
       --div:start_div({element = result}, "<" .. tag .. " " .. vim.inspect(result.a) .. ">", "element")
       --div:end_div()
-      div:start_div({element = result}, "", "element")
+      div:start_div({element = result, event = events}, "", "element")
       if tag == "li" then list_first = true end
 
       for _, child in pairs(children) do
@@ -161,7 +158,8 @@ function lean3.update_infoview(div, bufnr, params, use_widget, opts)
     end
 
     if not err and result and result.widget and result.widget.html then
-      div:start_div({widget = result.widget}, "", "widget")
+      widget = result.widget
+      div:start_div({widget = widget}, "", "widget")
       parse_widget(result.widget.html)
       div:end_div()
     end
