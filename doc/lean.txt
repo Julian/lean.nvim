@@ -111,6 +111,7 @@ Session                                                              *Session*
 
     Fields: ~
         {client}          ()
+        {bufnr}           (integer)
         {uri}             (string)
         {closed}          (boolean)
         {connected}       (boolean)
@@ -119,34 +120,6 @@ Session                                                              *Session*
         {keepalive_timer} (any)
         {to_release}      (RfcPtr[])
         {release_timer}   (any)
-
-
-TextDocumentIdentifier                                *TextDocumentIdentifier*
-
-
-
-LspPosition                                                      *LspPosition*
-
-
-    Fields: ~
-        {line}      (integer)
-        {character} (integer)
-
-
-LspRange                                                            *LspRange*
-
-
-    Fields: ~
-        {start} (LspPosition)
-        {end}   (LspPosition)
-
-
-TextDocumentPositionParams                        *TextDocumentPositionParams*
-
-
-    Fields: ~
-        {textDocument} (TextDocumentIdentifier)
-        {position}     (LspPosition)
 
 
 Subsession                                                        *Subsession*
