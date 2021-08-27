@@ -7,6 +7,7 @@ local control = require'plenary.async.control'
 
 ---@class Session
 ---@field client any vim.lsp.client object
+---@field bufnr integer
 ---@field uri string
 ---@field closed boolean
 ---@field connected boolean
@@ -19,11 +20,13 @@ local Session = {}
 Session.__index = Session
 
 ---@param client any vim.lsp.client object
+---@param bufnr integer
 ---@param uri string
 ---@return Session
-function Session:new(client, uri)
+function Session:new(client, bufnr, uri)
   self = setmetatable({
     client = client,
+    bufnr = bufnr,
     uri = uri,
     session_id = nil,
     connected = nil,
@@ -35,6 +38,7 @@ function Session:new(client, uri)
   }, self)
   self.keepalive_timer = vim.loop.new_timer()
   self.keepalive_timer:start(20000, 20000, vim.schedule_wrap(function()
+    if not self:is_buffer_attached() then return end
     if self.session_id ~= nil and self.client ~= nil then
       self.client.notify('$/lean/rpc/keepAlive', {
         uri = self.uri,
@@ -43,6 +47,11 @@ function Session:new(client, uri)
     end
   end))
   return self
+end
+
+---@return boolean
+function Session:is_buffer_attached()
+  return vim.lsp.buf_is_attached(self.bufnr, self.client.id)
 end
 
 function Session:close()
@@ -56,6 +65,7 @@ end
 function Session:release_now(refs)
   for _, ptr in ipairs(refs) do table.insert(self.to_release, ptr) end
   if self.closed or #self.to_release == 0 or self.client == nil then return end
+  if not self:is_buffer_attached() then return end
   self.client.notify('$/lean/rpc/release', {
     uri = self.uri,
     sessionId = self.session_id,
@@ -143,7 +153,7 @@ end
 local function connect(bufnr)
   local client = get_lean4_server(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
-  local sess = Session:new(client, uri)
+  local sess = Session:new(client, bufnr, uri)
   sessions[bufnr] = sess
   if client == nil then
     sess.connected = true

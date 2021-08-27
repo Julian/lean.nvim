@@ -167,10 +167,12 @@ function Info:widget()
         local info_popup = sess:infoToInteractive(info_with_ctx)
         local div = html.Div:new()
         if info_popup['type'] ~= nil then
+          div:add_div(html.Div:new({}, 'type: '))
           components.code_with_infos(div, info_popup['type'])
           div:add_div(html.Div:new({}, '\n'))
         end
         if info_popup.exprExplicit ~= nil then
+          div:add_div(html.Div:new({}, 'exprExplicit: '))
           components.code_with_infos(div, info_popup.exprExplicit)
           div:add_div(html.Div:new({}, '\n'))
         end
@@ -178,6 +180,8 @@ function Info:widget()
           div:start_div({}, info_popup.doc, 'docstring') -- TODO: render markdown
           div:end_div()
         end
+        div:add_div(html.Div:new({}, '\nannotated code: '))
+        div:add_div(div_stack[i])
         require"vim.lsp.util".open_floating_preview(vim.split(div:render(), "\n"), nil, {})
       end)()
     end
