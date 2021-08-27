@@ -27,6 +27,12 @@ local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, 
   use_widget = true} }
 
 local _NOTHING_TO_SHOW = { "No info found." }
+vim.api.nvim_command("highlight leanInfoHighlight ctermbg=153 ctermfg=0")
+vim.api.nvim_command("highlight leanInfoTooltip ctermbg=225 ctermfg=0")
+vim.api.nvim_command("highlight leanInfoTooltipSep ctermbg=3 ctermfg=0")
+vim.api.nvim_command("highlight leanInfoButton ctermbg=249 ctermfg=0")
+vim.api.nvim_command("highlight leanInfoField ctermbg=12 ctermfg=0")
+vim.api.nvim_command("highlight leanInfoFieldSep ctermbg=225 ctermfg=4")
 
 --- An individual pin.
 ---@class Pin
@@ -158,7 +164,7 @@ end
 
 function Info:__cursor_hold()
   self.div:hover(html.util.pos_to_raw_pos(vim.api.nvim_win_get_cursor(0),
-    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), html.util.is_event_div_check("onClick"), "LspReferenceRead")
+    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), html.util.is_event_div_check("onClick"), "leanInfoHighlight")
 
   self:_render()
 end
@@ -235,7 +241,7 @@ function Info:_render()
   vim.api.nvim_buf_call(self.bufnr, vim.fn.winline)
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', false)
 
-  for _, hl in pairs(hls) do
+  for _, hl in ipairs(hls) do
     local start_pos = html.util.raw_pos_to_pos(hl.start, lines)
     local end_pos = html.util.raw_pos_to_pos(hl["end"], lines)
     vim.highlight.range(

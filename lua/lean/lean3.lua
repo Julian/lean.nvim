@@ -62,9 +62,10 @@ local function is_widget_element(result)
   return type(result) == 'table' and result.t;
 end
 
---local class_to_hlgroup = {
---  ["expr-boundary highlight"] = "LspReferenceRead"
---}
+local class_to_hlgroup = {
+  ["expr-boundary highlight"] = "leanInfoHighlight";
+  ["bg-blue br3 ma1 ph2 white"] = "leanInfoField"
+}
 
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
 function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
@@ -121,6 +122,7 @@ function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
       local children = result.c
       local tooltip = result.tt
       local events = {}
+      local hlgroup
 
       if tag == "li" then
         div:insert_div({}, "\n", "list-separator")
@@ -143,16 +145,24 @@ function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
       end
 
       if tag == "label" or tag == "select" or tag == "option" then return div, false end
+      hlgroup = class_to_hlgroup[result.a and result.a.className]
+      if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
 
       --div:insert_div({element = result}, "<" .. tag .. ">", "element")
       --div:insert_div({element = result}, "<" .. tag .. " " .. vim.inspect(result.a) .. ">", "element")
-      div:start_div({element = result, event = events}, "", "element")
+      div:start_div({element = result, event = events}, "", "element", hlgroup)
+      if tag == "hr" then
+        div:insert_div({}, "|", "rule", "leanInfoFieldSep")
+      end
+
       parse_children(children)
 
       if tooltip then
-        div:start_div({element = result}, " [", "tooltip")
+        div:insert_div({element = result}, "→", "tooltip-separator", "leanInfoTooltipSep")
+        div:start_div({element = result}, "", "tooltip", "leanInfoTooltip")
+        div:insert_div({element = result}, "[", "tooltip-start", "leanInfoTooltipSep")
         div:insert_new_div(parse_widget(tooltip))
-        div:insert_div({element = result}, "]", "tooltip-close")
+        div:insert_div({element = result}, "]", "tooltip-close", "leanInfoTooltipSep")
         div:end_div()
       end
       div:end_div()
