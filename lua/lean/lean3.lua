@@ -165,7 +165,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
                 textDocument = pin.position_params.textDocument
               }})
 
-              if undo or not pos then return end
+              if undo or not pos or event == "onMouseEnter" or event == "onMouseLeave" then return end
               table.insert(pin.undo_list, {
                 pos = pos;
                 event = div_event
