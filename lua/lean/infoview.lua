@@ -28,6 +28,7 @@ local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, 
 
 local _NOTHING_TO_SHOW = { "No info found." }
 vim.api.nvim_command("highlight leanInfoHighlight ctermbg=153 ctermfg=0")
+vim.api.nvim_command("highlight leanInfoExternalHighlight ctermbg=12 ctermfg=15")
 vim.api.nvim_command("highlight leanInfoTooltip ctermbg=225 ctermfg=0")
 vim.api.nvim_command("highlight leanInfoTooltipSep ctermbg=3 ctermfg=0")
 vim.api.nvim_command("highlight leanInfoButton ctermbg=249 ctermfg=0")
@@ -157,14 +158,14 @@ function Info:new()
   return new_info
 end
 
-function Info:__click()
+function Info:__event(event)
   self.div:event(html.util.pos_to_raw_pos(vim.api.nvim_win_get_cursor(0),
-    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), "onClick")
+    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), event)
 end
 
 function Info:__cursor_hold()
   self.div:hover(html.util.pos_to_raw_pos(vim.api.nvim_win_get_cursor(0),
-    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), html.util.is_event_div_check("onClick"), "leanInfoHighlight")
+    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), html.util.is_event_div_check("click"), "leanInfoHighlight")
 
   self:_render()
 end

@@ -63,14 +63,21 @@ local function is_widget_element(result)
 end
 
 local class_to_hlgroup = {
-  ["expr-boundary highlight"] = "leanInfoHighlight";
+  ["expr-boundary highlight"] = "leanInfoExternalHighlight";
   ["bg-blue br3 ma1 ph2 white"] = "leanInfoField"
 }
 
 local undo_map = {
-  ["onMouseEnter"] = "onMouseLeave";
-  ["onMouseLeave"] = "onMouseEnter";
-  ["onClick"] = "onClick";
+  ["mouse_enter"] = "mouse_leave";
+  ["mouse_leave"] = "mouse_enter";
+  ["click"] = "click";
+}
+
+-- mapping from lean3 events to standard div events
+local to_event = {
+  ["onMouseEnter"] = "mouse_enter";
+  ["onMouseLeave"] = "mouse_leave";
+  ["onClick"] = "click";
 }
 
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
@@ -144,7 +151,8 @@ function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
 
       if result.e then
         for event, handler in pairs(result.e) do
-          events[event] = function(undo)
+          local div_event = to_event[event]
+          events[div_event] = function(undo)
             a.void(function()
               local pos = not undo and widget_div:pos_from_div(element_div)
 
@@ -159,7 +167,7 @@ function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
               if undo or not pos then return end
               table.insert(pin.undo_list, {
                 pos = pos;
-                event = event
+                event = div_event
               })
             end)()
           end
