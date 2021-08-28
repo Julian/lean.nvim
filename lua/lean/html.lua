@@ -16,14 +16,15 @@ end
 
 function Div:add_div(div)
   table.insert(self.divs, div)
+  return div
 end
 
 function Div:insert_new_div(new_div)
   local last_div = self.div_stack[#self.div_stack]
   if last_div then
-    last_div:add_div(new_div)
+    return last_div:add_div(new_div)
   else
-    self:add_div(new_div)
+    return self:add_div(new_div)
   end
 end
 
@@ -31,6 +32,7 @@ function Div:start_div(tags, text, name, hlgroup)
   local new_div = Div:new(tags, text, name, hlgroup)
   self:insert_new_div(new_div)
   table.insert(self.div_stack, new_div)
+  return new_div
 end
 
 function Div:end_div()
@@ -38,8 +40,9 @@ function Div:end_div()
 end
 
 function Div:insert_div(tags, text, name, hlgroup)
-  self:start_div(tags, text, name, hlgroup)
+  local new_div = self:start_div(tags, text, name, hlgroup)
   self:end_div()
+  return new_div
 end
 
 function Div:render()
@@ -61,6 +64,31 @@ end
 function Div:set_hlgroup(hlgroup)
   self.prev_hlgroup = self.hlgroup
   self.hlgroup = hlgroup
+end
+
+function Div:_pos_from_div(div)
+  local text = self.text
+
+  -- base case
+  if self == div then return nil, 1 end
+
+  local pos = #text
+
+  for _, this_div in ipairs(self.divs) do
+    local div_text, div_pos = this_div:_pos_from_div(div)
+    if div_pos then
+      return nil, pos + div_pos
+    end
+    text = text .. div_text
+    pos = #text
+  end
+
+  return text, nil
+end
+
+function Div:pos_from_div(div)
+  local _, pos = self:_pos_from_div(div)
+  return pos
 end
 
 function Div:div_from_pos(pos, stack)

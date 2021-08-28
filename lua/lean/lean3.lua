@@ -67,9 +67,15 @@ local class_to_hlgroup = {
   ["bg-blue br3 ma1 ph2 white"] = "leanInfoField"
 }
 
+local undo_map = {
+  ["onMouseEnter"] = "onMouseLeave";
+  ["onMouseLeave"] = "onMouseEnter";
+  ["onClick"] = "onClick";
+}
+
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
 function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
-  local widget
+  local widget, widget_div
 
   local function parse_widget(result)
     local div = html.Div:new({}, "")
@@ -128,10 +134,20 @@ function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
         div:insert_div({}, "\n", "list-separator")
       end
 
+      if tag == "label" or tag == "select" or tag == "option" then return div, false end
+      hlgroup = class_to_hlgroup[result.a and result.a.className]
+      if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
+
+      --div:insert_div({element = result}, "<" .. tag .. ">", "element")
+      --div:insert_div({element = result}, "<" .. tag .. " " .. vim.inspect(result.a) .. ">", "element")
+      local element_div = div:start_div({element = result, event = events}, "", "element", hlgroup)
+
       if result.e then
         for event, handler in pairs(result.e) do
-          events[event] = function()
+          events[event] = function(undo)
             a.void(function()
+              local pos = not undo and widget_div:pos_from_div(element_div)
+
               pin:_update(false, 0, {widget_event = {
                 widget = widget,
                 kind = event,
@@ -139,18 +155,17 @@ function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
                 args = { type = 'unit' },
                 textDocument = pin.position_params.textDocument
               }})
+
+              if undo or not pos then return end
+              table.insert(pin.undo_list, {
+                pos = pos;
+                event = event
+              })
             end)()
           end
         end
       end
 
-      if tag == "label" or tag == "select" or tag == "option" then return div, false end
-      hlgroup = class_to_hlgroup[result.a and result.a.className]
-      if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
-
-      --div:insert_div({element = result}, "<" .. tag .. ">", "element")
-      --div:insert_div({element = result}, "<" .. tag .. " " .. vim.inspect(result.a) .. ">", "element")
-      div:start_div({element = result, event = events}, "", "element", hlgroup)
       if tag == "hr" then
         div:insert_div({}, "|", "rule", "leanInfoFieldSep")
       end
@@ -179,6 +194,9 @@ function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
     local err, result
     if not (opts and opts.widget_event) then
       local _err, _, _result = buf_request(bufnr, "$/lean/discoverWidget", params)
+      if opts and opts.changed then
+        pin.undo_list = {}
+      end
       err, result = _err, _result
     else
       local _err, _, _result = buf_request(bufnr, "$/lean/widgetEvent", opts.widget_event)
@@ -188,7 +206,20 @@ function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
 
     if not err and result and result.widget and result.widget.html then
       widget = result.widget
-      parent_div:start_div({widget = widget}, "Tactic/Term State", "widget")
+      widget_div = parent_div:start_div({widget = widget, event = {
+        ["onUndo"] = function()
+          local last_undo = pin.undo_list[#(pin.undo_list)]
+          if not last_undo then
+            print("Nothing left to undo for pin " .. tostring(pin.id))
+            return
+          end
+          local pos = last_undo.pos
+          local event = last_undo.event
+
+          parent_div:event(pos, undo_map[event], true)
+          table.remove(pin.undo_list)
+        end
+      }}, "Tactic/Term State", "widget")
       parent_div:insert_new_div(parse_widget(result.widget.html))
       parent_div:end_div()
     end

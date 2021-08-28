@@ -169,6 +169,11 @@ function Info:__cursor_hold()
   self:_render()
 end
 
+function Info:__undo()
+  self.div:event(html.util.pos_to_raw_pos(vim.api.nvim_win_get_cursor(0),
+    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), "onUndo")
+end
+
 function Info:add_pin()
   table.insert(self.pins, self.pin)
   self.pin:show_extmark()
@@ -257,7 +262,7 @@ end
 ---@return Pin
 function Pin:new(paused, use_widget)
   local new_pin = {id = self.next_id, parent_infos = {}, paused = paused, tick = 0,
-    div = html.Div:new({pin = self}, "", "pin"), use_widget = use_widget}
+    div = html.Div:new({pin = self}, "", "pin"), use_widget = use_widget, undo_list = {}}
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
 
@@ -292,11 +297,14 @@ vim.highlight.create(pin_hl_group, {
 }, true)
 
 --- Update this pin's current position.
-function Pin:set_position_params(params, delay)
+function Pin:set_position_params(params, delay, lean3_opts)
+  local old_params = self.position_params
   self.position_params = params
 
+  lean3_opts = vim.tbl_extend("keep", lean3_opts or {}, {changed = not vim.deep_equal(params, old_params)})
+
   self:update_extmark()
-  self:update(false, delay)
+  self:update(false, delay, lean3_opts)
 end
 
 --- Update pin extmark based on position, used when resetting pin position.
@@ -327,7 +335,7 @@ function Pin:update_extmark()
 end
 
 --- Update pin position based on extmark, used when changing text.
-function Pin:update_position(delay)
+function Pin:update_position(delay, lean3_opts)
   local extmark = self.extmark
   if not extmark then return end
 
@@ -345,7 +353,7 @@ function Pin:update_position(delay)
 
   local new_params = vim.deepcopy(self.position_params)
   new_params.position = new_pos
-  self:set_position_params(new_params, delay)
+  self:set_position_params(new_params, delay, lean3_opts)
 end
 
 function Pin:toggle_pause() if not self.paused then self:pause() else self:unpause() end end
@@ -503,7 +511,7 @@ end
 function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
   for _, pin in pairs(infoview._pin_by_id) do
     if pin.position_params and pin.position_params.textDocument.uri == vim.uri_from_bufnr(bufnr) then
-      vim.schedule_wrap(function() pin:update_position(500) end)()
+      vim.schedule_wrap(function() pin:update_position(500, {changed = true}) end)()
     end
   end
 end
