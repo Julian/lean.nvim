@@ -417,8 +417,7 @@ function Pin:__update(delay, lean3_opts)
 
   local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   if buf == -1 then
-    self.div:start_div({}, "No corresponding buffer found.", "no-buffer-msg")
-    self.div:end_div()
+    self.div:insert_div({}, "No corresponding buffer found.", "no-buffer-msg")
     return
   end
 
@@ -427,31 +426,30 @@ function Pin:__update(delay, lean3_opts)
   local line = params.position.line
 
   if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
-    lean3.update_infoview(self, self.div, buf, params, self.use_widget, lean3_opts)
+    self.div:insert_new_div(lean3.update_infoview(self, buf, params, self.use_widget, lean3_opts))
   else
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then
-        self.div:start_div({}, "Processing file...", "processing-msg")
-        self.div:end_div()
+        self.div:insert_div({}, "Processing file...", "processing-msg")
       end
     else
       local _, _, goal = plain_goal(params, buf)
       if self.tick ~= this_tick then return end
-      components.goal(self.div, goal)
+      self.div:insert_new_div(components.goal(goal))
 
       local _, _, term_goal = plain_term_goal(params, buf)
       if goal and term_goal then
         self.div:add_div(html.Div:new({}, "\n\n", "plain_goal-term_goal-separator"))
       end
-      components.term_goal(self.div, term_goal)
+      self.div:insert_new_div(components.term_goal(term_goal))
 
       if not goal and not term_goal then
-        self.div:add_div(html.Div:new({}, "No tactic/term data found.", "no-tactic-term"))
+        self.div:insert_new_div(html.Div:new({}, "No tactic/term data found.", "no-tactic-term"))
       end
 
       if self.tick ~= this_tick then return end
 
-      components.diagnostics(self.div, buf, line)
+      self.div:insert_new_div(components.diagnostics(buf, line))
     end
   end
   if self.tick ~= this_tick then return end

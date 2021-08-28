@@ -81,7 +81,8 @@ local to_event = {
 }
 
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
-function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
+function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
+  local parent_div = html.Div:new({}, "")
   local widget, widget_div
 
   local function parse_widget(result)
@@ -234,10 +235,12 @@ function lean3.update_infoview(pin, parent_div, bufnr, params, use_widget, opts)
   else
     local _, _, result = buf_request(bufnr, "$/lean/plainGoal", params)
     if result and type(result) == "table" then
-      components.goal(parent_div, result)
+      parent_div:insert_new_div(components.goal(result))
     end
   end
-  components.diagnostics(parent_div, bufnr, params.position.line)
+  parent_div:insert_new_div(components.diagnostics(bufnr, params.position.line))
+
+  return parent_div
 end
 
 function lean3.lsp_enable(opts)

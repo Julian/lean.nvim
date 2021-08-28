@@ -8,6 +8,7 @@
 local DiagnosticSeverity = vim.lsp.protocol.DiagnosticSeverity
 local components = {}
 
+local html = require"lean.html"
 
 --- Format a heading.
 local function H(contents)
@@ -27,10 +28,10 @@ local function range_to_string(range)
 end
 
 --- The current (tactic) goal state.
----@param div table: the current div
 ---@param goal table: a Lean4 `plainGoal` LSP response
-function components.goal(div, goal)
-  if type(goal) ~= "table" or not goal.goals then return end
+function components.goal(goal)
+  local div = html.Div:new({}, "")
+  if type(goal) ~= "table" or not goal.goals then return div end
 
   div:start_div({goals = goal.goals}, #goal.goals == 0 and H('goals accomplished 🎉') or
     #goal.goals == 1 and H('1 goal') or
@@ -42,22 +43,25 @@ function components.goal(div, goal)
   end
 
   div:end_div()
+  return div
 end
 
 --- The current (term) goal state.
----@param div table: the current div
 ---@param term_goal table: a Lean4 `plainTermGoal` LSP response
-function components.term_goal(div, term_goal)
-  if type(term_goal) ~= "table" or not term_goal.goal then return end
+function components.term_goal(term_goal)
+  local div = html.Div:new({}, "")
+  if type(term_goal) ~= "table" or not term_goal.goal then return div end
 
   div:start_div({term_goal = term_goal},
     H(string.format('expected type (%s)', range_to_string(term_goal.range)) .. "\n" .. term_goal.goal),
     "term-goal")
   div:end_div()
+  return div
 end
 
 --- Diagnostic information for the current line from the Lean server.
-function components.diagnostics(div, bufnr, line)
+function components.diagnostics(bufnr, line)
+  local div = html.Div:new({}, "")
   for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics(bufnr, line)) do
     div:start_div({}, "\n", "diagnostic-separator")
     div:end_div()
@@ -67,6 +71,7 @@ function components.diagnostics(div, bufnr, line)
           DiagnosticSeverity[diag.severity]:lower())) .. "\n" .. diag.message, "diagnostic")
     div:end_div()
   end
+  return div
 end
 
 return components
