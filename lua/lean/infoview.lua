@@ -229,30 +229,14 @@ function Info:render()
 end
 
 function Info:_render()
-  local text, hls = self.div:render()
-
-  local lines = vim.split(text, "\n")
-
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', true)
-  vim.api.nvim_buf_set_lines(self.bufnr, 0, -1, true, lines)
+  self.div:render_buf(self.bufnr, info_ns)
   -- HACK: This shouldn't really do anything, but I think there's a neovim
   --       display bug. See #27 and neovim/neovim#14663. Specifically,
   --       as of NVIM v0.5.0-dev+e0a01bdf7, without this, updating a long
   --       infoview with shorter contents doesn't properly redraw.
   vim.api.nvim_buf_call(self.bufnr, vim.fn.winline)
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', false)
-
-  for _, hl in ipairs(hls) do
-    local start_pos = html.util.raw_pos_to_pos(hl.start, lines)
-    local end_pos = html.util.raw_pos_to_pos(hl["end"], lines)
-    vim.highlight.range(
-      self.bufnr,
-      info_ns,
-      hl.hlgroup,
-      start_pos,
-      {end_pos[1], end_pos[2] + 1}
-    )
-  end
 end
 
 ---@return Pin

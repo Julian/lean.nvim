@@ -159,6 +159,37 @@ local function raw_pos_to_pos(raw_pos, lines)
   return {line_num - 1, rem_chars - 1}
 end
 
+function Div:render_buf(bufnr, ns)
+  local text, hls = self:render()
+  local lines = vim.split(text, "\n")
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
+
+  table.sort(hls, function(hl1, hl2)
+    local range1 = (hl1["end"] - hl1.start)
+    local range2 = (hl2["end"] - hl2.start)
+    if range1 > range2 then
+      return true
+    elseif range1 == range2 then
+      -- clickable highlight takes priority
+      return hl2.hlgroup == "leanInfoHighlight"
+    else
+      return false
+    end
+  end)
+
+  for _, hl in ipairs(hls) do
+    local start_pos = raw_pos_to_pos(hl.start, lines)
+    local end_pos = raw_pos_to_pos(hl["end"], lines)
+    vim.highlight.range(
+      bufnr,
+      ns,
+      hl.hlgroup,
+      start_pos,
+      {end_pos[1], end_pos[2] + 1}
+    )
+  end
+end
+
 local function buf_get_parent_div(pos, bufnr, div, check)
   local raw_pos = pos_to_raw_pos(pos, vim.api.nvim_buf_get_lines(bufnr, 0, -1, true))
   if not raw_pos then return end

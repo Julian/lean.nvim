@@ -182,12 +182,10 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       parse_children(children)
 
       if tooltip then
-        div:insert_div({element = result}, "→", "tooltip-separator", "leanInfoTooltipSep")
-        div:insert_div({element = result}, "[", "tooltip-start", "leanInfoTooltipSep")
-        div:start_div({element = result}, "", "tooltip", "leanInfoTooltip")
+        div:start_div({element = result}, "→[", "tooltip", "leanInfoTooltip")
         div:insert_new_div(parse_widget(tooltip))
+        div:insert_div({element = result}, "]", "tooltip-close")
         div:end_div()
-        div:insert_div({element = result}, "]", "tooltip-close", "leanInfoTooltipSep")
       end
       div:end_div()
       --div:insert_div({element = result}, "</" .. tag .. ">", "element")
