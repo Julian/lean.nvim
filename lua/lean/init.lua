@@ -31,7 +31,7 @@ local lean = {
       ["K"] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__event("click")<CR>]];
       ["I"] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__event("mouse_enter")<CR>]];
       ["i"] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__event("mouse_leave")<CR>]];
-      ["u"] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__undo()<CR>]]
+      ["u"] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__event("undo")<CR>]];
     };
     i = {
     };

@@ -170,11 +170,6 @@ function Info:__cursor_hold()
   self:_render()
 end
 
-function Info:__undo()
-  self.div:event(html.util.pos_to_raw_pos(vim.api.nvim_win_get_cursor(0),
-    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), "onUndo")
-end
-
 function Info:add_pin()
   table.insert(self.pins, self.pin)
   self.pin:show_extmark()

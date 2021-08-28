@@ -216,7 +216,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
     if not err and result and result.widget and result.widget.html then
       widget = result.widget
       widget_div = parent_div:start_div({widget = widget, event = {
-        ["onUndo"] = function()
+        ["undo"] = function()
           local last_undo = pin.undo_list[#(pin.undo_list)]
           if not last_undo then
             print("Nothing left to undo for pin " .. tostring(pin.id))
