@@ -34,6 +34,7 @@ vim.api.nvim_command("highlight leanInfoTooltipSep ctermbg=3 ctermfg=0")
 vim.api.nvim_command("highlight leanInfoButton ctermbg=249 ctermfg=0")
 vim.api.nvim_command("highlight leanInfoField ctermbg=12 ctermfg=0")
 vim.api.nvim_command("highlight leanInfoFieldSep ctermbg=225 ctermfg=4")
+vim.api.nvim_command("highlight leanInfoGoal cterm=bold")
 
 --- An individual pin.
 ---@class Pin

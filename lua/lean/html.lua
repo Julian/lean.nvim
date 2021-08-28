@@ -91,7 +91,7 @@ function Div:pos_from_div(div)
   return pos
 end
 
-function Div:div_from_pos(pos, stack)
+function Div:_div_from_pos(pos, stack)
   stack = stack or {}
   table.insert(stack, self)
 
@@ -103,7 +103,7 @@ function Div:div_from_pos(pos, stack)
   local search_pos = pos - #text
 
   for _, div in ipairs(self.divs) do
-    local div_text, div_stack = div:div_from_pos(search_pos, stack)
+    local div_text, div_stack = div:_div_from_pos(search_pos, stack)
     if div_stack then
       return nil, div_stack
     end
@@ -113,6 +113,11 @@ function Div:div_from_pos(pos, stack)
 
   table.remove(stack)
   return text, nil
+end
+
+function Div:div_from_pos(pos, stack)
+  local _, div_stack = self:_div_from_pos(pos, stack)
+  return div_stack
 end
 
 local function _get_parent_div(div_stack, check)
@@ -194,7 +199,7 @@ local function buf_get_parent_div(pos, bufnr, div, check)
   local raw_pos = pos_to_raw_pos(pos, vim.api.nvim_buf_get_lines(bufnr, 0, -1, true))
   if not raw_pos then return end
 
-  local _, div_stack = div:div_from_pos(raw_pos)
+  local div_stack = div:div_from_pos(raw_pos)
   if not div_stack then return end
 
   return get_parent_div(div_stack, check), div_stack
@@ -210,7 +215,7 @@ local function is_event_div_check(eventName)
 end
 
 function Div:event(pos, eventName, ...)
-  local _, div_stack = self:div_from_pos(pos)
+  local div_stack = self:div_from_pos(pos)
   if not div_stack then return end
 
   local event_div = get_parent_div(div_stack, is_event_div_check(eventName))
@@ -219,7 +224,7 @@ function Div:event(pos, eventName, ...)
 end
 
 function Div:hover(pos, check, hlgroup)
-  local _, div_stack = self:div_from_pos(pos)
+  local div_stack = self:div_from_pos(pos)
   if not div_stack then return end
 
   local hover_div = get_parent_div(div_stack, check)

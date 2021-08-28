@@ -64,7 +64,8 @@ end
 
 local class_to_hlgroup = {
   ["expr-boundary highlight"] = "leanInfoExternalHighlight";
-  ["bg-blue br3 ma1 ph2 white"] = "leanInfoField"
+  ["bg-blue br3 ma1 ph2 white"] = "leanInfoField";
+  ["goal-goals"] = "leanInfoGoal";
 }
 
 local undo_map = {
@@ -84,6 +85,9 @@ local buf_request = a.wrap(vim.lsp.buf_request, 4)
 function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
   local parent_div = html.Div:new({}, "")
   local widget, widget_div
+
+  local list_first
+  local goal_first = true
 
   local function parse_widget(result)
     local div = html.Div:new({}, "")
@@ -134,20 +138,41 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
     elseif is_widget_element(result) then
       local tag = result.t
       local children = result.c
+      local attributes = result.a
+      local class_name = attributes and attributes.className
       local tooltip = result.tt
       local events = {}
       local hlgroup
 
+      if tag == "ul" then
+        list_first = true
+      end
+
       if tag == "li" then
-        div:insert_div({}, "\n", "list-separator")
+        if list_first then
+          list_first = false
+        else
+          div:insert_div({}, "\n", "list-separator")
+        end
       end
 
       if tag == "label" or tag == "select" or tag == "option" then return div, false end
-      hlgroup = class_to_hlgroup[result.a and result.a.className]
+      hlgroup = class_to_hlgroup[class_name]
       if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
 
-      --div:insert_div({element = result}, "<" .. tag .. ">", "element")
-      --div:insert_div({element = result}, "<" .. tag .. " " .. vim.inspect(result.a) .. ">", "element")
+      if class_name == "goal-goals" then
+        div:insert_div({}, '▶ ', "goal-prefix")
+        goal_first = false
+      end
+      if class_name == "lh-copy mt2" and not goal_first then
+        div:insert_div({}, '\n', "goal-separator")
+      end
+
+      local debug_tags = false
+      if debug_tags then
+        --div:insert_div({element = result}, "<" .. tag .. ">", "element")
+        div:insert_div({element = result}, "<" .. tag .. " " .. vim.inspect(attributes) .. ">", "element")
+      end
       local element_div = div:start_div({element = result, event = events}, "", "element", hlgroup)
 
       if result.e then
@@ -188,7 +213,9 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
         div:end_div()
       end
       div:end_div()
-      --div:insert_div({element = result}, "</" .. tag .. ">", "element")
+      if debug_tags then
+        div:insert_div({element = result}, "</" .. tag .. ">", "element")
+      end
       return div
     else
       parse_children(result.c)
@@ -226,7 +253,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
           parent_div:event(pos, undo_map[event], true)
           table.remove(pin.undo_list)
         end
-      }}, "Tactic/Term State", "widget")
+      }}, "", "widget")
       parent_div:insert_new_div(parse_widget(result.widget.html))
       parent_div:end_div()
     end

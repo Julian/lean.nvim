@@ -79,7 +79,7 @@ describe('infoview', function()
       infoview.get_current_infoview().info.pin:update(true)
       assert.pin_pos_changed.pin_text_changed.infoview()
       assert.equal(table.concat(infoview.get_current_infoview().info.pin.msg, "\n"),
-      'Tactic/Term State\nexpected type:\n\n⊢ Type 1')
+      '▶ expected type:\n⊢ Type 1')
     end)
   end)
 
