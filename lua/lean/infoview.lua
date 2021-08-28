@@ -47,6 +47,7 @@ local Pin = {next_id = 1}
 ---@field id number
 ---@field bufnr number
 ---@field pin Pin
+---@field div Div
 local Info = {}
 
 --- A "view" on an info (i.e. window).
@@ -140,6 +141,7 @@ function Info:new()
     bufnr = vim.api.nvim_create_buf(false, true),
     pin = Pin:new(options.autopause, options.use_widget),
     pins = {},
+    div = html.Div:new({info = self}, "", "info")
   }
   util.load_mappings(require"lean".info_mappings, new_info.bufnr)
   new_info.pin:add_parent_info(new_info)
@@ -190,7 +192,7 @@ local info_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
 
 --- Update this info's physical contents.
 function Info:render()
-  self.div = html.Div:new({info = self}, "", "info")
+  self.div.divs = {}
   local function render_pin(pin, current)
     local header
     if not current then
