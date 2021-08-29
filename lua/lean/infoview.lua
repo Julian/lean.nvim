@@ -27,14 +27,6 @@ local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, 
   use_widget = true} }
 
 local _NOTHING_TO_SHOW = { "No info found." }
-vim.api.nvim_command("highlight leanInfoHighlight ctermbg=153 ctermfg=0")
-vim.api.nvim_command("highlight leanInfoExternalHighlight ctermbg=12 ctermfg=15")
-vim.api.nvim_command("highlight leanInfoTooltip ctermbg=225 ctermfg=0")
-vim.api.nvim_command("highlight leanInfoTooltipSep ctermbg=3 ctermfg=0")
-vim.api.nvim_command("highlight leanInfoButton ctermbg=249 ctermfg=0")
-vim.api.nvim_command("highlight leanInfoField ctermbg=12 ctermfg=0")
-vim.api.nvim_command("highlight leanInfoFieldSep ctermbg=225 ctermfg=4")
-vim.api.nvim_command("highlight leanInfoGoal cterm=bold")
 
 --- An individual pin.
 ---@class Pin

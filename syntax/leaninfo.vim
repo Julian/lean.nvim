@@ -20,3 +20,13 @@ hi def link leanInfoError LspDiagnosticsDefaultError
 hi def link leanInfoWarning LspDiagnosticsDefaultWarning
 hi def link leanInfoInfo LspDiagnosticsDefaultInformation
 hi def link leanInfoComment Comment
+
+highlight leanInfoHighlight ctermbg=153 ctermfg=0
+highlight leanInfoExternalHighlight ctermbg=12 ctermfg=15
+highlight leanInfoTooltip ctermbg=225 ctermfg=0
+highlight leanInfoTooltipSep ctermbg=3 ctermfg=0
+highlight leanInfoButton ctermbg=249 ctermfg=0
+highlight leanInfoField ctermbg=12 ctermfg=0
+highlight leanInfoFieldAlt ctermbg=7 ctermfg=0
+highlight leanInfoFieldSep ctermbg=225 ctermfg=4
+highlight leanInfoGoals cterm=bold

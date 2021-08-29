@@ -65,7 +65,10 @@ end
 local class_to_hlgroup = {
   ["expr-boundary highlight"] = "leanInfoExternalHighlight";
   ["bg-blue br3 ma1 ph2 white"] = "leanInfoField";
-  ["goal-goals"] = "leanInfoGoal";
+  ["bg-gray br3 ma1 ph2 white"] = "leanInfoFieldAlt";
+  ["goal-goals"] = "leanInfoGoals";
+  ["goal-hyp b pr2"] = "leanInfoGoalHyp";
+  ["goal-vdash b"] = "leanInfoGoalVDash";
 }
 
 local undo_map = {
