@@ -191,6 +191,11 @@ local paused_txt = "[PAUSED]"
 
 local info_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
 
+--- Set the current window as the last window used to update this Info.
+function Info:set_last_window()
+  self.last_window = vim.api.nvim_get_current_win()
+end
+
 --- Update this info's physical contents.
 function Info:render()
   self.div.divs = {}
@@ -253,6 +258,12 @@ function Pin:new(paused, use_widget)
   setmetatable(new_pin, self)
 
   return new_pin
+end
+
+--- Set whether this pin uses a widget or a plain goal/term goal.
+function Pin:set_widget(use_widget)
+  self.use_widget = use_widget
+  self:update()
 end
 
 ---@param info Info
@@ -474,6 +485,7 @@ end
 --- Update the info contents appropriately for Lean 4 or 3.
 --- Normally will be called on each CursorHold for a buffer containing Lean.
 function infoview.__update()
+  infoview.get_current_infoview().info:set_last_window()
   infoview.get_current_infoview().info.pin:set_position_params(vim.lsp.util.make_position_params())
 end
 

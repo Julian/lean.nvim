@@ -171,7 +171,10 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       local debug_tags = false
       if debug_tags then
         --div:insert_div({element = result}, "<" .. tag .. ">", "element")
-        div:insert_div({element = result}, "<" .. tag .. " " .. vim.inspect(attributes) .. ">", "element")
+        div:insert_div({element = result}, "<" .. tag ..
+        " attributes(" .. vim.inspect(attributes) .. ")" ..
+        " events(" .. vim.inspect(result.e) .. ")" ..
+        ">", "element")
       end
       local element_div = div:start_div({element = result, event = events}, "", "element", hlgroup)
 
@@ -190,7 +193,8 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
                 textDocument = pin.position_params.textDocument
               }})
 
-              if undo or not pos or event == "onMouseEnter" or event == "onMouseLeave" then return end
+              if undo or not pos or event == "onMouseEnter" or event == "onMouseLeave"
+                or attributes.title == "go to definition" then return end
               table.insert(pin.undo_list, {
                 pos = pos;
                 event = div_event
@@ -239,6 +243,21 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
     end
 
     if not err and result and result.widget and result.widget.html then
+      if result.effects then
+        for _, effect in pairs(result.effects) do
+          if effect.kind == "reveal_position" then
+            local this_infoview = require"lean.infoview".get_current_infoview()
+            local this_info = this_infoview and this_infoview.info
+            local this_window = this_info and this_info.last_window
+            if this_window and vim.api.nvim_win_is_valid(this_window) then
+              vim.api.nvim_win_set_buf(this_window, vim.uri_to_bufnr(vim.uri_from_fname(effect.file_name)))
+              vim.api.nvim_set_current_win(this_window)
+              vim.api.nvim_win_set_cursor(this_window, {effect.line, effect.column})
+            end
+          end
+        end
+      end
+
       widget = result.widget
       widget_div = parent_div:start_div({widget = widget, event = {
         ["undo"] = function()
