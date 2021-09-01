@@ -179,7 +179,10 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
         " events(" .. vim.inspect(result.e) .. ")" ..
         ">", "element")
       end
-      local element_div = div:start_div({element = result, event = events}, "", "element", hlgroup)
+      local element_div = div:start_div({element = result, event = events}, "", "element")
+      element_div.hlgroup = function()
+        return html.util.highlight_check(element_div) or hlgroup
+      end
 
       if result.e then
         for event, handler in pairs(result.e) do

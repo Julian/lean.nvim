@@ -6,6 +6,7 @@ local util = require('lean._util')
 local set_augroup = util.set_augroup
 local a = require('plenary.async')
 local html = require'lean.html'
+local rpc = require'lean.rpc'
 
 local wait_timer = a.wrap(vim.loop.timer_start, 4)
 
@@ -418,17 +419,39 @@ function Pin:__update(delay, lean3_opts)
         self.div:insert_div({}, "Processing file...", "processing-msg")
       end
     else
+      self.sess = rpc.open(buf, params)
+
       local _, _, goal = plain_goal(params, buf)
       if self.tick ~= this_tick then return end
-      self.div:insert_new_div(components.goal(goal))
+      local goal_div = components.goal(goal)
+      self.div:insert_new_div(goal_div)
 
-      local _, _, term_goal = plain_term_goal(params, buf)
-      if goal and term_goal then
+      local term_goal, term_goal_err
+      local term_goal_div
+
+      if self.use_widget then
+        term_goal, term_goal_err = self.sess:getInteractiveTermGoal(params)
+        if term_goal_err then
+          term_goal = nil
+        else
+          term_goal_div = components.interactive_term_goal(term_goal, self)
+        end
+      end
+
+      if not term_goal then
+        local _, _, _plain_term_goal = plain_term_goal(params, buf)
+        term_goal = _plain_term_goal
+        term_goal_div = components.term_goal(term_goal)
+      end
+
+      local goal_div_empty, term_goal_div_empty = #goal_div:render() == 0, #term_goal_div:render() == 0
+
+      if not goal_div_empty and not term_goal_div_empty then
         self.div:add_div(html.Div:new({}, "\n\n", "plain_goal-term_goal-separator"))
       end
-      self.div:insert_new_div(components.term_goal(term_goal))
+      self.div:insert_new_div(term_goal_div)
 
-      if not goal and not term_goal then
+      if goal_div_empty and term_goal_div_empty then
         self.div:insert_new_div(html.Div:new({}, "No tactic/term data found.", "no-tactic-term"))
       end
 

@@ -57,13 +57,17 @@ function Div:render()
     vim.list_extend(hls, new_hls)
     text = text .. new_text
   end
-  if self.hlgroup then table.insert(hls, {start = 1, ["end"] = #text, hlgroup = self.hlgroup}) end
-  return text, hls
-end
+  if self.hlgroup then
+    local hlgroup = self.hlgroup
+    if type(hlgroup) == "function" then
+      hlgroup = hlgroup(self)
+    end
 
-function Div:set_hlgroup(hlgroup)
-  self.prev_hlgroup = self.hlgroup
-  self.hlgroup = hlgroup
+    if hlgroup then
+      table.insert(hls, {start = 1, ["end"] = #text, hlgroup = hlgroup})
+    end
+  end
+  return text, hls
 end
 
 function Div:_pos_from_div(div)
@@ -223,7 +227,7 @@ function Div:event(pos, eventName, ...)
   if event_div then event_div.tags.event[eventName](...) end
 end
 
-function Div:hover(pos, check, hlgroup)
+function Div:hover(pos, check)
   local div_stack = self:div_from_pos(pos)
   if not div_stack then return end
 
@@ -232,11 +236,11 @@ function Div:hover(pos, check, hlgroup)
   if hover_div == self.prev_hover_div then return end
 
   if hover_div then
-    hover_div:set_hlgroup(hlgroup)
+    hover_div.tags.__highlight = true
   end
 
   if self.prev_hover_div then
-    self.prev_hover_div:set_hlgroup(self.prev_hover_div.prev_hlgroup)
+    self.prev_hover_div.tags.__highlight = false
   end
 
   self.prev_hover_div = hover_div
@@ -244,4 +248,7 @@ end
 
 return {Div = Div, util = { get_parent_div = get_parent_div,
 pos_to_raw_pos = pos_to_raw_pos, raw_pos_to_pos = raw_pos_to_pos,
-buf_get_parent_div = buf_get_parent_div, is_event_div_check = is_event_div_check }}
+buf_get_parent_div = buf_get_parent_div, is_event_div_check = is_event_div_check,
+highlight_check = function(div)
+  return div.tags.__highlight and "leanInfoHighlight"
+end}}
