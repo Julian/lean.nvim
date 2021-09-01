@@ -208,9 +208,10 @@ function Info:render()
       else
         filename = pin.position_params.textDocument.uri
       end
-      header = header .. (": file %s at line %d, character %d\n"):format(filename,
+      header = header .. (": file %s at line %d, character %d"):format(filename,
         pin.position_params.position.line + 1, pin.position_params.position.character + 1)
     end
+    header = header and header .. "\n"
 
     local pin_div = html.Div:new({}, header, "pin_wrapper")
     if pin.div then pin_div:add_div(pin.div) end
@@ -227,6 +228,7 @@ function Info:render()
   end
 
   self:_render()
+  collectgarbage()
 end
 
 function Info:_render()
@@ -366,6 +368,10 @@ end
 function Pin:pause()
   if self.paused then return end
   self.paused = true
+
+  -- allow RPC refs to be released
+  self.div:filter(function(div) div.tags = {} end)
+
   self:update()
 end
 

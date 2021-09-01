@@ -88,43 +88,42 @@ function components.code_with_infos(t, pin)
     info_div:insert_new_div(suffix_div)
 
     local _click = function()
-      local info_popup, err = pin.sess:infoToInteractive(info_with_ctx)
-      if err then print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message)) return end
-
-      local tt_open = false
-
       local type_open = #type_div.divs > 0
       type_div.divs = {}
-      if not type_open and info_popup['type'] ~= nil then
-        type_div:insert_div({}, '\ntype', "type-prefix", "leanInfoButton")
-        type_div:insert_div({}, ': ', "separator", "")
-        type_div:insert_new_div(components.code_with_infos(info_popup['type'], pin))
-        tt_open = true
-      end
-
       local expr_open = #expr_div.divs > 0
       expr_div.divs = {}
-      if not expr_open and info_popup.exprExplicit ~= nil then
-        expr_div:insert_div({}, '\nexpr explicit', "exprExplicit-prefix", "leanInfoButton")
-        expr_div:insert_div({}, ': ', "separator", "", "Normal")
-        expr_div:insert_new_div(components.code_with_infos(info_popup.exprExplicit, pin))
-        tt_open = true
-      end
-
       local doc_open = #doc_div.divs > 0
       doc_div.divs = {}
-      if not doc_open and info_popup.doc ~= nil then
-        doc_div:insert_div({}, '\n' .. info_popup.doc, 'docstring') -- TODO: render markdown
-        tt_open = true
-      end
 
       prefix_div.divs = {}
       suffix_div.divs = {}
 
-      if tt_open == true then
-        prefix_div:insert_div({}, "→[", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
-        suffix_div:insert_div({}, "]", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
+      if type_open or expr_open or doc_open then
+        pin:render_parents()
+        return
       end
+
+      local info_popup, err = pin.sess:infoToInteractive(info_with_ctx)
+      if err then print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message)) return end
+
+      if info_popup['type'] ~= nil then
+        type_div:insert_div({}, '\ntype', "type-prefix", "leanInfoButton")
+        type_div:insert_div({}, ': ', "separator", "")
+        type_div:insert_new_div(components.code_with_infos(info_popup['type'], pin))
+      end
+
+      if info_popup.exprExplicit ~= nil then
+        expr_div:insert_div({}, '\nexpr explicit', "exprExplicit-prefix", "leanInfoButton")
+        expr_div:insert_div({}, ': ', "separator", "", "Normal")
+        expr_div:insert_new_div(components.code_with_infos(info_popup.exprExplicit, pin))
+      end
+
+      if info_popup.doc ~= nil then
+        doc_div:insert_div({}, '\n' .. info_popup.doc, 'docstring') -- TODO: render markdown
+      end
+
+      prefix_div:insert_div({}, "→[", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
+      suffix_div:insert_div({}, "]", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
 
       pin:render_parents()
     end

@@ -246,6 +246,14 @@ function Div:hover(pos, check)
   self.prev_hover_div = hover_div
 end
 
+function Div:filter(fn)
+  fn(self)
+
+  for _, div in pairs(self.divs) do
+    div:filter(fn)
+  end
+end
+
 return {Div = Div, util = { get_parent_div = get_parent_div,
 pos_to_raw_pos = pos_to_raw_pos, raw_pos_to_pos = raw_pos_to_pos,
 buf_get_parent_div = buf_get_parent_div, is_event_div_check = is_event_div_check,
