@@ -74,25 +74,49 @@ function Div:_pos_from_div(div)
   local text = self.text
 
   -- base case
-  if self == div then return nil, 1 end
+  if self == div then return nil, 1, {} end
 
   local pos = #text
 
-  for _, this_div in ipairs(self.divs) do
-    local div_text, div_pos = this_div:_pos_from_div(div)
+  for idx, this_div in ipairs(self.divs) do
+    local div_text, div_pos, div_path = this_div:_pos_from_div(div)
     if div_pos then
-      return nil, pos + div_pos
+      table.insert(div_path, {idx = idx, name = this_div.name})
+      return nil, pos + div_pos, div_path
     end
     text = text .. div_text
     pos = #text
   end
 
-  return text, nil
+  return text, nil, nil
 end
 
 function Div:pos_from_div(div)
-  local _, pos = self:_pos_from_div(div)
-  return pos
+  local _, pos, path = self:_pos_from_div(div)
+  if path then table.insert(path, {idx = -1, name = self.name}) end
+  return pos, path
+end
+
+function Div:_div_from_path(path)
+  if #path == 0 then return self end
+  path = {unpack(path)}
+
+  local this_branch = table.remove(path)
+  local this_div = self.divs[this_branch.idx]
+  local this_name = this_branch.name
+
+  if not this_div or this_div.name ~= this_name then return nil end
+
+  return this_div:_div_from_path(path)
+end
+
+function Div:div_from_path(path)
+  path = {unpack(path)}
+
+  -- check that the first name matches
+  if self.name ~= table.remove(path).name then return nil end
+
+  return self:_div_from_path(path)
 end
 
 function Div:_div_from_pos(pos, stack)

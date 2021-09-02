@@ -99,7 +99,6 @@ function components.code_with_infos(t, pin)
       suffix_div.divs = {}
 
       if type_open or expr_open or doc_open then
-        pin:render_parents()
         return
       end
 
@@ -124,11 +123,25 @@ function components.code_with_infos(t, pin)
 
       prefix_div:insert_div({}, "→[", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
       suffix_div:insert_div({}, "]", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
-
-      pin:render_parents()
     end
 
-    div.tags = {info_with_ctx = info_with_ctx, event = { _click = _click, click = a.void(_click) } }
+    local function event_wrap(fn, event_name)
+      return a.void(
+      function()
+        local undo_path
+
+        local _, path = pin.div:pos_from_div(div)
+        undo_path = path
+
+        fn()
+
+        table.insert(pin.undo_list, {path = undo_path, event = event_name})
+
+        pin:render_parents()
+      end)
+    end
+
+    div.tags = {info_with_ctx = info_with_ctx, event = { _click = _click, click = event_wrap(_click, "click") } }
     div.hlgroup = html.util.highlight_check
 
     div:insert_new_div(components.code_with_infos(t.tag[2], pin))

@@ -9,6 +9,7 @@ syn match leanInfoError "^▶.*: error:$"
 syn match leanInfoWarning "^▶.*: warning:$"
 syn match leanInfoInfo "^▶.*: information:$"
 syn match leanInfoComment "--.*"
+syn region leanInfoBlockComment start="/-" end="-/"
 
 hi def link leanInfoGoals Title
 hi def link leanInfoGoalCase Statement
@@ -20,6 +21,7 @@ hi def link leanInfoError LspDiagnosticsDefaultError
 hi def link leanInfoWarning LspDiagnosticsDefaultWarning
 hi def link leanInfoInfo LspDiagnosticsDefaultInformation
 hi def link leanInfoComment Comment
+hi def link leanInfoBlockComment Comment
 
 highlight leanInfoHighlight ctermbg=153 ctermfg=0
 highlight leanInfoExternalHighlight ctermbg=12 ctermfg=15

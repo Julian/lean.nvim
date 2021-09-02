@@ -34,6 +34,7 @@ local _NOTHING_TO_SHOW = { "No info found." }
 ---@field id number
 ---@field parent_infos table<number, boolean>
 ---@field use_widget boolean
+---@field div Div
 local Pin = {next_id = 1}
 
 --- An individual info.
@@ -215,6 +216,9 @@ function Info:render()
 
     local pin_div = html.Div:new({}, header, "pin_wrapper")
     if pin.div then pin_div:add_div(pin.div) end
+    if #pin.undo_list > 0 then
+      pin_div:add_div(html.Div:new({}, "\n/- action stack size: " .. tostring(#pin.undo_list) .. " -/"))
+    end
 
     self.div:add_div(pin_div)
   end
@@ -251,6 +255,29 @@ function Pin:new(paused, use_widget)
 
   self.__index = self
   setmetatable(new_pin, self)
+
+  -- (async function) replays the events in this pin's undo list
+  new_pin.div.tags.event = {}
+  new_pin.div.tags.event._replay = function(this_tick)
+    local new_undo_list = {}
+    for _, undo_item in pairs(new_pin.undo_list) do
+      local undo_path = undo_item.path
+      local undo_event = undo_item.event
+
+      local this_div = new_pin.div:div_from_path(undo_path)
+      if not this_div then break end
+      table.insert(new_undo_list, undo_item)
+
+      -- use unwrapped async version of event
+      local event_fn = this_div.tags.event["_" .. undo_event]
+
+      event_fn()
+
+      if this_tick ~= new_pin.tick then return end
+    end
+
+    new_pin.undo_list = new_undo_list
+  end
 
   return new_pin
 end
@@ -375,6 +402,18 @@ function Pin:pause()
   self:update()
 end
 
+function Pin:clear_undo_list()
+  self.undo_list = {}
+end
+
+-- Triggered when manually moving a pin.
+function Pin:move(params)
+  if not vim.deep_equal(params, self.position_params) then
+    self:clear_undo_list()
+  end
+  self:set_position_params(params)
+end
+
 function Pin:_update(force, delay, lean3_opts)
   if self.position_params and (force or not self.paused) then
     self:__update(delay, lean3_opts)
@@ -405,7 +444,7 @@ function Pin:__update(delay, lean3_opts)
 
   local params = self.position_params
 
-  self.div = html.Div:new({pin = self}, "", "pin")
+  self.div.divs = {}
 
   local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   if buf == -1 then
@@ -418,9 +457,11 @@ function Pin:__update(delay, lean3_opts)
   local line = params.position.line
 
   if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
+    self:clear_undo_list()
     self.div:insert_new_div(lean3.update_infoview(self, buf, params, self.use_widget, lean3_opts))
   else
     if require"lean.progress".is_processing_at(params) then
+      self:clear_undo_list()
       if options.show_processing then
         self.div:insert_div({}, "Processing file...", "processing-msg")
       end
@@ -445,6 +486,7 @@ function Pin:__update(delay, lean3_opts)
       end
 
       if not term_goal then
+        self:clear_undo_list()
         local _, _, _plain_term_goal = plain_term_goal(params, buf)
         term_goal = _plain_term_goal
         term_goal_div = components.term_goal(term_goal)
@@ -467,6 +509,8 @@ function Pin:__update(delay, lean3_opts)
     end
   end
   if self.tick ~= this_tick then return end
+
+  self.div.tags.event._replay(this_tick)
 
   local lines = vim.split(self.div:render(), "\n")
   self.msg = lines
@@ -507,7 +551,7 @@ end
 --- Normally will be called on each CursorHold for a buffer containing Lean.
 function infoview.__update()
   infoview.get_current_infoview().info:set_last_window()
-  infoview.get_current_infoview().info.pin:set_position_params(vim.lsp.util.make_position_params())
+  infoview.get_current_infoview().info.pin:move(vim.lsp.util.make_position_params())
 end
 
 --- Update pins corresponding to the given URI.
