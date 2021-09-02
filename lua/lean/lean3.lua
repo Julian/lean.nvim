@@ -1,8 +1,9 @@
 local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
 local dirname = require('lspconfig.util').path.dirname
 
+local util = require"lean._util"
 local components = require('lean.infoview.components')
-local subprocess_check_output = require('lean._util').subprocess_check_output
+local subprocess_check_output = util.subprocess_check_output
 
 local a = require('plenary.async')
 
@@ -56,10 +57,10 @@ function lean3.__current_search_paths()
   return vim.fn.json_decode(table.concat(result, '')).path
 end
 
-local buf_request = a.wrap(vim.lsp.buf_request, 4)
+local buf_request = a.wrap(util.request, 4)
 function lean3.update_infoview(bufnr, params)
   params = vim.deepcopy(params)
-  local _, _, result = buf_request(bufnr, "$/lean/plainGoal", params)
+  local _, result = buf_request(bufnr, "$/lean/plainGoal", params)
   local lines = {}
   if result and type(result) == "table" then
     vim.list_extend(lines, components.goal(result))
@@ -69,7 +70,9 @@ end
 
 function lean3.lsp_enable(opts)
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
-    ['textDocument/publishDiagnostics'] = require"lean.lsp".handlers.diagnostics_handler;
+    ['textDocument/publishDiagnostics'] = util.wrap_handler(
+      require"vim.lsp.handlers"['textDocument/publishDiagnostics'],
+      util.mk_handler(require"lean.lsp".handlers.diagnostics_handler))
   })
   require'lspconfig'.lean3ls.setup(opts)
 end
