@@ -55,6 +55,7 @@ end
 function Session:release_now(refs)
   for _, ptr in ipairs(refs) do table.insert(self.to_release, ptr) end
   if self.closed or #self.to_release == 0 then return end
+  --print("releasing: " .. vim.inspect(self.to_release))
   vim.lsp.buf_notify(self.bufnr, '$/lean/rpc/release', {
     uri = self.uri,
     sessionId = self.session_id,
@@ -93,7 +94,7 @@ end
 ---@return any result
 ---@return any error
 function Session:call(pos, method, params)
-  if not self.connected then
+  while not self.connected do
     self.on_connected:wait()
   end
   if self.connect_err ~= nil then
@@ -108,6 +109,8 @@ function Session:call(pos, method, params)
     if type(obj) == 'table' then
       for k, v in pairs(obj) do
         if k == 'p' and type(v) ~= 'table' then
+          --print("obtaining: " .. tostring(v))
+
           -- Lua 5.1 workaround for unsupported __gc on tables
           -- luacheck: ignore
           local prox = newproxy(true)

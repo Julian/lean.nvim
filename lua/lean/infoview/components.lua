@@ -74,59 +74,80 @@ function components.interactive_term_goal(goal, sess)
     elseif t.tag ~= nil then
       local info_with_ctx = t.tag[1].info
 
-      local info_div = html.Div:new()
+      local info_div = html.Div:new({event = {}}, "", "tooltip")
 
-      local prefix_div = html.Div:new()
-      local type_div = html.Div:new()
-      local expr_div = html.Div:new()
-      local doc_div = html.Div:new()
-      local suffix_div = html.Div:new()
+      local info_open = false
+      local tick = 0
+      local last_call
 
-      info_div:insert_new_div(prefix_div)
-      info_div:insert_new_div(type_div)
-      info_div:insert_new_div(expr_div)
-      info_div:insert_new_div(doc_div)
-      info_div:insert_new_div(suffix_div)
-
-      local click = function()
-        local type_open = #type_div.divs > 0
-        type_div.divs = {}
-        local expr_open = #expr_div.divs > 0
-        expr_div.divs = {}
-        local doc_open = #doc_div.divs > 0
-        doc_div.divs = {}
-
-        prefix_div.divs = {}
-        suffix_div.divs = {}
-
-        if type_open or expr_open or doc_open then
-          return
-        end
-
-        local info_popup, err = sess:infoToInteractive(info_with_ctx)
-        if err then print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message)) return end
-
-        if info_popup['type'] ~= nil then
-          type_div:insert_div({}, '\ntype', "type-prefix", "leanInfoButton")
-          type_div:insert_div({}, ': ', "separator", "")
-          type_div:insert_new_div(code_with_infos(info_popup['type']))
-        end
-
-        if info_popup.exprExplicit ~= nil then
-          expr_div:insert_div({}, '\nexpr explicit', "exprExplicit-prefix", "leanInfoButton")
-          expr_div:insert_div({}, ': ', "separator", "", "Normal")
-          expr_div:insert_new_div(code_with_infos(info_popup.exprExplicit))
-        end
-
-        if info_popup.doc ~= nil then
-          doc_div:insert_div({}, '\n' .. info_popup.doc, 'docstring') -- TODO: render markdown
-        end
-
-        prefix_div:insert_div({}, "→[", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
-        suffix_div:insert_div({}, "]", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
+      local function new_tick()
+        tick = tick + 1
+        return tick
       end
 
-      div.tags = {info_with_ctx = info_with_ctx, event = { click = click } }
+      local reset = function(_)
+        info_div.divs = {}
+        info_div.tags.event.close = nil
+        info_open = false
+        return true
+      end
+
+      local undo_wrap = function(call)
+        return function()
+          reset()
+          local this_tick = new_tick()
+          local success = call(this_tick)
+          if this_tick ~= tick then return end
+
+          local orig_last_call = last_call
+          last_call = call
+
+          return function()
+            reset()
+            last_call = orig_last_call
+            return orig_last_call(new_tick())
+          end, success
+        end
+      end
+
+      local do_reset = undo_wrap(function() return true end)
+
+      last_call = reset
+
+      local do_open_all = undo_wrap(function(this_tick)
+        local info_popup, err = sess:infoToInteractive(info_with_ctx)
+        if this_tick ~= tick then return false end
+
+        if err then print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message)) return false end
+
+        info_div:insert_div({}, "→[", "tooltip-prefix", function() return div.hlgroup(div) or "leanInfoTooltip" end)
+        local keys = {}
+        for key, _ in pairs(info_popup) do
+          table.insert(keys, key)
+        end
+        table.sort(keys)
+        for _, key in ipairs(keys) do
+          info_div:start_div({}, "", "info-item")
+          info_div:insert_div({}, '\n' .. key , "info-item-prefix", "leanInfoButton")
+          info_div:insert_div({}, ': ', "separator")
+          info_div:insert_new_div(code_with_infos(info_popup[key]))
+          info_div:end_div()
+        end
+        info_div:insert_div({}, "]", "tooltip-suffix", function() return div.hlgroup(div) or "leanInfoTooltip" end)
+        info_div.tags.event.close = do_reset
+        info_open = true
+        return true
+      end)
+
+      local click = function()
+        if info_open then
+          return do_reset()
+        else
+          return do_open_all()
+        end
+      end
+
+      div.tags = {info_with_ctx = info_with_ctx, event = { click = click }}
       div.hlgroup = html.util.highlight_check
 
       div:insert_new_div(code_with_infos(t.tag[2]))

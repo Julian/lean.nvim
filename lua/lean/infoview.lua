@@ -8,8 +8,6 @@ local a = require('plenary.async')
 local html = require'lean.html'
 local rpc = require'lean.rpc'
 
-local wait_timer = a.wrap(vim.loop.timer_start, 4)
-
 local infoview = {
   -- mapping from infoview IDs to infoviews
   ---@type table<number, Infoview>
@@ -217,7 +215,7 @@ function Info:render()
     local pin_div = html.Div:new({}, header, "pin_wrapper")
     if pin.div then pin_div:add_div(pin.div) end
     if #pin.undo_list > 0 then
-      pin_div:add_div(html.Div:new({}, "\n/- action stack size: " .. tostring(#pin.undo_list) .. " -/"))
+      pin_div:add_div(html.Div:new({}, "\n/- undo list size: " .. tostring(#pin.undo_list) .. " -/"))
     end
 
     self.div:add_div(pin_div)
@@ -267,9 +265,14 @@ function Pin:new(paused, use_widget)
 
       local this_div = new_pin.div:div_from_path(undo_path)
       if not this_div then break end
+
+      local undo_fn, success = this_div.tags.event[undo_event]()
+
+      undo_item.undo_fn = undo_fn
+
       table.insert(new_undo_list, undo_item)
 
-      this_div.tags.event[undo_event]()
+      if not success then print("replay aborted on error") break end
 
       if this_tick ~= new_pin.tick then return end
     end
@@ -279,7 +282,27 @@ function Pin:new(paused, use_widget)
 
   -- tracks the given event (relative to the pin), and appends it to the undo list
   new_pin.div.tags.event._track = function(path, event, undo_fn)
-    table.insert(new_pin.undo_list, {path = path, event = event, undo_fn = undo_fn})
+    if event == "undo" then return end
+
+    if undo_fn then table.insert(new_pin.undo_list, {path = path, event = event, undo_fn = undo_fn}) end
+
+    new_pin:render_parents()
+  end
+
+  -- tracks the given event (relative to the pin), and appends it to the undo list
+  new_pin.div.tags.event.undo = function()
+    if not (#new_pin.undo_list > 0) then return end
+
+    local undo_item = table.remove(new_pin.undo_list)
+
+    if not undo_item.undo_fn then return end
+
+    local undo_success = undo_item.undo_fn()
+    if undo_success then
+      print('Undo on "' .. undo_item.event .. '" action.')
+    else
+      print('Failed to undo "' .. undo_item.event .. '" action.')
+    end
 
     new_pin:render_parents()
   end
@@ -443,7 +466,7 @@ function Pin:__update(delay, lean3_opts)
   self.tick = (self.tick + 1) % 1000
   local this_tick = self.tick
 
-  wait_timer(vim.loop.new_timer(), delay or 100, 0)
+  util.wait_timer(vim.loop.new_timer(), delay or 100, 0)
   a.util.scheduler()
   if self.tick ~= this_tick then return end
 
@@ -516,7 +539,9 @@ function Pin:__update(delay, lean3_opts)
   end
   if self.tick ~= this_tick then return end
 
-  if self.replay then self.div.tags.event.replay(this_tick) end
+  if self.replay then
+    self.div.tags.event.replay(this_tick)
+  end
 
   local lines = vim.split(self.div:render(), "\n")
   self.msg = lines

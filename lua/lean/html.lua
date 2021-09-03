@@ -251,7 +251,7 @@ function Div:event(pos, event_name, ...)
   local args = {...}
 
   a.void(function()
-    local undo_fn = event_div.tags.event[event_name](unpack(args))
+    local result = {event_div.tags.event[event_name](unpack(args))}
 
     if tracker_div then
       -- take subset of path from tracker to event, inclusive
@@ -260,7 +260,7 @@ function Div:event(pos, event_name, ...)
         table.insert(new_path, path[i])
       end
 
-      tracker_div.tags.event["_track"](new_path, event_name, undo_fn)
+      tracker_div.tags.event["_track"](new_path, event_name, unpack(result))
     end
   end)()
 end

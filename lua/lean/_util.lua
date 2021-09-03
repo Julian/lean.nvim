@@ -1,5 +1,6 @@
 -- Stuff that should live in some standard library.
 local Job = require("plenary.job")
+local a = require("plenary.async")
 
 local M = {}
 
@@ -78,5 +79,7 @@ function M.load_mappings(mappings, buffer)
     end
   end
 end
+
+M.wait_timer = a.wrap(vim.loop.timer_start, 4)
 
 return M

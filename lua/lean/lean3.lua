@@ -177,18 +177,33 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       element_div.hlgroup = function()
         return html.util.highlight_check(element_div) or hlgroup
       end
+      local get_path = function()
+        local _, path = pin.div:pos_from_div(element_div)
+        return path
+      end
 
       if result.e then
         for event, handler in pairs(result.e) do
           local div_event = to_event[event]
           events[div_event] = function()
-              pin:_update(false, 0, {widget_event = {
-                widget = widget,
-                kind = event,
-                handler = handler,
-                args = { type = 'unit' },
-                textDocument = pin.position_params.textDocument
-              }})
+            pin:_update(false, 0, {widget_event = {
+              widget = widget,
+              kind = event,
+              handler = handler,
+              args = { type = 'unit' },
+              textDocument = pin.position_params.textDocument
+            }})
+
+            if div_event ~= "click" then return end
+            return function()
+              local new_div = pin.div:div_from_path(get_path())
+              if new_div then
+                new_div.tags.event[div_event]()
+                return true
+              else
+                return false
+              end
+            end
           end
         end
       end
@@ -200,10 +215,22 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       parse_children(children)
 
       if tooltip then
-        div:start_div({element = result}, "→[", "tooltip", "leanInfoTooltip")
+        local tooltip_div = div:start_div({element = result}, "→[", "tooltip", "leanInfoTooltip")
         div:insert_new_div(parse_widget(tooltip))
         div:insert_div({element = result}, "]", "tooltip-close")
         div:end_div()
+
+        tooltip_div.tags.event = {}
+
+        tooltip_div.tags.event.close = function()
+          local new_div = pin.div:div_from_path(get_path())
+          if new_div then
+            new_div.tags.event["click"]()
+            return true
+          else
+            return false
+          end
+        end
       end
       div:end_div()
       if debug_tags then
