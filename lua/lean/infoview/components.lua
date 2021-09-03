@@ -10,8 +10,6 @@ local components = {}
 
 local html = require"lean.html"
 
-local a = require"plenary.async"
-
 --- Format a heading.
 local function H(contents)
   return string.format('▶ %s', contents)
@@ -59,103 +57,86 @@ function components.term_goal(term_goal)
   return div
 end
 
----@param t CodeWithInfos
----@param pin Pin
-function components.code_with_infos(t, pin)
-  local div = html.Div:new({}, "", "code-with-infos")
-
-  if t.text ~= nil then
-    div:insert_div({}, t.text, "text")
-  elseif t.append ~= nil then
-    for _, s in ipairs(t.append) do
-      div:insert_new_div(components.code_with_infos(s, pin))
-    end
-  elseif t.tag ~= nil then
-    local info_with_ctx = t.tag[1].info
-
-    local info_div = html.Div:new()
-
-    local prefix_div = html.Div:new()
-    local type_div = html.Div:new()
-    local expr_div = html.Div:new()
-    local doc_div = html.Div:new()
-    local suffix_div = html.Div:new()
-
-    info_div:insert_new_div(prefix_div)
-    info_div:insert_new_div(type_div)
-    info_div:insert_new_div(expr_div)
-    info_div:insert_new_div(doc_div)
-    info_div:insert_new_div(suffix_div)
-
-    local _click = function()
-      local type_open = #type_div.divs > 0
-      type_div.divs = {}
-      local expr_open = #expr_div.divs > 0
-      expr_div.divs = {}
-      local doc_open = #doc_div.divs > 0
-      doc_div.divs = {}
-
-      prefix_div.divs = {}
-      suffix_div.divs = {}
-
-      if type_open or expr_open or doc_open then
-        return
-      end
-
-      local info_popup, err = pin.sess:infoToInteractive(info_with_ctx)
-      if err then print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message)) return end
-
-      if info_popup['type'] ~= nil then
-        type_div:insert_div({}, '\ntype', "type-prefix", "leanInfoButton")
-        type_div:insert_div({}, ': ', "separator", "")
-        type_div:insert_new_div(components.code_with_infos(info_popup['type'], pin))
-      end
-
-      if info_popup.exprExplicit ~= nil then
-        expr_div:insert_div({}, '\nexpr explicit', "exprExplicit-prefix", "leanInfoButton")
-        expr_div:insert_div({}, ': ', "separator", "", "Normal")
-        expr_div:insert_new_div(components.code_with_infos(info_popup.exprExplicit, pin))
-      end
-
-      if info_popup.doc ~= nil then
-        doc_div:insert_div({}, '\n' .. info_popup.doc, 'docstring') -- TODO: render markdown
-      end
-
-      prefix_div:insert_div({}, "→[", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
-      suffix_div:insert_div({}, "]", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
-    end
-
-    local function event_wrap(fn, event_name)
-      return a.void(
-      function()
-        local undo_path
-
-        local _, path = pin.div:pos_from_div(div)
-        undo_path = path
-
-        fn()
-
-        table.insert(pin.undo_list, {path = undo_path, event = event_name})
-
-        pin:render_parents()
-      end)
-    end
-
-    div.tags = {info_with_ctx = info_with_ctx, event = { _click = _click, click = event_wrap(_click, "click") } }
-    div.hlgroup = html.util.highlight_check
-
-    div:insert_new_div(components.code_with_infos(t.tag[2], pin))
-
-    div:insert_new_div(info_div)
-  end
-
-  return div
-end
-
 --- The current (term) goal state.
 ---@param goal InteractiveTermGoal
----@param pin Pin
-function components.interactive_term_goal(goal, pin)
+---@param sess Subsession
+function components.interactive_term_goal(goal, sess)
+  ---@param t CodeWithInfos
+  local function code_with_infos(t)
+    local div = html.Div:new({}, "", "code-with-infos")
+
+    if t.text ~= nil then
+      div:insert_div({}, t.text, "text")
+    elseif t.append ~= nil then
+      for _, s in ipairs(t.append) do
+        div:insert_new_div(code_with_infos(s))
+      end
+    elseif t.tag ~= nil then
+      local info_with_ctx = t.tag[1].info
+
+      local info_div = html.Div:new()
+
+      local prefix_div = html.Div:new()
+      local type_div = html.Div:new()
+      local expr_div = html.Div:new()
+      local doc_div = html.Div:new()
+      local suffix_div = html.Div:new()
+
+      info_div:insert_new_div(prefix_div)
+      info_div:insert_new_div(type_div)
+      info_div:insert_new_div(expr_div)
+      info_div:insert_new_div(doc_div)
+      info_div:insert_new_div(suffix_div)
+
+      local click = function()
+        local type_open = #type_div.divs > 0
+        type_div.divs = {}
+        local expr_open = #expr_div.divs > 0
+        expr_div.divs = {}
+        local doc_open = #doc_div.divs > 0
+        doc_div.divs = {}
+
+        prefix_div.divs = {}
+        suffix_div.divs = {}
+
+        if type_open or expr_open or doc_open then
+          return
+        end
+
+        local info_popup, err = sess:infoToInteractive(info_with_ctx)
+        if err then print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message)) return end
+
+        if info_popup['type'] ~= nil then
+          type_div:insert_div({}, '\ntype', "type-prefix", "leanInfoButton")
+          type_div:insert_div({}, ': ', "separator", "")
+          type_div:insert_new_div(code_with_infos(info_popup['type']))
+        end
+
+        if info_popup.exprExplicit ~= nil then
+          expr_div:insert_div({}, '\nexpr explicit', "exprExplicit-prefix", "leanInfoButton")
+          expr_div:insert_div({}, ': ', "separator", "", "Normal")
+          expr_div:insert_new_div(code_with_infos(info_popup.exprExplicit))
+        end
+
+        if info_popup.doc ~= nil then
+          doc_div:insert_div({}, '\n' .. info_popup.doc, 'docstring') -- TODO: render markdown
+        end
+
+        prefix_div:insert_div({}, "→[", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
+        suffix_div:insert_div({}, "]", "tooltip", function() return div.hlgroup(div) or "leanInfoTooltip" end)
+      end
+
+      div.tags = {info_with_ctx = info_with_ctx, event = { click = click } }
+      div.hlgroup = html.util.highlight_check
+
+      div:insert_new_div(code_with_infos(t.tag[2]))
+
+      div:insert_new_div(info_div)
+    end
+
+    return div
+  end
+
   local div = html.Div:new({}, "", "interactive-term-goal")
 
   if not goal then return div end
@@ -166,10 +147,10 @@ function components.interactive_term_goal(goal, pin)
   for _, hyp in ipairs(goal.hyps) do
     div:start_div({hyp = hyp}, table.concat(hyp.names, ' ') .. ' : ', "hyp")
 
-    div:insert_new_div(components.code_with_infos(hyp.type, pin))
+    div:insert_new_div(code_with_infos(hyp.type))
     if hyp.val ~= nil then
       div:start_div({val = hyp.val}, " := ", "hyp_val")
-      div:insert_new_div(components.code_with_infos(hyp.val, pin))
+      div:insert_new_div(code_with_infos(hyp.val))
       div:end_div()
     end
     div:insert_div({}, "\n", "hypothesis-separator")
@@ -177,7 +158,7 @@ function components.interactive_term_goal(goal, pin)
     div:end_div()
   end
   div:start_div({goal = goal.type}, '⊢ ', "goal")
-  div:insert_new_div(components.code_with_infos(goal.type, pin))
+  div:insert_new_div(code_with_infos(goal.type))
   div:end_div()
 
   div:end_div()

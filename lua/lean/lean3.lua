@@ -71,12 +71,6 @@ local class_to_hlgroup = {
   ["goal-vdash b"] = "leanInfoGoalVDash";
 }
 
-local undo_map = {
-  ["mouse_enter"] = "mouse_leave";
-  ["mouse_leave"] = "mouse_enter";
-  ["click"] = "click";
-}
-
 -- mapping from lean3 events to standard div events
 local to_event = {
   ["onMouseEnter"] = "mouse_enter";
@@ -87,7 +81,7 @@ local to_event = {
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
 function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
   local parent_div = html.Div:new({}, "")
-  local widget, widget_div
+  local widget
 
   local list_first
   local goal_first = true
@@ -187,10 +181,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       if result.e then
         for event, handler in pairs(result.e) do
           local div_event = to_event[event]
-          events[div_event] = function(undo)
-            a.void(function()
-              local pos = not undo and widget_div:pos_from_div(element_div)
-
+          events[div_event] = function()
               pin:_update(false, 0, {widget_event = {
                 widget = widget,
                 kind = event,
@@ -198,14 +189,6 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
                 args = { type = 'unit' },
                 textDocument = pin.position_params.textDocument
               }})
-
-              if undo or not pos or event == "onMouseEnter" or event == "onMouseLeave"
-                or attributes.title == "go to definition" then return end
-              table.insert(pin.undo_list, {
-                pos = pos;
-                event = div_event
-              })
-            end)()
           end
         end
       end
@@ -239,7 +222,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
     if not (opts and opts.widget_event) then
       local _err, _, _result = buf_request(bufnr, "$/lean/discoverWidget", params)
       if opts and opts.changed then
-        pin.undo_list = {}
+        pin:clear_undo_list()
       end
       err, result = _err, _result
     else
@@ -265,20 +248,6 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       end
 
       widget = result.widget
-      widget_div = parent_div:start_div({widget = widget, event = {
-        ["undo"] = function()
-          local last_undo = pin.undo_list[#(pin.undo_list)]
-          if not last_undo then
-            print("Nothing left to undo for pin " .. tostring(pin.id))
-            return
-          end
-          local pos = last_undo.pos
-          local event = last_undo.event
-
-          parent_div:event(pos, undo_map[event], true)
-          table.remove(pin.undo_list)
-        end
-      }}, "", "widget")
       parent_div:insert_new_div(parse_widget(result.widget.html))
       parent_div:end_div()
     end

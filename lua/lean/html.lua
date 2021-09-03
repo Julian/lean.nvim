@@ -1,3 +1,5 @@
+local a = require"plenary.async"
+
 --- An HTML-style div
 ---@class Div
 ---@field tags table
@@ -126,14 +128,15 @@ function Div:_div_from_pos(pos, stack)
   local text = self.text
 
   -- base case
-  if pos <= #text then return nil, stack end
+  if pos <= #text then return nil, stack, {} end
 
   local search_pos = pos - #text
 
-  for _, div in ipairs(self.divs) do
-    local div_text, div_stack = div:_div_from_pos(search_pos, stack)
+  for idx, div in ipairs(self.divs) do
+    local div_text, div_stack, div_path = div:_div_from_pos(search_pos, stack)
     if div_stack then
-      return nil, div_stack
+      table.insert(div_path, {idx = idx, name = div.name})
+      return nil, div_stack, div_path
     end
     text = text .. div_text
     search_pos = search_pos - #div_text
@@ -144,16 +147,19 @@ function Div:_div_from_pos(pos, stack)
 end
 
 function Div:div_from_pos(pos, stack)
-  local _, div_stack = self:_div_from_pos(pos, stack)
-  return div_stack
+  local _, div_stack, div_path = self:_div_from_pos(pos, stack)
+  if div_path then table.insert(div_path, {idx = -1, name = self.name}) end
+  return div_stack, div_path
 end
 
 local function _get_parent_div(div_stack, check)
+  div_stack = {unpack(div_stack)}
   for i = #div_stack, 1, -1 do
     local this_div = div_stack[i]
     if check(this_div) then
-      return this_div
+      return this_div, div_stack
     end
+    table.remove(div_stack)
   end
 end
 
@@ -223,32 +229,40 @@ function Div:render_buf(bufnr, ns)
   end
 end
 
-local function buf_get_parent_div(pos, bufnr, div, check)
-  local raw_pos = pos_to_raw_pos(pos, vim.api.nvim_buf_get_lines(bufnr, 0, -1, true))
-  if not raw_pos then return end
-
-  local div_stack = div:div_from_pos(raw_pos)
-  if not div_stack then return end
-
-  return get_parent_div(div_stack, check), div_stack
-end
-
-local function is_event_div_check(eventName)
+local function is_event_div_check(event_name)
   return function (div)
     if not div.tags.event then return false end
-    local event = div.tags.event[eventName]
+    local event = div.tags.event[event_name]
     if event then return true end
     return false
   end
 end
 
-function Div:event(pos, eventName, ...)
-  local div_stack = self:div_from_pos(pos)
+function Div:event(pos, event_name, ...)
+  local div_stack, path = self:div_from_pos(pos)
   if not div_stack then return end
 
-  local event_div = get_parent_div(div_stack, is_event_div_check(eventName))
+  local event_div, event_div_stack = get_parent_div(div_stack, is_event_div_check(event_name))
+  if not event_div then return end
 
-  if event_div then event_div.tags.event[eventName](...) end
+  -- track this event in a parent tracking div (if there is one)
+  local tracker_div, tracker_div_stack = get_parent_div(event_div_stack, is_event_div_check("_track"))
+
+  local args = {...}
+
+  a.void(function()
+    local undo_fn = event_div.tags.event[event_name](unpack(args))
+
+    if tracker_div then
+      -- take subset of path from tracker to event, inclusive
+      local new_path = {}
+      for i = #path - (#event_div_stack - 1), #path - (#tracker_div_stack - 1) do
+        table.insert(new_path, path[i])
+      end
+
+      tracker_div.tags.event["_track"](new_path, event_name, undo_fn)
+    end
+  end)()
 end
 
 function Div:hover(pos, check)
@@ -280,7 +294,7 @@ end
 
 return {Div = Div, util = { get_parent_div = get_parent_div,
 pos_to_raw_pos = pos_to_raw_pos, raw_pos_to_pos = raw_pos_to_pos,
-buf_get_parent_div = buf_get_parent_div, is_event_div_check = is_event_div_check,
+is_event_div_check = is_event_div_check,
 highlight_check = function(div)
   return div.tags.__highlight and "leanInfoHighlight"
 end}}

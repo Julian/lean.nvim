@@ -162,7 +162,7 @@ end
 
 function Info:__cursor_hold()
   self.div:hover(html.util.pos_to_raw_pos(vim.api.nvim_win_get_cursor(0),
-    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), html.util.is_event_div_check("click"), "leanInfoHighlight")
+    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), html.util.is_event_div_check("click"))
 
   self:_render()
 end
@@ -249,16 +249,17 @@ end
 ---@return Pin
 function Pin:new(paused, use_widget)
   local new_pin = {id = self.next_id, parent_infos = {}, paused = paused, tick = 0,
-    div = html.Div:new({pin = self}, "", "pin"), use_widget = use_widget, undo_list = {}}
+    div = html.Div:new({pin = self}, "", "pin"), use_widget = use_widget, undo_list = {}, replay = false}
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
 
   self.__index = self
   setmetatable(new_pin, self)
 
-  -- (async function) replays the events in this pin's undo list
   new_pin.div.tags.event = {}
-  new_pin.div.tags.event._replay = function(this_tick)
+
+  -- replays the events in this pin's undo list
+  new_pin.div.tags.event.replay = function(this_tick)
     local new_undo_list = {}
     for _, undo_item in pairs(new_pin.undo_list) do
       local undo_path = undo_item.path
@@ -268,15 +269,19 @@ function Pin:new(paused, use_widget)
       if not this_div then break end
       table.insert(new_undo_list, undo_item)
 
-      -- use unwrapped async version of event
-      local event_fn = this_div.tags.event["_" .. undo_event]
-
-      event_fn()
+      this_div.tags.event[undo_event]()
 
       if this_tick ~= new_pin.tick then return end
     end
 
     new_pin.undo_list = new_undo_list
+  end
+
+  -- tracks the given event (relative to the pin), and appends it to the undo list
+  new_pin.div.tags.event._track = function(path, event, undo_fn)
+    table.insert(new_pin.undo_list, {path = path, event = event, undo_fn = undo_fn})
+
+    new_pin:render_parents()
   end
 
   return new_pin
@@ -457,15 +462,16 @@ function Pin:__update(delay, lean3_opts)
   local line = params.position.line
 
   if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
-    self:clear_undo_list()
+    self.replay = false
     self.div:insert_new_div(lean3.update_infoview(self, buf, params, self.use_widget, lean3_opts))
   else
     if require"lean.progress".is_processing_at(params) then
-      self:clear_undo_list()
+      self.replay = false
       if options.show_processing then
         self.div:insert_div({}, "Processing file...", "processing-msg")
       end
     else
+      self.replay = true
       self.sess = rpc.open(buf, params)
 
       local _, _, goal = plain_goal(params, buf)
@@ -481,7 +487,7 @@ function Pin:__update(delay, lean3_opts)
         if term_goal_err then
           term_goal = nil
         else
-          term_goal_div = components.interactive_term_goal(term_goal, self)
+          term_goal_div = components.interactive_term_goal(term_goal, self.sess)
         end
       end
 
@@ -510,7 +516,7 @@ function Pin:__update(delay, lean3_opts)
   end
   if self.tick ~= this_tick then return end
 
-  self.div.tags.event._replay(this_tick)
+  if self.replay then self.div.tags.event.replay(this_tick) end
 
   local lines = vim.split(self.div:render(), "\n")
   self.msg = lines
