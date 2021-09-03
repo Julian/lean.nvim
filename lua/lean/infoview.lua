@@ -355,10 +355,10 @@ function Pin:_update(delay)
         lines = {"Processing file..."}
       end
     else
-      local _, _, goal = plain_goal(params, buf)
+      local _, goal = plain_goal(params, buf)
       if self.tick ~= this_tick then return end
 
-      local _, _, term_goal = plain_term_goal(params, buf)
+      local _, term_goal = plain_term_goal(params, buf)
       if self.tick ~= this_tick then return end
 
       lines = components.goal(goal)
