@@ -1,4 +1,5 @@
 local lsp = { handlers = {} }
+local util = require"lean._util"
 
 function lsp.enable(opts)
   opts.commands = vim.tbl_extend("keep", opts.commands or {}, {
@@ -12,10 +13,12 @@ function lsp.enable(opts)
     };
   })
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
-    ["$/lean/plainGoal"] = lsp.handlers.plain_goal_handler;
-    ["$/lean/plainTermGoal"] = lsp.handlers.plain_term_goal_handler;
-    ['$/lean/fileProgress'] = lsp.handlers.file_progress_handler;
-    ['textDocument/publishDiagnostics'] = lsp.handlers.diagnostics_handler;
+    ["$/lean/plainGoal"] = util.mk_handler(lsp.handlers.plain_goal_handler);
+    ["$/lean/plainTermGoal"] = util.mk_handler(lsp.handlers.plain_term_goal_handler);
+    ['$/lean/fileProgress'] = util.mk_handler(lsp.handlers.file_progress_handler);
+    ['textDocument/publishDiagnostics'] = util.wrap_handler(
+      require"vim.lsp.handlers"['textDocument/publishDiagnostics'],
+      util.mk_handler(lsp.handlers.diagnostics_handler));
   })
   require('lspconfig').leanls.setup(opts)
 end
@@ -26,16 +29,17 @@ function lsp.plain_goal(params, bufnr, handler)
   -- Shift forward by 1, since in vim it's easier to reach word
   -- boundaries in normal mode.
   params.position.character = params.position.character + 1
-  return vim.lsp.buf_request(bufnr, "$/lean/plainGoal", params, handler)
+  return util.request(bufnr, "$/lean/plainGoal", params, handler)
 end
 
 -- Fetch term goal state information from the server.
 function lsp.plain_term_goal(params, bufnr, handler)
   params = vim.deepcopy(params)
-  return vim.lsp.buf_request(bufnr, "$/lean/plainTermGoal", params, handler)
+  return util.request(bufnr, "$/lean/plainTermGoal", params, handler)
 end
 
-function lsp.handlers.plain_goal_handler (_, method, result, _, _, config)
+function lsp.handlers.plain_goal_handler (_, result, ctx, config)
+  local method = ctx.method
   config = config or {}
   config.focus_id = method
   if not (result and result.rendered) then
@@ -49,7 +53,8 @@ function lsp.handlers.plain_goal_handler (_, method, result, _, _, config)
   return vim.lsp.util.open_floating_preview(markdown_lines, "markdown", config)
 end
 
-function lsp.handlers.plain_term_goal_handler (_, method, result, _, _, config)
+function lsp.handlers.plain_term_goal_handler (_, result, ctx, config)
+  local method = ctx.method
   config = config or {}
   config.focus_id = method
   if not (result and result.goal) then
@@ -60,7 +65,7 @@ function lsp.handlers.plain_term_goal_handler (_, method, result, _, _, config)
   )
 end
 
-function lsp.handlers.file_progress_handler(err, _, params, _, _, _)
+function lsp.handlers.file_progress_handler(err, params)
   if err ~= nil then return end
 
   require"lean.progress".update(params)
@@ -70,9 +75,7 @@ function lsp.handlers.file_progress_handler(err, _, params, _, _, _)
   require"lean.progress_bars".update(params)
 end
 
-function lsp.handlers.diagnostics_handler (err, method, params, client_id, bufnr, config)
-  require"vim.lsp.handlers"['textDocument/publishDiagnostics'](err, method, params, client_id, bufnr, config)
-
+function lsp.handlers.diagnostics_handler (_, params)
   require"lean.infoview".__update_event(params.uri)
 end
 

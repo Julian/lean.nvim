@@ -1,6 +1,6 @@
 local rpc = {}
 local a = require'plenary.async'
-local lsp = require'plenary.async.lsp'
+local util = require'lean._util'
 local control = require'plenary.async.control'
 
 ---@class RpcRef
@@ -100,7 +100,7 @@ function Session:call(pos, method, params)
   if self.connect_err ~= nil then
     return nil, self.connect_err
   end
-  local err, _, result = lsp.buf_request(self.bufnr, '$/lean/rpc/call',
+  local err, result = util.a_request(self.bufnr, '$/lean/rpc/call',
     vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params }))
   if err ~= nil and err.code == -32900 then
     self.closed = true
@@ -137,7 +137,7 @@ local function connect(bufnr)
   local sess = Session:new(bufnr, uri)
   sessions[bufnr] = sess
   a.void(function()
-    local err, _, result = lsp.buf_request(bufnr, '$/lean/rpc/connect', {uri = uri})
+    local err, result = util.a_request(bufnr, '$/lean/rpc/connect', {uri = uri})
     sess.connected = true
     if err ~= nil then
       sess.connect_err = err

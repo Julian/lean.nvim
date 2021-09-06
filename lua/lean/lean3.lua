@@ -1,10 +1,9 @@
 local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
 local dirname = require('lspconfig.util').path.dirname
 
+local util = require"lean._util"
 local components = require('lean.infoview.components')
-local subprocess_check_output = require('lean._util').subprocess_check_output
-
-local a = require('plenary.async')
+local subprocess_check_output = util.subprocess_check_output
 
 local html = require('lean.html')
 
@@ -78,7 +77,6 @@ local to_event = {
   ["onClick"] = "click";
 }
 
-local buf_request = a.wrap(vim.lsp.buf_request, 4)
 function lean3.update_infoview(pin, bufnr, params, use_widget, opts, _this_tick)
   local parent_div = html.Div:new({}, "")
   local widget
@@ -244,10 +242,10 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, _this_tick)
   if use_widget then
     local err, result
     if not (opts and opts.widget_event) then
-      local _err, _, _result = buf_request(bufnr, "$/lean/discoverWidget", params)
+      local _err, _result = util.a_request(bufnr, "$/lean/discoverWidget", params)
       err, result = _err, _result
     else
-      local _err, _, _result = buf_request(bufnr, "$/lean/widgetEvent", opts.widget_event)
+      local _err, _result = util.a_request(bufnr, "$/lean/widgetEvent", opts.widget_event)
       err, result = _err, _result
       if result and result.record then result = result.record end
     end
@@ -274,7 +272,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, _this_tick)
     end
   else
     pin:clear_undo_list()
-    local _, _, result = buf_request(bufnr, "$/lean/plainGoal", params)
+    local _, result = util.a_request(bufnr, "$/lean/plainGoal", params)
     if pin.tick ~= _this_tick then return true end
     if result and type(result) == "table" then
       parent_div:insert_new_div(components.goal(result))
@@ -295,7 +293,9 @@ end
 
 function lean3.lsp_enable(opts)
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
-    ['textDocument/publishDiagnostics'] = require"lean.lsp".handlers.diagnostics_handler;
+    ['textDocument/publishDiagnostics'] = util.wrap_handler(
+      require"vim.lsp.handlers"['textDocument/publishDiagnostics'],
+      util.mk_handler(require"lean.lsp".handlers.diagnostics_handler))
   })
   require'lspconfig'.lean3ls.setup(opts)
 end

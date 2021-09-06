@@ -541,7 +541,7 @@ function Pin:__update(delay, this_tick, lean3_opts)
   self.sess = rpc.open(buf, params)
   if self.tick ~= this_tick then return true end
 
-  local _, _, goal = plain_goal(params, buf)
+  local _, goal = plain_goal(params, buf)
   if self.tick ~= this_tick then return true end
   local goal_div = components.goal(goal)
   self.div:insert_new_div(goal_div)
@@ -561,7 +561,7 @@ function Pin:__update(delay, this_tick, lean3_opts)
 
   if not term_goal then
     self:clear_undo_list()
-    local _, _, _plain_term_goal = plain_term_goal(params, buf)
+    local _, _plain_term_goal = plain_term_goal(params, buf)
     if self.tick ~= this_tick then return true end
     term_goal = _plain_term_goal
     term_goal_div = components.term_goal(term_goal)
