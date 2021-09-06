@@ -78,7 +78,6 @@ function components.interactive_term_goal(goal, sess)
 
       local info_open = false
       local tick = 0
-      local last_call
 
       local function new_tick()
         tick = tick + 1
@@ -87,36 +86,27 @@ function components.interactive_term_goal(goal, sess)
 
       local reset = function(_)
         info_div.divs = {}
-        info_div.tags.event.close = nil
+        info_div.tags.event.clear = nil
         info_open = false
         return true
       end
 
-      local undo_wrap = function(call)
+      local wrap = function(call)
         return function()
           reset()
           local this_tick = new_tick()
           local success = call(this_tick)
-          if this_tick ~= tick then return end
+          if this_tick ~= tick then return success, true end
 
-          local orig_last_call = last_call
-          last_call = call
-
-          return function()
-            reset()
-            last_call = orig_last_call
-            return orig_last_call(new_tick())
-          end, success
+          return success, false
         end
       end
 
-      local do_reset = undo_wrap(function() return true end)
+      local do_reset = wrap(function() return true end)
 
-      last_call = reset
-
-      local do_open_all = undo_wrap(function(this_tick)
+      local do_open_all = wrap(function(this_tick)
         local info_popup, err = sess:infoToInteractive(info_with_ctx)
-        if this_tick ~= tick then return false end
+        if this_tick ~= tick then return true end
 
         if err then print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message)) return false end
 
@@ -134,7 +124,7 @@ function components.interactive_term_goal(goal, sess)
           info_div:end_div()
         end
         info_div:insert_div({}, "]", "tooltip-suffix", function() return div.hlgroup(div) or "leanInfoTooltip" end)
-        info_div.tags.event.close = do_reset
+        info_div.tags.event.clear = do_reset
         info_open = true
         return true
       end)

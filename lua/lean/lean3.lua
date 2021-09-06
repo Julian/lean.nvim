@@ -79,7 +79,7 @@ local to_event = {
 }
 
 local buf_request = a.wrap(vim.lsp.buf_request, 4)
-function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
+function lean3.update_infoview(pin, bufnr, params, use_widget, opts, _this_tick)
   local parent_div = html.Div:new({}, "")
   local widget
 
@@ -177,16 +177,30 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       element_div.hlgroup = function()
         return html.util.highlight_check(element_div) or hlgroup
       end
-      local get_path = function()
-        local _, path = pin.div:pos_from_div(element_div)
-        return path
+
+      -- close tooltip button
+      if tag == "button" and result.c and result.c[1] == "x" then
+        element_div.tags.event.clear = function(this_tick)
+          if not this_tick then
+            pin.tick = pin.tick + 1
+            this_tick = pin.tick
+          end
+
+          element_div.tags.event["click"](this_tick)
+          return true
+        end
       end
 
       if result.e then
         for event, handler in pairs(result.e) do
           local div_event = to_event[event]
-          events[div_event] = function()
-            pin:_update(false, 0, {widget_event = {
+          events[div_event] = function(this_tick)
+            if not this_tick then
+              pin.tick = pin.tick + 1
+              this_tick = pin.tick
+            end
+
+            local success = pin:_update(false, 0, this_tick, {widget_event = {
               widget = widget,
               kind = event,
               handler = handler,
@@ -194,16 +208,11 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
               textDocument = pin.position_params.textDocument
             }})
 
-            if div_event ~= "click" then return end
-            return function()
-              local new_div = pin.div:div_from_path(get_path())
-              if new_div then
-                new_div.tags.event[div_event]()
-                return true
-              else
-                return false
-              end
-            end
+            if this_tick ~= pin.tick then return success, true end
+
+            if div_event ~= "click" then return success, true end
+
+            return success, false
           end
         end
       end
@@ -215,22 +224,10 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       parse_children(children)
 
       if tooltip then
-        local tooltip_div = div:start_div({element = result}, "→[", "tooltip", "leanInfoTooltip")
+        div:start_div({element = result, event = {}}, "→[", "tooltip", "leanInfoTooltip")
         div:insert_new_div(parse_widget(tooltip))
         div:insert_div({element = result}, "]", "tooltip-close")
         div:end_div()
-
-        tooltip_div.tags.event = {}
-
-        tooltip_div.tags.event.close = function()
-          local new_div = pin.div:div_from_path(get_path())
-          if new_div then
-            new_div.tags.event["click"]()
-            return true
-          else
-            return false
-          end
-        end
       end
       div:end_div()
       if debug_tags then
@@ -248,9 +245,6 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
     local err, result
     if not (opts and opts.widget_event) then
       local _err, _, _result = buf_request(bufnr, "$/lean/discoverWidget", params)
-      if opts and opts.changed then
-        pin:clear_undo_list()
-      end
       err, result = _err, _result
     else
       local _err, _, _result = buf_request(bufnr, "$/lean/widgetEvent", opts.widget_event)
@@ -279,14 +273,24 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       parent_div:end_div()
     end
   else
+    pin:clear_undo_list()
     local _, _, result = buf_request(bufnr, "$/lean/plainGoal", params)
+    if pin.tick ~= _this_tick then return true end
     if result and type(result) == "table" then
       parent_div:insert_new_div(components.goal(result))
     end
   end
+  if pin.tick ~= _this_tick then return true end
   parent_div:insert_new_div(components.diagnostics(bufnr, params.position.line))
+  if pin.tick ~= _this_tick then return true end
 
-  return parent_div
+  pin.div:insert_new_div(parent_div)
+
+  if not (opts and opts.widget_event) then
+    pin.div.tags.event.clear_all(_this_tick)
+    if pin.tick ~= _this_tick then return true end
+    pin.div.tags.event.replay(_this_tick)
+  end
 end
 
 function lean3.lsp_enable(opts)

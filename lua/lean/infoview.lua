@@ -247,7 +247,7 @@ end
 ---@return Pin
 function Pin:new(paused, use_widget)
   local new_pin = {id = self.next_id, parent_infos = {}, paused = paused, tick = 0,
-    div = html.Div:new({pin = self}, "", "pin"), use_widget = use_widget, undo_list = {}, replay = false}
+    div = html.Div:new({pin = self}, "", "pin"), use_widget = use_widget, undo_list = {}}
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
 
@@ -258,53 +258,85 @@ function Pin:new(paused, use_widget)
 
   -- replays the events in this pin's undo list
   new_pin.div.tags.event.replay = function(this_tick)
+    if not this_tick then
+      new_pin.tick = new_pin.tick + 1
+      this_tick = new_pin.tick
+    end
+
     local new_undo_list = {}
+    local success = true
     for _, undo_item in pairs(new_pin.undo_list) do
-      local undo_path = undo_item.path
-      local undo_event = undo_item.event
-
-      local this_div = new_pin.div:div_from_path(undo_path)
-      if not this_div then break end
-
-      local undo_fn, success = this_div.tags.event[undo_event]()
-
-      undo_item.undo_fn = undo_fn
+      local this_div = new_pin.div:div_from_path(undo_item.path)
+      if not this_div then
+        print("replay aborted on invalid event path")
+        success = false
+        break
+      end
 
       table.insert(new_undo_list, undo_item)
 
-      if not success then print("replay aborted on error") break end
+      if not this_div.tags.event[undo_item.event](this_tick) then
+        print("replay aborted on error")
+        success = false
+        break
+      end
 
-      if this_tick ~= new_pin.tick then return end
+      if this_tick ~= new_pin.tick then return false end
     end
 
     new_pin.undo_list = new_undo_list
+    return success
   end
 
   -- tracks the given event (relative to the pin), and appends it to the undo list
-  new_pin.div.tags.event._track = function(path, event, undo_fn)
+  new_pin.div.tags.event._track = function(path, event, success, abort)
     if event == "undo" then return end
 
-    if undo_fn then table.insert(new_pin.undo_list, {path = path, event = event, undo_fn = undo_fn}) end
+    if not abort then table.insert(new_pin.undo_list, {path = path, event = event}) end
+
+    if not success then print('failed "' .. event .. '" event (see :messages)') end
 
     new_pin:render_parents()
   end
 
-  -- tracks the given event (relative to the pin), and appends it to the undo list
+  new_pin.div.tags.event.clear_all = function(this_tick)
+    if not this_tick then
+      new_pin.tick = new_pin.tick + 1
+      this_tick = new_pin.tick
+    end
+
+    local unaborted = new_pin.div:find_filter(function(div)
+        return div.tags.event and div.tags.event.clear
+      end,
+      function(div)
+        div.tags.event.clear(this_tick)
+        if this_tick ~= new_pin.tick then return true end
+      end)
+
+    return true, not unaborted
+  end
+
   new_pin.div.tags.event.undo = function()
-    if not (#new_pin.undo_list > 0) then return end
+    if not (#new_pin.undo_list > 0) then return true end
 
     local undo_item = table.remove(new_pin.undo_list)
 
-    if not undo_item.undo_fn then return end
+    new_pin.tick = new_pin.tick + 1
+    local this_tick = new_pin.tick
 
-    local undo_success = undo_item.undo_fn()
-    if undo_success then
+    local success = new_pin.div.tags.event.clear_all(this_tick)
+    if this_tick ~= new_pin.tick then return true end
+    success = success and new_pin.div.tags.event.replay(this_tick)
+    if this_tick ~= new_pin.tick then return true end
+
+    if success then
       print('Undo on "' .. undo_item.event .. '" action.')
     else
       print('Failed to undo "' .. undo_item.event .. '" action.')
     end
 
     new_pin:render_parents()
+    return true
   end
 
   return new_pin
@@ -348,7 +380,7 @@ function Pin:set_position_params(params, delay, lean3_opts)
   lean3_opts = vim.tbl_extend("keep", lean3_opts or {}, {changed = not vim.deep_equal(params, old_params)})
 
   self:update_extmark()
-  self:update(false, delay, lean3_opts)
+  self:update(false, delay, nil, lean3_opts)
 end
 
 --- Update pin extmark based on position, used when resetting pin position.
@@ -442,15 +474,21 @@ function Pin:move(params)
   self:set_position_params(params)
 end
 
-function Pin:_update(force, delay, lean3_opts)
+function Pin:_update(force, delay, this_tick, lean3_opts)
   if self.position_params and (force or not self.paused) then
-    self:__update(delay, lean3_opts)
+    return self:__update(delay, this_tick, lean3_opts)
   end
-
-  self:render_parents()
 end
 
-Pin.update = a.void(Pin._update)
+Pin.update = a.void(function(self, force, delay, _, lean3_opts)
+  self.tick = self.tick + 1
+  local this_tick = self.tick
+
+  Pin._update(self, force, delay, this_tick, lean3_opts)
+  if self.tick ~= this_tick then return end
+
+  self:render_parents()
+end)
 
 function Pin:render_parents()
   for parent_id, _ in pairs(self.parent_infos) do
@@ -462,13 +500,15 @@ local plain_goal = a.wrap(leanlsp.plain_goal, 3)
 local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 
 --- async function to update this pin's contents given the current position.
-function Pin:__update(delay, lean3_opts)
-  self.tick = (self.tick + 1) % 1000
-  local this_tick = self.tick
+function Pin:__update(delay, this_tick, lean3_opts)
+  if not this_tick then
+    self.tick = self.tick + 1
+    this_tick = self.tick
+  end
 
   util.wait_timer(vim.loop.new_timer(), delay or 100, 0)
   a.util.scheduler()
-  if self.tick ~= this_tick then return end
+  if self.tick ~= this_tick then return true end
 
   local params = self.position_params
 
@@ -477,74 +517,74 @@ function Pin:__update(delay, lean3_opts)
   local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   if buf == -1 then
     self.div:insert_div({}, "No corresponding buffer found.", "no-buffer-msg")
-    return
+    return false
   end
 
   --- TODO if changes are currently being debounced for this buffer, add debounce timer delay
 
   local line = params.position.line
 
+  if not self.use_widget then self:clear_undo_list() end
+
   if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
-    self.replay = false
-    self.div:insert_new_div(lean3.update_infoview(self, buf, params, self.use_widget, lean3_opts))
-  else
-    if require"lean.progress".is_processing_at(params) then
-      self.replay = false
-      if options.show_processing then
-        self.div:insert_div({}, "Processing file...", "processing-msg")
-      end
+    lean3.update_infoview(self, buf, params, self.use_widget, lean3_opts, this_tick)
+    return true
+  end
+
+  if require"lean.progress".is_processing_at(params) then
+    if options.show_processing then
+      self.div:insert_div({}, "Processing file...", "processing-msg")
+    end
+    return true
+  end
+
+  self.sess = rpc.open(buf, params)
+  if self.tick ~= this_tick then return true end
+
+  local _, _, goal = plain_goal(params, buf)
+  if self.tick ~= this_tick then return true end
+  local goal_div = components.goal(goal)
+  self.div:insert_new_div(goal_div)
+
+  local term_goal, term_goal_err
+  local term_goal_div
+
+  if self.use_widget then
+    term_goal, term_goal_err = self.sess:getInteractiveTermGoal(params)
+    if self.tick ~= this_tick then return true end
+    if term_goal_err then
+      term_goal = nil
     else
-      self.replay = true
-      self.sess = rpc.open(buf, params)
-
-      local _, _, goal = plain_goal(params, buf)
-      if self.tick ~= this_tick then return end
-      local goal_div = components.goal(goal)
-      self.div:insert_new_div(goal_div)
-
-      local term_goal, term_goal_err
-      local term_goal_div
-
-      if self.use_widget then
-        term_goal, term_goal_err = self.sess:getInteractiveTermGoal(params)
-        if term_goal_err then
-          term_goal = nil
-        else
-          term_goal_div = components.interactive_term_goal(term_goal, self.sess)
-        end
-      end
-
-      if not term_goal then
-        self:clear_undo_list()
-        local _, _, _plain_term_goal = plain_term_goal(params, buf)
-        term_goal = _plain_term_goal
-        term_goal_div = components.term_goal(term_goal)
-      end
-
-      local goal_div_empty, term_goal_div_empty = #goal_div:render() == 0, #term_goal_div:render() == 0
-
-      if not goal_div_empty and not term_goal_div_empty then
-        self.div:add_div(html.Div:new({}, "\n\n", "plain_goal-term_goal-separator"))
-      end
-      self.div:insert_new_div(term_goal_div)
-
-      if goal_div_empty and term_goal_div_empty then
-        self.div:insert_new_div(html.Div:new({}, "No tactic/term data found.", "no-tactic-term"))
-      end
-
-      if self.tick ~= this_tick then return end
-
-      self.div:insert_new_div(components.diagnostics(buf, line))
+      term_goal_div = components.interactive_term_goal(term_goal, self.sess)
     end
   end
-  if self.tick ~= this_tick then return end
 
-  if self.replay then
-    self.div.tags.event.replay(this_tick)
+  if not term_goal then
+    self:clear_undo_list()
+    local _, _, _plain_term_goal = plain_term_goal(params, buf)
+    if self.tick ~= this_tick then return true end
+    term_goal = _plain_term_goal
+    term_goal_div = components.term_goal(term_goal)
   end
 
-  local lines = vim.split(self.div:render(), "\n")
-  self.msg = lines
+  local goal_div_empty, term_goal_div_empty = #goal_div:render() == 0, #term_goal_div:render() == 0
+
+  if not goal_div_empty and not term_goal_div_empty then
+    self.div:add_div(html.Div:new({}, "\n\n", "plain_goal-term_goal-separator"))
+  end
+  self.div:insert_new_div(term_goal_div)
+
+  if goal_div_empty and term_goal_div_empty then
+    self.div:insert_new_div(html.Div:new({}, "No tactic/term data found.", "no-tactic-term"))
+  end
+
+  if self.tick ~= this_tick then return true end
+
+  self.div:insert_new_div(components.diagnostics(buf, line))
+
+  self.div.tags.event.replay(this_tick)
+
+  return true
 end
 
 --- Retrieve the contents of the info as a table.
@@ -600,7 +640,7 @@ end
 function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
   for _, pin in pairs(infoview._pin_by_id) do
     if pin.position_params and pin.position_params.textDocument.uri == vim.uri_from_bufnr(bufnr) then
-      vim.schedule_wrap(function() pin:update_position(500, {changed = true}) end)()
+      vim.schedule_wrap(function() pin:update_position(500) end)()
     end
   end
 end

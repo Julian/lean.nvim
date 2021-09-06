@@ -284,6 +284,25 @@ function Div:hover(pos, check)
   self.prev_hover_div = hover_div
 end
 
+function Div:find(check)
+  if check(self) then return self end
+
+  for _, div in pairs(self.divs) do
+    local found = div:find(check)
+    if found then return found end
+  end
+end
+
+function Div:find_filter(check, fn)
+  local found = self:find(check)
+  while found do
+    local abort = fn(found)
+    if abort then return false end
+    found = self:find(check)
+  end
+  return true
+end
+
 function Div:filter(fn)
   fn(self)
 
