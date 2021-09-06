@@ -284,11 +284,17 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, _this_tick)
 
   pin.div:insert_new_div(parent_div)
 
-  if not (opts and opts.widget_event) then
-    pin.div.tags.event.clear_all(_this_tick)
-    if pin.tick ~= _this_tick then return true end
-    pin.div.tags.event.replay(_this_tick)
+  -- update all other pins for the same URI so they aren't left with a stale "session"
+  if opts and opts.widget_event then
+    for _, other_pin in pairs(require"lean.infoview"._pin_by_id) do
+      if other_pin ~= pin and other_pin.position_params and
+        other_pin.position_params.textDocument.uri == pin.position_params.textDocument.uri then
+        other_pin:update()
+      end
+    end
   end
+
+  return true
 end
 
 function lean3.lsp_enable(opts)

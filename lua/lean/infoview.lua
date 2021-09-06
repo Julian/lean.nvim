@@ -256,6 +256,17 @@ function Pin:new(paused, use_widget)
 
   new_pin.div.tags.event = {}
 
+  -- tracks the given event (relative to the pin), and appends it to the undo list
+  new_pin.div.tags.event._track = function(path, event, success, ignore)
+    if not ignore then
+      table.insert(new_pin.undo_list, {path = path, event = event})
+    end
+
+    if not success then print('failed "' .. event .. '" event (see :messages)') end
+
+    new_pin:render_parents()
+  end
+
   -- replays the events in this pin's undo list
   new_pin.div.tags.event.replay = function(this_tick)
     if not this_tick then
@@ -264,13 +275,21 @@ function Pin:new(paused, use_widget)
     end
 
     local new_undo_list = {}
-    local success = true
+
+    local success = new_pin.div.tags.event.clear_all(this_tick)
+    if not success then
+      print("replay aborted on failed clear")
+      goto finish
+    end
+
     for _, undo_item in pairs(new_pin.undo_list) do
+      if this_tick ~= new_pin.tick then return true, true end
+
       local this_div = new_pin.div:div_from_path(undo_item.path)
       if not this_div then
         print("replay aborted on invalid event path")
         success = false
-        break
+        goto finish
       end
 
       table.insert(new_undo_list, undo_item)
@@ -278,25 +297,34 @@ function Pin:new(paused, use_widget)
       if not this_div.tags.event[undo_item.event](this_tick) then
         print("replay aborted on error")
         success = false
-        break
+        goto finish
       end
-
-      if this_tick ~= new_pin.tick then return false end
     end
 
+    ::finish::
+    if this_tick ~= new_pin.tick then return true, true end
+
     new_pin.undo_list = new_undo_list
-    return success
+    return success, true
   end
 
-  -- tracks the given event (relative to the pin), and appends it to the undo list
-  new_pin.div.tags.event._track = function(path, event, success, abort)
-    if event == "undo" then return end
+  new_pin.div.tags.event.undo = function()
+    new_pin.tick = new_pin.tick + 1
+    local this_tick = new_pin.tick
 
-    if not abort then table.insert(new_pin.undo_list, {path = path, event = event}) end
+    if not (#new_pin.undo_list > 0) then return true, true end
 
-    if not success then print('failed "' .. event .. '" event (see :messages)') end
+    local undo_item = table.remove(new_pin.undo_list)
+    local success = new_pin.div.tags.event.replay(this_tick)
+    if this_tick ~= new_pin.tick then return true, true end
 
-    new_pin:render_parents()
+    if success then
+      print('Undo on "' .. undo_item.event .. '" action.')
+    else
+      print('Failed to undo "' .. undo_item.event .. '" action.')
+    end
+
+    return success, true
   end
 
   new_pin.div.tags.event.clear_all = function(this_tick)
@@ -314,29 +342,6 @@ function Pin:new(paused, use_widget)
       end)
 
     return true, not unaborted
-  end
-
-  new_pin.div.tags.event.undo = function()
-    if not (#new_pin.undo_list > 0) then return true end
-
-    local undo_item = table.remove(new_pin.undo_list)
-
-    new_pin.tick = new_pin.tick + 1
-    local this_tick = new_pin.tick
-
-    local success = new_pin.div.tags.event.clear_all(this_tick)
-    if this_tick ~= new_pin.tick then return true end
-    success = success and new_pin.div.tags.event.replay(this_tick)
-    if this_tick ~= new_pin.tick then return true end
-
-    if success then
-      print('Undo on "' .. undo_item.event .. '" action.')
-    else
-      print('Failed to undo "' .. undo_item.event .. '" action.')
-    end
-
-    new_pin:render_parents()
-    return true
   end
 
   return new_pin
@@ -457,7 +462,9 @@ function Pin:pause()
   self.paused = true
 
   -- allow RPC refs to be released
-  self.div:filter(function(div) div.tags = {} end)
+  for _, subdiv in ipairs(self.div.divs) do
+    subdiv:filter(function(div) div.tags = {} end)
+  end
 
   self:update()
 end
