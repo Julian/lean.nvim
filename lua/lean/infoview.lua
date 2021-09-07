@@ -33,6 +33,7 @@ local _NOTHING_TO_SHOW = { "No info found." }
 ---@field parent_infos table<number, boolean>
 ---@field use_widget boolean
 ---@field div Div
+---@field tick number
 local Pin = {next_id = 1}
 
 --- An individual info.
@@ -244,6 +245,23 @@ function Info:_render()
   vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', false)
 end
 
+--- Retrieve the contents of the info as a table.
+function Info:get_lines(start_line, end_line)
+  start_line = start_line or 0
+  end_line = end_line or -1
+  return vim.api.nvim_buf_get_lines(self.bufnr, start_line, end_line, true)
+end
+
+--- Retrieve the current combined contents of the info as a string.
+function Info:get_contents()
+  return table.concat(self:get_lines(), "\n")
+end
+
+--- Is the info not showing anything?
+function Info:is_empty()
+  return vim.deep_equal(self:get_lines(), _NOTHING_TO_SHOW)
+end
+
 ---@return Pin
 function Pin:new(paused, use_widget)
   local new_pin = {id = self.next_id, parent_infos = {}, paused = paused, tick = 0,
@@ -269,10 +287,7 @@ function Pin:new(paused, use_widget)
 
   -- replays the events in this pin's undo list
   new_pin.div.tags.event.replay = function(this_tick)
-    if not this_tick then
-      new_pin.tick = new_pin.tick + 1
-      this_tick = new_pin.tick
-    end
+    this_tick = this_tick or new_pin:new_tick()
 
     local new_undo_list = {}
 
@@ -308,9 +323,8 @@ function Pin:new(paused, use_widget)
     return success, true
   end
 
-  new_pin.div.tags.event.undo = function()
-    new_pin.tick = new_pin.tick + 1
-    local this_tick = new_pin.tick
+  new_pin.div.tags.event.undo = function(this_tick)
+    this_tick = this_tick or new_pin:new_tick()
 
     if not (#new_pin.undo_list > 0) then return true, true end
 
@@ -328,10 +342,7 @@ function Pin:new(paused, use_widget)
   end
 
   new_pin.div.tags.event.clear_all = function(this_tick)
-    if not this_tick then
-      new_pin.tick = new_pin.tick + 1
-      this_tick = new_pin.tick
-    end
+    this_tick = this_tick or new_pin:new_tick()
 
     local unaborted = new_pin.div:find_filter(function(div)
         return div.tags.event and div.tags.event.clear
@@ -345,6 +356,11 @@ function Pin:new(paused, use_widget)
   end
 
   return new_pin
+end
+
+function Pin:new_tick()
+  self.tick = self.tick + 1
+  return self.tick
 end
 
 --- Set whether this pin uses a widget or a plain goal/term goal.
@@ -488,10 +504,9 @@ function Pin:_update(force, delay, this_tick, lean3_opts)
 end
 
 Pin.update = a.void(function(self, force, delay, _, lean3_opts)
-  self.tick = self.tick + 1
-  local this_tick = self.tick
+  local this_tick = self:new_tick()
 
-  Pin._update(self, force, delay, this_tick, lean3_opts)
+  self:_update(force, delay, this_tick, lean3_opts)
   if self.tick ~= this_tick then return end
 
   self:render_parents()
@@ -508,10 +523,7 @@ local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 
 --- async function to update this pin's contents given the current position.
 function Pin:__update(delay, this_tick, lean3_opts)
-  if not this_tick then
-    self.tick = self.tick + 1
-    this_tick = self.tick
-  end
+  this_tick = this_tick or self:new_tick()
 
   util.wait_timer(vim.loop.new_timer(), delay or 100, 0)
   a.util.scheduler()
@@ -592,23 +604,6 @@ function Pin:__update(delay, this_tick, lean3_opts)
   self.div.tags.event.replay(this_tick)
 
   return true
-end
-
---- Retrieve the contents of the info as a table.
-function Info:get_lines(start_line, end_line)
-  start_line = start_line or 0
-  end_line = end_line or -1
-  return vim.api.nvim_buf_get_lines(self.bufnr, start_line, end_line, true)
-end
-
---- Retrieve the current combined contents of the info as a string.
-function Info:get_contents()
-  return table.concat(self:get_lines(), "\n")
-end
-
---- Is the info not showing anything?
-function Info:is_empty()
-  return vim.deep_equal(self:get_lines(), _NOTHING_TO_SHOW)
 end
 
 --- Close all open infoviews (across all tabs).
