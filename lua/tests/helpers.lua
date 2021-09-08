@@ -20,7 +20,8 @@ local default_config = {
   infoview = {
     autoopen = false,
     autopause = true,
-    show_processing = false
+    show_processing = false,
+    show_loading = false
   },
   lsp3 = {
     enable = false

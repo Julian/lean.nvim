@@ -11,9 +11,9 @@ local a = require"plenary.async"
 local Div = {}
 Div.__index = Div
 
-function Div:new(tags, text, name, hlgroup)
+function Div:new(tags, text, name, hlgroup, listener)
   return setmetatable({tags = tags or {}, text = text or "", name = name or "", hlgroup = hlgroup,
-    divs = {}, div_stack = {}}, self)
+    divs = {}, div_stack = {}, listener = listener}, self)
 end
 
 function Div:add_div(div)
@@ -245,22 +245,31 @@ function Div:event(pos, event_name, ...)
   local event_div, event_div_stack = get_parent_div(div_stack, is_event_div_check(event_name))
   if not event_div then return end
 
-  -- track this event in a parent tracking div (if there is one)
-  local tracker_div, tracker_div_stack = get_parent_div(event_div_stack, is_event_div_check("_track"))
+  -- find parent listener
+  local listener_div, listener_div_stack = get_parent_div(event_div_stack, function(div)
+    if div.listener then return true end
+    return false
+  end)
+  if not listener_div then return end
+
+  -- take subset of path from listener to event, inclusive
+  local event_path = {}
+  for i = #path - (#event_div_stack - 1), #path - (#listener_div_stack - 1) do
+    table.insert(event_path, path[i])
+  end
 
   local args = {...}
 
   a.void(function()
-    local result = {event_div.tags.event[event_name](unpack(args))}
+    local result
+    if listener_div.call_event then
+      result = {listener_div.call_event(event_path, event_name, event_div.tags.event[event_name], args)}
+    else
+      result = {event_div.tags.event[event_name](unpack(args))}
+    end
 
-    if tracker_div then
-      -- take subset of path from tracker to event, inclusive
-      local new_path = {}
-      for i = #path - (#event_div_stack - 1), #path - (#tracker_div_stack - 1) do
-        table.insert(new_path, path[i])
-      end
-
-      tracker_div.tags.event["_track"](new_path, event_name, unpack(result))
+    if listener_div.track_event then
+      listener_div.track_event(event_path, event_name, unpack(result))
     end
   end)()
 end
@@ -271,17 +280,22 @@ function Div:hover(pos, check)
 
   local hover_div = get_parent_div(div_stack, check)
 
-  if hover_div == self.prev_hover_div then return end
+  if hover_div == self.prev_hover_div then return false end
+
+  local changed = false
 
   if hover_div then
     hover_div.tags.__highlight = true
+    changed = true
   end
 
   if self.prev_hover_div then
     self.prev_hover_div.tags.__highlight = false
+    changed = true
   end
 
   self.prev_hover_div = hover_div
+  return changed
 end
 
 function Div:find(check)

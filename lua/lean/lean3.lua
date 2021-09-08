@@ -77,7 +77,7 @@ local to_event = {
   ["onClick"] = "click";
 }
 
-function lean3.update_infoview(pin, bufnr, params, use_widget, opts, _this_tick)
+function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
   local parent_div = html.Div:new({}, "")
   local widget
 
@@ -178,13 +178,15 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, _this_tick)
 
       -- close tooltip button
       if tag == "button" and result.c and result.c[1] == "x" then
-        element_div.tags.event.clear = function(this_tick)
-          if not this_tick then
-            pin.tick = pin.tick + 1
-            this_tick = pin.tick
-          end
+        element_div.tags.event.clear = function(tick)
+          local this_tick = pin:new_tick(tick)
+          if not this_tick then return true, true end
 
           element_div.tags.event["click"](this_tick)
+
+          if not pin:check_tick(this_tick) then return true, true end
+
+          pin:clear_tick(tick)
           return true
         end
       end
@@ -193,11 +195,6 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, _this_tick)
         for event, handler in pairs(result.e) do
           local div_event = to_event[event]
           events[div_event] = function(this_tick)
-            if not this_tick then
-              pin.tick = pin.tick + 1
-              this_tick = pin.tick
-            end
-
             local success = pin:_update(false, 0, this_tick, {widget_event = {
               widget = widget,
               kind = event,
@@ -206,10 +203,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, _this_tick)
               textDocument = pin.position_params.textDocument
             }})
 
-            if this_tick ~= pin.tick then return success, true end
-
             if div_event ~= "click" then return success, true end
-
             return success, false
           end
         end
@@ -273,15 +267,13 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, _this_tick)
   else
     pin:clear_undo_list()
     local _, result = util.a_request(bufnr, "$/lean/plainGoal", params)
-    if pin.tick ~= _this_tick then return true end
     if result and type(result) == "table" then
       parent_div:insert_new_div(components.goal(result))
     end
   end
-  if pin.tick ~= _this_tick then return true end
   parent_div:insert_new_div(components.diagnostics(bufnr, params.position.line))
-  if pin.tick ~= _this_tick then return true end
 
+  pin.div.divs = {}
   pin.div:insert_new_div(parent_div)
 
   -- update all other pins for the same URI so they aren't left with a stale "session"
