@@ -32,3 +32,4 @@ highlight leanInfoField ctermbg=12 ctermfg=0
 highlight leanInfoFieldAlt ctermbg=7 ctermfg=0
 highlight leanInfoFieldSep ctermbg=225 ctermfg=4
 highlight leanInfoGoals cterm=bold
+highlight leanInfoLoading ctermfg=8

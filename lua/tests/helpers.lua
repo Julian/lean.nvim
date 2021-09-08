@@ -702,7 +702,7 @@ local function infoview_check(state, _)
     --
 
     local function check_change(get_before, get_after, change, type)
-      vim.wait(100)
+      vim.wait(200)
       local changed, _ = vim.wait(change and 500 or 150, function()
         return not vim.deep_equal(get_before(), get_after())
       end, 50)

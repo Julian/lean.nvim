@@ -273,8 +273,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
   end
   parent_div:insert_new_div(components.diagnostics(bufnr, params.position.line))
 
-  pin.div.divs = {}
-  pin.div:insert_new_div(parent_div)
+  pin.data_div:insert_new_div(parent_div)
 
   -- update all other pins for the same URI so they aren't left with a stale "session"
   if opts and opts.widget_event then
