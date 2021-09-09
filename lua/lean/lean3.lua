@@ -178,15 +178,10 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
 
       -- close tooltip button
       if tag == "button" and result.c and result.c[1] == "x" then
-        element_div.tags.event.clear = function(tick)
-          local this_tick = pin:new_tick(tick)
-          if not this_tick then return true, true end
-
+        element_div.tags.event.clear = function(this_tick)
           element_div.tags.event["click"](this_tick)
 
-          if not pin:check_tick(this_tick) then return true, true end
-
-          pin:clear_tick(tick)
+          if not this_tick:check() then return true, true end
           return true
         end
       end

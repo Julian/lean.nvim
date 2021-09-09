@@ -5,7 +5,6 @@ local is_lean_buffer = require'lean'.is_lean_buffer
 local util = require'lean._util'
 local set_augroup = util.set_augroup
 local a = require'plenary.async'
-local control = require'plenary.async.control'
 local html = require'lean.html'
 local rpc = require'lean.rpc'
 
@@ -35,9 +34,7 @@ local _NOTHING_TO_SHOW = { "No info found." }
 ---@field use_widget boolean
 ---@field data_div Div
 ---@field div Div
----@field tick number
----@field lock boolean
----@field lock_var function
+---@field ticker table
 local Pin = {next_id = 1}
 
 --- An individual info.
@@ -271,7 +268,7 @@ end
 ---@return Pin
 function Pin:new(paused, use_widget)
   local new_pin = {id = self.next_id, parent_infos = {}, paused = paused,
-    tick = 0, lock = false, lock_var = control.Condvar.new(),
+    ticker = util.Ticker:new(),
     data_div = html.Div:new({pin = self}, "", "pin-data", nil),
     div = html.Div:new({pin = self}, "", "pin", nil, true), use_widget = use_widget, undo_list = {}}
   self.next_id = self.next_id + 1
@@ -283,14 +280,14 @@ function Pin:new(paused, use_widget)
   new_pin.div.tags.event = {}
 
   new_pin.div.call_event = function(path, event, fn, args)
-    local this_tick = new_pin:new_tick(nil)
-    if not this_tick then return end
+    local tick = new_pin.ticker:lock()
+    if not tick then return end
 
     new_pin:set_loading(true)
 
-    local success, ignore = fn(this_tick, unpack(args))
+    local success, ignore = fn(tick, unpack(args))
 
-    if not new_pin:check_tick(this_tick) then return end
+    if not tick:check() then return end
 
     if not success then print('failed "' .. event .. '" event (see :messages)') end
     if not ignore then
@@ -302,20 +299,20 @@ function Pin:new(paused, use_widget)
 
     new_pin:set_loading(false)
 
-    new_pin:clear_tick(nil)
+    new_pin.ticker:release()
   end
 
 
   -- replays the events in this pin's undo list
-  new_pin.div.tags.event.replay = function(this_tick)
+  new_pin.div.tags.event.replay = function(tick)
     local new_undo_list = {}
 
-    local success = new_pin.div.tags.event.clear_all(this_tick)
+    local success = new_pin.div.tags.event.clear_all(tick)
     if not success then
       print("replay aborted on failed clear")
       goto finish
     end
-    if not new_pin:check_tick(this_tick) then return end
+    if not tick:check() then return end
 
     for _, undo_item in pairs(new_pin.undo_list) do
       local this_div = new_pin.data_div:div_from_path(undo_item.path)
@@ -327,29 +324,29 @@ function Pin:new(paused, use_widget)
 
       table.insert(new_undo_list, undo_item)
 
-      if not this_div.tags.event[undo_item.event](this_tick) then
+      if not this_div.tags.event[undo_item.event](tick) then
         print("replay aborted on error")
         success = false
         goto finish
       end
-      if not new_pin:check_tick(this_tick) then return end
+      if not tick:check() then return end
     end
 
     ::finish::
-    if not new_pin:check_tick(this_tick) then return end
+    if not tick:check() then return end
 
     new_pin.undo_list = new_undo_list
 
     return success, true
   end
 
-  new_pin.div.tags.event.undo = function(this_tick)
+  new_pin.div.tags.event.undo = function(tick)
     if not (#new_pin.undo_list > 0) then return true, true end
 
     local undo_item = table.remove(new_pin.undo_list)
 
-    local success = new_pin.div.tags.event.replay(this_tick)
-    if not new_pin:check_tick(this_tick) then return end
+    local success = new_pin.div.tags.event.replay(tick)
+    if not tick:check() then return end
 
     if success then
       print('Undo on "' .. undo_item.event .. '" action.')
@@ -360,62 +357,18 @@ function Pin:new(paused, use_widget)
     return success, true
   end
 
-  new_pin.div.tags.event.clear_all = function(this_tick)
+  new_pin.div.tags.event.clear_all = function(tick)
     new_pin.data_div:find_filter(function(div)
         return div.tags.event and div.tags.event.clear
       end,
       function(div)
-        div.tags.event.clear(this_tick)
-        if not new_pin:check_tick(this_tick) then return true end
+        div.tags.event.clear(tick)
+        if not tick:check() then return true end
       end)
     return true
   end
 
   return new_pin
-end
-
--- Updates the tick if necessary.
-function Pin:new_tick(tick)
-  -- this tick comes from a parent context, so don't create new one
-  if tick then return tick end
-
-  -- create new tick
-  self.tick = self.tick + 1
-  tick = self.tick
-
-  -- if something else has the lock on this pin, wait for it to acknowlege it has been cancelled
-  while self.lock do
-    self.lock_var:wait()
-
-    -- if a new tick was created, this is cancelled
-    if self.tick ~= tick then return false end
-  end
-
-  -- this is the most recent tick, so we can proceed
-  self.lock = tick
-
-  return tick
-end
-
-function Pin:check_tick(this_tick)
-  -- this tick has been cancelled
-  if self.tick ~= this_tick then
-    -- allow waiting ticks to proceed
-    if self.lock == this_tick then
-      self.lock = false
-      self.lock_var:notify_all()
-    end
-    return false
-  end
-
-  return true
-end
-
-function Pin:clear_tick(tick)
-  -- don't free the lock if this tick came from a parent context
-  if tick then return end
-
-  self.lock = false
 end
 
 --- Set whether this pin uses a widget or a plain goal/term goal.
@@ -577,23 +530,23 @@ function Pin:set_loading(loading)
 end
 
 Pin.update = a.void(function(self, force, delay, _, lean3_opts)
-  local this_tick = self:new_tick(nil)
-  if not this_tick then return end
+  local tick = self.ticker:lock()
+  if not tick then return end
 
   self:set_loading(true)
 
-  self:_update(force, delay, this_tick, lean3_opts)
+  self:_update(force, delay, tick, lean3_opts)
 
-  if not self:check_tick(this_tick) then return end
+  if not tick:check() then return end
 
   self:set_loading(false)
 
-  self:clear_tick(nil)
+  self.ticker:release()
 end)
 
-function Pin:_update(force, delay, this_tick, lean3_opts)
+function Pin:_update(force, delay, tick, lean3_opts)
   if self.position_params and (force or not self.paused) then
-    return self:__update(this_tick, delay, lean3_opts)
+    return self:__update(tick, delay, lean3_opts)
   end
 end
 
@@ -601,7 +554,7 @@ local plain_goal = a.wrap(leanlsp.plain_goal, 3)
 local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 
 --- async function to update this pin's contents given the current position.
-function Pin:__update(this_tick, delay, lean3_opts)
+function Pin:__update(tick, delay, lean3_opts)
   delay = delay or 100
 
   self.data_div.divs = {}
@@ -637,21 +590,20 @@ function Pin:__update(this_tick, delay, lean3_opts)
       return true
     end
 
-    if not self:check_tick(this_tick) then return true end
     self.sess = rpc.open(buf, params)
+    if not tick:check() then return true end
 
-    if not self:check_tick(this_tick) then return true end
     local _, goal = plain_goal(params, buf)
+    if not tick:check() then return true end
 
     local goal_div = components.goal(goal)
-    self.data_div:insert_new_div(goal_div)
 
     local term_goal, term_goal_err
     local term_goal_div
 
     if self.use_widget then
-      if not self:check_tick(this_tick) then return true end
       term_goal, term_goal_err = self.sess:getInteractiveTermGoal(params)
+      if not tick:check() then return true end
       if term_goal_err then
         term_goal = nil
       else
@@ -661,14 +613,15 @@ function Pin:__update(this_tick, delay, lean3_opts)
 
     if not term_goal then
       self:clear_undo_list()
-      if not self:check_tick(this_tick) then return true end
       local _, _plain_term_goal = plain_term_goal(params, buf)
+      if not tick:check() then return true end
       term_goal = _plain_term_goal
       term_goal_div = components.term_goal(term_goal)
     end
 
     local goal_div_empty, term_goal_div_empty = #goal_div:render() == 0, #term_goal_div:render() == 0
 
+    self.data_div:insert_new_div(goal_div)
     if not goal_div_empty and not term_goal_div_empty then
       self.data_div:add_div(html.Div:new({}, "\n\n", "plain_goal-term_goal-separator"))
     end
@@ -681,8 +634,8 @@ function Pin:__update(this_tick, delay, lean3_opts)
 
     self.data_div:insert_new_div(components.diagnostics(buf, line))
 
-    if not self:check_tick(this_tick) then return true end
-    self.div.tags.event.replay(this_tick)
+    if not tick:check() then return true end
+    self.div.tags.event.replay(tick)
   end
 
   return true

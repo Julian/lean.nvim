@@ -77,36 +77,17 @@ function components.interactive_term_goal(goal, sess)
       local info_div = html.Div:new({event = {}}, "", "tooltip")
 
       local info_open = false
-      local tick = 0
 
-      local function new_tick()
-        tick = tick + 1
-        return tick
-      end
-
-      local reset = function(_)
+      local do_reset = function(_)
         info_div.divs = {}
         info_div.tags.event.clear = nil
         info_open = false
         return true
       end
 
-      local wrap = function(call)
-        return function()
-          reset()
-          local this_tick = new_tick()
-          local success = call(this_tick)
-          if this_tick ~= tick then return success, true end
-
-          return success, false
-        end
-      end
-
-      local do_reset = wrap(function() return true end)
-
-      local do_open_all = wrap(function(this_tick)
+      local do_open_all = function(tick)
         local info_popup, err = sess:infoToInteractive(info_with_ctx)
-        if this_tick ~= tick then return true end
+        if not tick:check() then return true end
 
         if err then print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message)) return false end
 
@@ -127,13 +108,13 @@ function components.interactive_term_goal(goal, sess)
         info_div.tags.event.clear = do_reset
         info_open = true
         return true
-      end)
+      end
 
-      local click = function()
+      local click = function(tick)
         if info_open then
-          return do_reset()
+          return do_reset(tick)
         else
-          return do_open_all()
+          return do_open_all(tick)
         end
       end
 
