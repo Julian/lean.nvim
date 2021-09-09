@@ -177,7 +177,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       end
 
       -- close tooltip button
-      if tag == "button" and result.c and result.c[1] == "x" then
+      if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
         element_div.tags.event.clear = function(this_tick)
           element_div.tags.event["click"](this_tick)
 
