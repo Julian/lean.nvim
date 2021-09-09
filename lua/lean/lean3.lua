@@ -75,10 +75,11 @@ local to_event = {
   ["onMouseEnter"] = "mouse_enter";
   ["onMouseLeave"] = "mouse_leave";
   ["onClick"] = "click";
+  ["onChange"] = "change";
 }
 
-function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
-  local parent_div = html.Div:new({}, "")
+function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
+  local parent_div = html.Div:new({}, "", "lean-3-widget")
   local widget
 
   local list_first
@@ -88,6 +89,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
     local div = html.Div:new({}, "")
     local function parse_children(children)
       local prev_div
+      local this_div = html.Div:new({}, "", "children")
       for _, child in pairs(children) do
         local last_hard_stop = false
         if prev_div then
@@ -113,15 +115,41 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
         end
 
         if last_hard_stop and this_hard_start then
-          div:insert_div({}, " ", "separator")
+          this_div:insert_div({}, " ", "separator")
         end
 
-        div:insert_new_div(new_div)
+        this_div:insert_new_div(new_div)
 
         prev_div = new_div
 
         ::continue::
       end
+      return this_div
+    end
+
+    local function parse_select(children, select_div, current_value)
+      local no_filter_div, no_filter_val, current_text
+      local this_div = html.Div:new({}, "", "select-children")
+      for _, child in pairs(children) do
+        local new_div = parse_widget(child)
+        new_div.tags.event = {}
+        new_div.tags.event.click = function(this_tick)
+          return select_div.tags.event.change(this_tick, child.a.value)
+        end
+        new_div.hlgroup = html.util.highlight_check
+        this_div:insert_new_div(new_div)
+        this_div:insert_div({}, "\n", "select-separator")
+
+        if child.c[1] == "no filter" then
+          no_filter_div = new_div
+          no_filter_val = child.a.value
+        end
+
+        if child.a.value == current_value then
+          current_text = child.c[1]
+        end
+      end
+      return this_div, no_filter_div, no_filter_val, current_text
     end
 
     if type(result) == "string" then
@@ -151,7 +179,6 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
         end
       end
 
-      if tag == "label" or tag == "select" or tag == "option" then return div, false end
       hlgroup = class_to_hlgroup[class_name]
       if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
 
@@ -173,6 +200,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       end
       local element_div = div:start_div({element = result, event = events}, "", "element")
       element_div.hlgroup = function()
+        -- let click highlight take priority
         return html.util.highlight_check(element_div) or hlgroup
       end
 
@@ -180,8 +208,6 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
         element_div.tags.event.clear = function(this_tick)
           element_div.tags.event["click"](this_tick)
-
-          if not this_tick:check() then return true, true end
           return true
         end
       end
@@ -189,16 +215,17 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
       if result.e then
         for event, handler in pairs(result.e) do
           local div_event = to_event[event]
-          events[div_event] = function(this_tick)
+          events[div_event] = function(this_tick, value)
+            local args = value and { type = 'string', value = value } or { type = 'unit' }
             local success = pin:_update(false, 0, this_tick, {widget_event = {
               widget = widget,
               kind = event,
               handler = handler,
-              args = { type = 'unit' },
+              args = args,
               textDocument = pin.position_params.textDocument
             }})
 
-            if div_event ~= "click" then return success, true end
+            if div_event ~= "click" and div_event ~= "change" then return success, true end
             return success, false
           end
         end
@@ -208,7 +235,20 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
         div:insert_div({}, "|", "rule", "leanInfoFieldSep")
       end
 
-      parse_children(children)
+      if options.show_filter and tag == "select" then
+        local select_children_div, no_filter_div, no_filter_val, current_text =
+          parse_select(children, element_div, attributes.value)
+        if no_filter_val and no_filter_val ~= attributes.value then
+          element_div.tags.event.clear = function(this_tick)
+            no_filter_div.tags.event.click(this_tick)
+            return true
+          end
+        end
+        div:insert_div({}, current_text .. "\n", "current-select")
+        div:insert_new_div(select_children_div)
+      else
+        div:insert_new_div(parse_children(children))
+      end
 
       if tooltip then
         div:start_div({element = result, event = {}}, "→[", "tooltip", "leanInfoTooltip")
@@ -216,13 +256,14 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
         div:insert_div({element = result}, "]", "tooltip-close")
         div:end_div()
       end
+      -- (from element_div)
       div:end_div()
       if debug_tags then
         div:insert_div({element = result}, "</" .. tag .. ">", "element")
       end
       return div
     else
-      parse_children(result.c)
+      div:insert_new_div(parse_children(result.c))
       return div
     end
   end
@@ -257,7 +298,6 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts)
 
       widget = result.widget
       parent_div:insert_new_div(parse_widget(result.widget.html))
-      parent_div:end_div()
     end
   else
     pin:clear_undo_list()

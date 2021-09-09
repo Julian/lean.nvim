@@ -23,7 +23,7 @@ local infoview = {
   _pin_by_id = {},
 }
 local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, show_processing = true,
-  show_loading = true, use_widget = true} }
+  show_loading = true, use_widget = true, lean3 = {show_filter = true}} }
 
 local _NOTHING_TO_SHOW = { "No info found." }
 
@@ -579,7 +579,8 @@ function Pin:__update(tick, delay, lean3_opts)
     if not self.use_widget then self:clear_undo_list() end
 
     if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
-      lean3.update_infoview(self, buf, params, self.use_widget, lean3_opts)
+      lean3_opts = lean3_opts or {}
+      lean3.update_infoview(self, buf, params, self.use_widget, lean3_opts, options.lean3)
       return true
     end
 
