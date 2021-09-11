@@ -153,8 +153,7 @@ function Info:new()
 end
 
 function Info:__event(event)
-  self.div:event(html.util.pos_to_raw_pos(vim.api.nvim_win_get_cursor(0),
-    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), event)
+  self.div:buf_event(self.bufnr, event)
 end
 
 function Info:add_pin()
@@ -296,7 +295,7 @@ function Pin:new(paused, use_widget)
     if not tick:check() then return end
 
     for _, undo_item in pairs(new_pin.undo_list) do
-      local this_div = new_pin.data_div:div_from_path(undo_item.path)
+      local _, this_div = new_pin.data_div:div_from_path(undo_item.path)
       if not this_div then
         print("replay aborted on invalid event path", vim.inspect(new_pin.data_div.divs[1].name))
         success = false

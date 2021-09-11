@@ -131,30 +131,30 @@ function Div:pos_from_path(path)
   return self:_pos_from_path(path)
 end
 
-function Div:_div_from_path(path)
-  if #path == 0 then return self end
+function Div:_div_from_path(path, stack)
+  table.insert(stack, self)
+  if #path == 0 then return stack, self end
   path = {unpack(path)}
 
   local this_branch = table.remove(path)
   local this_div = self.divs[this_branch.idx]
   local this_name = this_branch.name
 
-  if not this_div or this_div.name ~= this_name then return nil end
+  if not this_div or this_div.name ~= this_name then return nil, nil end
 
-  return this_div:_div_from_path(path)
+  return this_div:_div_from_path(path, stack)
 end
 
 function Div:div_from_path(path)
   path = {unpack(path)}
 
   -- check that the first name matches
-  if self.name ~= table.remove(path).name then return nil end
+  if self.name ~= table.remove(path).name then return nil, nil end
 
-  return self:_div_from_path(path)
+  return self:_div_from_path(path, setmetatable({}, {__mode = "v"}))
 end
 
 function Div:_div_from_pos(pos, stack)
-  stack = stack or {}
   table.insert(stack, self)
 
   local text = self.text
@@ -178,8 +178,8 @@ function Div:_div_from_pos(pos, stack)
   return text, nil
 end
 
-function Div:div_from_pos(pos, stack)
-  local _, div_stack, div_path = self:_div_from_pos(pos, stack)
+function Div:div_from_pos(pos)
+  local _, div_stack, div_path = self:_div_from_pos(pos, setmetatable({}, {__mode = "v"}))
   if div_path then table.insert(div_path, {idx = -1, name = self.name}) end
   return div_stack, div_path
 end
@@ -261,8 +261,13 @@ local function is_event_div_check(event_name)
   end
 end
 
-function Div:event(pos, event_name, ...)
-  local div_stack, path = self:div_from_pos(pos)
+function Div:path_from_pos(pos)
+  local _, path = self:div_from_pos(pos)
+  return path
+end
+
+function Div:event(path, event_name, ...)
+  local div_stack, _ = self:div_from_path(path)
   if not div_stack then return end
 
   local event_div, event_div_stack = get_parent_div(div_stack, is_event_div_check(event_name))
@@ -275,7 +280,7 @@ function Div:event(pos, event_name, ...)
   end)
   if not listener_div then return end
 
-  -- take subset of path from listener to event, inclusive
+  -- take subpath from listener to event, inclusive
   local event_path = {}
   for i = #path - (#event_div_stack - 1), #path - (#listener_div_stack - 1) do
     table.insert(event_path, path[i])
@@ -325,7 +330,7 @@ function Div:filter(fn)
 end
 
 function Div:buf_register(buf, parent_buf)
-  self.bufs[buf] = setmetatable({parent_buf = parent_buf}, {__mode = 'v'})
+  self.bufs[buf] = {parent_buf = parent_buf}
   util.set_augroup("DivPosition", string.format([[
     autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_position(%d)
     autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_position(%d)
@@ -368,15 +373,14 @@ function Div:buf_render(buf)
   end
 end
 
-Div.buf_update_position = function (self, buf)
+function Div:buf_update_position(buf)
   local raw_pos = pos_to_raw_pos(vim.api.nvim_win_get_cursor(0), vim.api.nvim_buf_get_lines(buf, 0, -1, true))
-  self:buf_hover(buf, raw_pos)
+  self.bufs[buf].path = self:path_from_pos(raw_pos)
+  self:buf_hover(buf)
 end
 
-function Div:buf_hover(buf, pos)
-  local div_stack = self:div_from_pos(pos)
-  if not div_stack then return end
-
+function Div:buf_hover(buf)
+  local div_stack, _ = self:div_from_path(self.bufs[buf].path)
   local hover_div = get_parent_div(div_stack, function (div) return div.highlightable end)
   if hover_div then
     hover_div.hlgroup_override = "htmlDivHighlight"
@@ -434,6 +438,11 @@ function Div:buf_clear_tooltips(parent_buf)
     child:buf_clear_tooltips(parent_buf)
   end
   if self.tooltip then self.tooltip:buf_clear_tooltips(parent_buf) end
+end
+
+function Div:buf_event(buf, event, ...)
+  self:buf_update_position(buf)
+  self:event(self.bufs[buf].path, event, ...)
 end
 
 return {Div = Div, util = { get_parent_div = get_parent_div,
