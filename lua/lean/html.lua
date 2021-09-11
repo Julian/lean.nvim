@@ -1,4 +1,8 @@
 local a = require"plenary.async"
+local util = require"lean._util"
+
+-- necessary until neovim/neovim#14661 is merged.
+local _by_id = setmetatable({}, {__mode = 'v'})
 
 --- An HTML-style div
 ---@class Div
@@ -6,18 +10,32 @@ local a = require"plenary.async"
 ---@field text string
 ---@field name string
 ---@field hlgroup string
----@field divs table
----@field div_stack table
-local Div = {}
+---@field hlgroup_override string
+---@field divs Div[]
+---@field div_stack Div[]
+---@field tooltip Div
+---@field bufs table
+---@field id number
+---@field highlightable boolean
+local Div = {next_id = 1}
 Div.__index = Div
 
 function Div:new(tags, text, name, hlgroup, listener)
-  return setmetatable({tags = tags or {}, text = text or "", name = name or "", hlgroup = hlgroup,
-    divs = {}, div_stack = {}, listener = listener}, self)
+  local new_div = setmetatable({tags = tags or {}, text = text or "", name = name or "", hlgroup = hlgroup,
+    divs = {}, div_stack = {}, listener = listener, bufs = {}, id = self.next_id}, self)
+  self.next_id = self.next_id + 1
+  _by_id[new_div.id] = new_div
+  new_div.tags.event = new_div.tags.event or {}
+  return new_div
 end
 
 function Div:add_div(div)
   table.insert(self.divs, div)
+  return div
+end
+
+function Div:add_tooltip(div)
+  self.tooltip = div
   return div
 end
 
@@ -30,8 +48,17 @@ function Div:insert_new_div(new_div)
   end
 end
 
-function Div:start_div(tags, text, name, hlgroup)
-  local new_div = Div:new(tags, text, name, hlgroup)
+function Div:insert_new_tooltip(new_div)
+  local last_div = self.div_stack[#self.div_stack]
+  if last_div then
+    return last_div:add_tooltip(new_div)
+  else
+    return self:add_tooltip(new_div)
+  end
+end
+
+function Div:start_div(tags, text, name, hlgroup, listener)
+  local new_div = Div:new(tags, text, name, hlgroup, listener)
   self:insert_new_div(new_div)
   table.insert(self.div_stack, new_div)
   return new_div
@@ -41,8 +68,8 @@ function Div:end_div()
   table.remove(self.div_stack)
 end
 
-function Div:insert_div(tags, text, name, hlgroup)
-  local new_div = self:start_div(tags, text, name, hlgroup)
+function Div:insert_div(tags, text, name, hlgroup, listener)
+  local new_div = self:start_div(tags, text, name, hlgroup, listener)
   self:end_div()
   return new_div
 end
@@ -59,8 +86,8 @@ function Div:render()
     vim.list_extend(hls, new_hls)
     text = text .. new_text
   end
-  if self.hlgroup then
-    local hlgroup = self.hlgroup
+  local hlgroup = self.hlgroup_override or self.hlgroup
+  if hlgroup then
     if type(hlgroup) == "function" then
       hlgroup = hlgroup(self)
     end
@@ -69,34 +96,39 @@ function Div:render()
       table.insert(hls, {start = 1, ["end"] = #text, hlgroup = hlgroup})
     end
   end
+  self.hlgroup_override = nil
   return text, hls
 end
 
-function Div:_pos_from_div(div)
-  local text = self.text
+function Div:_pos_from_path(path)
+  if #path == 0 then return 1 end
+  path = {unpack(path)}
 
-  -- base case
-  if self == div then return nil, 1, {} end
+  local this_branch = table.remove(path)
+  local this_name = this_branch.name
+  local this_idx = this_branch.idx
 
-  local pos = #text
-
-  for idx, this_div in ipairs(self.divs) do
-    local div_text, div_pos, div_path = this_div:_pos_from_div(div)
-    if div_pos then
-      table.insert(div_path, {idx = idx, name = this_div.name})
-      return nil, pos + div_pos, div_path
+  local pos = #self.text
+  for idx, child in ipairs(self.divs) do
+    if idx ~= this_idx then
+      pos = pos + #child:render()
+    else
+      if child.name ~= this_name then return nil end
+      local result = child:_pos_from_path(path)
+      return result and pos + result
     end
-    text = text .. div_text
-    pos = #text
   end
 
-  return text, nil, nil
+  return nil
 end
 
-function Div:pos_from_div(div)
-  local _, pos, path = self:_pos_from_div(div)
-  if path then table.insert(path, {idx = -1, name = self.name}) end
-  return pos, path
+function Div:pos_from_path(path)
+  path = {unpack(path)}
+
+  -- check that the first name matches
+  if self.name ~= table.remove(path).name then return nil end
+
+  return self:_pos_from_path(path)
 end
 
 function Div:_div_from_path(path)
@@ -170,6 +202,28 @@ local function get_parent_div(div_stack, check)
   return _get_parent_div(div_stack, check)
 end
 
+local function div_stack_to_path(div_stack)
+  local path = {}
+  for div_i, div in ipairs(div_stack) do
+    local idx
+    if div_i == 1 then
+      idx = -1
+    else
+      local found = false
+      for child_i, child in ipairs(div_stack[div_i-1].divs) do
+        if child == div then
+          idx = child_i
+          found = true
+          break
+        end
+      end
+      if not found then return nil end
+    end
+    table.insert(path, 1, {idx = idx, name = div.name})
+  end
+  return path
+end
+
 local function pos_to_raw_pos(pos, lines)
   local raw_pos = 0
   for i = 1, pos[1] - 1 do
@@ -196,37 +250,6 @@ local function raw_pos_to_pos(raw_pos, lines)
   end
 
   return {line_num - 1, rem_chars - 1}
-end
-
-function Div:render_buf(bufnr, ns)
-  local text, hls = self:render()
-  local lines = vim.split(text, "\n")
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, lines)
-
-  table.sort(hls, function(hl1, hl2)
-    local range1 = (hl1["end"] - hl1.start)
-    local range2 = (hl2["end"] - hl2.start)
-    if range1 > range2 then
-      return true
-    elseif range1 == range2 then
-      -- clickable highlight takes priority
-      return hl2.hlgroup == "leanInfoHighlight"
-    else
-      return false
-    end
-  end)
-
-  for _, hl in ipairs(hls) do
-    local start_pos = raw_pos_to_pos(hl.start, lines)
-    local end_pos = raw_pos_to_pos(hl["end"], lines)
-    vim.highlight.range(
-      bufnr,
-      ns,
-      hl.hlgroup,
-      start_pos,
-      {end_pos[1], end_pos[2] + 1}
-    )
-  end
 end
 
 local function is_event_div_check(event_name)
@@ -274,30 +297,6 @@ function Div:event(pos, event_name, ...)
   end)()
 end
 
-function Div:hover(pos, check)
-  local div_stack = self:div_from_pos(pos)
-  if not div_stack then return end
-
-  local hover_div = get_parent_div(div_stack, check)
-
-  if hover_div == self.prev_hover_div then return false end
-
-  local changed = false
-
-  if hover_div then
-    hover_div.tags.__highlight = true
-    changed = true
-  end
-
-  if self.prev_hover_div then
-    self.prev_hover_div.tags.__highlight = false
-    changed = true
-  end
-
-  self.prev_hover_div = hover_div
-  return changed
-end
-
 function Div:find(check)
   if check(self) then return self end
 
@@ -325,9 +324,118 @@ function Div:filter(fn)
   end
 end
 
+function Div:buf_register(buf, parent_buf)
+  self.bufs[buf] = setmetatable({parent_buf = parent_buf}, {__mode = 'v'})
+  util.set_augroup("DivPosition", string.format([[
+    autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_position(%d)
+    autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_position(%d)
+  ]], buf, self.id, buf, buf, self.id, buf), buf)
+end
+
+local div_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
+
+vim.api.nvim_command("highlight htmlDivHighlight ctermbg=153 ctermfg=0")
+
+function Div:buf_render(buf)
+  local text, hls = self:render()
+  local lines = vim.split(text, "\n")
+
+  vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, true, lines)
+  -- HACK: This shouldn't really do anything, but I think there's a neovim
+  --       display bug. See #27 and neovim/neovim#14663. Specifically,
+  --       as of NVIM v0.5.0-dev+e0a01bdf7, without this, updating a long
+  --       infoview with shorter contents doesn't properly redraw.
+  vim.api.nvim_buf_call(buf, vim.fn.winline)
+  vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+
+  table.sort(hls, function(hl1, hl2)
+    local range1 = (hl1["end"] - hl1.start)
+    local range2 = (hl2["end"] - hl2.start)
+    return range1 > range2
+  end)
+
+  for _, hl in ipairs(hls) do
+    local start_pos = raw_pos_to_pos(hl.start, lines)
+    local end_pos = raw_pos_to_pos(hl["end"], lines)
+    vim.highlight.range(
+      buf,
+      div_ns,
+      hl.hlgroup,
+      start_pos,
+      {end_pos[1], end_pos[2] + 1}
+    )
+  end
+end
+
+Div.buf_update_position = function (self, buf)
+  local raw_pos = pos_to_raw_pos(vim.api.nvim_win_get_cursor(0), vim.api.nvim_buf_get_lines(buf, 0, -1, true))
+  self:buf_hover(buf, raw_pos)
+end
+
+function Div:buf_hover(buf, pos)
+  local div_stack = self:div_from_pos(pos)
+  if not div_stack then return end
+
+  local hover_div = get_parent_div(div_stack, function (div) return div.highlightable end)
+  if hover_div then
+    hover_div.hlgroup_override = "htmlDivHighlight"
+  end
+
+  local parent_buf = self.bufs[buf].parent_buf or buf
+  self:buf_clear_tooltips(parent_buf)
+  local tt_parent_div, tt_parent_div_stack = get_parent_div(div_stack, function (div) return div.tooltip end)
+
+  if tt_parent_div then
+    local tooltip_path = div_stack_to_path(tt_parent_div_stack)
+    local tooltip_div = tt_parent_div.tooltip
+
+    local contents = vim.split(tooltip_div:render(), "\n")
+    local width, height = vim.lsp.util._make_floating_popup_size(contents, {
+      max_width = 30,
+      max_height = 30,
+      border = "none"
+    })
+
+    local tooltip_buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
+
+    tooltip_div:buf_register(tooltip_buf, parent_buf)
+    tooltip_div:buf_render(tooltip_buf)
+
+    local bufpos = raw_pos_to_pos(self:pos_from_path(tooltip_path), vim.split(self:render(), "\n"))
+
+    local win_options = {
+      relative = "win",
+      style = "minimal",
+      width = width,
+      height = height,
+      border = "none",
+      bufpos = bufpos
+    }
+
+    local tooltip_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
+    tooltip_div.bufs[tooltip_buf].win = tooltip_win
+  end
+
+  self:buf_render(buf)
+end
+
+function Div:buf_clear_tooltips(parent_buf)
+  for buf, bufdata in pairs(self.bufs) do
+    if bufdata.parent_buf ~= parent_buf then goto continue end
+    if bufdata.win then
+      vim.api.nvim_win_close(bufdata.win, false)
+      self.bufs[buf] = nil
+    end
+    ::continue::
+  end
+  for _, child in ipairs(self.divs) do
+    child:buf_clear_tooltips(parent_buf)
+  end
+  if self.tooltip then self.tooltip:buf_clear_tooltips(parent_buf) end
+end
+
 return {Div = Div, util = { get_parent_div = get_parent_div,
 pos_to_raw_pos = pos_to_raw_pos, raw_pos_to_pos = raw_pos_to_pos,
-is_event_div_check = is_event_div_check,
-highlight_check = function(div)
-  return div.tags.__highlight and "leanInfoHighlight"
-end}}
+is_event_div_check = is_event_div_check }, _by_id = _by_id}

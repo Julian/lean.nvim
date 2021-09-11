@@ -91,7 +91,7 @@ function components.interactive_term_goal(goal, sess)
 
         if err then print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message)) return false end
 
-        info_div:insert_div({}, "→[", "tooltip-prefix", function() return div.hlgroup(div) or "leanInfoTooltip" end)
+        info_div:insert_div({}, "→[", "tooltip-prefix", "leanInfoTooltip")
         local keys = {}
         for key, _ in pairs(info_popup) do
           table.insert(keys, key)
@@ -104,7 +104,7 @@ function components.interactive_term_goal(goal, sess)
           info_div:insert_new_div(code_with_infos(info_popup[key]))
           info_div:end_div()
         end
-        info_div:insert_div({}, "]", "tooltip-suffix", function() return div.hlgroup(div) or "leanInfoTooltip" end)
+        info_div:insert_div({}, "]", "tooltip-suffix", "leanInfoTooltip")
         info_div.tags.event.clear = do_reset
         info_open = true
         return true
@@ -119,7 +119,7 @@ function components.interactive_term_goal(goal, sess)
       end
 
       div.tags = {info_with_ctx = info_with_ctx, event = { click = click }}
-      div.hlgroup = html.util.highlight_check
+      div.highlightable = true
 
       div:insert_new_div(code_with_infos(t.tag[2]))
 

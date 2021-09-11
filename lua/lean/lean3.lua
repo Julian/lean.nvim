@@ -129,16 +129,15 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
 
     local function parse_select(children, select_div, current_value)
       local no_filter_div, no_filter_val, current_text
-      local this_div = html.Div:new({}, "", "select-children")
-      for _, child in pairs(children) do
+      local this_div = html.Div:new({}, "", "select-children", nil, false, true)
+      for child_i, child in pairs(children) do
         local new_div = parse_widget(child)
         new_div.tags.event = {}
         new_div.tags.event.click = function(this_tick)
           return select_div.tags.event.change(this_tick, child.a.value)
         end
-        new_div.hlgroup = html.util.highlight_check
         this_div:insert_new_div(new_div)
-        this_div:insert_div({}, "\n", "select-separator")
+        if child_i ~= #children then this_div:insert_div({}, "\n", "select-separator") end
 
         if child.c[1] == "no filter" then
           no_filter_div = new_div
@@ -198,11 +197,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
         " events(" .. vim.inspect(result.e) .. ")" ..
         ">", "element")
       end
-      local element_div = div:start_div({element = result, event = events}, "", "element")
-      element_div.hlgroup = function()
-        -- let click highlight take priority
-        return html.util.highlight_check(element_div) or hlgroup
-      end
+      local element_div = div:start_div({element = result, event = events}, "", "element", hlgroup)
 
       -- close tooltip button
       if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
@@ -215,6 +210,8 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
       if result.e then
         for event, handler in pairs(result.e) do
           local div_event = to_event[event]
+          local clickable_event = div_event == "click" or div_event == "change"
+          if clickable_event then element_div.highlightable = true end
           events[div_event] = function(this_tick, value)
             local args = value and { type = 'string', value = value } or { type = 'unit' }
             local success = pin:_update(false, 0, this_tick, {widget_event = {
@@ -225,7 +222,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
               textDocument = pin.position_params.textDocument
             }})
 
-            if div_event ~= "click" and div_event ~= "change" then return success, true end
+            if not clickable_event then return success, true end
             return success, false
           end
         end
@@ -244,8 +241,8 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
             return true
           end
         end
-        div:insert_div({}, current_text .. "\n", "current-select")
-        div:insert_new_div(select_children_div)
+        local select_menu_div = div:insert_div({}, current_text .. "\n", "current-select")
+        select_menu_div.tooltip = select_children_div
       else
         div:insert_new_div(parse_children(children))
       end

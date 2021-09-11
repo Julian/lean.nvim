@@ -147,10 +147,7 @@ function Info:new()
 
   vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
   vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
-  set_augroup("LeanInfoWidget", string.format([[
-    autocmd CursorMoved <buffer=%d> lua require'lean.infoview'._info_by_id[%d]:__cursor_hold()
-    autocmd BufEnter <buffer=%d> lua require'lean.infoview'._info_by_id[%d]:__cursor_hold()
-  ]], new_info.bufnr, new_info.id, new_info.bufnr, new_info.id), 0)
+  new_info.div:buf_register(new_info.bufnr)
 
   return new_info
 end
@@ -158,13 +155,6 @@ end
 function Info:__event(event)
   self.div:event(html.util.pos_to_raw_pos(vim.api.nvim_win_get_cursor(0),
     vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), event)
-end
-
-function Info:__cursor_hold()
-  if self.div:hover(html.util.pos_to_raw_pos(vim.api.nvim_win_get_cursor(0),
-    vim.api.nvim_buf_get_lines(self.bufnr, 0, -1, true)), html.util.is_event_div_check("click")) then
-    self:_render()
-  end
 end
 
 function Info:add_pin()
@@ -180,8 +170,6 @@ function Info:clear_pins()
 
   self.pins = {}
 end
-
-local info_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
 
 --- Set the current window as the last window used to update this Info.
 function Info:set_last_window()
@@ -238,14 +226,7 @@ function Info:render()
 end
 
 function Info:_render()
-  vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', true)
-  self.div:render_buf(self.bufnr, info_ns)
-  -- HACK: This shouldn't really do anything, but I think there's a neovim
-  --       display bug. See #27 and neovim/neovim#14663. Specifically,
-  --       as of NVIM v0.5.0-dev+e0a01bdf7, without this, updating a long
-  --       infoview with shorter contents doesn't properly redraw.
-  vim.api.nvim_buf_call(self.bufnr, vim.fn.winline)
-  vim.api.nvim_buf_set_option(self.bufnr, 'modifiable', false)
+  self.div:buf_render(self.bufnr)
 end
 
 --- Retrieve the contents of the info as a table.
@@ -658,6 +639,7 @@ end
 
 --- Update the info contents appropriately for Lean 4 or 3.
 --- Normally will be called on each CursorHold for a buffer containing Lean.
+--- TODO perhaps this should be schedule_wrap'ed?
 function infoview.__update()
   infoview.get_current_infoview().info:set_last_window()
   infoview.get_current_infoview().info.pin:move(vim.lsp.util.make_position_params())
