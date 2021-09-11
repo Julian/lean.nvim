@@ -329,12 +329,21 @@ function Div:filter(fn)
   end
 end
 
-function Div:buf_register(buf, parent_buf)
-  self.bufs[buf] = {parent_buf = parent_buf}
+function Div:buf_register(buf, keymaps, parent_buf)
+  self.bufs[buf] = {parent_buf = parent_buf, keymaps = keymaps}
   util.set_augroup("DivPosition", string.format([[
     autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_position(%d)
     autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_position(%d)
   ]], buf, self.id, buf, buf, self.id, buf), buf)
+
+  local mappings = {n = {}}
+  if keymaps then
+    for key, event in pairs(keymaps) do
+      mappings.n[key] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__event("]] .. event
+        .. [[")<CR>]];
+    end
+  end
+  util.load_mappings(mappings, buf)
 end
 
 local div_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
@@ -386,7 +395,8 @@ function Div:buf_hover(buf)
     hover_div.hlgroup_override = "htmlDivHighlight"
   end
 
-  local parent_buf = self.bufs[buf].parent_buf or buf
+  local bufdata = self.bufs[buf]
+  local parent_buf = bufdata.parent_buf or buf
   self:buf_clear_tooltips(parent_buf)
   local tt_parent_div, tt_parent_div_stack = get_parent_div(div_stack, function (div) return div.tooltip end)
 
@@ -404,7 +414,7 @@ function Div:buf_hover(buf)
     local tooltip_buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
 
-    tooltip_div:buf_register(tooltip_buf, parent_buf)
+    tooltip_div:buf_register(tooltip_buf, bufdata.keymaps, parent_buf)
     tooltip_div:buf_render(tooltip_buf)
 
     local bufpos = raw_pos_to_pos(self:pos_from_path(tooltip_path), vim.split(self:render(), "\n"))

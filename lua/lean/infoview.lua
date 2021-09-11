@@ -23,7 +23,14 @@ local infoview = {
   _pin_by_id = {},
 }
 local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, show_processing = true,
-  show_loading = true, use_widget = true, lean3 = {show_filter = true}} }
+  show_loading = true, use_widget = true, lean3 = {show_filter = true},
+  mappings = {
+      ["K"] = [[click]],
+      ["I"] = [[mouse_enter]],
+      ["i"] = [[mouse_leave]],
+      ["u"] = [[undo]],
+      ["C"] = [[clear_all]]
+    } } }
 
 local _NOTHING_TO_SHOW = { "No info found." }
 
@@ -138,7 +145,6 @@ function Info:new()
     pins = {},
     div = html.Div:new({info = self}, "", "info")
   }
-  util.load_mappings(require"lean".info_mappings, new_info.bufnr)
   new_info.pin:add_parent_info(new_info)
   table.insert(infoview._info_by_id, new_info)
 
@@ -147,7 +153,7 @@ function Info:new()
 
   vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
   vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
-  new_info.div:buf_register(new_info.bufnr)
+  new_info.div:buf_register(new_info.bufnr, options.mappings)
 
   return new_info
 end

@@ -28,17 +28,6 @@ local lean = {
     i = {
     };
   };
-  info_mappings = {
-    n = {
-      ["K"] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__event("click")<CR>]];
-      ["I"] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__event("mouse_enter")<CR>]];
-      ["i"] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__event("mouse_leave")<CR>]];
-      ["u"] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__event("undo")<CR>]];
-      ["C"] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__event("clear_all")<CR>]];
-    };
-    i = {
-    };
-  }
 }
 
 --- Setup function to be run in your init.lua (or init.vim).
