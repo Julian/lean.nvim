@@ -340,6 +340,7 @@ function Div:buf_register(buf, keymaps, tooltip_data)
     for key, event in pairs(keymaps) do
       mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_event(%d, "%s")<CR>]]):format(self.id, buf, event)
     end
+    mappings.n["J"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip(%d)<CR>]]):format(self.id, buf)
   end
   util.load_mappings(mappings, buf)
 end
@@ -447,6 +448,14 @@ function Div:buf_render(buf)
   bufdata.temp_decorations = {}
 end
 
+function Div:buf_enter_tooltip(buf)
+  local bufdata = self.bufs[buf]
+  -- TODO choose the one with the longest matching path
+  for child_buf, _ in pairs(bufdata.children) do
+    vim.api.nvim_set_current_win(self.bufs[child_buf].win)
+  end
+end
+
 function Div:buf_update_position(buf)
   local raw_pos = pos_to_raw_pos(vim.api.nvim_win_get_cursor(0), vim.api.nvim_buf_get_lines(buf, 0, -1, true))
   local bufdata = self.bufs[buf]
@@ -507,9 +516,9 @@ function Div:buf_clear_tooltips(buf)
     self:buf_clear_tooltips(child_buf)
 
     local child_bufdata = self.bufs[child_buf]
-    vim.api.nvim_win_close(child_bufdata.win, false)
     self.bufs[child_buf] = nil
     bufdata.children[child_buf] = nil
+    vim.api.nvim_win_close(child_bufdata.win, false)
   end
 end
 
