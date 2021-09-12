@@ -158,10 +158,6 @@ function Info:new()
   return new_info
 end
 
-function Info:__event(event)
-  self.div:buf_event(self.bufnr, event)
-end
-
 function Info:add_pin()
   table.insert(self.pins, self.pin)
   self.pin:show_extmark()
@@ -678,8 +674,6 @@ function infoview.enable(opts)
     autocmd FileType lean3 lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
     autocmd FileType lean lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
   ]])
-  vim.api.nvim_command([[command! -nargs=1 LeanInfoEvent ]]
-  .. [[lua require'lean.infoview'.get_current_infoview().info:__event(<f-args>)]])
 end
 
 --- Configure the infoview to update when this buffer is active.

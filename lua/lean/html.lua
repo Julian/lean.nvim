@@ -338,8 +338,7 @@ function Div:buf_register(buf, keymaps, tooltip_data)
   local mappings = {n = {}}
   if keymaps then
     for key, event in pairs(keymaps) do
-      mappings.n[key] = [[<Cmd>lua require'lean.infoview'.get_current_infoview().info:__event("]] .. event
-        .. [[")<CR>]];
+      mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_event(%d, "%s")<CR>]]):format(self.id, buf, event)
     end
   end
   util.load_mappings(mappings, buf)
