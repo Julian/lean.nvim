@@ -329,7 +329,7 @@ function Div:filter(fn)
 end
 
 function Div:buf_register(buf, keymaps, tooltip_data)
-  self.bufs[buf] = {keymaps = keymaps, children = {}, tooltip_data = tooltip_data}
+  self.bufs[buf] = {keymaps = keymaps, children = {}, temp_decorations = {}, tooltip_data = tooltip_data}
   util.set_augroup("DivPosition", string.format([[
     autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_position(%d)
     autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_position(%d)
@@ -348,15 +348,34 @@ local div_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
 
 vim.api.nvim_command("highlight htmlDivHighlight ctermbg=153 ctermfg=0")
 
-function Div:buf_render(buf)
+function Div:buf_get_root(buf)
   local bufdata = self.bufs[buf]
-  local text, hls
+  local root, path
   if bufdata.tooltip_data then
-    local _, tt_div = self:div_from_path(bufdata.tooltip_data.path)
-    text, hls = tt_div:render()
+    local _, _root = self:div_from_path(bufdata.tooltip_data.path)
+    root = _root
+    path = bufdata.tooltip_data.subpath
   else
-    text, hls = self:render()
+    root = self
+    path = self.bufs[buf].path
   end
+  return root, path
+end
+
+function Div:buf_render(buf)
+  self:buf_clear_tooltips(buf)
+  local bufdata = self.bufs[buf]
+
+  local root, _ = self:buf_get_root(buf)
+
+  if bufdata.temp_decorations.hovers then
+    for _, hover_path in pairs(bufdata.temp_decorations.hovers) do
+      local _, hover_div = self:div_from_path(hover_path)
+      hover_div.hlgroup_override = "htmlDivHighlight"
+    end
+  end
+
+  local text, hls = root:render()
   local lines = vim.split(text, "\n")
 
   vim.api.nvim_buf_set_option(buf, 'modifiable', true)
@@ -385,6 +404,47 @@ function Div:buf_render(buf)
       {end_pos[1], end_pos[2] + 1}
     )
   end
+
+  if bufdata.temp_decorations.tooltips then
+    for _, tt_path in pairs(bufdata.temp_decorations.tooltips) do
+      local tt_parent_path = {unpack(tt_path)}
+      table.remove(tt_parent_path, 1)
+
+      local _, tt_div = self:div_from_path(tt_path)
+
+      local width, height = vim.lsp.util._make_floating_popup_size(
+        vim.split(tt_div:render(), "\n"),
+        {
+          max_width = 30,
+          max_height = 30,
+          border = "none"
+        })
+
+      local tooltip_buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
+      vim.api.nvim_buf_set_option(tooltip_buf, "modifiable", false)
+
+      self:buf_register(tooltip_buf, bufdata.keymaps, {parent = buf, path = tt_path})
+      bufdata.children[tooltip_buf] = true
+      self:buf_render(tooltip_buf)
+
+      local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), vim.split(root:render(), "\n"))
+
+      local win_options = {
+        relative = "win",
+        style = "minimal",
+        width = width,
+        height = height,
+        border = "none",
+        bufpos = bufpos
+      }
+
+      local tooltip_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
+      self.bufs[tooltip_buf].win = tooltip_win
+    end
+  end
+
+  bufdata.temp_decorations = {}
 end
 
 function Div:buf_update_position(buf)
@@ -408,67 +468,34 @@ end
 
 function Div:buf_hover(buf)
   local bufdata = self.bufs[buf]
-  local root, path
-  if bufdata.tooltip_data then
-    local _, _root = self:div_from_path(bufdata.tooltip_data.path)
-    root = _root
-    path = bufdata.tooltip_data.subpath
-  else
-    root = self
-    path = self.bufs[buf].path
+  local root, path = self:buf_get_root(buf)
+
+  -- make sure this path is relative to the true root
+  local function to_true_path(root_path)
+    if bufdata.tooltip_data then
+      table.remove(root_path)
+      vim.list_extend(root_path, bufdata.tooltip_data.path)
+    end
   end
 
   local div_stack, _ = root:div_from_path(path)
-  local hover_div = get_parent_div(div_stack, function (div) return div.highlightable end)
+  local hover_div, hover_div_stack = get_parent_div(div_stack, function (div) return div.highlightable end)
   if hover_div then
-    hover_div.hlgroup_override = "htmlDivHighlight"
+    local hover_div_path = div_stack_to_path(hover_div_stack)
+    to_true_path(hover_div_path)
+    bufdata.temp_decorations.hovers = {hover_div_path}
   end
 
-  self:buf_clear_tooltips(buf)
   local tt_parent_div, tt_parent_div_stack = get_parent_div(div_stack, function (div)
     return div.divs.tt
   end)
 
   if tt_parent_div then
-    local tt_div = tt_parent_div.divs.tt
     local tooltip_parent_path = div_stack_to_path(tt_parent_div_stack)
     local tooltip_path = {unpack(tooltip_parent_path)}
-    table.insert(tooltip_path, 1, {idx = "tt", name = tt_div.name})
-
-    if bufdata.tooltip_data then
-      -- make sure this path is relative to the true root
-      table.remove(tooltip_path)
-      vim.list_extend(tooltip_path, bufdata.tooltip_data.path)
-    end
-
-    local width, height = vim.lsp.util._make_floating_popup_size(
-      vim.split(tt_div:render(), "\n"),
-      {
-        max_width = 30,
-        max_height = 30,
-        border = "none"
-      })
-
-    local tooltip_buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
-
-    self:buf_register(tooltip_buf, bufdata.keymaps, {parent = buf, path = tooltip_path})
-    bufdata.children[tooltip_buf] = true
-    self:buf_render(tooltip_buf)
-
-    local bufpos = raw_pos_to_pos(root:pos_from_path(tooltip_parent_path), vim.split(root:render(), "\n"))
-
-    local win_options = {
-      relative = "win",
-      style = "minimal",
-      width = width,
-      height = height,
-      border = "none",
-      bufpos = bufpos
-    }
-
-    local tooltip_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
-    self.bufs[tooltip_buf].win = tooltip_win
+    table.insert(tooltip_path, 1, {idx = "tt", name = tt_parent_div.divs.tt.name})
+    to_true_path(tooltip_path)
+    bufdata.temp_decorations.tooltips = {tooltip_path}
   end
 
   self:buf_render(buf)
