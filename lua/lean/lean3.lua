@@ -136,6 +136,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
         new_div.tags.event.click = function(this_tick)
           return select_div.tags.event.change(this_tick, child.a.value)
         end
+        new_div.highlightable = true
         this_div:insert_new_div(new_div)
         if child_i ~= #children then this_div:insert_div({}, "\n", "select-separator") end
 
@@ -242,7 +243,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
           end
         end
         local select_menu_div = div:insert_div({}, current_text .. "\n", "current-select")
-        select_menu_div.tooltip = select_children_div
+        select_menu_div:add_tooltip(select_children_div)
       else
         div:insert_new_div(parse_children(children))
       end
