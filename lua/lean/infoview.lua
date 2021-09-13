@@ -282,6 +282,8 @@ function Pin:new(paused, use_widget)
     new_pin:set_loading(false)
 
     new_pin.ticker:release()
+
+    return true
   end
 
 
