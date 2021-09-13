@@ -357,6 +357,7 @@ function Div:buf_get_root(buf)
 end
 
 function Div:buf_render(buf)
+  vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
   self:buf_clear_tooltips(buf)
   local bufdata = self.bufs[buf]
 
@@ -561,10 +562,17 @@ function Div:buf_goto_path(buf, path)
   if self.name ~= inc_path[1].name then restore_orig() return false end
 
   local prev_pos
+  local function go_to()
+    local bufpos = raw_pos_to_pos(prev_pos, vim.split(root:render(), "\n"))
+    bufpos[1] = bufpos[1] + 1
+    vim.api.nvim_win_set_cursor(0, bufpos)
+    self:buf_update_position(buf)
+  end
   while #path > 0 do
     local this_branch = table.remove(path)
     table.insert(inc_path, 1, this_branch)
     if this_branch.idx == "tt" then
+      go_to()
       buf = self:buf_enter_tooltip(buf)
       root = self:buf_get_root(buf)
       inc_path = {this_branch}
@@ -572,15 +580,10 @@ function Div:buf_goto_path(buf, path)
     else
       local new_pos = root:pos_from_path(inc_path)
       if not new_pos then restore_orig() return false end
-      if not vim.deep_equal(prev_pos, new_pos) then
-        local bufpos = raw_pos_to_pos(new_pos, vim.split(root:render(), "\n"))
-        bufpos[1] = bufpos[1] + 1
-        vim.api.nvim_win_set_cursor(0, bufpos)
-        self:buf_update_position(buf)
-      end
       prev_pos = new_pos
     end
   end
+  go_to()
 
   return true
 end
