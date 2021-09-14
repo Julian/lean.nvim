@@ -544,6 +544,7 @@ end
 local plain_goal = a.wrap(leanlsp.plain_goal, 3)
 local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 
+local wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) end, 2)
 --- async function to update this pin's contents given the current position.
 function Pin:__update(tick, delay, lean3_opts)
   delay = delay or 100
@@ -551,8 +552,7 @@ function Pin:__update(tick, delay, lean3_opts)
   self.data_div.divs = {}
 
   if delay > 0 then
-    util.wait_timer(vim.loop.new_timer(), delay or 100, 0)
-    a.util.scheduler()
+    wait_timer(delay)
   end
 
   local params = self.position_params
