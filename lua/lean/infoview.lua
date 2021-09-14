@@ -322,15 +322,15 @@ end
 local plain_goal = a.wrap(leanlsp.plain_goal, 3)
 local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 
-local wait_timer = a.wrap(vim.loop.timer_start, 4)
+local wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) end, 2)
 
 --- async function to update this pin's contents given the current position.
 function Pin:_update(delay)
-  self.tick = (self.tick + 1) % 1000
+  self.tick = self.tick + 1
   local this_tick = self.tick
+  --print(this_tick)
 
-  wait_timer(vim.loop.new_timer(), delay or 100, 0)
-  a.util.scheduler()
+  wait_timer(delay or 100)
   if self.tick ~= this_tick then return end
 
   local params = self.position_params
