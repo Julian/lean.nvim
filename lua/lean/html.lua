@@ -16,6 +16,7 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field bufs table
 ---@field id number
 ---@field highlightable boolean
+---@field event_disable boolean
 local Div = {next_id = 1}
 Div.__index = Div
 
@@ -92,7 +93,7 @@ function Div:render()
     end
 
     if hlgroup then
-      table.insert(hls, {start = 1, ["end"] = #text, hlgroup = hlgroup})
+      table.insert(hls, {start = 1, ["end"] = #text, hlgroup = hlgroup, override = self.hlgroup_override})
     end
   end
   self.hlgroup_override = nil
@@ -270,7 +271,7 @@ function Div:event(path, event_name, ...)
   if not div_stack then return end
 
   local event_div, event_div_stack = get_parent_div(div_stack, is_event_div_check(event_name))
-  if not event_div then return end
+  if not event_div or event_div.event_disable then return end
 
   -- find parent listener
   local listener_div, listener_div_stack = get_parent_div(event_div_stack, function(div)
@@ -287,11 +288,13 @@ function Div:event(path, event_name, ...)
 
   local args = {...}
 
-  if listener_div.call_event then
-    return listener_div.call_event(event_path, event_name, event_div.tags.event[event_name], args)
-  else
-    return event_div.tags.event[event_name](unpack(args))
-  end
+  a.void(function()
+    if listener_div.call_event then
+      return listener_div.call_event(event_path, event_name, event_div.tags.event[event_name], args)
+    else
+      return event_div.tags.event[event_name](unpack(args))
+    end
+  end)()
 end
 
 function Div:find(check)
@@ -356,10 +359,12 @@ function Div:buf_get_root(buf)
   return root, path
 end
 
-function Div:buf_render(buf)
+function Div:buf_render(buf, prevent_restore)
+  local bufdata = self.bufs[buf]
+  local restore_path = not prevent_restore and not bufdata.tooltip_data and bufdata.path and {unpack(bufdata.path)}
+
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
   self:buf_clear_tooltips(buf)
-  local bufdata = self.bufs[buf]
 
   local root, _ = self:buf_get_root(buf)
 
@@ -385,7 +390,12 @@ function Div:buf_render(buf)
   table.sort(hls, function(hl1, hl2)
     local range1 = (hl1["end"] - hl1.start)
     local range2 = (hl2["end"] - hl2.start)
-    return range1 > range2
+    if range1 > range2 then
+      return true
+    elseif range1 == range2 then
+      return hl2.override
+    end
+    return false
   end)
 
   for _, hl in ipairs(hls) do
@@ -446,6 +456,8 @@ function Div:buf_render(buf)
   end
 
   bufdata.temp_decorations = {}
+
+  if restore_path then self:buf_goto_path(buf, restore_path) end
 end
 
 function Div:buf_enter_tooltip(buf)
@@ -469,6 +481,7 @@ function Div:buf_update_position(buf, raw)
     table.remove(this_path)
     vim.list_extend(this_path, bufdata.tooltip_data.path)
     self.bufs[buf].path = this_path
+    self:buf_get_root_buf(buf, function(_, parent_bufdata) parent_bufdata.path = this_path end)
   else
     self.bufs[buf].path = self:path_from_pos(raw_pos)
   end
@@ -510,7 +523,7 @@ function Div:buf_hover(buf)
     bufdata.temp_decorations.tooltips = {tooltip_path}
   end
 
-  self:buf_render(buf)
+  self:buf_render(buf, true)
 end
 
 function Div:buf_clear_tooltips(buf)
@@ -525,11 +538,12 @@ function Div:buf_clear_tooltips(buf)
   end
 end
 
-function Div:buf_get_root_buf(buf)
+function Div:buf_get_root_buf(buf, fn)
   local bufdata = self.bufs[buf]
   while bufdata.tooltip_data do
     buf = bufdata.tooltip_data.parent
     bufdata = self.bufs[buf]
+    if fn then fn(buf, bufdata) end
   end
   return buf
 end
@@ -538,16 +552,12 @@ function Div:buf_event(buf, event, ...)
   local args = {...}
   self:buf_update_position(buf, true)
   local bufdata = self.bufs[buf]
-  local path_before = {unpack(bufdata.path)}
-  local root_buf = self:buf_get_root_buf(buf)
-  a.void(function()
-    if self:event(bufdata.path, event, unpack(args)) then
-      self:buf_goto_path(root_buf, path_before)
-    end
-  end)()
+  self:event(bufdata.path, event, unpack(args))
 end
 
 function Div:buf_goto_path(buf, path)
+  if vim.api.nvim_get_current_buf() ~= buf then return end
+
   self:buf_clear_tooltips(buf)
   local orig_window = vim.api.nvim_get_current_win()
   local orig_bufpos = vim.api.nvim_win_get_cursor(0)

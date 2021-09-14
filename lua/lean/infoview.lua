@@ -497,20 +497,27 @@ end
 
 function Pin:set_loading(loading)
   self.div.divs = {}
+  self.div:insert_new_div(self.data_div)
   if loading then
     self.loading = true
 
-    local loading_text = self.data_div:render()
-    if #loading_text == 0 and options.show_loading then loading_text = "loading..." end
-    self.div:insert_div({}, loading_text, "loading-text", "LeanInfoLoading")
-    self:render_parents()
+    self.data_div:filter(function(div)
+      div.event_disable = true
+      div.hlgroup = "LeanInfoLoading"
+    end)
+    self.data_div = html.Div:new({pin = self}, "", "pin-data", nil)
   elseif not loading then
     self.loading = false
 
-    self.div:insert_new_div(self.data_div)
-
-    self:render_parents()
+    self.data_div:filter(function(div)
+      div.event_disable = false
+      if div.hlgroup == "LeanInfoLoading" then
+        div.hlgroup = nil
+      end
+    end)
   end
+
+  self:render_parents()
 end
 
 Pin.update = a.void(function(self, force, delay, _, lean3_opts)
