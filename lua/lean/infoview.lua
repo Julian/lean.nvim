@@ -146,7 +146,6 @@ function Info:new()
     pins = {},
     div = html.Div:new({info = self}, "", "info")
   }
-  new_info.pin:add_parent_info(new_info)
   table.insert(infoview._info_by_id, new_info)
 
   self.__index = self
@@ -155,6 +154,10 @@ function Info:new()
   vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
   vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
   new_info.div:buf_register(new_info.bufnr, options.mappings)
+
+  new_info.pin:add_parent_info(new_info)
+
+  new_info:render()
 
   return new_info
 end
