@@ -11,6 +11,7 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field name string
 ---@field hlgroup string
 ---@field hlgroup_override string
+---@field temp_hlgroup string
 ---@field divs Div[]
 ---@field div_stack Div[]
 ---@field bufs table
@@ -86,7 +87,7 @@ function Div:render()
     vim.list_extend(hls, new_hls)
     text = text .. new_text
   end
-  local hlgroup = self.hlgroup_override or self.hlgroup
+  local hlgroup = self.hlgroup_override or self.temp_hlgroup or self.hlgroup
   if hlgroup then
     if type(hlgroup) == "function" then
       hlgroup = hlgroup(self)
@@ -306,16 +307,6 @@ function Div:find(check)
   end
 end
 
-function Div:find_filter(check, fn)
-  local found = self:find(check)
-  while found do
-    local abort = fn(found)
-    if abort then return false end
-    found = self:find(check)
-  end
-  return true
-end
-
 function Div:filter(fn)
   fn(self)
 
@@ -463,9 +454,14 @@ end
 function Div:buf_enter_tooltip(buf)
   local bufdata = self.bufs[buf]
   -- TODO choose the one with the longest matching path
+  local children = {}
   for child_buf, _ in pairs(bufdata.children) do
-    vim.api.nvim_set_current_win(self.bufs[child_buf].win)
-    return child_buf
+    table.insert(children, child_buf)
+  end
+
+  if #children > 0 then
+    vim.api.nvim_set_current_win(self.bufs[children[1]].win)
+    return children[1]
   end
 end
 

@@ -29,6 +29,7 @@ local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, 
       ["I"] = [[mouse_enter]],
       ["i"] = [[mouse_leave]],
       ["u"] = [[undo]],
+      ["U"] = [[clear_undo]],
       ["C"] = [[clear_all]]
     } } }
 
@@ -341,14 +342,24 @@ function Pin:new(paused, use_widget)
     return success, true
   end
 
+  new_pin.div.tags.event.clear_undo = function(_)
+    new_pin.undo_list = {}
+    return true, true
+  end
+
   new_pin.div.tags.event.clear_all = function(tick)
-    new_pin.data_div:find_filter(function(div)
-        return div.tags.event and div.tags.event.clear
-      end,
-      function(div)
-        div.tags.event.clear(tick)
+    while true do
+      local found_div = new_pin.data_div:find(function(div)
+          return div.tags.event and div.tags.event.clear
+        end)
+      if found_div then
+        local result = found_div.tags.event.clear(tick)
         if not tick:check() then return true end
-      end)
+        if not result then return false end
+      else
+        break
+      end
+    end
     return true
   end
 
@@ -474,7 +485,7 @@ function Pin:pause()
     subdiv:filter(function(div) div.tags = {} end)
   end
 
-  self:update()
+  self:render_parents()
 end
 
 function Pin:clear_undo_list()
@@ -503,16 +514,15 @@ function Pin:set_loading(loading)
 
     self.data_div:filter(function(div)
       div.event_disable = true
-      div.hlgroup = "LeanInfoLoading"
+      div.temp_hlgroup = "LeanInfoLoading"
     end)
-    self.data_div = html.Div:new({pin = self}, "", "pin-data", nil)
   elseif not loading then
     self.loading = false
 
     self.data_div:filter(function(div)
       div.event_disable = false
-      if div.hlgroup == "LeanInfoLoading" then
-        div.hlgroup = nil
+      if div.temp_hlgroup == "LeanInfoLoading" then
+        div.temp_hlgroup = nil
       end
     end)
   end
@@ -521,13 +531,14 @@ function Pin:set_loading(loading)
 end
 
 Pin.update = a.void(function(self, force, delay, _, lean3_opts)
+  if not force and self.paused then return end
+
   local tick = self.ticker:lock()
   if not tick then return end
 
   self:set_loading(true)
 
   self:_update(force, delay, tick, lean3_opts)
-
   if not tick:check() then return end
 
   self:set_loading(false)
@@ -549,7 +560,7 @@ local wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeo
 function Pin:__update(tick, delay, lean3_opts)
   delay = delay or 100
 
-  self.data_div.divs = {}
+  self.data_div = html.Div:new({pin = self}, "", "pin-data", nil)
 
   if delay > 0 then
     wait_timer(delay)
