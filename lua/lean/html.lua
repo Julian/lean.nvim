@@ -434,6 +434,7 @@ function Div:buf_render(buf, prevent_restore)
 
       local win_options = {
         relative = "win",
+        win = bufdata.last_win,
         style = "minimal",
         width = width,
         height = height,
@@ -442,7 +443,7 @@ function Div:buf_render(buf, prevent_restore)
       }
 
       local tooltip_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
-      self.bufs[tooltip_buf].win = tooltip_win
+      self.bufs[tooltip_buf].tooltip_data.win = tooltip_win
     end
   end
 
@@ -460,12 +461,12 @@ function Div:buf_enter_tooltip(buf)
   end
 
   if #children > 0 then
-    vim.api.nvim_set_current_win(self.bufs[children[1]].win)
+    vim.api.nvim_set_current_win(self.bufs[children[1]].tooltip_data.win)
     return children[1]
   end
 end
 
-function Div:buf_update_position(buf, raw)
+function Div:buf_update_position(buf)
   local raw_pos = pos_to_raw_pos(vim.api.nvim_win_get_cursor(0), vim.api.nvim_buf_get_lines(buf, 0, -1, true))
   local bufdata = self.bufs[buf]
   if bufdata.tooltip_data then
@@ -481,8 +482,9 @@ function Div:buf_update_position(buf, raw)
   else
     self.bufs[buf].path = self:path_from_pos(raw_pos)
   end
+  bufdata.last_win = vim.api.nvim_get_current_win()
 
-  if not raw then
+  if not self.hover_disable then
     self:buf_hover(buf)
   end
 
@@ -530,7 +532,15 @@ function Div:buf_clear_tooltips(buf)
     local child_bufdata = self.bufs[child_buf]
     self.bufs[child_buf] = nil
     bufdata.children[child_buf] = nil
-    if vim.api.nvim_win_is_valid(child_bufdata.win) then vim.api.nvim_win_close(child_bufdata.win, false) end
+    if vim.api.nvim_win_is_valid(child_bufdata.tooltip_data.win) then
+      if vim.api.nvim_get_current_win() == child_bufdata.tooltip_data.win and
+        bufdata.last_win and vim.api.nvim_win_is_valid(bufdata.last_win) then
+        self.hover_disable = true
+        vim.api.nvim_set_current_win(bufdata.last_win)
+        self.hover_disable = false
+      end
+      vim.api.nvim_win_close(child_bufdata.tooltip_data.win, false)
+    end
   end
 end
 
@@ -546,7 +556,9 @@ end
 
 function Div:buf_event(buf, event, ...)
   local args = {...}
-  self:buf_update_position(buf, true)
+  self.hover_disable = true
+  self:buf_update_position(buf)
+  self.hover_disable = false
   local bufdata = self.bufs[buf]
   self:event(bufdata.path, event, unpack(args))
 end
@@ -580,6 +592,7 @@ function Div:buf_goto_path(buf, path)
     if this_branch.idx == "tt" then
       go_to()
       buf = self:buf_enter_tooltip(buf)
+      if not buf then return false end
       root = self:buf_get_root(buf)
       inc_path = {this_branch}
       prev_pos = nil
