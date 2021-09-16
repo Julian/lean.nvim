@@ -264,6 +264,8 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
   end
 
   params = vim.deepcopy(params)
+  local state_div
+
   if use_widget then
     local err, result
     if not (opts and opts.widget_event) then
@@ -292,15 +294,19 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
       end
 
       widget = result.widget
-      parent_div:insert_new_div(parse_widget(result.widget.html))
+      state_div = parse_widget(result.widget.html)
     end
-  else
+  end
+
+  if not state_div then
     pin:clear_undo_list()
     local _, result = util.a_request(bufnr, "$/lean/plainGoal", params)
     if result and type(result) == "table" then
-      parent_div:insert_new_div(components.goal(result))
+      state_div = components.goal(result)
     end
   end
+
+  if state_div then parent_div:insert_new_div(state_div) end
   parent_div:insert_new_div(components.diagnostics(bufnr, params.position.line))
 
   pin.data_div:insert_new_div(parent_div)
