@@ -510,16 +510,21 @@ function Pin:render_parents()
 end
 
 function Pin:set_loading(loading)
-  self.div.divs = {}
-  self.div:insert_new_div(self.data_div)
-  if loading then
+  if loading and not self.loading then
+    self.div.divs = {}
+    self.div:insert_new_div(self.data_div)
+
     self.loading = true
 
     self.data_div:filter(function(div)
       div.event_disable = true
+      div.highlightable = false
       div.temp_hlgroup = "LeanInfoLoading"
     end)
   elseif not loading then
+    self.div.divs = {}
+    self.div:insert_new_div(self.data_div)
+
     self.loading = false
 
     self.data_div:filter(function(div)

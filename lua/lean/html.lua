@@ -352,10 +352,16 @@ end
 
 function Div:buf_render(buf, prevent_restore)
   local bufdata = self.bufs[buf]
-  local restore_path = not prevent_restore and not bufdata.tooltip_data and bufdata.path and {unpack(bufdata.path)}
+  local restore_path
 
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
-  self:buf_clear_tooltips(buf)
+
+  if not bufdata.tooltip_data then
+    self.disable_pos_update = true
+    self:buf_clear_tooltips(buf)
+    self.disable_pos_update = false
+    restore_path = not prevent_restore and bufdata.path and {unpack(bufdata.path)}
+  end
 
   local root, _ = self:buf_get_root(buf)
 
@@ -469,6 +475,7 @@ function Div:buf_enter_tooltip(buf)
 end
 
 function Div:buf_update_position(buf)
+  if self.disable_pos_update then return end
   local raw_pos = pos_to_raw_pos(vim.api.nvim_win_get_cursor(0), vim.api.nvim_buf_get_lines(buf, 0, -1, true))
   local bufdata = self.bufs[buf]
   if bufdata.tooltip_data then
@@ -486,7 +493,7 @@ function Div:buf_update_position(buf)
   end
   bufdata.last_win = vim.api.nvim_get_current_win()
 
-  if not self.hover_disable then
+  if not self.disable_hover then
     self:buf_hover(buf)
   end
 
@@ -537,9 +544,9 @@ function Div:buf_clear_tooltips(buf)
     if vim.api.nvim_win_is_valid(child_bufdata.tooltip_data.win) then
       if vim.api.nvim_get_current_win() == child_bufdata.tooltip_data.win and
         bufdata.last_win and vim.api.nvim_win_is_valid(bufdata.last_win) then
-        self.hover_disable = true
+        self.disable_hover = true
         vim.api.nvim_set_current_win(bufdata.last_win)
-        self.hover_disable = false
+        self.disable_hover = false
       end
       vim.api.nvim_win_close(child_bufdata.tooltip_data.win, false)
     end
@@ -558,9 +565,9 @@ end
 
 function Div:buf_event(buf, event, ...)
   local args = {...}
-  self.hover_disable = true
+  self.disable_hover = true
   self:buf_update_position(buf)
-  self.hover_disable = false
+  self.disable_hover = false
   local bufdata = self.bufs[buf]
   self:event(bufdata.path, event, unpack(args))
 end
