@@ -462,6 +462,8 @@ function Div:buf_enter_tooltip(buf)
 
   if #children > 0 then
     vim.api.nvim_set_current_win(self.bufs[children[1]].tooltip_data.win)
+    -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
+    vim.api.nvim_command("redraw")
     return children[1]
   end
 end

@@ -249,10 +249,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
       end
 
       if tooltip then
-        div:start_div({element = result, event = {}}, "→[", "tooltip", "leanInfoTooltip")
-        div:insert_new_div(parse_widget(tooltip))
-        div:insert_div({element = result}, "]", "tooltip-close")
-        div:end_div()
+        div:insert_new_tooltip(parse_widget(tooltip))
       end
       -- (from element_div)
       div:end_div()
