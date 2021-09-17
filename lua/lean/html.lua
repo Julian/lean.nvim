@@ -317,8 +317,8 @@ end
 function Div:buf_register(buf, keymaps, tooltip_data)
   self.bufs[buf] = {keymaps = keymaps, children = {}, temp_decorations = {}, tooltip_data = tooltip_data}
   util.set_augroup("DivPosition", string.format([[
-    autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_position(%d)
-    autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_position(%d)
+    autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor(%d)
+    autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor(%d)
   ]], buf, self.id, buf, buf, self.id, buf), buf)
 
   local mappings = {n = {}}
@@ -357,7 +357,7 @@ function Div:buf_render(buf, prevent_restore)
 
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
 
-  self:buf_clear_tooltips(buf)
+  self:buf_reset(buf)
 
   local root, _ = self:buf_get_root(buf)
 
@@ -451,7 +451,11 @@ function Div:buf_render(buf, prevent_restore)
 
   bufdata.temp_decorations = {}
 
-  if restore_path then self:buf_goto_path(buf, restore_path) end
+  if vim.api.nvim_get_current_buf() == buf then
+    self:buf_update_position(buf)
+
+    if restore_path then self:buf_goto_path(buf, restore_path) end
+  end
 end
 
 function Div:buf_enter_tooltip(buf)
@@ -467,6 +471,13 @@ function Div:buf_enter_tooltip(buf)
     -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
     vim.api.nvim_command("redraw")
     return children[1]
+  end
+end
+
+function Div:buf_update_cursor(buf)
+  self:buf_update_position(buf)
+  if not self.disable_hover then
+    self:buf_hover(buf)
   end
 end
 
@@ -487,10 +498,6 @@ function Div:buf_update_position(buf)
     self.bufs[buf].path = self:path_from_pos(raw_pos)
   end
   bufdata.last_win = vim.api.nvim_get_current_win()
-
-  if not self.disable_hover then
-    self:buf_hover(buf)
-  end
 end
 
 function Div:buf_hover(buf)
@@ -528,16 +535,15 @@ function Div:buf_hover(buf)
   self:buf_render(buf, true)
 end
 
-function Div:buf_clear_tooltips(buf)
+function Div:buf_reset(buf)
   local bufdata = self.bufs[buf]
+  bufdata.path = nil
   for child_buf, _ in pairs(bufdata.children) do
     local child_bufdata = self.bufs[child_buf]
-    -- paths may be invalid at this point, so ignore
-    child_bufdata.path = nil
     child_bufdata.tooltip_data.path = nil
     child_bufdata.tooltip_data.subpath = nil
 
-    self:buf_clear_tooltips(child_buf)
+    self:buf_reset(child_buf)
 
     self.bufs[child_buf] = nil
     bufdata.children[child_buf] = nil
@@ -570,9 +576,7 @@ function Div:buf_event(buf, event, ...)
 end
 
 function Div:buf_goto_path(buf, path)
-  if vim.api.nvim_get_current_buf() ~= buf then return end
-
-  self:buf_clear_tooltips(buf)
+  self:buf_reset(buf)
   local orig_window = vim.api.nvim_get_current_win()
   local orig_bufpos = vim.api.nvim_win_get_cursor(0)
   local function restore_orig()
@@ -590,7 +594,7 @@ function Div:buf_goto_path(buf, path)
     local bufpos = raw_pos_to_pos(prev_pos, vim.split(root:render(), "\n"))
     bufpos[1] = bufpos[1] + 1
     vim.api.nvim_win_set_cursor(0, bufpos)
-    self:buf_update_position(buf)
+    self:buf_update_cursor(buf)
   end
   while #path > 0 do
     local this_branch = table.remove(path)
