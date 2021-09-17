@@ -517,9 +517,7 @@ function Pin:set_loading(loading)
     self.loading = true
 
     self.data_div:filter(function(div)
-      div.event_disable = true
-      div.highlightable = false
-      div.temp_hlgroup = "LeanInfoLoading"
+      div.disabled = true
     end)
   elseif not loading then
     self.div.divs = {}
@@ -528,10 +526,7 @@ function Pin:set_loading(loading)
     self.loading = false
 
     self.data_div:filter(function(div)
-      div.event_disable = false
-      if div.temp_hlgroup == "LeanInfoLoading" then
-        div.temp_hlgroup = nil
-      end
+      div.disabled = false
     end)
   end
 

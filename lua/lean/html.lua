@@ -11,13 +11,12 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field name string
 ---@field hlgroup string
 ---@field hlgroup_override string
----@field temp_hlgroup string
 ---@field divs Div[]
 ---@field div_stack Div[]
 ---@field bufs table
 ---@field id number
 ---@field highlightable boolean
----@field event_disable boolean
+---@field disabled boolean
 local Div = {next_id = 1}
 Div.__index = Div
 
@@ -87,7 +86,7 @@ function Div:render()
     vim.list_extend(hls, new_hls)
     text = text .. new_text
   end
-  local hlgroup = self.hlgroup_override or self.temp_hlgroup or self.hlgroup
+  local hlgroup = self.disabled and "htmlDivLoading" or self.hlgroup_override or self.hlgroup
   if hlgroup then
     if type(hlgroup) == "function" then
       hlgroup = hlgroup(self)
@@ -272,7 +271,7 @@ function Div:event(path, event_name, ...)
   if not div_stack then return end
 
   local event_div, event_div_stack = get_parent_div(div_stack, is_event_div_check(event_name))
-  if not event_div or event_div.event_disable then return end
+  if not event_div or event_div.disabled then return end
 
   -- find parent listener
   local listener_div, listener_div_stack = get_parent_div(event_div_stack, function(div)
@@ -335,6 +334,8 @@ end
 local div_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
 
 vim.api.nvim_command("highlight htmlDivHighlight ctermbg=153 ctermfg=0")
+vim.api.nvim_command("highlight htmlDivLoading ctermfg=8")
+
 
 function Div:buf_get_root(buf)
   local bufdata = self.bufs[buf]
@@ -356,9 +357,7 @@ function Div:buf_render(buf, prevent_restore)
 
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
 
-  self.disable_pos_update = true
   self:buf_clear_tooltips(buf)
-  self.disable_pos_update = false
 
   local root, _ = self:buf_get_root(buf)
 
@@ -472,10 +471,9 @@ function Div:buf_enter_tooltip(buf)
 end
 
 function Div:buf_update_position(buf)
-  if self.disable_pos_update then return end
   local raw_pos = pos_to_raw_pos(vim.api.nvim_win_get_cursor(0), vim.api.nvim_buf_get_lines(buf, 0, -1, true))
   local bufdata = self.bufs[buf]
-  if bufdata.tooltip_data then
+  if bufdata.tooltip_data and bufdata.tooltip_data.path then
     local _, tt_div = self:div_from_path(bufdata.tooltip_data.path)
 
     local this_path = tt_div:path_from_pos(raw_pos)
@@ -493,8 +491,6 @@ function Div:buf_update_position(buf)
   if not self.disable_hover then
     self:buf_hover(buf)
   end
-
-  self.bufs[buf].last_path = self.bufs[buf].path
 end
 
 function Div:buf_hover(buf)
@@ -510,7 +506,9 @@ function Div:buf_hover(buf)
   end
 
   local div_stack, _ = root:div_from_path(path)
-  local hover_div, hover_div_stack = get_parent_div(div_stack, function (div) return div.highlightable end)
+  local hover_div, hover_div_stack = get_parent_div(div_stack, function (div)
+    return div.highlightable
+  end)
   if hover_div then
     local hover_div_path = div_stack_to_path(hover_div_stack)
     to_true_path(hover_div_path)
@@ -533,9 +531,14 @@ end
 function Div:buf_clear_tooltips(buf)
   local bufdata = self.bufs[buf]
   for child_buf, _ in pairs(bufdata.children) do
+    local child_bufdata = self.bufs[child_buf]
+    -- paths may be invalid at this point, so ignore
+    child_bufdata.path = nil
+    child_bufdata.tooltip_data.path = nil
+    child_bufdata.tooltip_data.subpath = nil
+
     self:buf_clear_tooltips(child_buf)
 
-    local child_bufdata = self.bufs[child_buf]
     self.bufs[child_buf] = nil
     bufdata.children[child_buf] = nil
     if vim.api.nvim_win_is_valid(child_bufdata.tooltip_data.win) then
@@ -562,9 +565,6 @@ end
 
 function Div:buf_event(buf, event, ...)
   local args = {...}
-  self.disable_hover = true
-  self:buf_update_position(buf)
-  self.disable_hover = false
   local bufdata = self.bufs[buf]
   self:event(bufdata.path, event, unpack(args))
 end
