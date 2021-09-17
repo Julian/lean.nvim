@@ -352,16 +352,13 @@ end
 
 function Div:buf_render(buf, prevent_restore)
   local bufdata = self.bufs[buf]
-  local restore_path
+  local restore_path = not prevent_restore and not bufdata.tooltip_data and bufdata.path and {unpack(bufdata.path)}
 
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
 
-  if not bufdata.tooltip_data then
-    self.disable_pos_update = true
-    self:buf_clear_tooltips(buf)
-    self.disable_pos_update = false
-    restore_path = not prevent_restore and bufdata.path and {unpack(bufdata.path)}
-  end
+  self.disable_pos_update = true
+  self:buf_clear_tooltips(buf)
+  self.disable_pos_update = false
 
   local root, _ = self:buf_get_root(buf)
 
