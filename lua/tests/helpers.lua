@@ -93,7 +93,7 @@ end
 --- Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
   local succeeded, _ = vim.wait(5000, function()
-    return not vim.tbl_isempty(vim.lsp.diagnostic.get_line_diagnostics())
+    return not vim.tbl_isempty(vim.diagnostic.get(0, {lnum = vim.api.nvim_win_get_cursor(0)[1] - 1}))
   end)
   assert.message("Waited for line diagnostics but none came.").True(succeeded)
 end
