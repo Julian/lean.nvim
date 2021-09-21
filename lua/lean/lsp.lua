@@ -18,7 +18,7 @@ function lsp.enable(opts)
     ['$/lean/fileProgress'] = util.mk_handler(lsp.handlers.file_progress_handler);
     ['textDocument/publishDiagnostics'] = util.wrap_handler(
       require"vim.lsp.handlers"['textDocument/publishDiagnostics'],
-      util.mk_handler(lsp.handlers.diagnostics_handler));
+      lsp.handlers.diagnostics_handler);
   })
   require('lspconfig').leanls.setup(opts)
 end
