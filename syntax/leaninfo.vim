@@ -16,7 +16,7 @@ hi def link leanInfoGoalHyp Type
 hi def link leanInfoGoalVDash Operator
 hi def link leanInfoExpectedType Special
 
-hi def link leanInfoError DiagnosticError
-hi def link leanInfoWarning DiagnosticWarning
-hi def link leanInfoInfo DiagnosticInfo
+hi def link leanInfoError LspDiagnosticsDefaultError
+hi def link leanInfoWarning LspDiagnosticsDefaultWarning
+hi def link leanInfoInfo LspDiagnosticsDefaultInformation
 hi def link leanInfoComment Comment
