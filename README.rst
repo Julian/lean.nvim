@@ -43,13 +43,12 @@ required or recommended.
 Lean 3
 ^^^^^^
 
-For Lean 3 support, in addition to the instructions above, you should:
+For Lean 3 support, in addition to the instructions above, you should
+install ``lean-language-server``, which can be done via e.g.:
 
-    * Install ``lean-language-server``, which can be done via e.g.:
+.. code-block:: sh
 
-        .. code-block:: sh
-
-            $ npm install -g lean-language-server
+    $ npm install -g lean-language-server
 
 Lean 4
 ^^^^^^
@@ -81,7 +80,7 @@ aforementioned repository) are also welcome.
 Features
 --------
 
-* abbreviation (unicode character) insertion, can also provide a
+* Abbreviation (unicode character) insertion, can also provide a
   `nvim-compe <https://github.com/hrsh7th/nvim-compe>`_ or
   `snippets.nvim <https://github.com/norcalli/snippets.nvim>`_
   source.
@@ -92,30 +91,30 @@ Features
   configuration)
 
 
-    * ``<LocalLeader>i``: toggle infoview
+  * ``<LocalLeader>i``: toggle infoview
 
-    * ``<LocalLeader>p``: pause infoview
+  * ``<LocalLeader>p``: pause infoview
 
-    * ``<LocalLeader>x``: place pin
+  * ``<LocalLeader>x``: place pin
 
-    * ``<LocalLeader>c``: clear all current pins
+  * ``<LocalLeader>c``: clear all current pins
 
-    * ``<LocalLeader>s``: ``sorry`` insertion corresponding to the number of open goals
+  * ``<LocalLeader>s``: ``sorry`` insertion corresponding to the number of open goals
 
-    * ``<LocalLeader>t``: "try this:" suggestion replacement
+  * ``<LocalLeader>t``: "try this:" suggestion replacement
 
-    * ``<LocalLeader>3``: force a buffer into Lean 3 mode
+  * ``<LocalLeader>3``: force a buffer into Lean 3 mode
 
-    * ``<LocalLeader>\``: show what abbreviation would produce the symbol under the cursor
+  * ``<LocalLeader>\``: show what abbreviation would produce the symbol under the cursor
 
 * A basic infoview which can show persistent goal, term & tactic state
 
 * Hover (preview) commands:
 
-    * ``:LeanPlainGoal`` for showing goal state in a preview window
+  * ``:LeanPlainGoal`` for showing goal state in a preview window
 
-    * ``:LeanPlainTermGoal`` for showing term-mode type information
-      in a preview window
+  * ``:LeanPlainTermGoal`` for showing term-mode type information
+    in a preview window
 
 * `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
   definitions for Lean
@@ -213,9 +212,9 @@ above with:
 .. code-block:: vim
 
     lua <<EOF
-        require('lean').setup{
-            ...
-        }
+      require('lean').setup{
+          ...
+      }
     EOF
 
 Other Plugins
@@ -224,17 +223,17 @@ Other Plugins
 Particularly if you're also a VSCode user, there may be other plugins
 you're interested in. Below is a (hopelessly incomplete) list of a few:
 
-    * `nvim-lightbulb <https://github.com/kosayoda/nvim-lightbulb>`_ for
-      signalling when code actions are available
+* `nvim-lightbulb <https://github.com/kosayoda/nvim-lightbulb>`_ for
+  signalling when code actions are available
 
-    * `goto-preview <https://github.com/rmagatti/goto-preview>`_ for
-      peeking definitions (instead of jumping to them)
+* `goto-preview <https://github.com/rmagatti/goto-preview>`_ for
+  peeking definitions (instead of jumping to them)
 
-    * `lsp-status.nvim <https://github.com/nvim-lua/lsp-status.nvim>`_ for
-      showing LSP information in your status bar
+* `lsp-status.nvim <https://github.com/nvim-lua/lsp-status.nvim>`_ for
+  showing LSP information in your status bar
 
-    * `lsp-trouble <https://github.com/folke/lsp-trouble.nvim>`_ for
-      showing a grouped view of diagnostics to pair with the "infauxview"
+* `lsp-trouble <https://github.com/folke/lsp-trouble.nvim>`_ for
+  showing a grouped view of diagnostics to pair with the "infauxview"
 
 Contributing
 ------------
