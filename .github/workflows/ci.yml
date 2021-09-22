@@ -9,32 +9,31 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest]
+        nvim-version: [v0.5.0, nightly]
         lean-version:
           - "leanprover-community/lean:3.33.0"
     steps:
       - uses: actions/checkout@v2
-      - run: date +%F > todays-date
-      - name: Restore cache for today's nightly.
-        uses: actions/cache@v2
-        with:
-          path: |
-            _neovim
-          key: ${{ runner.os }}-x64-${{ hashFiles('todays-date') }}
+
+      - name: Install macos dependencies
+        run: |
+          brew update
+          brew install coreutils
+        if: runner.os == 'macOS'
 
       - name: Install elan
         run: |
             curl https://raw.githubusercontent.com/Kha/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain "${{ matrix.lean-version }}" -y
             echo "$HOME/.elan/bin/" >> $GITHUB_PATH
-        if: runner.os == 'Linux'
 
-      - name: Install neovim and elan
+      - name: Install neovim
         run: |
-          brew update
-          brew install elan
-          brew install --head neovim
-          elan toolchain install "${{ matrix.lean-version }}"
-          elan default "${{ matrix.lean-version }}"
-        if: runner.os == 'macOS'
+          neovim_dir=$HOME/neovim
+          mkdir $neovim_dir
+          if [ "`uname`" = Linux ]; then os=linux64; else os=macos; fi
+          curl -sL https://github.com/neovim/neovim/releases/download/${{matrix.nvim-version}}/nvim-$os.tar.gz \
+            | tar xzf - --strip-components=1 -C $neovim_dir
+          echo $neovim_dir/bin >> $GITHUB_PATH
 
       - name: Install the Lean LSP
         run: sudo npm install -g lean-language-server
@@ -48,12 +47,4 @@ jobs:
           git clone --depth 1 https://github.com/nvim-lua/plenary.nvim packpath/plenary.nvim
 
       - name: Run tests
-        run: |
-          curl -OL https://raw.githubusercontent.com/norcalli/bot-ci/master/scripts/github-actions-setup.sh
-          source github-actions-setup.sh nightly-x64
-          make test
-        if: runner.os == 'Linux'
-
-      - name: Run tests
         run: make test
-        if: runner.os == 'macOS'
