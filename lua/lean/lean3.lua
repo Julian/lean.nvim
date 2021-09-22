@@ -2,6 +2,7 @@ local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
 local dirname = require('lspconfig.util').path.dirname
 
 local util = require"lean._util"
+local lsp = require'lean.lsp'
 local components = require('lean.infoview.components')
 local subprocess_check_output = util.subprocess_check_output
 
@@ -70,9 +71,10 @@ end
 
 function lean3.lsp_enable(opts)
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
-    ['textDocument/publishDiagnostics'] = util.wrap_handler(
-      require"vim.lsp.handlers"['textDocument/publishDiagnostics'],
-      util.mk_handler(require"lean.lsp".handlers.diagnostics_handler))
+    ['textDocument/publishDiagnostics'] = function(...)
+      vim.lsp.handlers['textDocument/publishDiagnostics'](...)
+      util.mk_handler(lsp.handlers.diagnostics_handler)(...)
+    end;
   })
   require'lspconfig'.lean3ls.setup(opts)
 end

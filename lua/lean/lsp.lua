@@ -16,9 +16,10 @@ function lsp.enable(opts)
     ["$/lean/plainGoal"] = util.mk_handler(lsp.handlers.plain_goal_handler);
     ["$/lean/plainTermGoal"] = util.mk_handler(lsp.handlers.plain_term_goal_handler);
     ['$/lean/fileProgress'] = util.mk_handler(lsp.handlers.file_progress_handler);
-    ['textDocument/publishDiagnostics'] = util.wrap_handler(
-      require"vim.lsp.handlers"['textDocument/publishDiagnostics'],
-      lsp.handlers.diagnostics_handler);
+    ['textDocument/publishDiagnostics'] = function(...)
+      vim.lsp.handlers['textDocument/publishDiagnostics'](...)
+      util.mk_handler(lsp.handlers.diagnostics_handler)(...)
+    end;
   })
   require('lspconfig').leanls.setup(opts)
 end
