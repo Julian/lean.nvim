@@ -52,7 +52,7 @@ end
 --- Includes both the Lean 3 core libraries as well as project-specific
 --- directories (i.e. equivalent to what is reported by `lean --path`).
 function lean3.__current_search_paths()
-  local root = vim.lsp.buf.list_workspace_folders()[1]
+  local root = util.list_workspace_folders()[1]
   local result = subprocess_check_output{command = "lean", args = {"--path"}, cwd = root }
   return vim.fn.json_decode(table.concat(result, '')).path
 end
