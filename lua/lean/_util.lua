@@ -50,13 +50,6 @@ function M.subprocess_check_output(opts, timeout)
   ))
 end
 
-function M.wrap_handler(other_handler, handler)
-  return function(...)
-    other_handler(...)
-    handler(...)
-  end
-end
-
 -- from mfussenegger/nvim-lsp-compl@29a81f3
 function M.mk_handler(fn)
   return function(...)
