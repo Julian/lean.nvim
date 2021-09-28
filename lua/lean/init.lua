@@ -85,7 +85,7 @@ function lean.current_search_paths()
   if vim.opt.filetype:get() == "lean3" then
     paths = require'lean.lean3'.__current_search_paths()
   else
-    local root = vim.lsp.buf.list_workspace_folders()[1]
+    local root = util.list_workspace_folders()[1]
     -- print-paths emits a colon-separated list of .lean paths on the second line
     local all_paths = subprocess_check_output(
       { command = "leanpkg", args = {"print-paths"}, cwd = root }

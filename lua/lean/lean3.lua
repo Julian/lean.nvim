@@ -2,6 +2,7 @@ local find_project_root = require('lspconfig.util').root_pattern('leanpkg.toml')
 local dirname = require('lspconfig.util').path.dirname
 
 local util = require"lean._util"
+local lsp = require'lean.lsp'
 local components = require('lean.infoview.components')
 local subprocess_check_output = util.subprocess_check_output
 
@@ -52,7 +53,7 @@ end
 --- Includes both the Lean 3 core libraries as well as project-specific
 --- directories (i.e. equivalent to what is reported by `lean --path`).
 function lean3.__current_search_paths()
-  local root = vim.lsp.buf.list_workspace_folders()[1]
+  local root = util.list_workspace_folders()[1]
   local result = subprocess_check_output{command = "lean", args = {"--path"}, cwd = root }
   return vim.fn.json_decode(table.concat(result, '')).path
 end
@@ -326,9 +327,10 @@ end
 
 function lean3.lsp_enable(opts)
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
-    ['textDocument/publishDiagnostics'] = util.wrap_handler(
-      require"vim.lsp.handlers"['textDocument/publishDiagnostics'],
-      util.mk_handler(require"lean.lsp".handlers.diagnostics_handler))
+    ['textDocument/publishDiagnostics'] = function(...)
+      vim.lsp.handlers['textDocument/publishDiagnostics'](...)
+      util.mk_handler(lsp.handlers.diagnostics_handler)(...)
+    end;
   })
   require'lspconfig'.lean3ls.setup(opts)
 end

@@ -1,7 +1,9 @@
 local assert = require('luassert')
 local infoview = require('lean.infoview')
+local progress = require'lean.progress'
 
 local lean = require('lean')
+local fixtures = require'tests.fixtures'
 
 local api = vim.api
 local helpers = {_clean_buffer_counter = 1}
@@ -51,10 +53,12 @@ end
 
 -- Even though we can delete a buffer, so should be able to reuse names,
 -- we do this to ensure if a test fails, future ones still get new "files".
-local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
+local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr, ft)
   local counter = helpers._clean_buffer_counter
   helpers._clean_buffer_counter = helpers._clean_buffer_counter + 1
-  local unique_name = string.format('unittest-%d.lean', counter)
+  local unique_name =
+    ft == 'lean3' and string.format('unittest-%d.lean', counter)
+                   or string.format('%s/unittest-%d.lean', fixtures.lean_project.path, counter)
   api.nvim_buf_set_name(bufnr, unique_name)
 end
 
@@ -71,7 +75,7 @@ end
 function helpers.clean_buffer(ft, contents, callback)
   return function()
     local bufnr = vim.api.nvim_create_buf(false, false)
-    set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
+    set_unique_name_so_we_always_have_a_separate_fake_file(bufnr, ft)
     -- apparently necessary to trigger BufWinEnter
     vim.api.nvim_set_current_buf(bufnr)
     vim.opt_local.bufhidden = "hide"
@@ -95,7 +99,22 @@ end
 --- Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
   local succeeded, _ = vim.wait(5000, function()
-    return not vim.tbl_isempty(vim.lsp.diagnostic.get_line_diagnostics())
+    if progress.is_processing(vim.uri_from_bufnr(0)) then return false end
+    local diags = vim.diagnostic ~= nil
+      and -- neovim 0.6
+        vim.diagnostic.get(0, {lnum = vim.api.nvim_win_get_cursor(0)[1] - 1})
+      or -- neovim 0.5
+        vim.lsp.diagnostic.get_line_diagnostics()
+
+    -- Lean 4 sends file progress notification too late :-(
+    if #diags == 1 then
+      local msg = diags[1].message
+      if msg:match("^configuring ") then return false end
+      if msg:match("^Foo: ") then return false end
+      if msg:match("^> ") then return false end
+    end
+
+    return #diags > 0
   end)
   assert.message("Waited for line diagnostics but none came.").True(succeeded)
 end

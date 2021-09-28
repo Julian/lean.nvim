@@ -81,15 +81,6 @@ function M.load_mappings(mappings, buffer)
   end
 end
 
-function M.wrap_handler(other_handler, handler)
-  return function(...)
-    other_handler(...)
-    handler(...)
-  end
-end
-
-M.wait_timer = a.wrap(vim.loop.timer_start, 4)
-
 -- from mfussenegger/nvim-lsp-compl@29a81f3
 function M.mk_handler(fn)
   return function(...)
@@ -188,8 +179,19 @@ function M.make_floating_popup_size(contents)
   return width, height
 end
 
-
 M.Tick = Tick
 M.Ticker = Ticker
+
+--- List workspace folders.
+--- Backport from https://github.com/neovim/neovim/pull/15059
+function M.list_workspace_folders()
+  local workspace_folders = {}
+  for _, client in pairs(vim.lsp.buf_get_clients()) do
+    for _, folder in pairs(client.workspaceFolders) do
+      table.insert(workspace_folders, folder.name)
+    end
+  end
+  return workspace_folders
+end
 
 return M

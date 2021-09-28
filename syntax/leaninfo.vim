@@ -17,9 +17,17 @@ hi def link leanInfoGoalHyp Type
 hi def link leanInfoGoalVDash Operator
 hi def link leanInfoExpectedType Special
 
-hi def link leanInfoError LspDiagnosticsDefaultError
-hi def link leanInfoWarning LspDiagnosticsDefaultWarning
-hi def link leanInfoInfo LspDiagnosticsDefaultInformation
+if luaeval('vim.diagnostic ~= nil')
+  " neovim 0.6
+  hi def link leanInfoError DiagnosticError
+  hi def link leanInfoWarning DiagnosticWarning
+  hi def link leanInfoInfo DiagnosticInfo
+else
+  " neovim 0.5
+  hi def link leanInfoError LspDiagnosticsDefaultError
+  hi def link leanInfoWarning LspDiagnosticsDefaultWarning
+  hi def link leanInfoInfo LspDiagnosticsDefaultInformation
+endif
 hi def link leanInfoComment Comment
 hi def link leanInfoBlockComment Comment
 
