@@ -185,7 +185,6 @@ function M.make_floating_popup_size(contents)
 
   local height = #contents
 
-  print(width, height)
   return width, height
 end
 

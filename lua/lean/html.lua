@@ -306,12 +306,36 @@ function Div:find(check)
   end
 end
 
-function Div:filter(fn)
-  fn(self)
+function Div:_filter(path, pos, fn, skip_tooltips)
+  pos = pos + #self.text
 
-  for _, div in pairs(self.divs) do
-    div:filter(fn)
+  for idx, child in ipairs(self.divs) do
+    local new_path = {unpack(path)}
+    table.insert(new_path, {idx = idx, name = child.name})
+    fn(self, new_path, pos)
+
+    pos = child:_filter(new_path, pos, fn, skip_tooltips)
   end
+
+  if not skip_tooltips and self.divs["tt"] then
+    local child = self.divs["tt"]
+    local new_path = {unpack(path)}
+    table.insert(new_path, {idx = "tt", name = child.name})
+    local new_pos = 1
+    fn(self, new_path, new_pos)
+
+    child:_filter(new_path, new_pos, fn, skip_tooltips)
+  end
+
+  return pos
+end
+
+function Div:filter(fn, skip_tooltips)
+  local path = {{idx = -1, name = self.name}}
+  local pos = 1
+  fn(self, path, pos)
+
+  self:_filter(path, pos, fn, skip_tooltips)
 end
 
 function Div:buf_register(buf, keymaps, tooltip_data)
@@ -609,6 +633,21 @@ function Div:buf_goto_path(buf, path)
   go_to()
 
   return true
+end
+
+function Div:buf_hop_to(buf, filter_fn, callback_fn)
+  local bufdata = self.bufs[buf]
+  local strategy = {
+    get_hint_list = function()
+      self:filter(function(div)
+        if not filter_fn(div) then return end
+        
+      end, true)
+    end
+  }
+
+  local hints = {}
+
 end
 
 return {Div = Div, util = { get_parent_div = get_parent_div,
