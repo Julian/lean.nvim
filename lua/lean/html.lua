@@ -238,6 +238,7 @@ local function pos_to_raw_pos(pos, lines)
   return raw_pos
 end
 
+-- returns (0, 0)-indexed cursor position from raw byte position and list of lines
 local function raw_pos_to_pos(raw_pos, lines)
   local line_num = 0
   local rem_chars = raw_pos
@@ -351,6 +352,7 @@ function Div:buf_register(buf, keymaps, tooltip_data)
       mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_event(%d, "%s")<CR>]]):format(self.id, buf, event)
     end
     mappings.n["J"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip(%d)<CR>]]):format(self.id, buf)
+    mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_hop_to(%d)<CR>]]):format(self.id, buf)
   end
   util.load_mappings(mappings, buf)
 end
@@ -635,19 +637,67 @@ function Div:buf_goto_path(buf, path)
   return true
 end
 
-function Div:buf_hop_to(buf, filter_fn, callback_fn)
+function Div:buf_hop_to(buf)
   local bufdata = self.bufs[buf]
+  while bufdata.tooltip_data and bufdata.tooltip_data.parent do
+    buf = bufdata.tooltip_data.parent
+    bufdata = self.bufs[buf]
+  end
+
+  local win = bufdata.last_win
+
+  self:buf_hop(buf, win, function(div) return div.highlightable end, require"hop.hint_util".callbacks.win_goto)
+end
+
+function Div:buf_hop(root_buf, root_win, filter_fn, callback_fn)
   local strategy = {
     get_hint_list = function()
-      self:filter(function(div)
-        if not filter_fn(div) then return end
-        
-      end, true)
-    end
+      local hints = {}
+      local windows = {}
+
+      local function buf_get_hints(this_buf, this_win)
+        local bufdata = self.bufs[this_buf]
+        this_win = this_win or bufdata.tooltip_data.win
+        table.insert(windows, this_win)
+        local root = self:buf_get_root(this_buf)
+        local lines = vim.split(root:render(), "\n")
+
+        root:filter(function(div, _, raw_pos)
+          if not filter_fn(div) then return end
+          local pos = raw_pos_to_pos(raw_pos, lines)
+          local hint =
+          {
+            line = pos[1] + 1,
+            col = pos[2] + 1,
+            buf = this_buf,
+
+            win = this_win,
+          }
+
+          -- prevent duplicate hints; this works because we are pre-order traversing the div tree
+          if not vim.deep_equal(hint, hints[#hints]) then
+            table.insert(hints, hint)
+          end
+        end, true)
+
+        for child_buf, _ in pairs(bufdata.children) do
+          buf_get_hints(child_buf)
+        end
+      end
+
+      buf_get_hints(root_buf, root_win)
+
+      -- just for greying out
+      self.disable_hover = true
+      local hint_states = require"hop.hint_util".create_hint_states(windows)
+      self.disable_hover = false
+
+      return hints, {grey_out = require"hop.hint_util".get_grey_out(hint_states)}
+    end,
+    callback = callback_fn
   }
 
-  local hints = {}
-
+  require"hop".hint(strategy)
 end
 
 return {Div = Div, util = { get_parent_div = get_parent_div,
