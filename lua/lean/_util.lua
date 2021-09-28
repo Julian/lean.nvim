@@ -172,6 +172,24 @@ function Ticker:release(tick)
   self._lock = false
 end
 
+-- simple alternative to vim.lsp.util._make_floating_popup_size
+function M.make_floating_popup_size(contents)
+  local line_widths = {}
+
+  local width = 0
+  for i, line in ipairs(contents) do
+    -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
+    line_widths[i] = vim.fn.strdisplaywidth(line)
+    width = math.max(line_widths[i], width)
+  end
+
+  local height = #contents
+
+  print(width, height)
+  return width, height
+end
+
+
 M.Tick = Tick
 M.Ticker = Ticker
 

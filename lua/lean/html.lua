@@ -416,13 +416,7 @@ function Div:buf_render(buf, prevent_restore)
 
       local _, tt_div = self:div_from_path(tt_path)
 
-      local width, height = vim.lsp.util._make_floating_popup_size(
-        vim.split(tt_div:render(), "\n"),
-        {
-          max_width = 30,
-          max_height = 30,
-          border = "none"
-        })
+      local width, height = util.make_floating_popup_size(vim.split(tt_div:render(), "\n"))
 
       local tooltip_buf = vim.api.nvim_create_buf(false, true)
       vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
