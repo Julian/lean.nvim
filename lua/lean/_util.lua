@@ -194,4 +194,6 @@ function M.list_workspace_folders()
   return workspace_folders
 end
 
+M.wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) end, 2)
+
 return M

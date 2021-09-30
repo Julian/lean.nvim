@@ -78,19 +78,32 @@ function components.interactive_term_goal(goal, sess)
 
       local info_open = false
 
-      local do_reset = function(_)
+      local do_reset = function()
         info_div.divs = {}
-        info_div:insert_div({}, "click for info!", "click_message")
+        info_div:insert_div({}, "click for info!", "click-message")
         info_div.tags.event.clear = nil
         info_open = false
         return true
       end
 
-      local do_open_all = function(tick)
-        local info_popup, err = sess:infoToInteractive(info_with_ctx)
-        if not tick:check() then return true end
+      local do_open_all = function(tick, render_fn)
+        if render_fn then
+          info_div.divs = {}
+          info_div:insert_div({}, "loading...", "loading-message")
+          render_fn()
+        end
 
-        if err then print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message)) return false end
+        local info_popup, err = sess:infoToInteractive(info_with_ctx)
+        if not tick:check() then
+          do_reset()
+          return true
+        end
+
+        if err then
+          print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message))
+          do_reset()
+          return false
+        end
 
         info_div.divs = {}
         local keys = {}
@@ -115,11 +128,11 @@ function components.interactive_term_goal(goal, sess)
         return true
       end
 
-      local click = function(tick)
+      local click = function(...)
         if info_open then
-          return do_reset(tick)
+          return do_reset()
         else
-          return do_open_all(tick)
+          return do_open_all(...)
         end
       end
 

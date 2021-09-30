@@ -269,7 +269,7 @@ function Pin:new(paused, use_widget)
     local tick = new_pin.ticker:lock()
     if not tick then return end
 
-    local success, ignore = fn(tick)
+    local success, ignore = fn(tick, function() new_pin:render_parents() end)
 
     if not tick:check() then return end
 
@@ -569,7 +569,6 @@ end
 local plain_goal = a.wrap(leanlsp.plain_goal, 3)
 local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 
-local wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) end, 2)
 --- async function to update this pin's contents given the current position.
 function Pin:__update(tick, delay, lean3_opts)
   delay = delay or 100
@@ -578,7 +577,7 @@ function Pin:__update(tick, delay, lean3_opts)
   self.data_div = html.Div:new({pin = self}, "", "pin-data", nil)
 
   if delay > 0 then
-    wait_timer(delay)
+    util.wait_timer(delay)
   end
 
   local params = self.position_params
