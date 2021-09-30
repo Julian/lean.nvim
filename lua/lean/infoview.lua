@@ -265,13 +265,11 @@ function Pin:new(paused, use_widget)
 
   new_pin.div.tags.event = {}
 
-  new_pin.div.call_event = function(path, event, fn, args)
+  new_pin.div.call_event = function(path, event, fn, _)
     local tick = new_pin.ticker:lock()
     if not tick then return end
 
-    new_pin:set_loading(true)
-
-    local success, ignore = fn(tick, unpack(args))
+    local success, ignore = fn(tick)
 
     if not tick:check() then return end
 
@@ -283,7 +281,9 @@ function Pin:new(paused, use_widget)
       table.insert(new_pin.undo_list, {path = this_path, event = event})
     end
 
-    new_pin:set_loading(false)
+    if not new_pin:set_loading(false) then
+      new_pin:render_parents()
+    end
 
     new_pin.ticker:release()
 
@@ -312,6 +312,8 @@ function Pin:new(paused, use_widget)
 
       table.insert(new_undo_list, undo_item)
 
+      -- want to preserve visual context until replay completes
+      new_pin:set_loading(true)
       if not this_div.tags.event[undo_item.event](tick) then
         print("replay aborted on error")
         success = false
@@ -332,6 +334,9 @@ function Pin:new(paused, use_widget)
     if not (#new_pin.undo_list > 0) then return true, true end
 
     local undo_item = table.remove(new_pin.undo_list)
+
+    -- make sure to visually update undo list count
+    new_pin:render_parents()
 
     local success = new_pin.div.tags.event.replay(tick)
     if not tick:check() then return end
@@ -356,6 +361,8 @@ function Pin:new(paused, use_widget)
           return div.tags.event and div.tags.event.clear
         end)
       if found_div then
+        -- want to preserve visual context while clearing
+        new_pin:set_loading(true)
         local result = found_div.tags.event.clear(tick)
         if not tick:check() then return true end
         if not result then return false end
@@ -509,28 +516,32 @@ function Pin:render_parents()
   end
 end
 
+-- Indicate that the pin is either loading or done loading, if it isn't already set as such.
 function Pin:set_loading(loading)
   if loading and not self.loading then
     self.div.divs = {}
-    self.div:insert_new_div(self.data_div)
+    local data_div_copy = self.data_div:dummy_copy()
+    data_div_copy:filter(function(div)
+      div.disabled = true
+    end)
+
+    self.div:insert_new_div(data_div_copy)
 
     self.loading = true
 
-    self.data_div:filter(function(div)
-      div.disabled = true
-    end)
-  elseif not loading then
+    self:render_parents()
+    return true
+  elseif not loading and self.loading then
     self.div.divs = {}
     self.div:insert_new_div(self.data_div)
 
     self.loading = false
 
-    self.data_div:filter(function(div)
-      div.disabled = false
-    end)
+    self:render_parents()
+    return true
   end
 
-  self:render_parents()
+  return false
 end
 
 Pin.update = a.void(function(self, force, delay, _, lean3_opts)
@@ -539,12 +550,12 @@ Pin.update = a.void(function(self, force, delay, _, lean3_opts)
   local tick = self.ticker:lock()
   if not tick then return end
 
-  self:set_loading(true)
-
   self:_update(force, delay, tick, lean3_opts)
   if not tick:check() then return end
 
-  self:set_loading(false)
+  if not self:set_loading(false) then
+    self:render_parents()
+  end
 
   self.ticker:release()
 end)
@@ -563,6 +574,7 @@ local wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeo
 function Pin:__update(tick, delay, lean3_opts)
   delay = delay or 100
 
+  self:set_loading(true)
   self.data_div = html.Div:new({pin = self}, "", "pin-data", nil)
 
   if delay > 0 then

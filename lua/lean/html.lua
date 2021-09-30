@@ -16,7 +16,6 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field bufs table
 ---@field id number
 ---@field highlightable boolean
----@field disabled boolean
 local Div = {next_id = 1}
 Div.__index = Div
 
@@ -86,7 +85,7 @@ function Div:render()
     vim.list_extend(hls, new_hls)
     text = text .. new_text
   end
-  local hlgroup = self.disabled and "htmlDivLoading" or self.hlgroup_override or self.hlgroup
+  local hlgroup = self.hlgroup_override or self.hlgroup
   if hlgroup then
     if type(hlgroup) == "function" then
       hlgroup = hlgroup(self)
@@ -272,7 +271,7 @@ function Div:event(path, event_name, ...)
   if not div_stack then return end
 
   local event_div, event_div_stack = get_parent_div(div_stack, is_event_div_check(event_name))
-  if not event_div or event_div.disabled then return end
+  if not event_div then return end
 
   -- find parent listener
   local listener_div, listener_div_stack = get_parent_div(event_div_stack, function(div)
@@ -698,6 +697,18 @@ function Div:buf_hop(root_buf, root_win, filter_fn, callback_fn)
   }
 
   require"hop".hint(strategy)
+end
+
+-- Creates an impotent deep copy of this div (both tag-stripped and event-disabled).
+function Div:dummy_copy()
+  local dummy = Div:new({}, self.text, self.name, self.hlgroup)
+  for _, child in ipairs(self.divs) do
+    table.insert(dummy.divs, child:dummy_copy())
+  end
+  if self.divs["tt"] then
+    dummy.divs["tt"] = self.divs["tt"]:dummy_copy()
+  end
+  return dummy
 end
 
 return {Div = Div, util = { get_parent_div = get_parent_div,
