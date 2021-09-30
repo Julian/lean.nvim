@@ -80,6 +80,7 @@ function components.interactive_term_goal(goal, sess)
 
       local do_reset = function(_)
         info_div.divs = {}
+        info_div:insert_div({}, "click for info!", "click_message")
         info_div.tags.event.clear = nil
         info_open = false
         return true
@@ -91,20 +92,24 @@ function components.interactive_term_goal(goal, sess)
 
         if err then print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message)) return false end
 
-        info_div:insert_div({}, "→[", "tooltip-prefix", "leanInfoTooltip")
+        info_div.divs = {}
         local keys = {}
         for key, _ in pairs(info_popup) do
           table.insert(keys, key)
         end
         table.sort(keys)
+        local prev_item = false
         for _, key in ipairs(keys) do
+          if prev_item then
+            info_div:insert_div({}, '\n', "info-item-separator")
+          end
           info_div:start_div({}, "", "info-item")
-          info_div:insert_div({}, '\n' .. key , "info-item-prefix", "leanInfoButton")
+          info_div:insert_div({}, key, "info-item-prefix", "leanInfoButton")
           info_div:insert_div({}, ': ', "separator")
           info_div:insert_new_div(code_with_infos(info_popup[key]))
           info_div:end_div()
+          prev_item = true
         end
-        info_div:insert_div({}, "]", "tooltip-suffix", "leanInfoTooltip")
         info_div.tags.event.clear = do_reset
         info_open = true
         return true
@@ -118,12 +123,14 @@ function components.interactive_term_goal(goal, sess)
         end
       end
 
+      do_reset()
+
       div.tags = {info_with_ctx = info_with_ctx, event = { click = click }}
       div.highlightable = true
 
       div:insert_new_div(code_with_infos(t.tag[2]))
 
-      div:insert_new_div(info_div)
+      div:insert_new_tooltip(info_div)
     end
 
     return div

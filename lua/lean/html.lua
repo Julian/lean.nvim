@@ -460,7 +460,8 @@ function Div:buf_render(buf, prevent_restore)
         width = width,
         height = height,
         border = "none",
-        bufpos = bufpos
+        bufpos = bufpos,
+        zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
       }
 
       local tooltip_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
