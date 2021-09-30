@@ -621,6 +621,8 @@ function Div:buf_goto_path(buf, path)
     table.insert(inc_path, 1, this_branch)
     if this_branch.idx == "tt" then
       go_to()
+      orig_window = vim.api.nvim_get_current_win()
+      orig_bufpos = vim.api.nvim_win_get_cursor(0)
       buf = self:buf_enter_tooltip(buf)
       if not buf then return false end
       root = self:buf_get_root(buf)
