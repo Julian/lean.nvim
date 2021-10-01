@@ -648,8 +648,15 @@ function Pin:__update(tick, delay, lean3_opts)
       self.data_div:insert_new_div(html.Div:new({}, "No tactic/term data found.", "no-tactic-term"))
     end
 
+    local diagnostics_div
+    if self.use_widget then
+      local diags, err = self.sess:getInteractiveDiagnostics()
+      if not err then
+        diagnostics_div = components.interactive_diagnostics(diags, line, self.sess)
+      end
+    end
 
-    self.data_div:insert_new_div(components.diagnostics(buf, line))
+    self.data_div:insert_new_div(diagnostics_div or components.diagnostics(buf, line))
 
     if not tick:check() then return true end
     self.div.tags.event.replay(tick)

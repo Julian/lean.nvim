@@ -13,7 +13,7 @@ local control = require'plenary.async.control'
 ---@field connect_err any | nil
 ---@field on_connected function
 ---@field keepalive_timer any
----@field to_release RfcPtr[]
+---@field to_release RpcRef[]
 ---@field release_timer any
 local Session = {}
 Session.__index = Session
@@ -84,6 +84,8 @@ end
 ---@class LspRange
 ---@field start LspPosition
 ---@field end LspPosition
+
+---@alias LspSeverity number
 
 ---@class TextDocumentPositionParams
 ---@field textDocument TextDocumentIdentifier
@@ -225,6 +227,30 @@ function Subsession:getInteractiveTermGoal(pos)
   return self:call('Lean.Widget.getInteractiveTermGoal', pos)
 end
 
+---@class TaggedTextMsgEmbed
+---@field text? string
+---@field append? TaggedTextMsgEmbed[]
+---@field tag? {[1]: MsgEmbed} -- the second field is always the empty string
+
+---@class MsgEmbed
+---@field expr? CodeWithInfos
+---@field goal? InteractiveGoal
+---@field lazyTrace? {[1]: number, [2]: string, [3]: MessageData}
+
+---@class MessageData
+
+---@class InteractiveDiagnostic
+---@field range LspRange
+---@field fullRange LspRange?
+---@field severity LspSeverity?
+---@field message TaggedTextMsgEmbed
+
+---@return InteractiveDiagnostic[]
+---@return any error
+function Subsession:getInteractiveDiagnostics()
+  return self:call('Lean.Widget.getInteractiveDiagnostics', {})
+end
+
 ---@class InfoPopup
 ---@field type CodeWithInfos|nil
 ---@field exprExplicit CodeWithInfos|nil
@@ -235,6 +261,15 @@ end
 ---@return any error
 function Subsession:infoToInteractive(i)
   return self:call('Lean.Widget.InteractiveDiagnostics.infoToInteractive', i)
+end
+
+---@param msg MessageData
+---@param indent number
+---@return TaggedTextMsgEmbed
+---@return any error
+function Subsession:msgToInteractive(msg, indent)
+  return self:call('Lean.Widget.InteractiveDiagnostics.msgToInteractive',
+    { msg = msg, indent = indent })
 end
 
 return rpc
