@@ -132,6 +132,16 @@ components.diagnostics()                            *components.diagnostics()*
 
 
 
+components.interactive_diagnostics({line}, {diags}, {sess})*components.interactive_diagnostics()*
+    Diagnostic information for the current line from the Lean server.
+
+
+    Parameters: ~
+        {line}  (number)
+        {diags} (InteractiveDiagnostic[])
+        {sess}  (Subsession)
+
+
 
 ================================================================================
 RpcRef                                                                *RpcRef*
@@ -149,7 +159,7 @@ Session                                                              *Session*
         {connect_err}     (any|nil)
         {on_connected}    (function)
         {keepalive_timer} (any)
-        {to_release}      (RfcPtr[])
+        {to_release}      (RpcRef[])
         {release_timer}   (any)
 
 
@@ -236,6 +246,27 @@ InteractiveTermGoal                                      *InteractiveTermGoal*
         {hyps}  (InteractiveHypothesis[])
         {type}  (CodeWithInfos)
         {range} (LspRange)
+
+
+TaggedTextMsgEmbed                                        *TaggedTextMsgEmbed*
+
+
+
+MsgEmbed                                                            *MsgEmbed*
+
+
+
+MessageData                                                      *MessageData*
+
+
+
+InteractiveDiagnostic                                  *InteractiveDiagnostic*
+
+
+    Fields: ~
+        {range}     (LspRange)
+        {fullRange} ()
+        {message}   (TaggedTextMsgEmbed)
 
 
 InfoPopup                                                          *InfoPopup*
