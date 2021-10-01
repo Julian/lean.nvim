@@ -376,13 +376,13 @@ function Div:buf_get_root(buf)
   return root, path
 end
 
-function Div:buf_render(buf, prevent_restore)
+function Div:buf_render(buf, internal)
   local bufdata = self.bufs[buf]
-  local restore_path = not prevent_restore and not bufdata.tooltip_data and bufdata.path and {unpack(bufdata.path)}
+  local restore_path = not internal and not bufdata.tooltip_data and bufdata.path and {unpack(bufdata.path)}
 
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
 
-  self:buf_reset(buf)
+  self:buf_reset(buf, internal)
 
   local root, _ = self:buf_get_root(buf)
 
@@ -449,7 +449,7 @@ function Div:buf_render(buf, prevent_restore)
 
       self:buf_register(tooltip_buf, bufdata.keymaps, {parent = buf, path = tt_path})
       bufdata.children[tooltip_buf] = true
-      self:buf_render(tooltip_buf)
+      self:buf_render(tooltip_buf, internal)
 
       local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), vim.split(root:render(), "\n"))
 
@@ -503,6 +503,7 @@ end
 
 function Div:buf_update_position(buf)
   local raw_pos = pos_to_raw_pos(vim.api.nvim_win_get_cursor(0), vim.api.nvim_buf_get_lines(buf, 0, -1, true))
+  if not raw_pos then return end
   local bufdata = self.bufs[buf]
   if bufdata.tooltip_data and bufdata.tooltip_data.path then
     local _, tt_div = self:div_from_path(bufdata.tooltip_data.path)
@@ -555,13 +556,15 @@ function Div:buf_hover(buf)
   self:buf_render(buf, true)
 end
 
-function Div:buf_reset(buf)
+function Div:buf_reset(buf, internal)
   local bufdata = self.bufs[buf]
-  bufdata.path = nil
+  if not internal then bufdata.path = nil end
   for child_buf, _ in pairs(bufdata.children) do
     local child_bufdata = self.bufs[child_buf]
-    child_bufdata.tooltip_data.path = nil
-    child_bufdata.tooltip_data.subpath = nil
+    if not internal then
+      child_bufdata.tooltip_data.path = nil
+      child_bufdata.tooltip_data.subpath = nil
+    end
 
     self:buf_reset(child_buf)
 
