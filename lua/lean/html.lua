@@ -4,21 +4,30 @@ local util = require"lean._util"
 -- necessary until neovim/neovim#14661 is merged.
 local _by_id = setmetatable({}, {__mode = 'v'})
 
---- An HTML-style div
+---An HTML-style div.
 ---@class Div
----@field tags table
----@field text string
----@field name string
----@field hlgroup string
----@field hlgroup_override string
----@field divs Div[]
----@field div_stack Div[]
----@field bufs table
----@field id number
----@field highlightable boolean
+---@field tags table @arbitrary application-specific metadata
+---@field text string @the text to show when rendering this div
+---@field name string @a named handle for this div, used when path-searching
+---@field hlgroup string|fun():string @the highlight group for this div's text, or a function that returns it
+---@field hlgroup_override string @temporary override of `hlgroup` that applies to a single render
+---@field divs Div[] @this div's child divs
+---@field div_stack Div[] @(internal) stack of divs used while dynamically constructing a div tree rooted at this div
+---@field listener boolean @whether this div can listen to events from its children
+---@field call_event fun(path:PathNode[],event_name:string,event_fn:fun(),args:any[]):any
+---@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
+---@field id number @(for buffer rendering) ID number of this div, used for autocmds only
+---@field bufs table<number, table> @(for buffer rendering) list of buffers rendering this div, can include tooltips
 local Div = {next_id = 1}
 Div.__index = Div
 
+---Create a new div.
+---@param tags table @arbitrary application-specific metadata
+---@param text string @the text to show when rendering this div
+---@param name string @a named handle for this div, used when path-searching
+---@param hlgroup string @the highlight group used for this div's text
+---@param listener boolean @whether this div can listen to events from its children
+---@return Div
 function Div:new(tags, text, name, hlgroup, listener)
   local new_div = setmetatable({tags = tags or {}, text = text or "", name = name or "", hlgroup = hlgroup,
     divs = {}, div_stack = {}, listener = listener, bufs = {}, id = self.next_id}, self)
@@ -28,16 +37,25 @@ function Div:new(tags, text, name, hlgroup, listener)
   return new_div
 end
 
+---Add a div to this div's `divs`.
+---@param div Div @child div to add to this div's `divs`
+---@return Div @the added div
 function Div:add_div(div)
   table.insert(self.divs, div)
   return div
 end
 
+---Set this div's tooltip.
+---@param div Div @div to use as a tooltip for this div
+---@return Div @the added tooltip div
 function Div:add_tooltip(div)
   self.divs["tt"] = div
   return div
 end
 
+---(for dynamic div construction) Insert a div at the current div level.
+---@param new_div Div @div to insert
+---@return Div @the inserted div
 function Div:insert_new_div(new_div)
   local last_div = self.div_stack[#self.div_stack]
   if last_div then
@@ -47,6 +65,9 @@ function Div:insert_new_div(new_div)
   end
 end
 
+---(for dynamic div construction) Insert a tooltip at the current div level.
+---@param new_div Div @tooltip to insert
+---@return Div @the added div
 function Div:insert_new_tooltip(new_div)
   local last_div = self.div_stack[#self.div_stack]
   if last_div then
@@ -56,6 +77,9 @@ function Div:insert_new_tooltip(new_div)
   end
 end
 
+---(for dynamic div construction) Insert a div at the current div level, initialized with the given params,
+---and set that div as the current div level (like <div> in HTML).
+---@return Div @the inserted div
 function Div:start_div(tags, text, name, hlgroup, listener)
   local new_div = Div:new(tags, text, name, hlgroup, listener)
   self:insert_new_div(new_div)
@@ -63,16 +87,21 @@ function Div:start_div(tags, text, name, hlgroup, listener)
   return new_div
 end
 
+---(for dynamic div construction) Go back one div level (like </div> in HTML).
 function Div:end_div()
   table.remove(self.div_stack)
 end
 
+---(for dynamic div construction) Insert a div at the current div level, initialized with the given params.
 function Div:insert_div(tags, text, name, hlgroup, listener)
   local new_div = self:start_div(tags, text, name, hlgroup, listener)
   self:end_div()
   return new_div
 end
 
+---Render this div, getting its text and highlight groups.
+---@return string @the rendered text
+---@return table[] @list of highlight data corresponding to the render
 function Div:render()
   local text = self.text
   local hls = {}
@@ -121,6 +150,14 @@ function Div:_pos_from_path(path)
   return nil
 end
 
+---Represents a node in a path through a div.
+---@class PathNode
+---@field idx number @the index in the current div's children to follow
+---@field name string @the name that the indexed child should have
+
+---Get the raw byte position of the div arrived at by following the given path.
+---@param path PathNode[] @the path to follow
+---@return number|nil @the position if the path was valid, nil otherwise
 function Div:pos_from_path(path)
   path = {unpack(path)}
 
@@ -130,30 +167,39 @@ function Div:pos_from_path(path)
   return self:_pos_from_path(path)
 end
 
-function Div:_div_from_path(path, stack)
+---@param path PathNode[]
+---@param stack Div[]
+function Div:__div_from_path(path, stack)
   table.insert(stack, self)
   if #path == 0 then return stack, self end
   path = {unpack(path)}
 
+  ---@type PathNode
   local this_branch = table.remove(path)
   local this_div = self.divs[this_branch.idx]
   local this_name = this_branch.name
 
   if not this_div or this_div.name ~= this_name then return nil, nil end
 
-  return this_div:_div_from_path(path, stack)
+  return this_div:__div_from_path(path, stack)
 end
 
+---Get the div stack and div arrived at by following the given path.
+---@param path PathNode[] @the path to follow
+---@return Div[]|nil @the stack of divs at this path, or nil if the path is invalid
+---@return Div|nil @the div at this path, or nil if the path is invalid
 function Div:div_from_path(path)
   path = {unpack(path)}
 
   -- check that the first name matches
   if self.name ~= table.remove(path).name then return nil, nil end
 
-  return self:_div_from_path(path, setmetatable({}, {__mode = "v"}))
+  return self:__div_from_path(path, setmetatable({}, {__mode = "v"}))
 end
 
-function Div:_div_from_pos(pos, stack)
+---@param pos number
+---@param stack Div[]
+function Div:__div_from_pos(pos, stack)
   table.insert(stack, self)
 
   local text = self.text
@@ -164,7 +210,7 @@ function Div:_div_from_pos(pos, stack)
   local search_pos = pos - #text
 
   for idx, div in ipairs(self.divs) do
-    local div_text, div_stack, div_path = div:_div_from_pos(search_pos, stack)
+    local div_text, div_stack, div_path = div:__div_from_pos(search_pos, stack)
     if div_stack then
       table.insert(div_path, {idx = idx, name = div.name})
       return nil, div_stack, div_path
@@ -177,12 +223,18 @@ function Div:_div_from_pos(pos, stack)
   return text, nil
 end
 
+---Get the div stack and path at the given raw byte position.
+---@param pos PathNode[] @the path to follow
+---@return Div[]|nil @the stack of divs at this position, or nil if the path is invalid
+---@return PathNode[]|nil @the path at this position, or nil if the position is invalid
 function Div:div_from_pos(pos)
-  local _, div_stack, div_path = self:_div_from_pos(pos, setmetatable({}, {__mode = "v"}))
+  local _, div_stack, div_path = self:__div_from_pos(pos, setmetatable({}, {__mode = "v"}))
   if div_path then table.insert(div_path, {idx = -1, name = self.name}) end
   return div_stack, div_path
 end
 
+---@param div_stack Div[]
+---@param check fun(div:Div):boolean
 local function _get_parent_div(div_stack, check)
   div_stack = {unpack(div_stack)}
   for i = #div_stack, 1, -1 do
@@ -194,6 +246,8 @@ local function _get_parent_div(div_stack, check)
   end
 end
 
+---@param div_stack Div[]
+---@param check fun(div:Div):boolean
 local function get_parent_div(div_stack, check)
   if type(check) == "string" then
     return _get_parent_div(div_stack, function(div) return div.name == check end)
@@ -201,6 +255,8 @@ local function get_parent_div(div_stack, check)
   return _get_parent_div(div_stack, check)
 end
 
+---@param div_stack Div[]
+---@return PathNode[]
 local function div_stack_to_path(div_stack)
   local path = {}
   for div_i, div in ipairs(div_stack) do
@@ -261,11 +317,18 @@ local function is_event_div_check(event_name)
   end
 end
 
+---Get the path at the given raw byte position.
+---@param pos PathNode[] @the path to follow
+---@return Div[]|nil @the stack of divs at this position, or nil if the path is invalid
+---@return PathNode[]|nil @the path at this position, or nil if the position is invalid
 function Div:path_from_pos(pos)
   local _, path = self:div_from_pos(pos)
   return path
 end
 
+---Trigger the given event at the given path (if there is a parent listener).
+---@param path PathNode[] @the path to trigger the event at
+---@param event_name string @the path to trigger the event at
 function Div:event(path, event_name, ...)
   local div_stack, _ = self:div_from_path(path)
   if not div_stack then return end
@@ -278,6 +341,7 @@ function Div:event(path, event_name, ...)
     if div.listener then return true end
     return false
   end)
+  -- there must be a listener for the event to fire
   if not listener_div then return end
 
   -- take subpath from listener to event, inclusive
@@ -306,7 +370,7 @@ function Div:find(check)
   end
 end
 
-function Div:_filter(path, pos, fn, skip_tooltips)
+function Div:__filter(path, pos, fn, skip_tooltips)
   pos = pos + #self.text
 
   for idx, child in ipairs(self.divs) do
@@ -314,7 +378,7 @@ function Div:_filter(path, pos, fn, skip_tooltips)
     table.insert(new_path, {idx = idx, name = child.name})
     fn(self, new_path, pos)
 
-    pos = child:_filter(new_path, pos, fn, skip_tooltips)
+    pos = child:__filter(new_path, pos, fn, skip_tooltips)
   end
 
   if not skip_tooltips and self.divs["tt"] then
@@ -324,7 +388,7 @@ function Div:_filter(path, pos, fn, skip_tooltips)
     local new_pos = 1
     fn(self, new_path, new_pos)
 
-    child:_filter(new_path, new_pos, fn, skip_tooltips)
+    child:__filter(new_path, new_pos, fn, skip_tooltips)
   end
 
   return pos
@@ -335,7 +399,7 @@ function Div:filter(fn, skip_tooltips)
   local pos = 1
   fn(self, path, pos)
 
-  self:_filter(path, pos, fn, skip_tooltips)
+  self:__filter(path, pos, fn, skip_tooltips)
 end
 
 function Div:buf_register(buf, keymaps, tooltip_data)
@@ -534,6 +598,7 @@ function Div:buf_hover(buf)
   end
 
   local div_stack, _ = root:div_from_path(path)
+  ---@param div Div
   local hover_div, hover_div_stack = get_parent_div(div_stack, function (div)
     return div.highlightable
   end)
