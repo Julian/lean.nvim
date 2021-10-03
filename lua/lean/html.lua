@@ -759,10 +759,10 @@ function Div:buf_hop(root_buf, root_win, filter_fn, callback_fn)
 
       -- just for greying out
       self.disable_hover = true
-      local hint_states = require"hop.hint_util".create_hint_states(windows)
+      local views_data = require"hop.hint_util".create_views_data(windows)
       self.disable_hover = false
 
-      return hints, {grey_out = require"hop.hint_util".get_grey_out(hint_states)}
+      return hints, {grey_out = require"hop.hint_util".get_grey_out(views_data)}
     end,
     callback = callback_fn
   }
