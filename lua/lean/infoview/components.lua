@@ -151,6 +151,10 @@ end
 local function interactive_goal(goal, sess)
   local div = html.Div:new({}, '', 'interactive-goal')
 
+  if goal.userName ~= nil then
+    div:insert_div({}, string.format('case %s\n', goal.userName))
+  end
+
   for _, hyp in ipairs(goal.hyps) do
     div:start_div({hyp = hyp}, table.concat(hyp.names, ' ') .. ' : ', "hyp")
 
@@ -167,6 +171,26 @@ local function interactive_goal(goal, sess)
   div:start_div({goal = goal.type}, '⊢ ', "goal")
   div:insert_new_div(code_with_infos(goal.type, sess))
   div:end_div()
+
+  return div
+end
+
+---@param goal InteractiveGoals | nil
+---@param sess Subsession
+---@return Div
+function components.interactive_goals(goal, sess)
+  local div = html.Div:new({}, "", "interactive-goals")
+  if goal == nil then return div end
+
+  div:insert_div({},
+    #goal.goals == 0 and H('goals accomplished 🎉\n') or
+    #goal.goals == 1 and H('1 goal\n') or
+    H(string.format('%d goals\n', #goal.goals)))
+
+  for i, this_goal in ipairs(goal.goals) do
+    if i ~= 1 then div:insert_div({}, '\n\n') end
+    div:insert_new_div(interactive_goal(this_goal, sess))
+  end
 
   return div
 end

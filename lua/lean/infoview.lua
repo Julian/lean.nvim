@@ -610,10 +610,20 @@ function Pin:__update(tick, delay, lean3_opts)
     self.sess = rpc.open(buf, params)
     if not tick:check() then return true end
 
-    local _, goal = plain_goal(params, buf)
-    if not tick:check() then return true end
+    local goal_div
+    if self.use_widget then
+      local goal, goal_err = self.sess:getInteractiveGoals(params)
+      if not tick:check() then return true end
+      if not goal_err then
+        goal_div = components.interactive_goals(goal, self.sess)
+      end
+    end
 
-    local goal_div = components.goal(goal)
+    if not goal_div then
+      local _, goal = plain_goal(params, buf)
+      if not tick:check() then return true end
+      goal_div = components.goal(goal)
+    end
 
     local term_goal, term_goal_err
     local term_goal_div

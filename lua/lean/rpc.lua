@@ -209,7 +209,7 @@ end
 ---@field goals InteractiveGoal[]
 
 ---@param pos PlainGoalParams
----@return InteractiveGoals
+---@return InteractiveGoals | nil
 ---@return any error
 function Subsession:getInteractiveGoals(pos)
   return self:call('Lean.Widget.getInteractiveGoals', pos)
