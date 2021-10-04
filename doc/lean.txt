@@ -61,6 +61,11 @@ health.check()                                                *health.check()*
 
 
 ================================================================================
+infoview.enable_debug()                              *infoview.enable_debug()*
+    Enables printing of extra debugging information in the infoview.
+
+
+
 infoview.get_current_infoview()              *infoview.get_current_infoview()*
     Get the infoview corresponding to the current window.
 
