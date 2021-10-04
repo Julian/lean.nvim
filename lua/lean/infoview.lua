@@ -29,6 +29,7 @@ local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, 
   show_loading = true, use_widget = true, lean3 = {show_filter = true},
   mappings = {
       ["K"] = [[click]],
+      ["<CR>"] = [[click]],
       ["I"] = [[mouse_enter]],
       ["i"] = [[mouse_leave]],
       ["u"] = [[undo]],
