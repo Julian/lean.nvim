@@ -83,6 +83,29 @@ local function code_with_infos(t, sess)
       return true
     end
 
+    ---@param info_popup InfoPopup
+    local mk_tooltip = function(info_popup)
+      local tooltip_div = html.Div:new()
+
+      if info_popup.exprExplicit ~= nil then
+        tooltip_div:insert_new_div(code_with_infos(info_popup.exprExplicit, sess))
+        if info_popup.type ~= nil then
+          tooltip_div:insert_div({}, ' :\n')
+        end
+      end
+
+      if info_popup.type ~= nil then
+        tooltip_div:insert_new_div(code_with_infos(info_popup.type, sess))
+      end
+
+      if info_popup.doc ~= nil then
+        tooltip_div:insert_div({}, '\n\n')
+        tooltip_div:insert_div({}, info_popup.doc) -- TODO: markdown
+      end
+
+      return tooltip_div
+    end
+
     local do_open_all = function(tick, render_fn)
       if render_fn then
         info_div.divs = {}
@@ -102,24 +125,7 @@ local function code_with_infos(t, sess)
         return false
       end
 
-      info_div.divs = {}
-      local keys = {}
-      for key, _ in pairs(info_popup) do
-        table.insert(keys, key)
-      end
-      table.sort(keys)
-      local prev_item = false
-      for _, key in ipairs(keys) do
-        if prev_item then
-          info_div:insert_div({}, '\n', "info-item-separator")
-        end
-        info_div:start_div({}, "", "info-item")
-        info_div:insert_div({}, key, "info-item-prefix", "leanInfoButton")
-        info_div:insert_div({}, ': ', "separator")
-        info_div:insert_new_div(code_with_infos(info_popup[key], sess))
-        info_div:end_div()
-        prev_item = true
-      end
+      info_div.divs = { mk_tooltip(info_popup) }
       info_div.tags.event.clear = do_reset
       info_open = true
       return true
