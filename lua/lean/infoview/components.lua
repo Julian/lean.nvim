@@ -79,6 +79,7 @@ local function code_with_infos(t, sess)
       info_div.divs = {}
       info_div:insert_div({}, "click for info!", "click-message")
       info_div.tags.event.clear = nil
+      div:insert_new_tooltip(nil)
       info_open = false
       return true
     end
@@ -127,6 +128,7 @@ local function code_with_infos(t, sess)
 
       info_div.divs = { mk_tooltip(info_popup) }
       info_div.tags.event.clear = do_reset
+      div:insert_new_tooltip(info_div)
       info_open = true
       return true
     end
@@ -145,8 +147,6 @@ local function code_with_infos(t, sess)
     div.highlightable = true
 
     div:insert_new_div(code_with_infos(t.tag[2], sess))
-
-    div:insert_new_tooltip(info_div)
   end
 
   return div
