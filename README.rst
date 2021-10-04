@@ -135,16 +135,27 @@ Features
 Configuration & Usage
 ---------------------
 
-In e.g. your ``init.lua``:
+The short version -- after following the installation instructions above,
+add the below to ``~/.config/nvim/plugin/lean.lua`` or an equivalent:
 
 .. code-block:: lua
 
-    -- If you don't already have a preferred neovim LSP setup, you may want
-    -- to reference the nvim-lspconfig documentation, which can be found at:
+    require('lean').setup{
+      abbreviations = { builtin = true },
+      lsp = { on_attach = on_attach },
+      lsp3 = { on_attach = on_attach },
+      mappings = true,
+    }
+
+where ``on_attach`` should be your preferred LSP attach handler.
+
+If you don't already have one, use:
+
+.. code-block:: lua
+
+    -- You may want to reference the nvim-lspconfig documentation, found at:
     -- https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
-    -- For completeness (of showing this plugin's settings), we show
-    -- a barebones LSP attach handler (which will give you Lean LSP
-    -- functionality in attached buffers) here:
+    -- The below is just a simple initial set of mappings.
     local function on_attach(client, bufnr) {
         local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
         local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
@@ -152,6 +163,11 @@ In e.g. your ``init.lua``:
         buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
         buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
     }
+
+Full Configuration & Settings Information
+-----------------------------------------
+
+.. code-block:: lua
 
     require('lean').setup{
       -- Enable the Lean language server(s)?
@@ -161,10 +177,10 @@ In e.g. your ``init.lua``:
       --
       -- See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls for details.
 
-      -- Lean 4
+      -- Lean 4  (on_attach is as above, your LSP handler)
       lsp = { on_attach = on_attach },
 
-      -- Lean 3
+      -- Lean 3  (on_attach is as above, your LSP handler)
       lsp3 = { on_attach = on_attach },
 
       -- Abbreviation support
@@ -208,17 +224,6 @@ In e.g. your ``init.lua``:
         priority = 10,
       },
     }
-
-If you're using an ``init.vim``-only configuration setup, simply surround the
-above with:
-
-.. code-block:: vim
-
-    lua <<EOF
-      require('lean').setup{
-          ...
-      }
-    EOF
 
 Other Plugins
 -------------
