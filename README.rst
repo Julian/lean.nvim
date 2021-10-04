@@ -107,7 +107,10 @@ Features
 
   * ``<LocalLeader>\``: show what abbreviation would produce the symbol under the cursor
 
-* A basic infoview which can show persistent goal, term & tactic state
+* An infoview which can show persistent goal, term & tactic state,
+  as well as interactive widgets in both
+  `Lean 4 <https://github.com/leanprover/lean4/pull/596>`__ and
+  `3 <https://www.youtube.com/watch?v=8NUBQEZYuis>`__!
 
 * Hover (preview) commands:
 
