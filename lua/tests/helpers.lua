@@ -23,8 +23,7 @@ local default_config = {
     autoopen = false,
     autopause = true,
     show_processing = false,
-    show_loading = false,
-    lean3 = {show_filter = false}
+    lean3 = { show_filter = false }
   },
   lsp3 = {
     enable = false

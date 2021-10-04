@@ -25,9 +25,15 @@ local infoview = {
   ---@type boolean
   debug = false,
 }
-local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, show_processing = true,
-  show_loading = true, use_widget = true, lean3 = {show_filter = true},
-  mappings = {
+local options = {
+  _DEFAULTS = {
+    autoopen = true,
+    width = 50,
+    autopause = false,
+    show_processing = true,
+    use_widget = true,
+    lean3 = { show_filter = true },
+    mappings = {
       ["K"] = [[click]],
       ["<CR>"] = [[click]],
       ["I"] = [[mouse_enter]],
@@ -35,7 +41,9 @@ local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, 
       ["u"] = [[undo]],
       ["U"] = [[clear_undo]],
       ["C"] = [[clear_all]]
-    } } }
+    }
+  }
+}
 
 local _NOTHING_TO_SHOW = { "No info found." }
 
