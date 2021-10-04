@@ -212,8 +212,11 @@ Full Configuration & Settings Information
       infoview = {
         -- Automatically open an infoview on entering a Lean buffer?
         autoopen = true,
-        -- Set the infoview windows' widths
+        -- Set the infoview windows' starting widths
         width = 50,
+        -- Set the infoview windows' starting heights
+        -- (portrait windows are split horizontally)
+        height = 20,
       },
 
       -- Progress bar support
