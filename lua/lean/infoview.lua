@@ -29,6 +29,7 @@ local options = {
   _DEFAULTS = {
     autoopen = true,
     width = 50,
+    height = 20,
     autopause = false,
     show_processing = true,
     use_widget = true,
@@ -70,6 +71,7 @@ local Info = {}
 ---@field id number
 ---@field bufnr number
 ---@field width number
+---@field height number
 ---@field info Info
 local Infoview = {}
 
@@ -85,11 +87,15 @@ function infoview.get_current_infoview()
 end
 
 --- Create a new infoview.
----@param width number: the width of the new infoview
 ---@param open boolean: whether to open the infoview after initializing
 ---@return Infoview
-function Infoview:new(width, open)
-  local new_infoview = {id = #infoview._by_id + 1, width = width, info = Info:new()}
+function Infoview:new(open)
+  local new_infoview = {
+    id = #infoview._by_id + 1,
+    width = options.width,
+    height = options.height,
+    info = Info:new(),
+  }
   table.insert(infoview._by_id, new_infoview)
   self.__index = self
   setmetatable(new_infoview, self)
@@ -103,7 +109,15 @@ end
 function Infoview:open()
   local window_before_split = vim.api.nvim_get_current_win()
 
-  vim.cmd("botright " .. self.width .. "vsplit")
+  local win_width = vim.api.nvim_win_get_width(window_before_split)
+  local win_height = vim.api.nvim_win_get_height(window_before_split)
+
+  local ch_aspect_ratio = 2.5 -- characters are 2.5x taller than they are wide
+  if win_width > ch_aspect_ratio * win_height then -- vertical split
+    vim.cmd("botright " .. self.width .. "vsplit")
+  else -- horizontal split
+    vim.cmd("botright " .. self.height .. "split")
+  end
   vim.cmd(string.format("buffer %d", self.info.bufnr))
   local window = vim.api.nvim_get_current_win()
 
@@ -796,7 +810,7 @@ end
 function infoview.__maybe_autoopen()
   local tabpage = vim.api.nvim_win_get_tabpage(0)
   if not infoview._by_tabpage[tabpage] then
-    infoview._by_tabpage[tabpage] = Infoview:new(options.width, options.autoopen)
+    infoview._by_tabpage[tabpage] = Infoview:new(options.autoopen)
   end
 end
 
