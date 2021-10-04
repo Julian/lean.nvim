@@ -189,7 +189,7 @@ function components.interactive_goals(goal, sess)
   if goal == nil then return div end
 
   div:insert_div({},
-    #goal.goals == 0 and H('goals accomplished 🎉\n') or
+    #goal.goals == 0 and H('goals accomplished 🎉') or
     #goal.goals == 1 and H('1 goal\n') or
     H(string.format('%d goals\n', #goal.goals)))
 
