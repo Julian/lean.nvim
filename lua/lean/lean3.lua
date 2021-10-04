@@ -215,7 +215,8 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
           local clickable_event = div_event == "click" or div_event == "change"
           if clickable_event then element_div.highlightable = true end
           events[div_event] = function(this_tick, value)
-            local args = value and { type = 'string', value = value } or { type = 'unit' }
+            local args = type(value) == 'string' and { type = 'string', value = value }
+              or { type = 'unit' }
             local success = pin:_update(false, 0, this_tick, {widget_event = {
               widget = widget,
               kind = event,
