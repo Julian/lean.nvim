@@ -50,6 +50,10 @@ install ``lean-language-server``, which can be done via e.g.:
 
     $ npm install -g lean-language-server
 
+Given that Lean 3's language server is separate from
+Lean itself, also ensure you've `installed Lean 3 itself
+<https://leanprover-community.github.io/get_started.html>`_.
+
 Lean 4
 ^^^^^^
 
