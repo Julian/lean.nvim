@@ -422,10 +422,6 @@ end
 
 local div_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
 
-vim.api.nvim_command("highlight htmlDivHighlight ctermbg=153 ctermfg=0")
-vim.api.nvim_command("highlight htmlDivLoading ctermfg=8")
-
-
 function Div:buf_get_root(buf)
   local bufdata = self.bufs[buf]
   local root, path
