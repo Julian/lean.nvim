@@ -1,7 +1,7 @@
 -- Stuff that should live in some standard library.
 local Job = require("plenary.job")
 local a = require("plenary.async")
-local control = require'plenary.async.control'
+-- local control = require'plenary.async.control'
 
 local M = {}
 
@@ -107,6 +107,9 @@ end
 
 M.a_request = a.wrap(M.request, 4)
 
+-- FIXME: tick locking is disabled for now
+-- It is really easy to crash the infoview this way if an exception is not handled.
+
 local Tick = {}
 Tick.__index = Tick
 
@@ -118,10 +121,10 @@ function Tick:check()
   -- this tick has been cancelled
   if self.ticker.tick ~= self.tick then
     -- allow waiting ticks to proceed
-    if self.ticker._lock == self.tick then
-      self.ticker._lock = false
-      self.ticker.lock_var:notify_all()
-    end
+    -- if self.ticker._lock == self.tick then
+    --   self.ticker._lock = false
+    --   self.ticker.lock_var:notify_all()
+    -- end
     return false
   end
 
@@ -132,7 +135,9 @@ local Ticker = {}
 Ticker.__index = Ticker
 
 function Ticker:new()
-  return setmetatable({tick = 0, _lock = false, lock_var = control.Condvar.new()}, self)
+  return setmetatable({tick = 0, _lock = false,
+    -- lock_var = control.Condvar.new()
+  }, self)
 end
 
 -- Updates the tick if necessary.
@@ -142,12 +147,12 @@ function Ticker:lock()
   local tick = self.tick
 
   -- if something else has the lock on this pin, wait for it to acknowlege it has been cancelled
-  while self._lock do
-    self.lock_var:wait()
-
-    -- if a new tick was created, this is cancelled
-    if self.tick ~= tick then return false end
-  end
+  -- while self._lock do
+  --   self.lock_var:wait()
+  --
+  --   -- if a new tick was created, this is cancelled
+  --   if self.tick ~= tick then return false end
+  -- end
 
   -- this is the most recent tick, so we can proceed
   self._lock = tick
