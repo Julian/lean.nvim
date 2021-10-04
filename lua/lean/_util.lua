@@ -1,5 +1,7 @@
 -- Stuff that should live in some standard library.
 local Job = require("plenary.job")
+local a = require("plenary.async")
+local control = require'plenary.async.control'
 
 local M = {}
 
@@ -50,6 +52,35 @@ function M.subprocess_check_output(opts, timeout)
   ))
 end
 
+function M.uri_to_existing_bufnr(uri)
+  local path = vim.uri_to_fname(uri)
+  local bufnr = vim.fn.bufnr(path)
+  if vim.fn.bufnr ~= -1 then return bufnr end
+  return nil
+end
+
+-- Lua 5.1 workaround copied from stackoverflow.com/questions/27426704 !!!
+function M.setmt__gc(t, mt)
+  -- luacheck: ignore
+  local prox = newproxy(true)
+  getmetatable(prox).__gc = function() mt.__gc(t) end
+  t[prox] = true
+  return setmetatable(t, mt)
+end
+
+function M.load_mappings(mappings, buffer)
+  local opts = { noremap = true }
+  for mode, mode_mappings in pairs(mappings) do
+    for lhs, rhs in pairs(mode_mappings) do
+      if buffer then
+        vim.api.nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts)
+      else
+        vim.api.nvim_set_keymap(mode, lhs, rhs, opts)
+      end
+    end
+  end
+end
+
 -- from mfussenegger/nvim-lsp-compl@29a81f3
 function M.mk_handler(fn)
   return function(...)
@@ -74,6 +105,83 @@ function M.request(bufnr, method, params, handler)
   return vim.lsp.buf_request(bufnr, method, params, M.mk_handler(handler))
 end
 
+M.a_request = a.wrap(M.request, 4)
+
+local Tick = {}
+Tick.__index = Tick
+
+function Tick:new(tick, ticker)
+  return setmetatable({tick = tick, ticker = ticker}, self)
+end
+
+function Tick:check()
+  -- this tick has been cancelled
+  if self.ticker.tick ~= self.tick then
+    -- allow waiting ticks to proceed
+    if self.ticker._lock == self.tick then
+      self.ticker._lock = false
+      self.ticker.lock_var:notify_all()
+    end
+    return false
+  end
+
+  return true
+end
+
+local Ticker = {}
+Ticker.__index = Ticker
+
+function Ticker:new()
+  return setmetatable({tick = 0, _lock = false, lock_var = control.Condvar.new()}, self)
+end
+
+-- Updates the tick if necessary.
+function Ticker:lock()
+  -- create new tick
+  self.tick = self.tick + 1
+  local tick = self.tick
+
+  -- if something else has the lock on this pin, wait for it to acknowlege it has been cancelled
+  while self._lock do
+    self.lock_var:wait()
+
+    -- if a new tick was created, this is cancelled
+    if self.tick ~= tick then return false end
+  end
+
+  -- this is the most recent tick, so we can proceed
+  self._lock = tick
+
+  return Tick:new(tick, self)
+end
+
+-- Release the current tick. Should only be called if certain the tick is up-to-date.
+function Ticker:release(tick)
+  -- don't free the lock if this tick came from a parent context
+  if tick then return end
+
+  self._lock = false
+end
+
+-- simple alternative to vim.lsp.util._make_floating_popup_size
+function M.make_floating_popup_size(contents)
+  local line_widths = {}
+
+  local width = 0
+  for i, line in ipairs(contents) do
+    -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
+    line_widths[i] = vim.fn.strdisplaywidth(line)
+    width = math.max(line_widths[i], width)
+  end
+
+  local height = #contents
+
+  return width, height
+end
+
+M.Tick = Tick
+M.Ticker = Ticker
+
 --- List workspace folders.
 --- Backport from https://github.com/neovim/neovim/pull/15059
 function M.list_workspace_folders()
@@ -85,5 +193,7 @@ function M.list_workspace_folders()
   end
   return workspace_folders
 end
+
+M.wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) end, 2)
 
 return M

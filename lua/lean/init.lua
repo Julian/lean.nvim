@@ -19,13 +19,15 @@ local lean = {
                            " require'lean.infoview'.__update()<CR>";
       ["<LocalLeader>c"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info:clear_pins()" ..
                            " require'lean.infoview'.__update()<CR>";
+      ["<LocalLeader>w"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info.pin:set_widget(true)<CR>";
+      ["<LocalLeader>W"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info.pin:set_widget(false)<CR>";
       ["<LocalLeader>s"] = "<Cmd>lua require'lean.sorry'.fill()<CR>";
       ["<LocalLeader>t"] = "<Cmd>lua require'lean.trythis'.swap()<CR>";
       ["<LocalLeader>\\"] = "<Cmd>lua require'lean.abbreviations'.show_reverse_lookup()<CR>";
     };
     i = {
     };
-  }
+  };
 }
 
 --- Setup function to be run in your init.lua (or init.vim).
@@ -63,16 +65,8 @@ function lean.setup(opts)
 end
 
 function lean.use_suggested_mappings(buffer_local)
-  local opts = { noremap = true }
-  for mode, mode_mappings in pairs(lean.mappings) do
-    for lhs, rhs in pairs(mode_mappings) do
-      if buffer_local then
-        vim.api.nvim_buf_set_keymap(0, mode, lhs, rhs, opts)
-      else
-        vim.api.nvim_set_keymap(mode, lhs, rhs, opts)
-      end
-    end
-  end
+  local buffer = buffer_local and 0
+  util.load_mappings(lean.mappings, buffer)
 end
 
 --- Is the current buffer a lean buffer?

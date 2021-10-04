@@ -37,8 +37,8 @@ describe('infoview pin', function()
       new_pin:update(true)
       old_pin:update(true)
       assert.pin_pos_changed{new_pin.id}.pin_text_changed{new_pin.id, old_pin.id}.infoview()
-      assert.has_all(new_pin.msg, {"\n⊢ Type"})
-      assert.has_all(old_pin.msg, {"\n⊢ Bool"})
+      assert.has_all(new_pin.div:render(), {"\n⊢ Type"})
+      assert.has_all(old_pin.div:render(), {"\n⊢ Bool"})
     end)
 
     it('can be cleared',

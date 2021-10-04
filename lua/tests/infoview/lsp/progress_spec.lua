@@ -19,7 +19,7 @@ describe('infoview', function()
       vim.api.nvim_win_set_cursor(0, {3, 23})
       infoview.__update()
       assert.initopened.pin_text_changed.infoview()
-      assert.has_all(infoview.get_current_infoview().info.pin.msg, {"Processing file..."})
+      assert.has_all(infoview.get_current_infoview().info.pin.div:render(), {"Processing file..."})
     end)
 
     it('startup',
