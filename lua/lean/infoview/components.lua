@@ -251,31 +251,53 @@ local function tagged_text_msg_embed(t, sess)
     elseif embed.goal ~= nil then
       return interactive_goal(embed.goal, sess)
     elseif embed.lazyTrace ~= nil then
-      local click = function(tick, render_fn)
-        if render_fn then
-          div.divs = {}
-          div:insert_div({}, "loading...", "loading-message")
-          render_fn()
+      local indent = embed.lazyTrace[1]
+      local category = embed.lazyTrace[2]
+      local msg_data = embed.lazyTrace[3]
+
+      local is_open = false
+      local expanded, expanded_err
+
+      local click
+      local function render()
+        local header = html.Div:new({},
+          string.format(is_open and '[%s] ▶' or '[%s] ▼', category))
+        header.highlightable = true
+        header.tags.event = { click = click }
+
+        div.divs = {header}
+
+        if is_open then
+          if expanded then
+            div:insert_new_div(tagged_text_msg_embed(expanded, sess))
+          elseif expanded_err then
+            div:insert_div({}, vim.inspect(expanded_err))
+          else
+            div:insert_div({}, 'loading...')
+          end
         end
-
-        local indent = embed.lazyTrace[1]
-        local expanded, err = sess:msgToInteractive(embed.lazyTrace[3], indent)
-        if not tick:check() then return true end
-
-        if err then
-          print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message))
-          return false
-        end
-
-        div.divs = {}
-        div.highlightable = false
-        div.tags.event.click = nil
-        div:insert_new_div(tagged_text_msg_embed(expanded, sess))
         return true
       end
-      div.highlightable = true
-      div.tags.event = { click = click }
-      div:insert_div({}, '...')
+
+      click = function(tick, render_fn)
+        if is_open then
+          is_open = false
+        else
+          is_open = true
+
+          if not expanded then
+            render()
+            render_fn()
+
+            expanded, expanded_err = sess:msgToInteractive(msg_data, indent)
+            if not tick:check() then return true end
+          end
+        end
+        render()
+        return true
+      end
+
+      render()
     end
   end
 
