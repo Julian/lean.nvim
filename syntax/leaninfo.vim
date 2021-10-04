@@ -9,7 +9,6 @@ syn match leanInfoError "^▶.*: error:$"
 syn match leanInfoWarning "^▶.*: warning:$"
 syn match leanInfoInfo "^▶.*: information:$"
 syn match leanInfoComment "--.*"
-syn region leanInfoBlockComment start="/-" end="-/"
 
 hi def link leanInfoGoals Title
 hi def link leanInfoGoalCase Statement
