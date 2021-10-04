@@ -1,7 +1,7 @@
 -- Stuff that should live in some standard library.
 local Job = require("plenary.job")
 local a = require("plenary.async")
-local control = require'plenary.async.control'
+-- local control = require'plenary.async.control'
 
 local M = {}
 
