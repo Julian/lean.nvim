@@ -21,6 +21,9 @@ local infoview = {
   -- mapping from pin IDs to pins
   ---@type table<number, Pin>
   _pin_by_id = {},
+  --- Whether to print additional debug information in the infoview.
+  ---@type boolean
+  debug = false,
 }
 local options = { _DEFAULTS = { autoopen = true, width = 50, autopause = false, show_processing = true,
   show_loading = true, use_widget = true, lean3 = {show_filter = true},
@@ -60,6 +63,11 @@ local Info = {}
 ---@field width number
 ---@field info Info
 local Infoview = {}
+
+--- Enables printing of extra debugging information in the infoview.
+function infoview.enable_debug()
+  infoview.debug = true
+end
 
 --- Get the infoview corresponding to the current window.
 ---@return Infoview
@@ -190,11 +198,13 @@ function Info:render()
     if current then table.insert(attributes, "CURRENT") end
     if pin.paused then table.insert(attributes, "PAUSED") end
     if pin.loading then table.insert(attributes, "LOADING") end
-    local attributes_txt = ""
-    for _, attribute in ipairs(attributes) do
-      attributes_txt = attributes_txt .. " [" .. attribute .. "]"
+    if infoview.debug then
+      local attributes_txt = ""
+      for _, attribute in ipairs(attributes) do
+        attributes_txt = attributes_txt .. " [" .. attribute .. "]"
+      end
+      header = "-- PIN " .. tostring(pin.id) .. attributes_txt
     end
-    header = "-- PIN " .. tostring(pin.id) .. attributes_txt
 
     if not current and pin.position_params then
       local bufnr = vim.fn.bufnr(vim.uri_to_fname(pin.position_params.textDocument.uri))
@@ -204,19 +214,19 @@ function Info:render()
       else
         filename = pin.position_params.textDocument.uri
       end
-      header = header .. (": file %s at line %d, character %d"):format(filename,
+      header = header and header .. ': ' or '-- '
+      header = header .. ("%s at %d:%d"):format(filename,
         pin.position_params.position.line + 1, pin.position_params.position.character + 1)
     end
     header = header and header .. "\n"
 
     local pin_div = html.Div:new({}, header, "pin_wrapper")
     if pin.div then pin_div:add_div(pin.div) end
-    if #pin.undo_list > 0 then
-      pin_div:add_div(html.Div:new({}, "\n/- undo list size: " .. tostring(#pin.undo_list) .. " -/"))
+    if infoview.debug and #pin.undo_list > 0 then
+      pin_div:add_div(html.Div:new({}, "\n-- undo list size: " .. tostring(#pin.undo_list)))
     end
 
     self.div:add_div(pin_div)
-    self.div:add_div(html.Div:new({}, "\n--", "close_pin"))
   end
 
   render_pin(self.pin, true)

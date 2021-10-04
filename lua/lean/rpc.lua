@@ -161,7 +161,7 @@ Subsession.__index = Subsession
 ---@param sess Session
 ---@param pos TextDocumentPositionParams
 function Subsession:new(sess, pos)
-  return setmetatable({ sess = sess, pos = pos, refs = {} }, self)
+  return setmetatable({ sess = sess, pos = pos }, self)
 end
 
 ---@param method string
