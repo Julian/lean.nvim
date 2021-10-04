@@ -30,12 +30,11 @@ endif
 hi def link leanInfoComment Comment
 hi def link leanInfoBlockComment Comment
 
-highlight leanInfoHighlight ctermbg=153 ctermfg=0
-highlight leanInfoExternalHighlight ctermbg=12 ctermfg=15
-highlight leanInfoTooltip ctermbg=225 ctermfg=0
-highlight leanInfoTooltipSep ctermbg=3 ctermfg=0
-highlight leanInfoButton ctermbg=249 ctermfg=0
-highlight leanInfoField ctermbg=12 ctermfg=0
-highlight leanInfoFieldAlt ctermbg=7 ctermfg=0
-highlight leanInfoFieldSep ctermbg=225 ctermfg=4
-highlight leanInfoLoading ctermfg=8
+hi def link htmlDivHighlight DiffChange
+hi def link htmlDivLoading Comment
+
+hi def link leanInfoExternalHighlight htmlDivHighlight
+hi def link leanInfoButton Pmenu
+hi def link leanInfoField DbgCurrent
+hi def link leanInfoFieldAlt PmenuSel
+hi def link leanInfoFieldSep DbgBreakPt
