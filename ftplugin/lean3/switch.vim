@@ -11,7 +11,7 @@ let b:switch_definitions = [
     \ ['\(begin\n\s*\|by \)\@<!sorry', 'begin\r  sorry\rend'],
     \ ['by sorry', 'by library_search'],
     \ ["tidy", "suggest", "hint", "linarith", "library_search"],
-    \ ["rw", "simp", "simp?"],
+    \ ["rw", "simp", "squeeze_simp"],
     \ ["cases", "rcases", "obtain"],
     \ ["norm_cast", "push_cast"],
     \ ["inl", "inr"],
