@@ -89,28 +89,6 @@ Features
   `snippets.nvim <https://github.com/norcalli/snippets.nvim>`_
   source.
 
-* Initial implementations of some editing helpers (note: no
-  mappings are associated with these by default unless you call
-  ``lean.use_suggested_mappings()`` or set ``mappings = true`` in the
-  configuration)
-
-
-  * ``<LocalLeader>i``: toggle infoview
-
-  * ``<LocalLeader>p``: pause infoview
-
-  * ``<LocalLeader>x``: place pin
-
-  * ``<LocalLeader>c``: clear all current pins
-
-  * ``<LocalLeader>s``: ``sorry`` insertion corresponding to the number of open goals
-
-  * ``<LocalLeader>t``: "try this:" suggestion replacement
-
-  * ``<LocalLeader>3``: force a buffer into Lean 3 mode
-
-  * ``<LocalLeader>\``: show what abbreviation would produce the symbol under the cursor
-
 * An infoview which can show persistent goal, term & tactic state,
   as well as interactive widgets in both
   `Lean 4 <https://github.com/leanprover/lean4/pull/596>`__ and
@@ -135,6 +113,9 @@ Features
   `telescope.nvim <https://github.com/nvim-telescope/telescope.nvim/>`_ for
   live grepping. See the wiki for `a sample configuration
   <https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#live-grep>`_.
+
+* Simple (or simplistic) implementations of some editing helpers, such as ``try
+  this`` suggestion replacement
 
 Configuration & Usage
 ---------------------
@@ -167,6 +148,61 @@ If you don't already have one, use:
         buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
         buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
     }
+
+Mappings
+--------
+
+If you've set ``mappings = true`` in your configuration (or have called
+``lean.use_suggested_mappings()`` explicitly), a number of keys will be mapped
+either within Lean source files or within Infoview windows:
+
+Within Lean files:
+
++---------------------+-------------------------------------------------------+
+|        Key          |                           Function                    |
++=====================+=======================================================+
+| ``<LocalLeader>i``  | toggle tne infoview open or closed                    |
++---------------------+-------------------------------------------------------+
+| ``<LocalLeader>p``  | pause the current infoview                            |
++---------------------+-------------------------------------------------------+
+| ``<LocalLeader>x``  | place an infoview pin                                 |
++---------------------+-------------------------------------------------------+
+| ``<LocalLeader>c``  | clear all current infoview pins                       |
++---------------------+-------------------------------------------------------+
+| ``<LocalLeader>s``  | insert a ``sorry`` for each open goal                 |
++---------------------+-------------------------------------------------------+
+| ``<LocalLeader>t``  | replace a "try this:" suggestion under the cursor     |
++---------------------+-------------------------------------------------------+
+| ``<LocalLeader>3``  | force a buffer into Lean 3 mode                       |
++---------------------+-------------------------------------------------------+
+| ``<LocalLeader>\\`` | show what abbreviation produces the symbol under      |
+|                     | the cursor                                            |
++---------------------+-------------------------------------------------------+
+
+Within Infoview windows:
+
++---------------------+-------------------------------------------------------+
+|        Key          |                           Function                    |
++=====================+=======================================================+
+| ``<CR>``            | click a widget or interactive area of the infoview    |
++---------------------+-------------------------------------------------------+
+| ``K``               | click a widget or interactive area of the infoview    |
++---------------------+-------------------------------------------------------+
+| ``<Tab>``           | jump into a tooltip (from a widget click)             |
++---------------------+-------------------------------------------------------+
+| ``J``               | jump into a tooltip (from a widget click)             |
++---------------------+-------------------------------------------------------+
+| ``u``               | undo the last widget interaction                      |
++---------------------+-------------------------------------------------------+
+| ``I``               | mouse-enter what is under the cursor                  |
++---------------------+-------------------------------------------------------+
+| ``i``               | mouse-leave what is under the cursor                  |
++---------------------+-------------------------------------------------------+
+| ``U``               | clear the stack of undo operations                    |
++---------------------+-------------------------------------------------------+
+| ``C``               | clear the stack of all operations                     |
++---------------------+-------------------------------------------------------+
+
 
 Full Configuration & Settings Information
 -----------------------------------------
