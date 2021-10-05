@@ -261,7 +261,7 @@ local function tagged_text_msg_embed(t, sess)
       local click
       local function render()
         local header = html.Div:new({},
-          string.format(is_open and '[%s] ▶' or '[%s] ▼', category))
+          string.format(is_open and '[%s] ▼' or '[%s] ▶', category))
         header.highlightable = true
         header.tags.event = { click = click }
 
