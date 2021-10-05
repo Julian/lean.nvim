@@ -183,9 +183,9 @@ In Lean Files
 .. note::
 
    See ``:help <LocalLeader>`` if you haven't previously interacted
-   with the local leader key. Some (myself, Julian) included remap this
-   key to make it easier to reach, so you may want to consider what key
-   that means for your own keyboard layout. My ``<Leader>`` is set to
+   with the local leader key. Some vim users remap this key to make it
+   easier to reach, so you may want to consider what key that means
+   for your own keyboard layout. My (Julian's) ``<Leader>`` is set to
    ``<Space>``, and my ``<LocalLeader>`` to ``<Space><Space>``, which
    may be a good choice for you if you have no other preference.
 
