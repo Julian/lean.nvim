@@ -53,6 +53,8 @@ function lean.setup(opts)
   opts.progress_bars = opts.progress_bars or {}
   if opts.progress_bars.enable ~= false then require'lean.progress_bars'.enable(opts.progress_bars) end
 
+  require'lean.stderr'.enable()
+
   if opts.mappings == true then
     vim.cmd[[
       autocmd FileType lean3 lua require'lean'.use_suggested_mappings(true)
