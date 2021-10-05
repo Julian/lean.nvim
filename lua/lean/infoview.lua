@@ -610,7 +610,7 @@ function Pin:__update(tick, delay, lean3_opts)
   delay = delay or 100
 
   self:set_loading(true)
-  self.data_div = html.Div:new({pin = self}, "", "pin-data", nil)
+  local new_data_div = html.Div:new({pin = self}, "", "pin-data", nil)
 
   if delay > 0 then
     util.wait_timer(delay)
@@ -620,7 +620,7 @@ function Pin:__update(tick, delay, lean3_opts)
 
   local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   if buf == -1 then
-    self.data_div:insert_div({}, "No corresponding buffer found.", "no-buffer-msg")
+    error("No corresponding buffer found for update.")
     return false
   end
 
@@ -632,15 +632,16 @@ function Pin:__update(tick, delay, lean3_opts)
 
     if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
       lean3_opts = lean3_opts or {}
-      lean3.update_infoview(self, buf, params, self.use_widget, lean3_opts, options.lean3)
-      return true
+      lean3.update_infoview(self, new_data_div, buf, params,
+        self.use_widget, lean3_opts, options.lean3)
+      goto finish
     end
 
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then
-        self.data_div:insert_div({}, "Processing file...", "processing-msg")
+        new_data_div:insert_div({}, "Processing file...", "processing-msg")
       end
-      return true
+      goto finish
     end
 
     self.sess = rpc.open(buf, params)
@@ -684,14 +685,14 @@ function Pin:__update(tick, delay, lean3_opts)
 
     local goal_div_empty, term_goal_div_empty = #goal_div:render() == 0, #term_goal_div:render() == 0
 
-    self.data_div:insert_new_div(goal_div)
+    new_data_div:insert_new_div(goal_div)
     if not goal_div_empty and not term_goal_div_empty then
-      self.data_div:add_div(html.Div:new({}, "\n\n", "plain_goal-term_goal-separator"))
+      new_data_div:add_div(html.Div:new({}, "\n\n", "plain_goal-term_goal-separator"))
     end
-    self.data_div:insert_new_div(term_goal_div)
+    new_data_div:insert_new_div(term_goal_div)
 
     if goal_div_empty and term_goal_div_empty then
-      self.data_div:insert_new_div(html.Div:new({}, "No tactic/term data found.", "no-tactic-term"))
+      new_data_div:insert_new_div(html.Div:new({}, "No tactic/term data found.", "no-tactic-term"))
     end
 
     local diagnostics_div
@@ -702,12 +703,14 @@ function Pin:__update(tick, delay, lean3_opts)
       end
     end
 
-    self.data_div:insert_new_div(diagnostics_div or components.diagnostics(buf, line))
+    new_data_div:insert_new_div(diagnostics_div or components.diagnostics(buf, line))
 
     if not tick:check() then return true end
     self.div.tags.event.replay(tick)
   end
 
+  ::finish::
+  self.data_div = new_data_div
   return true
 end
 
