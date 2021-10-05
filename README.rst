@@ -141,13 +141,13 @@ If you don't already have one, use:
     -- You may want to reference the nvim-lspconfig documentation, found at:
     -- https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
     -- The below is just a simple initial set of mappings.
-    local function on_attach(client, bufnr) {
+    local function on_attach(client, bufnr)
         local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
         local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
         buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
         buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
         buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
-    }
+    end
 
 Mappings
 --------
