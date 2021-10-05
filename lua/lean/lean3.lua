@@ -79,7 +79,7 @@ local to_event = {
   ["onChange"] = "change";
 }
 
-function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
+function lean3.update_infoview(pin, data_div, bufnr, params, use_widget, opts, options)
   local parent_div = html.Div:new({}, "", "lean-3-widget")
   local widget
 
@@ -311,7 +311,7 @@ function lean3.update_infoview(pin, bufnr, params, use_widget, opts, options)
   if state_div then parent_div:insert_new_div(state_div) end
   parent_div:insert_new_div(components.diagnostics(bufnr, params.position.line))
 
-  pin.data_div:insert_new_div(parent_div)
+  data_div:insert_new_div(parent_div)
 
   -- update all other pins for the same URI so they aren't left with a stale "session"
   if opts and opts.widget_event then
