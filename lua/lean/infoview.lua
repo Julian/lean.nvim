@@ -259,9 +259,6 @@ function Info:render()
     render_pin(pin, false)
   end
 
-  -- FIXME: without the extra newline, the tests fail with obscure errors
-  self.div:insert_div({}, '\n')
-
   self:_render()
   collectgarbage()
 end
