@@ -52,13 +52,6 @@ function M.subprocess_check_output(opts, timeout)
   ))
 end
 
-function M.uri_to_existing_bufnr(uri)
-  local path = vim.uri_to_fname(uri)
-  local bufnr = vim.fn.bufnr(path)
-  if vim.fn.bufnr ~= -1 then return bufnr end
-  return nil
-end
-
 -- Lua 5.1 workaround copied from stackoverflow.com/questions/27426704 !!!
 function M.setmt__gc(t, mt)
   -- luacheck: ignore
