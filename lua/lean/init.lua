@@ -24,6 +24,8 @@ local lean = {
       ["<LocalLeader>s"] = "<Cmd>lua require'lean.sorry'.fill()<CR>";
       ["<LocalLeader>t"] = "<Cmd>lua require'lean.trythis'.swap()<CR>";
       ["<LocalLeader>\\"] = "<Cmd>lua require'lean.abbreviations'.show_reverse_lookup()<CR>";
+      ["<LocalLeader><Tab>"] = "<Cmd>lua vim.api.nvim_set_current_win(" ..
+                               " require'lean.infoview'.get_current_infoview().window)<CR>";
     };
     i = {
     };

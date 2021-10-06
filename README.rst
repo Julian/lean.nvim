@@ -159,26 +159,29 @@ either within Lean source files or within Infoview windows:
 In Lean Files
 ^^^^^^^^^^^^^
 
-+---------------------+-------------------------------------------------------+
-|        Key          |                           Function                    |
-+=====================+=======================================================+
-| ``<LocalLeader>i``  | toggle the infoview open or closed                    |
-+---------------------+-------------------------------------------------------+
-| ``<LocalLeader>p``  | pause the current infoview                            |
-+---------------------+-------------------------------------------------------+
-| ``<LocalLeader>x``  | place an infoview pin                                 |
-+---------------------+-------------------------------------------------------+
-| ``<LocalLeader>c``  | clear all current infoview pins                       |
-+---------------------+-------------------------------------------------------+
-| ``<LocalLeader>s``  | insert a ``sorry`` for each open goal                 |
-+---------------------+-------------------------------------------------------+
-| ``<LocalLeader>t``  | replace a "try this:" suggestion under the cursor     |
-+---------------------+-------------------------------------------------------+
-| ``<LocalLeader>3``  | force a buffer into Lean 3 mode                       |
-+---------------------+-------------------------------------------------------+
-| ``<LocalLeader>\\`` | show what abbreviation produces the symbol under      |
-|                     | the cursor                                            |
-+---------------------+-------------------------------------------------------+
++------------------------+----------------------------------------------------+
+|        Key             |                           Function                 |
++========================+====================================================+
+| ``<LocalLeader>i``     | toggle the infoview open or closed                 |
++------------------------+----------------------------------------------------+
+| ``<LocalLeader>p``     | pause the current infoview                         |
++------------------------+----------------------------------------------------+
+| ``<LocalLeader>x``     | place an infoview pin                              |
++------------------------+----------------------------------------------------+
+| ``<LocalLeader>c``     | clear all current infoview pins                    |
++------------------------+----------------------------------------------------+
+| ``<LocalLeader>s``     | insert a ``sorry`` for each open goal              |
++------------------------+----------------------------------------------------+
+| ``<LocalLeader>t``     | replace a "try this:" suggestion under the cursor  |
++------------------------+----------------------------------------------------+
+| ``<LocalLeader>3``     | force a buffer into Lean 3 mode                    |
++------------------------+----------------------------------------------------+
+| ``<LocalLeader><Tab>`` | jump into the infoview window associated with the  |
+|                        | current lean file (use ``:h ^Wp`` to jump back)    |
++------------------------+----------------------------------------------------+
+| ``<LocalLeader>\\``    | show what abbreviation produces the symbol under   |
+|                        | the cursor                                         |
++------------------------+----------------------------------------------------+
 
 .. note::
 
