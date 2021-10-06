@@ -1,6 +1,11 @@
 local helpers = require('tests.helpers')
 local fixtures = require('tests.fixtures')
 
+helpers.setup {
+  lsp = { enable = true },
+  lsp3 = { enable = true },
+}
+
 describe('ft.detect', function()
   for kind, path in unpack(fixtures.lean_project.files_it) do
     it('detects ' .. kind .. ' lean 4 files', function()
@@ -15,11 +20,6 @@ describe('ft.detect', function()
       assert.are_equal("lean3", vim.opt.filetype:get())
     end)
   end
-
-  helpers.setup {
-    lsp = { enable = true },
-    lsp3 = { enable = true },
-  }
 
   it('detects lean 4 standard library files', function()
     helpers.edit_lean_buffer(fixtures.lean_project.path .. '/Test/JumpToStdlib.lean')
