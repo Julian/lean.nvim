@@ -660,6 +660,7 @@ end
 function Div:buf_event(buf, event, ...)
   local args = {...}
   local bufdata = self.bufs[buf]
+  if not bufdata.path then return end
   self:event(bufdata.path, event, unpack(args))
 end
 
