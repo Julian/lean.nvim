@@ -34,6 +34,9 @@ local default_config = {
 }
 
 function helpers.setup(config)
+  -- initialize on very first nvim window/buffer (base case satisfied pretty trivially)
+  assert.win.created.tracked()
+  assert.buf.created.tracked()
   lean.setup(vim.tbl_deep_extend("keep", config, default_config))
 end
 
@@ -833,9 +836,5 @@ assert:register("assertion", "opened_pin_kept_state", opened_pin_kept)
 assert:register("assertion", "closed_infoview_state", closed_infoview)
 assert:register("assertion", "closed_initialized_infoview_state", closed_initialized_infoview)
 assert:register("assertion", "closed_infoview_kept_state", closed_infoview_kept)
-
--- initialize on very first nvim window/buffer (base case satisfied pretty trivially)
-assert.win.created.tracked()
-assert.buf.created.tracked()
 
 return helpers
