@@ -52,15 +52,6 @@ function M.subprocess_check_output(opts, timeout)
   ))
 end
 
--- Lua 5.1 workaround copied from stackoverflow.com/questions/27426704 !!!
-function M.setmt__gc(t, mt)
-  -- luacheck: ignore
-  local prox = newproxy(true)
-  getmetatable(prox).__gc = function() mt.__gc(t) end
-  t[prox] = true
-  return setmetatable(t, mt)
-end
-
 function M.load_mappings(mappings, buffer)
   local opts = { noremap = true }
   for mode, mode_mappings in pairs(mappings) do
