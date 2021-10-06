@@ -189,7 +189,7 @@ end
 ---@return Div[]|nil @the stack of divs at this path, or nil if the path is invalid
 ---@return Div|nil @the div at this path, or nil if the path is invalid
 function Div:div_from_path(path)
-  if not path then return nil, nil end
+  if not path then print("error: div_from_path received nil path") return nil, nil end
   path = {unpack(path)}
 
   -- check that the first name matches
@@ -237,7 +237,7 @@ end
 ---@param div_stack Div[]
 ---@param check fun(div:Div):boolean
 local function _get_parent_div(div_stack, check)
-  if not div_stack then return nil, nil end
+  if not div_stack then print("error: get_parent_div received nil div stack") return nil, nil end
   div_stack = {unpack(div_stack)}
   for i = #div_stack, 1, -1 do
     local this_div = div_stack[i]
