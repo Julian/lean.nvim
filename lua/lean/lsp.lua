@@ -17,8 +17,8 @@ function lsp.enable(opts)
     ["$/lean/plainTermGoal"] = util.mk_handler(lsp.handlers.plain_term_goal_handler);
     ['$/lean/fileProgress'] = util.mk_handler(lsp.handlers.file_progress_handler);
     ['textDocument/publishDiagnostics'] = function(...)
-      vim.lsp.handlers['textDocument/publishDiagnostics'](...)
       util.mk_handler(lsp.handlers.diagnostics_handler)(...)
+      vim.lsp.handlers['textDocument/publishDiagnostics'](...)
     end;
   })
   require('lspconfig').leanls.setup(opts)
@@ -77,6 +77,15 @@ function lsp.handlers.file_progress_handler(err, params)
 end
 
 function lsp.handlers.diagnostics_handler (_, params)
+  -- Make sure there are no zero-length diagnostics.
+  for _, diag in pairs(params.diagnostics) do
+    ---@type LspRange
+    local range = diag.range
+    if range.start.line == range['end'].line and range.start.character == range['end'].character then
+      range['end'].character = range.start.character + 1
+    end
+  end
+
   require"lean.infoview".__update_event(params.uri)
 end
 
