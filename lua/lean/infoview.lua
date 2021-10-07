@@ -37,6 +37,7 @@ local options = {
     mappings = {
       ["K"] = [[click]],
       ["<CR>"] = [[click]],
+      ["<Esc>"] = [[clear_all]],
       ["I"] = [[mouse_enter]],
       ["i"] = [[mouse_leave]],
       ["u"] = [[undo]],
