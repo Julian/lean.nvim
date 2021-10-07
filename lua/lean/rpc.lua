@@ -42,6 +42,11 @@ function Session:new(bufnr, uri)
       })
     end
   end))
+  -- Terminate RPC session when document is closed.
+  vim.api.nvim_buf_attach(bufnr, false, {
+    on_reload = function() self.closed = true end,
+    on_detach = function() self.closed = true end,
+  })
   return self
 end
 
