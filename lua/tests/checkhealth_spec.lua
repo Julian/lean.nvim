@@ -4,9 +4,6 @@ describe('checkhealth', function()
   it('passes the health check', function()
     vim.api.nvim_command('checkhealth lean')
     assert.has_match([[
-
-health#lean#check
-========================================================================
 ## lean.nvim
   - .*OK:.* `lean ----version`
   - .*INFO:.* Lean .*version .+
