@@ -41,7 +41,8 @@ local options = {
       ["i"] = [[mouse_leave]],
       ["u"] = [[undo]],
       ["U"] = [[clear_undo]],
-      ["C"] = [[clear_all]]
+      ["C"] = [[clear_all]],
+      ["<LocalLeader><Tab>"] = [[goto_last_window]]
     }
   }
 }
@@ -175,7 +176,7 @@ function Info:new()
     bufnr = vim.api.nvim_create_buf(false, true),
     pin = Pin:new(options.autopause, options.use_widget),
     pins = {},
-    div = html.Div:new({info = self}, "", "info")
+    div = html.Div:new({info = self}, "", "info", nil, true)
   }
   table.insert(infoview._info_by_id, new_info)
 
@@ -185,6 +186,13 @@ function Info:new()
   vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
   vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
   new_info.div:buf_register(new_info.bufnr, options.mappings)
+  new_info.div.tags.event = {
+    goto_last_window = function()
+      if new_info.last_window then
+        vim.api.nvim_set_current_win(new_info.last_window)
+      end
+    end
+  }
 
   new_info.pin:add_parent_info(new_info)
 
