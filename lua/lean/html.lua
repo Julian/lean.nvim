@@ -417,7 +417,9 @@ function Div:buf_register(buf, keymaps, tooltip_data)
       mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_event(%d, "%s")<CR>]]):format(self.id, buf, event)
     end
     mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip(%d)<CR>]]):format(self.id, buf)
-    mappings.n["<S-Tab>"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_exit_tooltip(%d)<CR>]]):format(self.id, buf)
+    mappings.n["<S-Tab>"] = (
+      [[<Cmd>lua require'lean.html'._by_id[%d]:buf_goto_parent_tooltip(%d)<CR>]]
+    ):format(self.id, buf)
     mappings.n["J"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip(%d)<CR>]]):format(self.id, buf)
     mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_hop_to(%d)<CR>]]):format(self.id, buf)
   end
@@ -558,7 +560,7 @@ function Div:buf_enter_tooltip(buf)
   end
 end
 
-function Div:buf_exit_tooltip(buf)
+function Div:buf_goto_parent_tooltip(buf)
   local bufdata = self.bufs[buf]
   if bufdata.tooltip_data then
     local parent_bufdata = self.bufs[bufdata.tooltip_data.parent]
