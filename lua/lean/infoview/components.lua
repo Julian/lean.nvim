@@ -224,7 +224,7 @@ end
 function components.diagnostics(bufnr, line)
   local div = html.Div:new({}, "")
   for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics(bufnr, line)) do
-    div:insert_div({}, "\n", "diagnostic-separator")
+    div:insert_div({}, "\n\n", "diagnostic-separator")
     div:insert_div({diag = diag},
         H(string.format('%s: %s:',
           range_to_string(diag.range),
@@ -273,7 +273,7 @@ local function tagged_text_msg_embed(t, sess)
           elseif expanded_err then
             div:insert_div({}, vim.inspect(expanded_err))
           else
-            div:insert_div({}, 'loading...')
+            div:insert_div({}, ' loading...')
           end
         end
         return true
@@ -312,7 +312,7 @@ function components.interactive_diagnostics(diags, line, sess)
   local div = html.Div:new({}, "")
   for _, diag in pairs(diags) do
     if diag.range.start.line == line then
-      div:insert_div({}, "\n", "diagnostic-separator")
+      div:insert_div({}, "\n\n", "diagnostic-separator")
       div:insert_div({diag = diag},
           H(string.format('%s: %s:\n',
             range_to_string(diag.range),
