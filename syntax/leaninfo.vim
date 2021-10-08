@@ -35,6 +35,6 @@ hi def link htmlDivLoading Comment
 
 hi def link leanInfoExternalHighlight htmlDivHighlight
 hi def link leanInfoButton Pmenu
-hi def link leanInfoField DbgCurrent
-hi def link leanInfoFieldAlt PmenuSel
+hi def link leanInfoField Folded
+hi def link leanInfoFieldAlt Folded
 hi def link leanInfoFieldSep DbgBreakPt
