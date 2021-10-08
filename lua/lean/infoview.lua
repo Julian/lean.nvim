@@ -219,6 +219,7 @@ end
 --- Set the current window as the last window used to update this Info.
 function Info:set_last_window()
   self.last_window = vim.api.nvim_get_current_win()
+  self.last_buf = vim.api.nvim_get_current_buf()
 end
 
 --- Update this info's physical contents.
