@@ -699,7 +699,7 @@ function Pin:__update(tick, delay, lean3_opts)
     new_data_div:insert_new_div(term_goal_div)
 
     if goal_div_empty and term_goal_div_empty then
-      new_data_div:insert_new_div(html.Div:new({}, "No tactic/term data found.", "no-tactic-term"))
+      new_data_div:insert_new_div(html.Div:new({}, "No info.", "no-tactic-term"))
     end
 
     local diagnostics_div
