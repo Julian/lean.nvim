@@ -79,7 +79,8 @@ local to_event = {
   ["onChange"] = "change";
 }
 
-function lean3.update_infoview(pin, data_div, bufnr, params, use_widget, opts, options)
+function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
+    opts, options, show_processing)
   local parent_div = html.Div:new({}, "", "lean-3-widget")
   local widget
 
@@ -276,6 +277,13 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget, opts, o
 
   params = vim.deepcopy(params)
   local state_div
+
+  if require"lean.progress".is_processing_at(params) then
+    if show_processing then
+      data_div:insert_div({}, "Processing file...", "processing-msg")
+    end
+    return true
+  end
 
   if use_widget then
     local err, result
