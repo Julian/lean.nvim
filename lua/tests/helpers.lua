@@ -134,38 +134,15 @@ function helpers.edit_lean_buffer(filename)
 end
 
 --- Wait a few seconds for server progress to complete on the current buffer, erroring if it doesn't.
-function helpers.wait_for_server_progress(hover_match)
-  -- if Lean 4, we can just check the reported progress
-  if vim.bo.ft == "lean" then
-    local succeeded, _ = vim.wait(10000, function()
-      return require"lean.progress".is_processing(vim.uri_from_bufnr(vim.api.nvim_get_current_buf()))
-    end)
-    assert.message("Waited for lean 4 server progress to complete but never did.").True(succeeded)
-  -- if Lean 3, there's no concrete indication, so we'll wait for a hover to match the given hover_match
-  else
-    assert.is_not_nil(hover_match)
-    local result, _ = vim.wait(10000, function()
-      local results = vim.lsp.buf_request_sync(0, "textDocument/hover", vim.lsp.util.make_position_params(), 1000)
-      if not results then return false end
-      local text = ""
-      for _, result_table in pairs(results) do
-        if result_table and result_table.error then
-          error("error waiting for server progress: " .. vim.inspect(result_table.error))
-        else
-          local this_result = result_table.result
-          -- we can expect a language-labeled MarkedString[] from Lean 3
-          for _, hover in pairs(this_result.contents) do
-            if type(hover) == "table" and hover.value then text = text .. "\n" .. hover.value
-            elseif type(hover) == "string" then text = text .. "\n" .. hover
-            end
-          end
-        end
-      end
-
-      if text:find(hover_match, nil, true) then return true else return false end
-    end)
-    assert.message("Waited for lean 3 server progress to complete but never did.").is_truthy(result)
-  end
+function helpers.wait_for_server_progress()
+  -- the first fileProgress notification should come within this time,
+  -- so we avoid the initial nil case (for backwards compatibility)
+  vim.wait(5000)
+  local succeeded, _ = vim.wait(10000, function()
+    return not require"lean.progress".is_processing(
+      vim.uri_from_bufnr(vim.api.nvim_get_current_buf()))
+  end)
+  assert.message("Waited for server progress to complete but never did.").True(succeeded)
 end
 
 --- Assert about the entire buffer contents.
