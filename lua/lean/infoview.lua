@@ -705,6 +705,7 @@ function Pin:__update(tick, delay, lean3_opts)
     local diagnostics_div
     if self.use_widget then
       local diags, err = self.sess:getInteractiveDiagnostics()
+      if not tick:check() then return true end
       if not err then
         diagnostics_div = components.interactive_diagnostics(diags, line, self.sess)
       end
@@ -712,8 +713,8 @@ function Pin:__update(tick, delay, lean3_opts)
 
     new_data_div:insert_new_div(diagnostics_div or components.diagnostics(buf, line))
 
-    if not tick:check() then return true end
     self.div.tags.event.replay(tick)
+    if not tick:check() then return true end
   end
 
   ::finish::
