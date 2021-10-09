@@ -257,30 +257,6 @@ local function get_parent_div(div_stack, check)
   return _get_parent_div(div_stack, check)
 end
 
----@param div_stack Div[]
----@return PathNode[]
-local function div_stack_to_path(div_stack)
-  local path = {}
-  for div_i, div in ipairs(div_stack) do
-    local idx
-    if div_i == 1 then
-      idx = -1
-    else
-      local found = false
-      for child_i, child in ipairs(div_stack[div_i-1].divs) do
-        if child == div then
-          idx = child_i
-          found = true
-          break
-        end
-      end
-      if not found then return nil end
-    end
-    table.insert(path, 1, {idx = idx, name = div.name})
-  end
-  return path
-end
-
 local function pos_to_raw_pos(pos, lines)
   local raw_pos = 0
   for i = 1, pos[1] - 1 do
@@ -613,6 +589,17 @@ function Div:buf_hover(buf)
   local hover_div, hover_div_stack = get_parent_div(div_stack, function (div)
     return div.highlightable
   end)
+
+  ---@param _div_stack Div[]
+  ---@return PathNode[]
+  local function div_stack_to_path(_div_stack)
+    local new_path = {}
+    for i, _ in ipairs(_div_stack) do
+      table.insert(new_path, 1, path[#path + 1 - i])
+    end
+    return new_path
+  end
+
   if hover_div then
     local hover_div_path = div_stack_to_path(hover_div_stack)
     to_true_path(hover_div_path)
