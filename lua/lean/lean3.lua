@@ -97,7 +97,11 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget, opts, o
           local prev_div_string = prev_div:render()
           if #prev_div_string > 0 then
             local last_char = prev_div_string:sub(#prev_div_string, #prev_div_string)
-            if last_char ~= " " and last_char ~= "\n" and last_char ~= "(" then
+            if last_char ~= " "
+              and last_char ~= "\n"
+              and last_char ~= "("
+              and last_char ~= "["
+              then
               last_hard_stop = true
             end
           end
@@ -110,7 +114,12 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget, opts, o
         local this_hard_start = false
         if #new_div_string > 0 then
           local first_char = new_div_string:sub(1, 1)
-          if first_char ~= " " and first_char ~= "\n" and first_char ~= ")" and first_char ~= "," then
+          if first_char ~= " "
+            and first_char ~= "\n"
+            and first_char ~= ")"
+            and first_char ~= "]"
+            and first_char ~= ","
+            then
             this_hard_start = true
           end
         end
