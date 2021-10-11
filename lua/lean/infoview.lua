@@ -109,6 +109,8 @@ end
 
 --- Open this infoview if it isn't already open
 function Infoview:open()
+  if self.is_open then return end
+
   local window_before_split = vim.api.nvim_get_current_win()
 
   local win_width = vim.api.nvim_win_get_width(window_before_split)
@@ -823,6 +825,54 @@ function infoview.__maybe_autoopen()
   if not infoview._by_tabpage[tabpage] then
     infoview._by_tabpage[tabpage] = Infoview:new(options.autoopen)
   end
+end
+
+function infoview.open()
+  infoview.__maybe_autoopen()
+  infoview.get_current_infoview():open()
+end
+
+function infoview.toggle()
+  local iv = infoview.get_current_infoview()
+  if iv ~= nil then
+    iv:toggle()
+  else
+    infoview.open()
+  end
+end
+
+function infoview.pin_toggle_pause()
+  local iv = infoview.get_current_infoview()
+  if iv then iv.info.pin:toggle_pause() end
+end
+
+function infoview.add_pin()
+  infoview.open()
+  infoview.get_current_infoview().info:add_pin()
+  infoview.__update()
+end
+
+function infoview.clear_pins()
+  local iv = infoview.get_current_infoview()
+  if iv ~= nil then
+    iv.info:clear_pins()
+    infoview.__update()
+  end
+end
+
+function infoview.enable_widgets()
+  local iv = infoview.get_current_infoview()
+  if iv ~= nil then iv.info.pin:set_widget(true) end
+end
+
+function infoview.disable_widgets()
+  local iv = infoview.get_current_infoview()
+  if iv ~= nil then iv.info.pin:set_widget(false) end
+end
+
+function infoview.go_to()
+  infoview.open()
+  vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
 end
 
 return infoview

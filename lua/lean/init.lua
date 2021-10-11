@@ -13,19 +13,16 @@ local subprocess_check_output = util.subprocess_check_output
 local lean = {
   mappings = {
     n = {
-      ["<LocalLeader>i"] = "<Cmd>lua require'lean.infoview'.get_current_infoview():toggle()<CR>";
-      ["<LocalLeader>p"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info.pin:toggle_pause()<CR>";
-      ["<LocalLeader>x"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info:add_pin()" ..
-                           " require'lean.infoview'.__update()<CR>";
-      ["<LocalLeader>c"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info:clear_pins()" ..
-                           " require'lean.infoview'.__update()<CR>";
-      ["<LocalLeader>w"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info.pin:set_widget(true)<CR>";
-      ["<LocalLeader>W"] = "<Cmd>lua require'lean.infoview'.get_current_infoview().info.pin:set_widget(false)<CR>";
-      ["<LocalLeader>s"] = "<Cmd>lua require'lean.sorry'.fill()<CR>";
-      ["<LocalLeader>t"] = "<Cmd>lua require'lean.trythis'.swap()<CR>";
-      ["<LocalLeader>\\"] = "<Cmd>lua require'lean.abbreviations'.show_reverse_lookup()<CR>";
-      ["<LocalLeader><Tab>"] = "<Cmd>lua vim.api.nvim_set_current_win(" ..
-                               " require'lean.infoview'.get_current_infoview().window)<CR>";
+      ["<LocalLeader>i"] = "<Cmd>LeanInfoviewToggle<CR>";
+      ["<LocalLeader>p"] = "<Cmd>LeanInfoviewPinTogglePause<CR>";
+      ["<LocalLeader>x"] = "<Cmd>LeanInfoviewAddPin<CR>";
+      ["<LocalLeader>c"] = "<Cmd>LeanInfoviewClearPins<CR>";
+      ["<LocalLeader>w"] = "<Cmd>LeanInfoviewEnableWidgets<CR>";
+      ["<LocalLeader>W"] = "<Cmd>LeanInfoviewDisableWidgets<CR>";
+      ["<LocalLeader><Tab>"] = "<Cmd>LeanGotoInfoview<CR>";
+      ["<LocalLeader>s"] = "<Cmd>LeanSorryFill<CR>";
+      ["<LocalLeader>t"] = "<Cmd>LeanTryThis<CR>";
+      ["<LocalLeader>\\"] = "<Cmd>LeanAbbreviationsReverseLookup<CR>";
     };
     i = {
     };
@@ -56,6 +53,21 @@ function lean.setup(opts)
   if opts.progress_bars.enable ~= false then require'lean.progress_bars'.enable(opts.progress_bars) end
 
   require'lean.stderr'.enable()
+
+  vim.cmd[[
+    command LeanInfoviewToggle :lua require'lean.infoview'.toggle()
+    command LeanInfoviewPinTogglePause :lua require'lean.infoview'.pin_toggle_pause()
+    command LeanInfoviewAddPin :lua require'lean.infoview'.add_pin()
+    command LeanInfoviewClearPins :lua require'lean.infoview'.clear_pins()
+    command LeanInfoviewEnableWidgets :lua require'lean.infoview'.enable_widgets()
+    command LeanInfoviewDisableWidgets :lua require'lean.infoview'.disable_widgets()
+    command LeanGotoInfoview :lua require'lean.infoview'.go_to()
+
+    command LeanAbbreviationsReverseLookup :lua require'lean.abbreviations'.show_reverse_lookup()
+
+    command LeanSorryFill :lua require'lean.sorry'.fill()
+    command LeanTryThis :lua require'lean.trythis'.swap()
+  ]]
 
   if opts.mappings == true then
     vim.cmd[[
