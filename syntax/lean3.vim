@@ -1,5 +1,5 @@
 " Vim syntax file
-" Language:		Lean
+" Language:		Lean 3
 " Filename extensions:	*.lean
 " Maintainer:           Gabriel Ebner
 
@@ -8,9 +8,8 @@ syn case match
 " keywords
 
 syn keyword leanCommand prelude import include omit export open mutual
-syn keyword leanCommandPrefix local private protected scoped partial noncomputable meta unsafe
+syn keyword leanCommandPrefix local private protected noncomputable meta
 syn keyword leanModifier renaming hiding where extends using with at rec deriving
-syn keyword leanCommand syntax elab macro_rules macro
 
 syn keyword leanCommand namespace section
 
@@ -27,7 +26,6 @@ syn keyword leanCommand reserve precedence postfix prefix notation infix infixl 
 
 syn keyword leanKeyword begin by end
 syn keyword leanKeyword forall fun Pi from have show assume suffices let if else then in with calc match do this
-syn keyword leanKeyword try catch finally for unless return mut continue break
 syn keyword leanKeyword Sort Prop Type
 syn keyword leanCommand set_option run_cmd
 syn match leanCommand "#eval"
@@ -60,11 +58,7 @@ syn region leanEncl matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP
 syn keyword	leanTodo 	containedin=leanComment TODO FIXME BUG FIX
 
 syn match leanStringEscape '\\.' contained
-syn region leanString start='"' end='"' contains=leanInterpolation,leanStringEscape
-" HACK: Lean 4 supports both interpolated and non-interpolated strings
-" We want "{" to be highlighted as a string (because it often occurs in
-" syntax definitions).
-syn region leanInterpolation contained start='{\(\s*"\)\@!' end='}' contains=TOP keepend
+syn region leanString start='"' end='"' contains=leanStringEscape
 
 syn match leanChar "'[^\\]'"
 syn match leanChar "'\\.'"

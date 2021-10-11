@@ -1,5 +1,5 @@
 " Vim syntax file
-" Language:		Lean
+" Language:		Lean 4
 " Filename extensions:	*.lean
 " Maintainer:           Gabriel Ebner
 
@@ -7,10 +7,10 @@ syn case match
 
 " keywords
 
-syn keyword leanCommand prelude import include omit export open mutual
-syn keyword leanCommandPrefix local private protected scoped partial noncomputable meta unsafe
+syn keyword leanCommand prelude import include export open mutual
+syn keyword leanCommandPrefix local private protected scoped partial noncomputable unsafe
 syn keyword leanModifier renaming hiding where extends using with at rec deriving
-syn keyword leanCommand syntax elab macro_rules macro
+syn keyword leanCommand syntax elab elab_rules macro_rules macro
 
 syn keyword leanCommand namespace section
 
@@ -18,15 +18,15 @@ syn match leanFrenchQuote '«[^»]*»'
 
 syn match leanDeclarationName ' *[^:({\[[:space:]]*' contained
 syn match leanDeclarationName ' *«[^»]*»' contained
-syn keyword leanDeclaration lemma theorem def definition axiom axioms constant abbrev abbreviation
-        \ inductive coinductive structure class instance skipwhite nextgroup=leanDeclarationName
+syn keyword leanDeclaration theorem def axiom constant abbrev
+        \ inductive structure class instance skipwhite nextgroup=leanDeclarationName
 
-syn keyword leanCommand universe example axioms constants
-syn keyword leanCommand meta parameter parameters variable variables
-syn keyword leanCommand reserve precedence postfix prefix notation infix infixl infixr
+syn keyword leanCommand universe example
+syn keyword leanCommand variable
+syn keyword leanCommand precedence postfix prefix notation infix infixl infixr
 
-syn keyword leanKeyword begin by end
-syn keyword leanKeyword forall fun Pi from have show assume suffices let if else then in with calc match do this
+syn keyword leanKeyword by end
+syn keyword leanKeyword forall fun from have show assume suffices let if else then in with calc match do this
 syn keyword leanKeyword try catch finally for unless return mut continue break
 syn keyword leanKeyword Sort Prop Type
 syn keyword leanCommand set_option run_cmd
