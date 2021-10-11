@@ -742,6 +742,7 @@ end
 --- Normally will be called on each CursorHold for a buffer containing Lean.
 --- TODO perhaps this should be schedule_wrap'ed?
 function infoview.__update()
+  if not is_lean_buffer() then return end
   infoview.get_current_infoview().info:set_last_window()
   infoview.get_current_infoview().info.pin:move(vim.lsp.util.make_position_params())
 end
