@@ -216,6 +216,7 @@ function Info:clear_pins()
   for _, pin in pairs(self.pins) do pin:remove_parent_info(self) end
 
   self.pins = {}
+  self:render()
 end
 
 --- Set the current window as the last window used to update this Info.
@@ -857,7 +858,6 @@ function infoview.clear_pins()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then
     iv.info:clear_pins()
-    infoview.__update()
   end
 end
 
