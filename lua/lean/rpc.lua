@@ -250,10 +250,15 @@ end
 ---@field severity LspSeverity?
 ---@field message TaggedTextMsgEmbed
 
+---@class LineRange
+---@field start integer
+---@field end integer
+
+---@param lineRange LineRange?
 ---@return InteractiveDiagnostic[]
 ---@return any error
-function Subsession:getInteractiveDiagnostics()
-  return self:call('Lean.Widget.getInteractiveDiagnostics', {})
+function Subsession:getInteractiveDiagnostics(lineRange)
+  return self:call('Lean.Widget.getInteractiveDiagnostics', {lineRange = lineRange})
 end
 
 ---@class InfoPopup
