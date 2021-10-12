@@ -13,6 +13,12 @@ Prerequisites
 ``lean.nvim`` supports neovim 0.5 or a recent neovim nightly (one
 newer than September 18, 2021).
 
+If you are on neovim 0.5.1 or earlier, ensure you have ``set hidden``
+in your neovim ``init.lua`` or ``init.vim``, otherwise you may see
+degraded performance from the infoview when opening and closing Lean
+files. See `here <https://github.com/Julian/lean.nvim/issues/19>`_ for
+details. Newer versions of neovim `set hidden` by default.
+
 Installation
 ------------
 
@@ -137,6 +143,9 @@ If you do not already have a preferred setup which includes LSP key
 mappings and (auto)completion, you may find the `fuller example here in
 the wiki <https://github.com/Julian/lean.nvim/wiki/Getting-Started>_`
 helpful.
+
+More detail on the full list of supported configuration options can be
+found below.
 
 Mappings
 --------
