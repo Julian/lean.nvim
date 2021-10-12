@@ -16,6 +16,10 @@ describe('infoview', function()
     function(_)
       helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
       helpers.wait_for_ready_lsp()
+      local result = vim.wait(5000, function() return require"lean.progress".is_processing(
+        vim.uri_from_fname(fixtures.lean_project.some_existing_file)) end,
+        50)
+      assert.message"file was never processing".is_truthy(result)
       vim.api.nvim_win_set_cursor(0, {3, 23})
       infoview.__update()
       assert.initopened.pin_text_changed.infoview()
@@ -26,6 +30,10 @@ describe('infoview', function()
     function(_)
       helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
       helpers.wait_for_ready_lsp()
+      local result = vim.wait(5000, function() return require"lean.progress".is_processing(
+        vim.uri_from_fname(fixtures.lean_project.some_existing_file)) end,
+        50)
+      assert.message"file was never processing".is_truthy(result)
       vim.api.nvim_win_set_cursor(0, {3, 23})
       infoview.__update()
       assert.initopened.infoview()
