@@ -707,7 +707,7 @@ function Pin:__update(tick, delay, lean3_opts)
 
     local diagnostics_div
     if self.use_widget then
-      local diags, err = self.sess:getInteractiveDiagnostics()
+      local diags, err = self.sess:getInteractiveDiagnostics({ start = line, ['end'] = line + 1 })
       if not tick:check() then return true end
       if not err then
         diagnostics_div = components.interactive_diagnostics(diags, line, self.sess)
