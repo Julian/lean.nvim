@@ -10,9 +10,8 @@ https://user-images.githubusercontent.com/329822/122589781-acbbe480-d02e-11eb-9b
 Prerequisites
 -------------
 
-``lean.nvim`` supports neovim 0.5
-or a recent *nightly*
-(one newer than September 18, 2021).
+``lean.nvim`` supports neovim 0.5 or a recent neovim nightly (one
+newer than September 18, 2021).
 
 Installation
 ------------
@@ -134,20 +133,10 @@ add the below to ``~/.config/nvim/plugin/lean.lua`` or an equivalent:
 
 where ``on_attach`` should be your preferred LSP attach handler.
 
-If you don't already have one, use:
-
-.. code-block:: lua
-
-    -- You may want to reference the nvim-lspconfig documentation, found at:
-    -- https://github.com/neovim/nvim-lspconfig#keybindings-and-completion
-    -- The below is just a simple initial set of mappings.
-    local function on_attach(client, bufnr)
-        local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
-        local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
-        buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
-        buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
-        buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
-    end
+If you do not already have a preferred setup which includes LSP key
+mappings and (auto)completion, you may find the `fuller example here in
+the wiki <https://github.com/Julian/lean.nvim/wiki/Getting-Started>_`
+helpful.
 
 Mappings
 --------
