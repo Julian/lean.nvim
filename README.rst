@@ -220,7 +220,7 @@ In Infoview Windows
 +------------------------+----------------------------------------------------+
 | ``<LocalLeader><Tab>`` | jump to the lean file associated with the current  |
 |                        | infoview window                                    |
-+---------------------+-------------------------------------------------------+
++------------------------+----------------------------------------------------+
 
 
 Full Configuration & Settings Information
