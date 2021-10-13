@@ -52,6 +52,7 @@ function lean.setup(opts)
   opts.progress_bars = opts.progress_bars or {}
   if opts.progress_bars.enable ~= false then require'lean.progress_bars'.enable(opts.progress_bars) end
 
+  require'lean.ft'.enable(opts.ft or {})
   require'lean.stderr'.enable()
 
   vim.cmd[[
