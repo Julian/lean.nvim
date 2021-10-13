@@ -4,11 +4,10 @@ on: [push, pull_request]
 
 jobs:
   coverage:
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         lean-version:
           - "leanprover-community/lean:3.33.0"
     steps:
@@ -57,15 +56,11 @@ jobs:
 
       - name: Install luarocks and a global luacov
         run: |
-          sudo apt-get install -y luarocks
-          sudo luarocks install luacov
+          brew install lua@5.1 luarocks
+          luarocks install luacov
 
       - name: Run tests with coverage
-        run: |
-          curl -OL https://raw.githubusercontent.com/norcalli/bot-ci/master/scripts/github-actions-setup.sh
-          source github-actions-setup.sh nightly-x64
-          make install-luacov coverage
-        if: runner.os == 'Linux'
+        run: make install-luacov coverage
 
       - name: Upload to codecov.io
         run: bash <(curl -s https://codecov.io/bash) -t 1cbb8732-b172-4681-b4cb-2f11b5d70875
