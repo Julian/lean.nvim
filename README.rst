@@ -172,8 +172,6 @@ In Lean Files
 +------------------------+----------------------------------------------------+
 | ``<LocalLeader>t``     | replace a "try this:" suggestion under the cursor  |
 +------------------------+----------------------------------------------------+
-| ``<LocalLeader>3``     | force a buffer into Lean 3 mode                    |
-+------------------------+----------------------------------------------------+
 | ``<LocalLeader><Tab>`` | jump into the infoview window associated with the  |
 |                        | current lean file                                  |
 +------------------------+----------------------------------------------------+
