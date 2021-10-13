@@ -120,6 +120,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
             and first_char ~= ")"
             and first_char ~= "]"
             and first_char ~= ","
+            and first_char ~= "."
             then
             this_hard_start = true
           end
