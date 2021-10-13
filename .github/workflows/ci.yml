@@ -29,14 +29,11 @@ jobs:
             curl https://raw.githubusercontent.com/Kha/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain "${{ matrix.lean-version }}" -y
             echo "$HOME/.elan/bin/" >> $GITHUB_PATH
 
-      - name: Install neovim
-        run: |
-          neovim_dir=$HOME/neovim
-          mkdir $neovim_dir
-          if [ "`uname`" = Linux ]; then os=linux64; else os=macos; fi
-          curl -sL https://github.com/neovim/neovim/releases/download/${{matrix.nvim-version}}/nvim-$os.tar.gz \
-            | tar xzf - --strip-components=1 -C $neovim_dir
-          echo $neovim_dir/bin >> $GITHUB_PATH
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1.2.8
+        with:
+          neovim: true
+          version: ${{ matrix.nvim-version }}
 
       - name: Install the Lean LSP
         run: sudo npm install -g lean-language-server
