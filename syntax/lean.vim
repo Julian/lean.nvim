@@ -18,7 +18,7 @@ syn match leanFrenchQuote '«[^»]*»'
 
 syn match leanDeclarationName ' *[^:({\[[:space:]]*' contained
 syn match leanDeclarationName ' *«[^»]*»' contained
-syn keyword leanDeclaration theorem def axiom constant abbrev
+syn keyword leanDeclaration theorem lemma def axiom constant abbrev
         \ inductive structure class instance skipwhite nextgroup=leanDeclarationName
 
 syn keyword leanCommand universe example
