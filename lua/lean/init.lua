@@ -104,14 +104,11 @@ function lean.current_search_paths()
   else
     local root = util.list_workspace_folders()[1]
     -- print-paths emits a colon-separated list of .lean paths on the second line
-    local all_paths = subprocess_check_output(
-      { command = "leanpkg", args = {"print-paths"}, cwd = root }
-    )[2]
-
-    paths = vim.tbl_map(
-      function(path) return root .. '/' .. path end,
-      vim.split(all_paths, ':')
-    )
+    local all_paths = vim.fn.json_decode(
+      subprocess_check_output{
+        command = "leanpkg", args = {"print-paths"}, cwd = root
+    })
+    paths = vim.tbl_map(function(path) return root .. '/' .. path end, all_paths.srcPath)
     vim.list_extend(
       paths,
       subprocess_check_output{ command = "lean", args = {"--print-libdir"}, cwd = root }
