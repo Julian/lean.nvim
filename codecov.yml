@@ -3,4 +3,7 @@ coverage:
     patch:
       default:
         informational: true
+    project:
+      default:
+        informational: true
 comment: false
