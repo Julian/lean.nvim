@@ -873,7 +873,13 @@ end
 
 function infoview.go_to()
   infoview.open()
-  vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
+  local curr_info = infoview.get_current_infoview().info
+  -- if there is no last win, just go straight to the window itself
+  if not curr_info.div:buf_last_win_valid(curr_info.bufnr) then
+    vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
+  else
+    curr_info.div:buf_enter_win(curr_info.bufnr)
+  end
 end
 
 return infoview
