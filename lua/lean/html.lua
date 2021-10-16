@@ -568,14 +568,17 @@ end
 
 function Div:buf_update_position(buf)
   local bufdata = self.bufs[buf]
-  local raw_pos = pos_to_raw_pos(vim.api.nvim_win_get_cursor(bufdata.last_win),
-    vim.api.nvim_buf_get_lines(buf, 0, -1, true))
+  local cursor_pos = vim.api.nvim_win_get_cursor(bufdata.last_win)
+  local raw_pos = pos_to_raw_pos(cursor_pos, vim.api.nvim_buf_get_lines(buf, 0, -1, true))
+  local win_info = vim.fn.getwininfo(bufdata.last_win)
+  local win_offset = cursor_pos[1] - win_info[1].topline
   if not raw_pos then return end
   if bufdata.tooltip_data and bufdata.tooltip_data.path then
     local _, tt_div = self:div_from_path(bufdata.tooltip_data.path)
 
     local this_path = tt_div:path_from_pos(raw_pos)
     this_path[1].offset = raw_pos - tt_div:pos_from_path(this_path)
+    this_path[1].win_offset = win_offset
     self.bufs[buf].tooltip_data.subpath = {unpack(this_path)}
 
     table.remove(this_path)
@@ -586,6 +589,7 @@ function Div:buf_update_position(buf)
     self.bufs[buf].path = self:path_from_pos(raw_pos)
     if self.bufs[buf].path then
       self.bufs[buf].path[1].offset = raw_pos - self:pos_from_path(self.bufs[buf].path)
+      self.bufs[buf].path[1].win_offset = win_offset
     end
   end
 end
@@ -632,6 +636,7 @@ function Div:buf_hover(buf)
     -- TODO make this more efficient
     tooltip_parent_path[1].offset = path[1].offset + root:pos_from_path(path)
       - root:pos_from_path(tooltip_parent_path)
+    tooltip_parent_path[1].win_offset = path[1].win_offset
     local tooltip_path = {unpack(tooltip_parent_path)}
     table.insert(tooltip_path, 1, {idx = "tt", name = tt_parent_div.divs.tt.name})
     to_true_path(tooltip_path)
@@ -716,8 +721,10 @@ function Div:buf_goto_path(buf, path)
     vim.api.nvim_win_set_cursor(win, bufpos)
     if prev_win_offset then
       vim.api.nvim_win_call(win, function() vim.api.nvim_command("normal zt") end)
-      vim.api.nvim_win_call(win, function() vim.api.nvim_command(([[exe "normal %d\<c-e>"]]):
-        format(prev_win_offset)) end)
+      if prev_win_offset > 0 then
+        vim.api.nvim_win_call(win, function() vim.api.nvim_command(([[exe "normal %d\<c-y>"]]):
+          format(prev_win_offset)) end)
+      end
     end
     self:buf_update_cursor(buf, win)
   end
