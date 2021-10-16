@@ -308,7 +308,11 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
     end
   end
 
-  if state_div then parent_div:insert_new_div(state_div) end
+  if state_div and #state_div:render() > 0 then
+    parent_div:insert_new_div(state_div)
+  else
+    parent_div:insert_new_div(html.Div:new({}, "No info.", "no-tactic-term"))
+  end
   parent_div:insert_new_div(components.diagnostics(bufnr, params.position.line))
 
   data_div:insert_new_div(parent_div)
