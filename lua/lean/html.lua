@@ -278,12 +278,10 @@ local function raw_pos_to_pos(raw_pos, lines)
 
   for _, line in ipairs(lines) do
     line_num = line_num + 1
-    if rem_chars <= (#line + 1) then break end
+    if rem_chars <= (#line + 1) then return {line_num - 1, rem_chars - 1} end
 
     rem_chars = rem_chars - (#line + 1)
   end
-
-  return {line_num - 1, rem_chars - 1}
 end
 
 local function is_event_div_check(event_name)
@@ -577,6 +575,7 @@ function Div:buf_update_position(buf)
     local _, tt_div = self:div_from_path(bufdata.tooltip_data.path)
 
     local this_path = tt_div:path_from_pos(raw_pos)
+    this_path[1].offset = raw_pos - tt_div:pos_from_path(this_path)
     self.bufs[buf].tooltip_data.subpath = {unpack(this_path)}
 
     table.remove(this_path)
@@ -585,6 +584,9 @@ function Div:buf_update_position(buf)
     self:buf_get_root_buf(buf, function(_, parent_bufdata) parent_bufdata.path = this_path end)
   else
     self.bufs[buf].path = self:path_from_pos(raw_pos)
+    if self.bufs[buf].path then
+      self.bufs[buf].path[1].offset = raw_pos - self:pos_from_path(self.bufs[buf].path)
+    end
   end
 end
 
@@ -627,6 +629,9 @@ function Div:buf_hover(buf)
 
   if tt_parent_div then
     local tooltip_parent_path = div_stack_to_path(tt_parent_div_stack)
+    -- TODO make this more efficient
+    tooltip_parent_path[1].offset = path[1].offset + root:pos_from_path(path)
+      - root:pos_from_path(tooltip_parent_path)
     local tooltip_path = {unpack(tooltip_parent_path)}
     table.insert(tooltip_path, 1, {idx = "tt", name = tt_parent_div.divs.tt.name})
     to_true_path(tooltip_path)
@@ -698,14 +703,22 @@ function Div:buf_goto_path(buf, path)
   local inc_path = {table.remove(path)}
   if self.name ~= inc_path[1].name then return false end
 
-  local prev_pos
+  local prev_pos, prev_win_offset, prev_offset
   local function go_to()
-    local bufpos = raw_pos_to_pos(prev_pos, vim.split(root:render(), "\n"))
+    local bufpos = raw_pos_to_pos(prev_pos + (prev_offset or 0), vim.split(root:render(), "\n"))
+    -- in case the div has been modified such that the offset is no longer valid
+    if not bufpos then
+      bufpos = raw_pos_to_pos(prev_pos, vim.split(root:render(), "\n"))
+    end
     bufpos[1] = bufpos[1] + 1
     local bufdata = self.bufs[buf]
     local win = bufdata.tooltip_data and bufdata.tooltip_data.win or bufdata.last_win
     vim.api.nvim_win_set_cursor(win, bufpos)
-    --vim.api.nvim_win_call(win, function() vim.api.nvim_command("normal zz") end)
+    if prev_win_offset then
+      vim.api.nvim_win_call(win, function() vim.api.nvim_command("normal zt") end)
+      vim.api.nvim_win_call(win, function() vim.api.nvim_command(([[exe "normal %d\<c-e>"]]):
+        format(prev_win_offset)) end)
+    end
     self:buf_update_cursor(buf, win)
   end
   while #path > 0 do
@@ -723,11 +736,13 @@ function Div:buf_goto_path(buf, path)
       if not buf then return false end
       root = self:buf_get_root(buf)
       inc_path = {this_branch}
-      prev_pos = nil
+      prev_pos, prev_win_offset, prev_offset = nil, nil, nil
     else
       local new_pos = root:pos_from_path(inc_path)
       if not new_pos then return end
       prev_pos = new_pos
+      prev_offset = inc_path[1].offset
+      prev_win_offset = inc_path[1].win_offset
     end
   end
   go_to()
