@@ -48,8 +48,6 @@ local options = {
   }
 }
 
-local _NOTHING_TO_SHOW = { "No info found." }
-
 --- An individual pin.
 ---@class Pin
 ---@field id number
@@ -290,11 +288,6 @@ end
 --- Retrieve the current combined contents of the info as a string.
 function Info:get_contents()
   return table.concat(self:get_lines(), "\n")
-end
-
---- Is the info not showing anything?
-function Info:is_empty()
-  return vim.deep_equal(self:get_lines(), _NOTHING_TO_SHOW)
 end
 
 ---@return Pin
