@@ -378,11 +378,12 @@ function Div:filter(fn, skip_tooltips)
   self:__filter(path, pos, fn, skip_tooltips)
 end
 
-function Div:buf_register(buf, keymaps, tooltip_data)
-  self.bufs[buf] = {keymaps = keymaps, children = {}, temp_decorations = {}, tooltip_data = tooltip_data}
+function Div:buf_register(buf, keymaps, tooltip_data, ticker)
+  self.bufs[buf] = {keymaps = keymaps, children = {}, temp_decorations = {}, tooltip_data = tooltip_data,
+    ticker = ticker or util.Ticker:new()}
   util.set_augroup("DivPosition", string.format([[
-    autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor(%d)
-    autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor(%d)
+    autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor(%d, nil, 100)
+    autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor(%d, nil, 100)
   ]], buf, self.id, buf, buf, self.id, buf), buf)
 
   local mappings = {n = {}}
@@ -487,7 +488,7 @@ function Div:buf_render(buf, internal)
       vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
       vim.api.nvim_buf_set_option(tooltip_buf, "modifiable", false)
 
-      self:buf_register(tooltip_buf, bufdata.keymaps, {parent = buf, path = tt_path})
+      self:buf_register(tooltip_buf, bufdata.keymaps, {parent = buf, path = tt_path}, bufdata.ticker)
       bufdata.children[tooltip_buf] = true
       self:buf_render(tooltip_buf, internal)
 
@@ -554,16 +555,27 @@ function Div:buf_last_win_valid(buf)
     and vim.api.nvim_win_get_buf(bufdata.last_win) == buf
 end
 
-function Div:buf_update_cursor(buf, win)
+function Div:buf_update_cursor(buf, win, delay)
+  a.void(function()
   if self.disable_update then return end
   local bufdata = self.bufs[buf]
   win = win or vim.api.nvim_get_current_win()
   if vim.api.nvim_win_get_buf(win) == buf then
     bufdata.last_win = win
   end
+
+  local tick = bufdata.ticker:lock()
+
+  if delay then
+    util.wait_timer(delay)
+    if not tick:check() then return end
+  end
+
   if not self:buf_last_win_valid(buf) then return end
+
   self:buf_update_position(buf)
   self:buf_hover(buf)
+  end)()
 end
 
 function Div:buf_update_position(buf)
@@ -648,6 +660,8 @@ end
 
 function Div:buf_reset(buf, internal)
   local bufdata = self.bufs[buf]
+  -- abort any pending updates
+  bufdata.ticker:lock()
   if not internal then bufdata.path = nil end
   for child_buf, _ in pairs(bufdata.children) do
     local child_bufdata = self.bufs[child_buf]
