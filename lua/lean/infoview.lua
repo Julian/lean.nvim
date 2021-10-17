@@ -122,12 +122,12 @@ function Infoview:open()
   end
   vim.cmd(string.format("buffer %d", self.info.bufnr))
   -- Set the filetype now. Any earlier, and only buffer-local options will be
-  -- properly set in the infoview, since the buffer isn't properly shown yet in
-  -- the window.
+  -- properly set in the infoview, since the buffer isn't actually shown in a
+  -- window until we run :buffer above.
   vim.api.nvim_buf_set_option(self.info.bufnr, 'filetype', 'leaninfo')
   local window = vim.api.nvim_get_current_win()
 
-  -- Make sure we notice even if omeone manually :q's the infoview window.
+  -- Make sure we notice even if someone manually :q's the infoview window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer> lua require'lean.infoview'.__was_closed(%d)
   ]], self.id), 0)
