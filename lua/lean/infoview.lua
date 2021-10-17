@@ -48,8 +48,6 @@ local options = {
   }
 }
 
-local _NOTHING_TO_SHOW = { "No info found." }
-
 --- An individual pin.
 ---@class Pin
 ---@field id number
@@ -123,6 +121,10 @@ function Infoview:open()
     vim.cmd("botright " .. self.height .. "split")
   end
   vim.cmd(string.format("buffer %d", self.info.bufnr))
+  -- Set the filetype now. Any earlier, and only buffer-local options will be
+  -- properly set in the infoview, since the buffer isn't actually shown in a
+  -- window until we run :buffer above.
+  vim.api.nvim_buf_set_option(self.info.bufnr, 'filetype', 'leaninfo')
   local window = vim.api.nvim_get_current_win()
 
   -- Make sure we notice even if someone manually :q's the infoview window.
@@ -187,7 +189,6 @@ function Info:new()
   setmetatable(new_info, self)
 
   vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
-  vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
   new_info.div:buf_register(new_info.bufnr, options.mappings)
   new_info.div.tags.event = {
     goto_last_window = function()
@@ -290,11 +291,6 @@ end
 --- Retrieve the current combined contents of the info as a string.
 function Info:get_contents()
   return table.concat(self:get_lines(), "\n")
-end
-
---- Is the info not showing anything?
-function Info:is_empty()
-  return vim.deep_equal(self:get_lines(), _NOTHING_TO_SHOW)
 end
 
 ---@return Pin
