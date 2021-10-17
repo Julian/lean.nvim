@@ -768,6 +768,7 @@ function Div:buf_hop_to(buf)
 end
 
 function Div:buf_hop(root_buf, root_win, filter_fn, callback_fn)
+  local winpos = vim.api.nvim_win_get_position(0)
   local strategy = {
     get_hint_list = function()
       local hints = {}
@@ -779,6 +780,7 @@ function Div:buf_hop(root_buf, root_win, filter_fn, callback_fn)
         table.insert(windows, this_win)
         local root = self:buf_get_root(this_buf)
         local lines = vim.split(root:render(), "\n")
+        local window_dist = require"hop.hint_util".manh_dist(winpos, vim.api.nvim_win_get_position(this_win))
 
         root:filter(function(div, _, raw_pos)
           if not filter_fn(div) then return end
@@ -788,9 +790,13 @@ function Div:buf_hop(root_buf, root_win, filter_fn, callback_fn)
             line = pos[1] + 1,
             col = pos[2] + 1,
             buf = this_buf,
-
-            win = this_win,
           }
+
+          -- extra metadata
+          hint.dist = require"hop.hint_util".manh_dist(vim.api.nvim_win_get_cursor(this_win),
+            {hint.line, hint.col - 1})
+          hint.wdist = window_dist
+          hint.win = this_win
 
           -- prevent duplicate hints; this works because we are pre-order traversing the div tree
           if not vim.deep_equal(hint, hints[#hints]) then
@@ -812,7 +818,8 @@ function Div:buf_hop(root_buf, root_win, filter_fn, callback_fn)
 
       return hints, {grey_out = require"hop.hint_util".get_grey_out(views_data)}
     end,
-    callback = callback_fn
+    callback = callback_fn,
+    comparator = require"hop.hint_util".comparators.win_cursor_dist_comparator
   }
 
   require"hop".hint(strategy)
