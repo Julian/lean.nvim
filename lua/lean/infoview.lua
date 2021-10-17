@@ -121,9 +121,13 @@ function Infoview:open()
     vim.cmd("botright " .. self.height .. "split")
   end
   vim.cmd(string.format("buffer %d", self.info.bufnr))
+  -- Set the filetype now. Any earlier, and only buffer-local options will be
+  -- properly set in the infoview, since the buffer isn't properly shown yet in
+  -- the window.
+  vim.api.nvim_buf_set_option(self.info.bufnr, 'filetype', 'leaninfo')
   local window = vim.api.nvim_get_current_win()
 
-  -- Make sure we notice even if someone manually :q's the infoview window.
+  -- Make sure we notice even if omeone manually :q's the infoview window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer> lua require'lean.infoview'.__was_closed(%d)
   ]], self.id), 0)
@@ -185,7 +189,6 @@ function Info:new()
   setmetatable(new_info, self)
 
   vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
-  vim.api.nvim_buf_set_option(new_info.bufnr, 'filetype', 'leaninfo')
   new_info.div:buf_register(new_info.bufnr, options.mappings)
   new_info.div.tags.event = {
     goto_last_window = function()
