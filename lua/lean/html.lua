@@ -379,7 +379,7 @@ function Div:filter(fn, skip_tooltips)
 end
 
 function Div:buf_register(buf, keymaps, tooltip_data)
-  self.bufs[buf] = {keymaps = keymaps, children = {}, temp_decorations = {}, tooltip_data = tooltip_data}
+  self.bufs[buf] = {keymaps = keymaps, children = {}, decorations = {}, tooltip_data = tooltip_data}
   util.set_augroup("DivPosition", string.format([[
     autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor(%d)
     autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor(%d)
@@ -426,11 +426,9 @@ function Div:buf_render(buf, internal)
 
   local root, _ = self:buf_get_root(buf)
 
-  if bufdata.temp_decorations.hovers then
-    for _, hover_path in pairs(bufdata.temp_decorations.hovers) do
-      local _, hover_div = self:div_from_path(hover_path)
-      hover_div.hlgroup_override = "htmlDivHighlight"
-    end
+  if bufdata.decorations.hover then
+    local _, hover_div = self:div_from_path(bufdata.decorations.hover)
+    hover_div.hlgroup_override = "htmlDivHighlight"
   end
 
   local text, hls = root:render()
@@ -468,52 +466,48 @@ function Div:buf_render(buf, internal)
     )
   end
 
-  if bufdata.temp_decorations.tooltips then
-    for _, tt_path in pairs(bufdata.temp_decorations.tooltips) do
-      local tt_parent_path = {unpack(tt_path)}
-      table.remove(tt_parent_path, 1)
-      if bufdata.tooltip_data then
-        -- make it relative to the root
-        for _ = 1, #bufdata.tooltip_data.path - 1 do
-          table.remove(tt_parent_path)
-        end
+  if bufdata.decorations.tooltip then
+    local tt_parent_path = {unpack(bufdata.decorations.tooltip)}
+    table.remove(tt_parent_path, 1)
+    if bufdata.tooltip_data then
+      -- make it relative to the root
+      for _ = 1, #bufdata.tooltip_data.path - 1 do
+        table.remove(tt_parent_path)
       end
-
-      local _, tt_div = self:div_from_path(tt_path)
-
-      local width, height = util.make_floating_popup_size(vim.split(tt_div:render(), "\n"))
-
-      local tooltip_buf = vim.api.nvim_create_buf(false, true)
-      vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
-      vim.api.nvim_buf_set_option(tooltip_buf, "modifiable", false)
-
-      self:buf_register(tooltip_buf, bufdata.keymaps, {parent = buf, path = tt_path})
-      bufdata.children[tooltip_buf] = true
-      self:buf_render(tooltip_buf, internal)
-
-      local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), vim.split(root:render(), "\n"))
-
-      local win_options = {
-        relative = "win",
-        win = bufdata.last_win,
-        style = "minimal",
-        width = width,
-        height = height,
-        border = "none",
-        bufpos = bufpos,
-        zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
-      }
-
-      self.disable_update = true
-      local tooltip_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
-      self.disable_update = false
-      -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
-      vim.api.nvim_command("redraw")
-      self.bufs[tooltip_buf].tooltip_data.win = tooltip_win
     end
-  end
 
-  bufdata.temp_decorations = {}
+    local _, tt_div = self:div_from_path(bufdata.decorations.tooltip)
+
+    local width, height = util.make_floating_popup_size(vim.split(tt_div:render(), "\n"))
+
+    local tooltip_buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
+    vim.api.nvim_buf_set_option(tooltip_buf, "modifiable", false)
+
+    self:buf_register(tooltip_buf, bufdata.keymaps, {parent = buf, path = bufdata.decorations.tooltip})
+    bufdata.children[tooltip_buf] = true
+    self:buf_render(tooltip_buf, true)
+
+    local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), vim.split(root:render(), "\n"))
+
+    local win_options = {
+      relative = "win",
+      win = bufdata.last_win,
+      style = "minimal",
+      width = width,
+      height = height,
+      border = "none",
+      bufpos = bufpos,
+      zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
+    }
+
+    self.disable_update = true
+    local tooltip_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
+    self.disable_update = false
+    -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
+    vim.api.nvim_command("redraw")
+    self.bufs[tooltip_buf].tooltip_data.win = tooltip_win
+  end
 
   if restore_path then
     self:buf_goto_path(buf, restore_path)
@@ -544,6 +538,7 @@ function Div:buf_goto_parent_tooltip(buf)
   if bufdata.tooltip_data then
     local parent_bufdata = self.bufs[bufdata.tooltip_data.parent]
     if parent_bufdata.last_win then vim.api.nvim_set_current_win(parent_bufdata.last_win) end
+    self:buf_render(bufdata.tooltip_data.parent, true)
   end
 end
 
@@ -562,12 +557,33 @@ function Div:buf_update_cursor(buf, win)
     bufdata.last_win = win
   end
   if not self:buf_last_win_valid(buf) then return end
-  self:buf_update_position(buf)
-  self:buf_hover(buf)
+
+  local path_changed = self:buf_update_position(buf)
+  local decorations_changed = path_changed and self:buf_hover(buf)
+  if decorations_changed then
+    self:buf_render(buf, true)
+  end
+end
+
+--- Checks if two paths are equal, ignoring auxillary metadata (e.g. offsets)
+---@param path_a PathNode[] @first path
+---@param path_b PathNode[] @second path
+local function path_equal(path_a, path_b)
+  if path_a == nil and path_b == nil then return true end
+  if not path_a or not path_b then return false end
+  if #path_a ~= #path_b then return false end
+
+  for i, _ in ipairs(path_a) do
+    if path_a[i].idx ~= path_b[i].idx then return false end
+    if path_a[i].name ~= path_b[i].name then return false end
+  end
+
+  return true
 end
 
 function Div:buf_update_position(buf)
   local bufdata = self.bufs[buf]
+  local path_before = bufdata.path
   local cursor_pos = vim.api.nvim_win_get_cursor(bufdata.last_win)
   local raw_pos = pos_to_raw_pos(cursor_pos, vim.api.nvim_buf_get_lines(buf, 0, -1, true))
   local win_info = vim.fn.getwininfo(bufdata.last_win)
@@ -579,19 +595,21 @@ function Div:buf_update_position(buf)
     local this_path = tt_div:path_from_pos(raw_pos)
     this_path[1].offset = raw_pos - tt_div:pos_from_path(this_path)
     this_path[1].win_offset = win_offset
-    self.bufs[buf].tooltip_data.subpath = {unpack(this_path)}
+    bufdata.tooltip_data.subpath = {unpack(this_path)}
 
     table.remove(this_path)
     vim.list_extend(this_path, bufdata.tooltip_data.path)
-    self.bufs[buf].path = this_path
+    bufdata.path = this_path
     self:buf_get_root_buf(buf, function(_, parent_bufdata) parent_bufdata.path = this_path end)
   else
-    self.bufs[buf].path = self:path_from_pos(raw_pos)
+    bufdata.path = self:path_from_pos(raw_pos)
     if self.bufs[buf].path then
-      self.bufs[buf].path[1].offset = raw_pos - self:pos_from_path(self.bufs[buf].path)
-      self.bufs[buf].path[1].win_offset = win_offset
+      bufdata.path[1].offset = raw_pos - self:pos_from_path(self.bufs[buf].path)
+      bufdata.path[1].win_offset = win_offset
     end
   end
+
+  return not path_equal(path_before, bufdata.path)
 end
 
 function Div:buf_hover(buf)
@@ -607,12 +625,6 @@ function Div:buf_hover(buf)
     end
   end
 
-  local div_stack, _ = root:div_from_path(path)
-  ---@param div Div
-  local hover_div, hover_div_stack = get_parent_div(div_stack, function (div)
-    return div.highlightable
-  end)
-
   ---@param _div_stack Div[]
   ---@return PathNode[]
   local function div_stack_to_path(_div_stack)
@@ -623,10 +635,21 @@ function Div:buf_hover(buf)
     return new_path
   end
 
+  local old_decorations = vim.deepcopy(bufdata.decorations)
+
+  local div_stack, _ = root:div_from_path(path)
+
+  ---@param div Div
+  local hover_div, hover_div_stack = get_parent_div(div_stack, function (div)
+    return div.highlightable
+  end)
+
   if hover_div then
     local hover_div_path = div_stack_to_path(hover_div_stack)
     to_true_path(hover_div_path)
-    bufdata.temp_decorations.hovers = {hover_div_path}
+    bufdata.decorations.hover = hover_div_path
+  else
+    bufdata.decorations.hover = nil
   end
 
   local tt_parent_div, tt_parent_div_stack = get_parent_div(div_stack, function (div) return div.divs.tt end)
@@ -640,15 +663,21 @@ function Div:buf_hover(buf)
     local tooltip_path = {unpack(tooltip_parent_path)}
     table.insert(tooltip_path, 1, {idx = "tt", name = tt_parent_div.divs.tt.name})
     to_true_path(tooltip_path)
-    bufdata.temp_decorations.tooltips = {tooltip_path}
+    bufdata.decorations.tooltip = tooltip_path
+  else
+    bufdata.decorations.tooltip = nil
   end
 
-  self:buf_render(buf, true)
+  return not path_equal(old_decorations.hover, bufdata.decorations.hover) or
+         not path_equal(old_decorations.tooltip, bufdata.decorations.tooltip)
 end
 
 function Div:buf_reset(buf, internal)
   local bufdata = self.bufs[buf]
-  if not internal then bufdata.path = nil end
+  if not internal then
+    bufdata.path = nil
+    bufdata.decorations = {}
+  end
   for child_buf, _ in pairs(bufdata.children) do
     local child_bufdata = self.bufs[child_buf]
     if not internal then
