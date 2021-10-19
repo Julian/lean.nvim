@@ -434,14 +434,17 @@ function Div:buf_render(buf, internal)
   local text, hls = root:render()
   local lines = vim.split(text, "\n")
 
-  vim.api.nvim_buf_set_option(buf, 'modifiable', true)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, true, lines)
-  -- HACK: This shouldn't really do anything, but I think there's a neovim
-  --       display bug. See #27 and neovim/neovim#14663. Specifically,
-  --       as of NVIM v0.5.0-dev+e0a01bdf7, without this, updating a long
-  --       infoview with shorter contents doesn't properly redraw.
-  vim.api.nvim_buf_call(buf, vim.fn.winline)
-  vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+  -- internal updates shouldn't change the text
+  if not internal then
+    vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+    vim.api.nvim_buf_set_lines(buf, 0, -1, true, lines)
+    -- HACK: This shouldn't really do anything, but I think there's a neovim
+    --       display bug. See #27 and neovim/neovim#14663. Specifically,
+    --       as of NVIM v0.5.0-dev+e0a01bdf7, without this, updating a long
+    --       infoview with shorter contents doesn't properly redraw.
+    vim.api.nvim_buf_call(buf, vim.fn.winline)
+    vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+  end
 
   table.sort(hls, function(hl1, hl2)
     local range1 = (hl1["end"] - hl1.start)
@@ -486,7 +489,7 @@ function Div:buf_render(buf, internal)
 
     self:buf_register(tooltip_buf, bufdata.keymaps, {parent = buf, path = bufdata.decorations.tooltip})
     bufdata.children[tooltip_buf] = true
-    self:buf_render(tooltip_buf, true)
+    self:buf_render(tooltip_buf, false)
 
     local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), vim.split(root:render(), "\n"))
 
