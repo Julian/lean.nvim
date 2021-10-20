@@ -127,6 +127,12 @@ function Infoview:open()
   vim.api.nvim_buf_set_option(self.info.bufnr, 'filetype', 'leaninfo')
   local window = vim.api.nvim_get_current_win()
 
+  -- Show/hide current pin extmark when entering/leaving infoview.
+  set_augroup("LeanInfoviewShowPin", string.format([[
+    autocmd WinEnter <buffer> lua require'lean.infoview'.__show_curr_pin(%d)
+    autocmd WinLeave <buffer> lua require'lean.infoview'.__hide_curr_pin(%d)
+  ]], self.id, self.id), 0)
+
   -- Make sure we notice even if someone manually :q's the infoview window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer> lua require'lean.infoview'.__was_closed(%d)
@@ -510,9 +516,9 @@ end
 
 function Pin:toggle_pause() if not self.paused then self:pause() else self:unpause() end end
 
-function Pin:show_extmark()
+function Pin:show_extmark(name)
   self.extmark_hl_group = pin_hl_group
-  self.extmark_virt_text = {{"<-- PIN " .. tostring(self.id), "Comment"}};
+  self.extmark_virt_text = {{"<-- PIN " .. (name or tostring(self.id)), "Comment"}};
   self:update_extmark()
 end
 
@@ -733,6 +739,20 @@ end
 ---@param id number
 function infoview.__was_closed(id)
   infoview._by_id[id]:close()
+end
+
+--- An infoview was entered, show the extmark for the current pin.
+--- Will be triggered via a `WinEnter` autocmd.
+---@param id number
+function infoview.__show_curr_pin(id)
+  infoview._by_id[id].info.pin:show_extmark("CURRENT")
+end
+
+--- An infoview was left, hide the extmark for the current pin.
+--- Will be triggered via a `WinLeave` autocmd.
+---@param id number
+function infoview.__hide_curr_pin(id)
+  infoview._by_id[id].info.pin:hide_extmark()
 end
 
 --- Update the info contents appropriately for Lean 4 or 3.
