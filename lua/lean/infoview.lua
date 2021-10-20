@@ -7,6 +7,7 @@ local set_augroup = util.set_augroup
 local a = require'plenary.async'
 local html = require'lean.html'
 local rpc = require'lean.rpc'
+local protocol = require'vim.lsp.protocol'
 
 local infoview = {
   -- mapping from infoview IDs to infoviews
@@ -681,37 +682,44 @@ function Pin:__update(tick, delay, lean3_opts)
 
     local goal_div
     if self.use_widget then
-      local goal, goal_err = self.sess:getInteractiveGoals(params)
+      local goal, err = self.sess:getInteractiveGoals(params)
       if not tick:check() then return true end
-      if not goal_err then
+      if err and err.code == protocol.ErrorCodes.ContentModified then
+        return self:__update(tick, delay, lean3_opts)
+      end
+      if not err then
         goal_div = components.interactive_goals(goal, self.sess)
       end
     end
 
     if not goal_div then
-      local _, goal = plain_goal(params, buf)
+      local err, goal = plain_goal(params, buf)
       if not tick:check() then return true end
+      if err and err.code == protocol.ErrorCodes.ContentModified then
+        return self:__update(tick, delay, lean3_opts)
+      end
       goal_div = components.goal(goal)
     end
 
-    local term_goal, term_goal_err
     local term_goal_div
-
     if self.use_widget then
-      term_goal, term_goal_err = self.sess:getInteractiveTermGoal(params)
+      local term_goal, err = self.sess:getInteractiveTermGoal(params)
       if not tick:check() then return true end
-      if term_goal_err then
-        term_goal = nil
-      else
+      if err and err.code == protocol.ErrorCodes.ContentModified then
+        return self:__update(tick, delay, lean3_opts)
+      end
+      if not err then
         term_goal_div = components.interactive_term_goal(term_goal, self.sess)
       end
     end
 
-    if not term_goal then
+    if not term_goal_div then
       self:clear_undo_list()
-      local _, _plain_term_goal = plain_term_goal(params, buf)
+      local err, term_goal = plain_term_goal(params, buf)
       if not tick:check() then return true end
-      term_goal = _plain_term_goal
+      if err and err.code == protocol.ErrorCodes.ContentModified then
+        return self:__update(tick, delay, lean3_opts)
+      end
       term_goal_div = components.term_goal(term_goal)
     end
 
@@ -731,6 +739,9 @@ function Pin:__update(tick, delay, lean3_opts)
     if self.use_widget then
       local diags, err = self.sess:getInteractiveDiagnostics({ start = line, ['end'] = line + 1 })
       if not tick:check() then return true end
+      if err and err.code == protocol.ErrorCodes.ContentModified then
+        return self:__update(tick, delay, lean3_opts)
+      end
       if not err then
         diagnostics_div = components.interactive_diagnostics(diags, line, self.sess)
       end

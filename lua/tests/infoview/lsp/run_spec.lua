@@ -34,16 +34,18 @@ describe('infoview', function()
         {"1 goal", "p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
     end)
 
-    pending('re-issues on ContentModified',
-    function(_)
-      vim.api.nvim_win_set_cursor(0, {16, 1})
-      infoview.get_current_infoview().info.pin:set_position_params(position())
-      vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def new_test : Prop := by"})
-      infoview.get_current_infoview().info.pin:update(true)
-      vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def new_test : Nat := by"})
-      assert.pin_pos_changed.pin_text_changed.infoview()
-      assert.has_all(infoview.get_current_infoview().info.pin.div:render(), {"1 goal\n⊢ Nat"})
-    end)
+    if vim.version().minor == 6 then
+      it('re-issues on ContentModified',
+      function(_)
+        vim.api.nvim_win_set_cursor(0, {16, 1})
+        infoview.get_current_infoview().info.pin:set_position_params(position())
+        vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def new_test : Prop := by"})
+        infoview.get_current_infoview().info.pin:update(true, 0)
+        vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def new_test : Nat := by"})
+        assert.pin_pos_changed.pin_text_changed.infoview()
+        assert.has_all(infoview.get_current_infoview().info.pin.div:render(), {"1 goal\n⊢ Nat"})
+      end)
+    end
   end)
 
   describe('lean 3', function()
