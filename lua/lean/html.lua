@@ -352,7 +352,7 @@ function Div:__filter(path, pos, fn, skip_tooltips)
   for idx, child in ipairs(self.divs) do
     local new_path = {unpack(path)}
     table.insert(new_path, {idx = idx, name = child.name})
-    fn(self, new_path, pos)
+    fn(child, new_path, pos)
 
     pos = child:__filter(new_path, pos, fn, skip_tooltips)
   end
@@ -362,7 +362,7 @@ function Div:__filter(path, pos, fn, skip_tooltips)
     local new_path = {unpack(path)}
     table.insert(new_path, {idx = "tt", name = child.name})
     local new_pos = 1
-    fn(self, new_path, new_pos)
+    fn(child, new_path, new_pos)
 
     child:__filter(new_path, new_pos, fn, skip_tooltips)
   end
