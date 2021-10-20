@@ -257,9 +257,10 @@ function Info:render()
       end
       local location_text = ("%s at %d:%d"):format(filename,
         pin.position_params.position.line + 1, pin.position_params.position.character + 1)
-      local location_div = header_div:insert_div({}, location_text, "pin-location")
-      location_div.highlightable = true
-      location_div.tags.event = {
+      header_div:insert_div({}, location_text, "pin-location")
+
+      header_div.highlightable = true
+      header_div.tags.event = {
         click = function()
           if self.last_window then
             vim.api.nvim_set_current_win(self.last_window)
