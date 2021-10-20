@@ -236,17 +236,16 @@ end
 function Info:render()
   self.div.divs = {}
   local function render_pin(pin, current)
-    local header
+    local header_div = html.Div:new({}, "", "pin-header")
     if infoview.debug then
-      local attributes = {}
-      if current then table.insert(attributes, "CURRENT") end
-      if pin.paused then table.insert(attributes, "PAUSED") end
-      if pin.loading then table.insert(attributes, "LOADING") end
-      local attributes_txt = ""
-      for _, attribute in ipairs(attributes) do
-        attributes_txt = attributes_txt .. " [" .. attribute .. "]"
+      header_div:insert_div({}, "-- PIN " .. tostring(pin.id), "pin-id-header")
+
+      local function add_attribute(text, name)
+        header_div:insert_div({}, " [" .. text .. "]", name .. "-attribute")
       end
-      header = "-- PIN " .. tostring(pin.id) .. attributes_txt
+      if current then add_attribute("CURRENT", "current") end
+      if pin.paused then add_attribute("PAUSED", "paused") end
+      if pin.loading then add_attribute("LOADING", "loading") end
     end
 
     if not current and pin.position_params then
@@ -257,13 +256,34 @@ function Info:render()
       else
         filename = pin.position_params.textDocument.uri
       end
-      header = header and header .. ': ' or '-- '
-      header = header .. ("%s at %d:%d"):format(filename,
+      if not infoview.debug then
+        header_div:insert_div({}, "-- ", "pin-id-header")
+      else
+        header_div:insert_div({}, ": ", "pin-header-separator")
+      end
+      local location_text = ("%s at %d:%d"):format(filename,
         pin.position_params.position.line + 1, pin.position_params.position.character + 1)
-    end
-    header = header and header .. "\n"
+      header_div:insert_div({}, location_text, "pin-location")
 
-    local pin_div = html.Div:new({}, header, "pin_wrapper")
+      header_div.highlightable = true
+      header_div.tags.event = {
+        click = function()
+          if self.last_window then
+            vim.api.nvim_set_current_win(self.last_window)
+            local uri_bufnr = vim.uri_to_bufnr(pin.position_params.textDocument.uri)
+            vim.api.nvim_set_current_buf(uri_bufnr)
+            vim.api.nvim_win_set_cursor(0,
+              { pin.position_params.position.line + 1, pin.position_params.position.character })
+          end
+        end
+      }
+    end
+    if #header_div:render() > 0 then
+      header_div:insert_div({}, "\n", "pin-header-end")
+    end
+
+    local pin_div = html.Div:new({}, "", "pin_wrapper")
+    pin_div:insert_new_div(header_div)
     if pin.div then pin_div:add_div(pin.div) end
     if infoview.debug and #pin.undo_list > 0 then
       pin_div:add_div(html.Div:new({}, "\n-- undo list size: " .. tostring(#pin.undo_list)))
