@@ -39,6 +39,14 @@ describe('builtin abbreviations', function()
         assert.contents.are('ε')
       end))
 
+      it('resets original buffer mapping', helpers.clean_buffer(ft, '', function()
+        vim.api.nvim_buf_set_keymap(0, 'i', '<Tab>', 'tab', { noremap = true })
+        helpers.insert('\\e<Tab>')
+        wait_for_expansion()
+        helpers.insert('<Tab>')
+        assert.contents.are('εtab')
+      end))
+
       it('inserts nothing on <Tab> mid-line',
         helpers.clean_buffer(ft, 'foo bar baz quux,', function()
           vim.cmd('normal $')
