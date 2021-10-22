@@ -40,11 +40,21 @@ describe('builtin abbreviations', function()
       end))
 
       it('resets original buffer mapping', helpers.clean_buffer(ft, '', function()
-        vim.api.nvim_buf_set_keymap(0, 'i', '<Tab>', 'tab', { noremap = true })
+        vim.api.nvim_buf_set_keymap(
+            0,
+            'i',
+            '<Tab>',
+            '<C-o>:lua vim.b.foo = 12<CR>',
+            { noremap = true }
+        )
         helpers.insert('\\e<Tab>')
         wait_for_expansion()
+        assert.contents.are('ε')
+        assert.falsy(vim.b.foo)
         helpers.insert('<Tab>')
-        assert.contents.are('εtab')
+        assert.contents.are('ε')
+        assert.are.same(vim.b.foo, 12)
+        vim.api.nvim_buf_del_keymap(0, 'i', '<Tab>')
       end))
 
       it('inserts nothing on <Tab> mid-line',
