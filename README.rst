@@ -312,8 +312,8 @@ you're interested in. Below is a (hopelessly incomplete) list of a few:
 Contributing
 ------------
 
-Contributions are most welcome, as is just letting me know you use this at this
-point :)
+Contributions are most welcome. Feel free to send pull requests for anything
+you'd like to see, or open an issue if you'd like to discuss.
 
 Running the tests can be done via the ``Makefile``:
 
@@ -322,6 +322,12 @@ Running the tests can be done via the ``Makefile``:
     $ make test
 
 which will execute against a minimal ``vimrc`` isolated from your own setup.
+
+.. code-block:: sh
+
+    $ TEST_FILE=lua/tests/foo_spec.lua make test
+
+can be used to run just one specific test file, which can be faster.
 
 Some linting and style checking is done via `pre-commit
 <https://pre-commit.com/#install>`_, which once installed (via the linked
@@ -333,3 +339,12 @@ instructions) can be run via:
 
 or on each commit automatically by running ``pre-commit install`` in your
 repository checkout.
+
+You can also use
+
+.. code-block:: sh
+
+    $ make nvim SETUP_TABLE='{ lsp3 = { enable = true }, mappings = true }'
+
+to get a normal running neovim (again isolated from your own configuration),
+where ``SETUP_TABLE`` is a (Lua) table like one would pass to ``lean.setup``.
