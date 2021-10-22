@@ -8,6 +8,7 @@ local set_augroup = require('lean._util').set_augroup
 
 local abbreviations = {}
 
+local buf_imaps = {}
 local _MEMOIZED = nil
 local _CURSOR_MARKER = '$CURSOR'
 
@@ -105,11 +106,37 @@ local function get_extmark_range(abbr_ns, id, buffer)
   return row, col, details and details.end_row, details and details.end_col
 end
 
+local function backup_buf_imap(key)
+  local imap = vim.fn.maparg(key, "i", false, true)
+  if vim.fn.empty(imap) == 0 then
+    buf_imaps[key] = {
+      rhs = imap.rhs,
+      opts = {
+        noremap = imap.noremap == 1,
+        expr = imap.expr == 1,
+        silent = imap.silent == 1,
+        nowait = imap.nowait == 1,
+        script = imap.script == 1,
+      },
+    }
+  end
+end
+
+local function restore_buf_imaps()
+  for k, v in pairs(buf_imaps) do
+    if type(v) == 'table' and next(v) then
+      vim.api.nvim_buf_set_keymap(0, 'i', k, v.rhs, v.opts)
+      buf_imaps[k] = nil
+    end
+  end
+end
+
 local function _clear_abbr_mark()
   vim.api.nvim_buf_del_extmark(0, abbr_mark_ns, abbreviations.abbr_mark)
   abbreviations.abbr_mark = nil
   vim.api.nvim_buf_del_keymap(0, 'i', '<CR>')
   vim.api.nvim_buf_del_keymap(0, 'i', '<Tab>')
+  restore_buf_imaps()
 end
 
 function abbreviations._insert_char_pre()
@@ -151,7 +178,9 @@ function abbreviations._insert_char_pre()
       end_right_gravity = true,
     })
     -- override only for the duration of the abbreviation (clashes with autocompletion plugins)
+    backup_buf_imap('<CR>')
     vim.api.nvim_buf_set_keymap(0, 'i', '<CR>', 'v:lua._lean_abbreviations_enter_expr()', {expr = true, noremap = true})
+    backup_buf_imap('<Tab>')
     vim.api.nvim_buf_set_keymap(0, 'i', '<Tab>', 'v:lua._lean_abbreviations_tab_expr()', {expr = true, noremap = true})
     return
   end
