@@ -28,13 +28,16 @@ local infoview = {
 }
 local options = {
   _DEFAULTS = {
-    autoopen = true,
     width = 50,
     height = 20,
+
+    autoopen = true,
     autopause = false,
+    indicators = "auto",
+    lean3 = { show_filter = true },
     show_processing = true,
     use_widget = true,
-    lean3 = { show_filter = true },
+
     mappings = {
       ["K"] = [[click]],
       ["<CR>"] = [[click]],
@@ -64,6 +67,7 @@ local Pin = {next_id = 1}
 ---@field id number
 ---@field bufnr number
 ---@field pin Pin
+---@field pins table<Pin>
 ---@field div Div
 local Info = {}
 
@@ -214,7 +218,7 @@ end
 
 function Info:add_pin()
   table.insert(self.pins, self.pin)
-  self.pin:show_extmark()
+  self:maybe_show_pin_extmark()
   self.pin = Pin:new(options.autopause, options.use_widget)
   self.pin:add_parent_info(self)
   self:render()
@@ -225,6 +229,14 @@ function Info:clear_pins()
 
   self.pins = {}
   self:render()
+end
+
+--- Show a pin extmark if it is appropriate based on configuration.
+function Info:maybe_show_pin_extmark(...)
+  if not options.indicators or options.indicators == "never" then return end
+  -- self.pins is apparently all *other* pins, so we check it's empty
+  if options.indicators == "auto" and #self.pins == 0 then return end
+  self.pin:show_extmark(...)
 end
 
 --- Set the current window as the last window used to update this Info.
@@ -539,7 +551,7 @@ function Pin:toggle_pause() if not self.paused then self:pause() else self:unpau
 
 function Pin:show_extmark(name)
   self.extmark_hl_group = pin_hl_group
-  self.extmark_virt_text = {{"<-- PIN " .. (name or tostring(self.id)), "Comment"}};
+  self.extmark_virt_text = {{"← " .. (name or tostring(self.id)), "Comment"}}
   self:update_extmark()
 end
 
@@ -776,7 +788,7 @@ end
 --- Will be triggered via a `WinEnter` autocmd.
 ---@param id number
 function infoview.__show_curr_pin(id)
-  infoview._by_id[id].info.pin:show_extmark("CURRENT")
+  infoview._by_id[id].info:maybe_show_pin_extmark("current")
 end
 
 --- An infoview was left, hide the extmark for the current pin.

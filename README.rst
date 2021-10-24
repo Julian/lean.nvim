@@ -275,11 +275,15 @@ Full Configuration & Settings Information
       infoview = {
         -- Automatically open an infoview on entering a Lean buffer?
         autoopen = true,
-        -- Set the infoview windows' starting widths
+
+        -- Set infoview windows' starting dimensions.
+        -- Windows are opened horizontally or vertically depending on spacing.
         width = 50,
-        -- Set the infoview windows' starting heights
-        -- (portrait windows are split horizontally)
         height = 20,
+
+        -- Show indicators for pin locations when entering an infoview window?
+        -- always | never | auto (= only when there are multiple pins)
+        indicators = "auto",
       },
 
       -- Progress bar support
