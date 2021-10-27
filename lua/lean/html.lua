@@ -236,6 +236,8 @@ end
 
 ---@param div_stack Div[]
 ---@param check fun(div:Div):boolean
+---@return Div
+---@return Div[]
 local function _get_parent_div(div_stack, check)
   if not div_stack then error("get_parent_div received nil div stack") return nil, nil end
   div_stack = {unpack(div_stack)}
@@ -250,6 +252,8 @@ end
 
 ---@param div_stack Div[]
 ---@param check fun(div:Div):boolean
+---@return Div
+---@return Div[]
 local function get_parent_div(div_stack, check)
   if type(check) == "string" then
     return _get_parent_div(div_stack, function(div) return div.name == check end)
