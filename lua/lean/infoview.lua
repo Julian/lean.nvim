@@ -41,10 +41,8 @@ local options = {
     mappings = {
       ["K"] = [[click]],
       ["<CR>"] = [[click]],
-      ["<Esc>"] = [[clear_all]],
       ["I"] = [[mouse_enter]],
       ["i"] = [[mouse_leave]],
-      ["C"] = [[clear_all]],
       ["<LocalLeader><Tab>"] = [[goto_last_window]]
     }
   }
@@ -338,46 +336,6 @@ function Pin:new(paused, use_widget)
 
   self.__index = self
   setmetatable(new_pin, self)
-
-  new_pin.div.tags.event = {}
-
-  new_pin.div.call_event = function(_, event, fn, _)
-    local tick = new_pin.ticker:lock()
-    if not tick then return end
-
-    local success, _ = fn(tick, function() new_pin:render_parents() end)
-
-    if not tick:check() then return end
-
-    if not success then print('failed "' .. event .. '" event (see :messages)') end
-
-    if not new_pin:set_loading(false) then
-      new_pin:render_parents()
-    end
-
-    new_pin.ticker:release()
-
-    return true
-  end
-
-
-  new_pin.div.tags.event.clear_all = function(tick)
-    while true do
-      local found_div = new_pin.data_div:find(function(div)
-          return div.tags.event and div.tags.event.clear
-        end)
-      if found_div then
-        -- want to preserve visual context while clearing
-        new_pin:set_loading(true)
-        local result = found_div.tags.event.clear(tick)
-        if not tick:check() then return true end
-        if not result then return false end
-      else
-        break
-      end
-    end
-    return true
-  end
 
   return new_pin
 end

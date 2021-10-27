@@ -117,12 +117,12 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
 
     local function parse_select(children, select_div, current_value)
       local no_filter_div, no_filter_val, current_text
-      local this_div = html.Div:new({}, "", "select-children", nil, false, true)
+      local this_div = html.Div:new({}, "", "select-children", nil)
       for child_i, child in pairs(children) do
         local new_div = parse_widget(child)
         new_div.tags.event = {}
-        new_div.tags.event.click = function(this_tick)
-          return select_div.tags.event.change(this_tick, child.a.value)
+        new_div.tags.event.click = function(ctx)
+          return select_div.tags.event.change(ctx, child.a.value)
         end
         new_div.highlightable = true
         this_div:add_div(new_div)
@@ -192,7 +192,6 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
       if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
         element_div.tags.event.clear = function(this_tick)
           element_div.tags.event["click"](this_tick)
-          return true
         end
       end
 
@@ -201,19 +200,16 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
           local div_event = to_event[event]
           local clickable_event = div_event == "click" or div_event == "change"
           if clickable_event then element_div.highlightable = true end
-          events[div_event] = function(this_tick, value)
+          events[div_event] = function(ctx, value)
             local args = type(value) == 'string' and { type = 'string', value = value }
               or { type = 'unit' }
-            local success = pin:_update(false, 0, this_tick, {widget_event = {
+            pin:update(false, 0, ctx, {widget_event = {
               widget = widget,
               kind = event,
               handler = handler,
               args = args,
               textDocument = pin.position_params.textDocument
             }})
-
-            if not clickable_event then return success, true end
-            return success, false
           end
         end
       end

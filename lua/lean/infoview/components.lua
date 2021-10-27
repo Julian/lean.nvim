@@ -107,30 +107,22 @@ local function code_with_infos(t, sess)
       return tooltip_div
     end
 
-    local do_open_all = function(tick, render_fn)
-      if render_fn then
-        info_div.divs = {}
-        info_div:insert_div({}, "loading...", "loading-message")
-        render_fn()
-      end
+    local do_open_all = function(ctx)
+      info_div.divs = {}
+      info_div:insert_div({}, "loading...", "loading-message")
 
       local info_popup, err = sess:infoToInteractive(info_with_ctx)
-      if not tick:check() then
-        do_reset()
-        return true
-      end
 
       if err then
-        print("RPC ERROR:", vim.inspect(err.code), vim.inspect(err.message))
-        do_reset()
-        return false
+        info_div.divs = { html.Div:new({}, vim.inspect(err)) }
+        return ctx.rerender()
       end
 
       info_div.divs = { mk_tooltip(info_popup) }
       info_div.tags.event.clear = do_reset
       div:add_tooltip(info_div)
       info_open = true
-      return true
+      ctx.rerender()
     end
 
     local click = function(...)
@@ -272,7 +264,7 @@ local function tagged_text_msg_embed(t, sess)
         return true
       end
 
-      click = function(tick, render_fn)
+      click = function(ctx)
         if is_open then
           is_open = false
         else
@@ -280,14 +272,13 @@ local function tagged_text_msg_embed(t, sess)
 
           if not expanded then
             render()
-            render_fn()
+            ctx.rerender()
 
             expanded, expanded_err = sess:msgToInteractive(msg_data, indent)
-            if not tick:check() then return true end
           end
         end
         render()
-        return true
+        ctx.rerender()
       end
 
       render()

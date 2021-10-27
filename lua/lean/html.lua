@@ -21,8 +21,6 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field hlgroup string|fun():string @the highlight group for this div's text, or a function that returns it
 ---@field hlgroup_override string @temporary override of `hlgroup` that applies to a single render
 ---@field divs Div[] @this div's child divs
----@field listener boolean @whether this div can listen to events from its children
----@field call_event fun(path:PathNode[],event_name:string,event_fn:fun(),args:any[]):any
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
 ---@field id number @(for buffer rendering) ID number of this div, used for autocmds only
 ---@field bufs table<number, BufData> @(for buffer rendering) list of buffers rendering this div, can include tooltips
@@ -34,11 +32,10 @@ Div.__index = Div
 ---@param text string @the text to show when rendering this div
 ---@param name string @a named handle for this div, used when path-searching
 ---@param hlgroup string @the highlight group used for this div's text
----@param listener boolean @whether this div can listen to events from its children
 ---@return Div
-function Div:new(tags, text, name, hlgroup, listener)
+function Div:new(tags, text, name, hlgroup)
   local new_div = setmetatable({tags = tags or {}, text = text or "", name = name or "", hlgroup = hlgroup,
-    divs = {}, listener = listener, bufs = {}, id = self.next_id}, self)
+    divs = {}, bufs = {}, id = self.next_id}, self)
   self.next_id = self.next_id + 1
   _by_id[new_div.id] = new_div
   new_div.tags.event = new_div.tags.event or {}
@@ -67,8 +64,8 @@ end
 ---@param name string
 ---@param hlgroup string
 ---@return Div @the added div
-function Div:insert_div(tags, text, name, hlgroup, listener)
-  return self:add_div(Div:new(tags, text, name, hlgroup, listener))
+function Div:insert_div(tags, text, name, hlgroup)
+  return self:add_div(Div:new(tags, text, name, hlgroup))
 end
 
 ---Render this div, getting its text and highlight groups.
@@ -279,38 +276,24 @@ function Div:path_from_pos(pos)
   return path
 end
 
----Trigger the given event at the given path (if there is a parent listener).
+---Trigger the given event at the given path
 ---@param path PathNode[] @the path to trigger the event at
 ---@param event_name string @the path to trigger the event at
-function Div:event(path, event_name, ...)
+function Div:event(buf, path, event_name, ...)
   local div_stack, _ = self:div_from_path(path)
   if not div_stack then return end
 
-  local event_div, event_div_stack = get_parent_div(div_stack, is_event_div_check(event_name))
+  local event_div, _ = get_parent_div(div_stack, is_event_div_check(event_name))
   if not event_div then return end
-
-  -- find parent listener
-  local listener_div, listener_div_stack = get_parent_div(event_div_stack, function(div)
-    if div.listener then return true end
-    return false
-  end)
-  -- there must be a listener for the event to fire
-  if not listener_div then return end
-
-  -- take subpath from listener to event, inclusive
-  local event_path = {}
-  for i = #path - (#event_div_stack - 1), #path - (#listener_div_stack - 1) do
-    table.insert(event_path, path[i])
-  end
 
   local args = {...}
 
   a.void(function()
-    if listener_div.call_event then
-      return listener_div.call_event(event_path, event_name, event_div.tags.event[event_name], args)
-    else
-      return event_div.tags.event[event_name](unpack(args))
-    end
+    return event_div.tags.event[event_name]({
+      rerender = function()
+        self:buf_render(buf, false)
+      end,
+    }, unpack(args))
   end)()
 end
 
@@ -697,7 +680,7 @@ function Div:buf_event(buf, event, ...)
   local args = {...}
   local bufdata = self.bufs[buf]
   if not bufdata.path then return end
-  self:event(bufdata.path, event, unpack(args))
+  self:event(buf, bufdata.path, event, unpack(args))
 end
 
 function Div:buf_enter_win(buf)
