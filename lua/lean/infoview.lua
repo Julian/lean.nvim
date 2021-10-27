@@ -67,7 +67,7 @@ local Pin = {next_id = 1}
 ---@field id number
 ---@field bufnr number
 ---@field pin Pin
----@field pins table<Pin>
+---@field pins Pin[]
 ---@field div Div
 local Info = {}
 
