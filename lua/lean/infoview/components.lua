@@ -33,15 +33,15 @@ function components.goal(goal)
   local div = html.Div:new({}, "", "plain-goals")
   if type(goal) ~= "table" or not goal.goals then return div end
 
-  div:start_div({goals = goal.goals}, #goal.goals == 0 and H('goals accomplished 🎉') or
+  local goals_list = div:insert_div({goals = goal.goals},
+    #goal.goals == 0 and H('goals accomplished 🎉') or
     #goal.goals == 1 and H('1 goal') or
     H(string.format('%d goals', #goal.goals)), "plain-goals-list")
 
   for _, this_goal in pairs(goal.goals) do
-    div:insert_div({goal = this_goal}, "\n" .. this_goal, "plain-goal")
+    goals_list:insert_div({goal = this_goal}, "\n" .. this_goal, "plain-goal")
   end
 
-  div:end_div()
   return div
 end
 
@@ -66,7 +66,7 @@ local function code_with_infos(t, sess)
     div:insert_div({}, t.text, "text")
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
-      div:insert_new_div(code_with_infos(s, sess))
+      div:add_div(code_with_infos(s, sess))
     end
   elseif t.tag ~= nil then
     local info_with_ctx = t.tag[1].info
@@ -79,7 +79,7 @@ local function code_with_infos(t, sess)
       info_div.divs = {}
       info_div:insert_div({}, "click for info!", "click-message")
       info_div.tags.event.clear = nil
-      div:insert_new_tooltip(nil)
+      div:add_tooltip(nil)
       info_open = false
       return true
     end
@@ -89,14 +89,14 @@ local function code_with_infos(t, sess)
       local tooltip_div = html.Div:new()
 
       if info_popup.exprExplicit ~= nil then
-        tooltip_div:insert_new_div(code_with_infos(info_popup.exprExplicit, sess))
+        tooltip_div:add_div(code_with_infos(info_popup.exprExplicit, sess))
         if info_popup.type ~= nil then
           tooltip_div:insert_div({}, ' :\n')
         end
       end
 
       if info_popup.type ~= nil then
-        tooltip_div:insert_new_div(code_with_infos(info_popup.type, sess))
+        tooltip_div:add_div(code_with_infos(info_popup.type, sess))
       end
 
       if info_popup.doc ~= nil then
@@ -128,7 +128,7 @@ local function code_with_infos(t, sess)
 
       info_div.divs = { mk_tooltip(info_popup) }
       info_div.tags.event.clear = do_reset
-      div:insert_new_tooltip(info_div)
+      div:add_tooltip(info_div)
       info_open = true
       return true
     end
@@ -146,7 +146,7 @@ local function code_with_infos(t, sess)
     div.tags = {info_with_ctx = info_with_ctx, event = { click = click }}
     div.highlightable = true
 
-    div:insert_new_div(code_with_infos(t.tag[2], sess))
+    div:add_div(code_with_infos(t.tag[2], sess))
   end
 
   return div
@@ -162,21 +162,17 @@ local function interactive_goal(goal, sess)
   end
 
   for _, hyp in ipairs(goal.hyps) do
-    div:start_div({hyp = hyp}, table.concat(hyp.names, ' ') .. ' : ', "hyp")
+    local hyp_div = div:insert_div({hyp = hyp}, table.concat(hyp.names, ' ') .. ' : ', "hyp")
 
-    div:insert_new_div(code_with_infos(hyp.type, sess))
+    hyp_div:add_div(code_with_infos(hyp.type, sess))
     if hyp.val ~= nil then
-      div:start_div({val = hyp.val}, " := ", "hyp_val")
-      div:insert_new_div(code_with_infos(hyp.val, sess))
-      div:end_div()
+      local hyp_val = hyp_div:insert_div({val = hyp.val}, " := ", "hyp_val")
+      hyp_val:add_div(code_with_infos(hyp.val, sess))
     end
-    div:insert_div({}, "\n", "hypothesis-separator")
-
-    div:end_div()
+    hyp_div:insert_div({}, "\n", "hypothesis-separator")
   end
-  div:start_div({goal = goal.type}, '⊢ ', "goal")
-  div:insert_new_div(code_with_infos(goal.type, sess))
-  div:end_div()
+  div:insert_div({goal = goal.type}, '⊢ ', "goal")
+     :add_div(code_with_infos(goal.type, sess))
 
   return div
 end
@@ -195,7 +191,7 @@ function components.interactive_goals(goal, sess)
 
   for i, this_goal in ipairs(goal.goals) do
     if i ~= 1 then div:insert_div({}, '\n\n') end
-    div:insert_new_div(interactive_goal(this_goal, sess))
+    div:add_div(interactive_goal(this_goal, sess))
   end
 
   return div
@@ -209,13 +205,10 @@ function components.interactive_term_goal(goal, sess)
   local div = html.Div:new({}, "", "interactive-term-goal")
 
   if not goal then return div end
-  div:start_div({state = goal},
+  div:insert_div({state = goal},
     H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
     "term-state")
-
-  div:insert_new_div(interactive_goal(goal, sess))
-
-  div:end_div()
+    :add_div(interactive_goal(goal, sess))
 
   return div
 end
@@ -242,7 +235,7 @@ local function tagged_text_msg_embed(t, sess)
     div:insert_div({}, t.text, "text")
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
-      div:insert_new_div(tagged_text_msg_embed(s, sess))
+      div:add_div(tagged_text_msg_embed(s, sess))
     end
   elseif t.tag ~= nil then
     local embed = t.tag[1]
@@ -269,7 +262,7 @@ local function tagged_text_msg_embed(t, sess)
 
         if is_open then
           if expanded then
-            div:insert_new_div(tagged_text_msg_embed(expanded, sess))
+            div:add_div(tagged_text_msg_embed(expanded, sess))
           elseif expanded_err then
             div:insert_div({}, vim.inspect(expanded_err))
           else
@@ -317,7 +310,7 @@ function components.interactive_diagnostics(diags, line, sess)
           H(string.format('%s: %s:\n',
             range_to_string(diag.range),
             DiagnosticSeverity[diag.severity]:lower())), "diagnostic")
-      div:insert_new_div(tagged_text_msg_embed(diag.message, sess))
+      div:add_div(tagged_text_msg_embed(diag.message, sess))
     end
   end
   return div

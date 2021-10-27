@@ -12,7 +12,6 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field hlgroup string|fun():string @the highlight group for this div's text, or a function that returns it
 ---@field hlgroup_override string @temporary override of `hlgroup` that applies to a single render
 ---@field divs Div[] @this div's child divs
----@field div_stack Div[] @(internal) stack of divs used while dynamically constructing a div tree rooted at this div
 ---@field listener boolean @whether this div can listen to events from its children
 ---@field call_event fun(path:PathNode[],event_name:string,event_fn:fun(),args:any[]):any
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
@@ -30,7 +29,7 @@ Div.__index = Div
 ---@return Div
 function Div:new(tags, text, name, hlgroup, listener)
   local new_div = setmetatable({tags = tags or {}, text = text or "", name = name or "", hlgroup = hlgroup,
-    divs = {}, div_stack = {}, listener = listener, bufs = {}, id = self.next_id}, self)
+    divs = {}, listener = listener, bufs = {}, id = self.next_id}, self)
   self.next_id = self.next_id + 1
   _by_id[new_div.id] = new_div
   new_div.tags.event = new_div.tags.event or {}
@@ -53,50 +52,14 @@ function Div:add_tooltip(div)
   return div
 end
 
----(for dynamic div construction) Insert a div at the current div level.
----@param new_div Div @div to insert
----@return Div @the inserted div
-function Div:insert_new_div(new_div)
-  local last_div = self.div_stack[#self.div_stack]
-  if last_div then
-    return last_div:add_div(new_div)
-  else
-    return self:add_div(new_div)
-  end
-end
-
----(for dynamic div construction) Insert a tooltip at the current div level.
----@param new_div Div @tooltip to insert
+--- Insert a div initialized with the given params.
+---@param tags table
+---@param text string
+---@param name string
+---@param hlgroup string
 ---@return Div @the added div
-function Div:insert_new_tooltip(new_div)
-  local last_div = self.div_stack[#self.div_stack]
-  if last_div then
-    return last_div:add_tooltip(new_div)
-  else
-    return self:add_tooltip(new_div)
-  end
-end
-
----(for dynamic div construction) Insert a div at the current div level, initialized with the given params,
----and set that div as the current div level (like <div> in HTML).
----@return Div @the inserted div
-function Div:start_div(tags, text, name, hlgroup, listener)
-  local new_div = Div:new(tags, text, name, hlgroup, listener)
-  self:insert_new_div(new_div)
-  table.insert(self.div_stack, new_div)
-  return new_div
-end
-
----(for dynamic div construction) Go back one div level (like </div> in HTML).
-function Div:end_div()
-  table.remove(self.div_stack)
-end
-
----(for dynamic div construction) Insert a div at the current div level, initialized with the given params.
 function Div:insert_div(tags, text, name, hlgroup, listener)
-  local new_div = self:start_div(tags, text, name, hlgroup, listener)
-  self:end_div()
-  return new_div
+  return self:add_div(Div:new(tags, text, name, hlgroup, listener))
 end
 
 ---Render this div, getting its text and highlight groups.

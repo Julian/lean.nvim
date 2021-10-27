@@ -296,7 +296,7 @@ function Info:render()
     end
 
     local pin_div = html.Div:new({}, "", "pin_wrapper")
-    pin_div:insert_new_div(header_div)
+    pin_div:add_div(header_div)
     if pin.div then pin_div:add_div(pin.div) end
     if infoview.debug and #pin.undo_list > 0 then
       pin_div:add_div(html.Div:new({}, "\n-- undo list size: " .. tostring(#pin.undo_list)))
@@ -606,7 +606,7 @@ function Pin:set_loading(loading)
       div.disabled = true
     end)
 
-    self.div:insert_new_div(data_div_copy)
+    self.div:add_div(data_div_copy)
 
     self.loading = true
 
@@ -614,7 +614,7 @@ function Pin:set_loading(loading)
     return true
   elseif not loading and self.loading then
     self.div.divs = {}
-    self.div:insert_new_div(self.data_div)
+    self.div:add_div(self.data_div)
 
     self.loading = false
 
@@ -737,14 +737,14 @@ function Pin:__update(tick, delay, lean3_opts)
 
     local goal_div_empty, term_goal_div_empty = #goal_div:render() == 0, #term_goal_div:render() == 0
 
-    new_data_div:insert_new_div(goal_div)
+    new_data_div:add_div(goal_div)
     if not goal_div_empty and not term_goal_div_empty then
       new_data_div:add_div(html.Div:new({}, "\n\n", "plain_goal-term_goal-separator"))
     end
-    new_data_div:insert_new_div(term_goal_div)
+    new_data_div:add_div(term_goal_div)
 
     if goal_div_empty and term_goal_div_empty then
-      new_data_div:insert_new_div(html.Div:new({}, "No info.", "no-tactic-term"))
+      new_data_div:add_div(html.Div:new({}, "No info.", "no-tactic-term"))
     end
 
     local diagnostics_div
@@ -759,7 +759,7 @@ function Pin:__update(tick, delay, lean3_opts)
       end
     end
 
-    new_data_div:insert_new_div(diagnostics_div or components.diagnostics(buf, line))
+    new_data_div:add_div(diagnostics_div or components.diagnostics(buf, line))
 
     self.div.tags.event.replay(tick)
     if not tick:check() then return true end

@@ -106,7 +106,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
           this_div:insert_div({}, " ", "separator")
         end
 
-        this_div:insert_new_div(new_div)
+        this_div:add_div(new_div)
 
         prev_div = new_div
 
@@ -125,7 +125,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
           return select_div.tags.event.change(this_tick, child.a.value)
         end
         new_div.highlightable = true
-        this_div:insert_new_div(new_div)
+        this_div:add_div(new_div)
         if child_i ~= #children then this_div:insert_div({}, "\n", "select-separator") end
 
         if child.c[1] == "no filter" then
@@ -186,7 +186,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
         " events(" .. vim.inspect(result.e) .. ")" ..
         ">", "element")
       end
-      local element_div = div:start_div({element = result, event = events}, "", "element", hlgroup)
+      local element_div = div:insert_div({element = result, event = events}, "", "element", hlgroup)
 
       -- close tooltip button
       if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
@@ -219,7 +219,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
       end
 
       if tag == "hr" then
-        div:insert_div({}, "|", "rule", "leanInfoFieldSep")
+        element_div:insert_div({}, "|", "rule", "leanInfoFieldSep")
       end
 
       if options.show_filter and tag == "select" then
@@ -231,23 +231,21 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
             return true
           end
         end
-        local select_menu_div = div:insert_div({}, current_text .. "\n", "current-select")
+        local select_menu_div = element_div:insert_div({}, current_text .. "\n", "current-select")
         select_menu_div:add_tooltip(select_children_div)
       else
-        div:insert_new_div(parse_children(children))
+        element_div:add_div(parse_children(children))
       end
 
       if tooltip then
-        div:insert_new_tooltip(parse_widget(tooltip))
+        element_div:add_tooltip(parse_widget(tooltip))
       end
-      -- (from element_div)
-      div:end_div()
       if debug_tags then
         div:insert_div({element = result}, "</" .. tag .. ">", "element")
       end
       return div
     else
-      div:insert_new_div(parse_children(result.c))
+      div:add_div(parse_children(result.c))
       return div
     end
   end
@@ -309,13 +307,13 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
   end
 
   if state_div and #state_div:render() > 0 then
-    parent_div:insert_new_div(state_div)
+    parent_div:add_div(state_div)
   else
-    parent_div:insert_new_div(html.Div:new({}, "No info.", "no-tactic-term"))
+    parent_div:add_div(html.Div:new({}, "No info.", "no-tactic-term"))
   end
-  parent_div:insert_new_div(components.diagnostics(bufnr, params.position.line))
+  parent_div:add_div(components.diagnostics(bufnr, params.position.line))
 
-  data_div:insert_new_div(parent_div)
+  data_div:add_div(parent_div)
 
   -- update all other pins for the same URI so they aren't left with a stale "session"
   if opts and opts.widget_event then
