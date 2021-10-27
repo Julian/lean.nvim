@@ -4,6 +4,15 @@ local util = require"lean._util"
 -- necessary until neovim/neovim#14661 is merged.
 local _by_id = setmetatable({}, {__mode = 'v'})
 
+---@class BufData
+---@field path PathNode[]
+---@field last_win integer
+
+---@class TooltipData
+---@field path PathNode[]
+---@field subpath PathNode[]
+---@field parent integer Parent buffer number.
+
 ---An HTML-style div.
 ---@class Div
 ---@field tags table @arbitrary application-specific metadata
@@ -16,7 +25,7 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field call_event fun(path:PathNode[],event_name:string,event_fn:fun(),args:any[]):any
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
 ---@field id number @(for buffer rendering) ID number of this div, used for autocmds only
----@field bufs table<number, table> @(for buffer rendering) list of buffers rendering this div, can include tooltips
+---@field bufs table<number, BufData> @(for buffer rendering) list of buffers rendering this div, can include tooltips
 local Div = {next_id = 1}
 Div.__index = Div
 
@@ -117,6 +126,8 @@ end
 ---@class PathNode
 ---@field idx number @the index in the current div's children to follow
 ---@field name string @the name that the indexed child should have
+---@field offset? integer (Used in `buf_update_position`)
+---@field win_offset? integer (Used in `buf_update_position`)
 
 ---Get the raw byte position of the div arrived at by following the given path.
 ---@param path PathNode[] @the path to follow
@@ -262,7 +273,6 @@ end
 
 ---Get the path at the given raw byte position.
 ---@param pos PathNode[] @the path to follow
----@return Div[]|nil @the stack of divs at this position, or nil if the path is invalid
 ---@return PathNode[]|nil @the path at this position, or nil if the position is invalid
 function Div:path_from_pos(pos)
   local _, path = self:div_from_pos(pos)
@@ -345,6 +355,8 @@ function Div:filter(fn, skip_tooltips)
   self:__filter(path, pos, fn, skip_tooltips)
 end
 
+---@param buf integer
+---@param tooltip_data TooltipData
 function Div:buf_register(buf, keymaps, tooltip_data)
   self.bufs[buf] = {keymaps = keymaps, children = {}, decorations = {}, tooltip_data = tooltip_data}
   util.set_augroup("DivPosition", string.format([[
