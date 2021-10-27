@@ -44,8 +44,6 @@ local options = {
       ["<Esc>"] = [[clear_all]],
       ["I"] = [[mouse_enter]],
       ["i"] = [[mouse_leave]],
-      ["u"] = [[undo]],
-      ["U"] = [[clear_undo]],
       ["C"] = [[clear_all]],
       ["<LocalLeader><Tab>"] = [[goto_last_window]]
     }
@@ -298,9 +296,6 @@ function Info:render()
     local pin_div = html.Div:new({}, "", "pin_wrapper")
     pin_div:add_div(header_div)
     if pin.div then pin_div:add_div(pin.div) end
-    if infoview.debug and #pin.undo_list > 0 then
-      pin_div:add_div(html.Div:new({}, "\n-- undo list size: " .. tostring(#pin.undo_list)))
-    end
 
     self.div:add_div(pin_div)
   end
@@ -337,7 +332,7 @@ function Pin:new(paused, use_widget)
   local new_pin = {id = self.next_id, parent_infos = {}, paused = paused,
     ticker = util.Ticker:new(),
     data_div = html.Div:new({pin = self}, "", "pin-data", nil),
-    div = html.Div:new({pin = self}, "", "pin", nil, true), use_widget = use_widget, undo_list = {}}
+    div = html.Div:new({pin = self}, "", "pin", nil, true), use_widget = use_widget}
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
 
@@ -346,21 +341,15 @@ function Pin:new(paused, use_widget)
 
   new_pin.div.tags.event = {}
 
-  new_pin.div.call_event = function(path, event, fn, _)
+  new_pin.div.call_event = function(_, event, fn, _)
     local tick = new_pin.ticker:lock()
     if not tick then return end
 
-    local success, ignore = fn(tick, function() new_pin:render_parents() end)
+    local success, _ = fn(tick, function() new_pin:render_parents() end)
 
     if not tick:check() then return end
 
     if not success then print('failed "' .. event .. '" event (see :messages)') end
-    if not ignore then
-      -- store path relative to data_div
-      local this_path = {unpack(path)}
-      table.remove(this_path)
-      table.insert(new_pin.undo_list, {path = this_path, event = event})
-    end
 
     if not new_pin:set_loading(false) then
       new_pin:render_parents()
@@ -371,70 +360,6 @@ function Pin:new(paused, use_widget)
     return true
   end
 
-
-  -- replays the events in this pin's undo list
-  new_pin.div.tags.event.replay = function(tick)
-    local new_undo_list = {}
-
-    local success = new_pin.div.tags.event.clear_all(tick)
-    if not success then
-      print("replay aborted on failed clear")
-      goto finish
-    end
-    if not tick:check() then return end
-
-    for _, undo_item in pairs(new_pin.undo_list) do
-      local _, this_div = new_pin.data_div:div_from_path(undo_item.path)
-      if not this_div then
-        print("replay aborted on invalid event path", vim.inspect(new_pin.data_div.divs[1].name))
-        success = false
-        goto finish
-      end
-
-      table.insert(new_undo_list, undo_item)
-
-      -- want to preserve visual context until replay completes
-      new_pin:set_loading(true)
-      if not this_div.tags.event[undo_item.event](tick) then
-        print("replay aborted on error")
-        success = false
-        goto finish
-      end
-      if not tick:check() then return end
-    end
-
-    ::finish::
-    if not tick:check() then return end
-
-    new_pin.undo_list = new_undo_list
-
-    return success, true
-  end
-
-  new_pin.div.tags.event.undo = function(tick)
-    if not (#new_pin.undo_list > 0) then return true, true end
-
-    local undo_item = table.remove(new_pin.undo_list)
-
-    -- make sure to visually update undo list count
-    new_pin:render_parents()
-
-    local success = new_pin.div.tags.event.replay(tick)
-    if not tick:check() then return end
-
-    if success then
-      print('Undo on "' .. undo_item.event .. '" action.')
-    else
-      print('Failed to undo "' .. undo_item.event .. '" action.')
-    end
-
-    return success, true
-  end
-
-  new_pin.div.tags.event.clear_undo = function(_)
-    new_pin.undo_list = {}
-    return true, true
-  end
 
   new_pin.div.tags.event.clear_all = function(tick)
     while true do
@@ -579,15 +504,8 @@ function Pin:pause()
   self:render_parents()
 end
 
-function Pin:clear_undo_list()
-  self.undo_list = {}
-end
-
 -- Triggered when manually moving a pin.
 function Pin:move(params)
-  if not vim.deep_equal(params, self.position_params) then
-    self:clear_undo_list()
-  end
   self:set_position_params(params)
 end
 
@@ -673,8 +591,6 @@ function Pin:__update(tick, delay, lean3_opts)
   do
     local line = params.position.line
 
-    if not self.use_widget then self:clear_undo_list() end
-
     if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
       lean3_opts = lean3_opts or {}
       lean3.update_infoview(self, new_data_div, buf, params,
@@ -726,7 +642,6 @@ function Pin:__update(tick, delay, lean3_opts)
     end
 
     if not term_goal_div then
-      self:clear_undo_list()
       local err, term_goal = plain_term_goal(params, buf)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
@@ -761,7 +676,6 @@ function Pin:__update(tick, delay, lean3_opts)
 
     new_data_div:add_div(diagnostics_div or components.diagnostics(buf, line))
 
-    self.div.tags.event.replay(tick)
     if not tick:check() then return true end
   end
 

@@ -299,7 +299,6 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
   end
 
   if not state_div then
-    pin:clear_undo_list()
     local _, result = util.a_request(bufnr, "$/lean/plainGoal", params)
     if result and type(result) == "table" then
       state_div = components.goal(result)
