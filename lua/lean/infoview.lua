@@ -310,7 +310,7 @@ function Info:render()
 end
 
 function Info:_render()
-  self.div:buf_render(self.bufnr)
+  self.div:buf_render(false)
 end
 
 --- Retrieve the contents of the info as a table.
@@ -330,7 +330,7 @@ function Pin:new(paused, use_widget)
   local new_pin = {id = self.next_id, parent_infos = {}, paused = paused,
     ticker = util.Ticker:new(),
     data_div = html.Div:new({pin = self}, "", "pin-data", nil),
-    div = html.Div:new({pin = self}, "", "pin", nil, true), use_widget = use_widget}
+    div = html.Div:new({pin = self}, "", "pin", nil), use_widget = use_widget}
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
 
@@ -806,10 +806,10 @@ function infoview.go_to()
   infoview.open()
   local curr_info = infoview.get_current_infoview().info
   -- if there is no last win, just go straight to the window itself
-  if not curr_info.div:buf_last_win_valid(curr_info.bufnr) then
+  if not curr_info.div:buf_last_win_valid() then
     vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
   else
-    curr_info.div:buf_enter_win(curr_info.bufnr)
+    curr_info.div:buf_enter_win()
   end
 end
 

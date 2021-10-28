@@ -1,12 +1,22 @@
 local a = require"plenary.async"
 local util = require"lean._util"
 
--- necessary until neovim/neovim#14661 is merged.
+-- Maps div.id to Div
+-- (necessary until neovim/neovim#14661 is merged.)
+--- @type table<number, Div>
 local _by_id = setmetatable({}, {__mode = 'v'})
 
+---@class Decorations
+---@field hover? PathNode[]
+
 ---@class BufData
----@field path PathNode[]
----@field last_win integer
+---@field buf integer Buffer number of the buffer the div renders to
+---@field path? PathNode[] Current cursor path
+---@field last_win? integer Window number of the last event
+---@field decorations Decorations decorations?
+---@field keymaps table Extra keymaps (inherited by tooltips)
+---@field tooltip? Div currently open tooltip
+---@field parent? Div Parent div
 
 ---@class TooltipData
 ---@field path PathNode[]
@@ -23,7 +33,8 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field divs Div[] @this div's child divs
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
 ---@field id number @(for buffer rendering) ID number of this div, used for autocmds only
----@field bufs table<number, BufData> @(for buffer rendering) list of buffers rendering this div, can include tooltips
+---@field _bufdata? BufData Data stored when div is rendered to a buffer
+---@field disable_update? boolean
 local Div = {next_id = 1}
 Div.__index = Div
 
@@ -34,8 +45,14 @@ Div.__index = Div
 ---@param hlgroup string @the highlight group used for this div's text
 ---@return Div
 function Div:new(tags, text, name, hlgroup)
-  local new_div = setmetatable({tags = tags or {}, text = text or "", name = name or "", hlgroup = hlgroup,
-    divs = {}, bufs = {}, id = self.next_id}, self)
+  local new_div = setmetatable({
+    tags = tags or {},
+    text = text or "",
+    name = name or "",
+    hlgroup = hlgroup,
+    divs = {},
+    id = self.next_id,
+  }, self)
   self.next_id = self.next_id + 1
   _by_id[new_div.id] = new_div
   new_div.tags.event = new_div.tags.event or {}
@@ -279,7 +296,7 @@ end
 ---Trigger the given event at the given path
 ---@param path PathNode[] @the path to trigger the event at
 ---@param event_name string @the path to trigger the event at
-function Div:event(buf, path, event_name, ...)
+function Div:event(path, event_name, ...)
   local div_stack, _ = self:div_from_path(path)
   if not div_stack then return end
 
@@ -291,7 +308,7 @@ function Div:event(buf, path, event_name, ...)
   a.void(function()
     return event_div.tags.event[event_name]({
       rerender = function()
-        self:buf_render(buf, false)
+        self:buf_render(false)
       end,
     }, unpack(args))
   end)()
@@ -339,54 +356,60 @@ function Div:filter(fn, skip_tooltips)
 end
 
 ---@param buf integer
----@param tooltip_data TooltipData
-function Div:buf_register(buf, keymaps, tooltip_data)
-  self.bufs[buf] = {keymaps = keymaps, children = {}, decorations = {}, tooltip_data = tooltip_data}
+---@param keymaps? table Extra keymaps
+function Div:buf_register(buf, keymaps)
+  if self._bufdata ~= nil then error(('div already registered for buffer %d'):format(self._bufdata.buf)) end
+  self._bufdata = {
+    buf = buf,
+    keymaps = keymaps,
+    decorations = {},
+  }
   util.set_augroup("DivPosition", string.format([[
-    autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor(%d)
-    autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor(%d)
-  ]], buf, self.id, buf, buf, self.id, buf), buf)
+    autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
+    autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
+  ]], buf, self.id, buf, self.id), buf)
 
   local mappings = {n = {}}
   if keymaps then
     for key, event in pairs(keymaps) do
-      mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_event(%d, "%s")<CR>]]):format(self.id, buf, event)
+      mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_event("%s")<CR>]]):format(self.id, event)
     end
-    mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip(%d)<CR>]]):format(self.id, buf)
+    mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip()<CR>]]):format(self.id)
     mappings.n["<S-Tab>"] = (
-      [[<Cmd>lua require'lean.html'._by_id[%d]:buf_goto_parent_tooltip(%d)<CR>]]
-    ):format(self.id, buf)
-    mappings.n["J"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip(%d)<CR>]]):format(self.id, buf)
-    mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_hop_to(%d)<CR>]]):format(self.id, buf)
+      [[<Cmd>lua require'lean.html'._by_id[%d]:buf_goto_parent_tooltip()<CR>]]
+    ):format(self.id)
+    mappings.n["J"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip()<CR>]]):format(self.id)
+    mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_hop_to()<CR>]]):format(self.id)
   end
   util.load_mappings(mappings, buf)
 end
 
-local div_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
-
-function Div:buf_get_root(buf)
-  local bufdata = self.bufs[buf]
-  local root, path
-  if bufdata.tooltip_data then
-    local _, _root = self:div_from_path(bufdata.tooltip_data.path)
-    root = _root
-    path = bufdata.tooltip_data.subpath
-  else
-    root = self
-    path = self.bufs[buf].path
+---@param keep_tooltips_open? boolean
+function Div:buf_close(keep_tooltips_open)
+  vim.api.nvim_buf_delete(self._bufdata.buf, {force = true})
+  if self._bufdata.tooltip and self._bufdata.tooltip._bufdata then
+    self._bufdata.tooltip._bufdata.parent = nil
+    if not keep_tooltips_open then
+      self._bufdata.tooltip:buf_close()
+    end
   end
-  return root, path
+  self._bufdata = nil
 end
 
-function Div:buf_render(buf, internal)
-  local bufdata = self.bufs[buf]
-  local restore_path = not internal and not bufdata.tooltip_data and bufdata.path and {unpack(bufdata.path)}
+local div_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
+
+function Div:buf_render(internal)
+  local bufdata = self._bufdata
+  local buf = bufdata.buf
 
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
 
-  self:buf_reset(buf, internal)
+  if not internal then
+    bufdata.path = nil
+    bufdata.decorations = {}
+  end
 
-  local root, _ = self:buf_get_root(buf)
+  local root = self
 
   if bufdata.decorations.hover then
     local _, hover_div = self:div_from_path(bufdata.decorations.hover)
@@ -430,103 +453,39 @@ function Div:buf_render(buf, internal)
       {end_pos[1], end_pos[2] + 1}
     )
   end
+end
 
-  if bufdata.decorations.tooltip then
-    local tt_parent_path = {unpack(bufdata.decorations.tooltip)}
-    table.remove(tt_parent_path, 1)
-    if bufdata.tooltip_data then
-      -- make it relative to the root
-      for _ = 1, #bufdata.tooltip_data.path - 1 do
-        table.remove(tt_parent_path)
-      end
-    end
-
-    local _, tt_div = self:div_from_path(bufdata.decorations.tooltip)
-
-    local width, height = util.make_floating_popup_size(vim.split(tt_div:render(), "\n"))
-
-    local tooltip_buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
-    vim.api.nvim_buf_set_option(tooltip_buf, "modifiable", false)
-
-    self:buf_register(tooltip_buf, bufdata.keymaps, {parent = buf, path = bufdata.decorations.tooltip})
-    bufdata.children[tooltip_buf] = true
-    self:buf_render(tooltip_buf, false)
-
-    local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), vim.split(root:render(), "\n"))
-
-    local win_options = {
-      relative = "win",
-      win = bufdata.last_win,
-      style = "minimal",
-      width = width,
-      height = height,
-      border = "none",
-      bufpos = bufpos,
-      zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
-    }
-
-    self.disable_update = true
-    local tooltip_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
-    self.disable_update = false
-    -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
-    vim.api.nvim_command("redraw")
-    self.bufs[tooltip_buf].tooltip_data.win = tooltip_win
-  end
-
-  if restore_path then
-    self:buf_goto_path(buf, restore_path)
+function Div:buf_enter_tooltip()
+  if self._bufdata and self._bufdata.tooltip and self._bufdata.tooltip._bufdata then
+    vim.api.nvim_set_current_win(self._bufdata.tooltip._bufdata.last_win)
   end
 end
 
-function Div:buf_get_tooltip_buf(buf)
-  local bufdata = self.bufs[buf]
-  -- TODO choose the one with the longest matching path
-  local children = {}
-  for child_buf, _ in pairs(bufdata.children) do
-    table.insert(children, child_buf)
-  end
-
-  return children[1]
-end
-
-function Div:buf_enter_tooltip(buf)
-  local tt_buf = self:buf_get_tooltip_buf(buf)
-
-  if tt_buf then
-    vim.api.nvim_set_current_win(self.bufs[tt_buf].tooltip_data.win)
+function Div:buf_goto_parent_tooltip()
+  if self._bufdata and self._bufdata.parent and self._bufdata.parent._bufdata then
+    vim.api.nvim_set_current_win(self._bufdata.parent._bufdata.last_win)
   end
 end
 
-function Div:buf_goto_parent_tooltip(buf)
-  local bufdata = self.bufs[buf]
-  if bufdata.tooltip_data then
-    local parent_bufdata = self.bufs[bufdata.tooltip_data.parent]
-    if parent_bufdata.last_win then vim.api.nvim_set_current_win(parent_bufdata.last_win) end
-    self:buf_render(bufdata.tooltip_data.parent, true)
-  end
-end
-
-function Div:buf_last_win_valid(buf)
-  local bufdata = self.bufs[buf]
+function Div:buf_last_win_valid()
+  local bufdata = self._bufdata
   return bufdata and bufdata.last_win
     and vim.api.nvim_win_is_valid(bufdata.last_win)
-    and vim.api.nvim_win_get_buf(bufdata.last_win) == buf
+    and vim.api.nvim_win_get_buf(bufdata.last_win) == bufdata.buf
 end
 
-function Div:buf_update_cursor(buf, win)
-  if self.disable_update then return end
-  local bufdata = self.bufs[buf]
+function Div:buf_update_cursor(win)
+  if self.disable_update then return end local bufdata = self._bufdata
   win = win or vim.api.nvim_get_current_win()
-  if vim.api.nvim_win_get_buf(win) == buf then
+  if vim.api.nvim_win_get_buf(win) == bufdata.buf then
     bufdata.last_win = win
   end
-  if not self:buf_last_win_valid(buf) then return end
+  if not self:buf_last_win_valid() then return end
 
-  local path_changed = self:buf_update_position(buf)
-  local decorations_changed = path_changed and self:buf_hover(buf)
+  local path_changed = self:buf_update_position()
+  local decorations_changed = path_changed and self:buf_hover()
   if decorations_changed then
-    self:buf_render(buf, true)
+    self:buf_render(true)
   end
 end
 
@@ -546,49 +505,29 @@ local function path_equal(path_a, path_b)
   return true
 end
 
-function Div:buf_update_position(buf)
-  local bufdata = self.bufs[buf]
+function Div:buf_update_position()
+  local bufdata = self._bufdata
+  local buf = bufdata.buf
   local path_before = bufdata.path
   local cursor_pos = vim.api.nvim_win_get_cursor(bufdata.last_win)
   local raw_pos = pos_to_raw_pos(cursor_pos, vim.api.nvim_buf_get_lines(buf, 0, -1, true))
   local win_info = vim.fn.getwininfo(bufdata.last_win)
   local win_offset = cursor_pos[1] - win_info[1].topline
   if not raw_pos then return end
-  if bufdata.tooltip_data and bufdata.tooltip_data.path then
-    local _, tt_div = self:div_from_path(bufdata.tooltip_data.path)
 
-    local this_path = tt_div:path_from_pos(raw_pos)
-    this_path[1].offset = raw_pos - tt_div:pos_from_path(this_path)
-    this_path[1].win_offset = win_offset
-    bufdata.tooltip_data.subpath = {unpack(this_path)}
-
-    table.remove(this_path)
-    vim.list_extend(this_path, bufdata.tooltip_data.path)
-    bufdata.path = this_path
-    self:buf_get_root_buf(buf, function(_, parent_bufdata) parent_bufdata.path = this_path end)
-  else
-    bufdata.path = self:path_from_pos(raw_pos)
-    if self.bufs[buf].path then
-      bufdata.path[1].offset = raw_pos - self:pos_from_path(self.bufs[buf].path)
-      bufdata.path[1].win_offset = win_offset
-    end
+  bufdata.path = self:path_from_pos(raw_pos)
+  if self._bufdata.path then
+    bufdata.path[1].offset = raw_pos - self:pos_from_path(bufdata.path)
+    bufdata.path[1].win_offset = win_offset
   end
 
   return not path_equal(path_before, bufdata.path)
 end
 
-function Div:buf_hover(buf)
-  local bufdata = self.bufs[buf]
-  local root, path = self:buf_get_root(buf)
-  if not path then return end
-
-  -- make sure this path is relative to the true root
-  local function to_true_path(root_path)
-    if bufdata.tooltip_data then
-      table.remove(root_path)
-      vim.list_extend(root_path, bufdata.tooltip_data.path)
-    end
-  end
+function Div:buf_hover()
+  local bufdata = self._bufdata
+  local root = self
+  local path = bufdata.path
 
   ---@param _div_stack Div[]
   ---@return PathNode[]
@@ -601,6 +540,7 @@ function Div:buf_hover(buf)
   end
 
   local old_decorations = vim.deepcopy(bufdata.decorations)
+  local old_tooltip = bufdata.tooltip
 
   local div_stack, _ = root:div_from_path(path)
 
@@ -611,168 +551,99 @@ function Div:buf_hover(buf)
 
   if hover_div then
     local hover_div_path = div_stack_to_path(hover_div_stack)
-    to_true_path(hover_div_path)
     bufdata.decorations.hover = hover_div_path
   else
     bufdata.decorations.hover = nil
   end
 
-  local tt_parent_div, tt_parent_div_stack = get_parent_div(div_stack, function (div) return div.divs.tt end)
+  local tt_parent_div, _ = get_parent_div(div_stack, function (div) return div.divs.tt end)
 
-  if tt_parent_div then
-    local tooltip_parent_path = div_stack_to_path(tt_parent_div_stack)
-    -- TODO make this more efficient
-    tooltip_parent_path[1].offset = path[1].offset + root:pos_from_path(path)
-      - root:pos_from_path(tooltip_parent_path)
-    tooltip_parent_path[1].win_offset = path[1].win_offset
-    local tooltip_path = {unpack(tooltip_parent_path)}
-    table.insert(tooltip_path, 1, {idx = "tt", name = tt_parent_div.divs.tt.name})
-    to_true_path(tooltip_path)
-    bufdata.decorations.tooltip = tooltip_path
-  else
-    bufdata.decorations.tooltip = nil
+  bufdata.tooltip = tt_parent_div and tt_parent_div.divs.tt
+
+  if old_tooltip ~= nil and old_tooltip ~= bufdata.tooltip then
+    old_tooltip:buf_close()
+    old_tooltip = nil
   end
 
-  return not path_equal(old_decorations.hover, bufdata.decorations.hover) or
-         not path_equal(old_decorations.tooltip, bufdata.decorations.tooltip)
+  if bufdata.tooltip ~= nil and old_tooltip ~= bufdata.tooltip then
+    local width, height = util.make_floating_popup_size(vim.split(bufdata.tooltip:render(), "\n"))
+
+    local tooltip_buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
+    vim.api.nvim_buf_set_option(tooltip_buf, "modifiable", false)
+
+    bufdata.tooltip:buf_register(tooltip_buf, bufdata.keymaps)
+    bufdata.tooltip._bufdata.parent = self
+    bufdata.tooltip:buf_render(false)
+
+    local tt_parent_path = bufdata.path -- TODO: take position from tooltip parent div
+    local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), vim.split(root:render(), "\n"))
+
+    local win_options = {
+      relative = "win",
+      win = bufdata.last_win,
+      style = "minimal",
+      width = width,
+      height = height,
+      border = "none",
+      bufpos = bufpos,
+      zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
+    }
+
+    self.disable_update = true
+    local tooltip_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
+    self.disable_update = false
+    -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
+    vim.api.nvim_command("redraw")
+    bufdata.tooltip._bufdata.last_win = tooltip_win
+  end
+
+  return not path_equal(old_decorations.hover, bufdata.decorations.hover)
 end
 
-function Div:buf_reset(buf, internal)
-  local bufdata = self.bufs[buf]
-  if not internal then
-    bufdata.path = nil
-    bufdata.decorations = {}
-  end
-  for child_buf, _ in pairs(bufdata.children) do
-    local child_bufdata = self.bufs[child_buf]
-    if not internal then
-      child_bufdata.tooltip_data.path = nil
-      child_bufdata.tooltip_data.subpath = nil
-    end
-
-    self:buf_reset(child_buf)
-
-    self.bufs[child_buf] = nil
-    bufdata.children[child_buf] = nil
-    if vim.api.nvim_win_is_valid(child_bufdata.tooltip_data.win) then
-      if vim.api.nvim_get_current_win() == child_bufdata.tooltip_data.win and
-        bufdata.last_win and vim.api.nvim_win_is_valid(bufdata.last_win) then
-        self.disable_update = true
-        vim.api.nvim_set_current_win(bufdata.last_win)
-        self.disable_update = false
-      end
-      vim.api.nvim_win_close(child_bufdata.tooltip_data.win, false)
-    end
-  end
-end
-
-function Div:buf_get_root_buf(buf, fn)
-  local bufdata = self.bufs[buf]
-  while bufdata.tooltip_data do
-    buf = bufdata.tooltip_data.parent
-    bufdata = self.bufs[buf]
-    if fn then fn(buf, bufdata) end
-  end
-  return buf
-end
-
-function Div:buf_event(buf, event, ...)
+function Div:buf_event(event, ...)
   local args = {...}
-  local bufdata = self.bufs[buf]
+  local bufdata = self._bufdata
   if not bufdata.path then return end
-  self:event(buf, bufdata.path, event, unpack(args))
+  self:event(bufdata.path, event, unpack(args))
 end
 
-function Div:buf_enter_win(buf)
-  local bufdata = self.bufs[buf]
-  local restore_path = bufdata.path and {unpack(bufdata.path)}
-  if not self:buf_last_win_valid(buf) then return end
-  vim.api.nvim_set_current_win(bufdata.last_win)
-  if restore_path then
-    self:buf_goto_path(buf, restore_path)
+function Div:buf_enter_win()
+  local deepest_tooltip = self:get_deepest_tooltip()
+  if deepest_tooltip:buf_last_win_valid() then
+    vim.api.nvim_set_current_win(deepest_tooltip._bufdata.last_win)
   end
 end
 
-function Div:buf_goto_path(buf, path)
-  if not self:buf_last_win_valid(buf) then return end
-  self:buf_reset(buf)
-
-  local root = self
-  path = {unpack(path)}
-  local inc_path = {table.remove(path)}
-  if self.name ~= inc_path[1].name then return false end
-
-  local prev_pos, prev_win_offset, prev_offset
-  local function go_to()
-    local bufpos = raw_pos_to_pos(prev_pos + (prev_offset or 0), vim.split(root:render(), "\n"))
-    -- in case the div has been modified such that the offset is no longer valid
-    if not bufpos then
-      bufpos = raw_pos_to_pos(prev_pos, vim.split(root:render(), "\n"))
-    end
-    bufpos[1] = bufpos[1] + 1
-    local bufdata = self.bufs[buf]
-    local win = bufdata.tooltip_data and bufdata.tooltip_data.win or bufdata.last_win
-    vim.api.nvim_win_set_cursor(win, bufpos)
-    if prev_win_offset then
-      vim.api.nvim_win_call(win, function() vim.api.nvim_command("normal zt") end)
-      if prev_win_offset > 0 then
-        vim.api.nvim_win_call(win, function() vim.api.nvim_command(([[exe "normal %d\<c-y>"]]):
-          format(prev_win_offset)) end)
-      end
-    end
-    self:buf_update_cursor(buf, win)
+function Div:get_deepest_tooltip()
+  while self._bufdata and self._bufdata.tooltip do
+    self = self._bufdata.tooltip
   end
-  while #path > 0 do
-    local this_branch = table.remove(path)
-    table.insert(inc_path, 1, this_branch)
-    if this_branch.idx == "tt" then
-      go_to()
-      local tt_buf = self:buf_get_tooltip_buf(buf)
-
-      if tt_buf and vim.api.nvim_get_current_buf() == buf then
-        vim.api.nvim_set_current_win(self.bufs[tt_buf].tooltip_data.win)
-      end
-
-      buf = tt_buf
-      if not buf then return false end
-      root = self:buf_get_root(buf)
-      inc_path = {this_branch}
-      prev_pos, prev_win_offset, prev_offset = nil, nil, nil
-    else
-      local new_pos = root:pos_from_path(inc_path)
-      if not new_pos then return end
-      prev_pos = new_pos
-      prev_offset = inc_path[1].offset
-      prev_win_offset = inc_path[1].win_offset
-    end
-  end
-  go_to()
+  return self
 end
 
-function Div:buf_hop_to(buf)
-  local bufdata = self.bufs[buf]
-  while bufdata.tooltip_data and bufdata.tooltip_data.parent do
-    buf = bufdata.tooltip_data.parent
-    bufdata = self.bufs[buf]
+function Div:buf_hop_to()
+  if not self._bufdata then return end
+  while self._bufdata.parent and self._bufdata.parent._bufdata do
+    self = self._bufdata.parent
   end
-
-  local win = bufdata.last_win
-
-  self:buf_hop(buf, win, function(div) return div.highlightable end, require"hop.hint_util".callbacks.win_goto)
+  self:buf_hop(function(div) return div.highlightable end, require"hop.hint_util".callbacks.win_goto)
 end
 
-function Div:buf_hop(root_buf, root_win, filter_fn, callback_fn)
+function Div:buf_hop(filter_fn, callback_fn)
   local winpos = vim.api.nvim_win_get_position(0)
   local strategy = {
     get_hint_list = function()
       local hints = {}
       local windows = {}
 
-      local function buf_get_hints(this_buf, this_win)
-        local bufdata = self.bufs[this_buf]
-        this_win = this_win or bufdata.tooltip_data.win
+      ---@param root Div
+      local function buf_get_hints(root)
+        if not root._bufdata then return end
+        local this_buf = root._bufdata.buf
+        local this_win = root._bufdata.last_win
+        if not this_win then return end
         table.insert(windows, this_win)
-        local root = self:buf_get_root(this_buf)
         local lines = vim.split(root:render(), "\n")
         local window_dist = require"hop.hint_util".manh_dist(winpos, vim.api.nvim_win_get_position(this_win))
 
@@ -798,12 +669,12 @@ function Div:buf_hop(root_buf, root_win, filter_fn, callback_fn)
           end
         end, true)
 
-        for child_buf, _ in pairs(bufdata.children) do
-          buf_get_hints(child_buf)
+        if root._bufdata.tooltip then
+          buf_get_hints(root._bufdata.tooltip)
         end
       end
 
-      buf_get_hints(root_buf, root_win)
+      buf_get_hints(self)
 
       -- just for greying out
       self.disable_update = true
