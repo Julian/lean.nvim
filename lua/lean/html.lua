@@ -12,7 +12,6 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field path? PathNode[] Current cursor path
 ---@field last_win? integer Window number of the last event
 ---@field keymaps table Extra keymaps (inherited by tooltips)
----@field hover? PathNode[] path to the highlighted node
 ---@field hover_range? integer[][] (0,0)-range of the highlighted node
 ---@field tooltip? Div currently open tooltip
 ---@field parent? Div Parent div
@@ -470,12 +469,10 @@ function Div:buf_hover()
     return div.highlightable
   end)
 
+  local hover_div_path
   if hover_div then
-    local hover_div_path = {}
+    hover_div_path = {}
     for i, _ in ipairs(hover_div_stack) do table.insert(hover_div_path, path[i]) end
-    bufdata.hover = hover_div_path
-  else
-    bufdata.hover = nil
   end
 
   local tt_parent_div, _ = get_parent_div(div_stack, function (div) return div.divs.tt end)
@@ -520,8 +517,8 @@ function Div:buf_hover()
     bufdata.tooltip._bufdata.last_win = tooltip_win
   end
 
-  if bufdata.hover and hover_div then
-    local a = self:pos_from_path(bufdata.hover)
+  if hover_div_path and hover_div then
+    local a = self:pos_from_path(hover_div_path)
     local start_pos = raw_pos_to_pos(a, bufdata.lines)
     local end_pos = raw_pos_to_pos(a + hover_div._size, bufdata.lines)
     bufdata.hover_range = {start_pos, end_pos}
