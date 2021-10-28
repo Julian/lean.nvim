@@ -190,8 +190,8 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
 
       -- close tooltip button
       if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
-        element_div.tags.event.clear = function(this_tick)
-          element_div.tags.event["click"](this_tick)
+        element_div.tags.event.clear = function()
+          element_div.tags.event["click"]()
         end
       end
 
@@ -222,8 +222,8 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
         local select_children_div, no_filter_div, no_filter_val, current_text =
           parse_select(children, element_div, attributes.value)
         if no_filter_val and no_filter_val ~= attributes.value then
-          element_div.tags.event.clear = function(this_tick)
-            no_filter_div.tags.event.click(this_tick)
+          element_div.tags.event.clear = function()
+            no_filter_div.tags.event.click()
             return true
           end
         end

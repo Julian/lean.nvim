@@ -454,12 +454,14 @@ function Pin:pause()
   if self.paused then return end
   self.paused = true
 
-  -- allow RPC refs to be released
-  for _, subdiv in ipairs(self.div.divs) do
-    subdiv:filter(function(div) div.tags = {} end)
+  self.data_div = self.data_div:dummy_copy()
+  if not self:set_loading(false) then
+    self.div.divs = { self.data_div }
+    self:render_parents()
   end
 
-  self:render_parents()
+  -- abort any pending requests
+  self.ticker:lock()
 end
 
 -- Triggered when manually moving a pin.
@@ -478,9 +480,6 @@ function Pin:set_loading(loading)
   if loading and not self.loading then
     self.div.divs = {}
     local data_div_copy = self.data_div:dummy_copy()
-    data_div_copy:filter(function(div)
-      div.disabled = true
-    end)
 
     self.div:add_div(data_div_copy)
 
@@ -505,7 +504,6 @@ Pin.update = a.void(function(self, force, delay, _, lean3_opts)
   if not force and self.paused then return end
 
   local tick = self.ticker:lock()
-  if not tick then return end
 
   self:_update(force, delay, tick, lean3_opts)
   if not tick:check() then return end
@@ -513,8 +511,6 @@ Pin.update = a.void(function(self, force, delay, _, lean3_opts)
   if not self:set_loading(false) then
     self:render_parents()
   end
-
-  self.ticker:release()
 end)
 
 function Pin:_update(force, delay, tick, lean3_opts)
