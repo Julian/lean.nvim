@@ -18,11 +18,6 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field tooltip? Div currently open tooltip
 ---@field parent? Div Parent div
 
----@class TooltipData
----@field path PathNode[]
----@field subpath PathNode[]
----@field parent integer Parent buffer number.
-
 ---An HTML-style div.
 ---@class Div
 ---@field tags table @arbitrary application-specific metadata
