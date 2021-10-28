@@ -247,6 +247,7 @@ function Div:path_from_pos(pos)
   if pos < #self.text then return path, stack end
   pos = pos - #self.text
   for idx, child in ipairs(self.divs) do
+    if child._size == nil then return nil end
     if pos < child._size then
       table.insert(path, { idx = idx, name = child.name })
       table.insert(stack, child)
@@ -390,6 +391,8 @@ function Div:buf_render()
     local end_pos = raw_pos_to_pos(hl["end"], lines)
     vim.highlight.range(buf, div_ns, hl.hlgroup, start_pos, end_pos)
   end
+
+  self:buf_hover(true)
 end
 
 function Div:buf_enter_tooltip()
@@ -454,7 +457,7 @@ function Div:buf_update_position()
   return not path_equal(path_before, bufdata.path)
 end
 
-function Div:buf_hover()
+function Div:buf_hover(force)
   local bufdata = self._bufdata
   local root = self
   local path = bufdata.path
@@ -521,9 +524,9 @@ function Div:buf_hover()
     bufdata.tooltip._bufdata.last_win = tooltip_win
   end
 
-  if not path_equal(old_decorations.hover, bufdata.decorations.hover) then
+  if force or not path_equal(old_decorations.hover, bufdata.decorations.hover) then
     vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
-    if bufdata.decorations.hover then
+    if bufdata.decorations.hover and hover_div then
       local hlgroup = "htmlDivHighlight"
       local a = self:pos_from_path(bufdata.decorations.hover)
       local start_pos = raw_pos_to_pos(a, bufdata.lines)
