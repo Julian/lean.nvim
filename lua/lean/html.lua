@@ -6,16 +6,14 @@ local util = require"lean._util"
 --- @type table<number, Div>
 local _by_id = setmetatable({}, {__mode = 'v'})
 
----@class Decorations
----@field hover? PathNode[]
-
 ---@class BufData
 ---@field buf integer Buffer number of the buffer the div renders to
 ---@field lines? string[] Rendered lines.
 ---@field path? PathNode[] Current cursor path
 ---@field last_win? integer Window number of the last event
----@field decorations Decorations decorations?
 ---@field keymaps table Extra keymaps (inherited by tooltips)
+---@field hover? PathNode[] path to the highlighted node
+---@field hover_range? integer[][] (0,0)-range of the highlighted node
 ---@field tooltip? Div currently open tooltip
 ---@field parent? Div Parent div
 
@@ -275,7 +273,7 @@ function Div:event(path, event_name, ...)
   async.void(function()
     return event_div.tags.event[event_name]({
       rerender = function() self:buf_render() end,
-      rehover = function() self:buf_hover(true) end,
+      rehover = function() self:buf_hover() end,
     }, unpack(args))
   end)()
 end
@@ -328,7 +326,6 @@ function Div:buf_register(buf, keymaps)
   self._bufdata = {
     buf = buf,
     keymaps = keymaps,
-    decorations = {},
   }
   util.set_augroup("DivPosition", string.format([[
     autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
@@ -391,7 +388,7 @@ function Div:buf_render()
     vim.highlight.range(buf, div_ns, hl.hlgroup, start_pos, end_pos)
   end
 
-  self:buf_hover(true)
+  self:buf_hover()
 end
 
 function Div:buf_enter_tooltip()
@@ -456,14 +453,14 @@ function Div:buf_update_position()
   return not path_equal(path_before, bufdata.path)
 end
 
-function Div:buf_hover(force)
+function Div:buf_hover()
   local bufdata = self._bufdata
   local root = self
   local path = bufdata.path
 
   if not path then return end
 
-  local old_decorations = vim.deepcopy(bufdata.decorations)
+  local old_hover_range = bufdata.hover_range
   local old_tooltip = bufdata.tooltip
 
   local div_stack, _ = root:div_from_path(path)
@@ -476,9 +473,9 @@ function Div:buf_hover(force)
   if hover_div then
     local hover_div_path = {}
     for i, _ in ipairs(hover_div_stack) do table.insert(hover_div_path, path[i]) end
-    bufdata.decorations.hover = hover_div_path
+    bufdata.hover = hover_div_path
   else
-    bufdata.decorations.hover = nil
+    bufdata.hover = nil
   end
 
   local tt_parent_div, _ = get_parent_div(div_stack, function (div) return div.divs.tt end)
@@ -523,14 +520,19 @@ function Div:buf_hover(force)
     bufdata.tooltip._bufdata.last_win = tooltip_win
   end
 
-  if force or not path_equal(old_decorations.hover, bufdata.decorations.hover) then
+  if bufdata.hover and hover_div then
+    local a = self:pos_from_path(bufdata.hover)
+    local start_pos = raw_pos_to_pos(a, bufdata.lines)
+    local end_pos = raw_pos_to_pos(a + hover_div._size, bufdata.lines)
+    bufdata.hover_range = {start_pos, end_pos}
+  else
+    bufdata.hover_range = nil
+  end
+  if not vim.deep_equal(old_hover_range, bufdata.hover_range) then
+    local hlgroup = "htmlDivHighlight"
     vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
-    if bufdata.decorations.hover and hover_div then
-      local hlgroup = "htmlDivHighlight"
-      local a = self:pos_from_path(bufdata.decorations.hover)
-      local start_pos = raw_pos_to_pos(a, bufdata.lines)
-      local end_pos = raw_pos_to_pos(a + hover_div._size, bufdata.lines)
-      vim.highlight.range(bufdata.buf, hl_ns, hlgroup, start_pos, end_pos)
+    if bufdata.hover_range then
+      vim.highlight.range(bufdata.buf, hl_ns, hlgroup, bufdata.hover_range[1], bufdata.hover_range[2])
     end
   end
 end
