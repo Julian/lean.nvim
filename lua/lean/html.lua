@@ -333,7 +333,7 @@ function Div:event(path, event_name, ...)
   async.void(function()
     return event_div.tags.event[event_name]({
       rerender = function()
-        self:buf_render(false)
+        self:buf_render()
       end,
     }, unpack(args))
   end)()
@@ -424,43 +424,31 @@ end
 local div_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
 local hl_ns = vim.api.nvim_create_namespace('LeanNvimInfoHighlight')
 
-function Div:buf_render(internal)
-  local bufdata = self._bufdata
-  local buf = bufdata.buf
+function Div:buf_render()
+  local buf = self._bufdata.buf
 
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
 
-  if not internal then
-    bufdata.path = nil
-    bufdata.decorations = {}
-  end
-
-  local root = self
-
-  local text = root:to_string()
+  local text = self:to_string()
   local lines = vim.split(text, '\n')
-  bufdata.lines = lines
+  self._bufdata.lines = lines
 
-  local hls = root:_get_highlights()
+  local hls = self:_get_highlights()
 
-  -- internal updates shouldn't change the text
-  if not internal then
-    vim.api.nvim_buf_set_option(buf, 'modifiable', true)
-    vim.api.nvim_buf_set_lines(buf, 0, -1, true, lines)
-    -- HACK: This shouldn't really do anything, but I think there's a neovim
-    --       display bug. See #27 and neovim/neovim#14663. Specifically,
-    --       as of NVIM v0.5.0-dev+e0a01bdf7, without this, updating a long
-    --       infoview with shorter contents doesn't properly redraw.
-    vim.api.nvim_buf_call(buf, vim.fn.winline)
-    vim.api.nvim_buf_set_option(buf, 'modifiable', false)
-  end
+  vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, true, lines)
+  -- HACK: This shouldn't really do anything, but I think there's a neovim
+  --       display bug. See #27 and neovim/neovim#14663. Specifically,
+  --       as of NVIM v0.5.0-dev+e0a01bdf7, without this, updating a long
+  --       infoview with shorter contents doesn't properly redraw.
+  vim.api.nvim_buf_call(buf, vim.fn.winline)
+  vim.api.nvim_buf_set_option(buf, 'modifiable', false)
 
   for _, hl in ipairs(hls) do
     local start_pos = raw_pos_to_pos(hl.start, lines)
     local end_pos = raw_pos_to_pos(hl["end"], lines)
     vim.highlight.range(buf, div_ns, hl.hlgroup, start_pos, end_pos)
   end
-
 end
 
 function Div:buf_enter_tooltip()
@@ -575,7 +563,7 @@ function Div:buf_hover()
 
     bufdata.tooltip:buf_register(tooltip_buf, bufdata.keymaps)
     bufdata.tooltip._bufdata.parent = self
-    bufdata.tooltip:buf_render(false)
+    bufdata.tooltip:buf_render()
 
     local tt_parent_path = bufdata.path -- TODO: take position from tooltip parent div
     local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), bufdata.lines)
