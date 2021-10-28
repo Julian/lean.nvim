@@ -11,6 +11,7 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 
 ---@class BufData
 ---@field buf integer Buffer number of the buffer the div renders to
+---@field lines? string[] Rendered lines.
 ---@field path? PathNode[] Current cursor path
 ---@field last_win? integer Window number of the last event
 ---@field decorations Decorations decorations?
@@ -29,6 +30,7 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
 ---@field id number @(for buffer rendering) ID number of this div, used for autocmds only
 ---@field _bufdata? BufData Data stored when div is rendered to a buffer
+---@field _size? integer Computed size of this div, updated by `Div:to_string`
 ---@field disable_update? boolean
 local Div = {next_id = 1}
 Div.__index = Div
@@ -80,33 +82,41 @@ function Div:insert_div(tags, text, name, hlgroup)
   return self:add_div(Div:new(tags, text, name, hlgroup))
 end
 
----Render this div, getting its text and highlight groups.
----@return string @the rendered text
----@return table[] @list of highlight data corresponding to the render
-function Div:_render()
-  local text = self.text
-  local hls = {}
-  for _, div in ipairs(self.divs) do
-    local new_text, new_hls = div:_render()
-    for _, new_hl in ipairs(new_hls) do
-      new_hl.start = new_hl.start + #text
-      new_hl["end"] = new_hl["end"] + #text
-    end
-    vim.list_extend(hls, new_hls)
-    text = text .. new_text
-  end
-  local hlgroup = self.hlgroup_override or self.hlgroup
-  if hlgroup then
-    if type(hlgroup) == "function" then
-      hlgroup = hlgroup(self)
-    end
+---@class DivHighlight
+---@field start integer
+---@field end integer
+---@field hlgroup string
 
+---@return DivHighlight[]
+function Div:_get_highlights()
+  local hls = {} ---@type DivHighlight[]
+
+  ---@param div Div
+  ---@param pos integer
+  local function go(div, pos)
+    local hlgroup = div.hlgroup_override or div.hlgroup
+    if type(hlgroup) == "function" then
+      hlgroup = hlgroup(div)
+    end
     if hlgroup then
-      table.insert(hls, {start = 1, ["end"] = #text, hlgroup = hlgroup, override = self.hlgroup_override})
+      table.insert(hls, {
+        start = pos,
+        ["end"] = pos + div._size,
+        hlgroup = hlgroup,
+      })
+    end
+    div.hlgroup_override = nil
+
+    pos = pos + #div.text
+    for _, child in ipairs(div.divs) do
+      go(child, pos)
+      pos = pos + child._size
     end
   end
-  self.hlgroup_override = nil
-  return text, hls
+
+  go(self, 1)
+
+  return hls
 end
 
 ---Renders the div into a string.
@@ -116,7 +126,12 @@ function Div:to_string()
   ---@param div Div
   local function go(div)
     table.insert(pieces, div.text)
-    for _, child in ipairs(div.divs) do go(child) end
+    local size = #div.text
+    for _, child in ipairs(div.divs) do
+      go(child)
+      size = size + child._size
+    end
+    div._size = size
   end
   go(self)
   return table.concat(pieces)
@@ -139,7 +154,7 @@ function Div:_pos_from_path(path)
   local pos = #self.text
   for idx, child in ipairs(self.divs) do
     if idx ~= this_idx then
-      pos = pos + #child:to_string()
+      pos = pos + child._size
     else
       if child.name ~= this_name then return nil end
       local result = child:_pos_from_path(path)
@@ -428,8 +443,11 @@ function Div:buf_render(internal)
     hover_div.hlgroup_override = "htmlDivHighlight"
   end
 
-  local text, hls = root:_render()
-  local lines = vim.split(text, "\n")
+  local text = root:to_string()
+  local lines = vim.split(text, '\n')
+  bufdata.lines = lines
+
+  local hls = root:_get_highlights()
 
   -- internal updates shouldn't change the text
   if not internal then
@@ -443,27 +461,10 @@ function Div:buf_render(internal)
     vim.api.nvim_buf_set_option(buf, 'modifiable', false)
   end
 
-  table.sort(hls, function(hl1, hl2)
-    local range1 = (hl1["end"] - hl1.start)
-    local range2 = (hl2["end"] - hl2.start)
-    if range1 > range2 then
-      return true
-    elseif range1 == range2 then
-      return hl2.override
-    end
-    return false
-  end)
-
   for _, hl in ipairs(hls) do
     local start_pos = raw_pos_to_pos(hl.start, lines)
     local end_pos = raw_pos_to_pos(hl["end"], lines)
-    vim.highlight.range(
-      buf,
-      div_ns,
-      hl.hlgroup,
-      start_pos,
-      {end_pos[1], end_pos[2] + 1}
-    )
+    vim.highlight.range(buf, div_ns, hl.hlgroup, start_pos, end_pos)
   end
 end
 
@@ -519,10 +520,9 @@ end
 
 function Div:buf_update_position()
   local bufdata = self._bufdata
-  local buf = bufdata.buf
   local path_before = bufdata.path
   local cursor_pos = vim.api.nvim_win_get_cursor(bufdata.last_win)
-  local raw_pos = pos_to_raw_pos(cursor_pos, vim.api.nvim_buf_get_lines(buf, 0, -1, true))
+  local raw_pos = pos_to_raw_pos(cursor_pos, bufdata.lines)
   if not raw_pos then return end
 
   bufdata.path = self:path_from_pos(raw_pos)
@@ -583,7 +583,7 @@ function Div:buf_hover()
     bufdata.tooltip:buf_render(false)
 
     local tt_parent_path = bufdata.path -- TODO: take position from tooltip parent div
-    local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), vim.split(root:to_string(), "\n"))
+    local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), bufdata.lines)
 
     local win_options = {
       relative = "win",
@@ -650,7 +650,7 @@ function Div:buf_hop(filter_fn, callback_fn)
         local this_win = root._bufdata.last_win
         if not this_win then return end
         table.insert(windows, this_win)
-        local lines = vim.split(root:to_string(), "\n")
+        local lines = root._bufdata.lines
         local window_dist = require"hop.hint_util".manh_dist(winpos, vim.api.nvim_win_get_position(this_win))
 
         root:filter(function(div, _, raw_pos)
