@@ -197,7 +197,7 @@ function Info:new()
 
   vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
   new_info.div:buf_register(new_info.bufnr, options.mappings)
-  new_info.div.tags.event = {
+  new_info.events = {
     goto_last_window = function()
       if new_info.last_window then
         vim.api.nvim_set_current_win(new_info.last_window)
@@ -275,7 +275,7 @@ function Info:render()
       header_div:insert_div({}, location_text, "pin-location")
 
       header_div.highlightable = true
-      header_div.tags.event = {
+      header_div.events = {
         click = function()
           if self.last_window then
             vim.api.nvim_set_current_win(self.last_window)

@@ -125,7 +125,7 @@ local function code_with_infos(t, sess)
       end
     end
 
-    div.tags = { event = { click = click }}
+    div.events = { click = click }
     div.highlightable = true
 
     div:add_div(code_with_infos(t.tag[2], sess))
@@ -238,7 +238,7 @@ local function tagged_text_msg_embed(t, sess)
         local header = html.Div:new({},
           string.format(is_open and '[%s] ▼' or '[%s] ▶', category))
         header.highlightable = true
-        header.tags.event = { click = click }
+        header.events = { click = click }
 
         div.divs = {header}
 

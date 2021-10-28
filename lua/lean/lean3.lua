@@ -120,9 +120,8 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
       local this_div = html.Div:new({}, "", "select-children", nil)
       for child_i, child in pairs(children) do
         local new_div = parse_widget(child)
-        new_div.tags.event = {}
-        new_div.tags.event.click = function(ctx)
-          return select_div.tags.event.change(ctx, child.a.value)
+        new_div.events.click = function(ctx)
+          return select_div.events.change(ctx, child.a.value)
         end
         new_div.highlightable = true
         this_div:add_div(new_div)
@@ -186,12 +185,13 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
         " events(" .. vim.inspect(result.e) .. ")" ..
         ">", "element")
       end
-      local element_div = div:insert_div({element = result, event = events}, "", "element", hlgroup)
+      local element_div = div:insert_div({element = result}, "", "element", hlgroup)
+      element_div.events = events
 
       -- close tooltip button
       if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
-        element_div.tags.event.clear = function()
-          element_div.tags.event["click"]()
+        element_div.events.clear = function()
+          element_div.events["click"]()
         end
       end
 
@@ -222,8 +222,8 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
         local select_children_div, no_filter_div, no_filter_val, current_text =
           parse_select(children, element_div, attributes.value)
         if no_filter_val and no_filter_val ~= attributes.value then
-          element_div.tags.event.clear = function()
-            no_filter_div.tags.event.click()
+          element_div.events.clear = function()
+            no_filter_div.events.click()
             return true
           end
         end

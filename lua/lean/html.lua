@@ -19,6 +19,7 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---An HTML-style div.
 ---@class Div
 ---@field tags table @arbitrary application-specific metadata
+---@field events table<string, fun()> @event function map
 ---@field text string @the text to show when rendering this div
 ---@field name string @a named handle for this div, used when path-searching
 ---@field hlgroup string|fun():string @the highlight group for this div's text, or a function that returns it
@@ -41,6 +42,7 @@ Div.__index = Div
 function Div:new(tags, text, name, hlgroup)
   local new_div = setmetatable({
     tags = tags or {},
+    events = {},
     text = text or "",
     name = name or "",
     hlgroup = hlgroup,
@@ -49,7 +51,6 @@ function Div:new(tags, text, name, hlgroup)
   }, self)
   self.next_id = self.next_id + 1
   _by_id[new_div.id] = new_div
-  new_div.tags.event = new_div.tags.event or {}
   return new_div
 end
 
@@ -225,8 +226,8 @@ end
 
 local function is_event_div_check(event_name)
   return function (div)
-    if not div.tags.event then return false end
-    local event = div.tags.event[event_name]
+    if not div.events then return false end
+    local event = div.events[event_name]
     if event then return true end
     return false
   end
@@ -271,7 +272,7 @@ function Div:event(path, event_name, ...)
   local args = {...}
 
   async.void(function()
-    return event_div.tags.event[event_name]({
+    return event_div.events[event_name]({
       rerender = function() self:buf_render() end,
       rehover = function() self:buf_hover() end,
     }, unpack(args))
