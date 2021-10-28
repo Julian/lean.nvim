@@ -159,8 +159,6 @@ end
 ---@class PathNode
 ---@field idx number @the index in the current div's children to follow
 ---@field name string @the name that the indexed child should have
----@field offset? integer (Used in `buf_update_position`)
----@field win_offset? integer (Used in `buf_update_position`)
 
 ---Get the raw byte position of the div arrived at by following the given path.
 ---@param path PathNode[] @the path to follow
@@ -530,15 +528,9 @@ function Div:buf_update_position()
   local path_before = bufdata.path
   local cursor_pos = vim.api.nvim_win_get_cursor(bufdata.last_win)
   local raw_pos = pos_to_raw_pos(cursor_pos, vim.api.nvim_buf_get_lines(buf, 0, -1, true))
-  local win_info = vim.fn.getwininfo(bufdata.last_win)
-  local win_offset = cursor_pos[1] - win_info[1].topline
   if not raw_pos then return end
 
   bufdata.path = self:path_from_pos(raw_pos)
-  if self._bufdata.path then
-    bufdata.path[1].offset = raw_pos - self:pos_from_path(bufdata.path)
-    bufdata.path[1].win_offset = win_offset
-  end
 
   return not path_equal(path_before, bufdata.path)
 end
