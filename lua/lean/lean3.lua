@@ -71,7 +71,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
       for _, child in pairs(children) do
         local last_hard_stop = false
         if prev_div then
-          local prev_div_string = prev_div:render()
+          local prev_div_string = prev_div:to_string()
           if #prev_div_string > 0 then
             local last_char = prev_div_string:sub(#prev_div_string, #prev_div_string)
             if last_char ~= " "
@@ -85,7 +85,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
         end
 
         local new_div = parse_widget(child)
-        local new_div_string = new_div:render()
+        local new_div_string = new_div:to_string()
         if #new_div_string == 0 then goto continue end
 
         local this_hard_start = false
@@ -301,7 +301,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
     end
   end
 
-  if state_div and #state_div:render() > 0 then
+  if state_div and not state_div:is_empty() then
     parent_div:add_div(state_div)
   else
     parent_div:add_div(html.Div:new({}, "No info.", "no-tactic-term"))

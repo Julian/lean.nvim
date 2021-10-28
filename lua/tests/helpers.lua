@@ -682,7 +682,7 @@ local function infoview_check(state, _)
 
     if check == "pinopened" then
       assert.opened_pin_state(this_pin)
-      this_pin.prev_div_text = this_pin.div:render()
+      this_pin.prev_div_text = this_pin.div:to_string()
       -- assume text and pos kept if unspecified
       if pin_text_list[id] == nil then
         pin_text_list[id] = "pin_text_kept"
@@ -750,13 +750,13 @@ local function infoview_check(state, _)
 
     if text_check == "pin_text_changed" then
       check_change(function() return this_pin.prev_div_text end,
-        function() return this_pin.div:render() end, true, "text")
+        function() return this_pin.div:to_string() end, true, "text")
     else
       check_change(function() return this_pin.prev_div_text end,
-        function() return this_pin.div:render() end, false, "text")
+        function() return this_pin.div:to_string() end, false, "text")
     end
 
-    this_pin.prev_div_text = this_pin.div:render()
+    this_pin.prev_div_text = this_pin.div:to_string()
     this_pin.prev_text_check = text_check
 
     pin_ids[id] = true

@@ -188,7 +188,7 @@ function Info:new()
     bufnr = vim.api.nvim_create_buf(false, true),
     pin = Pin:new(options.autopause, options.use_widget),
     pins = {},
-    div = html.Div:new({info = self}, "", "info", nil, true)
+    div = html.Div:new({info = self}, "", "info", nil)
   }
   table.insert(infoview._info_by_id, new_info)
 
@@ -287,7 +287,7 @@ function Info:render()
         end
       }
     end
-    if #header_div:render() > 0 then
+    if not header_div:is_empty() then
       header_div:insert_div({}, "\n", "pin-header-end")
     end
 
@@ -608,7 +608,7 @@ function Pin:__update(tick, delay, lean3_opts)
       term_goal_div = components.term_goal(term_goal)
     end
 
-    local goal_div_empty, term_goal_div_empty = #goal_div:render() == 0, #term_goal_div:render() == 0
+    local goal_div_empty, term_goal_div_empty = goal_div:is_empty(), term_goal_div:is_empty()
 
     new_data_div:add_div(goal_div)
     if not goal_div_empty and not term_goal_div_empty then

@@ -88,11 +88,11 @@ end
 ---Render this div, getting its text and highlight groups.
 ---@return string @the rendered text
 ---@return table[] @list of highlight data corresponding to the render
-function Div:render()
+function Div:_render()
   local text = self.text
   local hls = {}
   for _, div in ipairs(self.divs) do
-    local new_text, new_hls = div:render()
+    local new_text, new_hls = div:_render()
     for _, new_hl in ipairs(new_hls) do
       new_hl.start = new_hl.start + #text
       new_hl["end"] = new_hl["end"] + #text
@@ -114,6 +114,25 @@ function Div:render()
   return text, hls
 end
 
+---Renders the div into a string.
+---@return string
+function Div:to_string()
+  local pieces = {}
+  ---@param div Div
+  local function go(div)
+    table.insert(pieces, div.text)
+    for _, child in ipairs(div.divs) do go(child) end
+  end
+  go(self)
+  return table.concat(pieces)
+end
+
+---Returns true if the div renders into the empty string.
+---@return boolean
+function Div:is_empty()
+  return #self:to_string() == 0
+end
+
 function Div:_pos_from_path(path)
   if #path == 0 then return 1 end
   path = {unpack(path)}
@@ -125,7 +144,7 @@ function Div:_pos_from_path(path)
   local pos = #self.text
   for idx, child in ipairs(self.divs) do
     if idx ~= this_idx then
-      pos = pos + #child:render()
+      pos = pos + #child:to_string()
     else
       if child.name ~= this_name then return nil end
       local result = child:_pos_from_path(path)
@@ -416,7 +435,7 @@ function Div:buf_render(internal)
     hover_div.hlgroup_override = "htmlDivHighlight"
   end
 
-  local text, hls = root:render()
+  local text, hls = root:_render()
   local lines = vim.split(text, "\n")
 
   -- internal updates shouldn't change the text
@@ -566,7 +585,7 @@ function Div:buf_hover()
   end
 
   if bufdata.tooltip ~= nil and old_tooltip ~= bufdata.tooltip then
-    local width, height = util.make_floating_popup_size(vim.split(bufdata.tooltip:render(), "\n"))
+    local width, height = util.make_floating_popup_size(vim.split(bufdata.tooltip:to_string(), "\n"))
 
     local tooltip_buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
@@ -577,7 +596,7 @@ function Div:buf_hover()
     bufdata.tooltip:buf_render(false)
 
     local tt_parent_path = bufdata.path -- TODO: take position from tooltip parent div
-    local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), vim.split(root:render(), "\n"))
+    local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), vim.split(root:to_string(), "\n"))
 
     local win_options = {
       relative = "win",
@@ -644,7 +663,7 @@ function Div:buf_hop(filter_fn, callback_fn)
         local this_win = root._bufdata.last_win
         if not this_win then return end
         table.insert(windows, this_win)
-        local lines = vim.split(root:render(), "\n")
+        local lines = vim.split(root:to_string(), "\n")
         local window_dist = require"hop.hint_util".manh_dist(winpos, vim.api.nvim_win_get_position(this_win))
 
         root:filter(function(div, _, raw_pos)
