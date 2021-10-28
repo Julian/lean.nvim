@@ -23,6 +23,7 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field name string @a named handle for this div, used when path-searching
 ---@field hlgroup string|fun():string @the highlight group for this div's text, or a function that returns it
 ---@field divs Div[] @this div's child divs
+---@field tooltip? Div Optional tooltip
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
 ---@field id number @(for buffer rendering) ID number of this div, used for autocmds only
 ---@field _bufdata? BufData Data stored when div is rendered to a buffer
@@ -64,7 +65,7 @@ end
 ---@param div Div @div to use as a tooltip for this div
 ---@return Div @the added tooltip div
 function Div:add_tooltip(div)
-  self.divs["tt"] = div
+  self.tooltip = div
   return div
 end
 
@@ -286,7 +287,7 @@ function Div:find(check)
   end
 end
 
-function Div:__filter(path, pos, fn, skip_tooltips)
+function Div:__filter(path, pos, fn)
   pos = pos + #self.text
 
   for idx, child in ipairs(self.divs) do
@@ -294,28 +295,18 @@ function Div:__filter(path, pos, fn, skip_tooltips)
     table.insert(new_path, {idx = idx, name = child.name})
     fn(child, new_path, pos)
 
-    pos = child:__filter(new_path, pos, fn, skip_tooltips)
-  end
-
-  if not skip_tooltips and self.divs["tt"] then
-    local child = self.divs["tt"]
-    local new_path = {unpack(path)}
-    table.insert(new_path, {idx = "tt", name = child.name})
-    local new_pos = 1
-    fn(child, new_path, new_pos)
-
-    child:__filter(new_path, new_pos, fn, skip_tooltips)
+    pos = child:__filter(new_path, pos, fn)
   end
 
   return pos
 end
 
-function Div:filter(fn, skip_tooltips)
+function Div:filter(fn)
   local path = {{idx = -1, name = self.name}}
   local pos = 1
   fn(self, path, pos)
 
-  self:__filter(path, pos, fn, skip_tooltips)
+  self:__filter(path, pos, fn)
 end
 
 ---@param buf integer
@@ -475,9 +466,9 @@ function Div:buf_hover()
     for i, _ in ipairs(hover_div_stack) do table.insert(hover_div_path, path[i]) end
   end
 
-  local tt_parent_div, _ = get_parent_div(div_stack, function (div) return div.divs.tt end)
+  local tt_parent_div, _ = get_parent_div(div_stack, function (div) return div.tooltip end)
 
-  bufdata.tooltip = tt_parent_div and tt_parent_div.divs.tt
+  bufdata.tooltip = tt_parent_div and tt_parent_div.tooltip
 
   if old_tooltip ~= nil and old_tooltip ~= bufdata.tooltip then
     old_tooltip:buf_close()
@@ -600,7 +591,7 @@ function Div:buf_hop(filter_fn, callback_fn)
           if not vim.deep_equal(hint, hints[#hints]) then
             table.insert(hints, hint)
           end
-        end, true)
+        end)
 
         if root._bufdata.tooltip then
           buf_get_hints(root._bufdata.tooltip)
@@ -629,8 +620,8 @@ function Div:dummy_copy()
   for _, child in ipairs(self.divs) do
     table.insert(dummy.divs, child:dummy_copy())
   end
-  if self.divs["tt"] then
-    dummy.divs["tt"] = self.divs["tt"]:dummy_copy()
+  if self.tooltip then
+    dummy.tooltip = self.tooltip:dummy_copy()
   end
   return dummy
 end
