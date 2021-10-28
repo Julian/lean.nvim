@@ -141,28 +141,6 @@ function Div:is_empty()
   return #self:to_string() == 0
 end
 
-function Div:_pos_from_path(path)
-  if #path == 0 then return 1 end
-  path = {unpack(path)}
-
-  local this_branch = table.remove(path)
-  local this_name = this_branch.name
-  local this_idx = this_branch.idx
-
-  local pos = #self.text
-  for idx, child in ipairs(self.divs) do
-    if idx ~= this_idx then
-      pos = pos + child._size
-    else
-      if child.name ~= this_name then return nil end
-      local result = child:_pos_from_path(path)
-      return result and pos + result
-    end
-  end
-
-  return nil
-end
-
 ---Represents a node in a path through a div.
 ---@class PathNode
 ---@field idx number @the index in the current div's children to follow
@@ -172,29 +150,18 @@ end
 ---@param path PathNode[] @the path to follow
 ---@return number|nil @the position if the path was valid, nil otherwise
 function Div:pos_from_path(path)
-  path = {unpack(path)}
-
-  -- check that the first name matches
-  if self.name ~= table.remove(path).name then return nil end
-
-  return self:_pos_from_path(path)
-end
-
----@param path PathNode[]
----@param stack Div[]
-function Div:__div_from_path(path, stack)
-  table.insert(stack, self)
-  if #path == 0 then return stack, self end
-  path = {unpack(path)}
-
-  ---@type PathNode
-  local this_branch = table.remove(path)
-  local this_div = self.divs[this_branch.idx]
-  local this_name = this_branch.name
-
-  if not this_div or this_div.name ~= this_name then return nil, nil end
-
-  return this_div:__div_from_path(path, stack)
+  local pos = 1
+  for i, p in ipairs(path) do
+    if i == 1 then -- first path node encodes root
+      if p.name ~= self.name then return nil end
+    else
+      if #self.divs < p.idx then return nil end
+      pos = pos + #self.text
+      for j = 1, p.idx - 1 do pos = pos + self.divs[j]._size end
+      self = self.divs[p.idx]
+    end
+  end
+  return pos
 end
 
 ---Get the div stack and div arrived at by following the given path.
@@ -202,56 +169,24 @@ end
 ---@return Div[]|nil @the stack of divs at this path, or nil if the path is invalid
 ---@return Div|nil @the div at this path, or nil if the path is invalid
 function Div:div_from_path(path)
-  if not path then error("div_from_path received nil path") return nil, nil end
-  path = {unpack(path)}
-
-  -- check that the first name matches
-  if self.name ~= table.remove(path).name then return nil, nil end
-
-  return self:__div_from_path(path, setmetatable({}, {__mode = "v"}))
-end
-
----@param pos number
----@param stack Div[]
-function Div:__div_from_pos(pos, stack)
-  table.insert(stack, self)
-
-  local text = self.text
-
-  -- base case
-  if pos <= #text then return nil, stack, {} end
-
-  local search_pos = pos - #text
-
-  for idx, div in ipairs(self.divs) do
-    local div_text, div_stack, div_path = div:__div_from_pos(search_pos, stack)
-    if div_stack then
-      table.insert(div_path, {idx = idx, name = div.name})
-      return nil, div_stack, div_path
+  local stack = { self }
+  for i, p in ipairs(path) do
+    if i == 1 then -- first path node encodes root
+      if p.name ~= self.name then return nil, nil end
+    else
+      if #self.divs < p.idx then return nil, nil end
+      self = self.divs[p.idx]
+      table.insert(stack, self)
     end
-    text = text .. div_text
-    search_pos = search_pos - #div_text
   end
-
-  table.remove(stack)
-  return text, nil
-end
-
----Get the div stack and path at the given raw byte position.
----@param pos PathNode[] @the path to follow
----@return Div[]|nil @the stack of divs at this position, or nil if the path is invalid
----@return PathNode[]|nil @the path at this position, or nil if the position is invalid
-function Div:div_from_pos(pos)
-  local _, div_stack, div_path = self:__div_from_pos(pos, setmetatable({}, {__mode = "v"}))
-  if div_path then table.insert(div_path, {idx = -1, name = self.name}) end
-  return div_stack, div_path
+  return stack, self
 end
 
 ---@param div_stack Div[]
 ---@param check fun(div:Div):boolean
 ---@return Div
 ---@return Div[]
-local function _get_parent_div(div_stack, check)
+local function get_parent_div(div_stack, check)
   if not div_stack then error("get_parent_div received nil div stack") return nil, nil end
   div_stack = {unpack(div_stack)}
   for i = #div_stack, 1, -1 do
@@ -261,17 +196,6 @@ local function _get_parent_div(div_stack, check)
     end
     table.remove(div_stack)
   end
-end
-
----@param div_stack Div[]
----@param check fun(div:Div):boolean
----@return Div
----@return Div[]
-local function get_parent_div(div_stack, check)
-  if type(check) == "string" then
-    return _get_parent_div(div_stack, function(div) return div.name == check end)
-  end
-  return _get_parent_div(div_stack, check)
 end
 
 local function pos_to_raw_pos(pos, lines)
@@ -311,11 +235,28 @@ local function is_event_div_check(event_name)
 end
 
 ---Get the path at the given raw byte position.
----@param pos PathNode[] @the path to follow
----@return PathNode[]|nil @the path at this position, or nil if the position is invalid
+---(requires previous call to Div:to_string)
+---@param pos integer byte position
+---@return PathNode[]|nil the path at this position
+---@return Div[]|nil the stack of divs along this path
 function Div:path_from_pos(pos)
-  local _, path = self:div_from_pos(pos)
-  return path
+  local path = { { idx = 0, name = self.name } }
+  local stack = { self }
+  pos = pos - 1
+::next::
+  if pos < #self.text then return path, stack end
+  pos = pos - #self.text
+  for idx, child in ipairs(self.divs) do
+    if pos < child._size then
+      table.insert(path, { idx = idx, name = child.name })
+      table.insert(stack, child)
+      self = child
+      goto next
+    else
+      pos = pos - child._size
+    end
+  end
+  return nil
 end
 
 ---Trigger the given event at the given path
@@ -518,15 +459,7 @@ function Div:buf_hover()
   local root = self
   local path = bufdata.path
 
-  ---@param _div_stack Div[]
-  ---@return PathNode[]
-  local function div_stack_to_path(_div_stack)
-    local new_path = {}
-    for i, _ in ipairs(_div_stack) do
-      table.insert(new_path, 1, path[#path + 1 - i])
-    end
-    return new_path
-  end
+  if not path then return end
 
   local old_decorations = vim.deepcopy(bufdata.decorations)
   local old_tooltip = bufdata.tooltip
@@ -539,7 +472,8 @@ function Div:buf_hover()
   end)
 
   if hover_div then
-    local hover_div_path = div_stack_to_path(hover_div_stack)
+    local hover_div_path = {}
+    for i, _ in ipairs(hover_div_stack) do table.insert(hover_div_path, path[i]) end
     bufdata.decorations.hover = hover_div_path
   else
     bufdata.decorations.hover = nil
@@ -700,6 +634,8 @@ function Div:dummy_copy()
   return dummy
 end
 
-return {Div = Div, util = { get_parent_div = get_parent_div,
-pos_to_raw_pos = pos_to_raw_pos, raw_pos_to_pos = raw_pos_to_pos,
-is_event_div_check = is_event_div_check }, _by_id = _by_id}
+return {Div = Div, util = {
+  pos_to_raw_pos = pos_to_raw_pos,
+  raw_pos_to_pos = raw_pos_to_pos,
+  is_event_div_check = is_event_div_check,
+}, _by_id = _by_id}
