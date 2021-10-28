@@ -1,4 +1,4 @@
-local a = require"plenary.async"
+local async = require"plenary.async"
 local util = require"lean._util"
 
 -- Maps div.id to Div
@@ -317,7 +317,7 @@ function Div:event(path, event_name, ...)
 
   local args = {...}
 
-  a.void(function()
+  async.void(function()
     return event_div.tags.event[event_name]({
       rerender = function()
         self:buf_render(false)
