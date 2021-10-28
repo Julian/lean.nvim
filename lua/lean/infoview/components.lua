@@ -71,17 +71,12 @@ local function code_with_infos(t, sess)
   elseif t.tag ~= nil then
     local info_with_ctx = t.tag[1].info
 
-    local info_div = html.Div:new({event = {}}, "", "tooltip")
-
     local info_open = false
 
-    local do_reset = function()
-      info_div.divs = {}
-      info_div:insert_div({}, "click for info!", "click-message")
-      info_div.tags.event.clear = nil
-      div:add_tooltip(nil)
+    local do_reset = function(ctx)
       info_open = false
-      return true
+      div:add_tooltip(nil)
+      ctx.rehover()
     end
 
     ---@param info_popup InfoPopup
@@ -108,34 +103,29 @@ local function code_with_infos(t, sess)
     end
 
     local do_open_all = function(ctx)
-      info_div.divs = {}
-      info_div:insert_div({}, "loading...", "loading-message")
-
       local info_popup, err = sess:infoToInteractive(info_with_ctx)
 
+      local tooltip
       if err then
-        info_div.divs = { html.Div:new({}, vim.inspect(err)) }
-        return ctx.rerender()
-      end
-
-      info_div.divs = { mk_tooltip(info_popup) }
-      info_div.tags.event.clear = do_reset
-      div:add_tooltip(info_div)
-      info_open = true
-      ctx.rerender()
-    end
-
-    local click = function(...)
-      if info_open then
-        return do_reset()
+        tooltip = html.Div:new({}, vim.inspect(err))
       else
-        return do_open_all(...)
+        tooltip = mk_tooltip(info_popup)
+        info_open = true
+      end
+
+      div:add_tooltip(tooltip)
+      ctx.rehover()
+    end
+
+    local click = function(ctx)
+      if info_open then
+        return do_reset(ctx)
+      else
+        return do_open_all(ctx)
       end
     end
 
-    do_reset()
-
-    div.tags = {info_with_ctx = info_with_ctx, event = { click = click }}
+    div.tags = { event = { click = click }}
     div.highlightable = true
 
     div:add_div(code_with_infos(t.tag[2], sess))

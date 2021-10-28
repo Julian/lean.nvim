@@ -274,9 +274,8 @@ function Div:event(path, event_name, ...)
 
   async.void(function()
     return event_div.tags.event[event_name]({
-      rerender = function()
-        self:buf_render()
-      end,
+      rerender = function() self:buf_render() end,
+      rehover = function() self:buf_hover(true) end,
     }, unpack(args))
   end)()
 end
