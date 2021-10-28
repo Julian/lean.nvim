@@ -18,7 +18,6 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 
 ---An HTML-style div.
 ---@class Div
----@field tags table @arbitrary application-specific metadata
 ---@field events table<string, fun()> @event function map
 ---@field text string @the text to show when rendering this div
 ---@field name string @a named handle for this div, used when path-searching
@@ -34,14 +33,12 @@ local Div = {next_id = 1}
 Div.__index = Div
 
 ---Create a new div.
----@param tags table @arbitrary application-specific metadata
 ---@param text string @the text to show when rendering this div
 ---@param name string @a named handle for this div, used when path-searching
 ---@param hlgroup string @the highlight group used for this div's text
 ---@return Div
-function Div:new(tags, text, name, hlgroup)
+function Div:new(text, name, hlgroup)
   local new_div = setmetatable({
-    tags = tags or {},
     events = {},
     text = text or "",
     name = name or "",
@@ -71,13 +68,12 @@ function Div:add_tooltip(div)
 end
 
 --- Insert a div initialized with the given params.
----@param tags table
 ---@param text string
 ---@param name string
 ---@param hlgroup string
 ---@return Div @the added div
-function Div:insert_div(tags, text, name, hlgroup)
-  return self:add_div(Div:new(tags, text, name, hlgroup))
+function Div:insert_div(text, name, hlgroup)
+  return self:add_div(Div:new(text, name, hlgroup))
 end
 
 ---@class DivHighlight
@@ -617,7 +613,7 @@ end
 
 -- Creates an impotent deep copy of this div (both tag-stripped and event-disabled).
 function Div:dummy_copy()
-  local dummy = Div:new({}, self.text, self.name, self.hlgroup)
+  local dummy = Div:new(self.text, self.name, self.hlgroup)
   for _, child in ipairs(self.divs) do
     table.insert(dummy.divs, child:dummy_copy())
   end

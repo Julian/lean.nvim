@@ -57,17 +57,17 @@ local to_event = {
 
 function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
     opts, options, show_processing)
-  local parent_div = html.Div:new({}, "", "lean-3-widget")
+  local parent_div = html.Div:new("", "lean-3-widget")
   local widget
 
   local list_first
   local goal_first = true
 
   local function parse_widget(result)
-    local div = html.Div:new({}, "")
+    local div = html.Div:new("")
     local function parse_children(children)
       local prev_div
-      local this_div = html.Div:new({}, "", "children")
+      local this_div = html.Div:new("", "children")
       for _, child in pairs(children) do
         local last_hard_stop = false
         if prev_div then
@@ -103,7 +103,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
         end
 
         if last_hard_stop and this_hard_start then
-          this_div:insert_div({}, " ", "separator")
+          this_div:insert_div(" ", "separator")
         end
 
         this_div:add_div(new_div)
@@ -117,7 +117,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
 
     local function parse_select(children, select_div, current_value)
       local no_filter_div, no_filter_val, current_text
-      local this_div = html.Div:new({}, "", "select-children", nil)
+      local this_div = html.Div:new("", "select-children", nil)
       for child_i, child in pairs(children) do
         local new_div = parse_widget(child)
         new_div.events.click = function(ctx)
@@ -125,7 +125,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
         end
         new_div.highlightable = true
         this_div:add_div(new_div)
-        if child_i ~= #children then this_div:insert_div({}, "\n", "select-separator") end
+        if child_i ~= #children then this_div:insert_div("\n", "select-separator") end
 
         if child.c[1] == "no filter" then
           no_filter_div = new_div
@@ -142,7 +142,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
     if type(result) == "string" then
       result = result:gsub('^%s*(.-)%s$', '%1')
 
-      div:insert_div({}, result, "html-string")
+      div:insert_div(result, "html-string")
 
       return div
     elseif is_widget_element(result) then
@@ -162,7 +162,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
         if list_first then
           list_first = false
         else
-          div:insert_div({}, "\n", "list-separator")
+          div:insert_div("\n", "list-separator")
         end
       end
 
@@ -170,22 +170,22 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
       if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
 
       if class_name == "goal-goals" then
-        div:insert_div({}, '▶ ', "goal-prefix")
+        div:insert_div('▶ ', "goal-prefix")
         goal_first = false
       end
       if class_name == "lh-copy mt2" and not goal_first then
-        div:insert_div({}, '\n', "goal-separator")
+        div:insert_div('\n', "goal-separator")
       end
 
       local debug_tags = false
       if debug_tags then
-        --div:insert_div({element = result}, "<" .. tag .. ">", "element")
-        div:insert_div({element = result}, "<" .. tag ..
+        --div:insert_div("<" .. tag .. ">", "element")
+        div:insert_div("<" .. tag ..
         " attributes(" .. vim.inspect(attributes) .. ")" ..
         " events(" .. vim.inspect(result.e) .. ")" ..
         ">", "element")
       end
-      local element_div = div:insert_div({element = result}, "", "element", hlgroup)
+      local element_div = div:insert_div("", "element", hlgroup)
       element_div.events = events
 
       -- close tooltip button
@@ -215,7 +215,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
       end
 
       if tag == "hr" then
-        element_div:insert_div({}, "|", "rule", "leanInfoFieldSep")
+        element_div:insert_div("|", "rule", "leanInfoFieldSep")
       end
 
       if options.show_filter and tag == "select" then
@@ -227,7 +227,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
             return true
           end
         end
-        local select_menu_div = element_div:insert_div({}, current_text .. "\n", "current-select")
+        local select_menu_div = element_div:insert_div(current_text .. "\n", "current-select")
         select_menu_div:add_tooltip(select_children_div)
       else
         element_div:add_div(parse_children(children))
@@ -237,7 +237,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
         element_div:add_tooltip(parse_widget(tooltip))
       end
       if debug_tags then
-        div:insert_div({element = result}, "</" .. tag .. ">", "element")
+        div:insert_div("</" .. tag .. ">", "element")
       end
       return div
     else
@@ -251,7 +251,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
 
   if require"lean.progress".is_processing_at(params) then
     if show_processing then
-      data_div:insert_div({}, "Processing file...", "processing-msg")
+      data_div:insert_div("Processing file...", "processing-msg")
     end
     return true
   end
@@ -304,7 +304,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
   if state_div and not state_div:is_empty() then
     parent_div:add_div(state_div)
   else
-    parent_div:add_div(html.Div:new({}, "No info.", "no-tactic-term"))
+    parent_div:add_div(html.Div:new("No info.", "no-tactic-term"))
   end
   parent_div:add_div(components.diagnostics(bufnr, params.position.line))
 

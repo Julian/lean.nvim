@@ -188,7 +188,7 @@ function Info:new()
     bufnr = vim.api.nvim_create_buf(false, true),
     pin = Pin:new(options.autopause, options.use_widget),
     pins = {},
-    div = html.Div:new({info = self}, "", "info", nil)
+    div = html.Div:new("", "info", nil)
   }
   table.insert(infoview._info_by_id, new_info)
 
@@ -245,12 +245,12 @@ end
 function Info:render()
   self.div.divs = {}
   local function render_pin(pin, current)
-    local header_div = html.Div:new({}, "", "pin-header")
+    local header_div = html.Div:new("", "pin-header")
     if infoview.debug then
-      header_div:insert_div({}, "-- PIN " .. tostring(pin.id), "pin-id-header")
+      header_div:insert_div("-- PIN " .. tostring(pin.id), "pin-id-header")
 
       local function add_attribute(text, name)
-        header_div:insert_div({}, " [" .. text .. "]", name .. "-attribute")
+        header_div:insert_div(" [" .. text .. "]", name .. "-attribute")
       end
       if current then add_attribute("CURRENT", "current") end
       if pin.paused then add_attribute("PAUSED", "paused") end
@@ -266,13 +266,13 @@ function Info:render()
         filename = pin.position_params.textDocument.uri
       end
       if not infoview.debug then
-        header_div:insert_div({}, "-- ", "pin-id-header")
+        header_div:insert_div("-- ", "pin-id-header")
       else
-        header_div:insert_div({}, ": ", "pin-header-separator")
+        header_div:insert_div(": ", "pin-header-separator")
       end
       local location_text = ("%s at %d:%d"):format(filename,
         pin.position_params.position.line + 1, pin.position_params.position.character + 1)
-      header_div:insert_div({}, location_text, "pin-location")
+      header_div:insert_div(location_text, "pin-location")
 
       header_div.highlightable = true
       header_div.events = {
@@ -288,10 +288,10 @@ function Info:render()
       }
     end
     if not header_div:is_empty() then
-      header_div:insert_div({}, "\n", "pin-header-end")
+      header_div:insert_div("\n", "pin-header-end")
     end
 
-    local pin_div = html.Div:new({}, "", "pin_wrapper")
+    local pin_div = html.Div:new("", "pin_wrapper")
     pin_div:add_div(header_div)
     if pin.div then pin_div:add_div(pin.div) end
 
@@ -301,7 +301,7 @@ function Info:render()
   render_pin(self.pin, true)
 
   for _, pin in pairs(self.pins) do
-    self.div:add_div(html.Div:new({}, "\n\n", "pin_spacing"))
+    self.div:add_div(html.Div:new("\n\n", "pin_spacing"))
     render_pin(pin, false)
   end
 
@@ -329,8 +329,8 @@ end
 function Pin:new(paused, use_widget)
   local new_pin = {id = self.next_id, parent_infos = {}, paused = paused,
     ticker = util.Ticker:new(),
-    data_div = html.Div:new({pin = self}, "", "pin-data", nil),
-    div = html.Div:new({pin = self}, "", "pin", nil), use_widget = use_widget}
+    data_div = html.Div:new("", "pin-data", nil),
+    div = html.Div:new("", "pin", nil), use_widget = use_widget}
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
 
@@ -527,7 +527,7 @@ function Pin:__update(tick, delay, lean3_opts)
   delay = delay or 100
 
   self:set_loading(true)
-  local new_data_div = html.Div:new({pin = self}, "", "pin-data", nil)
+  local new_data_div = html.Div:new("", "pin-data", nil)
 
   if delay > 0 then
     util.wait_timer(delay)
@@ -554,7 +554,7 @@ function Pin:__update(tick, delay, lean3_opts)
 
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then
-        new_data_div:insert_div({}, "Processing file...", "processing-msg")
+        new_data_div:insert_div("Processing file...", "processing-msg")
       end
       goto finish
     end
@@ -608,12 +608,12 @@ function Pin:__update(tick, delay, lean3_opts)
 
     new_data_div:add_div(goal_div)
     if not goal_div_empty and not term_goal_div_empty then
-      new_data_div:add_div(html.Div:new({}, "\n\n", "plain_goal-term_goal-separator"))
+      new_data_div:add_div(html.Div:new("\n\n", "plain_goal-term_goal-separator"))
     end
     new_data_div:add_div(term_goal_div)
 
     if goal_div_empty and term_goal_div_empty then
-      new_data_div:add_div(html.Div:new({}, "No info.", "no-tactic-term"))
+      new_data_div:add_div(html.Div:new("No info.", "no-tactic-term"))
     end
 
     local diagnostics_div
