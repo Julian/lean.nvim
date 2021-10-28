@@ -185,7 +185,7 @@ end
 ---@return Div
 ---@return Div[]
 local function get_parent_div(div_stack, check)
-  if not div_stack then error("get_parent_div received nil div stack") return nil, nil end
+  if not div_stack then return nil, nil end
   div_stack = {unpack(div_stack)}
   for i = #div_stack, 1, -1 do
     local this_div = div_stack[i]
