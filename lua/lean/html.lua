@@ -429,7 +429,6 @@ function Div:buf_render(internal)
   local buf = bufdata.buf
 
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
-  vim.api.nvim_buf_clear_namespace(buf, hl_ns, 0, -1)
 
   if not internal then
     bufdata.path = nil
@@ -462,14 +461,6 @@ function Div:buf_render(internal)
     vim.highlight.range(buf, div_ns, hl.hlgroup, start_pos, end_pos)
   end
 
-  if bufdata.decorations.hover then
-    local _, hover_div = self:div_from_path(bufdata.decorations.hover)
-    local hlgroup = "htmlDivHighlight"
-    local a = self:pos_from_path(bufdata.decorations.hover)
-    local start_pos = raw_pos_to_pos(a, lines)
-    local end_pos = raw_pos_to_pos(a + hover_div._size, lines)
-    vim.highlight.range(buf, hl_ns, hlgroup, start_pos, end_pos)
-  end
 end
 
 function Div:buf_enter_tooltip()
@@ -500,9 +491,9 @@ function Div:buf_update_cursor(win)
   if not self:buf_last_win_valid() then return end
 
   local path_changed = self:buf_update_position()
-  local decorations_changed = path_changed and self:buf_hover()
-  if decorations_changed then
-    self:buf_render(true)
+
+  if path_changed then
+    self:buf_hover()
   end
 end
 
@@ -608,7 +599,16 @@ function Div:buf_hover()
     bufdata.tooltip._bufdata.last_win = tooltip_win
   end
 
-  return not path_equal(old_decorations.hover, bufdata.decorations.hover)
+  if not path_equal(old_decorations.hover, bufdata.decorations.hover) then
+    vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
+    if bufdata.decorations.hover then
+      local hlgroup = "htmlDivHighlight"
+      local a = self:pos_from_path(bufdata.decorations.hover)
+      local start_pos = raw_pos_to_pos(a, bufdata.lines)
+      local end_pos = raw_pos_to_pos(a + hover_div._size, bufdata.lines)
+      vim.highlight.range(bufdata.buf, hl_ns, hlgroup, start_pos, end_pos)
+    end
+  end
 end
 
 function Div:buf_event(event, ...)
