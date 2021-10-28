@@ -25,7 +25,6 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field text string @the text to show when rendering this div
 ---@field name string @a named handle for this div, used when path-searching
 ---@field hlgroup string|fun():string @the highlight group for this div's text, or a function that returns it
----@field hlgroup_override string @temporary override of `hlgroup` that applies to a single render
 ---@field divs Div[] @this div's child divs
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
 ---@field id number @(for buffer rendering) ID number of this div, used for autocmds only
@@ -94,7 +93,7 @@ function Div:_get_highlights()
   ---@param div Div
   ---@param pos integer
   local function go(div, pos)
-    local hlgroup = div.hlgroup_override or div.hlgroup
+    local hlgroup = div.hlgroup
     if type(hlgroup) == "function" then
       hlgroup = hlgroup(div)
     end
@@ -105,7 +104,6 @@ function Div:_get_highlights()
         hlgroup = hlgroup,
       })
     end
-    div.hlgroup_override = nil
 
     pos = pos + #div.text
     for _, child in ipairs(div.divs) do
@@ -424,12 +422,14 @@ function Div:buf_close(keep_tooltips_open)
 end
 
 local div_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
+local hl_ns = vim.api.nvim_create_namespace('LeanNvimInfoHighlight')
 
 function Div:buf_render(internal)
   local bufdata = self._bufdata
   local buf = bufdata.buf
 
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
+  vim.api.nvim_buf_clear_namespace(buf, hl_ns, 0, -1)
 
   if not internal then
     bufdata.path = nil
@@ -437,11 +437,6 @@ function Div:buf_render(internal)
   end
 
   local root = self
-
-  if bufdata.decorations.hover then
-    local _, hover_div = self:div_from_path(bufdata.decorations.hover)
-    hover_div.hlgroup_override = "htmlDivHighlight"
-  end
 
   local text = root:to_string()
   local lines = vim.split(text, '\n')
@@ -465,6 +460,15 @@ function Div:buf_render(internal)
     local start_pos = raw_pos_to_pos(hl.start, lines)
     local end_pos = raw_pos_to_pos(hl["end"], lines)
     vim.highlight.range(buf, div_ns, hl.hlgroup, start_pos, end_pos)
+  end
+
+  if bufdata.decorations.hover then
+    local _, hover_div = self:div_from_path(bufdata.decorations.hover)
+    local hlgroup = "htmlDivHighlight"
+    local a = self:pos_from_path(bufdata.decorations.hover)
+    local start_pos = raw_pos_to_pos(a, lines)
+    local end_pos = raw_pos_to_pos(a + hover_div._size, lines)
+    vim.highlight.range(buf, hl_ns, hlgroup, start_pos, end_pos)
   end
 end
 
