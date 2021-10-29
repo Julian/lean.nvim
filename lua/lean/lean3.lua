@@ -259,7 +259,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
     if show_processing then
       data_div:insert_div({}, "Processing file...", "processing-msg")
     end
-    return true
+    goto finish
   end
 
   if use_widget then
@@ -313,9 +313,6 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
   else
     parent_div:insert_new_div(html.Div:new({}, "No info.", "no-tactic-term"))
   end
-  parent_div:insert_new_div(components.diagnostics(bufnr, params.position.line))
-
-  data_div:insert_new_div(parent_div)
 
   -- update all other pins for the same URI so they aren't left with a stale "session"
   if opts and opts.widget_event then
@@ -326,6 +323,12 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
       end
     end
   end
+
+  ::finish::
+
+  parent_div:insert_new_div(components.diagnostics(bufnr, params.position.line))
+
+  data_div:insert_new_div(parent_div)
 
   return true
 end
