@@ -125,7 +125,10 @@ local function code_with_infos(t, sess)
       end
     end
 
-    div.events = { click = click }
+    div.events = {
+      click = click,
+      clear = function(ctx) if info_open then do_reset(ctx) end end,
+    }
     div.highlightable = true
 
     div:add_div(code_with_infos(t.tag[2], sess))

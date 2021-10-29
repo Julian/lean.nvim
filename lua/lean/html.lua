@@ -255,6 +255,23 @@ function Div:path_from_pos(pos)
   return nil
 end
 
+---@class DivEventContext
+---@field rerender fun()
+---@field rehover fun()
+---@field root Div
+---@field div Div
+
+---@param child Div
+---@return DivEventContext
+function Div:make_event_context(child)
+  return {
+    rerender = function() self:buf_render() end,
+    rehover = function() self:buf_hover() end,
+    root = self,
+    div = child,
+  }
+end
+
 ---Trigger the given event at the given path
 ---@param path PathNode[] @the path to trigger the event at
 ---@param event_name string @the path to trigger the event at
@@ -268,13 +285,12 @@ function Div:event(path, event_name, ...)
   local args = {...}
 
   async.void(function()
-    return event_div.events[event_name]({
-      rerender = function() self:buf_render() end,
-      rehover = function() self:buf_hover() end,
-    }, unpack(args))
+    return event_div.events[event_name](self:make_event_context(event_div), unpack(args))
   end)()
 end
 
+---Returns true if check is true for one of the descendants
+---@param check fun(div:Div):boolean
 function Div:find(check)
   if check(self) then return self end
 
@@ -322,6 +338,10 @@ function Div:buf_register(buf, keymaps)
   local mappings = {n = {}}
   if keymaps then
     for key, event in pairs(keymaps) do
+      if type(event) == 'function' then
+        self.events[tostring(event)] = event
+        event = tostring(event)
+      end
       mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_event("%s")<CR>]]):format(self.id, event)
     end
     mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip()<CR>]]):format(self.id)
@@ -539,6 +559,13 @@ end
 function Div:get_deepest_tooltip()
   while self._bufdata and self._bufdata.tooltip do
     self = self._bufdata.tooltip
+  end
+  return self
+end
+
+function Div:get_outermost_ancestor()
+  while self._bufdata and self._bufdata.parent do
+    self = self._bufdata.parent
   end
   return self
 end
