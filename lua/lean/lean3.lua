@@ -78,6 +78,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
               and last_char ~= "\n"
               and last_char ~= "("
               and last_char ~= "["
+              and last_char ~= "{"
               and last_char ~= "@"
               then
               last_hard_stop = true
@@ -96,6 +97,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
             and first_char ~= "\n"
             and first_char ~= ")"
             and first_char ~= "]"
+            and first_char ~= "}"
             and first_char ~= ","
             and first_char ~= "."
             then
