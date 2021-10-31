@@ -15,6 +15,18 @@ local function H(contents)
   return string.format('▶ %s', contents)
 end
 
+---@param text string?
+local function mk_tooltip_div(text)
+  local div = html.Div:new(text)
+  local stop_bubbling = function() end
+  div.events = {
+    click = stop_bubbling,
+    mouse_enter = stop_bubbling,
+    mouse_leave = stop_bubbling,
+  }
+  return div
+end
+
 --- Convert an LSP range to a human-readable, (1,1)-indexed string.
 ---
 --- The (1, 1) indexing is to match the interface used interactively for
@@ -81,7 +93,7 @@ local function code_with_infos(t, sess)
 
     ---@param info_popup InfoPopup
     local mk_tooltip = function(info_popup)
-      local tooltip_div = html.Div:new()
+      local tooltip_div = mk_tooltip_div()
 
       if info_popup.exprExplicit ~= nil then
         tooltip_div:add_div(code_with_infos(info_popup.exprExplicit, sess))
@@ -107,7 +119,7 @@ local function code_with_infos(t, sess)
 
       local tooltip
       if err then
-        tooltip = html.Div:new(vim.inspect(err))
+        tooltip = mk_tooltip_div(vim.inspect(err))
       else
         tooltip = mk_tooltip(info_popup)
         info_open = true

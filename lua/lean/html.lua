@@ -15,6 +15,7 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field hover_range? integer[][] (0,0)-range of the highlighted node
 ---@field tooltip? Div currently open tooltip
 ---@field parent? Div Parent div
+---@field parent_path? PathNode[] Path in parent div, events bubble up to the parent there
 
 ---An HTML-style div.
 ---@class Div
@@ -177,19 +178,31 @@ function Div:div_from_path(path)
   return stack, self
 end
 
----@param div_stack Div[]
+---@generic T
+---@param arr T[]
+---@param n integer
+---@return T[]
+local function take(arr, n)
+  local res = {}
+  for i = 1, n do table.insert(res, arr[i]) end
+  return res
+end
+
+-- Finds the innermost div satisfying a predicate
+---@param path PathNode[]
 ---@param check fun(div:Div):boolean
----@return Div
----@return Div[]
-local function get_parent_div(div_stack, check)
-  if not div_stack then return nil, nil end
-  div_stack = {unpack(div_stack)}
-  for i = #div_stack, 1, -1 do
-    local this_div = div_stack[i]
+---@return Div @The div satisfying check
+---@return Div[] @The div stack up to and including that div
+---@return PathNode[] @The subpath up to that div
+function Div:find_innermost_along(path, check)
+  local stack, _ = self:div_from_path(path)
+  if stack == nil then return end
+
+  for i = #stack, 1, -1 do
+    local this_div = stack[i]
     if check(this_div) then
-      return this_div, div_stack
+      return this_div, take(stack, i), take(path, i)
     end
-    table.remove(div_stack)
   end
 end
 
@@ -217,15 +230,6 @@ local function raw_pos_to_pos(raw_pos, lines)
     if rem_chars <= (#line + 1) then return {line_num - 1, rem_chars - 1} end
 
     rem_chars = rem_chars - (#line + 1)
-  end
-end
-
-local function is_event_div_check(event_name)
-  return function (div)
-    if not div.events then return false end
-    local event = div.events[event_name]
-    if event then return true end
-    return false
   end
 end
 
@@ -276,11 +280,17 @@ end
 ---@param path PathNode[] @the path to trigger the event at
 ---@param event_name string @the path to trigger the event at
 function Div:event(path, event_name, ...)
-  local div_stack, _ = self:div_from_path(path)
-  if not div_stack then return end
-
-  local event_div, _ = get_parent_div(div_stack, is_event_div_check(event_name))
-  if not event_div then return end
+  local event_div, _, event_div_path =
+    self:find_innermost_along(path, function (div)
+      return div.events and div.events[event_name]
+    end)
+  if not event_div then
+    if self._bufdata.parent_path then
+      -- bubble up to parent
+      return self._bufdata.parent:event(self._bufdata.parent_path, event_name, ...)
+    end
+    return
+  end
 
   local args = {...}
 
@@ -338,10 +348,6 @@ function Div:buf_register(buf, keymaps)
   local mappings = {n = {}}
   if keymaps then
     for key, event in pairs(keymaps) do
-      if type(event) == 'function' then
-        self.events[tostring(event)] = event
-        event = tostring(event)
-      end
       mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_event("%s")<CR>]]):format(self.id, event)
     end
     mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip()<CR>]]):format(self.id)
@@ -356,9 +362,12 @@ end
 
 ---@param keep_tooltips_open? boolean
 function Div:buf_close(keep_tooltips_open)
-  vim.api.nvim_buf_delete(self._bufdata.buf, {force = true})
+  if vim.api.nvim_buf_is_valid(self._bufdata.buf) then
+    vim.api.nvim_buf_delete(self._bufdata.buf, {force = true})
+  end
   if self._bufdata.tooltip and self._bufdata.tooltip._bufdata then
     self._bufdata.tooltip._bufdata.parent = nil
+    self._bufdata.tooltip._bufdata.parent_path = nil
     if not keep_tooltips_open then
       self._bufdata.tooltip:buf_close()
     end
@@ -470,20 +479,12 @@ function Div:buf_hover()
   local old_hover_range = bufdata.hover_range
   local old_tooltip = bufdata.tooltip
 
-  local div_stack, _ = root:div_from_path(path)
-
   ---@param div Div
-  local hover_div, hover_div_stack = get_parent_div(div_stack, function (div)
-    return div.highlightable
-  end)
+  local hover_div, _, hover_div_path =
+    self:find_innermost_along(path, function (div) return div.highlightable end)
 
-  local hover_div_path
-  if hover_div then
-    hover_div_path = {}
-    for i, _ in ipairs(hover_div_stack) do table.insert(hover_div_path, path[i]) end
-  end
-
-  local tt_parent_div, _ = get_parent_div(div_stack, function (div) return div.tooltip end)
+  local tt_parent_div, _, tt_parent_div_path =
+    self:find_innermost_along(path, function (div) return div.tooltip end)
 
   bufdata.tooltip = tt_parent_div and tt_parent_div.tooltip
 
@@ -501,6 +502,7 @@ function Div:buf_hover()
 
     bufdata.tooltip:buf_register(tooltip_buf, bufdata.keymaps)
     bufdata.tooltip._bufdata.parent = self
+    bufdata.tooltip._bufdata.parent_path = tt_parent_div_path
     bufdata.tooltip:buf_render()
 
     local tt_parent_path = bufdata.path -- TODO: take position from tooltip parent div
@@ -653,5 +655,4 @@ end
 return {Div = Div, util = {
   pos_to_raw_pos = pos_to_raw_pos,
   raw_pos_to_pos = raw_pos_to_pos,
-  is_event_div_check = is_event_div_check,
 }, _by_id = _by_id}

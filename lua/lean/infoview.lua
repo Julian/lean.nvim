@@ -41,10 +41,10 @@ local options = {
     mappings = {
       ["K"] = [[click]],
       ["<CR>"] = [[click]],
-      ["<Esc>"] = function(...) infoview.clear_all_handler(...) end,
+      ["<Esc>"] = 'clear_all',
       ["I"] = [[mouse_enter]],
       ["i"] = [[mouse_leave]],
-      ["C"] = function(...) infoview.clear_all_handler(...) end,
+      ["C"] = 'clear_all',
       ["<LocalLeader><Tab>"] = [[goto_last_window]]
     }
   }
@@ -325,16 +325,6 @@ end
 --- Retrieve the current combined contents of the info as a string.
 function Info:get_contents()
   return table.concat(self:get_lines(), "\n")
-end
-
----@param ctx DivEventContext
-function infoview.clear_all_handler(ctx)
-  local root = ctx.root:get_outermost_ancestor()
-  ctx = root:make_event_context(ctx.div)
-  vim.api.nvim_set_current_win(root._bufdata.last_win)
-  root:find(function (div) ---@param div Div
-    if div.events.clear then div.events.clear(ctx) end
-  end)
 end
 
 ---@return Pin
@@ -643,6 +633,14 @@ function Pin:__update(tick, delay, lean3_opts)
     new_data_div:add_div(diagnostics_div or components.diagnostics(buf, line))
 
     if not tick:check() then return true end
+  end
+
+  ---@param ctx DivEventContext
+  new_data_div.events.clear_all = function(ctx)
+    vim.api.nvim_set_current_win(ctx.root._bufdata.last_win)
+    ctx.div:find(function (div) ---@param div Div
+      if div.events.clear then div.events.clear(ctx) end
+    end)
   end
 
   ::finish::
