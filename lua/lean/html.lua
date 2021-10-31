@@ -280,10 +280,9 @@ end
 ---@param path PathNode[] @the path to trigger the event at
 ---@param event_name string @the path to trigger the event at
 function Div:event(path, event_name, ...)
-  local event_div, _, event_div_path =
-    self:find_innermost_along(path, function (div)
-      return div.events and div.events[event_name]
-    end)
+  local event_div = self:find_innermost_along(path,
+    ---@param div Div
+    function (div) return div.events and div.events[event_name] end)
   if not event_div then
     if self._bufdata.parent_path then
       -- bubble up to parent
@@ -479,12 +478,13 @@ function Div:buf_hover()
   local old_hover_range = bufdata.hover_range
   local old_tooltip = bufdata.tooltip
 
-  ---@param div Div
-  local hover_div, _, hover_div_path =
-    self:find_innermost_along(path, function (div) return div.highlightable end)
+  local hover_div, _, hover_div_path = self:find_innermost_along(path,
+    ---@param div Div
+    function (div) return div.highlightable end)
 
-  local tt_parent_div, _, tt_parent_div_path =
-    self:find_innermost_along(path, function (div) return div.tooltip end)
+  local tt_parent_div, _, tt_parent_div_path = self:find_innermost_along(path,
+    ---@param div Div
+    function (div) return div.tooltip end)
 
   bufdata.tooltip = tt_parent_div and tt_parent_div.tooltip
 
