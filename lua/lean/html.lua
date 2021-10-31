@@ -11,6 +11,7 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field name string @a named handle for this div, used when path-searching
 ---@field hlgroup string|fun():string @the highlight group for this div's text, or a function that returns it
 ---@field hlgroup_override string @temporary override of `hlgroup` that applies to a single render
+---@field event_abort table<string, boolean> @indicates whether to abort search for events in this div's parents
 ---@field divs Div[] @this div's child divs
 ---@field div_stack Div[] @(internal) stack of divs used while dynamically constructing a div tree rooted at this div
 ---@field listener boolean @whether this div can listen to events from its children
@@ -30,7 +31,7 @@ Div.__index = Div
 ---@return Div
 function Div:new(tags, text, name, hlgroup, listener)
   local new_div = setmetatable({tags = tags or {}, text = text or "", name = name or "", hlgroup = hlgroup,
-    divs = {}, div_stack = {}, listener = listener, bufs = {}, id = self.next_id}, self)
+    divs = {}, div_stack = {}, listener = listener, bufs = {}, id = self.next_id, event_abort = {}}, self)
   self.next_id = self.next_id + 1
   _by_id[new_div.id] = new_div
   new_div.tags.event = new_div.tags.event or {}
@@ -241,9 +242,11 @@ local function _get_parent_div(div_stack, check)
   div_stack = {unpack(div_stack)}
   for i = #div_stack, 1, -1 do
     local this_div = div_stack[i]
-    if check(this_div) then
+    local found, abort = check(this_div)
+    if found then
       return this_div, div_stack
     end
+    if abort then return nil, nil end
     table.remove(div_stack)
   end
 end
@@ -285,11 +288,13 @@ local function raw_pos_to_pos(raw_pos, lines)
 end
 
 local function is_event_div_check(event_name)
+  ---@param div Div
   return function (div)
-    if not div.tags.event then return false end
+    local abort = div.event_abort[event_name]
+    if not div.tags.event then return false, abort end
     local event = div.tags.event[event_name]
-    if event then return true end
-    return false
+    if event then return true, abort end
+    return false, abort
   end
 end
 

@@ -87,6 +87,7 @@ local function code_with_infos(t, sess)
     ---@param info_popup InfoPopup
     local mk_tooltip = function(info_popup)
       local tooltip_div = html.Div:new()
+      tooltip_div.event_abort["click"] = true
 
       if info_popup.exprExplicit ~= nil then
         tooltip_div:insert_new_div(code_with_infos(info_popup.exprExplicit, sess))
