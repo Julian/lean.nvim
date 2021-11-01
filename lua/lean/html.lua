@@ -1,12 +1,8 @@
 local async = require"plenary.async"
 local util = require"lean._util"
 
--- Maps div.id to Div
--- (necessary until neovim/neovim#14661 is merged.)
---- @type table<number, Div>
-local _by_id = setmetatable({}, {__mode = 'v'})
-
 ---@class BufData
+---@field id number ID number, used for autocmds only
 ---@field buf integer Buffer number of the buffer the div renders to
 ---@field lines? string[] Rendered lines.
 ---@field path? PathNode[] Current cursor path
@@ -26,11 +22,10 @@ local _by_id = setmetatable({}, {__mode = 'v'})
 ---@field divs Div[] @this div's child divs
 ---@field tooltip? Div Optional tooltip
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
----@field id number @(for buffer rendering) ID number of this div, used for autocmds only
 ---@field _bufdata? BufData Data stored when div is rendered to a buffer
 ---@field _size? integer Computed size of this div, updated by `Div:to_string`
 ---@field disable_update? boolean
-local Div = {next_id = 1}
+local Div = {}
 Div.__index = Div
 
 ---Create a new div.
@@ -45,10 +40,7 @@ function Div:new(text, name, hlgroup)
     name = name or "",
     hlgroup = hlgroup,
     divs = {},
-    id = self.next_id,
   }, self)
-  self.next_id = self.next_id + 1
-  _by_id[new_div.id] = new_div
   return new_div
 end
 
@@ -331,30 +323,39 @@ function Div:filter(fn)
   self:__filter(path, pos, fn)
 end
 
+-- Maps div._bufdata.id to Div
+--- @type table<number, Div>
+local _by_id = setmetatable({}, {__mode = 'v'})
+local next_id = 1
+
 ---@param buf integer
 ---@param keymaps? table Extra keymaps
 function Div:buf_register(buf, keymaps)
   if self._bufdata ~= nil then error(('div already registered for buffer %d'):format(self._bufdata.buf)) end
+  local id = next_id
+  next_id = next_id + 1
   self._bufdata = {
+    id = id,
     buf = buf,
     keymaps = keymaps,
   }
+  _by_id[id] = self
   util.set_augroup("DivPosition", string.format([[
     autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
     autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
-  ]], buf, self.id, buf, self.id), buf)
+  ]], buf, id, buf, id), buf)
 
   local mappings = {n = {}}
   if keymaps then
     for key, event in pairs(keymaps) do
-      mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_event("%s")<CR>]]):format(self.id, event)
+      mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_event("%s")<CR>]]):format(id, event)
     end
-    mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip()<CR>]]):format(self.id)
+    mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip()<CR>]]):format(id)
     mappings.n["<S-Tab>"] = (
       [[<Cmd>lua require'lean.html'._by_id[%d]:buf_goto_parent_tooltip()<CR>]]
-    ):format(self.id)
-    mappings.n["J"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip()<CR>]]):format(self.id)
-    mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_hop_to()<CR>]]):format(self.id)
+    ):format(id)
+    mappings.n["J"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip()<CR>]]):format(id)
+    mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_hop_to()<CR>]]):format(id)
   end
   util.load_mappings(mappings, buf)
 end
