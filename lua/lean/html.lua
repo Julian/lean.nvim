@@ -427,7 +427,8 @@ function Div:buf_last_win_valid()
 end
 
 function Div:buf_update_cursor(win)
-  if self.disable_update then return end local bufdata = self._bufdata
+  if self.disable_update then return end
+  local bufdata = self._bufdata
   win = win or vim.api.nvim_get_current_win()
   if vim.api.nvim_win_get_buf(win) == bufdata.buf then
     bufdata.last_win = win
@@ -489,43 +490,57 @@ function Div:buf_hover()
 
   bufdata.tooltip = tt_parent_div and tt_parent_div.tooltip
 
-  if old_tooltip ~= nil and old_tooltip ~= bufdata.tooltip then
+  if old_tooltip ~= nil and (bufdata.tooltip == nil
+      -- reuse old tooltip window if at same path
+      or not path_equal(old_tooltip._bufdata.parent_path, tt_parent_div_path)
+      or not old_tooltip:buf_last_win_valid()) then
     old_tooltip:buf_close()
     old_tooltip = nil
   end
 
-  if bufdata.tooltip ~= nil and old_tooltip ~= bufdata.tooltip then
+  if bufdata.tooltip ~= nil then
     local width, height = util.make_floating_popup_size(vim.split(bufdata.tooltip:to_string(), "\n"))
 
-    local tooltip_buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
-    vim.api.nvim_buf_set_option(tooltip_buf, "modifiable", false)
+    local tt_parent_path = tt_parent_div_path
+    local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), bufdata.lines)
 
-    bufdata.tooltip:buf_register(tooltip_buf, bufdata.keymaps)
+    if old_tooltip then -- reuse old tooltip window
+      bufdata.tooltip._bufdata = old_tooltip._bufdata
+      old_tooltip._bufdata = nil
+      _by_id[bufdata.tooltip._bufdata.id] = bufdata.tooltip
+    else
+      local tooltip_buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
+      vim.api.nvim_buf_set_option(tooltip_buf, "modifiable", false)
+
+      bufdata.tooltip:buf_register(tooltip_buf, bufdata.keymaps)
+    end
+
     bufdata.tooltip._bufdata.parent = self
     bufdata.tooltip._bufdata.parent_path = tt_parent_div_path
     bufdata.tooltip:buf_render()
 
-    local tt_parent_path = bufdata.path -- TODO: take position from tooltip parent div
-    local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), bufdata.lines)
+    if not bufdata.tooltip._bufdata.last_win then
+      -- fresh non-reused tooltip, open window
+      local tooltip_buf = bufdata.tooltip._bufdata.buf
 
-    local win_options = {
-      relative = "win",
-      win = bufdata.last_win,
-      style = "minimal",
-      width = width,
-      height = height,
-      border = "none",
-      bufpos = bufpos,
-      zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
-    }
+      local win_options = {
+        relative = "win",
+        win = bufdata.last_win,
+        style = "minimal",
+        width = width,
+        height = height,
+        border = "none",
+        bufpos = bufpos,
+        zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
+      }
 
-    self.disable_update = true
-    local tooltip_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
-    self.disable_update = false
+      bufdata.tooltip._bufdata.last_win =
+        vim.api.nvim_open_win(tooltip_buf, false, win_options)
+    end
+
     -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
     vim.api.nvim_command("redraw")
-    bufdata.tooltip._bufdata.last_win = tooltip_win
   end
 
   if hover_div_path and hover_div then
