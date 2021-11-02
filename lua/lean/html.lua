@@ -408,7 +408,7 @@ function Div:buf_render()
   -- TODO: cache div_from_path() return value to use in buf_hover
   if self._bufdata.path and not self:div_from_path(self._bufdata.path) then self._bufdata.path = nil end
 
-  self:buf_hover()
+  self:buf_hover(true)
 end
 
 function Div:buf_enter_tooltip()
@@ -474,13 +474,12 @@ function Div:buf_update_position()
   return not path_equal(path_before, bufdata.path)
 end
 
-function Div:buf_hover()
+function Div:buf_hover(force_update_highlight)
   local bufdata = self._bufdata
   local root = self
   local path = bufdata.path
 
-  vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
-
+  local old_hover_range = bufdata.hover_range
   local old_tooltip = bufdata.tooltip
 
   if not path then
@@ -488,6 +487,8 @@ function Div:buf_hover()
       old_tooltip:buf_close()
       bufdata.tooltip = nil
     end
+    vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
+    bufdata.hover_range = nil
     return
   end
 
@@ -568,9 +569,12 @@ function Div:buf_hover()
     bufdata.hover_range = nil
   end
 
-  local hlgroup = "htmlDivHighlight"
-  if bufdata.hover_range then
-    vim.highlight.range(bufdata.buf, hl_ns, hlgroup, bufdata.hover_range[1], bufdata.hover_range[2])
+  if force_update_highlight or not vim.deep_equal(old_hover_range, bufdata.hover_range) then
+    vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
+    local hlgroup = "htmlDivHighlight"
+    if bufdata.hover_range then
+      vim.highlight.range(bufdata.buf, hl_ns, hlgroup, bufdata.hover_range[1], bufdata.hover_range[2])
+    end
   end
 end
 
