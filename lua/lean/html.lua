@@ -479,9 +479,16 @@ function Div:buf_hover()
   local root = self
   local path = bufdata.path
 
-  if not path then return end
+  vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
 
   local old_tooltip = bufdata.tooltip
+
+  if not path then
+    if old_tooltip ~= nil then
+      old_tooltip:buf_close()
+    end
+    return
+  end
 
   local hover_div, _, hover_div_path = self:find_innermost_along(path,
     ---@param div Div
@@ -561,7 +568,6 @@ function Div:buf_hover()
   end
 
   local hlgroup = "htmlDivHighlight"
-  vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
   if bufdata.hover_range then
     vim.highlight.range(bufdata.buf, hl_ns, hlgroup, bufdata.hover_range[1], bufdata.hover_range[2])
   end
