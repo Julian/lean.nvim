@@ -560,12 +560,11 @@ function Div:buf_hover()
   else
     bufdata.hover_range = nil
   end
-  if not vim.deep_equal(old_hover_range, bufdata.hover_range) then
-    local hlgroup = "htmlDivHighlight"
-    vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
-    if bufdata.hover_range then
-      vim.highlight.range(bufdata.buf, hl_ns, hlgroup, bufdata.hover_range[1], bufdata.hover_range[2])
-    end
+
+  local hlgroup = "htmlDivHighlight"
+  vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
+  if bufdata.hover_range then
+    vim.highlight.range(bufdata.buf, hl_ns, hlgroup, bufdata.hover_range[1], bufdata.hover_range[2])
   end
 end
 
@@ -668,6 +667,7 @@ end
 -- Creates an impotent deep copy of this div (both tag-stripped and event-disabled).
 function Div:dummy_copy()
   local dummy = Div:new(self.text, self.name, self.hlgroup)
+  dummy.highlightable = self.highlightable
   for _, child in ipairs(self.divs) do
     table.insert(dummy.divs, child:dummy_copy())
   end
