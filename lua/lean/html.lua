@@ -404,6 +404,10 @@ function Div:buf_render()
     vim.highlight.range(buf, div_ns, hl.hlgroup, start_pos, end_pos)
   end
 
+  -- on a rerender any previously existing paths may be invalid
+  -- TODO: cache div_from_path() return value to use in buf_hover
+  if self._bufdata.path and not self:div_from_path(self._bufdata.path) then self._bufdata.path = nil end
+
   self:buf_hover()
 end
 
@@ -490,10 +494,7 @@ function Div:buf_hover()
 
   bufdata.tooltip = tt_parent_div and tt_parent_div.tooltip
 
-  if old_tooltip ~= nil and (bufdata.tooltip == nil
-      -- reuse old tooltip window if at same path
-      or not path_equal(old_tooltip._bufdata.parent_path, tt_parent_div_path)
-      or not old_tooltip:buf_last_win_valid()) then
+  if old_tooltip ~= nil and bufdata.tooltip == nil then
     old_tooltip:buf_close()
     old_tooltip = nil
   end
@@ -505,9 +506,11 @@ function Div:buf_hover()
     local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), bufdata.lines)
 
     if old_tooltip then -- reuse old tooltip window
-      bufdata.tooltip._bufdata = old_tooltip._bufdata
-      old_tooltip._bufdata = nil
-      _by_id[bufdata.tooltip._bufdata.id] = bufdata.tooltip
+      if old_tooltip ~= bufdata.tooltip then
+        bufdata.tooltip._bufdata = old_tooltip._bufdata
+        old_tooltip._bufdata = nil
+        _by_id[bufdata.tooltip._bufdata.id] = bufdata.tooltip
+      end
     else
       local tooltip_buf = vim.api.nvim_create_buf(false, true)
       vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
@@ -520,23 +523,26 @@ function Div:buf_hover()
     bufdata.tooltip._bufdata.parent_path = tt_parent_div_path
     bufdata.tooltip:buf_render()
 
-    if not bufdata.tooltip._bufdata.last_win then
+    local tooltip_buf = bufdata.tooltip._bufdata.buf
+
+    local win_options = {
+      relative = "win",
+      win = bufdata.last_win,
+      style = "minimal",
+      width = width,
+      height = height,
+      border = "none",
+      bufpos = bufpos,
+      zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
+    }
+
+    if not old_tooltip then
       -- fresh non-reused tooltip, open window
-      local tooltip_buf = bufdata.tooltip._bufdata.buf
-
-      local win_options = {
-        relative = "win",
-        win = bufdata.last_win,
-        style = "minimal",
-        width = width,
-        height = height,
-        border = "none",
-        bufpos = bufpos,
-        zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
-      }
-
-      bufdata.tooltip._bufdata.last_win =
-        vim.api.nvim_open_win(tooltip_buf, false, win_options)
+      bufdata.tooltip._bufdata.last_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
+      bufdata.tooltip._bufdata.last_win_options = vim.deepcopy(win_options)
+    elseif not vim.deep_equal(win_options, bufdata.tooltip._bufdata.last_win_options) then
+      vim.api.nvim_win_set_config(bufdata.tooltip._bufdata.last_win, win_options)
+      bufdata.tooltip._bufdata.last_win_options = vim.deepcopy(win_options)
     end
 
     -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
