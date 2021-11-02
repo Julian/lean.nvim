@@ -481,7 +481,6 @@ function Div:buf_hover()
 
   if not path then return end
 
-  local old_hover_range = bufdata.hover_range
   local old_tooltip = bufdata.tooltip
 
   local hover_div, _, hover_div_path = self:find_innermost_along(path,
