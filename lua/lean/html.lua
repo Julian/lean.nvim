@@ -486,6 +486,7 @@ function Div:buf_hover()
   if not path then
     if old_tooltip ~= nil then
       old_tooltip:buf_close()
+      bufdata.tooltip = nil
     end
     return
   end
