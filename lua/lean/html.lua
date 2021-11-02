@@ -133,10 +133,12 @@ end
 ---@class PathNode
 ---@field idx number @the index in the current div's children to follow
 ---@field name string @the name that the indexed child should have
+---@field offset number|nil @if provided, a byte offset from the beginning of this div
 
 ---Get the raw byte position of the div arrived at by following the given path.
 ---@param path PathNode[] @the path to follow
 ---@return number|nil @the position if the path was valid, nil otherwise
+---@return number|nil @the additional byte offset from the position if the path was valid, nil otherwise
 function Div:pos_from_path(path)
   local pos = 1
   for i, p in ipairs(path) do
@@ -149,7 +151,11 @@ function Div:pos_from_path(path)
       self = self.divs[p.idx]
     end
   end
-  return pos
+  local offset = path[#path].offset or 0
+  -- in case this is an invalid or outdated path
+  offset = (#self.text - 1 >= offset) and offset
+  offset = offset or 0
+  return pos, offset
 end
 
 ---Get the div stack and div arrived at by following the given path.
@@ -235,7 +241,10 @@ function Div:path_from_pos(pos)
   local stack = { self }
   pos = pos - 1
 ::next::
-  if pos < #self.text then return path, stack end
+  if pos < #self.text then
+    path[#path].offset = pos
+    return path, stack
+  end
   pos = pos - #self.text
   for idx, child in ipairs(self.divs) do
     if child._size == nil then return nil end
@@ -404,9 +413,18 @@ function Div:buf_render()
     vim.highlight.range(buf, div_ns, hl.hlgroup, start_pos, end_pos)
   end
 
-  -- on a rerender any previously existing paths may be invalid
-  -- TODO: cache div_from_path() return value to use in buf_hover
-  if self._bufdata.path and not self:div_from_path(self._bufdata.path) then self._bufdata.path = nil end
+  if self._bufdata.path then
+    -- on a rerender any previously existing paths may be invalid
+    -- TODO: cache div_from_path() return value to use in buf_hover
+    if not self:div_from_path(self._bufdata.path) then
+      self._bufdata.path = nil
+    elseif self:buf_last_win_valid() then
+      local raw_pos, offset = self:pos_from_path(self._bufdata.path)
+      local pos = raw_pos_to_pos(raw_pos + offset, lines)
+      pos[1] = pos[1] + 1
+      vim.api.nvim_win_set_cursor(self._bufdata.last_win, pos)
+    end
+  end
 
   self:buf_hover(true)
 end
