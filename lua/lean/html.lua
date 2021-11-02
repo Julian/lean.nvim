@@ -521,7 +521,6 @@ function Div:buf_hover()
 
     bufdata.tooltip._bufdata.parent = self
     bufdata.tooltip._bufdata.parent_path = tt_parent_div_path
-    bufdata.tooltip:buf_render()
 
     local tooltip_buf = bufdata.tooltip._bufdata.buf
 
@@ -538,15 +537,19 @@ function Div:buf_hover()
 
     if not old_tooltip then
       -- fresh non-reused tooltip, open window
+      bufdata.tooltip.disable_update = true
       bufdata.tooltip._bufdata.last_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
+      bufdata.tooltip.disable_update = false
+      -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
+      vim.api.nvim_command("redraw")
       bufdata.tooltip._bufdata.last_win_options = vim.deepcopy(win_options)
     elseif not vim.deep_equal(win_options, bufdata.tooltip._bufdata.last_win_options) then
       vim.api.nvim_win_set_config(bufdata.tooltip._bufdata.last_win, win_options)
+      vim.api.nvim_command("redraw")
       bufdata.tooltip._bufdata.last_win_options = vim.deepcopy(win_options)
     end
 
-    -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
-    vim.api.nvim_command("redraw")
+    bufdata.tooltip:buf_render()
   end
 
   if hover_div_path and hover_div then
