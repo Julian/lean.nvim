@@ -268,12 +268,11 @@ end
 
 ---@param child Div
 ---@return DivEventContext
-function Div:make_event_context(child)
+function Div:buf_make_event_context()
   return {
     rerender = function() self:buf_render() end,
     rehover = function() self:buf_hover() end,
     root = self,
-    div = child,
   }
 end
 
@@ -285,18 +284,15 @@ function Div:event(path, event_name, ...)
     ---@param div Div
     function (div) return div.events and div.events[event_name] end)
   if not event_div then
-    if self._bufdata.parent_path then
-      -- bubble up to parent
-      return self._bufdata.parent:event(self._bufdata.parent_path, event_name, ...)
-    end
-    return
+    return false
   end
 
   local args = {...}
 
   async.void(function()
-    return event_div.events[event_name](self:make_event_context(event_div), unpack(args))
+    return event_div.events[event_name](unpack(args))
   end)()
+  return true
 end
 
 ---Returns true if check is true for one of the descendants
@@ -596,30 +592,28 @@ function Div:buf_hover(force_update_highlight)
   end
 end
 
-function Div:buf_event(event, ...)
+function Div:buf_event(event, path, ...)
   local args = {...}
   local bufdata = self._bufdata
-  if not bufdata.path then return end
-  self:event(bufdata.path, event, unpack(args))
+
+  path = path or bufdata.path
+
+  if not self:event(path, event, self:buf_make_event_context(), unpack(args)) and bufdata.parent then
+    -- bubble up to parent
+    return bufdata.parent:buf_event(event, bufdata.parent_path, ...)
+  end
 end
 
 function Div:buf_enter_win()
-  local deepest_tooltip = self:get_deepest_tooltip()
+  local deepest_tooltip = self:buf_get_deepest_tooltip()
   if deepest_tooltip:buf_last_win_valid() then
     vim.api.nvim_set_current_win(deepest_tooltip._bufdata.last_win)
   end
 end
 
-function Div:get_deepest_tooltip()
+function Div:buf_get_deepest_tooltip()
   while self._bufdata and self._bufdata.tooltip do
     self = self._bufdata.tooltip
-  end
-  return self
-end
-
-function Div:get_outermost_ancestor()
-  while self._bufdata and self._bufdata.parent do
-    self = self._bufdata.parent
   end
   return self
 end
