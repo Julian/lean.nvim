@@ -67,6 +67,7 @@ local Pin = {next_id = 1}
 ---@field pin Pin
 ---@field pins Pin[]
 ---@field div Div
+---@field bufdiv BufDiv
 local Info = {}
 
 --- A "view" on an info (i.e. window).
@@ -198,7 +199,7 @@ function Info:new()
   setmetatable(new_info, self)
 
   vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
-  new_info.div:buf_register(new_info.bufnr, options.mappings)
+  new_info.bufdiv = html.BufDiv:new(new_info.bufnr, new_info.div, options.mappings)
   new_info.events = {
     goto_last_window = function()
       if new_info.last_window then
@@ -312,7 +313,7 @@ function Info:render()
 end
 
 function Info:_render()
-  self.div:buf_render()
+  self.bufdiv:buf_render()
 end
 
 --- Retrieve the contents of the info as a table.
@@ -808,10 +809,10 @@ function infoview.go_to()
   infoview.open()
   local curr_info = infoview.get_current_infoview().info
   -- if there is no last win, just go straight to the window itself
-  if not curr_info.div:buf_last_win_valid() then
+  if not curr_info.bufdiv:buf_last_win_valid() then
     vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
   else
-    curr_info.div:buf_enter_win()
+    curr_info.bufdiv:buf_enter_win()
   end
 end
 

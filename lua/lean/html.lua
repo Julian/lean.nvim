@@ -1,18 +1,6 @@
 local async = require"plenary.async"
 local util = require"lean._util"
 
----@class BufData
----@field id number ID number, used for autocmds only
----@field buf integer Buffer number of the buffer the div renders to
----@field lines? string[] Rendered lines.
----@field path? PathNode[] Current cursor path
----@field last_win? integer Window number of the last event
----@field keymaps table Extra keymaps (inherited by tooltips)
----@field hover_range? integer[][] (0,0)-range of the highlighted node
----@field tooltip? Div currently open tooltip
----@field parent? Div Parent div
----@field parent_path? PathNode[] Path in parent div, events bubble up to the parent there
-
 ---An HTML-style div.
 ---@class Div
 ---@field events table<string, fun()> @event function map
@@ -22,7 +10,6 @@ local util = require"lean._util"
 ---@field divs Div[] @this div's child divs
 ---@field tooltip? Div Optional tooltip
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
----@field _bufdata? BufData Data stored when div is rendered to a buffer
 ---@field _size? integer Computed size of this div, updated by `Div:to_string`
 ---@field disable_update? boolean
 local Div = {}
@@ -266,16 +253,6 @@ end
 ---@field root Div
 ---@field div Div
 
----@param child Div
----@return DivEventContext
-function Div:buf_make_event_context()
-  return {
-    rerender = function() self:buf_render() end,
-    rehover = function() self:buf_hover() end,
-    root = self,
-  }
-end
-
 ---Trigger the given event at the given path
 ---@param path PathNode[] @the path to trigger the event at
 ---@param event_name string @the path to trigger the event at
@@ -328,23 +305,56 @@ function Div:filter(fn)
   self:__filter(path, pos, fn)
 end
 
--- Maps div._bufdata.id to Div
---- @type table<number, Div>
+-- Creates an impotent deep copy of this div (both tag-stripped and event-disabled).
+function Div:dummy_copy()
+  local dummy = Div:new(self.text, self.name, self.hlgroup)
+  dummy.highlightable = self.highlightable
+  for _, child in ipairs(self.divs) do
+    table.insert(dummy.divs, child:dummy_copy())
+  end
+  if self.tooltip then
+    dummy.tooltip = self.tooltip:dummy_copy()
+  end
+  return dummy
+end
+
+---Utility for rendering a div with a particular buffer.
+---@class BufDiv
+---@field id number ID number, used for autocmds only
+---@field buf integer Buffer number of the buffer the div renders to
+---@field div Div Div rendered by this buffer
+---@field lines? string[] Rendered lines.
+---@field path? PathNode[] Current cursor path
+---@field last_win? integer Window number of the last event
+---@field keymaps table Extra keymaps (inherited by tooltips)
+---@field hover_range? integer[][] (0,0)-range of the highlighted node
+---@field tooltip? BufDiv currently open tooltip
+---@field parent? BufDiv Parent bufdiv
+---@field parent_path? PathNode[] Path in parent div, events bubble up to the parent there
+
+
+-- Maps BufDiv.id to BufDiv
+--- @type table<number, BufDiv>
 local _by_id = setmetatable({}, {__mode = 'v'})
 local next_id = 1
 
+local BufDiv = {}
+BufDiv.__index = BufDiv
+
 ---@param buf integer
 ---@param keymaps? table Extra keymaps
-function Div:buf_register(buf, keymaps)
-  if self._bufdata ~= nil then error(('div already registered for buffer %d'):format(self._bufdata.buf)) end
+function BufDiv:new(buf, div, keymaps)
   local id = next_id
   next_id = next_id + 1
-  self._bufdata = {
+  local new_bufdiv = setmetatable({
     id = id,
     buf = buf,
     keymaps = keymaps,
-  }
+    div = div,
+  }, self)
+  self = new_bufdiv
   _by_id[id] = self
+
   util.set_augroup("DivPosition", string.format([[
     autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
     autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
@@ -363,36 +373,37 @@ function Div:buf_register(buf, keymaps)
     mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_hop_to()<CR>]]):format(id)
   end
   util.load_mappings(mappings, buf)
+
+  return new_bufdiv
 end
 
 ---@param keep_tooltips_open? boolean
-function Div:buf_close(keep_tooltips_open)
-  if vim.api.nvim_buf_is_valid(self._bufdata.buf) then
-    vim.api.nvim_buf_delete(self._bufdata.buf, {force = true})
+function BufDiv:buf_close(keep_tooltips_open)
+  if vim.api.nvim_buf_is_valid(self.buf) then
+    vim.api.nvim_buf_delete(self.buf, {force = true})
   end
-  if self._bufdata.tooltip and self._bufdata.tooltip._bufdata then
-    self._bufdata.tooltip._bufdata.parent = nil
-    self._bufdata.tooltip._bufdata.parent_path = nil
+  if self.tooltip then
+    self.tooltip.parent = nil
+    self.tooltip.parent_path = nil
     if not keep_tooltips_open then
-      self._bufdata.tooltip:buf_close()
+      self.tooltip:buf_close()
     end
   end
-  self._bufdata = nil
 end
 
 local div_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
 local hl_ns = vim.api.nvim_create_namespace('LeanNvimInfoHighlight')
 
-function Div:buf_render()
-  local buf = self._bufdata.buf
+function BufDiv:buf_render()
+  local buf = self.buf
 
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
 
-  local text = self:to_string()
+  local text = self.div:to_string()
   local lines = vim.split(text, '\n')
-  self._bufdata.lines = lines
+  self.lines = lines
 
-  local hls = self:_get_highlights()
+  local hls = self.div:_get_highlights()
 
   vim.api.nvim_buf_set_option(buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, true, lines)
@@ -409,47 +420,45 @@ function Div:buf_render()
     vim.highlight.range(buf, div_ns, hl.hlgroup, start_pos, end_pos)
   end
 
-  if self._bufdata.path then
+  if self.path then
     -- on a rerender any previously existing paths may be invalid
     -- TODO: cache div_from_path() return value to use in buf_hover
-    if not self:div_from_path(self._bufdata.path) then
-      self._bufdata.path = nil
+    if not self.div:div_from_path(self.path) then
+      self.path = nil
     elseif self:buf_last_win_valid() then
-      local raw_pos, offset = self:pos_from_path(self._bufdata.path)
+      local raw_pos, offset = self.div:pos_from_path(self.path)
       local pos = raw_pos_to_pos(raw_pos + offset, lines)
       pos[1] = pos[1] + 1
-      vim.api.nvim_win_set_cursor(self._bufdata.last_win, pos)
+      vim.api.nvim_win_set_cursor(self.last_win, pos)
     end
   end
 
   self:buf_hover(true)
 end
 
-function Div:buf_enter_tooltip()
-  if self._bufdata and self._bufdata.tooltip and self._bufdata.tooltip._bufdata then
-    vim.api.nvim_set_current_win(self._bufdata.tooltip._bufdata.last_win)
+function BufDiv:buf_enter_tooltip()
+  if self.tooltip and self.tooltip:buf_last_win_valid() then
+    vim.api.nvim_set_current_win(self.tooltip.last_win)
   end
 end
 
-function Div:buf_goto_parent_tooltip()
-  if self._bufdata and self._bufdata.parent and self._bufdata.parent._bufdata then
-    vim.api.nvim_set_current_win(self._bufdata.parent._bufdata.last_win)
+function BufDiv:buf_goto_parent_tooltip()
+  if self.parent and self.parent:buf_last_win_valid() then
+    vim.api.nvim_set_current_win(self.parent.last_win)
   end
 end
 
-function Div:buf_last_win_valid()
-  local bufdata = self._bufdata
-  return bufdata and bufdata.last_win
-    and vim.api.nvim_win_is_valid(bufdata.last_win)
-    and vim.api.nvim_win_get_buf(bufdata.last_win) == bufdata.buf
+function BufDiv:buf_last_win_valid()
+  return self.last_win
+    and vim.api.nvim_win_is_valid(self.last_win)
+    and vim.api.nvim_win_get_buf(self.last_win) == self.buf
 end
 
-function Div:buf_update_cursor(win)
+function BufDiv:buf_update_cursor(win)
   if self.disable_update then return end
-  local bufdata = self._bufdata
   win = win or vim.api.nvim_get_current_win()
-  if vim.api.nvim_win_get_buf(win) == bufdata.buf then
-    bufdata.last_win = win
+  if vim.api.nvim_win_get_buf(win) == self.buf then
+    self.last_win = win
   end
   if not self:buf_last_win_valid() then return end
 
@@ -476,79 +485,71 @@ local function path_equal(path_a, path_b)
   return true
 end
 
-function Div:buf_update_position()
-  local bufdata = self._bufdata
-  local path_before = bufdata.path
-  local cursor_pos = vim.api.nvim_win_get_cursor(bufdata.last_win)
-  local raw_pos = pos_to_raw_pos(cursor_pos, bufdata.lines)
+function BufDiv:buf_update_position()
+  local path_before = self.path
+  local cursor_pos = vim.api.nvim_win_get_cursor(self.last_win)
+  local raw_pos = pos_to_raw_pos(cursor_pos, self.lines)
   if not raw_pos then return end
 
-  bufdata.path = self:path_from_pos(raw_pos)
+  self.path = self.div:path_from_pos(raw_pos)
 
-  return not path_equal(path_before, bufdata.path)
+  return not path_equal(path_before, self.path)
 end
 
-function Div:buf_hover(force_update_highlight)
-  local bufdata = self._bufdata
-  local root = self
-  local path = bufdata.path
+function BufDiv:buf_hover(force_update_highlight)
+  local path = self.path
 
-  local old_hover_range = bufdata.hover_range
-  local old_tooltip = bufdata.tooltip
+  local old_hover_range = self.hover_range
 
   if not path then
-    if old_tooltip ~= nil then
-      old_tooltip:buf_close()
-      bufdata.tooltip = nil
+    if self.tooltip ~= nil then
+      self.tooltip:buf_close()
+      self.tooltip = nil
     end
-    vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
-    bufdata.hover_range = nil
+    vim.api.nvim_buf_clear_namespace(self.buf, hl_ns, 0, -1)
+    self.hover_range = nil
     return
   end
 
-  local hover_div, _, hover_div_path = self:find_innermost_along(path,
+  local hover_div, _, hover_div_path = self.div:find_innermost_along(path,
     ---@param div Div
     function (div) return div.highlightable end)
 
-  local tt_parent_div, _, tt_parent_div_path = self:find_innermost_along(path,
+  local tt_parent_div, _, tt_parent_div_path = self.div:find_innermost_along(path,
     ---@param div Div
     function (div) return div.tooltip end)
 
-  bufdata.tooltip = tt_parent_div and tt_parent_div.tooltip
+  local new_tooltip_div = tt_parent_div and tt_parent_div.tooltip
 
-  if old_tooltip ~= nil and bufdata.tooltip == nil then
-    old_tooltip:buf_close()
-    old_tooltip = nil
+  if self.tooltip ~= nil and new_tooltip_div == nil then
+    self.tooltip:buf_close()
+    self.tooltip = nil
   end
 
-  if bufdata.tooltip ~= nil then
-    local width, height = util.make_floating_popup_size(vim.split(bufdata.tooltip:to_string(), "\n"))
+  if new_tooltip_div ~= nil then
+    local width, height = util.make_floating_popup_size(vim.split(new_tooltip_div:to_string(), "\n"))
 
     local tt_parent_path = tt_parent_div_path
-    local bufpos = raw_pos_to_pos(root:pos_from_path(tt_parent_path), bufdata.lines)
+    local bufpos = raw_pos_to_pos(self.div:pos_from_path(tt_parent_path), self.lines)
 
-    if old_tooltip then -- reuse old tooltip window
-      if old_tooltip ~= bufdata.tooltip then
-        bufdata.tooltip._bufdata = old_tooltip._bufdata
-        old_tooltip._bufdata = nil
-        _by_id[bufdata.tooltip._bufdata.id] = bufdata.tooltip
-      end
+    if self.tooltip then -- reuse old tooltip window
+      self.tooltip.div = new_tooltip_div
     else
       local tooltip_buf = vim.api.nvim_create_buf(false, true)
       vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
       vim.api.nvim_buf_set_option(tooltip_buf, "modifiable", false)
 
-      bufdata.tooltip:buf_register(tooltip_buf, bufdata.keymaps)
+      self.tooltip = BufDiv:new(tooltip_buf, new_tooltip_div, self.keymaps)
     end
 
-    bufdata.tooltip._bufdata.parent = self
-    bufdata.tooltip._bufdata.parent_path = tt_parent_div_path
+    self.tooltip.parent = self
+    self.tooltip.parent_path = tt_parent_div_path
 
-    local tooltip_buf = bufdata.tooltip._bufdata.buf
+    local tooltip_buf = self.tooltip.buf
 
     local win_options = {
       relative = "win",
-      win = bufdata.last_win,
+      win = self.last_win,
       style = "minimal",
       width = width,
       height = height,
@@ -557,93 +558,99 @@ function Div:buf_hover(force_update_highlight)
       zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
     }
 
-    if not old_tooltip then
+    if not self.tooltip:buf_last_win_valid() then
       -- fresh non-reused tooltip, open window
-      bufdata.tooltip.disable_update = true
-      bufdata.tooltip._bufdata.last_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
-      bufdata.tooltip.disable_update = false
+      self.tooltip.disable_update = true
+      self.tooltip.last_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
+      self.tooltip.disable_update = false
       -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
       vim.api.nvim_command("redraw")
-      bufdata.tooltip._bufdata.last_win_options = vim.deepcopy(win_options)
-    elseif not vim.deep_equal(win_options, bufdata.tooltip._bufdata.last_win_options) then
-      vim.api.nvim_win_set_config(bufdata.tooltip._bufdata.last_win, win_options)
+      self.tooltip.last_win_options = vim.deepcopy(win_options)
+    elseif not vim.deep_equal(win_options, self.tooltip.last_win_options) then
+      vim.api.nvim_win_set_config(self.tooltip.last_win, win_options)
       vim.api.nvim_command("redraw")
-      bufdata.tooltip._bufdata.last_win_options = vim.deepcopy(win_options)
+      self.tooltip.last_win_options = vim.deepcopy(win_options)
     end
 
-    bufdata.tooltip:buf_render()
+    self.tooltip:buf_render()
   end
 
   if hover_div_path and hover_div then
-    local a = self:pos_from_path(hover_div_path)
-    local start_pos = raw_pos_to_pos(a, bufdata.lines)
-    local end_pos = raw_pos_to_pos(a + hover_div._size, bufdata.lines)
-    bufdata.hover_range = {start_pos, end_pos}
+    local a = self.div:pos_from_path(hover_div_path)
+    local start_pos = raw_pos_to_pos(a, self.lines)
+    local end_pos = raw_pos_to_pos(a + hover_div._size, self.lines)
+    self.hover_range = {start_pos, end_pos}
   else
-    bufdata.hover_range = nil
+    self.hover_range = nil
   end
 
-  if force_update_highlight or not vim.deep_equal(old_hover_range, bufdata.hover_range) then
-    vim.api.nvim_buf_clear_namespace(bufdata.buf, hl_ns, 0, -1)
+  if force_update_highlight or not vim.deep_equal(old_hover_range, self.hover_range) then
+    vim.api.nvim_buf_clear_namespace(self.buf, hl_ns, 0, -1)
     local hlgroup = "htmlDivHighlight"
-    if bufdata.hover_range then
-      vim.highlight.range(bufdata.buf, hl_ns, hlgroup, bufdata.hover_range[1], bufdata.hover_range[2])
+    if self.hover_range then
+      vim.highlight.range(self.buf, hl_ns, hlgroup, self.hover_range[1], self.hover_range[2])
     end
   end
 end
 
-function Div:buf_event(event, path, ...)
+function BufDiv:buf_event(event, path, ...)
   local args = {...}
-  local bufdata = self._bufdata
 
-  path = path or bufdata.path
+  path = path or self.path
 
-  if not self:event(path, event, self:buf_make_event_context(), unpack(args)) and bufdata.parent then
+  if not self.div:event(path, event, self:buf_make_event_context(), unpack(args)) and self.parent then
     -- bubble up to parent
-    return bufdata.parent:buf_event(event, bufdata.parent_path, ...)
+    return self.parent:buf_event(event, self.parent_path, ...)
   end
 end
 
-function Div:buf_enter_win()
+---@return DivEventContext
+function BufDiv:buf_make_event_context()
+  return {
+    rerender = function() self:buf_render() end,
+    rehover = function() self:buf_hover() end,
+    root = self,
+  }
+end
+
+function BufDiv:buf_enter_win()
   local deepest_tooltip = self:buf_get_deepest_tooltip()
   if deepest_tooltip:buf_last_win_valid() then
-    vim.api.nvim_set_current_win(deepest_tooltip._bufdata.last_win)
+    vim.api.nvim_set_current_win(deepest_tooltip.last_win)
   end
 end
 
-function Div:buf_get_deepest_tooltip()
-  while self._bufdata and self._bufdata.tooltip do
-    self = self._bufdata.tooltip
+function BufDiv:buf_get_deepest_tooltip()
+  while self.tooltip do
+    self = self.tooltip
   end
   return self
 end
 
-function Div:buf_hop_to()
-  if not self._bufdata then return end
-  while self._bufdata.parent and self._bufdata.parent._bufdata do
-    self = self._bufdata.parent
+function BufDiv:buf_hop_to()
+  while self.parent do
+    self = self.parent
   end
   self:buf_hop(function(div) return div.highlightable end, require"hop.hint_util".callbacks.win_goto)
 end
 
-function Div:buf_hop(filter_fn, callback_fn)
+function BufDiv:buf_hop(filter_fn, callback_fn)
   local winpos = vim.api.nvim_win_get_position(0)
   local strategy = {
     get_hint_list = function()
       local hints = {}
       local windows = {}
 
-      ---@param root Div
+      ---@param root BufDiv
       local function buf_get_hints(root)
-        if not root._bufdata then return end
-        local this_buf = root._bufdata.buf
-        local this_win = root._bufdata.last_win
+        local this_buf = root.buf
+        local this_win = root.last_win
         if not this_win then return end
         table.insert(windows, this_win)
-        local lines = root._bufdata.lines
+        local lines = root.lines
         local window_dist = require"hop.hint_util".manh_dist(winpos, vim.api.nvim_win_get_position(this_win))
 
-        root:filter(function(div, _, raw_pos)
+        root.div:filter(function(div, _, raw_pos)
           if not filter_fn(div) then return end
           local pos = raw_pos_to_pos(raw_pos, lines)
           local hint =
@@ -665,8 +672,8 @@ function Div:buf_hop(filter_fn, callback_fn)
           end
         end)
 
-        if root._bufdata.tooltip then
-          buf_get_hints(root._bufdata.tooltip)
+        if root.tooltip then
+          buf_get_hints(root.tooltip)
         end
       end
 
@@ -686,20 +693,7 @@ function Div:buf_hop(filter_fn, callback_fn)
   require"hop".hint(strategy)
 end
 
--- Creates an impotent deep copy of this div (both tag-stripped and event-disabled).
-function Div:dummy_copy()
-  local dummy = Div:new(self.text, self.name, self.hlgroup)
-  dummy.highlightable = self.highlightable
-  for _, child in ipairs(self.divs) do
-    table.insert(dummy.divs, child:dummy_copy())
-  end
-  if self.tooltip then
-    dummy.tooltip = self.tooltip:dummy_copy()
-  end
-  return dummy
-end
-
-return {Div = Div, util = {
+return {Div = Div, BufDiv = BufDiv, util = {
   pos_to_raw_pos = pos_to_raw_pos,
   raw_pos_to_pos = raw_pos_to_pos,
 }, _by_id = _by_id}
