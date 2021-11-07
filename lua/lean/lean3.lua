@@ -73,13 +73,22 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
         if prev_div then
           local prev_div_string = prev_div:render()
           if #prev_div_string > 0 then
-            local last_char = prev_div_string:sub(#prev_div_string, #prev_div_string)
+            local last_byte_idx = 0
+            if #prev_div_string > 0 then
+              last_byte_idx = vim.str_byteindex(prev_div_string, vim.fn.strchars(prev_div_string) - 1) + 1
+            end
+
+            local last_char = prev_div_string:sub(last_byte_idx, #prev_div_string)
             if last_char ~= " "
               and last_char ~= "\n"
               and last_char ~= "("
               and last_char ~= "["
               and last_char ~= "{"
               and last_char ~= "@"
+              and last_char ~= "↑"
+              and last_char ~= "⇑"
+              and last_char ~= "↥"
+              and last_char ~= "¬"
               then
               last_hard_stop = true
             end
