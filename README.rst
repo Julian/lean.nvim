@@ -240,11 +240,17 @@ Full Configuration & Settings Information
       -- Lean 3  (on_attach is as above, your LSP handler)
       lsp3 = { on_attach = on_attach },
 
-      -- What filetype should be associated with standalone Lean files?
-      -- Can be set to "lean3" if you prefer that default.
-      -- Having a leanpkg.toml or lean-toolchain file should always mean
-      -- autodetection works correctly.
-      ft = { default = "lean" },
+      ft = {
+        -- What filetype should be associated with standalone Lean files?
+        -- Can be set to "lean3" if you prefer that default.
+        -- Having a leanpkg.toml or lean-toolchain file should always mean
+        -- autodetection works correctly.
+        default = "lean",
+
+        -- Make buffers from jumped-to dependencies (those in `_target`
+        -- for Lean 3) set to `nomodifiable`?
+        make_deps_nomodifiable = true,
+      },
 
       -- Abbreviation support
       abbreviations = {

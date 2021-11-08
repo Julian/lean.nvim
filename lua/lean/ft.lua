@@ -1,5 +1,11 @@
 local ft = {}
-local options = { default = "lean", _DEFAULTS = { default = "lean" } }
+local options = {
+  default = "lean",
+  _DEFAULTS = {
+    default = "lean",
+    make_deps_nomodifiable = true,
+  }
+}
 
 local _LEAN3_STANDARD_LIBRARY = '.*/[^/]*lean[%-]+3.+/lib/'
 local _LEAN3_VERSION_MARKER = '.*lean_version.*\".*:3.*'
@@ -43,6 +49,15 @@ function ft.detect(filename)
     end
   end
   vim.opt.filetype = filetype
+end
+
+--- Maybe make the current buffer `nomodifiable` unless configured not to.
+---
+--- Prevents unintentional modification of files in `_target` (i.e. Lean
+--- dependencies).
+function ft.__maybe_make_nomodifiable(fname)
+  if not options.make_deps_nomodifiable then return end
+  if fname:find('/_target/.*/.*.lean') then vim.bo.modifiable = false end
 end
 
 function ft.enable(opts)
