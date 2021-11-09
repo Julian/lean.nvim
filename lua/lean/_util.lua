@@ -94,9 +94,15 @@ M.a_request = a.wrap(M.request, 4)
 -- FIXME: tick locking is disabled for now
 -- It is really easy to crash the infoview this way if an exception is not handled.
 
+---Helper to check whether a Ticker has been updated with a new version.
+---@class Tick
+---@field tick integer The ticker counter at initiatization time.
+---@field ticker Ticker The corresponding ticker
 local Tick = {}
 Tick.__index = Tick
 
+---@param tick integer
+---@param ticker Ticker
 function Tick:new(tick, ticker)
   return setmetatable({tick = tick, ticker = ticker}, self)
 end
@@ -115,16 +121,25 @@ function Tick:check()
   return true
 end
 
+---A ticker allows outdated computations to cancel themselves.
+---The ticker maintains an internal counter,
+---which is incremented whenever a new computation is started.
+---The related Tick class wraps a Ticker with
+---the counter from the instant the computation was started,
+---and is used to query out-of-datedness.
+---@class Ticker
+---@field tick integer The current tick counter.
 local Ticker = {}
 Ticker.__index = Ticker
 
 function Ticker:new()
-  return setmetatable({tick = 0, _lock = false,
+  return setmetatable({tick = 0,
+    --_lock = false,
     -- lock_var = control.Condvar.new()
   }, self)
 end
 
--- Updates the tick if necessary.
+-- Updates the tick.
 function Ticker:lock()
   -- create new tick
   self.tick = self.tick + 1
@@ -139,17 +154,15 @@ function Ticker:lock()
   -- end
 
   -- this is the most recent tick, so we can proceed
-  self._lock = tick
+  -- self._lock = tick
 
   return Tick:new(tick, self)
 end
 
 -- Release the current tick. Should only be called if certain the tick is up-to-date.
-function Ticker:release(tick)
-  -- don't free the lock if this tick came from a parent context
-  if tick then return end
-
-  self._lock = false
+-- luacheck: ignore
+function Ticker:release()
+  -- self._lock = false
 end
 
 -- simple alternative to vim.lsp.util._make_floating_popup_size
