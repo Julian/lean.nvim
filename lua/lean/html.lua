@@ -330,15 +330,13 @@ end
 ---@field tooltip? BufDiv currently open tooltip
 ---@field parent? BufDiv Parent bufdiv
 ---@field parent_path? PathNode[] Path in parent div, events bubble up to the parent there
-
+local BufDiv = {}
+BufDiv.__index = BufDiv
 
 -- Maps BufDiv.id to BufDiv
 --- @type table<number, BufDiv>
 local _by_id = setmetatable({}, {__mode = 'v'})
 local next_id = 1
-
-local BufDiv = {}
-BufDiv.__index = BufDiv
 
 ---@param buf integer
 ---@param keymaps? table Extra keymaps
