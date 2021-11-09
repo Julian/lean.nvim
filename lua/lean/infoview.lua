@@ -636,9 +636,9 @@ function Pin:__update(tick, delay, lean3_opts)
     if not tick:check() then return true end
   end
 
-  new_data_div.events.clear_all = function(ctx)
-    vim.api.nvim_set_current_win(ctx.root._bufdata.last_win)
-    ctx.div:find(function (div) ---@param div Div
+  new_data_div.events.clear_all = function(ctx) ---@param ctx DivEventContext
+    vim.api.nvim_set_current_win(ctx.root.last_win)
+    new_data_div:find(function (div) ---@param div Div
       if div.events.clear then div.events.clear(ctx) end
     end)
   end
