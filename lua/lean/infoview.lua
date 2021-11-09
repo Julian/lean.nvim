@@ -337,10 +337,6 @@ function Pin:new(paused, use_widget)
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
 
-  new_pin.div.events.clear_all = function()
-    print"clear_all test placeholder"
-  end
-
   self.__index = self
   setmetatable(new_pin, self)
 
@@ -638,6 +634,13 @@ function Pin:__update(tick, delay, lean3_opts)
     new_data_div:add_div(diagnostics_div or components.diagnostics(buf, line))
 
     if not tick:check() then return true end
+  end
+
+  new_data_div.events.clear_all = function(ctx)
+    vim.api.nvim_set_current_win(ctx.root._bufdata.last_win)
+    ctx.div:find(function (div) ---@param div Div
+      if div.events.clear then div.events.clear(ctx) end
+    end)
   end
 
   ::finish::
