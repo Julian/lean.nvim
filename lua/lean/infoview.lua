@@ -78,6 +78,8 @@ local Info = {}
 ---@field width number
 ---@field height number
 ---@field info Info
+---@field window integer
+---@field orientation "vertical"|"horizontal"
 local Infoview = {}
 
 local pin_hl_group = "LeanNvimPin"

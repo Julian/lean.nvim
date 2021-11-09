@@ -25,6 +25,7 @@ local default_config = {
     show_processing = false,
     lean3 = { show_filter = false }
   },
+  stderr = { enable = false },
   lsp3 = {
     enable = false
   },
