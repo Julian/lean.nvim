@@ -36,6 +36,7 @@ Install via your favorite plugin manager. E.g., with
     Plug 'hrsh7th/nvim-compe'  " For LSP completion
     Plug 'hrsh7th/vim-vsnip'   " For snippets
     Plug 'andrewradev/switch.vim'  " For Lean switch support
+    Plug 'rish987/hop.nvim'  " TEMPORARY: for experimental interactive infoview hop support (to be eventually merged into phaazon/hop.nvim)
 
 ``lean.nvim`` already includes syntax highlighting and Lean filetype
 support, so installing the ``lean.vim`` (i.e. non-neovim) plugin is not
@@ -212,6 +213,9 @@ In Infoview Windows
 +------------------------+----------------------------------------------------+
 | ``i``                  | mouse-leave what is under the cursor               |
 +------------------------+----------------------------------------------------+
+| ``S``                  | (if hop_support enabled, requires rish987/hop.nvim)|
+|                        | hop to clickable text                              |
++------------------------+----------------------------------------------------+
 | ``<LocalLeader><Tab>`` | jump to the lean file associated with the current  |
 |                        | infoview window                                    |
 +------------------------+----------------------------------------------------+
@@ -271,6 +275,10 @@ Full Configuration & Settings Information
       infoview = {
         -- Automatically open an infoview on entering a Lean buffer?
         autoopen = true,
+
+        -- enable hop support? (experimental, at the moment requires the
+        -- rish987/hop.nvim fork of phaazon/hop.nvim)
+        hop_support = true,
 
         -- Set infoview windows' starting dimensions.
         -- Windows are opened horizontally or vertically depending on spacing.

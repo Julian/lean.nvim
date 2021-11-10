@@ -330,7 +330,7 @@ end
 ---@field tooltip? BufDiv currently open tooltip
 ---@field parent? BufDiv Parent bufdiv
 ---@field parent_path? PathNode[] Path in parent div, events bubble up to the parent there
-local BufDiv = {}
+local BufDiv = {support_hop = true}
 BufDiv.__index = BufDiv
 
 -- Maps BufDiv.id to BufDiv
@@ -367,7 +367,9 @@ function BufDiv:new(buf, div, keymaps)
       [[<Cmd>lua require'lean.html'._by_id[%d]:buf_goto_parent_tooltip()<CR>]]
     ):format(id)
     mappings.n["J"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip()<CR>]]):format(id)
-    mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_hop_to()<CR>]]):format(id)
+    if self.support_hop then
+      mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_hop_to()<CR>]]):format(id)
+    end
   end
   util.load_mappings(mappings, buf)
 

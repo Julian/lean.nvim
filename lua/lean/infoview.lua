@@ -37,6 +37,7 @@ local options = {
     lean3 = { show_filter = true },
     show_processing = true,
     use_widget = true,
+    support_hop = false,
 
     mappings = {
       ["K"] = [[click]],
@@ -708,6 +709,7 @@ end
 --- Enable and open the infoview across all Lean buffers.
 function infoview.enable(opts)
   options = vim.tbl_extend("force", options._DEFAULTS, opts)
+  html.BufDiv.support_hop = options.support_hop
   infoview.enabled = true
   set_augroup("LeanInfoviewInit", [[
     autocmd FileType lean3 lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
