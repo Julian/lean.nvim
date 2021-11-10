@@ -46,6 +46,7 @@ describe('ft.detect', function()
     local initial_path = vim.api.nvim_buf_get_name(0)
     helpers.wait_for_ready_lsp()
     helpers.wait_for_server_progress(": Type")
+    vim.wait(1000)
 
     vim.lsp.buf.definition()
     assert.is_truthy(vim.wait(5000, function() return vim.api.nvim_buf_get_name(0) ~= initial_path end))
