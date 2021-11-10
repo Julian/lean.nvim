@@ -137,6 +137,7 @@ end
 function helpers.wait_for_server_progress()
   -- the first fileProgress notification should come within this time,
   -- so we avoid the initial nil case (for backwards compatibility)
+  vim.wait(5000)
   local succeeded, _ = vim.wait(10000, function()
     return not require"lean.progress".is_processing(
       vim.uri_from_bufnr(vim.api.nvim_get_current_buf()))
