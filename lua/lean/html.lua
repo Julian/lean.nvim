@@ -250,7 +250,7 @@ end
 ---@class DivEventContext
 ---@field rerender fun()
 ---@field rehover fun()
----@field root BufDiv
+---@field self BufDiv
 
 ---Trigger the given event at the given path
 ---@param path PathNode[] @the path to trigger the event at

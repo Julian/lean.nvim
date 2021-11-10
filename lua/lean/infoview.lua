@@ -637,7 +637,7 @@ function Pin:__update(tick, delay, lean3_opts)
   end
 
   new_data_div.events.clear_all = function(ctx) ---@param ctx DivEventContext
-    vim.api.nvim_set_current_win(ctx.root.last_win)
+    vim.api.nvim_set_current_win(ctx.self.last_win)
     new_data_div:find(function (div) ---@param div Div
       if div.events.clear then div.events.clear(ctx) end
     end)
