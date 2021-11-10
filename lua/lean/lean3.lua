@@ -222,9 +222,8 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
               args = args,
               textDocument = pin.position_params.textDocument
             }})
-            -- trigger cursor_enter
             if div_event == "cursor_leave" then
-              value()
+              ctx.self:buf_event("cursor_enter")
             end
           end
         end
