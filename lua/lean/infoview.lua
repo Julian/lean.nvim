@@ -42,8 +42,6 @@ local options = {
       ["K"] = [[click]],
       ["<CR>"] = [[click]],
       ["<Esc>"] = 'clear_all',
-      ["I"] = [[mouse_enter]],
-      ["i"] = [[mouse_leave]],
       ["C"] = 'clear_all',
       ["<LocalLeader><Tab>"] = [[goto_last_window]]
     }
@@ -503,7 +501,7 @@ function Pin:set_loading(loading)
   return false
 end
 
-Pin.update = a.void(function(self, force, delay, _, lean3_opts)
+function Pin:a_update(force, delay, _, lean3_opts)
   if not force and self.paused then return end
 
   local tick = self.ticker:lock()
@@ -514,7 +512,9 @@ Pin.update = a.void(function(self, force, delay, _, lean3_opts)
   if not self:set_loading(false) then
     self:render_parents()
   end
-end)
+end
+
+Pin.update = a.void(Pin.a_update)
 
 function Pin:_update(force, delay, tick, lean3_opts)
   if self.position_params and (force or not self.paused) then

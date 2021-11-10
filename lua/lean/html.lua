@@ -490,7 +490,13 @@ function BufDiv:buf_update_position()
 
   self.path = self.div:path_from_pos(raw_pos)
 
-  return not path_equal(path_before, self.path)
+  if not path_equal(path_before, self.path) then
+    self:buf_event("cursor_left", path_before, function() self:buf_event("cursor_entered") end)
+    self:buf_event("cursor_entered", self.path)
+    return true
+  end
+
+  return false
 end
 
 function BufDiv:buf_hover(force_update_highlight)
