@@ -491,8 +491,8 @@ function BufDiv:buf_update_position()
   self.path = self.div:path_from_pos(raw_pos)
 
   if not path_equal(path_before, self.path) then
-    self:buf_event("cursor_left", path_before, function() self:buf_event("cursor_entered") end)
-    self:buf_event("cursor_entered", self.path)
+    self:buf_event("cursor_leave", path_before, function() self:buf_event("cursor_enter") end)
+    self:buf_event("cursor_enter", self.path)
     return true
   end
 

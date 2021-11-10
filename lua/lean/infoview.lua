@@ -501,7 +501,7 @@ function Pin:set_loading(loading)
   return false
 end
 
-function Pin:a_update(force, delay, _, lean3_opts)
+function Pin:async_update(force, delay, _, lean3_opts)
   if not force and self.paused then return end
 
   local tick = self.ticker:lock()
@@ -514,7 +514,7 @@ function Pin:a_update(force, delay, _, lean3_opts)
   end
 end
 
-Pin.update = a.void(Pin.a_update)
+Pin.update = a.void(Pin.async_update)
 
 function Pin:_update(force, delay, tick, lean3_opts)
   if self.position_params and (force or not self.paused) then
