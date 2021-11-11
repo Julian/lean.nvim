@@ -42,8 +42,6 @@ local options = {
       ["K"] = [[click]],
       ["<CR>"] = [[click]],
       ["<Esc>"] = 'clear_all',
-      ["I"] = [[mouse_enter]],
-      ["i"] = [[mouse_leave]],
       ["C"] = 'clear_all',
       ["<LocalLeader><Tab>"] = [[goto_last_window]]
     }
@@ -503,7 +501,7 @@ function Pin:set_loading(loading)
   return false
 end
 
-Pin.update = a.void(function(self, force, delay, _, lean3_opts)
+function Pin:async_update(force, delay, _, lean3_opts)
   if not force and self.paused then return end
 
   local tick = self.ticker:lock()
@@ -514,7 +512,9 @@ Pin.update = a.void(function(self, force, delay, _, lean3_opts)
   if not self:set_loading(false) then
     self:render_parents()
   end
-end)
+end
+
+Pin.update = a.void(Pin.async_update)
 
 function Pin:_update(force, delay, tick, lean3_opts)
   if self.position_params and (force or not self.paused) then
@@ -637,7 +637,7 @@ function Pin:__update(tick, delay, lean3_opts)
   end
 
   new_data_div.events.clear_all = function(ctx) ---@param ctx DivEventContext
-    vim.api.nvim_set_current_win(ctx.root.last_win)
+    vim.api.nvim_set_current_win(ctx.self.last_win)
     new_data_div:find(function (div) ---@param div Div
       if div.events.clear then div.events.clear(ctx) end
     end)

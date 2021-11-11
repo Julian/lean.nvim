@@ -250,7 +250,7 @@ end
 ---@class DivEventContext
 ---@field rerender fun()
 ---@field rehover fun()
----@field root BufDiv
+---@field self BufDiv
 
 ---Trigger the given event at the given path
 ---@param path PathNode[] @the path to trigger the event at
@@ -490,7 +490,13 @@ function BufDiv:buf_update_position()
 
   self.path = self.div:path_from_pos(raw_pos)
 
-  return not path_equal(path_before, self.path)
+  if not path_equal(path_before, self.path) then
+    self:buf_event("cursor_leave", path_before)
+    self:buf_event("cursor_enter", self.path)
+    return true
+  end
+
+  return false
 end
 
 function BufDiv:buf_hover(force_update_highlight)
@@ -606,7 +612,7 @@ function BufDiv:buf_make_event_context()
   return {
     rerender = function() self:buf_render() end,
     rehover = function() self:buf_hover() end,
-    root = self,
+    self = self,
   }
 end
 

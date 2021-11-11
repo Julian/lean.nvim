@@ -49,8 +49,8 @@ local class_to_hlgroup = {
 
 -- mapping from lean3 events to standard div events
 local to_event = {
-  ["onMouseEnter"] = "mouse_enter";
-  ["onMouseLeave"] = "mouse_leave";
+  ["onMouseEnter"] = "cursor_enter";
+  ["onMouseLeave"] = "cursor_leave";
   ["onClick"] = "click";
   ["onChange"] = "change";
 }
@@ -215,13 +215,16 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
           events[div_event] = function(ctx, value)
             local args = type(value) == 'string' and { type = 'string', value = value }
               or { type = 'unit' }
-            pin:update(false, 0, ctx, {widget_event = {
+            pin:async_update(false, 0, ctx, {widget_event = {
               widget = widget,
               kind = event,
               handler = handler,
               args = args,
               textDocument = pin.position_params.textDocument
             }})
+            if div_event == "cursor_leave" then
+              ctx.self:buf_event("cursor_enter")
+            end
           end
         end
       end
