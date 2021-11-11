@@ -228,7 +228,7 @@ Full Configuration & Settings Information
       -- false to disable, otherwise should be a table of options to pass to
       --  `leanls` and/or `lean3ls`.
       --
-      -- See https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#leanls for details.
+      -- See https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#leanls for details.
 
       -- Lean 4  (on_attach is as above, your LSP handler)
       lsp = { on_attach = on_attach },
