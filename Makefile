@@ -11,7 +11,7 @@ docgen:
 
 build-test-fixtures:
 	cd ./lua/tests/fixtures/example-lean3-project/ && leanpkg build
-	cd ./lua/tests/fixtures/example-lean4-project/ && leanpkg build
+	cd ./lua/tests/fixtures/example-lean4-project/ && lake build
 
 test: build-test-fixtures
 	./lua/tests/scripts/run_tests.sh

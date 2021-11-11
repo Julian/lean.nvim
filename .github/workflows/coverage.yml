@@ -41,7 +41,7 @@ jobs:
 
       - name: Build Lean 4 fixture
         run: |
-          cd lua/tests/fixtures/example-lean4-project/ && leanpkg configure && leanpkg build
+          cd lua/tests/fixtures/example-lean4-project/ && lake build
 
       - name: Install the Lean LSP
         run: sudo npm install -g lean-language-server
