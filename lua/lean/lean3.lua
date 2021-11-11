@@ -349,6 +349,12 @@ function lean3.lsp_enable(opts)
       vim.lsp.handlers['textDocument/publishDiagnostics'](...)
     end;
   })
+  opts.commands = vim.tbl_extend("keep", opts.commands or {}, {
+    LeanScratchBuffer = {
+      function() require"lean".open_scratch_buffer() end,
+      description = "Open a scratch buffer for the currently open Lean file."
+    };
+  })
   require'lspconfig'.lean3ls.setup(opts)
 end
 

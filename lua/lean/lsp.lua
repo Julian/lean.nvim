@@ -11,6 +11,10 @@ function lsp.enable(opts)
       function (...) lsp.plain_term_goal(vim.lsp.util.make_position_params(), ...) end;
       description = "Describe the expected type of the current term."
     };
+    LeanScratchBuffer = {
+      function() require"lean".open_scratch_buffer() end,
+      description = "Open a scratch buffer for the currently open Lean file."
+    };
   })
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
     ["$/lean/plainGoal"] = util.mk_handler(lsp.handlers.plain_goal_handler);

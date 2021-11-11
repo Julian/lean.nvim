@@ -92,6 +92,24 @@ function lean.is_lean_buffer()
   return filetype == "lean" or filetype == "lean3"
 end
 
+function lean.open_scratch_buffer()
+  if not lean.is_lean_buffer() then return end
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+
+  local _, _, curr_name = vim.api.nvim_buf_get_name(0):find("(.*)%.lean")
+  local scratch_buf_name = curr_name .. "_scratch.lean"
+  local scratch_buf_uri = vim.uri_from_fname(scratch_buf_name)
+
+  local bufnr = vim.uri_to_bufnr(scratch_buf_uri)
+  vim.api.nvim_buf_set_option(bufnr, 'modifiable', true)
+  vim.api.nvim_win_set_buf(0, bufnr)
+
+  vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+
+  vim.api.nvim_win_set_cursor(0, pos)
+end
+
 --- Return the current Lean search path.
 ---
 --- Includes both the Lean core libraries as well as project-specific
