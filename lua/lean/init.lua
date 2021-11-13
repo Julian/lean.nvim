@@ -103,6 +103,7 @@ function lean.open_scratch_buffer()
 
   local bufnr = vim.uri_to_bufnr(scratch_buf_uri)
   vim.api.nvim_buf_set_option(bufnr, 'modifiable', true)
+  vim.api.nvim_buf_set_option(bufnr, 'buftype', 'nowrite')
   vim.api.nvim_win_set_buf(0, bufnr)
 
   vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
