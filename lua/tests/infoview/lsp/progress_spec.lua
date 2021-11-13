@@ -26,7 +26,7 @@ describe('infoview', function()
       assert.has_all(infoview.get_current_infoview().info.pin.div:to_string(), {"Processing file..."})
     end)
 
-    it('startup',
+    pending('startup',
     function(_)
       helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
       helpers.wait_for_ready_lsp()
@@ -39,7 +39,7 @@ describe('infoview', function()
       assert.initopened.infoview()
     end)
 
-    it('automatically updates when processing finished',
+    pending('automatically updates when processing finished',
     function(_)
       helpers.wait_for_server_progress()
       assert.pin_text_changed.infoview()
