@@ -63,7 +63,6 @@ local Pin = {next_id = 1}
 --- An individual info.
 ---@class Info
 ---@field id number
----@field bufnr number
 ---@field pin Pin
 ---@field pins Pin[]
 ---@field div Div
@@ -73,7 +72,6 @@ local Info = {}
 --- A "view" on an info (i.e. window).
 ---@class Infoview
 ---@field id number
----@field bufnr number
 ---@field width number
 ---@field height number
 ---@field info Info
@@ -124,11 +122,11 @@ function Infoview:open()
   else -- horizontal split
     vim.cmd("botright " .. self.height .. "split")
   end
-  vim.cmd(string.format("buffer %d", self.info.bufnr))
+  vim.cmd(string.format("buffer %d", self.info.bufdiv.buf))
   -- Set the filetype now. Any earlier, and only buffer-local options will be
   -- properly set in the infoview, since the buffer isn't actually shown in a
   -- window until we run :buffer above.
-  vim.api.nvim_buf_set_option(self.info.bufnr, 'filetype', 'leaninfo')
+  vim.api.nvim_buf_set_option(self.info.bufdiv.buf, 'filetype', 'leaninfo')
   local window = vim.api.nvim_get_current_win()
 
   -- Show/hide current pin extmark when entering/leaving infoview.
@@ -158,7 +156,7 @@ function Infoview:close()
     return
   end
 
-  set_augroup("LeanInfoviewClose", "", self.bufnr)
+  set_augroup("LeanInfoviewClose", "", self.info.bufdiv.buf)
   vim.api.nvim_win_close(self.window, true)
   self.window = nil
   self.is_open = false
@@ -188,7 +186,6 @@ end
 function Info:new()
   local new_info = {
     id = #infoview._info_by_id + 1,
-    bufnr = vim.api.nvim_create_buf(false, true),
     pin = Pin:new(options.autopause, options.use_widget),
     pins = {},
     div = html.Div:new("", "info", nil)
@@ -198,8 +195,7 @@ function Info:new()
   self.__index = self
   setmetatable(new_info, self)
 
-  vim.api.nvim_buf_set_name(new_info.bufnr, "lean://info/" .. new_info.id)
-  new_info.bufdiv = html.BufDiv:new(new_info.bufnr, new_info.div, options.mappings)
+  new_info.bufdiv = html.BufDiv:new("lean://info/" .. new_info.id, new_info.div, options.mappings)
   new_info.events = {
     goto_last_window = function()
       if new_info.last_window then
@@ -298,14 +294,14 @@ function Info:render()
     pin_div:add_div(header_div)
     if pin.div then pin_div:add_div(pin.div) end
 
-    self.div:add_div(pin_div)
+    return pin_div
   end
 
-  render_pin(self.pin, true)
+  self.div:add_div(render_pin(self.pin, true))
 
   for _, pin in pairs(self.pins) do
     self.div:add_div(html.Div:new("\n\n", "pin_spacing"))
-    render_pin(pin, false)
+    self.div:add_div(render_pin(pin, false))
   end
 
   self:_render()
@@ -320,7 +316,7 @@ end
 function Info:get_lines(start_line, end_line)
   start_line = start_line or 0
   end_line = end_line or -1
-  return vim.api.nvim_buf_get_lines(self.bufnr, start_line, end_line, true)
+  return vim.api.nvim_buf_get_lines(self.bufdiv.buf, start_line, end_line, true)
 end
 
 --- Retrieve the current combined contents of the info as a string.
