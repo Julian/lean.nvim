@@ -168,6 +168,10 @@ In Lean Files
 +------------------------+----------------------------------------------------+
 | ``<LocalLeader>c``     | clear all current infoview pins                    |
 +------------------------+----------------------------------------------------+
+| ``<LocalLeader>dx``    | place an infoview diff pin                         |
++------------------------+----------------------------------------------------+
+| ``<LocalLeader>dc``    | clear current infoview diff pin                    |
++------------------------+----------------------------------------------------+
 | ``<LocalLeader>s``     | insert a ``sorry`` for each open goal              |
 +------------------------+----------------------------------------------------+
 | ``<LocalLeader>t``     | replace a "try this:" suggestion under the cursor  |
