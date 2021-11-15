@@ -285,22 +285,19 @@ function Info:add_pin()
   self:render()
 end
 
-function Info:add_diff_pin()
-  local old_bufdiv
-  if self.diff_pin then
-    self.diff_pin:remove_parent_info(self)
-    old_bufdiv = self.diff_bufdiv
+function Info:add_diff_pin(params)
+  if self.diff_pin then -- move existing diff pin
+    self.diff_pin:move(params)
+  else                  -- create new diff pin
+    self.diff_pin = self.pin
+    self.diff_bufdiv = html.BufDiv:new("lean://info/" .. self.id .. "/diff_pin/" .. self.diff_pin.id,
+      self.diff_pin.div, options.mappings)
+    self:maybe_show_pin_extmark()
+    self.pin = Pin:new(options.autopause, options.use_widget)
+    self.pin:add_parent_info(self)
   end
 
-  self.diff_pin = self.pin
-  self.diff_bufdiv = html.BufDiv:new("lean://info/" .. self.id .. "/diff_pin/" .. self.diff_pin.id,
-    self.diff_pin.div, options.mappings)
-  self:maybe_show_pin_extmark()
-  self.pin = Pin:new(options.autopause, options.use_widget)
-  self.pin:add_parent_info(self)
   self:refresh_parents()
-
-  if old_bufdiv then old_bufdiv:buf_close() end
 end
 
 function Info:clear_pins()
@@ -893,9 +890,10 @@ function infoview.add_pin()
 end
 
 function infoview.add_diff_pin()
+  if not is_lean_buffer() then return end
   infoview.open()
-  infoview.get_current_infoview().info:add_diff_pin()
-  infoview.__update()
+  infoview.get_current_infoview().info:set_last_window()
+  infoview.get_current_infoview().info:add_diff_pin(vim.lsp.util.make_position_params())
 end
 
 function infoview.clear_pins()
