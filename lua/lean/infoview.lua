@@ -313,6 +313,11 @@ function Info:add_diff_pin(params)
     self.diff_pin:show_extmark("diff", diff_pin_hl_group)
     self.diff_bufdiv = html.BufDiv:new("lean://info/" .. self.id .. "/diff_pin/" .. self.diff_pin.id,
       self.diff_pin.div, options.mappings)
+    -- Make sure we notice even if someone manually :q's the diff window.
+    set_augroup("LeanInfoviewClose", string.format([[
+      autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__diff_was_closed(%d)
+    ]], self.diff_bufdiv.buf, self.id), self.diff_bufdiv.buf)
+
     self.pin = Pin:new(options.autopause, options.use_widget)
     self.pin:add_parent_info(self)
   end
@@ -330,6 +335,7 @@ end
 function Info:clear_diff_pin()
   if not self.diff_pin then return end
   self.diff_pin:remove_parent_info(self)
+  set_augroup("LeanInfoviewClose", "", self.diff_bufdiv.buf)
   self.diff_pin = nil
   self.diff_bufdiv = nil
   self:refresh_parents()
@@ -795,6 +801,13 @@ end
 ---@param id number
 function infoview.__was_closed(id)
   infoview._by_id[id]:close()
+end
+
+--- An infoview diff window was closed.
+--- Will be triggered via a `WinClosed` autocmd.
+---@param id number
+function infoview.__diff_was_closed(id)
+  infoview._info_by_id[id]:clear_diff_pin()
 end
 
 --- An infoview was entered, show the extmark for the current pin.
