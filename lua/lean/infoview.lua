@@ -80,6 +80,20 @@ local Info = {}
 ---@field info Info
 local Infoview = {}
 
+local pin_hl_group = "LeanNvimPin"
+vim.highlight.create(pin_hl_group, {
+  cterm = 'underline',
+  ctermbg = '3',
+  gui   = 'underline',
+}, true)
+
+local diff_pin_hl_group = "LeanNvimDiffPin"
+vim.highlight.create(diff_pin_hl_group, {
+  cterm = 'underline',
+  ctermbg = '7',
+  gui   = 'underline',
+}, true)
+
 --- Enables printing of extra debugging information in the infoview.
 function infoview.enable_debug()
   infoview.debug = true
@@ -291,9 +305,9 @@ function Info:add_diff_pin(params)
     self.diff_pin:move(params)
   else                  -- create new diff pin
     self.diff_pin = self.pin
+    self.diff_pin:show_extmark("diff", diff_pin_hl_group)
     self.diff_bufdiv = html.BufDiv:new("lean://info/" .. self.id .. "/diff_pin/" .. self.diff_pin.id,
       self.diff_pin.div, options.mappings)
-    self:maybe_show_pin_extmark()
     self.pin = Pin:new(options.autopause, options.use_widget)
     self.pin:add_parent_info(self)
   end
@@ -487,13 +501,6 @@ function Pin:remove_parent_info(info)
   if vim.tbl_isempty(self.parent_infos) then self:_teardown() end
 end
 
-local pin_hl_group = "LeanNvimPin"
-vim.highlight.create(pin_hl_group, {
-  cterm = 'underline',
-  ctermbg = '3',
-  gui   = 'underline',
-}, true)
-
 --- Update this pin's current position.
 function Pin:set_position_params(params, delay, lean3_opts)
   local old_params = self.position_params
@@ -556,8 +563,8 @@ end
 
 function Pin:toggle_pause() if not self.paused then self:pause() else self:unpause() end end
 
-function Pin:show_extmark(name)
-  self.extmark_hl_group = pin_hl_group
+function Pin:show_extmark(name, hlgroup)
+  self.extmark_hl_group = hlgroup or pin_hl_group
   self.extmark_virt_text = {{"← " .. (name or tostring(self.id)), "Comment"}}
   self:update_extmark()
 end
