@@ -401,8 +401,13 @@ end
 --- Move the current pin to the specified location.
 function Info:move_pin(params)
   if self.auto_diff_pin and self.pin.position_params then
-    -- update diff pin to previous position
-    self:add_diff_pin(self.pin.position_params)
+    if util.position_params_valid(self.pin.position_params) then
+      -- update diff pin to previous position
+      self:add_diff_pin(self.pin.position_params)
+    else
+      -- if previous position invalid, use current position
+      self:add_diff_pin(params)
+    end
   end
   if params then self.pin:move(params) end
 end
