@@ -236,6 +236,10 @@ Full Configuration & Settings Information
       -- Lean 3  (on_attach is as above, your LSP handler)
       lsp3 = { on_attach = on_attach },
 
+      -- mouse_events = true will simulate mouse events in the Lean 3 infoview, this is buggy at the moment
+      -- so you can use the I/i keybindings to manually trigger these
+      lean3 = { mouse_events = false },
+
       -- What filetype should be associated with standalone Lean files?
       -- Can be set to "lean3" if you prefer that default.
       -- Having a leanpkg.toml or lean-toolchain file should always mean
