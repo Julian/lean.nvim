@@ -186,24 +186,29 @@ function Infoview:refresh_diff()
     vim.api.nvim_command("setlocal wrap")
 
     if self.orientation == "vertical" then
-      vim.cmd("rightbelow split")
+      vim.cmd("leftabove " .. self.width .. "vsplit")
+      vim.cmd("vertical resize " .. self.width)
     else
-      vim.cmd("rightbelow vsplit")
+      vim.cmd("leftabove " .. self.height .. "split")
+      vim.cmd("resize " .. self.height)
     end
     self.diff_win = vim.api.nvim_get_current_win()
 
     vim.api.nvim_set_current_win(window_before_split)
   end
 
-  -- turn off diff for any preexisting buffer
-  vim.api.nvim_win_call(self.diff_win, function() vim.api.nvim_command"diffoff" end)
+  if vim.api.nvim_win_get_buf(self.diff_win) ~= diff_bufdiv.buf then
+    -- turn off diff for any preexisting buffer
+    vim.api.nvim_win_call(self.diff_win, function() vim.api.nvim_command"diffoff" end)
+    vim.api.nvim_win_set_buf(self.diff_win, diff_bufdiv.buf)
 
-  vim.api.nvim_win_set_buf(self.diff_win, diff_bufdiv.buf)
-  vim.api.nvim_win_call(self.diff_win, function()
-    vim.api.nvim_command"diffthis"
-    vim.api.nvim_command("setlocal foldmethod=manual")
-    vim.api.nvim_command("setlocal wrap")
-  end)
+    vim.api.nvim_win_call(self.diff_win, function()
+      vim.api.nvim_command"diffthis"
+      vim.api.nvim_command("setlocal filetype=leaninfo")
+      vim.api.nvim_command("set foldmethod=manual")
+      vim.api.nvim_command("setlocal wrap")
+    end)
+  end
 end
 
 --- Close this infoview's diff window.
