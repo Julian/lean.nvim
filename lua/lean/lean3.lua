@@ -210,6 +210,14 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
       if result.e then
         for event, handler in pairs(result.e) do
           local div_event = to_event[event]
+          if not options.mouse_events then
+            if div_event == "cursor_enter" then
+              div_event = "mouse_enter"
+            end
+            if div_event == "cursor_leave" then
+              div_event = "mouse_leave"
+            end
+          end
           local clickable_event = div_event == "click" or div_event == "change"
           if clickable_event then element_div.highlightable = true end
           events[div_event] = function(ctx, value)

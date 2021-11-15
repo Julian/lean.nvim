@@ -34,13 +34,15 @@ local options = {
     autoopen = true,
     autopause = false,
     indicators = "auto",
-    lean3 = { show_filter = true },
+    lean3 = { show_filter = true, mouse_events = false },
     show_processing = true,
     use_widget = true,
 
     mappings = {
       ["K"] = [[click]],
       ["<CR>"] = [[click]],
+      ["I"] = 'mouse_enter',
+      ["i"] = 'mouse_leave',
       ["<Esc>"] = 'clear_all',
       ["C"] = 'clear_all',
       ["<LocalLeader><Tab>"] = [[goto_last_window]]
