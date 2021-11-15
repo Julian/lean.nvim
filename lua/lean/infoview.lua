@@ -277,11 +277,12 @@ function Info:add_parent_infoview(_infoview)
   self.parent_infoviews[_infoview.id] = true
 end
 
-function Info:add_pin()
+function Info:add_pin(params)
   table.insert(self.pins, self.pin)
   self:maybe_show_pin_extmark()
   self.pin = Pin:new(options.autopause, options.use_widget)
   self.pin:add_parent_info(self)
+  if params then self.pin:move(params) end
   self:render()
 end
 
@@ -884,9 +885,10 @@ function infoview.pin_toggle_pause()
 end
 
 function infoview.add_pin()
+  if not is_lean_buffer() then return end
   infoview.open()
-  infoview.get_current_infoview().info:add_pin()
-  infoview.__update()
+  infoview.get_current_infoview().info:set_last_window()
+  infoview.get_current_infoview().info:add_pin(vim.lsp.util.make_position_params())
 end
 
 function infoview.add_diff_pin()
