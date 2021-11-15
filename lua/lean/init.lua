@@ -19,6 +19,7 @@ local lean = {
       ["<LocalLeader>c"] = "<Cmd>LeanInfoviewClearPins<CR>";
       ["<LocalLeader>dx"] = "<Cmd>LeanInfoviewAddDiffPin<CR>";
       ["<LocalLeader>dc"] = "<Cmd>LeanInfoviewClearDiffPin<CR>";
+      ["<LocalLeader>dd"] = "<Cmd>LeanInfoviewToggleAutoDiffPin<CR>";
       ["<LocalLeader>w"] = "<Cmd>LeanInfoviewEnableWidgets<CR>";
       ["<LocalLeader>W"] = "<Cmd>LeanInfoviewDisableWidgets<CR>";
       ["<LocalLeader><Tab>"] = "<Cmd>LeanGotoInfoview<CR>";
@@ -64,6 +65,7 @@ function lean.setup(opts)
     command LeanInfoviewClearPins :lua require'lean.infoview'.clear_pins()
     command LeanInfoviewAddDiffPin :lua require'lean.infoview'.add_diff_pin()
     command LeanInfoviewClearDiffPin :lua require'lean.infoview'.clear_diff_pin()
+    command LeanInfoviewToggleAutoDiffPin :lua require'lean.infoview'.toggle_auto_diff_pin()
     command LeanInfoviewEnableWidgets :lua require'lean.infoview'.enable_widgets()
     command LeanInfoviewDisableWidgets :lua require'lean.infoview'.disable_widgets()
     command LeanGotoInfoview :lua require'lean.infoview'.go_to()

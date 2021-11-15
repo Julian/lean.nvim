@@ -398,6 +398,25 @@ function Info:render()
   collectgarbage()
 end
 
+--- Move the current pin to the specified location.
+function Info:move_pin(params)
+  if self.auto_diff_pin and self.pin.position_params then
+    -- update diff pin to previous position
+    self:add_diff_pin(self.pin.position_params)
+  end
+  if params then self.pin:move(params) end
+end
+
+function Info:toggle_auto_diff_pin()
+  if self.auto_diff_pin then
+    self.auto_diff_pin = false
+    self:clear_diff_pin()
+  else
+    self.auto_diff_pin = true
+    self:move_pin()
+  end
+end
+
 function Info:_render()
   self.bufdiv:buf_render()
 
@@ -781,7 +800,7 @@ end
 function infoview.__update()
   if not is_lean_buffer() then return end
   infoview.get_current_infoview().info:set_last_window()
-  infoview.get_current_infoview().info.pin:move(vim.lsp.util.make_position_params())
+  infoview.get_current_infoview().info:move_pin(vim.lsp.util.make_position_params())
 end
 
 --- Update pins corresponding to the given URI.
@@ -910,6 +929,12 @@ function infoview.clear_diff_pin()
   if iv ~= nil then
     iv.info:clear_diff_pin()
   end
+end
+
+function infoview.toggle_auto_diff_pin()
+  if not is_lean_buffer() then return end
+  infoview.open()
+  infoview.get_current_infoview().info:toggle_auto_diff_pin()
 end
 
 function infoview.enable_widgets()

@@ -172,6 +172,8 @@ In Lean Files
 +------------------------+----------------------------------------------------+
 | ``<LocalLeader>dc``    | clear current infoview diff pin                    |
 +------------------------+----------------------------------------------------+
+| ``<LocalLeader>dd``    | toggle auto diff pin mode                          |
++------------------------+----------------------------------------------------+
 | ``<LocalLeader>s``     | insert a ``sorry`` for each open goal              |
 +------------------------+----------------------------------------------------+
 | ``<LocalLeader>t``     | replace a "try this:" suggestion under the cursor  |
