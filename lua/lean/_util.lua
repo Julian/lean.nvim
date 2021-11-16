@@ -196,6 +196,22 @@ function M.list_workspace_folders()
   return workspace_folders
 end
 
+function M.position_params_valid(params)
+  local bufnr = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
+  if bufnr == -1 then return false end
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+
+  local line = params.position.line + 1
+  local col = params.position.character + 1
+
+  if line > #lines then return false end
+
+  if col > vim.fn.strwidth(lines[line]) then return false end
+
+  return true
+end
+
 M.wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) end, 2)
 
 return M

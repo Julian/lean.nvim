@@ -425,7 +425,7 @@ local function opened_info(_, arguments)
 
   assert.is_nil(last_info_ids[this_info.id])
 
-  assert.is_truthy(this_info.bufnr)
+  assert.is_truthy(this_info.bufdiv)
   assert.is_falsy(this_info.prev_buf)
 
   return true
@@ -434,8 +434,8 @@ end
 local function opened_info_kept(_, arguments)
   local this_info = arguments[1]
 
-  assert.is_truthy(this_info.bufnr)
-  assert.are_equal(this_info.bufnr, this_info.prev_buf)
+  assert.is_truthy(this_info.bufdiv)
+  assert.are_equal(this_info.bufdiv.buf, this_info.prev_buf)
 
   return true
 end
@@ -641,7 +641,7 @@ local function infoview_check(state, _)
     end
 
     if check == "infoopened" then
-      vim.list_extend(opened_bufs, {this_info.bufnr})
+      vim.list_extend(opened_bufs, {this_info.bufdiv.buf})
       assert.opened_info_state(this_info)
       assert.is_nil(pin_list[this_info.pin.id])
       pin_list[this_info.pin.id] = "pinopened"
@@ -649,7 +649,7 @@ local function infoview_check(state, _)
       assert.opened_info_kept_state(this_info)
     end
 
-    this_info.prev_buf = this_info.bufnr
+    this_info.prev_buf = this_info.bufdiv.buf
     this_info.prev_check = check
 
     info_ids[id] = true

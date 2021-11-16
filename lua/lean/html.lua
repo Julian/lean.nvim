@@ -338,11 +338,14 @@ BufDiv.__index = BufDiv
 local _by_id = setmetatable({}, {__mode = 'v'})
 local next_id = 1
 
----@param buf integer
+---@param buf_name string
 ---@param keymaps? table Extra keymaps
-function BufDiv:new(buf, div, keymaps)
+function BufDiv:new(buf_name, div, keymaps)
   local id = next_id
   next_id = next_id + 1
+  local buf = vim.api.nvim_create_buf(false, true)
+  if buf_name then vim.api.nvim_buf_set_name(buf, buf_name) end
+  vim.api.nvim_buf_set_option(buf, "modifiable", false)
   local new_bufdiv = setmetatable({
     id = id,
     buf = buf,
@@ -538,11 +541,8 @@ function BufDiv:buf_hover(force_update_highlight)
     if self.tooltip then -- reuse old tooltip window
       self.tooltip.div = new_tooltip_div
     else
-      local tooltip_buf = vim.api.nvim_create_buf(false, true)
-      vim.api.nvim_buf_set_option(tooltip_buf, "bufhidden", "wipe")
-      vim.api.nvim_buf_set_option(tooltip_buf, "modifiable", false)
-
-      self.tooltip = BufDiv:new(tooltip_buf, new_tooltip_div, self.keymaps)
+      self.tooltip = BufDiv:new(nil, new_tooltip_div, self.keymaps)
+      vim.api.nvim_buf_set_option(self.tooltip.buf, "bufhidden", "wipe")
     end
 
     self.tooltip.parent = self
