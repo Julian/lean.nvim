@@ -168,15 +168,15 @@ function Infoview:open()
 
   self:focus_on_current_buffer()
 
-  self:refresh_diff()
+  self:__refresh_diff()
 end
 
 --- Either open or close a diff window for this infoview depending on whether its info has a diff_pin.
-function Infoview:refresh_diff()
+function Infoview:__refresh_diff()
   if not self.is_open then return end
 
   local diff_bufdiv = self.info.diff_bufdiv
-  if not diff_bufdiv then self:close_diff() return end
+  if not diff_bufdiv then self:__close_diff() return end
 
   if not self.diff_win then
     local window_before_split = vim.api.nvim_get_current_win()
@@ -212,7 +212,7 @@ function Infoview:refresh_diff()
 end
 
 --- Close this infoview's diff window.
-function Infoview:close_diff()
+function Infoview:__close_diff()
   if not self.is_open or not self.diff_win then return end
 
   vim.api.nvim_win_call(self.window, function() vim.api.nvim_command"diffoff" end)
@@ -233,7 +233,7 @@ function Infoview:close()
     return
   end
 
-  self:close_diff()
+  self:__close_diff()
 
   set_augroup("LeanInfoviewClose", "", self.info.bufdiv.buf)
   vim.api.nvim_win_close(self.window, true)
@@ -322,7 +322,7 @@ function Info:add_diff_pin(params)
     self.pin:add_parent_info(self)
   end
 
-  self:refresh_parents()
+  self:__refresh_parents()
 end
 
 function Info:clear_pins()
@@ -338,7 +338,7 @@ function Info:clear_diff_pin()
   set_augroup("LeanInfoviewClose", "", self.diff_bufdiv.buf)
   self.diff_pin = nil
   self.diff_bufdiv = nil
-  self:refresh_parents()
+  self:__refresh_parents()
 end
 
 --- Show a pin extmark if it is appropriate based on configuration.
@@ -456,9 +456,9 @@ function Info:_render()
 end
 
 --- Refresh parent infoview diff windows.
-function Info:refresh_parents()
+function Info:__refresh_parents()
   for parent_id, _ in pairs(self.parent_infoviews) do
-    infoview._by_id[parent_id]:refresh_diff()
+    infoview._by_id[parent_id]:__refresh_diff()
   end
 end
 
