@@ -305,7 +305,7 @@ function Info:add_pin(params)
   self:render()
 end
 
-function Info:add_diff_pin(params)
+function Info:set_diff_pin(params)
   if self.diff_pin then -- move existing diff pin
     self.diff_pin:move(params)
   else                  -- create new diff pin
@@ -423,27 +423,34 @@ function Info:render()
   collectgarbage()
 end
 
---- Move the current pin to the specified location.
-function Info:move_pin(params)
-  if self.auto_diff_pin and self.pin.position_params then
-    if util.position_params_valid(self.pin.position_params) then
-      -- update diff pin to previous position
-      self:add_diff_pin(self.pin.position_params)
-    else
-      -- if previous position invalid, use current position
-      self:add_diff_pin(params)
-    end
+--- Update the diff pin to use the current pin's positon params if they are valid,
+--- and the provided params if they are not.
+function Info:__update_auto_diff_pin(params)
+  if self.pin.position_params and util.position_params_valid(self.pin.position_params) then
+    -- update diff pin to previous position
+    self:set_diff_pin(self.pin.position_params)
+  elseif params then
+    -- if previous position invalid, use current position
+    self:set_diff_pin(params)
   end
-  if params then self.pin:move(params) end
 end
 
-function Info:toggle_auto_diff_pin()
+--- Move the current pin to the specified location.
+function Info:move_pin(params)
+  if self.auto_diff_pin then self:__update_auto_diff_pin(params) end
+  self.pin:move(params)
+end
+
+--- Toggle auto diff pin mode.
+--- @param clear boolean @clear the pin when disabling auto diff pin mode?
+function Info:toggle_auto_diff_pin(clear)
   if self.auto_diff_pin then
     self.auto_diff_pin = false
-    self:clear_diff_pin()
+    if clear then self:clear_diff_pin() end
   else
     self.auto_diff_pin = true
-    self:move_pin()
+    -- only update the diff pin if there isn't already one
+    if not self.diff_pin then self:__update_auto_diff_pin() end
   end
 end
 
@@ -940,11 +947,11 @@ function infoview.add_pin()
   infoview.get_current_infoview().info:add_pin(vim.lsp.util.make_position_params())
 end
 
-function infoview.add_diff_pin()
+function infoview.set_diff_pin()
   if not is_lean_buffer() then return end
   infoview.open()
   infoview.get_current_infoview().info:set_last_window()
-  infoview.get_current_infoview().info:add_diff_pin(vim.lsp.util.make_position_params())
+  infoview.get_current_infoview().info:set_diff_pin(vim.lsp.util.make_position_params())
 end
 
 function infoview.clear_pins()
@@ -961,10 +968,10 @@ function infoview.clear_diff_pin()
   end
 end
 
-function infoview.toggle_auto_diff_pin()
+function infoview.toggle_auto_diff_pin(clear)
   if not is_lean_buffer() then return end
   infoview.open()
-  infoview.get_current_infoview().info:toggle_auto_diff_pin()
+  infoview.get_current_infoview().info:toggle_auto_diff_pin(clear)
 end
 
 function infoview.enable_widgets()
