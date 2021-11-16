@@ -310,7 +310,7 @@ function Info:set_diff_pin(params)
     self.diff_pin:move(params)
   else                  -- create new diff pin
     self.diff_pin = self.pin
-    self.diff_pin:show_extmark("diff", diff_pin_hl_group)
+    self.diff_pin:show_extmark("", diff_pin_hl_group)
     self.diff_bufdiv = html.BufDiv:new("lean://info/" .. self.id .. "/diff_pin/" .. self.diff_pin.id,
       self.diff_pin.div, options.mappings)
     -- Make sure we notice even if someone manually :q's the diff window.
@@ -583,7 +583,11 @@ function Pin:toggle_pause() if not self.paused then self:pause() else self:unpau
 
 function Pin:show_extmark(name, hlgroup)
   self.extmark_hl_group = hlgroup or pin_hl_group
-  self.extmark_virt_text = {{"← " .. (name or tostring(self.id)), "Comment"}}
+  if name == "" then
+    self.extmark_virt_text = {{""}}
+  else
+    self.extmark_virt_text = {{"← " .. (name or tostring(self.id)), "Comment"}}
+  end
   self:update_extmark()
 end
 
