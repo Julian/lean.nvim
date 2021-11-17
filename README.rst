@@ -301,6 +301,9 @@ Full Configuration & Settings Information
         -- Use a different priority for the signs
         priority = 10,
       },
+
+      -- Print Lean's stderr messages to a vim buffer
+      stderr = { enable = true },
     }
 
 Other Plugins

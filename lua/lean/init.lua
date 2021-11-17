@@ -57,7 +57,10 @@ function lean.setup(opts)
   if opts.progress_bars.enable ~= false then require'lean.progress_bars'.enable(opts.progress_bars) end
 
   require'lean.ft'.enable(opts.ft or {})
-  require'lean.stderr'.enable()
+
+  if not opts.stderr or opts.stderr.enable then
+    require'lean.stderr'.enable()
+  end
 
   vim.cmd[[
     command LeanInfoviewToggle :lua require'lean.infoview'.toggle()
