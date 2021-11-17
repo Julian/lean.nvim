@@ -174,7 +174,7 @@ local function connect(bufnr)
     return err
   end
   a.void(function()
-    local err, result = util.a_request(bufnr, '$/lean/rpc/connect', {uri = uri})
+    local err, result = util.client_a_request(client, '$/lean/rpc/connect', {uri = uri})
     sess.connected = true
     if err ~= nil then
       sess.connect_err = err
