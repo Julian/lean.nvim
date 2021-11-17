@@ -91,6 +91,12 @@ end
 
 M.a_request = a.wrap(M.request, 4)
 
+function M.client_request(client, method, params, handler)
+  return client.request(method, params, M.mk_handler(handler))
+end
+
+M.client_a_request = a.wrap(M.client_request, 4)
+
 -- FIXME: tick locking is disabled for now
 -- It is really easy to crash the infoview this way if an exception is not handled.
 
