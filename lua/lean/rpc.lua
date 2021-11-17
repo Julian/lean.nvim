@@ -6,9 +6,8 @@ local control = require'plenary.async.control'
 ---@class RpcRef
 
 ---@class Session
----@field bufnr number
+---@field client any vim.lsp.client object
 ---@field uri string
----@field closed boolean
 ---@field connected boolean
 ---@field connect_err any | nil
 ---@field on_connected function
@@ -18,25 +17,25 @@ local control = require'plenary.async.control'
 local Session = {}
 Session.__index = Session
 
+---@param client any vim.lsp.client object
 ---@param bufnr number
 ---@param uri string
 ---@return Session
-function Session:new(bufnr, uri)
+function Session:new(client, bufnr, uri)
   self = setmetatable({
-    bufnr = bufnr,
+    client = client,
     uri = uri,
     session_id = nil,
     connected = nil,
     connect_err = nil,
-    closed = false,
     on_connected = control.Condvar.new(),
     to_release = {},
     release_timer = nil,
   }, self)
   self.keepalive_timer = vim.loop.new_timer()
   self.keepalive_timer:start(20000, 20000, vim.schedule_wrap(function()
-    if self.session_id ~= nil then
-      vim.lsp.buf_notify(self.bufnr, '$/lean/rpc/keepAlive', {
+    if not self:is_closed() and self.session_id ~= nil then
+      self.client.notify('$/lean/rpc/keepAlive', {
         uri = self.uri,
         sessionId = self.session_id,
       })
@@ -44,24 +43,37 @@ function Session:new(bufnr, uri)
   end))
   -- Terminate RPC session when document is closed.
   vim.api.nvim_buf_attach(bufnr, false, {
-    on_reload = function() self.closed = true end,
-    on_detach = function() self.closed = true end,
+    on_reload = function() self:close_without_releasing() end,
+    on_detach = function() self:close_without_releasing() end,
   })
   return self
 end
 
+function Session:is_closed()
+  if self.client and self.client.is_stopped() then
+    self:close_without_releasing()
+  end
+  return self.client == nil
+end
+
+function Session:close_without_releasing()
+  if self.keepalive_timer then
+    self.keepalive_timer:close()
+    self.keepalive_timer = nil
+  end
+  self.client = nil
+end
+
 function Session:close()
   self:release_now{}
-  self.keepalive_timer:close()
-  self.closed = true
+  self:close_without_releasing()
 end
 
 ---@param refs RpcRef[]
 function Session:release_now(refs)
   for _, ptr in ipairs(refs) do table.insert(self.to_release, ptr) end
-  if self.closed or #self.to_release == 0 then return end
-  --print("releasing: " .. vim.inspect(self.to_release))
-  vim.lsp.buf_notify(self.bufnr, '$/lean/rpc/release', {
+  if #self.to_release == 0 or self:is_closed() then return end
+  self.client.notify('$/lean/rpc/release', {
     uri = self.uri,
     sessionId = self.session_id,
     refs = self.to_release,
@@ -107,17 +119,18 @@ function Session:call(pos, method, params)
   if self.connect_err ~= nil then
     return nil, self.connect_err
   end
-  local err, result = util.a_request(self.bufnr, '$/lean/rpc/call',
+  if self:is_closed() then
+    return nil, { code = -32900, message = 'LSP server disconnected' }
+  end
+  local err, result = util.client_a_request(self.client, '$/lean/rpc/call',
     vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params }))
   if err ~= nil and err.code == -32900 then
-    self.closed = true
+    self:close_without_releasing()
   end
   local function register(obj)
     if type(obj) == 'table' then
       for k, v in pairs(obj) do
         if k == 'p' and type(v) ~= 'table' then
-          --print("obtaining: " .. tostring(v))
-
           -- Lua 5.1 workaround for unsupported __gc on tables
           -- luacheck: ignore
           local prox = newproxy(true)
@@ -137,12 +150,29 @@ end
 ---@type table<number, Session>
 local sessions = {}
 
+--- Finds the vim.lsp.client object for the Lean 4 server associated to the
+--- given bufnr.
+local function get_lean4_server(bufnr)
+  for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
+    if client.name == 'leanls' then
+      return client
+    end
+  end
+end
+
 ---@param bufnr number
 ---@result any error
 local function connect(bufnr)
+  local client = get_lean4_server(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
-  local sess = Session:new(bufnr, uri)
+  local sess = Session:new(client, bufnr, uri)
   sessions[bufnr] = sess
+  if client == nil then
+    sess.connected = true
+    local err = 'Lean 4 LSP server not found'
+    sess.connect_err = err
+    return err
+  end
   a.void(function()
     local err, result = util.a_request(bufnr, '$/lean/rpc/connect', {uri = uri})
     sess.connected = true
@@ -177,10 +207,7 @@ function Subsession:call(method, params)
 end
 
 function rpc.open(bufnr, params)
-  if sessions[bufnr] == nil or sessions[bufnr].connect_err then
-    connect(bufnr)
-  elseif sessions[bufnr].closed then
-    sessions[bufnr]:close()
+  if sessions[bufnr] == nil or sessions[bufnr].connect_err or sessions[bufnr]:is_closed() then
     connect(bufnr)
   end
   return Subsession:new(sessions[bufnr], params)
