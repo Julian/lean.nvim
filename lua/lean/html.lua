@@ -601,6 +601,8 @@ function BufDiv:buf_event(event, path, ...)
 
   path = path or self.path
 
+  if not path then return end
+
   if not self.div:event(path, event, self:buf_make_event_context(), unpack(args)) and self.parent then
     -- bubble up to parent
     return self.parent:buf_event(event, self.parent_path, ...)
