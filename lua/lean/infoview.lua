@@ -843,7 +843,8 @@ end
 function infoview.__update()
   if not is_lean_buffer() then return end
   infoview.get_current_infoview().info:set_last_window()
-  infoview.get_current_infoview().info:move_pin(vim.lsp.util.make_position_params())
+  local info = infoview.get_current_infoview().info
+  pcall(info.move_pin, info, vim.lsp.util.make_position_params())
 end
 
 --- Update pins corresponding to the given URI.
