@@ -17,14 +17,8 @@ local function open_window(stderr_bufnr)
 
   vim.cmd'resize 5'
   local stderr_winnr = vim.api.nvim_get_current_win()
-  vim.opt_local.number = true
-  vim.opt_local.bufhidden = 'hide'
-  vim.opt_local.spell = false
-  vim.opt_local.undolevels = -1
-  vim.opt_local.signcolumn = 'no'
-
+  vim.api.nvim_buf_set_option(stderr_bufnr, 'filetype', 'leanstderr')
   vim.api.nvim_set_current_win(old_win)
-
   return stderr_winnr
 end
 
