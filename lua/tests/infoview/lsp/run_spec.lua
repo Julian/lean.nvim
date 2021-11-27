@@ -1,7 +1,7 @@
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 local fixtures = require('tests.fixtures')
-local position = require('vim.lsp.util').make_position_params
+local position = require('lean._util').make_position_params
 
 helpers.setup {
   infoview = { autoopen = true },
@@ -45,6 +45,31 @@ describe('infoview', function()
         assert.pin_pos_changed.pin_text_changed.infoview()
         assert.has_all(infoview.get_current_infoview().info.pin.div:to_string(), {"1 goal\n⊢ Nat"})
       end)
+
+      it('shows state following multi-index UTF-16 character',
+      function(_)
+        vim.api.nvim_win_set_cursor(0, {18, 44})
+        infoview.get_current_infoview().info.pin:set_position_params(position())
+        infoview.get_current_infoview().info.pin:update(true)
+        assert.pin_pos_changed.pin_text_changed.infoview()
+        assert.has_all(infoview.get_current_infoview().info.pin.div:to_string(), {"𝔽 : Type", "⊢ 𝔽 = 𝔽"})
+
+        vim.api.nvim_win_set_cursor(0, {18, 45})
+        infoview.get_current_infoview().info.pin:set_position_params(position())
+        infoview.get_current_infoview().info.pin:update(true)
+        assert.pin_pos_changed.pin_text_kept.infoview()
+
+        vim.api.nvim_win_set_cursor(0, {18, 46})
+        infoview.get_current_infoview().info.pin:set_position_params(position())
+        infoview.get_current_infoview().info.pin:update(true)
+        assert.pin_pos_changed.pin_text_kept.infoview()
+
+        vim.api.nvim_win_set_cursor(0, {18, 43})
+        infoview.get_current_infoview().info.pin:set_position_params(position())
+        infoview.get_current_infoview().info.pin:update(true)
+        assert.pin_pos_changed.pin_text_changed.infoview()
+        assert.has_all(infoview.get_current_infoview().info.pin.div:to_string(), {"No info."})
+      end)
     end
   end)
 
@@ -83,6 +108,31 @@ describe('infoview', function()
       assert.pin_pos_changed.pin_text_changed.infoview()
       assert.equal(infoview.get_current_infoview().info.pin.div:to_string(),
       '▶ expected type:\n⊢ Type 1')
+    end)
+
+    it('shows state following multi-index UTF-16 character',
+    function(_)
+      vim.api.nvim_win_set_cursor(0, {18, 44})
+      infoview.get_current_infoview().info.pin:set_position_params(position())
+      infoview.get_current_infoview().info.pin:update(true)
+      assert.pin_pos_changed.pin_text_changed.infoview()
+      assert.has_all(infoview.get_current_infoview().info.pin.div:to_string(), {"𝔽 : Type", "⊢ 𝔽 = 𝔽"})
+
+      vim.api.nvim_win_set_cursor(0, {18, 45})
+      infoview.get_current_infoview().info.pin:set_position_params(position())
+      infoview.get_current_infoview().info.pin:update(true)
+      assert.pin_pos_changed.pin_text_kept.infoview()
+
+      vim.api.nvim_win_set_cursor(0, {18, 46})
+      infoview.get_current_infoview().info.pin:set_position_params(position())
+      infoview.get_current_infoview().info.pin:update(true)
+      assert.pin_pos_changed.pin_text_kept.infoview()
+
+      vim.api.nvim_win_set_cursor(0, {18, 43})
+      infoview.get_current_infoview().info.pin:set_position_params(position())
+      infoview.get_current_infoview().info.pin:update(true)
+      assert.pin_pos_changed.pin_text_changed.infoview()
+      assert.has_all(infoview.get_current_infoview().info.pin.div:to_string(), {"No info."})
     end)
   end)
 

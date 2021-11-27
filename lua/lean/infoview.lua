@@ -59,6 +59,7 @@ local options = {
 ---@field data_div Div
 ---@field div Div
 ---@field ticker table
+---@field __ui_position_params UIParams
 local Pin = {next_id = 1}
 
 --- An individual info.
@@ -379,7 +380,7 @@ function Info:__new_current_pin()
 end
 
 function Info:add_pin()
-  local new_params = vim.deepcopy(self.pin.position_params)
+  local new_params = vim.deepcopy(self.pin.__ui_position_params)
   table.insert(self.pins, self.pin)
   self:maybe_show_pin_extmark(tostring(self.pin.id))
   self:__new_current_pin()
@@ -387,6 +388,7 @@ function Info:add_pin()
   self:render()
 end
 
+---@param params UIParams
 function Info:set_diff_pin(params)
   if not self.diff_pin then
     self.diff_pin = Pin:new(options.autopause, options.use_widget)
@@ -452,13 +454,14 @@ function Info:__render_pins()
       if pin.loading then add_attribute("LOADING", "loading") end
     end
 
-    if not current and pin.position_params then
-      local bufnr = vim.fn.bufnr(vim.uri_to_fname(pin.position_params.textDocument.uri))
+    local params = pin.__ui_position_params
+    if not current and params then
+      local bufnr = vim.fn.bufnr(params.filename)
       local filename
       if bufnr ~= -1 then
         filename = vim.fn.bufname(bufnr)
       else
-        filename = pin.position_params.textDocument.uri
+        filename = params.filename
       end
       if not infoview.debug then
         header_div:insert_div("-- ", "pin-id-header")
@@ -466,7 +469,7 @@ function Info:__render_pins()
         header_div:insert_div(": ", "pin-header-separator")
       end
       local location_text = ("%s at %d:%d"):format(filename,
-        pin.position_params.position.line + 1, pin.position_params.position.character + 1)
+        params.row + 1, params.col + 1)
       header_div:insert_div(location_text, "pin-location")
 
       header_div.highlightable = true
@@ -474,10 +477,9 @@ function Info:__render_pins()
         click = function()
           if self.last_window then
             vim.api.nvim_set_current_win(self.last_window)
-            local uri_bufnr = vim.uri_to_bufnr(pin.position_params.textDocument.uri)
+            local uri_bufnr = vim.fn.bufnr(params.filename)
             vim.api.nvim_set_current_buf(uri_bufnr)
-            vim.api.nvim_win_set_cursor(0,
-              { pin.position_params.position.line + 1, pin.position_params.position.character })
+            vim.api.nvim_win_set_cursor(0, { params.row + 1, params.col })
           end
         end
       }
@@ -517,10 +519,11 @@ end
 
 --- Update the diff pin to use the current pin's positon params if they are valid,
 --- and the provided params if they are not.
+---@param params UIParams
 function Info:__update_auto_diff_pin(params)
-  if self.pin.position_params and util.position_params_valid(self.pin.position_params) then
+  if self.pin.__ui_position_params and util.position_params_valid(self.pin.__ui_position_params) then
     -- update diff pin to previous position
-    self:set_diff_pin(self.pin.position_params)
+    self:set_diff_pin(self.pin.__ui_position_params)
   elseif params then
     -- if previous position invalid, use current position
     self:set_diff_pin(params)
@@ -528,6 +531,7 @@ function Info:__update_auto_diff_pin(params)
 end
 
 --- Move the current pin to the specified location.
+---@param params UIParams
 function Info:move_pin(params)
   if self.auto_diff_pin then self:__update_auto_diff_pin(params) end
   self.pin:move(params)
@@ -604,45 +608,66 @@ function Pin:remove_parent_info(info)
 end
 
 --- Update this pin's current position.
-function Pin:set_position_params(params, delay, lean3_opts)
-  local old_params = self.position_params
-  self.position_params = params
-
-  lean3_opts = vim.tbl_extend("keep", lean3_opts or {}, {changed = not vim.deep_equal(params, old_params)})
-
-  self:update_extmark()
-  self:update(false, delay, nil, lean3_opts)
+---@param params UIParams
+function Pin:set_position_params(params)
+  self:update_extmark(params)
 end
 
 --- Update pin extmark based on position, used when resetting pin position.
-function Pin:update_extmark()
-  local params = self.position_params
+---@param params UIParams
+function Pin:update_extmark(params)
   if not params then return end
 
-  local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
+  local buf = vim.fn.bufnr(params.filename)
 
   if buf ~= -1 then
-    local line = params.position.line
-    local buf_line = vim.api.nvim_buf_get_lines(buf, line, line + 1, false)[1]
-    local col = buf_line and vim.str_byteindex(buf_line, params.position.character) or 0
-    local end_col = buf_line and ((col < #buf_line) and
-      vim.str_byteindex(buf_line, params.position.character + 1) or col) or 0
+    local line = params.row
+    local col = params.col
 
-    self.extmark = vim.api.nvim_buf_set_extmark(buf, extmark_ns,
-      line, col,
-      {
-        id = self.extmark;
-        end_col = end_col;
-        hl_group = self.extmark_hl_group;
-        virt_text = self.extmark_virt_text;
-        virt_text_pos = "right_align";
-      })
-    self.extmark_buf = buf
+    self:__update_extmark_style(buf, line, col)
+
+    self:update_position()
   end
 end
 
---- Update pin position based on extmark, used when changing text.
-function Pin:update_position(delay, lean3_opts)
+function Pin:__update_extmark_style(buf, line, col)
+  if not buf and not self.extmark then return end
+
+  -- not a brand new extmark
+  if not buf then
+    buf = self.extmark_buf
+    local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, self.extmark, {})
+    line = extmark_pos[1]
+    col = extmark_pos[2]
+  end
+
+  local buf_line = vim.api.nvim_buf_get_lines(buf, line, line + 1, false)[1]
+  local end_col = 0
+  if buf_line then
+    if col < #buf_line then
+      -- vim.str_utfindex rounds up to the next UTF16 index if in the middle of a UTF8 sequence;
+      -- so convert next byte to UTF16 and back to get UTF8 index of next codepoint
+      local _, next_utf16 = vim.str_utfindex(buf_line, col + 1)
+      end_col = (col < #buf_line) and vim.str_byteindex(buf_line, next_utf16, true)
+    else
+      end_col = col
+    end
+  end
+
+  self.extmark = vim.api.nvim_buf_set_extmark(buf, extmark_ns,
+    line, col,
+    {
+      id = self.extmark;
+      end_col = end_col;
+      hl_group = self.extmark_hl_group;
+      virt_text = self.extmark_virt_text;
+      virt_text_pos = "right_align";
+    })
+  self.extmark_buf = buf
+end
+
+--- Update pin position based on extmark, used directly when changing text, indirectly when setting position.
+function Pin:update_position()
   local extmark = self.extmark
   if not extmark then return end
 
@@ -651,16 +676,24 @@ function Pin:update_position(delay, lean3_opts)
 
   local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, extmark, {})
 
-  local pos = self.position_params.position
-  local new_pos = vim.deepcopy(pos)
+  local encoding = vim.lsp.util._get_offset_encoding and vim.lsp.util._get_offset_encoding(buf) or "utf-32"
+  local use_utf16 = encoding == "utf-16"
+  local new_pos = {}
 
   new_pos.line = extmark_pos[1]
   local buf_line = vim.api.nvim_buf_get_lines(buf, new_pos.line, new_pos.line + 1, false)[1]
-  new_pos.character = buf_line and vim.str_utfindex(buf_line, extmark_pos[2]) or new_pos.character
+  if buf_line then
+    local utf32, utf16 = vim.str_utfindex(buf_line, extmark_pos[2])
+    new_pos.character = use_utf16 and utf16 or utf32
+  else
+    new_pos.character = 0
+  end
 
-  local new_params = vim.deepcopy(self.position_params)
-  new_params.position = new_pos
-  self:set_position_params(new_params, delay, lean3_opts)
+  local new_params = { textDocument = { uri = vim.uri_from_bufnr(buf) }, position = new_pos }
+  local new_ui_params = { filename = vim.uri_to_fname(vim.uri_from_bufnr(buf)),
+    row = extmark_pos[1], col = extmark_pos[2] }
+  self.__position_params = new_params
+  self.__ui_position_params = new_ui_params
 end
 
 function Pin:toggle_pause() if not self.paused then self:pause() else self:unpause() end end
@@ -672,13 +705,13 @@ function Pin:show_extmark(name, hlgroup)
   else
     self.extmark_virt_text = nil
   end
-  self:update_extmark()
+  self:__update_extmark_style()
 end
 
 function Pin:hide_extmark()
   self.extmark_hl_group = nil
   self.extmark_virt_text = nil
-  self:update_extmark()
+  self:__update_extmark_style()
 end
 
 function Pin:unpause()
@@ -701,9 +734,11 @@ function Pin:pause()
   self.ticker:lock()
 end
 
--- Triggered when manually moving a pin.
+--- Triggered when manually moving a pin.
+---@param params UIParams
 function Pin:move(params)
   self:set_position_params(params)
+  self:update()
 end
 
 function Pin:render_parents()
@@ -753,7 +788,7 @@ end
 Pin.update = a.void(Pin.async_update)
 
 function Pin:_update(force, delay, tick, lean3_opts)
-  if self.position_params and (force or not self.paused) then
+  if self.__position_params and (force or not self.paused) then
     return self:__update(tick, delay, lean3_opts)
   end
 end
@@ -773,7 +808,7 @@ function Pin:__update(tick, delay, lean3_opts)
     util.wait_timer(delay)
   end
 
-  local params = self.position_params
+  local params = self.__position_params
 
   local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   if buf == -1 then
@@ -934,14 +969,14 @@ function infoview.__update(id)
 
   if not is_lean_buffer() then return end
   info:set_last_window()
-  pcall(info.move_pin, info, vim.lsp.util.make_position_params())
+  pcall(info.move_pin, info, util.make_position_params())
 end
 
 --- Update pins corresponding to the given URI.
 function infoview.__update_event(uri)
   if infoview.enabled then
     for _, pin in pairs(infoview._pin_by_id) do
-      if pin.position_params and pin.position_params.textDocument.uri == uri then
+      if pin.__position_params and pin.__position_params.textDocument.uri == uri then
         pin:update()
       end
     end
@@ -951,8 +986,11 @@ end
 --- on_lines callback to update pins position according to the given textDocument/didChange parameters.
 function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
   for _, pin in pairs(infoview._pin_by_id) do
-    if pin.position_params and pin.position_params.textDocument.uri == vim.uri_from_bufnr(bufnr) then
-      vim.schedule_wrap(function() pin:update_position(500) end)()
+    if pin.__position_params and pin.__position_params.textDocument.uri == vim.uri_from_bufnr(bufnr) then
+      vim.schedule_wrap(function()
+        pin:update_position()
+        pin:update(false, 500)
+      end)()
     end
   end
 end
@@ -1049,7 +1087,7 @@ function infoview.set_diff_pin()
   if not is_lean_buffer() then return end
   infoview.open()
   infoview.get_current_infoview().info:set_last_window()
-  infoview.get_current_infoview().info:set_diff_pin(vim.lsp.util.make_position_params())
+  infoview.get_current_infoview().info:set_diff_pin(util.make_position_params())
 end
 
 function infoview.clear_pins()

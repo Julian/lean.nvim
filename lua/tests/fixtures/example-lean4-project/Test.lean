@@ -14,3 +14,5 @@ theorem test2 : p ∨ q → q ∨ p := by
 
 def new_test : Bool := by
   exact false
+
+def utf_test {𝔽 : Type} : 𝔽 = 𝔽 := rfl

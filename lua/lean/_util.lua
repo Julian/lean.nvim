@@ -202,20 +202,36 @@ function M.list_workspace_folders()
   return workspace_folders
 end
 
+---@class UIParams
+---@field filename string
+---@field row number
+---@field col number
+
+--- Checks that the given position parameters are valid given the buffer they correspond to.
+---@param params UIParams @parameters to verify
+---@return boolean
 function M.position_params_valid(params)
-  local bufnr = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
+  local bufnr = vim.fn.bufnr(params.filename)
   if bufnr == -1 then return false end
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
 
-  local line = params.position.line + 1
-  local col = params.position.character + 1
+  local line = params.row + 1
+  local col = params.col + 1
 
   if line > #lines then return false end
 
-  if col > vim.fn.strwidth(lines[line]) then return false end
+  if col > #lines[line] then return false end
 
   return true
+end
+
+function M.make_position_params()
+  local buf = vim.api.nvim_win_get_buf(0)
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+  row = row - 1
+
+  return { filename = vim.api.nvim_buf_get_name(buf), row = row, col = col }
 end
 
 M.wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) end, 2)

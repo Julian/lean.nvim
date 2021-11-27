@@ -228,7 +228,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
               kind = event,
               handler = handler,
               args = args,
-              textDocument = pin.position_params.textDocument
+              textDocument = pin.__position_params.textDocument
             }})
             if div_event == "cursor_leave" then
               ctx.self:buf_event("cursor_enter")
@@ -333,8 +333,8 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
   -- update all other pins for the same URI so they aren't left with a stale "session"
   if opts and opts.widget_event then
     for _, other_pin in pairs(require"lean.infoview"._pin_by_id) do
-      if other_pin ~= pin and other_pin.position_params and
-        other_pin.position_params.textDocument.uri == pin.position_params.textDocument.uri then
+      if other_pin ~= pin and other_pin.__position_params and
+        other_pin.__position_params.textDocument.uri == pin.__position_params.textDocument.uri then
         other_pin:update()
       end
     end
