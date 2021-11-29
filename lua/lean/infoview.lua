@@ -308,10 +308,10 @@ function Info:add_pin(params)
 end
 
 function Info:set_diff_pin(params)
-  if self.diff_pin then -- move existing diff pin
-    self.diff_pin:move(params)
-  else                  -- create new diff pin
-    self.diff_pin = self.pin
+  if not self.diff_pin then
+    self.diff_pin = Pin:new(options.autopause, options.use_widget)
+    self.diff_pin:add_parent_info(self)
+
     self.diff_pin:show_extmark(nil, diff_pin_hl_group)
     self.diff_bufdiv = html.BufDiv:new("lean://info/" .. self.id .. "/diff_pin/" .. self.diff_pin.id,
       self.diff_pin.div, options.mappings)
@@ -319,12 +319,12 @@ function Info:set_diff_pin(params)
     set_augroup("LeanInfoviewClose", string.format([[
       autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__diff_was_closed(%d)
     ]], self.diff_bufdiv.buf, self.id), self.diff_bufdiv.buf)
-
-    self.pin = Pin:new(options.autopause, options.use_widget)
-    self.pin:add_parent_info(self)
   end
 
+  self.diff_pin:move(params)
+
   self:__refresh_parents()
+  self:render()
 end
 
 function Info:clear_pins()
