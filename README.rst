@@ -176,6 +176,8 @@ In Lean Files
 +------------------------+----------------------------------------------------+
 | ``<LocalLeader>dt``    | toggle auto diff pin mode without clearing diff pin|
 +------------------------+----------------------------------------------------+
+| ``<LocalLeader>f``     | toggle focus on current pin                        |
++------------------------+----------------------------------------------------+
 | ``<LocalLeader>s``     | insert a ``sorry`` for each open goal              |
 +------------------------+----------------------------------------------------+
 | ``<LocalLeader>t``     | replace a "try this:" suggestion under the cursor  |
