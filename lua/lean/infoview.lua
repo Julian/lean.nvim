@@ -300,7 +300,7 @@ end
 
 function Info:add_pin(params)
   table.insert(self.pins, self.pin)
-  self:maybe_show_pin_extmark()
+  self:maybe_show_pin_extmark(tostring(self.pin.id))
   self.pin = Pin:new(options.autopause, options.use_widget)
   self.pin:add_parent_info(self)
   if params then self.pin:move(params) end
@@ -312,7 +312,7 @@ function Info:set_diff_pin(params)
     self.diff_pin:move(params)
   else                  -- create new diff pin
     self.diff_pin = self.pin
-    self.diff_pin:show_extmark("", diff_pin_hl_group)
+    self.diff_pin:show_extmark(nil, diff_pin_hl_group)
     self.diff_bufdiv = html.BufDiv:new("lean://info/" .. self.id .. "/diff_pin/" .. self.diff_pin.id,
       self.diff_pin.div, options.mappings)
     -- Make sure we notice even if someone manually :q's the diff window.
@@ -585,10 +585,10 @@ function Pin:toggle_pause() if not self.paused then self:pause() else self:unpau
 
 function Pin:show_extmark(name, hlgroup)
   self.extmark_hl_group = hlgroup or pin_hl_group
-  if name == "" then
-    self.extmark_virt_text = {{""}}
-  else
+  if name then
     self.extmark_virt_text = {{"← " .. (name or tostring(self.id)), "Comment"}}
+  else
+    self.extmark_virt_text = nil
   end
   self:update_extmark()
 end
