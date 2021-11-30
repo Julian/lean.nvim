@@ -332,7 +332,6 @@ function Info:set_diff_pin(params)
 
   self.diff_pin:move(params)
 
-  self:__refresh_parents()
   self:render()
 end
 
@@ -355,7 +354,7 @@ function Info:clear_diff_pin()
   self.diff_pin:remove_parent_info(self)
   self.diff_pin = nil
   self.diff_bufdiv.div = self.pin.div
-  self:__refresh_parents()
+  self:render()
 end
 
 --- Show a pin extmark if it is appropriate based on configuration.
@@ -438,6 +437,8 @@ function Info:render()
 
   self:_render()
   collectgarbage()
+
+  self:__refresh_parents()
 end
 
 --- Update the diff pin to use the current pin's positon params if they are valid,
