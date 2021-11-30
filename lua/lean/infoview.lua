@@ -67,7 +67,7 @@ local Pin = {next_id = 1}
 ---@field pin Pin
 ---@field diff_pin Pin
 ---@field pins Pin[]
----@field div Div
+---@field pins_div Div
 ---@field bufdiv BufDiv
 ---@field diff_bufdiv BufDiv
 ---@field win_event_disable boolean
@@ -158,9 +158,38 @@ function Infoview:open()
   self.window = window
   self.is_open = true
 
-  self:focus_on_current_buffer()
+  self.info:focus_on_current_buffer()
 
   self:__refresh_diff()
+end
+
+--- API for opening an auxilliary window relative to the current infoview window.
+--- @param buf number @buffer to put in the new window
+--- @param orientation string @"leftabove" or "rightbelow"
+--- @return number @new window handle or nil if the infoview is closed
+function Infoview:__open_win(buf, orientation)
+  if not self.is_open then return end
+
+  self.info.win_event_disable = true
+  local window_before_split = vim.api.nvim_get_current_win()
+  vim.api.nvim_set_current_win(self.window)
+
+  if self.orientation == "vertical" then
+    vim.cmd(orientation .. self.width .. "vsplit")
+    vim.cmd("vertical resize " .. self.width)
+  else
+    vim.cmd(orientation .. self.height .. "split")
+    vim.cmd("resize " .. self.height)
+  end
+  local new_win = vim.api.nvim_get_current_win()
+  vim.api.nvim_buf_set_option(buf, 'filetype', 'leaninfo')
+
+  vim.api.nvim_win_set_buf(new_win, buf)
+
+  vim.api.nvim_set_current_win(window_before_split)
+  self.info.win_event_disable = false
+
+  return new_win
 end
 
 --- Either open or close a diff window for this infoview depending on whether its info has a diff_pin.
@@ -172,32 +201,12 @@ function Infoview:__refresh_diff()
   local diff_bufdiv = self.info.diff_bufdiv
 
   if not self.diff_win then
-    local window_before_split = vim.api.nvim_get_current_win()
-    vim.api.nvim_set_current_win(self.window)
-    vim.cmd"diffthis"
-    vim.api.nvim_command("setlocal foldmethod=manual")
-    vim.api.nvim_command("setlocal wrap")
-
-    if self.orientation == "vertical" then
-      vim.cmd("leftabove " .. self.width .. "vsplit")
-      vim.cmd("vertical resize " .. self.width)
-    else
-      vim.cmd("leftabove " .. self.height .. "split")
-      vim.cmd("resize " .. self.height)
-    end
-    self.diff_win = vim.api.nvim_get_current_win()
-
-    vim.api.nvim_set_current_win(window_before_split)
+    self.diff_win = self:__open_win(diff_bufdiv.buf, "leftabove")
   end
 
-  if vim.api.nvim_win_get_buf(self.diff_win) ~= diff_bufdiv.buf then
-    -- turn off diff for any preexisting buffer
-    vim.api.nvim_win_call(self.diff_win, function() vim.api.nvim_command"diffoff" end)
-    vim.api.nvim_win_set_buf(self.diff_win, diff_bufdiv.buf)
-
-    vim.api.nvim_win_call(self.diff_win, function()
+  for _, win in pairs({self.diff_win, self.window}) do
+    vim.api.nvim_win_call(win, function()
       vim.api.nvim_command"diffthis"
-      vim.api.nvim_command("setlocal filetype=leaninfo")
       vim.api.nvim_command("set foldmethod=manual")
       vim.api.nvim_command("setlocal wrap")
     end)
@@ -237,7 +246,7 @@ function Infoview:close()
   self.window = nil
   self.is_open = false
 
-  self:focus_on_current_buffer()
+  self.info:focus_on_current_buffer()
 end
 
 --- Toggle this infoview being open.
@@ -246,13 +255,21 @@ function Infoview:toggle()
 end
 
 --- Set the currently active Lean buffer to update the info.
-function Infoview:focus_on_current_buffer()
+function Info:focus_on_current_buffer()
   if not is_lean_buffer() then return end
-  if self.is_open then
-    set_augroup("LeanInfoviewUpdate", [[
-      autocmd CursorMoved <buffer> lua require'lean.infoview'.__update()
-      autocmd CursorMovedI <buffer> lua require'lean.infoview'.__update()
-    ]], 0)
+  local is_open = false
+  for parent_id, _ in pairs(self.parent_infoviews) do
+    if infoview._by_id[parent_id].is_open then
+      is_open = true
+      break
+    end
+  end
+
+  if is_open then
+    set_augroup("LeanInfoviewUpdate", string.format([[
+      autocmd CursorMoved <buffer> lua require'lean.infoview'.__update(%d)
+      autocmd CursorMovedI <buffer> lua require'lean.infoview'.__update(%d)
+    ]], self.id, self.id), 0)
   else
     set_augroup("LeanInfoviewUpdate", "", 0)
   end
@@ -265,7 +282,7 @@ function Info:new()
     pin = Pin:new(options.autopause, options.use_widget),
     pins = {},
     parent_infoviews = {},
-    div = html.Div:new("", "info", nil),
+    pins_div = html.Div:new("", "info", nil),
     win_event_disable = false
   }
   table.insert(infoview._info_by_id, new_info)
@@ -274,8 +291,7 @@ function Info:new()
   setmetatable(new_info, self)
   self = new_info
 
-  self.bufdiv = html.BufDiv:new("lean://info/" .. self.id, self.div, options.mappings)
-  self.div.events = {
+  self.pins_div.events = {
     goto_last_window = function()
       if self.last_window then
         vim.api.nvim_set_current_win(self.last_window)
@@ -283,6 +299,7 @@ function Info:new()
     end
   }
 
+  self.bufdiv = html.BufDiv:new("lean://info/" .. self.id .. "/curr", self.pins_div, options.mappings)
   self.diff_bufdiv = html.BufDiv:new("lean://info/" .. self.id .. "/diff", self.pin.div, options.mappings)
 
   -- Show/hide current pin extmark when entering/leaving infoview.
@@ -313,11 +330,16 @@ function Info:add_parent_infoview(_infoview)
   self.parent_infoviews[_infoview.id] = true
 end
 
+function Info:__new_current_pin()
+  self.pin = Pin:new(options.autopause, options.use_widget)
+  self.bufdiv.div = self.pin.div
+  self.pin:add_parent_info(self)
+end
+
 function Info:add_pin(params)
   table.insert(self.pins, self.pin)
   self:maybe_show_pin_extmark(tostring(self.pin.id))
-  self.pin = Pin:new(options.autopause, options.use_widget)
-  self.pin:add_parent_info(self)
+  self:__new_current_pin()
   if params then self.pin:move(params) end
   self:render()
 end
@@ -371,9 +393,9 @@ function Info:set_last_window()
   self.last_buf = vim.api.nvim_get_current_buf()
 end
 
---- Update this info's physical contents.
-function Info:render()
-  self.div.divs = {}
+--- Update this info's pins div.
+function Info:__render_pins()
+  self.pins_div.divs = {}
   local function render_pin(pin, current)
     local header_div = html.Div:new("", "pin-header")
     if infoview.debug then
@@ -428,17 +450,24 @@ function Info:render()
     return pin_div
   end
 
-  self.div:add_div(render_pin(self.pin, true))
+  self.pins_div:add_div(render_pin(self.pin, true))
 
-  for _, pin in pairs(self.pins) do
-    self.div:add_div(html.Div:new("\n\n", "pin_spacing"))
-    self.div:add_div(render_pin(pin, false))
+  for _, pin in ipairs(self.pins) do
+    self.pins_div:add_div(html.Div:new("\n\n", "pin_spacing"))
+    self.pins_div:add_div(render_pin(pin, false))
   end
+end
 
-  self:_render()
-  collectgarbage()
+--- Update this info's physical contents.
+function Info:render()
+  self:__render_pins()
+
+  self.bufdiv:buf_render()
+  self.diff_bufdiv:buf_render()
 
   self:__refresh_parents()
+
+  collectgarbage()
 end
 
 --- Update the diff pin to use the current pin's positon params if they are valid,
@@ -470,11 +499,6 @@ function Info:toggle_auto_diff_pin(clear)
     -- only update the diff pin if there isn't already one
     if not self.diff_pin then self:__update_auto_diff_pin() end
   end
-end
-
-function Info:_render()
-  self.bufdiv:buf_render()
-  self.diff_bufdiv:buf_render()
 end
 
 --- Refresh parent infoview diff windows.
@@ -861,10 +885,13 @@ end
 --- Update the info contents appropriately for Lean 4 or 3.
 --- Normally will be called on each CursorHold for a buffer containing Lean.
 --- TODO perhaps this should be schedule_wrap'ed?
-function infoview.__update()
+--- @param id number @info id
+function infoview.__update(id)
+  local info = id and infoview._info_by_id[id] or infoview.get_current_infoview().info
+  if info.win_event_disable then return end
+
   if not is_lean_buffer() then return end
-  infoview.get_current_infoview().info:set_last_window()
-  local info = infoview.get_current_infoview().info
+  info:set_last_window()
   pcall(info.move_pin, info, vim.lsp.util.make_position_params())
 end
 
@@ -905,7 +932,7 @@ function infoview.make_buffer_focusable(name)
   if bufnr == vim.api.nvim_get_current_buf() then
     -- because FileType can happen after BufEnter
     infoview.__bufenter()
-    infoview.get_current_infoview():focus_on_current_buffer()
+    infoview.get_current_infoview().info:focus_on_current_buffer()
   end
 
   -- WinEnter is necessary for the edge case where you have
@@ -914,7 +941,7 @@ function infoview.make_buffer_focusable(name)
   set_augroup("LeanInfoviewSetFocus", string.format([[
     autocmd BufEnter <buffer=%d> lua require'lean.infoview'.__bufenter()
     autocmd BufEnter,WinEnter <buffer=%d> lua if require'lean.infoview'.get_current_infoview()]] ..
-    [[ then require'lean.infoview'.get_current_infoview():focus_on_current_buffer() end
+    [[ then require'lean.infoview'.get_current_infoview().info:focus_on_current_buffer() end
   ]], bufnr, bufnr), 0)
 end
 
