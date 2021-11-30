@@ -642,7 +642,7 @@ local function infoview_check(state, _)
     end
 
     if check == "infoopened" then
-      vim.list_extend(opened_bufs, {this_info.bufdiv.buf})
+      vim.list_extend(opened_bufs, {this_info.bufdiv.buf, this_info.diff_bufdiv.buf})
       assert.opened_info_state(this_info)
       assert.is_nil(pin_list[this_info.pin.id])
       pin_list[this_info.pin.id] = "pinopened"
