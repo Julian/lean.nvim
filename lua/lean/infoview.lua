@@ -354,6 +354,7 @@ function Info:clear_diff_pin()
   if not self.diff_pin then return end
   self.diff_pin:remove_parent_info(self)
   self.diff_pin = nil
+  self.diff_bufdiv.div = self.pin.div
   self:__refresh_parents()
 end
 
