@@ -275,7 +275,7 @@ function Info:new()
   self = new_info
 
   self.bufdiv = html.BufDiv:new("lean://info/" .. self.id, self.div, options.mappings)
-  self.bufdiv.events = {
+  self.div.events = {
     goto_last_window = function()
       if self.last_window then
         vim.api.nvim_set_current_win(self.last_window)
