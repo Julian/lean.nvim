@@ -80,6 +80,7 @@ local Info = {}
 ---@field height number
 ---@field info Info
 ---@field window integer
+---@field diff_win integer
 ---@field orientation "vertical"|"horizontal"
 local Infoview = {}
 
@@ -192,6 +193,34 @@ function Infoview:__open_win(buf, orientation)
   return new_win
 end
 
+function Infoview:__refresh()
+  local valid_windows = {}
+
+  self.info.win_event_disable = true
+  for _, win in pairs({self.window, self.diff_win}) do
+    if win and vim.api.nvim_win_is_valid(win) then
+      table.insert(valid_windows, win)
+    end
+  end
+
+  for _, win in pairs(valid_windows) do
+    vim.api.nvim_win_call(win, function()
+      vim.api.nvim_command("set winfixwidth")
+    end)
+  end
+
+  for _, win in pairs(valid_windows) do
+    vim.api.nvim_win_call(win, function()
+      if self.orientation == "vertical" then
+        vim.cmd("vertical resize " .. self.width)
+      else
+        vim.cmd("resize " .. self.height)
+      end
+    end)
+  end
+  self.info.win_event_disable = false
+end
+
 --- Either open or close a diff window for this infoview depending on whether its info has a diff_pin.
 function Infoview:__refresh_diff()
   if not self.is_open then return end
@@ -211,6 +240,8 @@ function Infoview:__refresh_diff()
       vim.api.nvim_command("setlocal wrap")
     end)
   end
+
+  self:__refresh()
 end
 
 --- Close this infoview's diff window.
@@ -227,6 +258,8 @@ function Infoview:__close_diff()
   self.info.win_event_disable = false
 
   self.diff_win = nil
+
+  self:__refresh()
 end
 
 --- Close this infoview.
