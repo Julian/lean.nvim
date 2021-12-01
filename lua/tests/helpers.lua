@@ -461,12 +461,19 @@ end
 local LEAN_NVIM_PREFIX = "lean_nvim_infoview_tracker_"
 
 local checks = {"opened", "initopened", "opened_kept", "closed", "initclosed", "closed_kept"}
+local win_checks = {"diffwinopened", "diffwinclosed"}
 local info_checks = {"infoopened", "infoopened_kept"}
 local pin_checks = {"pinopened", "pinopened_kept", "pindeleted"}
 local pin_text_checks = {"pin_text_changed", "pin_text_kept"}
 local pin_pos_checks = {"pin_pos_changed", "pin_pos_kept"}
 
 for _, check in pairs(checks) do
+  assert:register("modifier", check, function(state, arguments)
+    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {infoview.get_current_infoview().id})
+  end)
+end
+
+for _, check in pairs(win_checks) do
   assert:register("modifier", check, function(state, arguments)
     rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {infoview.get_current_infoview().id})
   end)
@@ -509,6 +516,7 @@ end)
 
 local function infoview_check(state, _)
   local infoview_list = {}
+  local infoview_win_list = {}
   local info_list = {}
   local pin_list = {}
   local pin_text_list = {}
@@ -519,6 +527,15 @@ local function infoview_check(state, _)
     for _, id in pairs(handles) do
       assert.is_nil(infoview_list[id])
       infoview_list[id] = check
+    end
+  end
+
+  for _, check in pairs(win_checks) do
+    local handles = rawget(state, LEAN_NVIM_PREFIX .. check) or {}
+    for _, id in pairs(handles) do
+      infoview_win_list[id] = infoview_win_list[id] or {}
+      assert.is_nil(infoview_win_list[id][check])
+      infoview_win_list[id][check] = true
     end
   end
 
@@ -567,6 +584,7 @@ local function infoview_check(state, _)
 
   for id, this_infoview in pairs(infoview._by_id) do
     local check = infoview_list[id]
+    local win_check = infoview_win_list[id] or {}
 
     if not check then
       -- all unspecified infoviews must have been previously checked
@@ -612,9 +630,21 @@ local function infoview_check(state, _)
       assert.closed_infoview_kept_state(this_infoview)
     end
 
+    if win_check["diffwinopened"] then
+      assert.is_nil(this_infoview.prev_diff_win)
+      assert.is_not_nil(this_infoview.diff_win)
+      vim.list_extend(opened_wins, {this_infoview.diff_win})
+    elseif win_check["diffwinclosed"] then
+      assert.is_not_nil(this_infoview.prev_diff_win)
+      assert.is_nil(this_infoview.diff_win)
+      vim.list_extend(closed_wins, {this_infoview.prev_diff_win})
+    end
+
     this_infoview.prev_info = this_infoview.info.id
     this_infoview.prev_win = this_infoview.window
     this_infoview.prev_check = check
+
+    this_infoview.prev_diff_win = this_infoview.diff_win
 
     infoview_ids[id] = true
   end

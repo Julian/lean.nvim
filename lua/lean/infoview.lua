@@ -373,7 +373,7 @@ function Info:add_pin(params)
   table.insert(self.pins, self.pin)
   self:maybe_show_pin_extmark(tostring(self.pin.id))
   self:__new_current_pin()
-  if params then self.pin:move(params) end
+  self.pin:move(params)
   self:render()
 end
 

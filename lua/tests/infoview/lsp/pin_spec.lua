@@ -1,6 +1,7 @@
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 local fixtures = require('tests.fixtures')
+local position = require('vim.lsp.util').make_position_params
 
 helpers.setup {
   infoview = { autoopen = true },
@@ -25,8 +26,8 @@ describe('infoview pin', function()
     local new_pin
     it('can be created',
     function(_)
-      infoview.get_current_infoview().info:add_pin()
-      assert.pinopened.infoview()
+      infoview.get_current_infoview().info:add_pin(position())
+      assert.pinopened.pin_pos_changed.infoview()
       new_pin = infoview.get_current_infoview().info.pin
     end)
 
@@ -49,8 +50,51 @@ describe('infoview pin', function()
 
     it('can be created again',
     function(_)
-      infoview.get_current_infoview().info:add_pin()
-      assert.pinopened.infoview()
+      infoview.get_current_infoview().info:add_pin(position())
+      assert.pinopened.pin_pos_changed.infoview()
+    end)
+  end)
+
+  describe('diff pin', function()
+    local diff_pin
+    it('can be created', function()
+      infoview.get_current_infoview().info:set_diff_pin(position())
+      diff_pin = infoview.get_current_infoview().info.diff_pin
+      assert.pinopened{diff_pin.id}.pin_pos_changed{diff_pin.id}.diffwinopened.infoview()
+    end)
+
+    it('is retained on infoview close', function()
+      infoview.get_current_infoview():close()
+      assert.closed.diffwinclosed.infoview()
+    end)
+
+    it('opens along with infoview on infoview open', function()
+      infoview.get_current_infoview():open()
+      assert.opened.diffwinopened.infoview()
+    end)
+
+    it('can be cleared',
+    function(_)
+      infoview.get_current_infoview().info:clear_diff_pin()
+      assert.pindeleted{diff_pin.id}.diffwinclosed.infoview()
+    end)
+
+    it('can be created again', function()
+      infoview.get_current_infoview().info:set_diff_pin(position())
+      diff_pin = infoview.get_current_infoview().info.diff_pin
+      assert.pinopened{diff_pin.id}.pin_pos_changed{diff_pin.id}.diffwinopened.infoview()
+    end)
+
+    it('manual window close clears pins',
+    function(_)
+      vim.api.nvim_set_current_win(infoview.get_current_infoview().diff_win)
+      assert.buf.left.tracked()
+      assert.win.left.tracked()
+      vim.api.nvim_command("quit")
+      assert.buf.left.tracked_pending()
+      assert.win.left.tracked_pending()
+
+      assert.use_pendingbuf.use_pendingwin.pindeleted{diff_pin.id}.diffwinclosed.infoview()
     end)
   end)
 end)
