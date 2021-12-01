@@ -183,9 +183,9 @@ function Infoview:__open_win(buf, orientation)
     vim.cmd("resize " .. self.height)
   end
   local new_win = vim.api.nvim_get_current_win()
-  vim.api.nvim_buf_set_option(buf, 'filetype', 'leaninfo')
 
   vim.api.nvim_win_set_buf(new_win, buf)
+  vim.api.nvim_buf_set_option(buf, 'filetype', 'leaninfo')
 
   vim.api.nvim_set_current_win(window_before_split)
   self.info.win_event_disable = false
