@@ -365,7 +365,6 @@ end
 
 function Info:__new_current_pin()
   self.pin = Pin:new(options.autopause, options.use_widget)
-  self.bufdiv.div = self.pin.div
   self.pin:add_parent_info(self)
 end
 
