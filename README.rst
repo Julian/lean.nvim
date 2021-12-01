@@ -292,6 +292,10 @@ Full Configuration & Settings Information
         -- Show indicators for pin locations when entering an infoview window?
         -- always | never | auto (= only when there are multiple pins)
         indicators = "auto",
+
+        -- Reuse the last info when opening a new infoview? (default true)
+        -- This allows you, for example, to share pins between tabs.
+        reuse_info = true,
       },
 
       -- Progress bar support

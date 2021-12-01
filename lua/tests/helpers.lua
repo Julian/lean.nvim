@@ -24,7 +24,8 @@ local default_config = {
     autopause = true,
     show_processing = false,
     show_no_info_message = true,
-    lean3 = { show_filter = false }
+    lean3 = { show_filter = false },
+    reuse_info = false,
   },
   stderr = { enable = false },
   lsp3 = {

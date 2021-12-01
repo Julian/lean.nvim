@@ -39,6 +39,8 @@ local options = {
     show_no_info_message = false,
     use_widget = true,
 
+    reuse_info = true,
+
     mappings = {
       ["K"] = [[click]],
       ["<CR>"] = [[click]],
@@ -113,14 +115,15 @@ end
 
 --- Create a new infoview.
 ---@param open boolean: whether to open the infoview after initializing
+---@param info Info: info to initialize this infoview with
 ---@return Infoview
-function Infoview:new(open)
+function Infoview:new(open, info)
   local new_infoview = {
     id = #infoview._by_id + 1,
     width = options.width,
     height = options.height,
     diff_open = false,
-    info = Info:new(),
+    info = info or Info:new(),
   }
   new_infoview.info:add_parent_infoview(new_infoview)
   table.insert(infoview._by_id, new_infoview)
@@ -130,6 +133,17 @@ function Infoview:new(open)
   if not open then new_infoview:close() else new_infoview:open() end
 
   return new_infoview
+end
+
+---@param info Info
+function Infoview:new_info(info)
+  self.info:remove_parent_infoview(self)
+  self.info = info or Info:new()
+  self.info:add_parent_infoview(self)
+
+  if self.open then self:close() self:open() end
+
+  return self
 end
 
 --- Open this infoview if it isn't already open
@@ -291,9 +305,13 @@ function Infoview:toggle()
   if self.is_open then self:close() else self:open() end
 end
 
+--- The last info used.
+local last_info
+
 --- Set the currently active Lean buffer to update the info.
 function Info:focus_on_current_buffer()
   if not is_lean_buffer() then return end
+  last_info = self
   local is_open = false
   for parent_id, _ in pairs(self.parent_infoviews) do
     if infoview._by_id[parent_id].is_open then
@@ -372,6 +390,11 @@ end
 ---@param _infoview Infoview
 function Info:add_parent_infoview(_infoview)
   self.parent_infoviews[_infoview.id] = true
+end
+
+---@param _infoview Infoview
+function Info:remove_parent_infoview(_infoview)
+  self.parent_infoviews[_infoview.id] = nil
 end
 
 function Info:__new_current_pin()
@@ -1053,7 +1076,7 @@ end
 function infoview.__maybe_autoopen()
   local tabpage = vim.api.nvim_win_get_tabpage(0)
   if not infoview._by_tabpage[tabpage] then
-    infoview._by_tabpage[tabpage] = Infoview:new(options.autoopen)
+    infoview._by_tabpage[tabpage] = Infoview:new(options.autoopen, options.reuse_info and last_info)
   end
 end
 
@@ -1118,6 +1141,11 @@ end
 function infoview.disable_widgets()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then iv.info.pin:set_widget(false) end
+end
+
+function infoview.new_info()
+  local iv = infoview.get_current_infoview()
+  if iv ~= nil then iv:new_info() end
 end
 
 function infoview.go_to()
