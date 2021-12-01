@@ -27,7 +27,7 @@ describe('infoview pin', function()
     it('can be created',
     function(_)
       infoview.get_current_infoview().info:add_pin(position())
-      assert.pinopened.pin_pos_changed.infoview()
+      assert.pinopened.infoview()
       new_pin = infoview.get_current_infoview().info.pin
     end)
 
@@ -37,7 +37,7 @@ describe('infoview pin', function()
       infoview.__update()
       new_pin:update(true)
       old_pin:update(true)
-      assert.pin_pos_changed{new_pin.id}.pin_text_changed{new_pin.id, old_pin.id}.infoview()
+      assert.pin_text_changed{new_pin.id, old_pin.id}.pin_pos_changed.infoview()
       assert.has_all(new_pin.div:to_string(), {"\n⊢ Type"})
       assert.has_all(old_pin.div:to_string(), {"\n⊢ Bool"})
     end)
@@ -51,7 +51,7 @@ describe('infoview pin', function()
     it('can be created again',
     function(_)
       infoview.get_current_infoview().info:add_pin(position())
-      assert.pinopened.pin_pos_changed.infoview()
+      assert.pinopened.infoview()
     end)
   end)
 
@@ -60,7 +60,7 @@ describe('infoview pin', function()
     it('can be created', function()
       infoview.get_current_infoview().info:set_diff_pin(position())
       diff_pin = infoview.get_current_infoview().info.diff_pin
-      assert.pinopened{diff_pin.id}.pin_pos_changed{diff_pin.id}.diffwinopened.infoview()
+      assert.pinopened{diff_pin.id}.diffwinopened.infoview()
     end)
 
     it('is retained on infoview close', function()
@@ -82,7 +82,7 @@ describe('infoview pin', function()
     it('can be created again', function()
       infoview.get_current_infoview().info:set_diff_pin(position())
       diff_pin = infoview.get_current_infoview().info.diff_pin
-      assert.pinopened{diff_pin.id}.pin_pos_changed{diff_pin.id}.diffwinopened.infoview()
+      assert.pinopened{diff_pin.id}.diffwinopened.infoview()
     end)
 
     it('manual window close clears pins',

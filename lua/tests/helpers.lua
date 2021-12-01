@@ -614,7 +614,7 @@ local function infoview_check(state, _)
       assert.is_nil(info_list[this_infoview.info.id])
       info_list[this_infoview.info.id] = "infoopened"
       assert.is_nil(pin_pos_list[this_infoview.info.pin.id])
-      pin_pos_list[this_infoview.info.pin.id] = "pin_pos_changed"
+      pin_pos_list[this_infoview.info.pin.id] = "pin_pos_kept"
     elseif check == "opened_kept" then
       assert.opened_infoview_kept_state(this_infoview)
     elseif check == "closed" then
@@ -625,7 +625,7 @@ local function infoview_check(state, _)
       assert.is_nil(info_list[this_infoview.info.id])
       info_list[this_infoview.info.id] = "infoopened"
       assert.is_nil(pin_pos_list[this_infoview.info.pin.id])
-      pin_pos_list[this_infoview.info.pin.id] = "pin_pos_changed"
+      pin_pos_list[this_infoview.info.pin.id] = "pin_pos_kept"
     elseif check == "closed_kept" then
       assert.closed_infoview_kept_state(this_infoview)
     end
@@ -714,6 +714,7 @@ local function infoview_check(state, _)
     if check == "pinopened" then
       assert.opened_pin_state(this_pin)
       this_pin.prev_div_text = this_pin.div:to_string()
+      this_pin.prev_position_params = vim.deepcopy(this_pin.position_params)
       -- assume text and pos kept if unspecified
       if pin_text_list[id] == nil then
         pin_text_list[id] = "pin_text_kept"
