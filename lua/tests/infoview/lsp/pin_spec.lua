@@ -27,7 +27,7 @@ describe('infoview pin', function()
     it('can be created',
     function(_)
       infoview.get_current_infoview().info:add_pin()
-      assert.pinopened.infoview()
+      assert.pinopened.pinwinopened.infoview()
       new_pin = infoview.get_current_infoview().info.pin
     end)
 
@@ -45,13 +45,104 @@ describe('infoview pin', function()
     it('can be cleared',
     function(_)
       infoview.get_current_infoview().info:clear_pins()
-      assert.pindeleted{old_pin.id}.infoview()
+      assert.pindeleted{old_pin.id}.pinwinclosed{[infoview.get_current_infoview().id] = {old_pin.id}}.infoview()
     end)
 
     it('can be created again',
     function(_)
+      old_pin = infoview.get_current_infoview().info.pin
       infoview.get_current_infoview().info:add_pin()
-      assert.pinopened.infoview()
+      assert.pinopened.pinwinopened.infoview()
+    end)
+
+    it('can be cleared again',
+    function(_)
+      infoview.get_current_infoview().info:clear_pins()
+      assert.pindeleted{old_pin.id}.pinwinclosed{[infoview.get_current_infoview().id] = {old_pin.id}}.infoview()
+    end)
+  end)
+  describe('multiple new pins', function()
+    it('can be cleared',
+    function(_)
+      local new_pin_1 = infoview.get_current_infoview().info.pin
+
+      -- make first pin
+      infoview.get_current_infoview().info:add_pin()
+      assert.pinopened.pinwinopened.infoview()
+
+      local new_pin_2 = infoview.get_current_infoview().info.pin
+
+      -- make second pin
+      infoview.get_current_infoview().info:add_pin()
+      assert.pinopened.pinwinopened.infoview()
+
+      infoview.get_current_infoview().info:clear_pins()
+
+      assert.pindeleted{new_pin_1.id, new_pin_2.id}.pinwinclosed
+        {[infoview.get_current_infoview().id] = {new_pin_1.id, new_pin_2.id}}.infoview()
+    end)
+
+    it('manual window close clears pins',
+    function(_)
+      local new_pin_1 = infoview.get_current_infoview().info.pin
+
+      -- make first pin
+      infoview.get_current_infoview().info:add_pin()
+      assert.pinopened.pinwinopened.infoview()
+
+      local new_pin_2 = infoview.get_current_infoview().info.pin
+
+      -- make second pin
+      infoview.get_current_infoview().info:add_pin()
+      assert.pinopened.pinwinopened.infoview()
+
+      vim.api.nvim_set_current_win(infoview.get_current_infoview().pins_wins[new_pin_1.id])
+      assert.buf.left.tracked()
+      assert.win.left.tracked()
+      vim.api.nvim_command("quit")
+      assert.buf.left.tracked_pending()
+      assert.win.left.tracked_pending()
+
+      assert.use_pendingbuf.use_pendingwin.pindeleted{new_pin_1.id}.pinwinclosed
+        {[infoview.get_current_infoview().id] = {new_pin_1.id}}.infoview()
+
+      vim.api.nvim_set_current_win(infoview.get_current_infoview().pins_wins[new_pin_2.id])
+      vim.api.nvim_command("quit")
+      assert.buf.left.tracked_pending()
+      assert.win.left.tracked_pending()
+
+      assert.use_pendingbuf.use_pendingwin.pindeleted{new_pin_2.id}.pinwinclosed
+        {[infoview.get_current_infoview().id] = {new_pin_2.id}}.infoview()
+    end)
+
+    local new_pin_1, new_pin_2
+
+    it('are retained on infoview close', function()
+      new_pin_1 = infoview.get_current_infoview().info.pin
+
+      -- make first pin
+      infoview.get_current_infoview().info:add_pin()
+      assert.pinopened.pinwinopened.infoview()
+
+      new_pin_2 = infoview.get_current_infoview().info.pin
+
+      -- make second pin
+      infoview.get_current_infoview().info:add_pin()
+      assert.pinopened.pinwinopened.infoview()
+
+      infoview.get_current_infoview():close()
+
+      assert.pinwinclosed{[infoview.get_current_infoview().id] = {new_pin_1.id, new_pin_2.id}}.closed.infoview()
+    end)
+
+    it('opens along with infoview on infoview open', function()
+      infoview.get_current_infoview():open()
+      assert.pinwinopened{[infoview.get_current_infoview().id] = {new_pin_1.id, new_pin_2.id}}.opened.infoview()
+
+      infoview.get_current_infoview().info:clear_pins()
+
+      assert.pindeleted{new_pin_1.id, new_pin_2.id}.pinwinclosed
+        {[infoview.get_current_infoview().id] = {new_pin_1.id, new_pin_2.id}}.infoview()
     end)
   end)
 

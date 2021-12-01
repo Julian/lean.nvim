@@ -256,9 +256,11 @@ local function track_handles(state, _)
   closed_handles = to_num_idx(closed_handles)
 
   if changed then
-    assert.are_not.equal(last_handle[htype], handle_current(htype))
+    assert.message("expected current " .. htype .. " to change but did not change").are_not.
+      equal(last_handle[htype], handle_current(htype))
   else
-    assert.equal(last_handle[htype], handle_current(htype))
+    assert.message("expected current " .. htype .. " to not change but did change").
+      equal(last_handle[htype], handle_current(htype))
   end
 
   local expected_handles = vim.deepcopy(last_handles[htype])
@@ -426,18 +428,12 @@ local function opened_info(_, arguments)
 
   assert.is_nil(last_info_ids[this_info.id])
 
-  assert.is_truthy(this_info.bufdiv)
   assert.is_falsy(this_info.prev_buf)
 
   return true
 end
 
-local function opened_info_kept(_, arguments)
-  local this_info = arguments[1]
-
-  assert.is_truthy(this_info.bufdiv)
-  assert.are_equal(this_info.bufdiv.buf, this_info.prev_buf)
-
+local function opened_info_kept(_, _)
   return true
 end
 
@@ -447,6 +443,8 @@ local function opened_pin(_, arguments)
   assert.is_nil(last_pin_ids[this_pin.id])
   assert.is_nil(this_pin.prev_div)
 
+  assert.is_truthy(this_pin.bufdiv)
+
   return true
 end
 
@@ -455,13 +453,17 @@ local function opened_pin_kept(_, arguments)
 
   assert.is_not_nil(last_pin_ids[this_pin.id])
 
+  assert.is_truthy(this_pin.bufdiv)
+  assert.are_equal(this_pin.bufdiv.buf, this_pin.prev_buf)
+
   return true
 end
 
 local LEAN_NVIM_PREFIX = "lean_nvim_infoview_tracker_"
 
 local checks = {"opened", "initopened", "opened_kept", "closed", "initclosed", "closed_kept"}
-local win_checks = {"diffwinopened", "diffwinclosed"}
+local diff_win_checks = {"diffwinopened", "diffwinclosed"}
+local pin_win_checks = {"pinwinopened", "pinwinclosed"}
 local info_checks = {"infoopened", "infoopened_kept"}
 local pin_checks = {"pinopened", "pinopened_kept", "pindeleted"}
 local pin_text_checks = {"pin_text_changed", "pin_text_kept"}
@@ -473,9 +475,17 @@ for _, check in pairs(checks) do
   end)
 end
 
-for _, check in pairs(win_checks) do
+for _, check in pairs(diff_win_checks) do
   assert:register("modifier", check, function(state, arguments)
     rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1] or {infoview.get_current_infoview().id})
+  end)
+end
+
+for _, check in pairs(pin_win_checks) do
+  assert:register("modifier", check, function(state, arguments)
+    local iv = infoview.get_current_infoview()
+    rawset(state, LEAN_NVIM_PREFIX .. check, arguments and arguments[1]
+      or {[iv.id] = {iv.info.pins[#iv.info.pins] and iv.info.pins[#iv.info.pins].id}})
   end)
 end
 
@@ -516,7 +526,8 @@ end)
 
 local function infoview_check(state, _)
   local infoview_list = {}
-  local infoview_win_list = {}
+  local infoview_diff_win_list = {}
+  local infoview_pin_win_list = {}
   local info_list = {}
   local pin_list = {}
   local pin_text_list = {}
@@ -530,12 +541,20 @@ local function infoview_check(state, _)
     end
   end
 
-  for _, check in pairs(win_checks) do
+  for _, check in pairs(diff_win_checks) do
     local handles = rawget(state, LEAN_NVIM_PREFIX .. check) or {}
     for _, id in pairs(handles) do
-      infoview_win_list[id] = infoview_win_list[id] or {}
-      assert.is_nil(infoview_win_list[id][check])
-      infoview_win_list[id][check] = true
+      assert.is_nil(infoview_diff_win_list[id])
+      infoview_diff_win_list[id] = check
+    end
+  end
+
+  for _, check in pairs(pin_win_checks) do
+    local handles = rawget(state, LEAN_NVIM_PREFIX .. check) or {}
+    for id, pin_ids in pairs(handles) do
+      infoview_pin_win_list[id] = infoview_pin_win_list[id] or {}
+      assert.is_nil(infoview_pin_win_list[id][check])
+      infoview_pin_win_list[id][check] = pin_ids
     end
   end
 
@@ -584,7 +603,8 @@ local function infoview_check(state, _)
 
   for id, this_infoview in pairs(infoview._by_id) do
     local check = infoview_list[id]
-    local win_check = infoview_win_list[id] or {}
+    local diff_win_check = infoview_diff_win_list[id]
+    local pin_win_check = infoview_pin_win_list[id] or {}
 
     if not check then
       -- all unspecified infoviews must have been previously checked
@@ -630,11 +650,26 @@ local function infoview_check(state, _)
       assert.closed_infoview_kept_state(this_infoview)
     end
 
-    if win_check["diffwinopened"] then
+    for _, pin_id in pairs(pin_win_check["pinwinopened"] or {}) do
+      local win = this_infoview.pins_wins[pin_id]
+      local prev_win = this_infoview.prev_pins_wins[pin_id]
+      assert.is_nil(prev_win)
+      assert.is_not_nil(win)
+      vim.list_extend(opened_wins, {win})
+    end
+    for _, pin_id in pairs(pin_win_check["pinwinclosed"] or {}) do
+      local win = this_infoview.pins_wins[pin_id]
+      local prev_win = this_infoview.prev_pins_wins[pin_id]
+      assert.is_not_nil(prev_win)
+      assert.is_nil(win)
+      vim.list_extend(closed_wins, {prev_win})
+    end
+
+    if diff_win_check == "diffwinopened" then
       assert.is_nil(this_infoview.prev_diff_win)
       assert.is_not_nil(this_infoview.diff_win)
       vim.list_extend(opened_wins, {this_infoview.diff_win})
-    elseif win_check["diffwinclosed"] then
+    elseif diff_win_check == "diffwinclosed" then
       assert.is_not_nil(this_infoview.prev_diff_win)
       assert.is_nil(this_infoview.diff_win)
       vim.list_extend(closed_wins, {this_infoview.prev_diff_win})
@@ -645,6 +680,7 @@ local function infoview_check(state, _)
     this_infoview.prev_check = check
 
     this_infoview.prev_diff_win = this_infoview.diff_win
+    this_infoview.prev_pins_wins = vim.deepcopy(this_infoview.pins_wins)
 
     infoview_ids[id] = true
   end
@@ -672,7 +708,6 @@ local function infoview_check(state, _)
     end
 
     if check == "infoopened" then
-      vim.list_extend(opened_bufs, {this_info.bufdiv.buf, this_info.diff_bufdiv.buf})
       assert.opened_info_state(this_info)
       assert.is_nil(pin_list[this_info.pin.id])
       pin_list[this_info.pin.id] = "pinopened"
@@ -680,7 +715,6 @@ local function infoview_check(state, _)
       assert.opened_info_kept_state(this_info)
     end
 
-    this_info.prev_buf = this_info.bufdiv.buf
     this_info.prev_check = check
 
     info_ids[id] = true
@@ -712,6 +746,7 @@ local function infoview_check(state, _)
     end
 
     if check == "pinopened" then
+      vim.list_extend(opened_bufs, {this_pin.bufdiv.buf})
       assert.opened_pin_state(this_pin)
       this_pin.prev_div_text = this_pin.div:to_string()
       this_pin.prev_position_params = vim.deepcopy(this_pin.position_params)
@@ -787,6 +822,7 @@ local function infoview_check(state, _)
         function() return this_pin.div:to_string() end, false, "text")
     end
 
+    this_pin.prev_buf = this_pin.bufdiv.buf
     this_pin.prev_div_text = this_pin.div:to_string()
     this_pin.prev_text_check = text_check
 

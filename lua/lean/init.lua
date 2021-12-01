@@ -23,7 +23,8 @@ local lean = {
       ["<LocalLeader>dt"] = "<Cmd>LeanInfoviewToggleNoClearAutoDiffPin<CR>";
       ["<LocalLeader>w"] = "<Cmd>LeanInfoviewEnableWidgets<CR>";
       ["<LocalLeader>W"] = "<Cmd>LeanInfoviewDisableWidgets<CR>";
-      ["<LocalLeader><Tab>"] = "<Cmd>LeanGotoInfoview<CR>";
+      ["<LocalLeader><Tab><Tab>"] = "<Cmd>LeanGotoInfoview<CR>";
+      ["<LocalLeader><Tab>d"] = "<Cmd>LeanGotoInfoview -1<CR>";
       ["<LocalLeader>s"] = "<Cmd>LeanSorryFill<CR>";
       ["<LocalLeader>t"] = "<Cmd>LeanTryThis<CR>";
       ["<LocalLeader>\\"] = "<Cmd>LeanAbbreviationsReverseLookup<CR>";
@@ -32,6 +33,11 @@ local lean = {
     };
   };
 }
+
+for i = 1,9 do
+  local lhs = "<LocalLeader><Tab>" .. tostring(i)
+  lean.mappings.n[lhs] = "<Cmd>LeanGotoInfoview " .. tostring(i) .. "<CR>"
+end
 
 --- Setup function to be run in your init.lua (or init.vim).
 ---@param opts table: Configuration options
@@ -73,7 +79,7 @@ function lean.setup(opts)
     command LeanInfoviewToggleNoClearAutoDiffPin :lua require'lean.infoview'.toggle_auto_diff_pin(false)
     command LeanInfoviewEnableWidgets :lua require'lean.infoview'.enable_widgets()
     command LeanInfoviewDisableWidgets :lua require'lean.infoview'.disable_widgets()
-    command LeanGotoInfoview :lua require'lean.infoview'.go_to()
+    command -nargs=? LeanGotoInfoview :lua require'lean.infoview'.go_to(<args>)
 
     command LeanAbbreviationsReverseLookup :lua require'lean.abbreviations'.show_reverse_lookup()
 
