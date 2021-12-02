@@ -496,7 +496,9 @@ function Info:render()
   self:__render_pins()
 
   self.bufdiv:buf_render()
-  self.diff_bufdiv:buf_render()
+  if self.diff_pin then
+    self.diff_bufdiv:buf_render()
+  end
 
   self:__refresh_parents()
 
