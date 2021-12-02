@@ -332,8 +332,14 @@ function Info:new()
     end
   }
 
-  self.bufdiv = html.BufDiv:new("lean://info/" .. self.id .. "/curr", self.pins_div, options.mappings)
-  self.diff_bufdiv = html.BufDiv:new("lean://info/" .. self.id .. "/diff", self.pin.div, options.mappings)
+  local function mk_buf(name, listed)
+    local bufnr = vim.api.nvim_create_buf(listed or false, true)
+    vim.api.nvim_buf_set_name(bufnr, name)
+    return bufnr
+  end
+
+  self.bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/curr", true), self.pins_div, options.mappings)
+  self.diff_bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/diff"), self.pin.div, options.mappings)
 
   -- Show/hide current pin extmark when entering/leaving infoview.
   set_augroup("LeanInfoviewShowPin", string.format([[
