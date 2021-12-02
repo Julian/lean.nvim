@@ -368,11 +368,12 @@ function Info:__new_current_pin()
   self.pin:add_parent_info(self)
 end
 
-function Info:add_pin(params)
+function Info:add_pin()
+  local new_params = vim.deepcopy(self.pin.position_params)
   table.insert(self.pins, self.pin)
   self:maybe_show_pin_extmark(tostring(self.pin.id))
   self:__new_current_pin()
-  self.pin:move(params)
+  self.pin:move(new_params)
   self:render()
 end
 
@@ -1031,7 +1032,7 @@ function infoview.add_pin()
   if not is_lean_buffer() then return end
   infoview.open()
   infoview.get_current_infoview().info:set_last_window()
-  infoview.get_current_infoview().info:add_pin(vim.lsp.util.make_position_params())
+  infoview.get_current_infoview().info:add_pin()
 end
 
 function infoview.set_diff_pin()

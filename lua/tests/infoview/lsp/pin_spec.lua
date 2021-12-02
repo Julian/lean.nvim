@@ -26,7 +26,7 @@ describe('infoview pin', function()
     local new_pin
     it('can be created',
     function(_)
-      infoview.get_current_infoview().info:add_pin(position())
+      infoview.get_current_infoview().info:add_pin()
       assert.pinopened.infoview()
       new_pin = infoview.get_current_infoview().info.pin
     end)
@@ -50,7 +50,7 @@ describe('infoview pin', function()
 
     it('can be created again',
     function(_)
-      infoview.get_current_infoview().info:add_pin(position())
+      infoview.get_current_infoview().info:add_pin()
       assert.pinopened.infoview()
     end)
   end)
