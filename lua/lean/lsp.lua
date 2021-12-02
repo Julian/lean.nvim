@@ -2,16 +2,6 @@ local lsp = { handlers = {} }
 local util = require"lean._util"
 
 function lsp.enable(opts)
-  opts.commands = vim.tbl_extend("keep", opts.commands or {}, {
-    LeanPlainGoal = {
-      function (...) lsp.plain_goal(vim.lsp.util.make_position_params(), ...) end;
-      description = "Describe the current tactic state."
-    };
-    LeanPlainTermGoal = {
-      function (...) lsp.plain_term_goal(vim.lsp.util.make_position_params(), ...) end;
-      description = "Describe the expected type of the current term."
-    };
-  })
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
     ["$/lean/plainGoal"] = util.mk_handler(lsp.handlers.plain_goal_handler);
     ["$/lean/plainTermGoal"] = util.mk_handler(lsp.handlers.plain_term_goal_handler);

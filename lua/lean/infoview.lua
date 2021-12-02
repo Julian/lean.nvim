@@ -959,6 +959,7 @@ end
 --- Enable and open the infoview across all Lean buffers.
 function infoview.enable(opts)
   options = vim.tbl_extend("force", options._DEFAULTS, opts)
+  infoview.mappings = options.mappings
   infoview.enabled = true
   set_augroup("LeanInfoviewInit", [[
     autocmd FileType lean3 lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
