@@ -335,7 +335,7 @@ BufDiv.__index = BufDiv
 
 -- Maps BufDiv.id to BufDiv
 --- @type table<number, BufDiv>
-local _by_id = setmetatable({}, {__mode = 'v'})
+local _by_id = {}
 local next_id = 1
 
 ---@param buf number
@@ -357,7 +357,8 @@ function BufDiv:new(buf, div, keymaps)
   util.set_augroup("DivPosition", string.format([[
     autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
     autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
-  ]], buf, id, buf, id), buf)
+    autocmd BufDelete <buffer=%d> lua require'lean.html'._by_id[%d] = nil
+  ]], buf, id, buf, id, buf, id), buf)
 
   local mappings = {n = {}}
   if keymaps then
@@ -386,6 +387,7 @@ function BufDiv:buf_close(keep_tooltips_open)
     self.tooltip.parent_path = nil
     if not keep_tooltips_open then
       self.tooltip:buf_close()
+      self.tooltip = nil
     end
   end
 end
