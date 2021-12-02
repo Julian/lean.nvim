@@ -339,7 +339,8 @@ function Info:new()
   end
 
   self.bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/curr", true), self.pins_div, options.mappings)
-  self.diff_bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/diff"), self.pin.div, options.mappings)
+  self.diff_bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/diff"), nil, options.mappings)
+  self.diff_bufdiv:unregister_buf()
 
   -- Show/hide current pin extmark when entering/leaving infoview.
   set_augroup("LeanInfoviewShowPin", string.format([[
@@ -388,6 +389,7 @@ function Info:set_diff_pin(params)
     self.diff_pin = Pin:new(options.autopause, options.use_widget)
     self.diff_pin:add_parent_info(self)
     self.diff_bufdiv.div = self.diff_pin.div
+    self.diff_bufdiv:register_buf()
     self.diff_pin:show_extmark(nil, diff_pin_hl_group)
   end
 
@@ -414,7 +416,8 @@ function Info:clear_diff_pin()
   if not self.diff_pin then return end
   self.diff_pin:remove_parent_info(self)
   self.diff_pin = nil
-  self.diff_bufdiv.div = self.pin.div
+  self.diff_bufdiv.div = nil
+  self.diff_bufdiv:unregister_buf()
   self:render()
 end
 

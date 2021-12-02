@@ -354,6 +354,17 @@ function BufDiv:new(buf, div, keymaps)
   self = new_bufdiv
   _by_id[id] = self
 
+  self:register_buf()
+
+  return new_bufdiv
+end
+
+--- Enables autocmds and mappings for the buffer associated with this BufDiv.
+function BufDiv:register_buf()
+  local buf = self.buf
+  local id = self.id
+  local keymaps = self.keymaps
+
   util.set_augroup("DivPosition", string.format([[
     autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
     autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
@@ -372,8 +383,22 @@ function BufDiv:new(buf, div, keymaps)
     mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_hop_to()<CR>]]):format(id)
   end
   util.load_mappings(mappings, buf)
+end
 
-  return new_bufdiv
+function BufDiv:unregister_buf()
+  local buf = self.buf
+  local keymaps = self.keymaps
+
+  util.set_augroup("DivPosition", "", buf)
+
+  if keymaps then
+    for key, _ in pairs(keymaps) do
+      vim.api.nvim_buf_del_keymap(buf, "n", key)
+    end
+    for _, key in ipairs({ "<Tab>", "<S-Tab>", "J", "S" }) do
+      vim.api.nvim_buf_del_keymap(buf, "n", key)
+    end
+  end
 end
 
 ---@param keep_tooltips_open? boolean
