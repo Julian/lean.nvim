@@ -826,7 +826,7 @@ local function infoview_check(state, _)
     this_pin.prev_div_text = this_pin.div:to_string()
     this_pin.prev_text_check = text_check
 
-    pin_ids[id] = true
+    pin_ids[id] = {buf = this_pin.bufdiv.buf}
 
     --
 
@@ -844,6 +844,7 @@ local function infoview_check(state, _)
     if pin_list[id] == "pindeleted" then
       assert.truthy(last_pin_ids[id])
       assert.is_falsy(pin_ids[id])
+      vim.list_extend(closed_bufs, {last_pin_ids[id].buf})
     else
       assert.is_truthy(pin_ids[id])
     end

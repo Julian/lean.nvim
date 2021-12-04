@@ -452,13 +452,12 @@ function Info:clear_pin(pin_id)
 
   local pin = self.pins[idx]
 
-  pin:remove_parent_info(self)
-
   table.remove(self.pins, idx)
   self.pins_set[pin_id] = nil
 
-
   self:render()
+
+  pin:remove_parent_info(self)
 end
 
 function Info:set_diff_pin(params)
@@ -495,9 +494,12 @@ end
 
 function Info:clear_diff_pin()
   if not self.diff_pin then return end
-  self.diff_pin:remove_parent_info(self)
+  local diff_pin = self.diff_pin
   self.diff_pin = nil
+
   self:render()
+
+  diff_pin:remove_parent_info(self)
 end
 
 --- Show a pin extmark if it is appropriate based on configuration.
