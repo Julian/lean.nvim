@@ -590,6 +590,7 @@ local extmark_ns = vim.api.nvim_create_namespace("LeanNvimPinExtmarks")
 
 function Pin:_teardown()
   if self.extmark then vim.api.nvim_buf_del_extmark(self.extmark_buf, extmark_ns, self.extmark) end
+  if self.bufdiv then self.bufdiv:buf_close() end
   infoview._pin_by_id[self.id] = nil
 end
 
