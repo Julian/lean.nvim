@@ -13,7 +13,7 @@ local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 ---@param div Div
 local function show_popup(div)
   local str = div:to_string()
-  if str:match('%s*') then
+  if str:match('^%s*$') then
     -- do not show the popup if it's the empty string
     return
   end
