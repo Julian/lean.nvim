@@ -319,7 +319,6 @@ end
 
 ---Utility for rendering a div with a particular buffer.
 ---@class BufDiv
----@field id number ID number, used for autocmds only
 ---@field buf integer Buffer number of the buffer the div renders to
 ---@field div Div Div rendered by this buffer
 ---@field lines? string[] Rendered lines.
@@ -333,44 +332,40 @@ end
 local BufDiv = {}
 BufDiv.__index = BufDiv
 
--- Maps BufDiv.id to BufDiv
+-- Maps BufDiv.buf to BufDiv
 --- @type table<number, BufDiv>
-local _by_id = {}
-local next_id = 1
+local _by_buf = {}
 
 ---@param buf number
 ---@param div Div
 ---@param keymaps? table Extra keymaps
 function BufDiv:new(buf, div, keymaps)
-  local id = next_id
-  next_id = next_id + 1
   vim.api.nvim_buf_set_option(buf, "modifiable", false)
   local new_bufdiv = setmetatable({
-    id = id,
     buf = buf,
     keymaps = keymaps,
     div = div,
   }, self)
   self = new_bufdiv
-  _by_id[id] = self
+  _by_buf[buf] = self
 
   util.set_augroup("DivPosition", string.format([[
-    autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
-    autocmd BufEnter <buffer=%d> lua require'lean.html'._by_id[%d]:buf_update_cursor()
-    autocmd BufDelete <buffer=%d> lua require'lean.html'._by_id[%d] = nil
-  ]], buf, id, buf, id, buf, id), buf)
+    autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_buf[%d]:buf_update_cursor()
+    autocmd BufEnter <buffer=%d> lua require'lean.html'._by_buf[%d]:buf_update_cursor()
+    autocmd BufUnload <buffer=%d> lua require'lean.html'._by_buf[%d] = nil
+  ]], buf, buf, buf, buf, buf, buf), buf)
 
   local mappings = {n = {}}
   if keymaps then
     for key, event in pairs(keymaps) do
-      mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_event("%s")<CR>]]):format(id, event)
+      mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_buf[%d]:buf_event("%s")<CR>]]):format(buf, event)
     end
-    mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip()<CR>]]):format(id)
+    mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.html'._by_buf[%d]:buf_enter_tooltip()<CR>]]):format(buf)
     mappings.n["<S-Tab>"] = (
-      [[<Cmd>lua require'lean.html'._by_id[%d]:buf_goto_parent_tooltip()<CR>]]
-    ):format(id)
-    mappings.n["J"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_enter_tooltip()<CR>]]):format(id)
-    mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_id[%d]:buf_hop_to()<CR>]]):format(id)
+      [[<Cmd>lua require'lean.html'._by_buf[%d]:buf_goto_parent_tooltip()<CR>]]
+    ):format(buf)
+    mappings.n["J"] = ([[<Cmd>lua require'lean.html'._by_buf[%d]:buf_enter_tooltip()<CR>]]):format(buf)
+    mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_buf[%d]:buf_hop_to()<CR>]]):format(buf)
   end
   util.load_mappings(mappings, buf)
 
@@ -397,6 +392,8 @@ local hl_ns = vim.api.nvim_create_namespace('LeanNvimInfoHighlight')
 
 function BufDiv:buf_render()
   local buf = self.buf
+
+  if not vim.api.nvim_buf_is_valid(buf) then return end
 
   vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
 
@@ -703,4 +700,4 @@ end
 return {Div = Div, BufDiv = BufDiv, util = {
   pos_to_raw_pos = pos_to_raw_pos,
   raw_pos_to_pos = raw_pos_to_pos,
-}, _by_id = _by_id}
+}, _by_buf = _by_buf}

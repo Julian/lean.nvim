@@ -15,7 +15,6 @@ local function show_popup(div)
   local bufnr, winnr = vim.lsp.util.open_floating_preview(
     vim.split(div:to_string(), '\n'), 'leaninfo',
     { close_events = {} })
-  vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
 
   local bufdiv = html.BufDiv:new(bufnr, div, infoview.mappings)
   bufdiv.last_win = winnr
