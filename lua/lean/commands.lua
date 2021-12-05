@@ -12,8 +12,14 @@ local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
 
 ---@param div Div
 local function show_popup(div)
+  local str = div:to_string()
+  if str:match('%s*') then
+    -- do not show the popup if it's the empty string
+    return
+  end
+
   local bufnr, winnr = vim.lsp.util.open_floating_preview(
-    vim.split(div:to_string(), '\n'), 'leaninfo',
+    vim.split(str, '\n'), 'leaninfo',
     { focus_id = 'lean_goal' })
 
   local bufdiv = html.BufDiv:new(bufnr, div, infoview.mappings)
