@@ -34,7 +34,7 @@ describe('infoview', function()
         {"1 goal", "p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
     end)
 
-    if vim.version().minor == 6 then
+    if vim.version().minor >= 6 then
       it('re-issues on ContentModified',
       function(_)
         vim.api.nvim_win_set_cursor(0, {16, 1})
