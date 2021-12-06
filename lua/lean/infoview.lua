@@ -273,7 +273,9 @@ function Infoview:close()
   self:__close_diff()
 
   self.info.win_event_disable = true
-  vim.api.nvim_win_close(self.window, true)
+  if vim.api.nvim_win_is_valid(self.window) then
+    vim.api.nvim_win_close(self.window, true)
+  end
   self.info.win_event_disable = false
 
   self.window = nil
@@ -334,6 +336,7 @@ function Info:new()
 
   local function mk_buf(name, listed)
     local bufnr = vim.api.nvim_create_buf(listed or false, true)
+    vim.api.nvim_buf_set_option(bufnr, "bufhidden", "hide")
     vim.api.nvim_buf_set_name(bufnr, name)
     return bufnr
   end
@@ -959,6 +962,7 @@ end
 --- Enable and open the infoview across all Lean buffers.
 function infoview.enable(opts)
   options = vim.tbl_extend("force", options._DEFAULTS, opts)
+  infoview.mappings = options.mappings
   infoview.enabled = true
   set_augroup("LeanInfoviewInit", [[
     autocmd FileType lean3 lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))

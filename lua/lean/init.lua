@@ -44,6 +44,8 @@ function lean.setup(opts)
   opts.infoview = opts.infoview or {}
   require'lean.infoview'.enable(opts.infoview)
 
+  require'lean.commands'.enable()
+
   opts.lsp3 = opts.lsp3 or {}
   if opts.lsp3.enable ~= false then require'lean.lean3'.lsp_enable(opts.lsp3) end
 
