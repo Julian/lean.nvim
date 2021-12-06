@@ -105,6 +105,11 @@ function lean.is_lean_buffer()
   return filetype == "lean" or filetype == "lean3"
 end
 
+--- Is the current buffer a lean 3 buffer?
+function lean.is_lean3_buffer()
+  return vim.opt.filetype:get() == "lean3"
+end
+
 --- Return the current Lean search path.
 ---
 --- Includes both the Lean core libraries as well as project-specific
@@ -112,7 +117,7 @@ end
 function lean.current_search_paths()
   local paths
 
-  if vim.opt.filetype:get() == "lean3" then
+  if lean.is_lean3_buffer() then
     paths = require'lean.lean3'.__current_search_paths()
   else
     local root = util.list_workspace_folders()[1]

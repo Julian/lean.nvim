@@ -4,6 +4,7 @@ local leanlsp = require'lean.lsp'
 local a = require'plenary.async'
 local html = require'lean.html'
 local rpc = require'lean.rpc'
+local lean = require'lean'
 
 local commands = {}
 
@@ -32,10 +33,11 @@ function commands.show_goal(use_widgets)
 
   local params = vim.lsp.util.make_position_params()
   local bufnr = vim.api.nvim_get_current_buf()
+  local is_lean3 = lean.is_lean3_buffer()
 
   a.void(function()
     local goal, err
-    if use_widgets then
+    if not is_lean3 and use_widgets then
       local sess = rpc.open(bufnr, params)
       goal, err = sess:getInteractiveGoals(params)
       goal = goal and components.interactive_goals(goal, sess)
@@ -51,6 +53,11 @@ function commands.show_goal(use_widgets)
 end
 
 function commands.show_term_goal(use_widgets)
+  if lean.is_lean3_buffer() then
+    -- Lean 3 does not support term goals.
+    return
+  end
+
   if use_widgets == nil then use_widgets = true end
 
   local params = vim.lsp.util.make_position_params()
