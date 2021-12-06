@@ -336,10 +336,23 @@ BufDiv.__index = BufDiv
 --- @type table<number, BufDiv>
 local _by_buf = {}
 
+-- Clean up references to closed buffers in the `_by_buf` table.
+-- It doesn't seem to possibly to reliably detect the deletion of buffers in
+-- neovim, so we just call this function regularly.
+local function gc()
+  for bufnr, _ in pairs(_by_buf) do
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      _by_buf[bufnr] = nil
+    end
+  end
+end
+
 ---@param buf number
 ---@param div Div
 ---@param keymaps? table Extra keymaps
 function BufDiv:new(buf, div, keymaps)
+  gc()
+
   vim.api.nvim_buf_set_option(buf, "modifiable", false)
   local new_bufdiv = setmetatable({
     buf = buf,
@@ -352,8 +365,7 @@ function BufDiv:new(buf, div, keymaps)
   util.set_augroup("DivPosition", string.format([[
     autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_buf[%d]:buf_update_cursor()
     autocmd BufEnter <buffer=%d> lua require'lean.html'._by_buf[%d]:buf_update_cursor()
-    autocmd BufUnload <buffer=%d> lua require'lean.html'._by_buf[%d] = nil
-  ]], buf, buf, buf, buf, buf, buf), buf)
+  ]], buf, buf, buf, buf), buf)
 
   local mappings = {n = {}}
   if keymaps then
@@ -376,6 +388,7 @@ end
 function BufDiv:buf_close(keep_tooltips_open)
   if vim.api.nvim_buf_is_valid(self.buf) then
     vim.api.nvim_buf_delete(self.buf, {force = true})
+    gc()
   end
   if self.tooltip then
     self.tooltip.parent = nil
