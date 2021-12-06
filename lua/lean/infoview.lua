@@ -71,7 +71,6 @@ local Pin = {next_id = 1}
 ---@field diff_pin Pin
 ---@field pins Pin[]
 ---@field pins_set table<number, Pin> @mapping from pin ID to Pin corresponding to `self.pins`
----@field win_event_disable boolean
 local Info = {}
 
 --- A "view" on an info (i.e. window).
@@ -83,7 +82,9 @@ local Info = {}
 ---@field window integer @main pin window
 ---@field diff_win number @diff pin window
 ---@field pins_wins table<number, number> @mapping from pin IDs to pin windows
+---@field win_set table<number, boolean> @set of all this infoview's windows (union window, diff_win, pins_wins)
 ---@field orientation "vertical"|"horizontal"
+---@field win_event_disable boolean
 local Infoview = {}
 
 local pin_hl_group = "LeanNvimPin"
@@ -121,7 +122,9 @@ function Infoview:new(open)
     height = options.height,
     diff_open = false,
     info = Info:new(),
-    pins_wins = {}
+    pins_wins = {},
+    win_set = {},
+    win_event_disable = false
   }
   new_infoview.info:add_parent_infoview(new_infoview)
   table.insert(infoview._by_id, new_infoview)
@@ -153,6 +156,7 @@ function Infoview:open()
 
   local window = self:__open_win("botright")
   self.window = window
+  self.win_set[window] = true
 
   vim.api.nvim_win_set_buf(self.window, self.info.pin.bufdiv.buf)
   -- Set the filetype now. Any earlier, and only buffer-local options will be
@@ -160,9 +164,21 @@ function Infoview:open()
   -- window until we run :buffer above.
   vim.api.nvim_buf_set_option(self.info.pin.bufdiv.buf, 'filetype', 'leaninfo')
 
-  self.info:focus_on_current_buffer()
+  self:focus_on_current_buffer()
 
   self:__refresh()
+end
+
+--- Handle :quit on a pin's window.
+--- @param id @pin id
+function Infoview:__pin_quit(id)
+  if id == self.info.pin.id then
+    self:close()
+  elseif self.info.diff_pin and id == self.info.diff_pin.id then
+    self.info:clear_diff_pin()
+  else
+    self.info:clear_pin(id)
+  end
 end
 
 function Infoview:__refresh()
@@ -186,7 +202,7 @@ function Infoview:__open_win(orientation, win, flip, raw)
   if not self.is_open then return end
   win = win or self.window
 
-  self.info.win_event_disable = true
+  self.win_event_disable = true
   local window_before_split = vim.api.nvim_get_current_win()
   vim.api.nvim_set_current_win(win)
 
@@ -213,7 +229,7 @@ function Infoview:__open_win(orientation, win, flip, raw)
   local new_win = vim.api.nvim_get_current_win()
 
   vim.api.nvim_set_current_win(window_before_split)
-  self.info.win_event_disable = false
+  self.win_event_disable = false
 
   return new_win
 end
@@ -232,6 +248,7 @@ function Infoview:__refresh_pins_win()
       else
         last_pin_win = self:__open_win("rightbelow", last_pin_win, true, true)
       end
+      self.win_set[last_pin_win] = true
       vim.api.nvim_win_set_buf(last_pin_win, pin.bufdiv.buf)
       vim.api.nvim_buf_set_option(pin.bufdiv.buf, 'filetype', 'leaninfo')
       self.pins_wins[pin.id] = last_pin_win
@@ -242,24 +259,25 @@ function Infoview:__refresh_pins_win()
 
   -- close windows for any pins that are no longer in the current info
   for pin_id, win in pairs(vim.deepcopy(self.pins_wins)) do
-    self.info.win_event_disable = true
+    self.win_event_disable = true
     if not self.info.pins_set[pin_id] then
       if win and vim.api.nvim_win_is_valid(win) then
         vim.api.nvim_win_close(win, true)
       end
       self.pins_wins[pin_id] = nil
+      self.win_set[win] = nil
     end
-    self.info.win_event_disable = false
+    self.win_event_disable = false
   end
 end
 
 function Infoview:__refresh_pins()
   -- make sure they aren't in diff mode, because splitting a diff window results in another diff window
-  self.info.win_event_disable = true
+  self.win_event_disable = true
   for _, win in pairs(vim.deepcopy(self.pins_wins)) do
     vim.api.nvim_win_call(win, function() vim.api.nvim_command"diffoff" end)
   end
-  self.info.win_event_disable = false
+  self.win_event_disable = false
 end
 
 --- Either open or close a diff window for this infoview depending on whether its info has a diff_pin.
@@ -268,23 +286,25 @@ function Infoview:__refresh_diff_win()
 
   if self.info.diff_pin and not self.diff_win then
     self.diff_win = self:__open_win("leftabove")
+    self.win_set[self.diff_win] = true
     vim.api.nvim_win_set_buf(self.diff_win, self.info.diff_pin.bufdiv.buf)
     vim.api.nvim_buf_set_option(self.info.diff_pin.bufdiv.buf, 'filetype', 'leaninfo')
   end
 
   if not self.info.diff_pin and self.diff_win then
-    self.info.win_event_disable = true
+    self.win_event_disable = true
     if vim.api.nvim_win_is_valid(self.diff_win) then
       vim.api.nvim_win_close(self.diff_win, true)
     end
-    self.info.win_event_disable = false
+    self.win_set[self.diff_win] = nil
+    self.win_event_disable = false
     self.diff_win = nil
     return
   end
 end
 
 function Infoview:__refresh_diff()
-  self.info.win_event_disable = true
+  self.win_event_disable = true
   if self.info.diff_pin then
     for _, win in pairs({self.diff_win, self.window}) do
       vim.api.nvim_win_call(win, function()
@@ -296,12 +316,12 @@ function Infoview:__refresh_diff()
   else
     vim.api.nvim_win_call(self.window, function() vim.api.nvim_command"diffoff" end)
   end
-  self.info.win_event_disable = false
+  self.win_event_disable = false
 end
 
 --- Refresh the buffers in the windows in case the underlying Info has changed.
 function Infoview:__refresh_bufs()
-  self.info.win_event_disable = true
+  self.win_event_disable = true
   if self.window then
     if vim.api.nvim_win_get_buf(self.window) ~= self.info.pin.bufdiv.buf then
       vim.api.nvim_win_set_buf(self.window, self.info.pin.bufdiv.buf)
@@ -325,7 +345,7 @@ function Infoview:__refresh_bufs()
       vim.api.nvim_buf_set_option(self.info.pin.bufdiv.buf, 'filetype', 'leaninfo')
     end
   end
-  self.info.win_event_disable = false
+  self.win_event_disable = false
 end
 
 --- Close this infoview.
@@ -336,22 +356,31 @@ function Infoview:close()
     return
   end
 
-  self.info.win_event_disable = true
-  vim.api.nvim_win_close(self.window, true)
+  self.win_event_disable = true
+  if vim.api.nvim_win_is_valid(self.window) then
+    vim.api.nvim_win_close(self.window, true)
+  end
+  self.win_set[self.window] = nil
   if self.diff_win then
-    vim.api.nvim_win_close(self.diff_win, true)
+    if vim.api.nvim_win_is_valid(self.diff_win) then
+      vim.api.nvim_win_close(self.diff_win, true)
+    end
+    self.win_set[self.diff_win] = nil
     self.diff_win = nil
   end
   for pin_id, win in pairs(vim.deepcopy(self.pins_wins)) do
-    vim.api.nvim_win_close(win, true)
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
     self.pins_wins[pin_id] = nil
+    self.win_set[win] = nil
   end
-  self.info.win_event_disable = false
+  self.win_event_disable = false
 
   self.window = nil
   self.is_open = false
 
-  self.info:focus_on_current_buffer()
+  self:focus_on_current_buffer()
 end
 
 --- Toggle this infoview being open.
@@ -359,22 +388,15 @@ function Infoview:toggle()
   if self.is_open then self:close() else self:open() end
 end
 
---- Set the currently active Lean buffer to update the info.
-function Info:focus_on_current_buffer()
+--- Set the currently active Lean buffer to update the infoview.
+function Infoview:focus_on_current_buffer()
   if not is_lean_buffer() then return end
-  local is_open = false
-  for parent_id, _ in pairs(self.parent_infoviews) do
-    if infoview._by_id[parent_id].is_open then
-      is_open = true
-      break
-    end
-  end
 
-  if is_open then
+  if self.is_open then
     set_augroup("LeanInfoviewUpdate", string.format([[
-      autocmd CursorMoved <buffer> lua require'lean.infoview'.__update(%d)
-      autocmd CursorMovedI <buffer> lua require'lean.infoview'.__update(%d)
-    ]], self.id, self.id), 0)
+      autocmd CursorMoved <buffer> lua require'lean.infoview'.__update()
+      autocmd CursorMovedI <buffer> lua require'lean.infoview'.__update()
+    ]]), 0)
   else
     set_augroup("LeanInfoviewUpdate", "", 0)
   end
@@ -387,7 +409,6 @@ function Info:new()
     pins = {},
     pins_set = {},
     parent_infoviews = {},
-    win_event_disable = false
   }
   table.insert(infoview._info_by_id, new_info)
 
@@ -411,17 +432,6 @@ function Info:__new_current_pin()
   self.pin = Pin:new(options.autopause, options.use_widget)
   self.pin:__new_bufdiv()
   self.pin:add_parent_info(self)
-
-  -- Show/hide current pin extmark when entering/leaving infoview.
-  set_augroup("LeanInfoviewShowPin", string.format([[
-    autocmd WinEnter <buffer=%d> lua require'lean.infoview'.__show_curr_pin(%d)
-    autocmd WinLeave <buffer=%d> lua require'lean.infoview'.__hide_curr_pin(%d)
-  ]], self.pin.bufdiv.buf, self.id, self.pin.bufdiv.buf, self.id), self.pin.bufdiv.buf)
-
-  -- Make sure we notice even if someone manually :q's the infoview window.
-  set_augroup("LeanInfoviewClose", string.format([[
-    autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__was_closed(%d)
-  ]], self.pin.bufdiv.buf, self.id), self.pin.bufdiv.buf)
 end
 
 function Info:add_pin()
@@ -429,10 +439,6 @@ function Info:add_pin()
   table.insert(self.pins, self.pin)
   self.pins_set[self.pin.id] = self.pin
   set_augroup("LeanInfoviewShowPin", "", self.pin.bufdiv.buf)
-  -- Make sure we notice even if someone manually :q's this pin's window.
-  set_augroup("LeanInfoviewClose", string.format([[
-    autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__pin_was_closed(%d, %d)
-  ]], self.pin.bufdiv.buf, self.id, self.pin.id), self.pin.bufdiv.buf)
   self:maybe_show_pin_extmark(tostring(self.pin.id))
   self.pin.render_header = true
   self.pin:render()
@@ -466,23 +472,11 @@ function Info:set_diff_pin(params)
     self.diff_pin:__new_bufdiv()
     self.diff_pin:add_parent_info(self)
     self.diff_pin:show_extmark(nil, diff_pin_hl_group)
-
-    -- Make sure we notice even if someone manually :q's the diff window.
-    set_augroup("LeanInfoviewClose", string.format([[
-      autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__diff_was_closed(%d)
-    ]], self.diff_pin.bufdiv.buf, self.id), self.diff_pin.bufdiv.buf)
   end
 
   self.diff_pin:move(params)
 
   self:render()
-end
-
---- Close all parent infoviews.
-function Info:clear()
-  for parent_id, _ in pairs(self.parent_infoviews) do
-    infoview._by_id[parent_id]:close()
-  end
 end
 
 function Info:clear_pins()
@@ -511,9 +505,8 @@ function Info:maybe_show_pin_extmark(...)
 end
 
 --- Set the current window as the last window used to update this Info.
-function Info:set_last_window()
+function Infoview:set_last_window()
   self.last_window = vim.api.nvim_get_current_win()
-  self.last_buf = vim.api.nvim_get_current_buf()
 end
 
 --- Update this info's physical contents.
@@ -712,13 +705,19 @@ function Pin:__new_bufdiv()
   end
   self.bufdiv = html.BufDiv:new(mk_buf("lean://pin/" .. self.id, true), self.ui_div, options.mappings)
 
+  -- Make sure we notice even if someone manually :q's this pin's window.
+  set_augroup("LeanInfoviewClose", string.format([[
+    autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__pin_win_was_closed(%d, %s)
+    autocmd QuitPre <buffer=%d> lua require'lean.infoview'.__pin_win_was_quit(%d, %s)
+  ]], self.bufdiv.buf, self.id, util.afile, self.bufdiv.buf, self.id, util.afile), self.bufdiv.buf)
+
   self:render()
 
   self.ui_div.events = {
     goto_last_window = function()
       local curr_infoview = infoview.get_current_infoview()
-      if curr_infoview and curr_infoview.info.last_window then
-        vim.api.nvim_set_current_win(curr_infoview.info.last_window)
+      if curr_infoview and curr_infoview.last_window then
+        vim.api.nvim_set_current_win(curr_infoview.last_window)
       end
     end
   }
@@ -757,8 +756,8 @@ function Pin:render()
     header_div.events = {
       click = function()
         local curr_infoview = infoview.get_current_infoview()
-        if curr_infoview and curr_infoview.info.last_window then
-          vim.api.nvim_set_current_win(curr_infoview.info.last_window)
+        if curr_infoview and curr_infoview.last_window then
+          vim.api.nvim_set_current_win(curr_infoview.last_window)
           local uri_bufnr = vim.uri_to_bufnr(self.position_params.textDocument.uri)
           vim.api.nvim_set_current_buf(uri_bufnr)
           vim.api.nvim_win_set_cursor(0,
@@ -957,63 +956,47 @@ function infoview.close_all()
   end
 end
 
---- An infoview was closed, either directly via `Infoview.close` or manually.
+--- Gets the infoview which has the given window registered, nil if
+--- no such infoview exists.
+--- @param win number @window handle
+local function get_iv_from_win(win)
+  for _, iv in pairs(infoview._by_id) do
+    if iv.win_set[win] then return iv end
+  end
+end
+
+--- A pin's window was closed.
 --- Will be triggered via a `WinClosed` autocmd.
----@param id number @info id
-function infoview.__was_closed(id)
-  local info = infoview._info_by_id[id]
-  if info.win_event_disable then return end
-  info:clear()
+---@param id number @pin id
+---@param win number @handle of closed window
+function infoview.__pin_win_was_closed(id, win)
+  local iv = get_iv_from_win(win)
+  if not iv or iv.win_event_disable then return end
+  -- TODO handle via separate __pin_closed
+  iv:__pin_quit(id)
 end
 
---- An infoview diff window was closed.
---- Will be triggered via a `WinClosed` autocmd.
----@param id number @info id
-function infoview.__diff_was_closed(id)
-  local info = infoview._info_by_id[id]
-  if info.win_event_disable then return end
-  info:clear_diff_pin()
-end
-
---- An infoview pins window was closed.
---- Will be triggered via a `WinClosed` autocmd.
----@param id number @info id
----@param pin_id number @pin id
-function infoview.__pin_was_closed(id, pin_id)
-  local info = infoview._info_by_id[id]
-  if info.win_event_disable then return end
-  info:clear_pin(pin_id)
-end
-
---- An infoview was entered, show the extmark for the current pin.
---- Will be triggered via a `WinEnter` autocmd.
----@param id number @info id
-function infoview.__show_curr_pin(id)
-  local info = infoview._info_by_id[id]
-  if info.win_event_disable then return end
-  info:maybe_show_pin_extmark("current")
-end
-
---- An infoview was left, hide the extmark for the current pin.
---- Will be triggered via a `WinLeave` autocmd.
----@param id number @info id
-function infoview.__hide_curr_pin(id)
-  local info = infoview._info_by_id[id]
-  if info.win_event_disable then return end
-  info.pin:hide_extmark()
+--- A pin's window was quit.
+--- Will be triggered via a `QuitPre` autocmd.
+---@param id number @pin id
+---@param win number @handle of quit window
+function infoview.__pin_win_was_quit(id, win)
+  local iv = get_iv_from_win(win)
+  if not iv or iv.win_event_disable then return end
+  iv:__pin_quit(id)
 end
 
 --- Update the info contents appropriately for Lean 4 or 3.
 --- Normally will be called on each CursorHold for a buffer containing Lean.
 --- TODO perhaps this should be schedule_wrap'ed?
---- @param id number @info id
-function infoview.__update(id)
-  local info = id and infoview._info_by_id[id] or infoview.get_current_infoview().info
-  if info.win_event_disable then return end
-
+function infoview.__update()
   if not is_lean_buffer() then return end
-  info:set_last_window()
-  pcall(info.move_pin, info, vim.lsp.util.make_position_params())
+
+  local iv = infoview.get_current_infoview()
+  if iv.win_event_disable then return end
+
+  iv:set_last_window()
+  pcall(iv.info.move_pin, iv.info, vim.lsp.util.make_position_params())
 end
 
 --- Update pins corresponding to the given URI.
@@ -1053,7 +1036,7 @@ function infoview.make_buffer_focusable(name)
   if bufnr == vim.api.nvim_get_current_buf() then
     -- because FileType can happen after BufEnter
     infoview.__bufenter()
-    infoview.get_current_infoview().info:focus_on_current_buffer()
+    infoview.get_current_infoview():focus_on_current_buffer()
   end
 
   -- WinEnter is necessary for the edge case where you have
@@ -1062,7 +1045,7 @@ function infoview.make_buffer_focusable(name)
   set_augroup("LeanInfoviewSetFocus", string.format([[
     autocmd BufEnter <buffer=%d> lua require'lean.infoview'.__bufenter()
     autocmd BufEnter,WinEnter <buffer=%d> lua if require'lean.infoview'.get_current_infoview()]] ..
-    [[ then require'lean.infoview'.get_current_infoview().info:focus_on_current_buffer() end
+    [[ then require'lean.infoview'.get_current_infoview():focus_on_current_buffer() end
   ]], bufnr, bufnr), 0)
 end
 
@@ -1119,14 +1102,14 @@ end
 function infoview.add_pin()
   if not is_lean_buffer() then return end
   infoview.open()
-  infoview.get_current_infoview().info:set_last_window()
+  infoview.get_current_infoview():set_last_window()
   infoview.get_current_infoview().info:add_pin()
 end
 
 function infoview.set_diff_pin()
   if not is_lean_buffer() then return end
   infoview.open()
-  infoview.get_current_infoview().info:set_last_window()
+  infoview.get_current_infoview():set_last_window()
   infoview.get_current_infoview().info:set_diff_pin(vim.lsp.util.make_position_params())
 end
 

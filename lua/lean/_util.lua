@@ -220,4 +220,7 @@ end
 
 M.wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) end, 2)
 
+-- string to use in autocmds
+M.afile = "tonumber(vim.fn.expand('<afile>'))"
+
 return M
