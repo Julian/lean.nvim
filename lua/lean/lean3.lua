@@ -357,6 +357,7 @@ function lean3.lsp_enable(opts)
       vim.lsp.handlers['textDocument/publishDiagnostics'](...)
     end;
   })
+  opts.offset_encoding = "utf-32"
   require'lspconfig'.lean3ls.setup(opts)
 end
 

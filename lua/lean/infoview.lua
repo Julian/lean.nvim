@@ -676,7 +676,7 @@ function Pin:update_position()
 
   local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, extmark, {})
 
-  local encoding = vim.lsp.util._get_offset_encoding and vim.lsp.util._get_offset_encoding(buf) or "utf-32"
+  local encoding = util._get_offset_encoding(buf) or "utf-32"
   local use_utf16 = encoding == "utf-16"
   local new_pos = {}
 
