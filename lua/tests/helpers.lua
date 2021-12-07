@@ -23,6 +23,7 @@ local default_config = {
     autoopen = false,
     autopause = true,
     show_processing = false,
+    show_no_info_message = true,
     lean3 = { show_filter = false }
   },
   stderr = { enable = false },
@@ -755,7 +756,7 @@ local function infoview_check(state, _)
       vim.list_extend(opened_bufs, {this_pin.bufdiv.buf})
       assert.opened_pin_state(this_pin)
       this_pin.prev_div_text = this_pin.div:to_string()
-      this_pin.prev_position_params = vim.deepcopy(this_pin.position_params)
+      this_pin.prev_position_params = vim.deepcopy(this_pin.__position_params)
       -- assume text and pos kept if unspecified
       if pin_text_list[id] == nil then
         pin_text_list[id] = "pin_text_kept"
@@ -799,13 +800,13 @@ local function infoview_check(state, _)
 
     if pos_check == "pin_pos_changed" then
       check_change(function() return this_pin.prev_position_params end,
-        function() return this_pin.position_params end, true, "position")
+        function() return this_pin.__position_params end, true, "position")
     else
       check_change(function() return this_pin.prev_position_params end,
-        function() return this_pin.position_params end, false, "position")
+        function() return this_pin.__position_params end, false, "position")
     end
 
-    this_pin.prev_position_params = vim.deepcopy(this_pin.position_params)
+    this_pin.prev_position_params = vim.deepcopy(this_pin.__position_params)
     this_pin.prev_pos_check = pos_check
 
     --

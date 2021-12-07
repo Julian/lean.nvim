@@ -1,7 +1,7 @@
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 local fixtures = require('tests.fixtures')
-local position = require('vim.lsp.util').make_position_params
+local position = require('lean._util').make_position_params
 
 helpers.setup {
   infoview = { autoopen = true },
@@ -34,8 +34,8 @@ describe('infoview pin', function()
     function(_)
       vim.api.nvim_buf_set_lines(0, 3, 4, true, {"def boop : Nat := 5"})
       assert.pin_pos_kept.infoview()
-      assert.are_equal(2, infoview.get_current_infoview().info.pin.position_params.position.line)
-      assert.are_equal(18, infoview.get_current_infoview().info.pin.position_params.position.character)
+      assert.are_equal(2, infoview.get_current_infoview().info.pin.__position_params.position.line)
+      assert.are_equal(18, infoview.get_current_infoview().info.pin.__position_params.position.character)
     end)
 
     it('when lines added below',
@@ -71,8 +71,8 @@ describe('infoview pin', function()
     function(_)
       vim.api.nvim_buf_set_lines(0, 1, 2, true, {"", ""})
       assert.pin_pos_changed.infoview()
-      assert.are_equal(3, infoview.get_current_infoview().info.pin.position_params.position.line)
-      assert.are_equal(18, infoview.get_current_infoview().info.pin.position_params.position.character)
+      assert.are_equal(3, infoview.get_current_infoview().info.pin.__position_params.position.line)
+      assert.are_equal(18, infoview.get_current_infoview().info.pin.__position_params.position.character)
     end)
 
     it('on change before on same line',
@@ -81,8 +81,8 @@ describe('infoview pin', function()
 
       vim.api.nvim_command("normal! $bbeaa")
       assert.pin_pos_changed.infoview()
-      assert.are_equal(2, infoview.get_current_infoview().info.pin.position_params.position.line)
-      assert.are_equal(19, infoview.get_current_infoview().info.pin.position_params.position.character)
+      assert.are_equal(2, infoview.get_current_infoview().info.pin.__position_params.position.line)
+      assert.are_equal(19, infoview.get_current_infoview().info.pin.__position_params.position.character)
     end)
   end)
 end)

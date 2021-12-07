@@ -14,3 +14,5 @@ end
 
 def new_test : bool := by
   exact false
+
+def utf_test {𝔽 : Type} : 𝔽 = 𝔽 := rfl

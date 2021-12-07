@@ -101,9 +101,9 @@ Features
 
 * Hover (preview) commands:
 
-  * ``:LeanPlainGoal`` for showing goal state in a preview window
+  * ``:LeanGoal`` for showing goal state in a preview window
 
-  * ``:LeanPlainTermGoal`` for showing term-mode type information
+  * ``:LeanTermGoal`` for showing term-mode type information
     in a preview window
 
 * `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base

@@ -56,7 +56,7 @@ local to_event = {
 }
 
 function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
-    opts, options, show_processing)
+    opts, options, show_processing, show_no_info_message)
   local parent_div = html.Div:new("", "lean-3-widget")
   local widget
 
@@ -228,7 +228,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
               kind = event,
               handler = handler,
               args = args,
-              textDocument = pin.position_params.textDocument
+              textDocument = pin.__position_params.textDocument
             }})
             if div_event == "cursor_leave" then
               ctx.self:buf_event("cursor_enter")
@@ -270,7 +270,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
   end
 
   params = vim.deepcopy(params)
-  local state_div
+  local state_div --- @type Div?
 
   if require"lean.progress".is_processing_at(params) then
     if show_processing then
@@ -320,21 +320,21 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
   if not state_div then
     local _, result = util.a_request(bufnr, "$/lean/plainGoal", params)
     if result and type(result) == "table" then
-      state_div = components.goal(result)
+      state_div = html.concat(components.goal(result), '\n\n')
     end
   end
 
   if state_div and not state_div:is_empty() then
     parent_div:add_div(state_div)
-  else
+  elseif show_no_info_message then
     parent_div:add_div(html.Div:new("No info.", "no-tactic-term"))
   end
 
   -- update all other pins for the same URI so they aren't left with a stale "session"
   if opts and opts.widget_event then
     for _, other_pin in pairs(require"lean.infoview"._pin_by_id) do
-      if other_pin ~= pin and other_pin.position_params and
-        other_pin.position_params.textDocument.uri == pin.position_params.textDocument.uri then
+      if other_pin ~= pin and other_pin.__position_params and
+        other_pin.__position_params.textDocument.uri == pin.__position_params.textDocument.uri then
         other_pin:update()
       end
     end
@@ -342,7 +342,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
 
   ::finish::
 
-  parent_div:add_div(components.diagnostics(bufnr, params.position.line))
+  parent_div:add_div(html.concat(components.diagnostics(bufnr, params.position.line), '\n\n'))
 
   data_div:add_div(parent_div)
 
@@ -357,6 +357,7 @@ function lean3.lsp_enable(opts)
       vim.lsp.handlers['textDocument/publishDiagnostics'](...)
     end;
   })
+  opts.offset_encoding = "utf-32"
   require'lspconfig'.lean3ls.setup(opts)
 end
 

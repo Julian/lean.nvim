@@ -1,4 +1,3 @@
-vim.opt_local.bufhidden = "hide"
 vim.opt_local.modifiable = false
 vim.opt_local.cursorline = false
 vim.opt_local.number = false
