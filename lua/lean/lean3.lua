@@ -56,7 +56,7 @@ local to_event = {
 }
 
 function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
-    opts, options, show_processing)
+    opts, options, show_processing, show_no_info_message)
   local parent_div = html.Div:new("", "lean-3-widget")
   local widget
 
@@ -326,7 +326,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
 
   if state_div and not state_div:is_empty() then
     parent_div:add_div(state_div)
-  else
+  elseif show_no_info_message then
     parent_div:add_div(html.Div:new("No info.", "no-tactic-term"))
   end
 

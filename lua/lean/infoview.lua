@@ -788,7 +788,7 @@ function Pin:__update(tick, delay, lean3_opts)
     if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
       lean3_opts = lean3_opts or {}
       lean3.update_infoview(self, new_data_div, buf, params,
-        self.use_widget, lean3_opts, options.lean3, options.show_processing)
+        self.use_widget, lean3_opts, options.lean3, options.show_processing, options.show_no_info_message)
       goto finish
     end
 
