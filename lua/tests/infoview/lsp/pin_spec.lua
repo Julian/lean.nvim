@@ -1,7 +1,7 @@
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 local fixtures = require('tests.fixtures')
-local position = require('vim.lsp.util').make_position_params
+local position = require('lean._util').make_position_params
 
 helpers.setup {
   infoview = { autoopen = true },
