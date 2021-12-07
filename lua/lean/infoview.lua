@@ -769,8 +769,8 @@ function Pin:__new_bufdiv()
   -- Make sure we notice even if someone manually :q's this pin's window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__pin_win_was_closed(%d, %s)
-    autocmd QuitPre <buffer=%d> lua require'lean.infoview'.__pin_win_was_quit()
-  ]], self.bufdiv.buf, self.id, util.afile, self.bufdiv.buf), self.bufdiv.buf)
+    autocmd QuitPre <buffer=%d> lua require'lean.infoview'.__pin_win_was_quit(%d)
+  ]], self.bufdiv.buf, self.id, util.afile, self.bufdiv.buf, self.id), self.bufdiv.buf)
 
   self:render()
 
@@ -1024,8 +1024,6 @@ local function get_iv_from_win(win)
   end
 end
 
-local just_quit = false
-
 --- A pin's window was closed.
 --- Will be triggered via a `WinClosed` autocmd.
 ---@param id number @pin id
@@ -1033,18 +1031,16 @@ local just_quit = false
 function infoview.__pin_win_was_closed(id, win)
   local iv = get_iv_from_win(win)
   if not iv or iv.win_event_disable then return end
-  if just_quit then
-    iv:__pin_quit(id)
-    just_quit = false
-  else
-    iv:__pin_closed(id)
-  end
+  iv:__pin_closed(id)
 end
 
 --- A pin's window was quit.
 --- Will be triggered via a `QuitPre` autocmd.
-function infoview.__pin_win_was_quit()
-  just_quit = true
+---@param id number @pin id
+function infoview.__pin_win_was_quit(id)
+  local iv = get_iv_from_win(vim.api.nvim_get_current_win())
+  if not iv or iv.win_event_disable then return end
+  iv:__pin_quit(id)
 end
 
 --- Update the info contents appropriately for Lean 4 or 3.

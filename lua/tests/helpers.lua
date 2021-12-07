@@ -671,6 +671,7 @@ local function infoview_check(state, _)
     end
     for _, pin_id in pairs(pin_win_check["pinwinclosed"] or {}) do
       local prev_win = this_infoview.prev_pins_wins[pin_id]
+      assert.is_not_nil(prev_win)
       vim.list_extend(closed_wins, {prev_win})
     end
 
