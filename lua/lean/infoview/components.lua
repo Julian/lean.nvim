@@ -41,9 +41,11 @@ end
 
 --- The current (tactic) goal state.
 ---@param goal table: a Lean4 `plainGoal` LSP response
+---@return Div[]
 function components.goal(goal)
+  if type(goal) ~= "table" or not goal.goals then return {} end
+
   local div = html.Div:new("", "plain-goals")
-  if type(goal) ~= "table" or not goal.goals then return div end
 
   local goals_list = div:insert_div(
     #goal.goals == 0 and H('goals accomplished 🎉') or
@@ -54,19 +56,18 @@ function components.goal(goal)
     goals_list:insert_div("\n" .. this_goal, "plain-goal")
   end
 
-  return div
+  return {div}
 end
 
 --- The current (term) goal state.
 ---@param term_goal table: a Lean4 `plainTermGoal` LSP response
+---@return Div[]
 function components.term_goal(term_goal)
-  local div = html.Div:new("", "plain-term-goal")
-  if type(term_goal) ~= "table" or not term_goal.goal then return div end
+  if type(term_goal) ~= "table" or not term_goal.goal then return {} end
 
-  div:insert_div(
+  return {html.Div:new(
     H(string.format('expected type (%s)', range_to_string(term_goal.range)) .. "\n" .. term_goal.goal),
-    "term-goal")
-  return div
+    "term-goal")}
 end
 
 ---@param t CodeWithInfos
@@ -176,11 +177,11 @@ end
 
 ---@param goal InteractiveGoals | nil
 ---@param sess Subsession
----@return Div
+---@return Div[]
 function components.interactive_goals(goal, sess)
-  local div = html.Div:new("", "interactive-goals")
-  if goal == nil then return div end
+  if goal == nil then return {} end
 
+  local div = html.Div:new("", "interactive-goals")
   div:insert_div(
     #goal.goals == 0 and H('goals accomplished 🎉') or
     #goal.goals == 1 and H('1 goal\n') or
@@ -191,36 +192,37 @@ function components.interactive_goals(goal, sess)
     div:add_div(interactive_goal(this_goal, sess))
   end
 
-  return div
+  return {div}
 end
 
 --- The current (term) goal state.
 ---@param goal InteractiveTermGoal
 ---@param sess Subsession
+---@return Div[]
 function components.interactive_term_goal(goal, sess)
+  if not goal then return {} end
 
   local div = html.Div:new("", "interactive-term-goal")
 
-  if not goal then return div end
   div:insert_div(
     H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
     "term-state")
     :add_div(interactive_goal(goal, sess))
 
-  return div
+  return {div}
 end
 
 --- Diagnostic information for the current line from the Lean server.
+---@return Div[]
 function components.diagnostics(bufnr, line)
-  local div = html.Div:new("")
+  local divs = {}
   for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics(bufnr, line)) do
-    div:insert_div("\n\n", "diagnostic-separator")
-    div:insert_div(
+    table.insert(divs, html.Div:new(
         H(string.format('%s: %s:',
           range_to_string(diag.range),
-          DiagnosticSeverity[diag.severity]:lower())) .. "\n" .. diag.message, "diagnostic")
+          DiagnosticSeverity[diag.severity]:lower())) .. "\n" .. diag.message, "diagnostic"))
   end
-  return div
+  return divs
 end
 
 ---@param t TaggedTextMsgEmbed
@@ -297,19 +299,20 @@ end
 ---@param line number
 ---@param diags InteractiveDiagnostic[]
 ---@param sess Subsession
+---@return Div[]
 function components.interactive_diagnostics(diags, line, sess)
-  local div = html.Div:new("")
+  local divs = {}
   for _, diag in pairs(diags) do
     if diag.range.start.line == line then
-      div:insert_div("\n\n", "diagnostic-separator")
-      div:insert_div(
+      local div = html.Div:new(
           H(string.format('%s: %s:\n',
             range_to_string(diag.range),
             DiagnosticSeverity[diag.severity]:lower())), "diagnostic")
       div:add_div(tagged_text_msg_embed(diag.message, sess))
+      table.insert(divs, div)
     end
   end
-  return div
+  return divs
 end
 
 return components

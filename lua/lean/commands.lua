@@ -5,6 +5,7 @@ local a = require'plenary.async'
 local html = require'lean.html'
 local rpc = require'lean.rpc'
 local lean = require'lean'
+local progress = require'lean.progress'
 
 local commands = {}
 
@@ -28,6 +29,16 @@ local function show_popup(div)
   bufdiv:buf_render()
 end
 
+---@param divs Div[]?
+---@param err any?
+local function show_popup_or_error(divs, err)
+  if divs then
+    show_popup(html.concat(divs, '\n\n'))
+  elseif err then
+    show_popup(html.Div:new(vim.inspect(err)))
+  end
+end
+
 function commands.show_goal(use_widgets)
   if use_widgets == nil then use_widgets = true end
 
@@ -48,7 +59,7 @@ function commands.show_goal(use_widgets)
       goal = goal and components.goal(goal)
     end
 
-    if goal or err then show_popup(goal or html.Div:new(vim.inspect(err))) end
+    show_popup_or_error(goal, err)
   end)()
 end
 
@@ -76,7 +87,30 @@ function commands.show_term_goal(use_widgets)
       term_goal = term_goal and components.term_goal(term_goal)
     end
 
-    if term_goal or err then show_popup(term_goal or html.Div:new(vim.inspect(err))) end
+    show_popup_or_error(term_goal, err)
+  end)()
+end
+
+function commands.show_line_diagnostics()
+  local is_lean3 = lean.is_lean3_buffer()
+  local params = vim.lsp.util.make_position_params()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local line = params.position.line
+
+  a.void(function()
+    local diags, err
+
+    if not is_lean3 and not progress.is_processing_at(params) then
+      local sess = rpc.open(bufnr, params)
+      diags, err = sess:getInteractiveDiagnostics{ start = line, ['end'] = line + 1 }
+      diags = not err and components.interactive_diagnostics(diags, line, sess)
+    end
+
+    if not diags then
+      diags = components.diagnostics(bufnr, line)
+    end
+
+    show_popup_or_error(diags, err)
   end)()
 end
 
@@ -86,6 +120,7 @@ function commands.enable()
     command LeanPlainTermGoal :lua require'lean.commands'.show_term_goal(false)
     command LeanGoal :lua require'lean.commands'.show_goal()
     command LeanTermGoal :lua require'lean.commands'.show_term_goal()
+    command LeanLineDiagnostics :lua require'lean.commands'.show_line_diagnostics()
   ]]
 end
 
