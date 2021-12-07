@@ -71,7 +71,7 @@ describe('infoview', function()
       assert.use_pendingbuf.use_pendingwin.closed.infoview()
     end)
 
-    it('manual close succeeds and updates internal state',
+    it('window close succeeds and does not change internal state',
     function(_)
       infoview.get_current_infoview():open()
       assert.opened.infoview()
@@ -81,7 +81,9 @@ describe('infoview', function()
       vim.api.nvim_command("close")
       assert.buf.left.tracked_pending()
       assert.win.left.tracked_pending()
-      assert.use_pendingbuf.use_pendingwin.closed.infoview()
+      assert.use_pendingbuf.use_pendingwin.currwinclosed.infoview()
+      infoview.get_current_infoview():close()
+      assert.currwinkept.closed.infoview()
     end)
   end)
 

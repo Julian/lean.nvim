@@ -82,7 +82,7 @@ describe('infoview pin', function()
         {[infoview.get_current_infoview().id] = {new_pin_1.id, new_pin_2.id}}.infoview()
     end)
 
-    it('manual window close clears pins',
+    it('are cleared by manual window quit',
     function(_)
       local new_pin_1 = infoview.get_current_infoview().info.pin
 
@@ -144,6 +144,51 @@ describe('infoview pin', function()
       assert.pindeleted{new_pin_1.id, new_pin_2.id}.pinwinclosed
         {[infoview.get_current_infoview().id] = {new_pin_1.id, new_pin_2.id}}.infoview()
     end)
+
+    it('window close does not clear pins',
+    function(_)
+      new_pin_1 = infoview.get_current_infoview().info.pin
+
+      -- make first pin
+      infoview.get_current_infoview().info:add_pin()
+      assert.pinopened.pinwinopened.infoview()
+
+      new_pin_2 = infoview.get_current_infoview().info.pin
+
+      -- make second pin
+      infoview.get_current_infoview().info:add_pin()
+      assert.pinopened.pinwinopened.infoview()
+
+      vim.api.nvim_set_current_win(infoview.get_current_infoview().pins_wins[new_pin_1.id])
+      assert.buf.left.tracked()
+      assert.win.left.tracked()
+      vim.api.nvim_command("close")
+      assert.buf.left.tracked_pending()
+      assert.win.left.tracked_pending()
+
+      assert.use_pendingbuf.use_pendingwin.pinwinclosed
+        {[infoview.get_current_infoview().id] = {new_pin_1.id}}.infoview()
+
+      vim.api.nvim_set_current_win(infoview.get_current_infoview().pins_wins[new_pin_2.id])
+      vim.api.nvim_command("close")
+      assert.buf.left.tracked_pending()
+      assert.win.left.tracked_pending()
+
+      assert.use_pendingbuf.use_pendingwin.pinwinclosed
+        {[infoview.get_current_infoview().id] = {new_pin_2.id}}.infoview()
+
+      infoview.get_current_infoview():close()
+
+      assert.closed.infoview()
+
+      infoview.get_current_infoview():open()
+      assert.pinwinopened{[infoview.get_current_infoview().id] = {new_pin_1.id, new_pin_2.id}}.opened.infoview()
+
+      infoview.get_current_infoview().info:clear_pins()
+
+      assert.pindeleted{new_pin_1.id, new_pin_2.id}.pinwinclosed
+        {[infoview.get_current_infoview().id] = {new_pin_1.id, new_pin_2.id}}.infoview()
+    end)
   end)
 
   describe('diff pin', function()
@@ -176,7 +221,7 @@ describe('infoview pin', function()
       assert.pinopened{diff_pin.id}.diffwinopened.infoview()
     end)
 
-    it('manual window close clears pins',
+    it('is cleared by manual window quit',
     function(_)
       vim.api.nvim_set_current_win(infoview.get_current_infoview().diff_win)
       assert.buf.left.tracked()
@@ -186,6 +231,25 @@ describe('infoview pin', function()
       assert.win.left.tracked_pending()
 
       assert.use_pendingbuf.use_pendingwin.pindeleted{diff_pin.id}.diffwinclosed.infoview()
+    end)
+
+    it('is not cleared by window close',
+    function(_)
+      infoview.get_current_infoview().info:set_diff_pin(position())
+      diff_pin = infoview.get_current_infoview().info.diff_pin
+      assert.pinopened{diff_pin.id}.diffwinopened.infoview()
+
+      vim.api.nvim_set_current_win(infoview.get_current_infoview().diff_win)
+      assert.buf.left.tracked()
+      assert.win.left.tracked()
+      vim.api.nvim_command("close")
+      assert.buf.left.tracked_pending()
+      assert.win.left.tracked_pending()
+
+      assert.use_pendingbuf.use_pendingwin.diffwinclosed.infoview()
+
+      infoview.get_current_infoview().info:clear_diff_pin()
+      assert.pindeleted{diff_pin.id}.infoview()
     end)
   end)
 end)

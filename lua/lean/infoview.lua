@@ -154,7 +154,7 @@ function Infoview:open()
 
   self.is_open = true
 
-  local window = self:__open_win("botright")
+  local window = self:__open_win()
   self.window = window
   self.win_set[window] = true
 
@@ -169,8 +169,22 @@ function Infoview:open()
   self:__refresh()
 end
 
+--- Handle :close on a pin's window.
+--- @param id number @pin id
+function Infoview:__pin_closed(id)
+  -- make the vim.api.nvim_win_is_valid() checks fail for these windows;
+  -- don't nil them so that they aren't re-opened on refresh
+  if id == self.info.pin.id then
+    self.window = -1
+  elseif self.info.diff_pin and id == self.info.diff_pin.id then
+    self.diff_win = -1
+  elseif self.pins_wins[id] then
+    self.pins_wins[id] = -1
+  end
+end
+
 --- Handle :quit on a pin's window.
---- @param id @pin id
+--- @param id number @pin id
 function Infoview:__pin_quit(id)
   if id == self.info.pin.id then
     self:close()
@@ -185,7 +199,7 @@ function Infoview:__refresh()
   if not self.is_open then return end
 
   self:__refresh_diff_win()
-  self:__refresh_pins_win()
+  self:__refresh_pins_wins()
   self:__refresh_bufs()
   self:__refresh_diff()
   self:__refresh_pins()
@@ -201,6 +215,8 @@ end
 function Infoview:__open_win(orientation, win, flip, raw)
   if not self.is_open then return end
   win = win or self.window
+
+  if not win then orientation = "botright" end
 
   self.win_event_disable = true
   local window_before_split = vim.api.nvim_get_current_win()
@@ -235,10 +251,17 @@ function Infoview:__open_win(orientation, win, flip, raw)
 end
 
 --- Either open or close a pins window for this infoview depending on whether its info has pins.
-function Infoview:__refresh_pins_win()
+function Infoview:__refresh_pins_wins()
   if not self.is_open then return end
 
   local last_pin_win
+
+  -- get window handle of last open pin
+  for _, pin in ipairs(self.info.pins) do
+    if self.pins_wins[pin.id] and self.pins_wins[pin.id] ~= -1 then
+      last_pin_win = self.pins_wins[pin.id]
+    end
+  end
 
   -- open windows for any unopened pins
   for _, pin in ipairs(self.info.pins) do
@@ -252,8 +275,6 @@ function Infoview:__refresh_pins_win()
       vim.api.nvim_win_set_buf(last_pin_win, pin.bufdiv.buf)
       vim.api.nvim_buf_set_option(pin.bufdiv.buf, 'filetype', 'leaninfo')
       self.pins_wins[pin.id] = last_pin_win
-    else
-      last_pin_win = self.pins_wins[pin.id]
     end
   end
 
@@ -275,7 +296,9 @@ function Infoview:__refresh_pins()
   -- make sure they aren't in diff mode, because splitting a diff window results in another diff window
   self.win_event_disable = true
   for _, win in pairs(vim.deepcopy(self.pins_wins)) do
-    vim.api.nvim_win_call(win, function() vim.api.nvim_command"diffoff" end)
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_call(win, function() vim.api.nvim_command"diffoff" end)
+    end
   end
   self.win_event_disable = false
 end
@@ -307,11 +330,13 @@ function Infoview:__refresh_diff()
   self.win_event_disable = true
   if self.info.diff_pin then
     for _, win in pairs({self.diff_win, self.window}) do
-      vim.api.nvim_win_call(win, function()
-        vim.api.nvim_command"diffthis"
-        vim.api.nvim_command("set foldmethod=manual")
-        vim.api.nvim_command("setlocal wrap")
-      end)
+      if vim.api.nvim_win_is_valid(win) then
+        vim.api.nvim_win_call(win, function()
+          vim.api.nvim_command"diffthis"
+          vim.api.nvim_command("set foldmethod=manual")
+          vim.api.nvim_command("setlocal wrap")
+        end)
+      end
     end
   else
     vim.api.nvim_win_call(self.window, function() vim.api.nvim_command"diffoff" end)
@@ -322,14 +347,14 @@ end
 --- Refresh the buffers in the windows in case the underlying Info has changed.
 function Infoview:__refresh_bufs()
   self.win_event_disable = true
-  if self.window then
+  if self.window and vim.api.nvim_win_is_valid(self.window) then
     if vim.api.nvim_win_get_buf(self.window) ~= self.info.pin.bufdiv.buf then
       vim.api.nvim_win_set_buf(self.window, self.info.pin.bufdiv.buf)
       vim.api.nvim_buf_set_option(self.info.pin.bufdiv.buf, 'filetype', 'leaninfo')
     end
   end
 
-  if self.info.diff_pin and self.diff_win then
+  if self.info.diff_pin and self.diff_win and vim.api.nvim_win_is_valid(self.diff_win) then
     if vim.api.nvim_win_get_buf(self.diff_win) ~= self.info.diff_pin.bufdiv.buf then
       vim.api.nvim_win_set_buf(self.diff_win, self.info.diff_pin.bufdiv.buf)
       vim.api.nvim_buf_set_option(self.info.pin.bufdiv.buf, 'filetype', 'leaninfo')
@@ -340,7 +365,7 @@ function Infoview:__refresh_bufs()
   for pin_id, win in pairs(vim.deepcopy(self.pins_wins)) do
     local pin = infoview._pin_by_id[pin_id]
 
-    if vim.api.nvim_win_get_buf(win) ~= pin.bufdiv.buf then
+    if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) ~= pin.bufdiv.buf then
       vim.api.nvim_win_set_buf(win, pin.bufdiv.buf)
       vim.api.nvim_buf_set_option(self.info.pin.bufdiv.buf, 'filetype', 'leaninfo')
     end
@@ -472,11 +497,11 @@ function Info:set_diff_pin(params)
     self.diff_pin:__new_bufdiv()
     self.diff_pin:add_parent_info(self)
     self.diff_pin:show_extmark(nil, diff_pin_hl_group)
+
+    self:render()
   end
 
   self.diff_pin:move(params)
-
-  self:render()
 end
 
 function Info:clear_pins()
@@ -708,8 +733,8 @@ function Pin:__new_bufdiv()
   -- Make sure we notice even if someone manually :q's this pin's window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__pin_win_was_closed(%d, %s)
-    autocmd QuitPre <buffer=%d> lua require'lean.infoview'.__pin_win_was_quit(%d, %s)
-  ]], self.bufdiv.buf, self.id, util.afile, self.bufdiv.buf, self.id, util.afile), self.bufdiv.buf)
+    autocmd QuitPre <buffer=%d> lua require'lean.infoview'.__pin_win_was_quit()
+  ]], self.bufdiv.buf, self.id, util.afile, self.bufdiv.buf), self.bufdiv.buf)
 
   self:render()
 
@@ -965,6 +990,8 @@ local function get_iv_from_win(win)
   end
 end
 
+local just_quit = false
+
 --- A pin's window was closed.
 --- Will be triggered via a `WinClosed` autocmd.
 ---@param id number @pin id
@@ -972,18 +999,18 @@ end
 function infoview.__pin_win_was_closed(id, win)
   local iv = get_iv_from_win(win)
   if not iv or iv.win_event_disable then return end
-  -- TODO handle via separate __pin_closed
-  iv:__pin_quit(id)
+  if just_quit then
+    iv:__pin_quit(id)
+    just_quit = false
+  else
+    iv:__pin_closed(id)
+  end
 end
 
 --- A pin's window was quit.
 --- Will be triggered via a `QuitPre` autocmd.
----@param id number @pin id
----@param win number @handle of quit window
-function infoview.__pin_win_was_quit(id, win)
-  local iv = get_iv_from_win(win)
-  if not iv or iv.win_event_disable then return end
-  iv:__pin_quit(id)
+function infoview.__pin_win_was_quit()
+  just_quit = true
 end
 
 --- Update the info contents appropriately for Lean 4 or 3.
