@@ -317,6 +317,17 @@ function Div:dummy_copy()
   return dummy
 end
 
+---@param divs Div[]
+---@param sep string
+local function concat(divs, sep)
+  local out = Div:new()
+  for i, d in ipairs(divs) do
+    if i > 1 then out:insert_div(sep) end
+    out:add_div(d)
+  end
+  return out
+end
+
 ---Utility for rendering a div with a particular buffer.
 ---@class BufDiv
 ---@field buf integer Buffer number of the buffer the div renders to
@@ -713,4 +724,4 @@ end
 return {Div = Div, BufDiv = BufDiv, util = {
   pos_to_raw_pos = pos_to_raw_pos,
   raw_pos_to_pos = raw_pos_to_pos,
-}, _by_buf = _by_buf}
+}, _by_buf = _by_buf, concat = concat}

@@ -28,6 +28,16 @@ local function show_popup(div)
   bufdiv:buf_render()
 end
 
+---@param divs Div[]?
+---@param err any?
+local function show_popup_or_error(divs, err)
+  if divs then
+    show_popup(html.concat(divs, '\n\n'))
+  elseif err then
+    show_popup(html.Div:new(vim.inspect(err)))
+  end
+end
+
 function commands.show_goal(use_widgets)
   if use_widgets == nil then use_widgets = true end
 
@@ -48,7 +58,7 @@ function commands.show_goal(use_widgets)
       goal = goal and components.goal(goal)
     end
 
-    if goal or err then show_popup(goal or html.Div:new(vim.inspect(err))) end
+    show_popup_or_error(goal, err)
   end)()
 end
 
@@ -76,7 +86,7 @@ function commands.show_term_goal(use_widgets)
       term_goal = term_goal and components.term_goal(term_goal)
     end
 
-    if term_goal or err then show_popup(term_goal or html.Div:new(vim.inspect(err))) end
+    show_popup_or_error(term_goal, err)
   end)()
 end
 

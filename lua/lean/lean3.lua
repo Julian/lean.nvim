@@ -270,7 +270,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
   end
 
   params = vim.deepcopy(params)
-  local state_div
+  local state_div --- @type Div?
 
   if require"lean.progress".is_processing_at(params) then
     if show_processing then
@@ -320,7 +320,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
   if not state_div then
     local _, result = util.a_request(bufnr, "$/lean/plainGoal", params)
     if result and type(result) == "table" then
-      state_div = components.goal(result)
+      state_div = html.concat(components.goal(result), '\n\n')
     end
   end
 
@@ -342,7 +342,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
 
   ::finish::
 
-  parent_div:add_div(components.diagnostics(bufnr, params.position.line))
+  parent_div:add_div(html.concat(components.diagnostics(bufnr, params.position.line), '\n\n'))
 
   data_div:add_div(parent_div)
 

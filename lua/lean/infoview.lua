@@ -36,6 +36,7 @@ local options = {
     indicators = "auto",
     lean3 = { show_filter = true, mouse_events = false },
     show_processing = true,
+    show_no_info_message = false,
     use_widget = true,
 
     mappings = {
@@ -765,6 +766,7 @@ function Pin:__update(tick, delay, lean3_opts)
   delay = delay or 100
 
   self:set_loading(true)
+  local blocks = {} ---@type Div[]
   local new_data_div = html.Div:new("", "pin-data", nil)
 
   if delay > 0 then
@@ -842,16 +844,10 @@ function Pin:__update(tick, delay, lean3_opts)
       term_goal_div = components.term_goal(term_goal)
     end
 
-    local goal_div_empty, term_goal_div_empty = goal_div:is_empty(), term_goal_div:is_empty()
-
-    new_data_div:add_div(goal_div)
-    if not goal_div_empty and not term_goal_div_empty then
-      new_data_div:add_div(html.Div:new("\n\n", "plain_goal-term_goal-separator"))
-    end
-    new_data_div:add_div(term_goal_div)
-
-    if goal_div_empty and term_goal_div_empty then
-      new_data_div:add_div(html.Div:new("No info.", "no-tactic-term"))
+    vim.list_extend(blocks, goal_div)
+    vim.list_extend(blocks, term_goal_div)
+    if options.show_no_info_message and #goal_div + #term_goal_div == 0 then
+      table.insert(blocks, html.Div:new("No info.", "no-tactic-term"))
     end
 
     local diagnostics_div
@@ -866,7 +862,9 @@ function Pin:__update(tick, delay, lean3_opts)
       end
     end
 
-    new_data_div:add_div(diagnostics_div or components.diagnostics(buf, line))
+    vim.list_extend(blocks, diagnostics_div or components.diagnostics(buf, line))
+
+    new_data_div:add_div(html.concat(blocks, '\n\n'))
 
     if not tick:check() then return true end
   end
