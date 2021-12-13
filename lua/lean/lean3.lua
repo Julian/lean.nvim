@@ -57,6 +57,9 @@ local to_event = {
 
 function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
     opts, options, show_processing, show_no_info_message)
+  local client = lsp.get_lean3_server(bufnr)
+  if not client then return end
+
   local parent_div = html.Div:new("", "lean-3-widget")
   local widget
 
@@ -282,10 +285,10 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
   if use_widget then
     local err, result
     if not (opts and opts.widget_event) then
-      local _err, _result = util.a_request(bufnr, "$/lean/discoverWidget", params)
+      local _err, _result = util.client_a_request(client, "$/lean/discoverWidget", params)
       err, result = _err, _result
     else
-      local _err, _result = util.a_request(bufnr, "$/lean/widgetEvent", opts.widget_event)
+      local _err, _result = util.client_a_request(client, "$/lean/widgetEvent", opts.widget_event)
       err, result = _err, _result
       if result and result.record then result = result.record end
     end
@@ -318,7 +321,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
   end
 
   if not state_div then
-    local _, result = util.a_request(bufnr, "$/lean/plainGoal", params)
+    local _, result = util.client_a_request(client, "$/lean/plainGoal", params)
     if result and type(result) == "table" then
       state_div = html.concat(components.goal(result), '\n\n')
     end

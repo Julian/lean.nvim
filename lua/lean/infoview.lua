@@ -793,9 +793,6 @@ function Pin:_update(force, delay, tick, lean3_opts)
   end
 end
 
-local plain_goal = a.wrap(leanlsp.plain_goal, 3)
-local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
-
 --- async function to update this pin's contents given the current position.
 function Pin:__update(tick, delay, lean3_opts)
   delay = delay or 100
@@ -850,7 +847,7 @@ function Pin:__update(tick, delay, lean3_opts)
     end
 
     if not goal_div then
-      local err, goal = plain_goal(params, buf)
+      local err, goal = leanlsp.plain_goal(params, buf)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
         return self:__update(tick, delay, lean3_opts)
@@ -871,7 +868,7 @@ function Pin:__update(tick, delay, lean3_opts)
     end
 
     if not term_goal_div then
-      local err, term_goal = plain_term_goal(params, buf)
+      local err, term_goal = leanlsp.plain_term_goal(params, buf)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
         return self:__update(tick, delay, lean3_opts)
