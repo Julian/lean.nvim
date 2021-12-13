@@ -9,9 +9,6 @@ local progress = require'lean.progress'
 
 local commands = {}
 
-local plain_goal = a.wrap(leanlsp.plain_goal, 3)
-local plain_term_goal = a.wrap(leanlsp.plain_term_goal, 3)
-
 ---@param div Div
 local function show_popup(div)
   local str = div:to_string()
@@ -55,7 +52,7 @@ function commands.show_goal(use_widgets)
     end
 
     if not goal then
-      err, goal = plain_goal(params, bufnr)
+      err, goal = leanlsp.plain_goal(params, bufnr)
       goal = goal and components.goal(goal)
     end
 
@@ -83,7 +80,7 @@ function commands.show_term_goal(use_widgets)
     end
 
     if not term_goal then
-      err, term_goal = plain_term_goal(params, bufnr)
+      err, term_goal = leanlsp.plain_term_goal(params, bufnr)
       term_goal = term_goal and components.term_goal(term_goal)
     end
 

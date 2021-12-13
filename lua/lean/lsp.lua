@@ -3,8 +3,6 @@ local util = require"lean._util"
 
 function lsp.enable(opts)
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
-    ["$/lean/plainGoal"] = util.mk_handler(lsp.handlers.plain_goal_handler);
-    ["$/lean/plainTermGoal"] = util.mk_handler(lsp.handlers.plain_term_goal_handler);
     ['$/lean/fileProgress'] = util.mk_handler(lsp.handlers.file_progress_handler);
     ['textDocument/publishDiagnostics'] = function(...)
       util.mk_handler(lsp.handlers.diagnostics_handler)(...)
@@ -18,46 +16,51 @@ function lsp.enable(opts)
   require('lspconfig').leanls.setup(opts)
 end
 
--- Fetch goal state information from the server.
-function lsp.plain_goal(params, bufnr, handler)
+--- Finds the vim.lsp.client object for the Lean 4 server associated to the
+--- given bufnr.
+function lsp.get_lean4_server(bufnr)
+  local lean_client
+  vim.lsp.for_each_buffer_client(bufnr, function (client)
+    if client.name == 'leanls' then lean_client = client end
+  end)
+  return lean_client
+end
+
+--- Finds the vim.lsp.client object for the Lean 3 server associated to the
+--- given bufnr.
+function lsp.get_lean3_server(bufnr)
+  local lean_client
+  vim.lsp.for_each_buffer_client(bufnr, function (client)
+    if client.name == 'lean3ls' then lean_client = client end
+  end)
+  return lean_client
+end
+
+-- Fetch goal state information from the server (async).
+---@param params PlainGoalParams
+---@param bufnr number
+---@return any error
+---@return any plain_goal
+function lsp.plain_goal(params, bufnr)
+  local client = lsp.get_lean4_server(bufnr) or lsp.get_lean3_server(bufnr)
+  if not client then return 'LSP server not connected', nil end
+
   params = vim.deepcopy(params)
   -- Shift forward by 1, since in vim it's easier to reach word
   -- boundaries in normal mode.
   params.position.character = params.position.character + 1
-  return util.request(bufnr, "$/lean/plainGoal", params, handler)
+  return util.client_a_request(client, '$/lean/plainGoal', params)
 end
 
--- Fetch term goal state information from the server.
-function lsp.plain_term_goal(params, bufnr, handler)
-  params = vim.deepcopy(params)
-  return util.request(bufnr, "$/lean/plainTermGoal", params, handler)
-end
-
-function lsp.handlers.plain_goal_handler (_, result, ctx, config)
-  local method = ctx.method
-  config = config or {}
-  config.focus_id = method
-  if not (result and result.rendered) then
-    return
-  end
-  local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(result.rendered)
-  markdown_lines = vim.lsp.util.trim_empty_lines(markdown_lines)
-  if vim.tbl_isempty(markdown_lines) then
-    return
-  end
-  return vim.lsp.util.open_floating_preview(markdown_lines, "markdown", config)
-end
-
-function lsp.handlers.plain_term_goal_handler (_, result, ctx, config)
-  local method = ctx.method
-  config = config or {}
-  config.focus_id = method
-  if not (result and result.goal) then
-    return
-  end
-  return vim.lsp.util.open_floating_preview(
-    vim.split(result.goal, '\n'), "leaninfo", config
-  )
+-- Fetch term goal state information from the server (async).
+---@param params PlainTermGoalParams
+---@param bufnr number
+---@return any error
+---@return any plain_term_goal
+function lsp.plain_term_goal(params, bufnr)
+  local client = lsp.get_lean4_server(bufnr)
+  if not client then return 'LSP server not connected', nil end
+  return util.client_a_request(client, '$/lean/plainTermGoal', params)
 end
 
 function lsp.handlers.file_progress_handler(err, params)

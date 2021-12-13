@@ -1,6 +1,7 @@
 local rpc = {}
 local a = require'plenary.async'
 local util = require'lean._util'
+local lsp = require'lean.lsp'
 local control = require'plenary.async.control'
 
 ---@class RpcRef
@@ -9,6 +10,7 @@ local control = require'plenary.async.control'
 ---@field client any vim.lsp.client object
 ---@field uri string
 ---@field connected boolean
+---@field session_id string?
 ---@field connect_err any | nil
 ---@field on_connected function
 ---@field keepalive_timer any
@@ -150,20 +152,10 @@ end
 ---@type table<number, Session>
 local sessions = {}
 
---- Finds the vim.lsp.client object for the Lean 4 server associated to the
---- given bufnr.
-local function get_lean4_server(bufnr)
-  for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
-    if client.name == 'leanls' then
-      return client
-    end
-  end
-end
-
 ---@param bufnr number
 ---@result any error
 local function connect(bufnr)
-  local client = get_lean4_server(bufnr)
+  local client = lsp.get_lean4_server(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local sess = Session:new(client, bufnr, uri)
   sessions[bufnr] = sess

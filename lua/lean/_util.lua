@@ -84,18 +84,14 @@ function M.mk_handler(fn)
   end
 end
 
--- from mfussenegger/nvim-lsp-compl@29a81f3
-function M.request(bufnr, method, params, handler)
-  return vim.lsp.buf_request(bufnr, method, params, M.mk_handler(handler))
+---@param client any vim.lsp.client
+---@param request string LSP request name
+---@param params table LSP request parameters
+---@return any error
+---@return any result
+function M.client_a_request(client, request, params)
+  return a.wrap(function(handler) return client.request(request, params, M.mk_handler(handler)) end, 1)()
 end
-
-M.a_request = a.wrap(M.request, 4)
-
-function M.client_request(client, method, params, handler)
-  return client.request(method, params, M.mk_handler(handler))
-end
-
-M.client_a_request = a.wrap(M.client_request, 4)
 
 -- FIXME: tick locking is disabled for now
 -- It is really easy to crash the infoview this way if an exception is not handled.
@@ -237,8 +233,8 @@ end
 M.wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) end, 2)
 
 --- Utility function for getting the encoding of the first LSP client on the given buffer.
----@param bufnr (number) buffer handle or 0 for current, defaults to current
----@returns (string) encoding first client if there is one, nil otherwise
+---@param bufnr number buffer handle or 0 for current, defaults to current
+---@returns string encoding first client if there is one, nil otherwise
 function M._get_offset_encoding(bufnr)
   local offset_encoding
 
