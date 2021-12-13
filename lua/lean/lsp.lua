@@ -11,6 +11,10 @@ function lsp.enable(opts)
       vim.lsp.handlers['textDocument/publishDiagnostics'](...)
     end;
   })
+  if vim.version().major == 0 and vim.version().minor >= 6 then
+    -- workaround for https://github.com/neovim/neovim/issues/16624
+    opts.flags = vim.tbl_extend('keep', opts.flags or {}, { allow_incremental_sync = false })
+  end
   require('lspconfig').leanls.setup(opts)
 end
 
