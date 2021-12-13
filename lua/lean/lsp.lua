@@ -9,9 +9,6 @@ function lsp.enable(opts)
       vim.lsp.handlers['textDocument/publishDiagnostics'](...)
     end;
   })
-  -- workaround for sync bugs in <=0.6.0
-  -- https://github.com/neovim/neovim/issues/16624
-  opts.flags = vim.tbl_extend('keep', opts.flags or {}, { allow_incremental_sync = false })
   require('lspconfig').leanls.setup(opts)
 end
 
