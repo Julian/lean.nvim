@@ -342,7 +342,10 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
 
   ::finish::
 
-  parent_div:add_div(html.concat(components.diagnostics(bufnr, params.position.line), '\n\n'))
+  for _, diag in ipairs(components.diagnostics(bufnr, params.position.line)) do
+    parent_div:insert_div('\n\n')
+    parent_div:add_div(diag)
+  end
 
   data_div:add_div(parent_div)
 
