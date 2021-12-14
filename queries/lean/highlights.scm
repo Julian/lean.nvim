@@ -198,7 +198,7 @@
 (char) @character
 (string) @string
 (interpolated_string) @string
-(escape_sequence) @string.escape
+(quoted_char) @string.escape
 
 ; Reset highlighing in string interpolation
 (interpolation) @none
