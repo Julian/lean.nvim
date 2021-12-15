@@ -295,12 +295,11 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
         for _, effect in pairs(result.effects) do
           if effect.kind == "reveal_position" then
             local this_infoview = require"lean.infoview".get_current_infoview()
-            local this_info = this_infoview and this_infoview.info
-            local this_window = this_info and this_info.last_window
+            local this_window = this_infoview and this_infoview.last_window
             -- effect.file_name == nil means current file
             local this_buf = effect.file_name and
               vim.uri_to_bufnr(vim.uri_from_fname(effect.file_name)) or
-              (this_info and vim.uri_to_bufnr(params.textDocument.uri))
+              (this_infoview and vim.uri_to_bufnr(params.textDocument.uri))
             if this_window and vim.api.nvim_win_is_valid(this_window) then
               if this_buf then
                 vim.api.nvim_win_set_buf(this_window, this_buf)
