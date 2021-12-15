@@ -1153,6 +1153,19 @@ function infoview.toggle_focus_curr_pin()
   end
 end
 
+function infoview.goto_curr_pin()
+  if not is_lean_buffer() then return end
+
+  local iv = infoview.get_current_infoview()
+  if iv ~= nil then
+    local curr_pin = iv.info.pin
+    local params = curr_pin.__ui_position_params
+    local uri_bufnr = vim.fn.bufnr(params.filename)
+    vim.api.nvim_set_current_buf(uri_bufnr)
+    vim.api.nvim_win_set_cursor(0, { params.row + 1, params.col })
+  end
+end
+
 function infoview.enable_widgets()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then iv.info.pin:set_widget(true) end
