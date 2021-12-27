@@ -1,11 +1,10 @@
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 
-helpers.setup {}
+helpers.setup{}
 describe('infoview', function()
-  describe('close_all succeeds', function()
-    it('single infoview',
-    function(_)
+  describe('close_all', function()
+    it('closes one infoview', function(_)
       helpers.edit_lean_buffer("temp.lean")
       assert.initclosed.infoview()
       infoview.get_current_infoview():open()
@@ -16,8 +15,7 @@ describe('infoview', function()
       assert.closed.infoview()
     end)
 
-    it('multiple infoviews, not all opened',
-    function(_)
+    it('closes many infoviews, some already closed', function(_)
       vim.api.nvim_command("tabnew")
       assert.buf.created.tracked()
       assert.win.created.tracked()
