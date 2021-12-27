@@ -120,13 +120,12 @@ function Infoview:new(open)
     width = options.width,
     height = options.height,
     diff_open = false,
-    info = Info:new(),
   }
-  table.insert(new_infoview.info.__parent_infoviews, new_infoview)
-  table.insert(infoview._by_id, new_infoview)
   self.__index = self
   setmetatable(new_infoview, self)
 
+  new_infoview.info = Info:new{ parent = new_infoview }
+  table.insert(infoview._by_id, new_infoview)
   if not open then new_infoview:close() else new_infoview:open() end
 
   return new_infoview
@@ -313,14 +312,14 @@ function Info:focus_on_current_buffer()
 end
 
 ---@return Info
-function Info:new()
+function Info:new(opts)
   local new_info = {
     id = #infoview._info_by_id + 1,
     pin = Pin:new(options.autopause, options.use_widget),
     pins = {},
     pins_div = html.Div:new("", "info", nil),
     win_event_disable = false,
-    __parent_infoviews = {},
+    __parent_infoviews = { opts.parent },
   }
   table.insert(infoview._info_by_id, new_info)
 
