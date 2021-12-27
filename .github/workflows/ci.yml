@@ -55,6 +55,7 @@ jobs:
       - name: Install nvim dependencies
         run: |
           mkdir packpath
+          git clone --depth 1 https://github.com/AndrewRadev/switch.vim/ packpath/switch.vim
           git clone --depth 1 https://github.com/neovim/nvim-lspconfig packpath/nvim-lspconfig
           git clone --depth 1 https://github.com/norcalli/snippets.nvim packpath/snippets.nvim
           git clone --depth 1 https://github.com/nvim-lua/plenary.nvim packpath/plenary.nvim

@@ -8,8 +8,7 @@ endif
 let b:switch_definitions = [
     \ g:switch_builtins.true_false,
     \ ["#check", "#eval", "#reduce"],
-    \ ["inl", "inr"],
-    \ ["tt", "ff"],
+    \ switch#Words(["tt", "ff"]),
     \ ["=", "≠"],
     \ ["∈", "∉"],
     \ ["∪", "∩"],
@@ -33,4 +32,16 @@ let b:switch_definitions = [
     \ ["8", "₈", "⁸"],
     \ ["9", "₉", "⁹"],
     \ ["ℕ", "ℚ", "ℝ", "ℂ"],
+    \ {
+    \   '\(\<\|[_.]\)\zsbot\ze\(\>\|[_.]\)': 'top',
+    \   '\(\<\|[_.]\)\zstop\ze\(\>\|[_.]\)': 'bot',
+    \ },
+    \ {
+    \   '\(\<\|[_.]\)\zsinl\ze\(\>\|[_.]\)': 'inr',
+    \   '\(\<\|[_.]\)\zsinr\ze\(\>\|[_.]\)': 'inl',
+    \ },
+    \ {
+    \   '\(\<\|[_.]\)\zsleft\ze\(\>\|[_.]\)': 'right',
+    \   '\(\<\|[_.]\)\zsright\ze\(\>\|[_.]\)': 'left',
+    \ },
 \ ]
