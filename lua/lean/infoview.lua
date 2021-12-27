@@ -54,18 +54,17 @@ local options = {
 --- An individual pin.
 ---@class Pin
 ---@field id number
----@field parent_infos table<number, boolean>
 ---@field use_widget boolean
 ---@field data_div Div
 ---@field div Div
 ---@field ticker table
----@field __ui_position_params UIParams
+---@field private __parent_infos table<Info, boolean>
+---@field private __ui_position_params UIParams
 local Pin = {next_id = 1}
 
 --- An individual info.
 ---@class Info
 ---@field id number
----@field parent_infoviews Infoview[]
 ---@field pin Pin
 ---@field diff_pin Pin
 ---@field pins Pin[]
@@ -73,6 +72,7 @@ local Pin = {next_id = 1}
 ---@field bufdiv BufDiv
 ---@field diff_bufdiv BufDiv
 ---@field win_event_disable boolean
+---@field private __parent_infoviews Infoview[]
 local Info = {}
 
 --- A "view" on an info (i.e. window).
@@ -122,7 +122,7 @@ function Infoview:new(open)
     diff_open = false,
     info = Info:new(),
   }
-  new_infoview.info:add_parent_infoview(new_infoview)
+  table.insert(new_infoview.info.__parent_infoviews, new_infoview)
   table.insert(infoview._by_id, new_infoview)
   self.__index = self
   setmetatable(new_infoview, self)
@@ -295,7 +295,7 @@ end
 function Info:focus_on_current_buffer()
   if not is_lean_buffer() then return end
   local is_open = false
-  for _, parent in ipairs(self.parent_infoviews) do
+  for _, parent in ipairs(self.__parent_infoviews) do
     if parent.is_open then
       is_open = true
       break
@@ -318,9 +318,9 @@ function Info:new()
     id = #infoview._info_by_id + 1,
     pin = Pin:new(options.autopause, options.use_widget),
     pins = {},
-    parent_infoviews = {},
     pins_div = html.Div:new("", "info", nil),
-    win_event_disable = false
+    win_event_disable = false,
+    __parent_infoviews = {},
   }
   table.insert(infoview._info_by_id, new_info)
 
@@ -362,21 +362,16 @@ function Info:new()
     autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__diff_was_closed(%d)
   ]], self.diff_bufdiv.buf, self.id), self.diff_bufdiv.buf)
 
-  self.pin:add_parent_info(self)
+  self.pin:__add_parent_info(self)
 
   self:render()
 
   return self
 end
 
----@param new_parent Infoview
-function Info:add_parent_infoview(new_parent)
-  table.insert(self.parent_infoviews, new_parent)
-end
-
 function Info:__new_current_pin()
   self.pin = Pin:new(options.autopause, options.use_widget)
-  self.pin:add_parent_info(self)
+  self.pin:__add_parent_info(self)
 end
 
 function Info:add_pin()
@@ -392,7 +387,7 @@ end
 function Info:set_diff_pin(params)
   if not self.diff_pin then
     self.diff_pin = Pin:new(options.autopause, options.use_widget)
-    self.diff_pin:add_parent_info(self)
+    self.diff_pin:__add_parent_info(self)
     self.diff_bufdiv.div = self.diff_pin.div
     self.diff_pin:show_extmark(nil, diff_pin_hl_group)
   end
@@ -404,13 +399,13 @@ end
 
 --- Close all parent infoviews.
 function Info:clear()
-  for _, parent in ipairs(self.parent_infoviews) do
+  for _, parent in ipairs(self.__parent_infoviews) do
     parent:close()
   end
 end
 
 function Info:clear_pins()
-  for _, pin in pairs(self.pins) do pin:remove_parent_info(self) end
+  for _, pin in pairs(self.pins) do pin:__remove_parent_info(self) end
 
   self.pins = {}
   self:render()
@@ -418,7 +413,7 @@ end
 
 function Info:clear_diff_pin()
   if not self.diff_pin then return end
-  self.diff_pin:remove_parent_info(self)
+  self.diff_pin:__remove_parent_info(self)
   self.diff_pin = nil
   self.diff_bufdiv.div = self.pin.div
   self:render()
@@ -552,7 +547,7 @@ end
 
 --- Refresh parent infoview diff windows.
 function Info:__refresh_parents()
-  for _, parent in ipairs(self.parent_infoviews) do
+  for _, parent in ipairs(self.__parent_infoviews) do
     parent:__refresh_diff()
   end
 end
@@ -571,10 +566,14 @@ end
 
 ---@return Pin
 function Pin:new(paused, use_widget)
-  local new_pin = {id = self.next_id, parent_infos = {}, paused = paused,
+  local new_pin = {
+    id = self.next_id,
+    paused = paused,
     ticker = util.Ticker:new(),
     data_div = html.Div:new("", "pin-data", nil),
-    div = html.Div:new("", "pin", nil), use_widget = use_widget}
+    div = html.Div:new("", "pin", nil), use_widget = use_widget,
+    __parent_infos = {},
+  }
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
 
@@ -590,9 +589,9 @@ function Pin:set_widget(use_widget)
   self:update()
 end
 
----@param info Info
-function Pin:add_parent_info(info)
-  self.parent_infos[info.id] = true
+---@param new_parent Info
+function Pin:__add_parent_info(new_parent)
+  self.__parent_infos[new_parent] = true
 end
 
 local extmark_ns = vim.api.nvim_create_namespace("LeanNvimPinExtmarks")
@@ -602,9 +601,9 @@ function Pin:_teardown()
   infoview._pin_by_id[self.id] = nil
 end
 
-function Pin:remove_parent_info(info)
-  self.parent_infos[info.id] = nil
-  if vim.tbl_isempty(self.parent_infos) then self:_teardown() end
+function Pin:__remove_parent_info(info)
+  self.__parent_infos[info] = nil
+  if vim.tbl_isempty(self.__parent_infos) then self:_teardown() end
 end
 
 --- Update this pin's current position.
@@ -727,7 +726,7 @@ function Pin:pause()
   self.data_div = self.data_div:dummy_copy()
   if not self:set_loading(false) then
     self.div.divs = { self.data_div }
-    self:render_parents()
+    self:__render_parents()
   end
 
   -- abort any pending requests
@@ -741,9 +740,9 @@ function Pin:move(params)
   self:update()
 end
 
-function Pin:render_parents()
-  for parent_id, _ in pairs(self.parent_infos) do
-    infoview._info_by_id[parent_id]:render()
+function Pin:__render_parents()
+  for parent, _ in pairs(self.__parent_infos) do
+    parent:render()
   end
 end
 
@@ -757,7 +756,7 @@ function Pin:set_loading(loading)
 
     self.loading = true
 
-    self:render_parents()
+    self:__render_parents()
     return true
   elseif not loading and self.loading then
     self.div.divs = {}
@@ -765,7 +764,7 @@ function Pin:set_loading(loading)
 
     self.loading = false
 
-    self:render_parents()
+    self:__render_parents()
     return true
   end
 
@@ -781,7 +780,7 @@ function Pin:async_update(force, delay, _, lean3_opts)
   if not tick:check() then return end
 
   if not self:set_loading(false) then
-    self:render_parents()
+    self:__render_parents()
   end
 end
 
