@@ -508,7 +508,9 @@ function Info:render()
     self.diff_bufdiv:buf_render()
   end
 
-  self:__refresh_parents()
+  for _, parent in ipairs(self.__parent_infoviews) do
+    parent:__refresh_diff()
+  end
 
   collectgarbage()
 end
@@ -546,13 +548,6 @@ function Info:toggle_auto_diff_pin(clear)
   end
 end
 
---- Refresh parent infoview diff windows.
-function Info:__refresh_parents()
-  for _, parent in ipairs(self.__parent_infoviews) do
-    parent:__refresh_diff()
-  end
-end
-
 --- Retrieve the contents of the info as a table.
 function Info:get_lines(start_line, end_line)
   start_line = start_line or 0
@@ -572,7 +567,8 @@ function Pin:new(paused, use_widget)
     paused = paused,
     ticker = util.Ticker:new(),
     data_div = html.Div:new("", "pin-data", nil),
-    div = html.Div:new("", "pin", nil), use_widget = use_widget,
+    div = html.Div:new("", "pin", nil),
+    use_widget = use_widget,
     __parent_infos = {},
   }
   self.next_id = self.next_id + 1
