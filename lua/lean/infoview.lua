@@ -65,7 +65,7 @@ local Pin = {next_id = 1}
 --- An individual info.
 ---@class Info
 ---@field id number
----@field parent_infoviews table<number, boolean>
+---@field parent_infoviews table<Infoview, boolean>
 ---@field pin Pin
 ---@field diff_pin Pin
 ---@field pins Pin[]
@@ -295,8 +295,8 @@ end
 function Info:focus_on_current_buffer()
   if not is_lean_buffer() then return end
   local is_open = false
-  for parent_id, _ in pairs(self.parent_infoviews) do
-    if infoview._by_id[parent_id].is_open then
+  for parent, _ in pairs(self.parent_infoviews) do
+    if parent.is_open then
       is_open = true
       break
     end
@@ -369,9 +369,9 @@ function Info:new()
   return self
 end
 
----@param _infoview Infoview
-function Info:add_parent_infoview(_infoview)
-  self.parent_infoviews[_infoview.id] = true
+---@param new_parent Infoview
+function Info:add_parent_infoview(new_parent)
+  self.parent_infoviews[new_parent] = true
 end
 
 function Info:__new_current_pin()
@@ -404,8 +404,8 @@ end
 
 --- Close all parent infoviews.
 function Info:clear()
-  for parent_id, _ in pairs(self.parent_infoviews) do
-    infoview._by_id[parent_id]:close()
+  for parent, _ in pairs(self.parent_infoviews) do
+    parent:close()
   end
 end
 
@@ -552,8 +552,8 @@ end
 
 --- Refresh parent infoview diff windows.
 function Info:__refresh_parents()
-  for parent_id, _ in pairs(self.parent_infoviews) do
-    infoview._by_id[parent_id]:__refresh_diff()
+  for parent, _ in pairs(self.parent_infoviews) do
+    parent:__refresh_diff()
   end
 end
 
