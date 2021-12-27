@@ -431,7 +431,6 @@ end
 --- Set the current window as the last window used to update this Info.
 function Info:set_last_window()
   self.last_window = vim.api.nvim_get_current_win()
-  self.last_buf = vim.api.nvim_get_current_buf()
 end
 
 --- Update this info's pins div.
@@ -553,11 +552,6 @@ function Info:get_lines(start_line, end_line)
   start_line = start_line or 0
   end_line = end_line or -1
   return vim.api.nvim_buf_get_lines(self.bufdiv.buf, start_line, end_line, true)
-end
-
---- Retrieve the current combined contents of the info as a string.
-function Info:get_contents()
-  return table.concat(self:get_lines(), "\n")
 end
 
 ---@return Pin
