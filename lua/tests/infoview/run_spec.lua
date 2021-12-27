@@ -5,22 +5,19 @@ local helpers = require('tests.helpers')
 helpers.setup{}
 describe('infoview', function()
   describe('initial', function()
-    it('opens',
-    function(_)
+    it('opens', function(_)
       helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
       assert.initclosed.infoview()
       infoview.get_current_infoview():open()
       assert.opened.infoview()
     end)
 
-    it('remains open on BufEnter',
-    function(_)
+    it('remains open on BufEnter', function(_)
       vim.api.nvim_command("edit " .. fixtures.lean3_project.some_existing_file)
       assert.opened_kept.infoview()
     end)
 
-    it('remains open on WinEnter',
-    function(_)
+    it('remains open on WinEnter', function(_)
       vim.api.nvim_command("split")
       helpers.edit_lean_buffer(fixtures.lean3_project.some_nested_existing_file)
       assert.buf.created.tracked()
@@ -32,21 +29,18 @@ describe('infoview', function()
       assert.opened_kept.pin_pos_changed.infoview()
     end)
 
-    it('closes',
-    function(_)
+    it('closes', function(_)
       infoview.get_current_infoview():close()
       assert.closed.infoview()
     end)
 
-    it('remains closed on BufEnter',
-    function(_)
+    it('remains closed on BufEnter', function(_)
       vim.api.nvim_command("edit " .. fixtures.lean3_project.some_nested_existing_file)
       assert.buf.left.tracked()
       assert.closed_kept.pin_pos_changed.infoview()
     end)
 
-    it('remains closed on WinEnter',
-    function(_)
+    it('remains closed on WinEnter', function(_)
       vim.api.nvim_command("split")
       helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
       assert.win.created.tracked()
@@ -58,8 +52,7 @@ describe('infoview', function()
       assert.closed_kept.pin_pos_changed.infoview()
     end)
 
-    it('manual quit succeeds and updates internal state',
-    function(_)
+    it('manual quit succeeds and updates internal state', function(_)
       infoview.get_current_infoview():open()
       assert.opened.infoview()
       vim.api.nvim_command("wincmd l")
@@ -71,8 +64,7 @@ describe('infoview', function()
       assert.use_pendingbuf.use_pendingwin.closed.infoview()
     end)
 
-    it('manual close succeeds and updates internal state',
-    function(_)
+    it('manual close succeeds and updates internal state', function(_)
       infoview.get_current_infoview():open()
       assert.opened.infoview()
       vim.api.nvim_command("wincmd l")
@@ -86,8 +78,7 @@ describe('infoview', function()
   end)
 
   describe('new tab', function()
-    it('closes independently',
-    function(_)
+    it('closes independently', function(_)
       infoview.get_current_infoview():open()
       assert.opened.infoview()
       vim.api.nvim_command("tabnew")
@@ -105,8 +96,7 @@ describe('infoview', function()
       assert.opened_kept.infoview()
     end)
 
-    it('opens independently',
-    function(_)
+    it('opens independently', function(_)
       infoview.get_current_infoview():close()
       assert.closed.infoview()
       vim.api.nvim_command("tabnext")
@@ -124,8 +114,7 @@ describe('infoview', function()
       assert.opened_kept.infoview()
     end)
 
-    it('closes when only window',
-    function(_)
+    it('closes when only window', function(_)
       vim.api.nvim_command("close")
       assert.buf.left.tracked()
       assert.win.removed.tracked()
