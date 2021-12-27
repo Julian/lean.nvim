@@ -398,14 +398,16 @@ function Info:set_diff_pin(params)
 end
 
 --- Close all parent infoviews.
-function Info:clear()
+function Info:close_parent_infoviews()
   for _, parent in ipairs(self.__parent_infoviews) do
     parent:close()
   end
 end
 
 function Info:clear_pins()
-  for _, pin in pairs(self.pins) do pin:__remove_parent_info(self) end
+  for _, pin in pairs(self.pins) do
+    pin:__remove_parent_info(self)
+  end
 
   self.pins = {}
   self:render()
@@ -925,7 +927,7 @@ end
 function infoview.__was_closed(id)
   local info = infoview._info_by_id[id]
   if info.win_event_disable then return end
-  info:clear()
+  info:close_parent_infoviews()
 end
 
 --- An infoview diff window was closed.
