@@ -11,8 +11,7 @@ helpers.setup {
 
 describe('infoview', function()
   describe('lean 4', function()
-    it('shows term state',
-    function(_)
+    it('shows term state', function(_)
       helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
       assert.initopened.infoview()
       helpers.wait_for_ready_lsp()
@@ -24,8 +23,7 @@ describe('infoview', function()
       assert.has_all(infoview.get_current_infoview().info.pin.div:to_string(), {"expected type", "⊢ Nat"})
     end)
 
-    it('shows tactic state',
-    function(_)
+    it('shows tactic state', function(_)
       vim.api.nvim_win_set_cursor(0, {6, 9})
       infoview.get_current_infoview().info.pin:set_position_params(position())
       infoview.get_current_infoview().info.pin:update(true)
@@ -35,8 +33,7 @@ describe('infoview', function()
     end)
 
     if vim.version().minor >= 6 then
-      it('re-issues on ContentModified',
-      function(_)
+      it('re-issues on ContentModified', function(_)
         vim.api.nvim_win_set_cursor(0, {16, 1})
         infoview.get_current_infoview().info.pin:set_position_params(position())
         vim.api.nvim_buf_set_lines(0, 14, 15, true, {"def new_test : Prop := by"})
@@ -46,8 +43,7 @@ describe('infoview', function()
         assert.has_all(infoview.get_current_infoview().info.pin.div:to_string(), {"1 goal\n⊢ Nat"})
       end)
 
-      it('shows state following multi-index UTF-16 character',
-      function(_)
+      it('shows state following multi-index UTF-16 character', function(_)
         vim.api.nvim_win_set_cursor(0, {18, 44})
         infoview.get_current_infoview().info.pin:set_position_params(position())
         infoview.get_current_infoview().info.pin:update(true)
@@ -74,8 +70,7 @@ describe('infoview', function()
   end)
 
   describe('lean 3', function()
-    it('shows term state',
-    function(_)
+    it('shows term state', function(_)
       helpers.edit_lean_buffer(fixtures.lean3_project.some_nested_existing_file)
       assert.buf.created.tracked_pending()
       assert.use_pendingbuf.pin_pos_changed.infoview()
@@ -89,8 +84,7 @@ describe('infoview', function()
       assert.has_all(infoview.get_current_infoview().info.pin.div:to_string(), {"⊢ ℕ"})
     end)
 
-    it('shows tactic state',
-    function(_)
+    it('shows tactic state', function(_)
       vim.api.nvim_win_set_cursor(0, {7, 10})
       infoview.get_current_infoview().info.pin:set_position_params(position())
       infoview.get_current_infoview().info.pin:update(true)
@@ -98,8 +92,7 @@ describe('infoview', function()
       assert.has_all(infoview.get_current_infoview().info.pin.div:to_string(), {"p q : Prop", "h : p ∨ q", "⊢ q ∨ p"})
     end)
 
-    it('only counts goals as goals, not hovered terms',
-    function(_)
+    it('only counts goals as goals, not hovered terms', function(_)
       -- hover for Lean 3 will also return information about `nat`, which is
       -- under the cursor, but we shouldn't count that as a goal.
       vim.api.nvim_win_set_cursor(0, {3, 14})
@@ -110,8 +103,7 @@ describe('infoview', function()
       '▶ expected type:\n⊢ Type 1')
     end)
 
-    it('shows state following multi-index UTF-16 character',
-    function(_)
+    it('shows state following multi-index UTF-16 character', function(_)
       vim.api.nvim_win_set_cursor(0, {18, 44})
       infoview.get_current_infoview().info.pin:set_position_params(position())
       infoview.get_current_infoview().info.pin:update(true)
@@ -137,8 +129,7 @@ describe('infoview', function()
   end)
 
   describe('new tab', function()
-    it('maintains separate infoview text',
-    function(_)
+    it('maintains separate infoview text', function(_)
       vim.api.nvim_win_set_cursor(0, {3, 23})
       infoview.get_current_infoview().info.pin:set_position_params(position())
       infoview.get_current_infoview().info.pin:update(true)
