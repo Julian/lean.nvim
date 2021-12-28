@@ -138,7 +138,7 @@ describe('infoview open/close', function()
         vim.api.nvim_tabpage_list_wins(0)
       )
 
-      vim.api.nvim_command("tabnew")
+      vim.cmd("tabnew")
       local tab2_window = vim.api.nvim_get_current_win()
       assert.are.same({ tab2_window }, vim.api.nvim_tabpage_list_wins(0))
 
