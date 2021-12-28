@@ -9,9 +9,9 @@ describe('infoview open/close', function()
 
   it('opens', function(_)
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+    lean_window = vim.api.nvim_get_current_win()
 
     helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
-    lean_window = unpack(vim.api.nvim_tabpage_list_wins(0))
     local current_infoview = infoview.get_current_infoview()
 
     current_infoview:open()

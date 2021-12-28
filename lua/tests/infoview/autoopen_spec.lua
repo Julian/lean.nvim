@@ -13,7 +13,7 @@ describe('infoview autoopen', function()
   it('automatically opens infoviews when editing new Lean files', function(_)
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
-    lean_window = unpack(vim.api.nvim_tabpage_list_wins(0))
+    lean_window = vim.api.nvim_get_current_win()
     assert.are.same_elements(
       { lean_window, infoview.get_current_infoview().window },
       vim.api.nvim_tabpage_list_wins(0)
@@ -58,7 +58,7 @@ describe('infoview autoopen', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
 
     vim.cmd("edit some_other_file.foo")
-    local non_lean_window = unpack(vim.api.nvim_tabpage_list_wins(0))
+    local non_lean_window = vim.api.nvim_get_current_win()
 
     assert.are.same({ non_lean_window }, vim.api.nvim_tabpage_list_wins(0))
 

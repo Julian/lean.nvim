@@ -5,9 +5,9 @@ helpers.setup{}
 describe('infoview.close_all', function()
   it('closes one infoview', function(_)
     assert.is.equal(#vim.api.nvim_tabpage_list_wins(0), 1)
+    local lean_window = vim.api.nvim_get_current_win()
 
     helpers.edit_lean_buffer("temp.lean")
-    local lean_window = unpack(vim.api.nvim_tabpage_list_wins(0))
     local current_infoview = infoview.get_current_infoview()
 
     current_infoview:open()
