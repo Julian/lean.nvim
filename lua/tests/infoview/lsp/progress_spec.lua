@@ -12,8 +12,7 @@ describe('infoview', function()
   describe('lean 4', function()
     -- NOTE: this test is disabled because it's fragile;
     -- swap it with the test below, and swap the configs above if you want to specifically test this
-    pending('shows processing message initially',
-    function(_)
+    pending('shows processing message initially', function(_)
       helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
       helpers.wait_for_ready_lsp()
       local result = vim.wait(5000, function() return require"lean.progress".is_processing(
@@ -26,8 +25,7 @@ describe('infoview', function()
       assert.has_all(infoview.get_current_infoview().info.pin.div:to_string(), {"Processing file..."})
     end)
 
-    pending('startup',
-    function(_)
+    pending('startup', function(_)
       helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
       helpers.wait_for_ready_lsp()
       local result = vim.wait(5000, function() return require"lean.progress".is_processing(
