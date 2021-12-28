@@ -547,13 +547,6 @@ function Info:toggle_auto_diff_pin(clear)
   end
 end
 
---- Retrieve the contents of the info as a table.
-function Info:get_lines(start_line, end_line)
-  start_line = start_line or 0
-  end_line = end_line or -1
-  return vim.api.nvim_buf_get_lines(self.bufdiv.buf, start_line, end_line, true)
-end
-
 ---@return Pin
 function Pin:new(paused, use_widget)
   local new_pin = {
