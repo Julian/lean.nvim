@@ -168,6 +168,16 @@ end
 
 assert:register("assertion", "has_all", has_all)
 
+--- Assert two list-tables have the same elements in any order.
+local function has_same_elements(_, arguments)
+  table.sort(arguments[1])
+  table.sort(arguments[2])
+  assert.are.same(arguments[1], arguments[2])
+  return true
+end
+
+assert:register("assertion", "same_elements", has_same_elements)
+
 --- The number of current windows.
 function helpers.get_num_wins() return #vim.api.nvim_list_wins() end
 
