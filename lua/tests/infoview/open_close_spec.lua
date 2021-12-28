@@ -12,12 +12,23 @@ describe('infoview open/close', function()
     lean_window = vim.api.nvim_get_current_win()
 
     helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
+    local cursor = vim.api.nvim_win_get_cursor(0)
     local current_infoview = infoview.get_current_infoview()
 
     current_infoview:open()
     assert.are.same_elements(
       { lean_window, current_infoview.window },
       vim.api.nvim_tabpage_list_wins(0)
+    )
+
+    -- Cursor did not move
+    assert.is.equal(vim.api.nvim_get_current_win(), lean_window)
+    assert.are.same(vim.api.nvim_win_get_cursor(0), cursor)
+
+    -- Infoview is positioned at the top
+    assert.are.same(
+      {1, 0},
+      vim.api.nvim_win_get_cursor(current_infoview.window)
     )
   end)
 
