@@ -126,9 +126,7 @@ function helpers.wait_for_line_diagnostics()
 end
 
 function helpers.wait_for_filetype()
-  local result, _ = vim.wait(10000, function()
-    return require"lean".is_lean_buffer()
-  end)
+  local result, _ = vim.wait(10000, require"lean".is_lean_buffer)
   assert.message("filetype was never set").is_truthy(result)
 end
 
