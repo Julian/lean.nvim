@@ -2,11 +2,6 @@ local lsp = { handlers = {} }
 local util = require"lean._util"
 
 function lsp.enable(opts)
-  if vim.version().major == 0 and vim.version().minor <= 6 then
-    -- workaround for sync bugs in <=0.6.0
-    -- https://github.com/neovim/neovim/issues/16624
-    opts.flags = vim.tbl_extend('keep', opts.flags or {}, { allow_incremental_sync = false })
-  end
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
     ['$/lean/fileProgress'] = util.mk_handler(lsp.handlers.file_progress_handler);
     ['textDocument/publishDiagnostics'] = function(...)
