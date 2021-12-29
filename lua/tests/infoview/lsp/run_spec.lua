@@ -78,6 +78,11 @@ describe('infoview', function()
       helpers.wait_for_server_progress()
       vim.api.nvim_win_set_cursor(0, {3, 23})
       infoview.get_current_infoview().info.pin:set_position_params(position())
+      -- FIXME: This vim.wait is "tight" -- moving it one line up or down makes
+      --        the test fail, and moving it "inward" (i.e. pushing it down
+      --        temporarily into Pin.__update and friends) doesn't lead
+      --        anywhere enlightening. But these tests need rewriting to just
+      --        assert against buffer contents.
       vim.wait(1000)
       infoview.get_current_infoview().info.pin:update(true)
       assert.pin_pos_changed.pin_text_changed.infoview()
