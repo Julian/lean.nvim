@@ -6,8 +6,6 @@ local a = require("plenary.async")
 local M = {}
 
 --- Return an array-like table with a value repeated the given number of times.
----
---- Will hopefully move upstream, see neovim/neovim#14919.
 function M.tbl_repeat(value, times)
   local result = {}
   for _ = 1, times do table.insert(result, value) end
