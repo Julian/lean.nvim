@@ -765,7 +765,9 @@ function Pin:async_update(force, _, lean3_opts)
 
   local tick = self.ticker:lock()
 
-  self:_update(force, tick, lean3_opts)
+  if self.__position_params and (force or not self.paused) then
+    self:__update(tick, lean3_opts)
+  end
   if not tick:check() then return end
 
   if not self:set_loading(false) then
@@ -774,12 +776,6 @@ function Pin:async_update(force, _, lean3_opts)
 end
 
 Pin.update = a.void(Pin.async_update)
-
-function Pin:_update(force, tick, lean3_opts)
-  if self.__position_params and (force or not self.paused) then
-    return self:__update(tick, lean3_opts)
-  end
-end
 
 --- async function to update this pin's contents given the current position.
 function Pin:__update(tick, lean3_opts)
