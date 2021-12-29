@@ -39,7 +39,21 @@ describe('builtin abbreviations', function()
         assert.contents.are('ε')
       end))
 
-      it('resets original buffer mapping', helpers.clean_buffer(ft, '', function()
+      pending('leaves the cursor in the right spot on <Tab>', helpers.clean_buffer(ft, '', function()
+        helpers.insert('\\<<Tab>')
+        helpers.insert('abc')
+        wait_for_expansion()
+        assert.contents.are('⟨abc')
+      end))
+
+      it('inserts nothing on <Tab> mid-line', helpers.clean_buffer(ft, 'foo bar baz quux,', function()
+        vim.cmd('normal $')
+        helpers.insert(' \\comp<Tab> spam')
+        wait_for_expansion()
+        assert.contents.are('foo bar baz quux ∘ spam,')
+      end))
+
+      it('does not interfere with existing mappings', helpers.clean_buffer(ft, '', function()
         vim.api.nvim_buf_set_keymap(
             0,
             'i',
@@ -56,14 +70,6 @@ describe('builtin abbreviations', function()
         assert.are.same(vim.b.foo, 12)
         vim.api.nvim_buf_del_keymap(0, 'i', '<Tab>')
       end))
-
-      it('inserts nothing on <Tab> mid-line',
-        helpers.clean_buffer(ft, 'foo bar baz quux,', function()
-          vim.cmd('normal $')
-          helpers.insert(' \\comp<Tab> spam')
-          wait_for_expansion()
-          assert.contents.are('foo bar baz quux ∘ spam,')
-        end))
     end)
 
     -- Really this needs to place the cursor too, but for now we just strip
