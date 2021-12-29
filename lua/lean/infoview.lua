@@ -961,7 +961,7 @@ function infoview.__update(id)
 end
 
 --- Update pins corresponding to the given URI.
-function infoview.__update_event(uri)
+function infoview.__update_pin_by_uri(uri)
   if infoview.enabled then
     for _, pin in pairs(infoview._pin_by_id) do
       if pin.__position_params and pin.__position_params.textDocument.uri == uri then

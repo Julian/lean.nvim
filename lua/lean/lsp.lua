@@ -69,7 +69,7 @@ function lsp.handlers.file_progress_handler(err, params)
 
   require"lean.progress".update(params)
 
-  require"lean.infoview".__update_event(params.textDocument.uri)
+  require"lean.infoview".__update_pin_by_uri(params.textDocument.uri)
 
   require"lean.progress_bars".update(params)
 end
@@ -84,7 +84,7 @@ function lsp.handlers.diagnostics_handler (_, params)
     end
   end
 
-  require"lean.infoview".__update_event(params.uri)
+  require"lean.infoview".__update_pin_by_uri(params.uri)
 end
 
 return lsp
