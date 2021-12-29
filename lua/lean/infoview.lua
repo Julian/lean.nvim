@@ -948,9 +948,7 @@ function infoview.__hide_curr_pin(id)
 end
 
 --- Update the info contents appropriately for Lean 4 or 3.
---- Normally will be called on each CursorHold for a buffer containing Lean.
---- TODO perhaps this should be schedule_wrap'ed?
---- @param id number @info id
+--- @param id number @Info id
 function infoview.__update(id)
   local info = id and infoview._info_by_id[id] or infoview.get_current_infoview().info
   if info.win_event_disable then return end
