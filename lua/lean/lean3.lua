@@ -364,9 +364,6 @@ function lean3.lsp_enable(opts)
     end;
   })
   opts.offset_encoding = "utf-32"
-  -- workaround for sync bugs in <=0.6.0
-  -- https://github.com/neovim/neovim/issues/16624
-  opts.flags = vim.tbl_extend('keep', opts.flags or {}, { allow_incremental_sync = false })
   require'lspconfig'.lean3ls.setup(opts)
 end
 
