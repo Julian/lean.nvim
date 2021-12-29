@@ -67,7 +67,10 @@ local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr, ft)
 end
 
 function helpers.wait_for_ready_lsp()
-  local succeeded, _ = vim.wait(20000, vim.lsp.buf.server_ready)
+  assert.message("LSP isn't enabled.").True(
+    lean.config.lsp.enable or lean.config.lsp3.enable
+  )
+  local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
   assert.message("LSP server was never ready.").True(succeeded)
 end
 
