@@ -1,4 +1,5 @@
 local components = require'lean.infoview.components'
+local lean = require'lean'
 local lean3 = require'lean.lean3'
 local leanlsp = require'lean.lsp'
 local is_lean_buffer = require'lean'.is_lean_buffer
@@ -795,7 +796,7 @@ function Pin:__update(tick, lean3_opts)
   do
     local line = params.position.line
 
-    if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
+    if lean.is_lean3_buffer() then
       lean3_opts = lean3_opts or {}
       lean3.update_infoview(
         self,
