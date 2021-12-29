@@ -55,8 +55,17 @@ local to_event = {
   ["onChange"] = "change";
 }
 
-function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
-    opts, options, show_processing, show_no_info_message)
+function lean3.update_infoview(
+  pin,
+  data_div,
+  bufnr,
+  params,
+  use_widgets,
+  opts,
+  options,
+  show_processing,
+  show_no_info_message
+)
   local client = lsp.get_lean3_server(bufnr)
   if not client then return end
 
@@ -282,7 +291,7 @@ function lean3.update_infoview(pin, data_div, bufnr, params, use_widget,
     goto finish
   end
 
-  if use_widget then
+  if use_widgets then
     local err, result
     if not (opts and opts.widget_event) then
       local _err, _result = util.client_a_request(client, "$/lean/discoverWidget", params)

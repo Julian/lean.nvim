@@ -37,7 +37,7 @@ local options = {
     lean3 = { show_filter = true, mouse_events = false },
     show_processing = true,
     show_no_info_message = false,
-    use_widget = true,
+    use_widgets = true,
 
     mappings = {
       ["K"] = [[click]],
@@ -54,12 +54,12 @@ local options = {
 --- An individual pin.
 ---@class Pin
 ---@field id number
----@field use_widget boolean
 ---@field data_div Div
 ---@field div Div
 ---@field ticker table
 ---@field private __parent_infos table<Info, boolean>
 ---@field private __ui_position_params UIParams
+---@field private __use_widgets boolean
 local Pin = {next_id = 1}
 
 --- An individual info.
@@ -315,7 +315,7 @@ end
 function Info:new(opts)
   local new_info = {
     id = #infoview._info_by_id + 1,
-    pin = Pin:new(options.autopause, options.use_widget),
+    pin = Pin:new(options.autopause, options.use_widgets),
     pins = {},
     pins_div = html.Div:new("", "info", nil),
     win_event_disable = false,
@@ -369,7 +369,7 @@ function Info:new(opts)
 end
 
 function Info:__new_current_pin()
-  self.pin = Pin:new(options.autopause, options.use_widget)
+  self.pin = Pin:new(options.autopause, options.use_widgets)
   self.pin:__add_parent_info(self)
 end
 
@@ -385,7 +385,7 @@ end
 ---@param params UIParams
 function Info:set_diff_pin(params)
   if not self.diff_pin then
-    self.diff_pin = Pin:new(options.autopause, options.use_widget)
+    self.diff_pin = Pin:new(options.autopause, options.use_widgets)
     self.diff_pin:__add_parent_info(self)
     self.diff_bufdiv.div = self.diff_pin.div
     self.diff_pin:show_extmark(nil, diff_pin_hl_group)
@@ -548,14 +548,14 @@ function Info:toggle_auto_diff_pin(clear)
 end
 
 ---@return Pin
-function Pin:new(paused, use_widget)
+function Pin:new(paused, use_widgets)
   local new_pin = {
     id = self.next_id,
     paused = paused,
     ticker = util.Ticker:new(),
     data_div = html.Div:new("", "pin-data", nil),
     div = html.Div:new("", "pin", nil),
-    use_widget = use_widget,
+    __use_widgets = use_widgets,
     __parent_infos = {},
   }
   self.next_id = self.next_id + 1
@@ -568,8 +568,8 @@ function Pin:new(paused, use_widget)
 end
 
 --- Set whether this pin uses a widget or a plain goal/term goal.
-function Pin:set_widget(use_widget)
-  self.use_widget = use_widget
+function Pin:enable_widgets(use_widgets)
+  self.__use_widgets = use_widgets
   self:update()
 end
 
@@ -802,8 +802,17 @@ function Pin:__update(tick, delay, lean3_opts)
 
     if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
       lean3_opts = lean3_opts or {}
-      lean3.update_infoview(self, new_data_div, buf, params,
-        self.use_widget, lean3_opts, options.lean3, options.show_processing, options.show_no_info_message)
+      lean3.update_infoview(
+        self,
+        new_data_div,
+        buf,
+        params,
+        self.__use_widgets,
+        lean3_opts,
+        options.lean3,
+        options.show_processing,
+        options.show_no_info_message
+      )
       goto finish
     end
 
@@ -818,7 +827,7 @@ function Pin:__update(tick, delay, lean3_opts)
     if not tick:check() then return true end
 
     local goal_div
-    if self.use_widget then
+    if self.__use_widgets then
       local goal, err = self.sess:getInteractiveGoals(params)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
@@ -839,7 +848,7 @@ function Pin:__update(tick, delay, lean3_opts)
     end
 
     local term_goal_div
-    if self.use_widget then
+    if self.__use_widgets then
       local term_goal, err = self.sess:getInteractiveTermGoal(params)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
@@ -866,7 +875,7 @@ function Pin:__update(tick, delay, lean3_opts)
     end
 
     local diagnostics_div
-    if self.use_widget then
+    if self.__use_widgets then
       local diags, err = self.sess:getInteractiveDiagnostics({ start = line, ['end'] = line + 1 })
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
