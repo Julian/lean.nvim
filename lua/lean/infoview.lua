@@ -679,8 +679,6 @@ function Pin:update_position()
   self.__ui_position_params = new_ui_params
 end
 
-function Pin:toggle_pause() if not self.paused then self:pause() else self:unpause() end end
-
 function Pin:show_extmark(name, hlgroup)
   self.extmark_hl_group = hlgroup or pin_hl_group
   if name then
@@ -697,12 +695,7 @@ function Pin:hide_extmark()
   self:__update_extmark_style()
 end
 
-function Pin:unpause()
-  if not self.paused then return end
-  self.paused = false
-  self:update()
-end
-
+---Stop updating this pin.
 function Pin:pause()
   if self.paused then return end
   self.paused = true
@@ -715,6 +708,18 @@ function Pin:pause()
 
   -- abort any pending requests
   self.ticker:lock()
+end
+
+---Restart updating this pin.
+function Pin:unpause()
+  if not self.paused then return end
+  self.paused = false
+  self:update()
+end
+
+---Toggle whether this pin receives updates.
+function Pin:toggle_pause()
+  if not self.paused then self:pause() else self:unpause() end
 end
 
 --- Triggered when manually moving a pin.
