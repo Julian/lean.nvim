@@ -1,11 +1,10 @@
 local assert = require('luassert')
+
+local fixtures = require('tests.fixtures')
 local infoview = require('lean.infoview')
-local progress = require'lean.progress'
-
 local lean = require('lean')
-local fixtures = require'tests.fixtures'
+local progress = require('lean.progress')
 
-local api = vim.api
 local helpers = {_clean_buffer_counter = 1}
 
 -- everything disabled by default to encourage unit testing
@@ -46,7 +45,7 @@ end
 function helpers.feed(text, feed_opts)
   feed_opts = feed_opts or 'n'
   local to_feed = vim.api.nvim_replace_termcodes(text, true, false, true)
-  api.nvim_feedkeys(to_feed, feed_opts, true)
+  vim.api.nvim_feedkeys(to_feed, feed_opts, true)
 end
 
 --- Insert some text into the current buffer.
@@ -63,7 +62,7 @@ local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr, ft)
   local unique_name =
     ft == 'lean3' and string.format('unittest-%d.lean', counter)
                    or string.format('%s/unittest-%d.lean', fixtures.lean_project.path, counter)
-  api.nvim_buf_set_name(bufnr, unique_name)
+  vim.api.nvim_buf_set_name(bufnr, unique_name)
 end
 
 function helpers.wait_for_ready_lsp()
@@ -89,12 +88,12 @@ function helpers.clean_buffer(ft, contents, callback)
     vim.opt_local.swapfile = false
     vim.opt.filetype = ft
 
-    api.nvim_buf_call(bufnr, function()
+    vim.api.nvim_buf_call(bufnr, function()
       if not vim.tbl_isempty(vim.lsp.buf_get_clients()) then
         helpers.wait_for_ready_lsp()
       end
 
-      api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
+      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
       callback{
         source_file = { bufnr = bufnr },
       }
@@ -166,7 +165,7 @@ local function has_all(_, arguments)
   return true
 end
 
-assert:register("assertion", "has_all", has_all)
+assert:register('assertion', "has_all", has_all)
 
 --- Assert two list-tables have the same elements in any order.
 local function has_same_elements(_, arguments)
@@ -176,7 +175,7 @@ local function has_same_elements(_, arguments)
   return true
 end
 
-assert:register("assertion", "same_elements", has_same_elements)
+assert:register('assertion', 'same_elements', has_same_elements)
 
 --- The number of current windows.
 function helpers.get_num_wins() return #vim.api.nvim_list_wins() end

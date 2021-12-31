@@ -201,7 +201,7 @@ end
 ---@field row number
 ---@field col number
 
---- Checks that the given position parameters are valid given the buffer they correspond to.
+--- Check that the given position parameters are valid given the buffer they correspond to.
 ---@param params UIParams @parameters to verify
 ---@return boolean
 function M.position_params_valid(params)
