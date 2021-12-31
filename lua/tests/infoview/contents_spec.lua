@@ -75,7 +75,7 @@ describe('infoview content (auto-)update', function()
   it('is shared between separate windows', function(_)
     assert.is.equal(lean_window, vim.api.nvim_get_current_win())
 
-    vim.cmd("split")
+    vim.cmd('split')
     local second_window = vim.api.nvim_get_current_win()
     assert.are.same(vim.api.nvim_win_get_cursor(0), {3, 0})
     helpers.wait_for_infoview_contents('^9')
@@ -119,7 +119,7 @@ describe('infoview content (auto-)update', function()
     helpers.insert('some stuff')
     assert.are.same(original_lines, infoview.get_current_infoview():get_lines())
 
-    vim.cmd('close')
+    vim.cmd('close!')
   end)
 
   it('does not error while closed and continues updating when reopened', function(_)
