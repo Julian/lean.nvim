@@ -177,9 +177,6 @@ end
 
 assert:register('assertion', 'same_elements', has_same_elements)
 
---- The number of current windows.
-function helpers.get_num_wins() return #vim.api.nvim_list_wins() end
-
 local NVIM_PREFIX = "nvim_handle_tracker_"
 local last_handles = {["win"] = {}, ["buf"] = {}}
 local last_handle = {["win"] = nil, ["buf"] = nil}
