@@ -33,7 +33,7 @@ Install via your favorite plugin manager. E.g., with
 
     " Optional Dependencies:
 
-    Plug 'hrsh7th/nvim-compe'  " For LSP completion
+    Plug 'hrsh7th/nvim-cmp'  " For LSP completion
     Plug 'hrsh7th/vim-vsnip'   " For snippets
     Plug 'andrewradev/switch.vim'  " For Lean switch support
 
