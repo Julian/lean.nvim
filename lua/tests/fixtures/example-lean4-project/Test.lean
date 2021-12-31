@@ -1,8 +1,8 @@
-import Test.Test1
+import Test.Squares
 
-def test1 : Nat := test
+def test1 : Nat := square 4
 
-theorem test2 : p ∨ q → q ∨ p := by
+theorem has_tactic_goal : p ∨ q → q ∨ p := by
   intro h
   cases h with
   | inl h1 =>

@@ -79,7 +79,7 @@ describe('infoview pin', function()
     function(_)
       assert.pin_pos_changed.infoview()
 
-      vim.api.nvim_command("normal! $bbeaa")
+      vim.api.nvim_command("normal! $bbbeaa")
       assert.pin_pos_changed.infoview()
       assert.are_equal(2, infoview.get_current_infoview().info.pin.__position_params.position.line)
       assert.are_equal(19, infoview.get_current_infoview().info.pin.__position_params.position.character)

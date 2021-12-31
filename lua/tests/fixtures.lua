@@ -5,7 +5,7 @@ local lean_project = {
   path = root .. '/example-lean4-project',
   some_existing_file = root .. '/example-lean4-project/Test.lean',
   some_nonexisting_file = root .. '/example-lean4-project/DoesNotExist.lean',
-  some_nested_existing_file = root .. '/example-lean4-project/Test/Test1.lean',
+  some_nested_existing_file = root .. '/example-lean4-project/Test/Squares.lean',
   some_nested_nonexisting_file = root .. '/example-lean4-project/Test/DoesNotExist.lean',
 }
 
