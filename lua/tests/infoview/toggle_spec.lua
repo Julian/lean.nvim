@@ -2,9 +2,8 @@ local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
 local helpers = require('tests.helpers')
 
-helpers.setup {
-  infoview = { autoopen = true },
-}
+require('lean').setup{}
+
 describe('Infoview.toggle', function()
 
   local lean_window

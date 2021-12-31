@@ -1,7 +1,8 @@
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 
-helpers.setup{}
+require('lean').setup{}
+
 describe('infoview.close_all', function()
   it('closes one infoview', function(_)
     assert.is.equal(#vim.api.nvim_tabpage_list_wins(0), 1)

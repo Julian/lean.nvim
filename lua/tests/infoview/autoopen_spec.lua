@@ -2,9 +2,8 @@ local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
 local helpers = require('tests.helpers')
 
-helpers.setup {
-  infoview = { autoopen = true },
-}
+require('lean').setup{ infoview = { autoopen = true } }
+
 describe('infoview autoopen', function()
   -- Somewhat follows open_close_spec.lua but here infoviews open automatically
 

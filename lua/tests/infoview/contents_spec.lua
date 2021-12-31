@@ -24,14 +24,8 @@ local fixtures = require('tests.fixtures')
 local helpers = require('tests.helpers')
 
 
-helpers.setup {
-  lsp = { enable = true },
-  infoview = {
-    autoopen = true,
-    autopause = false,
-    use_widgets = true,
-  },
-}
+require('lean').setup{ lsp = { enable = true } }
+
 describe('infoview content (auto-)update', function()
 
   local lean_window
@@ -45,11 +39,8 @@ describe('infoview content (auto-)update', function()
     assert.are.same(vim.api.nvim_win_get_cursor(0), {1, 0})
 
     helpers.wait_for_infoview_contents('^1')
-    -- FIXME: The no info doesn't seem to show when not headless.
-    --        Also trailing extra newline.
+    -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
-      No info.
-
       ▶ 1:1-1:6: information:
       1
 
@@ -61,11 +52,8 @@ describe('infoview content (auto-)update', function()
 
     helpers.move_cursor{ to = {3, 0} }
     helpers.wait_for_infoview_contents('^9')
-    -- FIXME: The no info doesn't seem to show when not headless.
-    --        Also trailing extra newline.
+    -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
-      No info.
-
       ▶ 3:1-3:6: information:
       9.000000
 
@@ -80,8 +68,6 @@ describe('infoview content (auto-)update', function()
     assert.are.same(vim.api.nvim_win_get_cursor(0), {3, 0})
     helpers.wait_for_infoview_contents('^9')
     assert.infoview_contents.are[[
-      No info.
-
       ▶ 3:1-3:6: information:
       9.000000
 
@@ -90,8 +76,6 @@ describe('infoview content (auto-)update', function()
     helpers.move_cursor{ to = {1, 0} }
     helpers.wait_for_infoview_contents('^1')
     assert.infoview_contents.are[[
-      No info.
-
       ▶ 1:1-1:6: information:
       1
 
@@ -101,8 +85,6 @@ describe('infoview content (auto-)update', function()
     vim.cmd[[wincmd p]]
     helpers.wait_for_infoview_contents('^9')
     assert.infoview_contents.are[[
-      No info.
-
       ▶ 3:1-3:6: information:
       9.000000
 
@@ -139,8 +121,6 @@ describe('infoview content (auto-)update', function()
     infoview.get_current_infoview():open()
     helpers.wait_for_infoview_contents('^1')
     assert.infoview_contents.are[[
-      No info.
-
       ▶ 1:1-1:6: information:
       1
 
@@ -149,8 +129,6 @@ describe('infoview content (auto-)update', function()
     helpers.move_cursor{ to = {3, 0} }
     helpers.wait_for_infoview_contents('^9')
     assert.infoview_contents.are[[
-      No info.
-
       ▶ 3:1-3:6: information:
       9.000000
 
@@ -168,8 +146,6 @@ describe('infoview content (auto-)update', function()
       helpers.move_cursor{ to = {1, 0} }
       helpers.wait_for_infoview_contents('^1')
       assert.infoview_contents.are[[
-        No info.
-
         ▶ 1:1-1:6: information:
         1
 
@@ -179,8 +155,6 @@ describe('infoview content (auto-)update', function()
       helpers.move_cursor{ to = {3, 0} }
       helpers.wait_for_infoview_contents('^9')
       assert.infoview_contents.are[[
-        No info.
-
         ▶ 3:1-3:6: information:
         9.000000
 
@@ -189,8 +163,6 @@ describe('infoview content (auto-)update', function()
       -- But the first tab's contents are unchanged even without re-entering.
       assert.infoview_contents.are{
         [[
-          No info.
-
           ▶ 1:1-1:6: information:
           1
 
@@ -209,8 +181,6 @@ describe('infoview content (auto-)update', function()
       helpers.move_cursor{ to = {3, 0} }
       helpers.wait_for_infoview_contents('^9')
       assert.infoview_contents.are[[
-        No info.
-
         ▶ 3:1-3:6: information:
         9.000000
 
@@ -219,8 +189,6 @@ describe('infoview content (auto-)update', function()
       helpers.move_cursor{ to = {1, 0} }
       helpers.wait_for_infoview_contents('^1')
       assert.infoview_contents.are[[
-        No info.
-
         ▶ 1:1-1:6: information:
         1
 
