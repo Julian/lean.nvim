@@ -11,12 +11,16 @@ helpers.setup {
 
 local lines
 describe('infoview pin', function()
+
+  local pin_position
+
   it('setup', function()
       --- setup
       helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
       helpers.wait_for_ready_lsp()
       helpers.wait_for_server_progress()
-      vim.api.nvim_win_set_cursor(0, {3, 18})
+      pin_position = {3, 18}
+      vim.api.nvim_win_set_cursor(0, pin_position)
       assert.initopened.infoview()
       infoview.get_current_infoview().info.pin:set_position_params(position())
       assert.pin_pos_changed.infoview()
@@ -25,7 +29,7 @@ describe('infoview pin', function()
 
   before_each(function()
     vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
-    vim.api.nvim_win_set_cursor(0, {3, 18})
+    vim.api.nvim_win_set_cursor(0, pin_position)
     infoview.get_current_infoview().info.pin:set_position_params(position())
   end)
 
@@ -35,7 +39,7 @@ describe('infoview pin', function()
       vim.api.nvim_buf_set_lines(0, 3, 4, true, {"def boop : Nat := 5"})
       assert.pin_pos_kept.infoview()
       assert.are_equal(2, infoview.get_current_infoview().info.pin.__position_params.position.line)
-      assert.are_equal(18, infoview.get_current_infoview().info.pin.__position_params.position.character)
+      assert.are_equal(pin_position[2], infoview.get_current_infoview().info.pin.__position_params.position.character)
     end)
 
     it('when lines added below',
@@ -72,7 +76,7 @@ describe('infoview pin', function()
       vim.api.nvim_buf_set_lines(0, 1, 2, true, {"", ""})
       assert.pin_pos_changed.infoview()
       assert.are_equal(3, infoview.get_current_infoview().info.pin.__position_params.position.line)
-      assert.are_equal(18, infoview.get_current_infoview().info.pin.__position_params.position.character)
+      assert.are_equal(pin_position[2], infoview.get_current_infoview().info.pin.__position_params.position.character)
     end)
 
     it('on change before on same line',
@@ -82,7 +86,10 @@ describe('infoview pin', function()
       vim.api.nvim_command("normal! $bbbeaa")
       assert.pin_pos_changed.infoview()
       assert.are_equal(2, infoview.get_current_infoview().info.pin.__position_params.position.line)
-      assert.are_equal(19, infoview.get_current_infoview().info.pin.__position_params.position.character)
+      assert.are_equal(
+          pin_position[2] + #'a',
+          infoview.get_current_infoview().info.pin.__position_params.position.character
+      )
     end)
   end)
 end)
