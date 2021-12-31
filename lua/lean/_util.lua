@@ -50,6 +50,29 @@ function M.subprocess_check_output(opts, timeout)
   ))
 end
 
+local function max_common_indent(str)
+  local level = math.huge
+  local common_indent = ""
+  local len
+  for indent in str:gmatch("\n( +)") do
+    len = #indent
+    if len < level then
+      level = len
+      common_indent = indent
+    end
+  end
+  return common_indent
+end
+
+--- Dedent a multi-line string.
+---
+--- REPLACEME: plenary.nvim has a version of this but it has odd behavior.
+function M.dedent(str)
+  str = str:gsub(" +$", ""):gsub("^ +", "") -- remove spaces at start and end
+  local prefix = max_common_indent(str)
+  return (str:gsub("\n" .. prefix, "\n"):gsub("\n$", ""))
+end
+
 function M.load_mappings(mappings, buffer)
   local opts = { noremap = true }
   for mode, mode_mappings in pairs(mappings) do

@@ -286,6 +286,14 @@ function Infoview:close()
   self.info:focus_on_current_buffer()
 end
 
+--- Retrieve the contents of the infoview as a table.
+function Infoview:get_lines(start_line, end_line)
+  if not self.is_open then error("infoview is not open") end
+  start_line = start_line or 0
+  end_line = end_line or -1
+  return vim.api.nvim_buf_get_lines(self.info.bufdiv.buf, start_line, end_line, true)
+end
+
 --- Toggle this infoview being open.
 function Infoview:toggle()
   if self.is_open then self:close() else self:open() end

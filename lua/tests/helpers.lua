@@ -1,5 +1,6 @@
 local assert = require('luassert')
 
+local dedent = require('lean._util').dedent
 local fixtures = require('tests.fixtures')
 local infoview = require('lean.infoview')
 local lean = require('lean')
@@ -54,6 +55,45 @@ function helpers.insert(text, feed_opts)
   helpers.feed('i' .. text, feed_opts)
 end
 
+--- Move the cursor to a new location.
+---
+--- Ideally this function wouldn't exist, and one would call
+--- `vim.api.nvim_win_set_cursor` directly, but it does not fire `CursorMoved`
+--- autocmds. This function exists therefore to make tests which have slightly
+--- less implementation details in them (the manual firing of that autocmd).
+---
+---@param opts table
+---@field window integer @the window handle. Defaults to the current window.
+---@field to table @the new cursor position (1-row indexed, as per nvim_win_set_cursor)
+function helpers.move_cursor(opts)
+  vim.api.nvim_win_set_cursor(opts.window or 0, opts.to)
+  vim.cmd[[doautocmd CursorMoved]]
+end
+
+function helpers.wait_for_ready_lsp()
+  assert.message("LSP isn't enabled.").True(
+    lean.config.lsp.enable or lean.config.lsp3.enable
+  )
+  local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
+  assert.message('LSP server was never ready.').True(succeeded)
+end
+
+--- Wait until a single line in the infoview matches the given contents.
+function helpers.wait_for_infoview_contents(contents)
+  local current_infoview = infoview.get_current_infoview()
+  local succeeded, _ = vim.wait(5000, function()
+    for _, line in ipairs(current_infoview:get_lines()) do
+      if line:match(contents) then return true end
+    end
+  end)
+  local message = string.format(
+    "Infoview never contained %q. Last contents were %q.",
+    contents,
+    table.concat(current_infoview:get_lines(), '\n')
+  )
+  assert.message(message).True(succeeded)
+end
+
 -- Even though we can delete a buffer, so should be able to reuse names,
 -- we do this to ensure if a test fails, future ones still get new "files".
 local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr, ft)
@@ -63,14 +103,6 @@ local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr, ft)
     ft == 'lean3' and string.format('unittest-%d.lean', counter)
                    or string.format('%s/unittest-%d.lean', fixtures.lean_project.path, counter)
   vim.api.nvim_buf_set_name(bufnr, unique_name)
-end
-
-function helpers.wait_for_ready_lsp()
-  assert.message("LSP isn't enabled.").True(
-    lean.config.lsp.enable or lean.config.lsp3.enable
-  )
-  local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
-  assert.message("LSP server was never ready.").True(succeeded)
 end
 
 --- Create a clean Lean buffer of the given filetype with the given contents.
@@ -153,6 +185,17 @@ local function has_buf_contents(_, arguments)
 end
 
 assert:register('assertion', 'contents', has_buf_contents)
+
+--- Assert about the current infoview contents.
+local function has_infoview_contents(_, arguments)
+  local expected = dedent(arguments[1][1] or arguments[1])
+  local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
+  local got = table.concat(target_infoview:get_lines(), '\n')
+  assert.are.same(expected, got)
+  return true
+end
+
+assert:register('assertion', 'infoview_contents', has_infoview_contents)
 
 local function has_all(_, arguments)
   local text = arguments[1]
