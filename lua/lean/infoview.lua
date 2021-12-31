@@ -120,7 +120,6 @@ function Infoview:new(open)
     id = #infoview._by_id + 1,
     width = options.width,
     height = options.height,
-    diff_open = false,
   }
   self.__index = self
   setmetatable(new_infoview, self)
