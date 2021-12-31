@@ -11,7 +11,7 @@ Prerequisites
 -------------
 
 ``lean.nvim`` supports neovim 0.5 or a recent neovim nightly (one
-newer than September 18, 2021).
+newer than December 25, 2021).
 
 If you are on neovim 0.5.1 or earlier, ensure you have ``set hidden``
 in your neovim ``init.lua`` or ``init.vim``, otherwise you may see
