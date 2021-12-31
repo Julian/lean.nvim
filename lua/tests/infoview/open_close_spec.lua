@@ -1,3 +1,8 @@
+---@brief [[
+--- Tests for the opening and closing of infoviews via command mode, their Lua
+--- API, or combinations of the two.
+---@brief ]]
+
 local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
 local helpers = require('tests.helpers')
