@@ -23,7 +23,7 @@ jobs:
         os: [macos-latest, ubuntu-latest]
         nvim-version:
           - v0.5.1
-          - v0.6.0
+          - v0.6.1
           - nightly
         lean-version:
           - "leanprover-community/lean:3.35.1"
