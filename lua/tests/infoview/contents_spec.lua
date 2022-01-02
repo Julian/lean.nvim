@@ -24,7 +24,10 @@ local fixtures = require('tests.fixtures')
 local helpers = require('tests.helpers')
 
 
-require('lean').setup{ lsp = { enable = true } }
+require('lean').setup{
+  lsp = { enable = true },
+  lsp3 = { enable = true }
+}
 
 describe('infoview content (auto-)update', function()
 
@@ -199,6 +202,170 @@ describe('infoview content (auto-)update', function()
         vim.api.nvim_win_get_tabpage(lean_window),
         vim.api.nvim_get_current_tabpage()
       )
+    end)
+  end)
+
+  describe('components', function()
+    describe('lean 4', function()
+
+      helpers.edit_lean_buffer(fixtures.lean_project.path .. '/Test.lean')
+
+      it('shows a term goal', function()
+        helpers.move_cursor{ to = {3, 27} }
+        helpers.wait_for_infoview_contents('expected type')
+        assert.infoview_contents.are[[
+          ▶ expected type (3:28-3:36)
+          ⊢ Nat
+        ]]
+      end)
+
+      it('shows a tactic goal', function()
+        helpers.move_cursor{ to = {6, 0} }
+        helpers.wait_for_infoview_contents('1 goal')
+        assert.infoview_contents.are[[
+          ▶ 1 goal
+          p q : Prop
+          ⊢ p ∨ q → q ∨ p
+        ]]
+      end)
+
+      it('shows mixed goals', function()
+        helpers.move_cursor{ to = {7, 8} }
+        helpers.wait_for_infoview_contents('7:9')
+        assert.infoview_contents.are[[
+          ▶ 1 goal
+          p q : Prop
+          h : p ∨ q
+          ⊢ q ∨ p
+
+          ▶ expected type (7:9-7:10)
+          p q : Prop
+          h : p ∨ q
+          ⊢ p ∨ q
+        ]]
+      end)
+
+      it('shows multiple goals', function()
+        helpers.move_cursor{ to = {17, 2} }
+        helpers.wait_for_infoview_contents('goals')
+        assert.infoview_contents.are[[
+          ▶ 2 goals
+          case zero
+          ⊢ Nat.zero = Nat.zero
+
+          case succ
+          n✝ : Nat
+          ⊢ Nat.succ n✝ = Nat.succ n✝
+        ]]
+      end)
+
+      it('properly handles multibyte characters', function()
+        helpers.move_cursor{ to = {20, 62} }
+        helpers.wait_for_infoview_contents('expected type')
+        assert.infoview_contents.are[[
+          ▶ expected type (20:54-20:57)
+          𝔽 : Type
+          ⊢ 𝔽 = 𝔽
+        ]]
+
+        helpers.move_cursor{ to = {20, 58} }
+        helpers.wait_for_infoview_contents('^$')
+        -- FIXME: The 'No info.' message is broken.
+        assert.infoview_contents.are[[
+        ]]
+
+        helpers.move_cursor{ to = {20, 60} }
+        helpers.wait_for_infoview_contents('expected type')
+        assert.infoview_contents.are[[
+          ▶ expected type (20:54-20:57)
+          𝔽 : Type
+          ⊢ 𝔽 = 𝔽
+       ]]
+      end)
+
+      it('autoupdates when contents are modified without the cursor moving', function()
+        helpers.move_cursor{ to = {23, 1} }
+        helpers.wait_for_infoview_contents('37')
+        assert.infoview_contents.are[[
+          ▶ 1 goal
+          ⊢ 37 = 37
+        ]]
+        vim.api.nvim_buf_set_lines(0, 21, 22, true, {"def will_be_modified : 2 = 2 := by"})
+        helpers.wait_for_infoview_contents('2')
+        assert.infoview_contents.are[[
+          ▶ 1 goal
+          ⊢ 2 = 2
+        ]]
+      end)
+    end)
+
+    describe('lean 3', function()
+
+      helpers.edit_lean_buffer(fixtures.lean3_project.path .. '/src/bar/baz.lean')
+
+      it('shows a term goal', function()
+        helpers.move_cursor{ to = {3, 27} }
+        helpers.wait_for_infoview_contents('expected type')
+        assert.infoview_contents.are[[
+          ▶ expected type:
+          ⊢ ℕ
+        ]]
+      end)
+
+      it('shows a tactic goal', function()
+        helpers.move_cursor{ to = {6, 0} }
+        helpers.wait_for_infoview_contents('1 goal')
+        -- FIXME: extra internal newline compared to Lean 4
+        assert.infoview_contents.are[[
+          filter: no filter
+          ▶ 1 goal
+
+          p q : Prop
+          ⊢ p ∨ q → q ∨ p
+        ]]
+      end)
+
+      it('shows multiple goals', function()
+        helpers.move_cursor{ to = {20, 2} }
+        helpers.wait_for_infoview_contents('goals')
+        assert.infoview_contents.are[[
+          filter: no filter
+          ▶ 2 goals
+
+          case nat.zero
+          ⊢ 0 = 0
+
+          case nat.succ
+          n : ℕ
+          ⊢ n.succ = n.succ
+        ]]
+      end)
+
+      if vim.version().major >= 1 or vim.version().minor >= 6 then
+        it('properly handles multibyte characters', function()
+          helpers.move_cursor{ to = {24, 61} }
+          helpers.wait_for_infoview_contents('expected type')
+          assert.infoview_contents.are[[
+            ▶ expected type:
+            𝔽 : Type
+            ⊢ 𝔽 = 𝔽
+          ]]
+
+          helpers.move_cursor{ to = {24, 58} }
+          helpers.wait_for_infoview_contents('^$')
+          -- FIXME: The 'No info.' message is broken.
+          assert.infoview_contents.are[[
+          ]]
+
+          helpers.move_cursor{ to = {24, 60} }
+          helpers.wait_for_infoview_contents('expected type')
+          assert.infoview_contents.are[[
+            ▶ expected type:
+            𝔽 : Type
+            ⊢ 𝔽 = 𝔽
+          ]]
+        end)
+      end
     end)
   end)
 end)

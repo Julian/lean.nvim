@@ -19,7 +19,7 @@ describe('infoview pin', function()
       helpers.edit_lean_buffer(fixtures.lean_project.some_existing_file)
       helpers.wait_for_ready_lsp()
       helpers.wait_for_server_progress()
-      pin_position = {3, 18}
+      pin_position = {3, 26}
       vim.api.nvim_win_set_cursor(0, pin_position)
       assert.initopened.infoview()
       infoview.get_current_infoview().info.pin:set_position_params(position())

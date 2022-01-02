@@ -1,8 +1,8 @@
 import foo
 
-def test1 : nat := test
+def has_term_goal : nat := test
 
-theorem test2 {p : Prop} {q : Prop} : p ∨ q → q ∨ p :=
+theorem has_tactic_goal {p : Prop} {q : Prop} : p ∨ q → q ∨ p :=
 begin
   intro h,
   cases h with h1 h2,
@@ -15,4 +15,10 @@ end
 def new_test : bool := by
   exact false
 
-def utf_test {𝔽 : Type} : 𝔽 = 𝔽 := rfl
+theorem has_multiple_goals (n : nat) : n = n := begin
+  cases n,
+  refl,
+  refl,
+end
+
+def has_multibyte_character {𝔽 : Type} : 𝔽 = 𝔽 := rfl

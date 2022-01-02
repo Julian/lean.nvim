@@ -1,6 +1,6 @@
 import Test.Squares
 
-def test1 : Nat := square 4
+def has_term_goal : Nat := square 4
 
 theorem has_tactic_goal : p ∨ q → q ∨ p := by
   intro h
@@ -12,7 +12,12 @@ theorem has_tactic_goal : p ∨ q → q ∨ p := by
     apply Or.inl
     assumption
 
-def new_test : Bool := by
-  exact false
+theorem has_multiple_goals (n : Nat) : n = n := by
+  cases n
+  rfl
+  rfl
 
-def utf_test {𝔽 : Type} : 𝔽 = 𝔽 := rfl
+def has_multibyte_character {𝔽 : Type} : 𝔽 = 𝔽 := rfl
+
+def will_be_modified : 37 = 37 := by
+  exact rfl
