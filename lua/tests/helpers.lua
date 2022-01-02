@@ -81,7 +81,7 @@ end
 --- Wait until a single line in the infoview matches the given contents.
 function helpers.wait_for_infoview_contents(contents)
   local current_infoview = infoview.get_current_infoview()
-  local succeeded, _ = vim.wait(5000, function()
+  local succeeded, _ = vim.wait(10000, function()
     for _, line in ipairs(current_infoview:get_lines()) do
       if line:match(contents) then return true end
     end
