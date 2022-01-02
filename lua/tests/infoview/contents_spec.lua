@@ -138,6 +138,22 @@ describe('infoview content (auto-)update', function()
     ]]
   end)
 
+  it('does not have line contents while closed', function(_)
+    assert.are.same_elements(
+      { lean_window, infoview.get_current_infoview().window },
+      vim.api.nvim_tabpage_list_wins(0)
+    )
+    local current_infoview = infoview.get_current_infoview()
+    current_infoview:close()
+    local succeeded, result = pcall(current_infoview.get_lines, current_infoview)
+    assert.is_false(succeeded)
+    assert.is.truthy(result:match("infoview is not open"))
+
+    -- But succeeds again when re-opened
+    current_infoview:open()
+    current_infoview:get_lines()
+  end)
+
   describe('in multiple tabs', function()
     it('updates separate infoviews independently', function(_)
       local tab1_infoview = infoview.get_current_infoview()
