@@ -257,20 +257,10 @@ M.wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) 
 ---@param bufnr number buffer handle or 0 for current, defaults to current
 ---@returns string encoding first client if there is one, nil otherwise
 function M._get_offset_encoding(bufnr)
-  -- TODO: Can this be removed (or removed once 0.6 support is dropped?)
-  -- It's now upstream.
-  local offset_encoding
-
+  -- TODO: Can this be removed (or removed once 0.6 support is dropped)?
   for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
-    local this_offset_encoding = client.offset_encoding or "utf-16"
-    if not offset_encoding then
-      offset_encoding = this_offset_encoding
-    elseif offset_encoding ~= this_offset_encoding then
-      vim.notify("warning: multiple different client offset_encodings detected for buffer, this is not supported yet", vim.log.levels.WARN)
-    end
+    return client.offset_encoding or "utf-16"
   end
-
-  return offset_encoding
 end
 
 return M
