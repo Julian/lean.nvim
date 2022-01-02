@@ -284,6 +284,10 @@ describe('infoview content (auto-)update', function()
       end)
 
       it('autoupdates when contents are modified without the cursor moving', function()
+        --- FIXME: This test is meant to ensure that we re-send requests on ContentModified LSP
+        ---        errors, but it doesn't seem to do that (it doesn't seem to do particularly that
+        ---        even before being refactored though, as it passes with or without the relevant
+        ---        lines in infoview.lua)
         helpers.move_cursor{ to = {23, 1} }
         helpers.wait_for_infoview_contents('37')
         assert.infoview_contents.are[[
