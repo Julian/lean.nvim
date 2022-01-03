@@ -1,11 +1,10 @@
 local dirname = require('lspconfig.util').path.dirname
 
-local util = require'lean._util'
-local lsp = require'lean.lsp'
 local components = require('lean.infoview.components')
+local lsp = require('lean.lsp')
+local util = require('lean._util')
 local subprocess_check_output = util.subprocess_check_output
-
-local html = require('lean.html')
+local widgets = require('lean.widgets')
 
 local lean3 = {}
 
@@ -47,7 +46,7 @@ local class_to_hlgroup = {
   ["goal-vdash b"] = "leanInfoGoalVDash";
 }
 
--- mapping from lean3 events to standard div events
+-- mapping from lean3 events to standard widget element events
 local to_event = {
   ["onMouseEnter"] = "cursor_enter";
   ["onMouseLeave"] = "cursor_leave";
@@ -57,7 +56,7 @@ local to_event = {
 
 function lean3.update_infoview(
   pin,
-  data_div,
+  data_element,
   bufnr,
   params,
   use_widgets,
@@ -69,28 +68,28 @@ function lean3.update_infoview(
   local client = lsp.get_lean3_server(bufnr)
   if not client then return end
 
-  local parent_div = html.Div:new("", "lean-3-widget")
+  local parent_element = widgets.Element:new("", "lean-3-widget")
   local widget
 
   local list_first
   local goal_first = true
 
   local function parse_widget(result)
-    local div = html.Div:new("")
+    local element = widgets.Element:new("")
     local function parse_children(children)
-      local prev_div
-      local this_div = html.Div:new("", "children")
+      local prev_element
+      local this_element = widgets.Element:new("", "children")
       for _, child in pairs(children) do
         local last_hard_stop = false
-        if prev_div then
-          local prev_div_string = prev_div:to_string()
-          if #prev_div_string > 0 then
+        if prev_element then
+          local prev_element_string = prev_element:to_string()
+          if #prev_element_string > 0 then
             local last_byte_idx = 0
-            if #prev_div_string > 0 then
-              last_byte_idx = vim.str_byteindex(prev_div_string, vim.fn.strchars(prev_div_string) - 1) + 1
+            if #prev_element_string > 0 then
+              last_byte_idx = vim.str_byteindex(prev_element_string, vim.fn.strchars(prev_element_string) - 1) + 1
             end
 
-            local last_char = prev_div_string:sub(last_byte_idx, #prev_div_string)
+            local last_char = prev_element_string:sub(last_byte_idx, #prev_element_string)
             if last_char ~= " "
               and last_char ~= "\n"
               and last_char ~= "("
@@ -107,13 +106,13 @@ function lean3.update_infoview(
           end
         end
 
-        local new_div = parse_widget(child)
-        local new_div_string = new_div:to_string()
-        if #new_div_string == 0 then goto continue end
+        local new_element = parse_widget(child)
+        local new_element_string = new_element:to_string()
+        if #new_element_string == 0 then goto continue end
 
         local this_hard_start = false
-        if #new_div_string > 0 then
-          local first_char = new_div_string:sub(1, 1)
+        if #new_element_string > 0 then
+          local first_char = new_element_string:sub(1, 1)
           if first_char ~= " "
             and first_char ~= "\n"
             and first_char ~= ")"
@@ -127,32 +126,32 @@ function lean3.update_infoview(
         end
 
         if last_hard_stop and this_hard_start then
-          this_div:insert_div(" ", "separator")
+          this_element:insert_div(" ", "separator")
         end
 
-        this_div:add_div(new_div)
+        this_element:add_div(new_element)
 
-        prev_div = new_div
+        prev_element = new_element
 
         ::continue::
       end
-      return this_div
+      return this_element
     end
 
-    local function parse_select(children, select_div, current_value)
-      local no_filter_div, no_filter_val, current_text
-      local this_div = html.Div:new("", "select-children", nil)
+    local function parse_select(children, select_element, current_value)
+      local no_filter_element, no_filter_val, current_text
+      local this_element = widgets.Element:new("", "select-children", nil)
       for child_i, child in pairs(children) do
-        local new_div = parse_widget(child)
-        new_div.events.click = function(ctx)
-          return select_div.events.change(ctx, child.a.value)
+        local new_element = parse_widget(child)
+        new_element.events.click = function(ctx)
+          return select_element.events.change(ctx, child.a.value)
         end
-        new_div.highlightable = true
-        this_div:add_div(new_div)
-        if child_i ~= #children then this_div:insert_div("\n", "select-separator") end
+        new_element.highlightable = true
+        this_element:add_div(new_element)
+        if child_i ~= #children then this_element:insert_div("\n", "select-separator") end
 
         if child.c[1] == "no filter" then
-          no_filter_div = new_div
+          no_filter_element = new_element
           no_filter_val = child.a.value
         end
 
@@ -160,15 +159,15 @@ function lean3.update_infoview(
           current_text = child.c[1]
         end
       end
-      return this_div, no_filter_div, no_filter_val, current_text
+      return this_element, no_filter_element, no_filter_val, current_text
     end
 
     if type(result) == "string" then
       result = result:gsub('^%s*(.-)%s$', '%1')
 
-      div:insert_div(result, "html-string")
+      element:insert_div(result, "widget-element-string")
 
-      return div
+      return element
     elseif is_widget_element(result) then
       local tag = result.t
       local children = result.c
@@ -186,7 +185,7 @@ function lean3.update_infoview(
         if list_first then
           list_first = false
         else
-          div:insert_div("\n", "list-separator")
+          element:insert_div("\n", "list-separator")
         end
       end
 
@@ -194,45 +193,45 @@ function lean3.update_infoview(
       if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
 
       if class_name == "goal-goals" then
-        div:insert_div('▶ ', "goal-prefix")
+        element:insert_div('▶ ', "goal-prefix")
         goal_first = false
       end
       if class_name == "lh-copy mt2" and not goal_first then
-        div:insert_div('\n', "goal-separator")
+        element:insert_div('\n', "goal-separator")
       end
 
       local debug_tags = false
       if debug_tags then
-        --div:insert_div("<" .. tag .. ">", "element")
-        div:insert_div("<" .. tag ..
+        --element:insert_div("<" .. tag .. ">", "element")
+        element:insert_div("<" .. tag ..
         " attributes(" .. vim.inspect(attributes) .. ")" ..
         " events(" .. vim.inspect(result.e) .. ")" ..
         ">", "element")
       end
-      local element_div = div:insert_div("", "element", hlgroup)
-      element_div.events = events
+      local element_element = element:insert_div("", "element", hlgroup)
+      element_element.events = events
 
       -- close tooltip button
       if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
-        element_div.events.clear = function()
-          element_div.events["click"]()
+        element_element.events.clear = function()
+          element_element.events["click"]()
         end
       end
 
       if result.e then
         for event, handler in pairs(result.e) do
-          local div_event = to_event[event]
+          local element_event = to_event[event]
           if not options.mouse_events then
-            if div_event == "cursor_enter" then
-              div_event = "mouse_enter"
+            if element_event == "cursor_enter" then
+              element_event = "mouse_enter"
             end
-            if div_event == "cursor_leave" then
-              div_event = "mouse_leave"
+            if element_event == "cursor_leave" then
+              element_event = "mouse_leave"
             end
           end
-          local clickable_event = div_event == "click" or div_event == "change"
-          if clickable_event then element_div.highlightable = true end
-          events[div_event] = function(ctx, value)
+          local clickable_event = element_event == "click" or element_event == "change"
+          if clickable_event then element_element.highlightable = true end
+          events[element_event] = function(ctx, value)
             local args = type(value) == 'string' and { type = 'string', value = value }
               or { type = 'unit' }
             pin:async_update(false, ctx, {widget_event = {
@@ -242,7 +241,7 @@ function lean3.update_infoview(
               args = args,
               textDocument = pin.__position_params.textDocument
             }})
-            if div_event == "cursor_leave" then
+            if element_event == "cursor_leave" then
               ctx.self:buf_event("cursor_enter")
             end
           end
@@ -250,43 +249,43 @@ function lean3.update_infoview(
       end
 
       if tag == "hr" then
-        element_div:insert_div("|", "rule", "leanInfoFieldSep")
+        element_element:insert_div("|", "rule", "leanInfoFieldSep")
       end
 
       if options.show_filter and tag == "select" then
-        local select_children_div, no_filter_div, no_filter_val, current_text =
-          parse_select(children, element_div, attributes.value)
+        local select_children_element, no_filter_element, no_filter_val, current_text =
+          parse_select(children, element_element, attributes.value)
         if no_filter_val and no_filter_val ~= attributes.value then
-          element_div.events.clear = function()
-            no_filter_div.events.click()
+          element_element.events.clear = function()
+            no_filter_element.events.click()
             return true
           end
         end
-        local select_menu_div = element_div:insert_div(current_text .. "\n", "current-select")
-        select_menu_div:add_tooltip(select_children_div)
+        local select_menu_element = element_element:insert_div(current_text .. "\n", "current-select")
+        select_menu_element:add_tooltip(select_children_element)
       else
-        element_div:add_div(parse_children(children))
+        element_element:add_div(parse_children(children))
       end
 
       if tooltip then
-        element_div:add_tooltip(parse_widget(tooltip))
+        element_element:add_tooltip(parse_widget(tooltip))
       end
       if debug_tags then
-        div:insert_div("</" .. tag .. ">", "element")
+        element:insert_div("</" .. tag .. ">", "element")
       end
-      return div
+      return element
     else
-      div:add_div(parse_children(result.c))
-      return div
+      element:add_div(parse_children(result.c))
+      return element
     end
   end
 
   params = vim.deepcopy(params)
-  local state_div --- @type Div?
+  local state_element --- @type Element?
 
   if require"lean.progress".is_processing_at(params) then
     if show_processing then
-      data_div:insert_div("Processing file...", "processing-msg")
+      data_element:insert_div("Processing file...", "processing-msg")
     end
     goto finish
   end
@@ -325,21 +324,21 @@ function lean3.update_infoview(
       end
 
       widget = result.widget
-      state_div = parse_widget(result.widget.html)
+      state_element = parse_widget(result.widget.html)
     end
   end
 
-  if not state_div then
+  if not state_element then
     local _, result = util.client_a_request(client, "$/lean/plainGoal", params)
     if result and type(result) == "table" then
-      state_div = html.concat(components.goal(result), '\n\n')
+      state_element = widgets.concat(components.goal(result), '\n\n')
     end
   end
 
-  if state_div and not state_div:is_empty() then
-    parent_div:add_div(state_div)
+  if state_element and not state_element:is_empty() then
+    parent_element:add_div(state_element)
   elseif show_no_info_message then
-    parent_div:add_div(html.Div:new("No info.", "no-tactic-term"))
+    parent_element:add_div(widgets.Element:new("No info.", "no-tactic-term"))
   end
 
   -- update all other pins for the same URI so they aren't left with a stale "session"
@@ -355,11 +354,11 @@ function lean3.update_infoview(
   ::finish::
 
   for _, diag in ipairs(components.diagnostics(bufnr, params.position.line)) do
-    parent_div:insert_div('\n\n')
-    parent_div:add_div(diag)
+    parent_element:insert_div('\n\n')
+    parent_element:add_div(diag)
   end
 
-  data_div:add_div(parent_div)
+  data_element:add_div(parent_element)
 
   return true
 end

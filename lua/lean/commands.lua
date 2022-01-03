@@ -1,17 +1,18 @@
-local components = require'lean.infoview.components'
-local infoview = require'lean.infoview'
-local leanlsp = require'lean.lsp'
-local a = require'plenary.async'
-local html = require'lean.html'
-local rpc = require'lean.rpc'
-local lean = require'lean'
-local progress = require'lean.progress'
+local a = require('plenary.async')
+
+local components = require('lean.infoview.components')
+local infoview = require('lean.infoview')
+local lean = require('lean')
+local leanlsp = require('lean.lsp')
+local progress = require('lean.progress')
+local rpc = require('lean.rpc')
+local widgets = require('lean.widgets')
 
 local commands = {}
 
----@param div Div
-local function show_popup(div)
-  local str = div:to_string()
+---@param element Element
+local function show_popup(element)
+  local str = element:to_string()
   if str:match('^%s*$') then
     -- do not show the popup if it's the empty string
     return
@@ -21,18 +22,18 @@ local function show_popup(div)
     vim.split(str, '\n'), 'leaninfo',
     { focus_id = 'lean_goal' })
 
-  local bufdiv = html.BufDiv:new(bufnr, div, infoview.mappings)
-  bufdiv.last_win = winnr
-  bufdiv:buf_render()
+  local renderer = widgets.BufRenderer:new(bufnr, element, infoview.mappings)
+  renderer.last_win = winnr
+  renderer:buf_render()
 end
 
----@param divs Div[]?
+---@param elements Element[]?
 ---@param err any?
-local function show_popup_or_error(divs, err)
-  if divs then
-    show_popup(html.concat(divs, '\n\n'))
+local function show_popup_or_error(elements, err)
+  if elements then
+    show_popup(widgets.concat(elements, '\n\n'))
   elseif err then
-    show_popup(html.Div:new(vim.inspect(err)))
+    show_popup(widgets.Element:new(vim.inspect(err)))
   end
 end
 

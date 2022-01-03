@@ -30,10 +30,10 @@ endif
 hi def link leanInfoComment Comment
 hi def link leanInfoBlockComment Comment
 
-hi def link htmlDivHighlight DiffChange
-hi def link htmlDivLoading Comment
+hi def link widgetElementHighlight DiffChange
+hi def link widgetElementLoading Comment
 
-hi def link leanInfoExternalHighlight htmlDivHighlight
+hi def link leanInfoExternalHighlight widgetElementHighlight
 hi def link leanInfoButton Pmenu
 hi def link leanInfoField Folded
 hi def link leanInfoFieldAlt Folded

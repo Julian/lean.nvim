@@ -1,13 +1,15 @@
-local components = require'lean.infoview.components'
-local lean3 = require'lean.lean3'
-local leanlsp = require'lean.lsp'
-local is_lean_buffer = require'lean'.is_lean_buffer
-local util = require'lean._util'
+local protocol = require('vim.lsp.protocol')
+
+local a = require('plenary.async')
+
+local components = require('lean.infoview.components')
+local lean3 = require('lean.lean3')
+local leanlsp = require('lean.lsp')
+local is_lean_buffer = require('lean').is_lean_buffer
+local util = require('lean._util')
 local set_augroup = util.set_augroup
-local a = require'plenary.async'
-local html = require'lean.html'
-local rpc = require'lean.rpc'
-local protocol = require'vim.lsp.protocol'
+local widgets = require('lean.widgets')
+local rpc = require('lean.rpc')
 
 local infoview = {
   -- mapping from infoview IDs to infoviews
@@ -54,8 +56,8 @@ local options = {
 --- An individual pin.
 ---@class Pin
 ---@field id number
----@field private __data_div Div
----@field private __div Div
+---@field private __data_element Element
+---@field private __element Element
 ---@field private __extmark number
 ---@field private __extmark_buf number
 ---@field private __extmark_hl_group string
@@ -72,10 +74,10 @@ local Pin = {next_id = 1}
 ---@field pin Pin
 ---@field pins Pin[]
 ---@field private __auto_diff_pin Pin
----@field private __bufdiv BufDiv
----@field private __diff_bufdiv BufDiv
+---@field private __renderer BufRenderer
+---@field private __diff_renderer BufRenderer
 ---@field private __diff_pin Pin
----@field private __pins_div Div
+---@field private __pins_element Element
 ---@field private __parent_infoviews Infoview[]
 ---@field private __win_event_disable boolean
 local Info = {}
@@ -147,11 +149,11 @@ function Infoview:open()
     self.__orientation = "horizontal"
     vim.cmd("botright " .. self.__height .. "split")
   end
-  vim.cmd(string.format("buffer %d", self.info.__bufdiv.buf))
+  vim.cmd(string.format("buffer %d", self.info.__renderer.buf))
   -- Set the filetype now. Any earlier, and only buffer-local options will be
   -- properly set in the infoview, since the buffer isn't actually shown in a
   -- window until we run :buffer above.
-  vim.api.nvim_buf_set_option(self.info.__bufdiv.buf, 'filetype', 'leaninfo')
+  vim.api.nvim_buf_set_option(self.info.__renderer.buf, 'filetype', 'leaninfo')
   self.window = vim.api.nvim_get_current_win()
   vim.api.nvim_set_current_win(window_before_split)
 
@@ -222,10 +224,10 @@ function Infoview:__refresh_diff()
 
   if not self.info.__diff_pin then self:__close_diff() return end
 
-  local diff_bufdiv = self.info.__diff_bufdiv
+  local diff_renderer = self.info.__diff_renderer
 
   if not self.__diff_win then
-    self.__diff_win = self:__open_win(diff_bufdiv.buf)
+    self.__diff_win = self:__open_win(diff_renderer.buf)
   end
 
   for _, win in pairs({self.__diff_win, self.window}) do
@@ -279,7 +281,7 @@ function Infoview:get_lines(start_line, end_line)
   if not self.window then error("infoview is not open") end
   start_line = start_line or 0
   end_line = end_line or -1
-  return vim.api.nvim_buf_get_lines(self.info.__bufdiv.buf, start_line, end_line, true)
+  return vim.api.nvim_buf_get_lines(self.info.__renderer.buf, start_line, end_line, true)
 end
 
 --- Toggle this infoview being open.
@@ -315,7 +317,7 @@ function Info:new(opts)
     pin = Pin:new(options.autopause, options.use_widgets),
     pins = {},
     __parent_infoviews = { opts.parent },
-    __pins_div = html.Div:new("", "info", nil),
+    __pins_element = widgets.Element:new("", "info", nil),
     __win_event_disable = false,
   }
   table.insert(infoview._info_by_id, new_info)
@@ -324,7 +326,7 @@ function Info:new(opts)
   setmetatable(new_info, self)
   self = new_info
 
-  self.__pins_div.events = {
+  self.__pins_element.events = {
     goto_last_window = function()
       if self.last_window then
         vim.api.nvim_set_current_win(self.last_window)
@@ -339,24 +341,32 @@ function Info:new(opts)
     return bufnr
   end
 
-  self.__bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/curr", true), self.__pins_div, options.mappings)
-  self.__diff_bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/diff"), self.pin.__div, options.mappings)
+  self.__renderer = widgets.BufRenderer:new(
+    mk_buf("lean://info/" .. self.id .. "/curr", true),
+    self.__pins_element,
+    options.mappings
+  )
+  self.__diff_renderer = widgets.BufRenderer:new(
+    mk_buf("lean://info/" .. self.id .. "/diff"),
+    self.pin.__element,
+    options.mappings
+  )
 
   -- Show/hide current pin extmark when entering/leaving infoview.
   set_augroup("LeanInfoviewShowPin", string.format([[
     autocmd WinEnter <buffer=%d> lua require'lean.infoview'.__show_curr_pin(%d)
     autocmd WinLeave <buffer=%d> lua require'lean.infoview'.__hide_curr_pin(%d)
-  ]], self.__bufdiv.buf, self.id, self.__bufdiv.buf, self.id), self.__bufdiv.buf)
+  ]], self.__renderer.buf, self.id, self.__renderer.buf, self.id), self.__renderer.buf)
 
   -- Make sure we notice even if someone manually :q's the infoview window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__was_closed(%d)
-  ]], self.__bufdiv.buf, self.id), self.__bufdiv.buf)
+  ]], self.__renderer.buf, self.id), self.__renderer.buf)
 
   -- Make sure we notice even if someone manually :q's the diff window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__diff_was_closed(%d)
-  ]], self.__diff_bufdiv.buf, self.id), self.__diff_bufdiv.buf)
+  ]], self.__diff_renderer.buf, self.id), self.__diff_renderer.buf)
 
   self.pin:__add_parent_info(self)
 
@@ -384,7 +394,7 @@ function Info:__set_diff_pin(params)
   if not self.__diff_pin then
     self.__diff_pin = Pin:new(options.autopause, options.use_widgets)
     self.__diff_pin:__add_parent_info(self)
-    self.__diff_bufdiv.__div = self.__diff_pin.__div
+    self.__diff_renderer.__element = self.__diff_pin.__element
     self.__diff_pin:__show_extmark(nil, diff_pin_hl_group)
   end
 
@@ -413,7 +423,7 @@ function Info:__clear_diff_pin()
   if not self.__diff_pin then return end
   self.__diff_pin:__remove_parent_info(self)
   self.__diff_pin = nil
-  self.__diff_bufdiv.__div = self.pin.__div
+  self.__diff_renderer.__element = self.pin.__element
   self:render()
 end
 
@@ -430,16 +440,16 @@ function Info:set_last_window()
   self.last_window = vim.api.nvim_get_current_win()
 end
 
---- Update this info's pins div.
+--- Update this info's pins element.
 function Info:__render_pins()
-  self.__pins_div.children = {}
+  self.__pins_element.children = {}
   local function render_pin(pin, current)
-    local header_div = html.Div:new("", "pin-header")
+    local header_element = widgets.Element:new("", "pin-header")
     if infoview.debug then
-      header_div:insert_div("-- PIN " .. tostring(pin.id), "pin-id-header")
+      header_element:insert_div("-- PIN " .. tostring(pin.id), "pin-id-header")
 
       local function add_attribute(text, name)
-        header_div:insert_div(" [" .. text .. "]", name .. "-attribute")
+        header_element:insert_div(" [" .. text .. "]", name .. "-attribute")
       end
       if current then add_attribute("CURRENT", "current") end
       if pin.paused then add_attribute("PAUSED", "paused") end
@@ -456,16 +466,16 @@ function Info:__render_pins()
         filename = params.filename
       end
       if not infoview.debug then
-        header_div:insert_div("-- ", "pin-id-header")
+        header_element:insert_div("-- ", "pin-id-header")
       else
-        header_div:insert_div(": ", "pin-header-separator")
+        header_element:insert_div(": ", "pin-header-separator")
       end
       local location_text = ("%s at %d:%d"):format(filename,
         params.row + 1, params.col + 1)
-      header_div:insert_div(location_text, "pin-location")
+      header_element:insert_div(location_text, "pin-location")
 
-      header_div.highlightable = true
-      header_div.events = {
+      header_element.highlightable = true
+      header_element.events = {
         click = function()
           if self.last_window then
             vim.api.nvim_set_current_win(self.last_window)
@@ -476,22 +486,22 @@ function Info:__render_pins()
         end
       }
     end
-    if not header_div:is_empty() then
-      header_div:insert_div("\n", "pin-header-end")
+    if not header_element:is_empty() then
+      header_element:insert_div("\n", "pin-header-end")
     end
 
-    local pin_div = html.Div:new("", "pin_wrapper")
-    pin_div:add_div(header_div)
-    if pin.__div then pin_div:add_div(pin.__div) end
+    local pin_element = widgets.Element:new("", "pin_wrapper")
+    pin_element:add_div(header_element)
+    if pin.__element then pin_element:add_div(pin.__element) end
 
-    return pin_div
+    return pin_element
   end
 
-  self.__pins_div:add_div(render_pin(self.pin, true))
+  self.__pins_element:add_div(render_pin(self.pin, true))
 
   for _, pin in ipairs(self.pins) do
-    self.__pins_div:add_div(html.Div:new("\n\n", "pin_spacing"))
-    self.__pins_div:add_div(render_pin(pin, false))
+    self.__pins_element:add_div(widgets.Element:new("\n\n", "pin_spacing"))
+    self.__pins_element:add_div(render_pin(pin, false))
   end
 end
 
@@ -499,8 +509,8 @@ end
 function Info:render()
   self:__render_pins()
 
-  self.__bufdiv:buf_render()
-  if self.__diff_pin then self.__diff_bufdiv:buf_render() end
+  self.__renderer:buf_render()
+  if self.__diff_pin then self.__diff_renderer:buf_render() end
 
   for _, parent in ipairs(self.__parent_infoviews) do
     parent:__refresh_diff()
@@ -547,8 +557,8 @@ function Pin:new(paused, use_widgets)
   local new_pin = {
     id = self.next_id,
     paused = paused,
-    __data_div = html.Div:new("", "pin-data", nil),
-    __div = html.Div:new("", "pin", nil),
+    __data_element = widgets.Element:new("", "pin-data", nil),
+    __element = widgets.Element:new("", "pin", nil),
     __parent_infos = {},
     __ticker = util.Ticker:new(),
     __use_widgets = use_widgets,
@@ -698,9 +708,9 @@ function Pin:pause()
   if self.paused then return end
   self.paused = true
 
-  self.__data_div = self.__data_div:dummy_copy()
+  self.__data_element = self.__data_element:dummy_copy()
   if not self:set_loading(false) then
-    self.__div.children = { self.__data_div }
+    self.__element.children = { self.__data_element }
     self:__render_parents()
   end
 
@@ -736,18 +746,18 @@ end
 -- Indicate that the pin is either loading or done loading, if it isn't already set as such.
 function Pin:set_loading(loading)
   if loading and not self.loading then
-    self.__div.children = {}
-    local data_div_copy = self.__data_div:dummy_copy()
+    self.__element.children = {}
+    local data_element_copy = self.__data_element:dummy_copy()
 
-    self.__div:add_div(data_div_copy)
+    self.__element:add_div(data_element_copy)
 
     self.loading = true
 
     self:__render_parents()
     return true
   elseif not loading and self.loading then
-    self.__div.children = {}
-    self.__div:add_div(self.__data_div)
+    self.__element.children = {}
+    self.__element:add_div(self.__data_element)
 
     self.loading = false
 
@@ -778,8 +788,8 @@ Pin.update = a.void(Pin.async_update)
 --- async function to update this pin's contents given the current position.
 function Pin:__update(tick, lean3_opts)
   self:set_loading(true)
-  local blocks = {} ---@type Div[]
-  local new_data_div = html.Div:new("", "pin-data", nil)
+  local blocks = {} ---@type Element[]
+  local new_data_element = widgets.Element:new("", "pin-data", nil)
 
   local params = self.__position_params
 
@@ -797,7 +807,7 @@ function Pin:__update(tick, lean3_opts)
       lean3_opts = lean3_opts or {}
       lean3.update_infoview(
         self,
-        new_data_div,
+        new_data_element,
         buf,
         params,
         self.__use_widgets,
@@ -811,7 +821,7 @@ function Pin:__update(tick, lean3_opts)
 
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then
-        new_data_div:insert_div("Processing file...", "processing-msg")
+        new_data_element:insert_div("Processing file...", "processing-msg")
       end
       goto finish
     end
@@ -819,7 +829,7 @@ function Pin:__update(tick, lean3_opts)
     self.sess = rpc.open(buf, params)
     if not tick:check() then return true end
 
-    local goal_div
+    local goal_element
     if self.__use_widgets then
       local goal, err = self.sess:getInteractiveGoals(params)
       if not tick:check() then return true end
@@ -827,20 +837,20 @@ function Pin:__update(tick, lean3_opts)
         return self:__update(tick, lean3_opts)
       end
       if not err then
-        goal_div = components.interactive_goals(goal, self.sess)
+        goal_element = components.interactive_goals(goal, self.sess)
       end
     end
 
-    if not goal_div then
+    if not goal_element then
       local err, goal = leanlsp.plain_goal(params, buf)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
         return self:__update(tick, lean3_opts)
       end
-      goal_div = components.goal(goal)
+      goal_element = components.goal(goal)
     end
 
-    local term_goal_div
+    local term_goal_element
     if self.__use_widgets then
       local term_goal, err = self.sess:getInteractiveTermGoal(params)
       if not tick:check() then return true end
@@ -848,26 +858,26 @@ function Pin:__update(tick, lean3_opts)
         return self:__update(tick, lean3_opts)
       end
       if not err then
-        term_goal_div = components.interactive_term_goal(term_goal, self.sess)
+        term_goal_element = components.interactive_term_goal(term_goal, self.sess)
       end
     end
 
-    if not term_goal_div then
+    if not term_goal_element then
       local err, term_goal = leanlsp.plain_term_goal(params, buf)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
         return self:__update(tick, lean3_opts)
       end
-      term_goal_div = components.term_goal(term_goal)
+      term_goal_element = components.term_goal(term_goal)
     end
 
-    vim.list_extend(blocks, goal_div)
-    vim.list_extend(blocks, term_goal_div)
-    if options.show_no_info_message and #goal_div + #term_goal_div == 0 then
-      table.insert(blocks, html.Div:new("No info.", "no-tactic-term"))
+    vim.list_extend(blocks, goal_element)
+    vim.list_extend(blocks, term_goal_element)
+    if options.show_no_info_message and #goal_element + #term_goal_element == 0 then
+      table.insert(blocks, widgets.Element:new("No info.", "no-tactic-term"))
     end
 
-    local diagnostics_div
+    local diagnostics_element
     if self.__use_widgets then
       local diags, err = self.sess:getInteractiveDiagnostics({ start = line, ['end'] = line + 1 })
       if not tick:check() then return true end
@@ -875,26 +885,26 @@ function Pin:__update(tick, lean3_opts)
         return self:__update(tick, lean3_opts)
       end
       if not err then
-        diagnostics_div = components.interactive_diagnostics(diags, line, self.sess)
+        diagnostics_element = components.interactive_diagnostics(diags, line, self.sess)
       end
     end
 
-    vim.list_extend(blocks, diagnostics_div or components.diagnostics(buf, line))
+    vim.list_extend(blocks, diagnostics_element or components.diagnostics(buf, line))
 
-    new_data_div:add_div(html.concat(blocks, '\n\n'))
+    new_data_element:add_div(widgets.concat(blocks, '\n\n'))
 
     if not tick:check() then return true end
   end
 
-  new_data_div.events.clear_all = function(ctx) ---@param ctx DivEventContext
+  new_data_element.events.clear_all = function(ctx) ---@param ctx ElementEventContext
     vim.api.nvim_set_current_win(ctx.self.last_win)
-    new_data_div:find(function (div) ---@param div Div
-      if div.events.clear then div.events.clear(ctx) end
+    new_data_element:find(function (element) ---@param element Element
+      if element.events.clear then element.events.clear(ctx) end
     end)
   end
 
   ::finish::
-  self.__data_div = new_data_div
+  self.__data_element = new_data_element
   return true
 end
 
@@ -1104,10 +1114,10 @@ function infoview.go_to()
   infoview.open()
   local curr_info = infoview.get_current_infoview().info
   -- if there is no last win, just go straight to the window itself
-  if not curr_info.__bufdiv:buf_last_win_valid() then
+  if not curr_info.__renderer:buf_last_win_valid() then
     vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
   else
-    curr_info.__bufdiv:buf_enter_win()
+    curr_info.__renderer:buf_enter_win()
   end
 end
 

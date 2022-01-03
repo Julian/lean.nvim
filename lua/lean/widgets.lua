@@ -1,87 +1,87 @@
 local async = require('plenary.async')
+
 local util = require('lean._util')
 
----An HTML-style div.
----@class Div
+---An individual console user interface element.
+---@class Element
 ---@field events table<string, fun()> @event function map
----@field text string @the text to show when rendering this div
----@field name string @a named handle for this div, used when path-searching
----@field hlgroup string|fun():string @the highlight group for this div's text, or a function that returns it
----@field children Div[] @this div's children
----@field tooltip? Div Optional tooltip
----@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
----@field _size? integer Computed size of this div, updated by `Div:to_string`
+---@field text string @the text to show when rendering this element
+---@field name string @a named handle for this element, used when path-searching
+---@field hlgroup string|fun():string @the highlight group for this element's text, or a function that returns it
+---@field children Element[] @this element's children
+---@field tooltip? Element Optional tooltip
+---@field highlightable boolean @(for buffer rendering) whether to highlight this element when hovering over it
+---@field _size? integer Computed size of this element, updated by `Element:to_string`
 ---@field disable_update? boolean
-local Div = {}
-Div.__index = Div
+local Element = {}
+Element.__index = Element
 
----Create a new div.
----@param text string @the text to show when rendering this div
----@param name string @a named handle for this div, used when path-searching
----@param hlgroup string @the highlight group used for this div's text
----@return Div
-function Div:new(text, name, hlgroup)
-  local new_div = setmetatable({
+---Create a new Element.
+---@param text string @the text to show when rendering this element
+---@param name string @a named handle for this element, used when path-searching
+---@param hlgroup string @the highlight group used for this element's text
+---@return Element
+function Element:new(text, name, hlgroup)
+  return setmetatable({
     events = {},
     text = text or "",
     name = name or "",
     hlgroup = hlgroup,
     children = {},
   }, self)
-  return new_div
 end
 
----Add a div to this div's children.
----@param div Div @child div to add
----@return Div @the added child
-function Div:add_div(div)
-  table.insert(self.children, div)
-  return div
+---Add a child to this element.
+---@param child Element @child element to add
+---@return Element @the added child
+function Element:add_div(child)
+  table.insert(self.children, child)
+  return child
 end
 
----Set this div's tooltip.
----@param div Div @div to use as a tooltip for this div
----@return Div @the added tooltip div
-function Div:add_tooltip(div)
-  self.tooltip = div
-  return div
+---Set this element's tooltip.
+---@param element Element @element to use as a tooltip for this element
+---@return Element @the added tooltip element
+function Element:add_tooltip(element)
+  self.tooltip = element
+  return element
 end
 
---- Insert a div initialized with the given params.
+--- Insert an element initialized with the given params.
 ---@param text string
 ---@param name string
 ---@param hlgroup string
----@return Div @the added div
-function Div:insert_div(text, name, hlgroup)
-  return self:add_div(Div:new(text, name, hlgroup))
+---@return Element @the added element
+function Element:insert_div(text, name, hlgroup)
+  return self:add_div(Element:new(text, name, hlgroup))
 end
 
----@class DivHighlight
+---@class ElementHighlight
 ---@field start integer
 ---@field end integer
 ---@field hlgroup string
 
----@return DivHighlight[]
-function Div:_get_highlights()
-  local hls = {} ---@type DivHighlight[]
+---@return ElementHighlight[]
+function Element:_get_highlights()
+  local hls = {} ---@type ElementHighlight[]
 
-  ---@param div Div
+  ---@param element Element
   ---@param pos integer
-  local function go(div, pos)
-    local hlgroup = div.hlgroup
+  local function go(element, pos)
+    local hlgroup = element.hlgroup
     if type(hlgroup) == "function" then
-      hlgroup = hlgroup(div)
+      hlgroup = hlgroup(element)
     end
     if hlgroup then
       table.insert(hls, {
         start = pos,
-        ["end"] = pos + div._size,
+        ["end"] = pos + element._size,
         hlgroup = hlgroup,
       })
     end
 
-    pos = pos + #div.text
-    for _, child in ipairs(div.children) do
+    pos = pos + #element.text
+    for _, child in ipairs(element.children) do
       go(child, pos)
       pos = pos + child._size
     end
@@ -92,41 +92,41 @@ function Div:_get_highlights()
   return hls
 end
 
----Renders the div into a string.
+---Render the element into a string.
 ---@return string
-function Div:to_string()
+function Element:to_string()
   local pieces = {}
-  ---@param div Div
-  local function go(div)
-    table.insert(pieces, div.text)
-    local size = #div.text
-    for _, child in ipairs(div.children) do
+  ---@param element Element
+  local function go(element)
+    table.insert(pieces, element.text)
+    local size = #element.text
+    for _, child in ipairs(element.children) do
       go(child)
       size = size + child._size
     end
-    div._size = size
+    element._size = size
   end
   go(self)
   return table.concat(pieces)
 end
 
----Returns true if the div renders into the empty string.
+---Return true if the element renders into the empty string.
 ---@return boolean
-function Div:is_empty()
+function Element:is_empty()
   return #self:to_string() == 0
 end
 
----Represents a node in a path through a div.
+---Represents a node in a path through an element.
 ---@class PathNode
----@field idx number @the index in the current div's children to follow
+---@field idx number @the index in the current element's children to follow
 ---@field name string @the name that the indexed child should have
----@field offset number|nil @if provided, a byte offset from the beginning of this div
+---@field offset number|nil @if provided, a byte offset from the beginning of this element
 
----Get the raw byte position of the div arrived at by following the given path.
+---Get the raw byte position of the element arrived at by following the given path.
 ---@param path PathNode[] @the path to follow
 ---@return number|nil @the position if the path was valid, nil otherwise
 ---@return number|nil @the additional byte offset from the position if the path was valid, nil otherwise
-function Div:pos_from_path(path)
+function Element:pos_from_path(path)
   local pos = 1
   for i, p in ipairs(path) do
     if i == 1 then -- first path node encodes root
@@ -145,11 +145,11 @@ function Div:pos_from_path(path)
   return pos, offset
 end
 
----Get the div stack and div arrived at by following the given path.
+---Get the element stack and element arrived at by following the given path.
 ---@param path PathNode[] @the path to follow
----@return Div[]|nil @the stack of children at this path, or nil if the path is invalid
----@return Div|nil @the div at this path, or nil if the path is invalid
-function Div:div_from_path(path)
+---@return Element[]|nil @the stack of elements at this path, or nil if the path is invalid
+---@return Element|nil @the element at this path, or nil if the path is invalid
+function Element:div_from_path(path)
   local stack = { self }
   for i, p in ipairs(path) do
     if i == 1 then -- first path node encodes root
@@ -173,20 +173,20 @@ local function take(arr, n)
   return res
 end
 
--- Finds the innermost div satisfying a predicate
+-- Finds the innermost element satisfying a predicate
 ---@param path PathNode[]
----@param check fun(div:Div):boolean
----@return Div @The div satisfying check
----@return Div[] @The div stack up to and including that div
----@return PathNode[] @The subpath up to that div
-function Div:find_innermost_along(path, check)
+---@param check fun(element:Element):boolean
+---@return Element @The element satisfying check
+---@return Element[] @The element stack up to and including that element
+---@return PathNode[] @The subpath up to that element
+function Element:find_innermost_along(path, check)
   local stack, _ = self:div_from_path(path)
   if stack == nil then return end
 
   for i = #stack, 1, -1 do
-    local this_div = stack[i]
-    if check(this_div) then
-      return this_div, take(stack, i), take(path, i)
+    local this_element = stack[i]
+    if check(this_element) then
+      return this_element, take(stack, i), take(path, i)
     end
   end
 end
@@ -219,11 +219,11 @@ local function raw_pos_to_pos(raw_pos, lines)
 end
 
 ---Get the path at the given raw byte position.
----(requires previous call to Div:to_string)
+---(requires previous call to Element:to_string)
 ---@param pos integer byte position
 ---@return PathNode[]|nil the path at this position
----@return Div[]|nil the stack of children along this path
-function Div:path_from_pos(pos)
+---@return Element[]|nil the stack of elements along this path
+function Element:path_from_pos(pos)
   local path = { { idx = 0, name = self.name } }
   local stack = { self }
   pos = pos - 1
@@ -247,42 +247,37 @@ function Div:path_from_pos(pos)
   return nil
 end
 
----@class DivEventContext
----@field rerender fun()
----@field rehover fun()
----@field self BufDiv
-
 ---Trigger the given event at the given path
 ---@param path PathNode[] @the path to trigger the event at
 ---@param event_name string @the path to trigger the event at
-function Div:event(path, event_name, ...)
-  local event_div = self:find_innermost_along(path,
-    ---@param div Div
-    function (div) return div.events and div.events[event_name] end)
-  if not event_div then
+function Element:event(path, event_name, ...)
+  local event_element = self:find_innermost_along(path,
+    ---@param element Element
+    function (element) return element.events and element.events[event_name] end)
+  if not event_element then
     return false
   end
 
   local args = {...}
 
   async.void(function()
-    return event_div.events[event_name](unpack(args))
+    return event_element.events[event_name](unpack(args))
   end)()
   return true
 end
 
 ---Returns true if check is true for one of the descendants
----@param check fun(div:Div):boolean
-function Div:find(check)
+---@param check fun(element:Element):boolean
+function Element:find(check)
   if check(self) then return self end
 
-  for _, div in pairs(self.children) do
-    local found = div:find(check)
+  for _, child in pairs(self.children) do
+    local found = child:find(check)
     if found then return found end
   end
 end
 
-function Div:__filter(path, pos, fn)
+function Element:__filter(path, pos, fn)
   pos = pos + #self.text
 
   for idx, child in ipairs(self.children) do
@@ -296,7 +291,7 @@ function Div:__filter(path, pos, fn)
   return pos
 end
 
-function Div:filter(fn)
+function Element:filter(fn)
   local path = {{idx = -1, name = self.name}}
   local pos = 1
   fn(self, path, pos)
@@ -304,9 +299,9 @@ function Div:filter(fn)
   self:__filter(path, pos, fn)
 end
 
--- Creates an impotent deep copy of this div (both tag-stripped and event-disabled).
-function Div:dummy_copy()
-  local dummy = Div:new(self.text, self.name, self.hlgroup)
+-- Creates an impotent deep copy of this element (both tag-stripped and event-disabled).
+function Element:dummy_copy()
+  local dummy = Element:new(self.text, self.name, self.hlgroup)
   dummy.highlightable = self.highlightable
   for _, child in ipairs(self.children) do
     table.insert(dummy.children, child:dummy_copy())
@@ -317,34 +312,34 @@ function Div:dummy_copy()
   return dummy
 end
 
----@param divs Div[]
+---@param elements Element[]
 ---@param sep string
-local function concat(divs, sep)
-  local out = Div:new()
-  for i, d in ipairs(divs) do
+local function concat(elements, sep)
+  local out = Element:new()
+  for i, d in ipairs(elements) do
     if i > 1 then out:insert_div(sep) end
     out:add_div(d)
   end
   return out
 end
 
----Utility for rendering a div with a particular buffer.
----@class BufDiv
----@field buf integer Buffer number of the buffer the div renders to
----@field div Div Div rendered by this buffer
+---Renders elements within a specific buffer.
+---@class BufRenderer
+---@field buf integer Buffer number of the buffer the element renders to
+---@field element Element the element rendered by this renderer
 ---@field lines? string[] Rendered lines.
 ---@field path? PathNode[] Current cursor path
 ---@field last_win? integer Window number of the last event
 ---@field keymaps table Extra keymaps (inherited by tooltips)
 ---@field hover_range? integer[][] (0,0)-range of the highlighted node
----@field tooltip? BufDiv currently open tooltip
----@field parent? BufDiv Parent bufdiv
----@field parent_path? PathNode[] Path in parent div, events bubble up to the parent there
-local BufDiv = {}
-BufDiv.__index = BufDiv
+---@field tooltip? BufRenderer currently open tooltip
+---@field parent? BufRenderer Parent renderer
+---@field parent_path? PathNode[] Path in parent element, events bubble up to the parent there
+local BufRenderer = {}
+BufRenderer.__index = BufRenderer
 
--- Maps BufDiv.buf to BufDiv
---- @type table<number, BufDiv>
+-- Maps BufRenderer.buf to BufRenderer
+--- @type table<number, BufRenderer>
 local _by_buf = {}
 
 -- Clean up references to closed buffers in the `_by_buf` table.
@@ -359,44 +354,44 @@ local function gc()
 end
 
 ---@param buf number
----@param div Div
+---@param element Element
 ---@param keymaps? table Extra keymaps
-function BufDiv:new(buf, div, keymaps)
+function BufRenderer:new(buf, element, keymaps)
   gc()
 
   vim.api.nvim_buf_set_option(buf, "modifiable", false)
-  local new_bufdiv = setmetatable({
+  local new_renderer = setmetatable({
     buf = buf,
     keymaps = keymaps,
-    div = div,
+    element = element,
   }, self)
-  self = new_bufdiv
+  self = new_renderer
   _by_buf[buf] = self
 
-  util.set_augroup("DivPosition", string.format([[
-    autocmd CursorMoved <buffer=%d> lua require'lean.html'._by_buf[%d]:buf_update_cursor()
-    autocmd BufEnter <buffer=%d> lua require'lean.html'._by_buf[%d]:buf_update_cursor()
+  util.set_augroup("WidgetPosition", string.format([[
+    autocmd CursorMoved <buffer=%d> lua require'lean.widgets'._by_buf[%d]:buf_update_cursor()
+    autocmd BufEnter <buffer=%d> lua require'lean.widgets'._by_buf[%d]:buf_update_cursor()
   ]], buf, buf, buf, buf), buf)
 
   local mappings = {n = {}}
   if keymaps then
     for key, event in pairs(keymaps) do
-      mappings.n[key] = ([[<Cmd>lua require'lean.html'._by_buf[%d]:buf_event("%s")<CR>]]):format(buf, event)
+      mappings.n[key] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:buf_event("%s")<CR>]]):format(buf, event)
     end
-    mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.html'._by_buf[%d]:buf_enter_tooltip()<CR>]]):format(buf)
+    mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:buf_enter_tooltip()<CR>]]):format(buf)
     mappings.n["<S-Tab>"] = (
-      [[<Cmd>lua require'lean.html'._by_buf[%d]:buf_goto_parent_tooltip()<CR>]]
+      [[<Cmd>lua require'lean.widgets'._by_buf[%d]:buf_goto_parent_tooltip()<CR>]]
     ):format(buf)
-    mappings.n["J"] = ([[<Cmd>lua require'lean.html'._by_buf[%d]:buf_enter_tooltip()<CR>]]):format(buf)
-    mappings.n["S"] = ([[<Cmd>lua require'lean.html'._by_buf[%d]:buf_hop_to()<CR>]]):format(buf)
+    mappings.n["J"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:buf_enter_tooltip()<CR>]]):format(buf)
+    mappings.n["S"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:buf_hop_to()<CR>]]):format(buf)
   end
   util.load_mappings(mappings, buf)
 
-  return new_bufdiv
+  return new_renderer
 end
 
 ---@param keep_tooltips_open? boolean
-function BufDiv:buf_close(keep_tooltips_open)
+function BufRenderer:buf_close(keep_tooltips_open)
   if vim.api.nvim_buf_is_valid(self.buf) then
     vim.api.nvim_buf_delete(self.buf, {force = true})
     gc()
@@ -411,21 +406,21 @@ function BufDiv:buf_close(keep_tooltips_open)
   end
 end
 
-local div_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
+local widgets_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
 local hl_ns = vim.api.nvim_create_namespace('LeanNvimInfoHighlight')
 
-function BufDiv:buf_render()
+function BufRenderer:buf_render()
   local buf = self.buf
 
   if not vim.api.nvim_buf_is_valid(buf) then return end
 
-  vim.api.nvim_buf_clear_namespace(buf, div_ns, 0, -1)
+  vim.api.nvim_buf_clear_namespace(buf, widgets_ns, 0, -1)
 
-  local text = self.div:to_string()
+  local text = self.element:to_string()
   local lines = vim.split(text, '\n')
   self.lines = lines
 
-  local hls = self.div:_get_highlights()
+  local hls = self.element:_get_highlights()
 
   vim.api.nvim_buf_set_option(buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, true, lines)
@@ -439,16 +434,16 @@ function BufDiv:buf_render()
   for _, hl in ipairs(hls) do
     local start_pos = raw_pos_to_pos(hl.start, lines)
     local end_pos = raw_pos_to_pos(hl["end"], lines)
-    vim.highlight.range(buf, div_ns, hl.hlgroup, start_pos, end_pos)
+    vim.highlight.range(buf, widgets_ns, hl.hlgroup, start_pos, end_pos)
   end
 
   if self.path then
     -- on a rerender any previously existing paths may be invalid
     -- TODO: cache div_from_path() return value to use in buf_hover
-    if not self.div:div_from_path(self.path) then
+    if not self.element:div_from_path(self.path) then
       self.path = nil
     elseif self:buf_last_win_valid() then
-      local raw_pos, offset = self.div:pos_from_path(self.path)
+      local raw_pos, offset = self.element:pos_from_path(self.path)
       local pos = raw_pos_to_pos(raw_pos + offset, lines)
       pos[1] = pos[1] + 1
       vim.api.nvim_win_set_cursor(self.last_win, pos)
@@ -458,25 +453,25 @@ function BufDiv:buf_render()
   self:buf_hover(true)
 end
 
-function BufDiv:buf_enter_tooltip()
+function BufRenderer:buf_enter_tooltip()
   if self.tooltip and self.tooltip:buf_last_win_valid() then
     vim.api.nvim_set_current_win(self.tooltip.last_win)
   end
 end
 
-function BufDiv:buf_goto_parent_tooltip()
+function BufRenderer:buf_goto_parent_tooltip()
   if self.parent and self.parent:buf_last_win_valid() then
     vim.api.nvim_set_current_win(self.parent.last_win)
   end
 end
 
-function BufDiv:buf_last_win_valid()
+function BufRenderer:buf_last_win_valid()
   return self.last_win
     and vim.api.nvim_win_is_valid(self.last_win)
     and vim.api.nvim_win_get_buf(self.last_win) == self.buf
 end
 
-function BufDiv:buf_update_cursor(win)
+function BufRenderer:buf_update_cursor(win)
   if self.disable_update then return end
   win = win or vim.api.nvim_get_current_win()
   if vim.api.nvim_win_get_buf(win) == self.buf then
@@ -507,13 +502,13 @@ local function path_equal(path_a, path_b)
   return true
 end
 
-function BufDiv:buf_update_position()
+function BufRenderer:buf_update_position()
   local path_before = self.path
   local cursor_pos = vim.api.nvim_win_get_cursor(self.last_win)
   local raw_pos = pos_to_raw_pos(cursor_pos, self.lines)
   if not raw_pos then return end
 
-  self.path = self.div:path_from_pos(raw_pos)
+  self.path = self.element:path_from_pos(raw_pos)
 
   if not path_equal(path_before, self.path) then
     self:buf_event("cursor_leave", path_before)
@@ -524,7 +519,7 @@ function BufDiv:buf_update_position()
   return false
 end
 
-function BufDiv:buf_hover(force_update_highlight)
+function BufRenderer:buf_hover(force_update_highlight)
   local path = self.path
 
   local old_hover_range = self.hover_range
@@ -539,37 +534,37 @@ function BufDiv:buf_hover(force_update_highlight)
     return
   end
 
-  local hover_div, _, hover_div_path = self.div:find_innermost_along(path,
-    ---@param div Div
-    function (div) return div.highlightable end)
+  local hover_element, _, hover_element_path = self.element:find_innermost_along(path,
+    ---@param element Element
+    function (element) return element.highlightable end)
 
-  local tt_parent_div, _, tt_parent_div_path = self.div:find_innermost_along(path,
-    ---@param div Div
-    function (div) return div.tooltip end)
+  local tt_parent_element, _, tt_parent_element_path = self.element:find_innermost_along(path,
+    ---@param element Element
+    function (element) return element.tooltip end)
 
-  local new_tooltip_div = tt_parent_div and tt_parent_div.tooltip
+  local new_tooltip_element = tt_parent_element and tt_parent_element.tooltip
 
-  if self.tooltip ~= nil and new_tooltip_div == nil then
+  if self.tooltip ~= nil and new_tooltip_element == nil then
     self.tooltip:buf_close()
     self.tooltip = nil
   end
 
-  if new_tooltip_div ~= nil then
-    local width, height = util.make_floating_popup_size(vim.split(new_tooltip_div:to_string(), "\n"))
+  if new_tooltip_element ~= nil then
+    local width, height = util.make_floating_popup_size(vim.split(new_tooltip_element:to_string(), "\n"))
 
-    local tt_parent_path = tt_parent_div_path
-    local bufpos = raw_pos_to_pos(self.div:pos_from_path(tt_parent_path), self.lines)
+    local tt_parent_path = tt_parent_element_path
+    local bufpos = raw_pos_to_pos(self.element:pos_from_path(tt_parent_path), self.lines)
 
     if self.tooltip then -- reuse old tooltip window
-      self.tooltip.div = new_tooltip_div
+      self.tooltip.element = new_tooltip_element
     else
       local bufnr = vim.api.nvim_create_buf(false, true)
-      self.tooltip = BufDiv:new(bufnr, new_tooltip_div, self.keymaps)
+      self.tooltip = BufRenderer:new(bufnr, new_tooltip_element, self.keymaps)
       vim.api.nvim_buf_set_option(self.tooltip.buf, "bufhidden", "wipe")
     end
 
     self.tooltip.parent = self
-    self.tooltip.parent_path = tt_parent_div_path
+    self.tooltip.parent_path = tt_parent_element_path
 
     local tooltip_buf = self.tooltip.buf
 
@@ -601,10 +596,10 @@ function BufDiv:buf_hover(force_update_highlight)
     self.tooltip:buf_render()
   end
 
-  if hover_div_path and hover_div then
-    local a = self.div:pos_from_path(hover_div_path)
+  if hover_element_path and hover_element then
+    local a = self.element:pos_from_path(hover_element_path)
     local start_pos = raw_pos_to_pos(a, self.lines)
-    local end_pos = raw_pos_to_pos(a + hover_div._size, self.lines)
+    local end_pos = raw_pos_to_pos(a + hover_element._size, self.lines)
     self.hover_range = {start_pos, end_pos}
   else
     self.hover_range = nil
@@ -612,28 +607,33 @@ function BufDiv:buf_hover(force_update_highlight)
 
   if force_update_highlight or not vim.deep_equal(old_hover_range, self.hover_range) then
     vim.api.nvim_buf_clear_namespace(self.buf, hl_ns, 0, -1)
-    local hlgroup = "htmlDivHighlight"
+    local hlgroup = 'widgetElementHighlight'
     if self.hover_range then
       vim.highlight.range(self.buf, hl_ns, hlgroup, self.hover_range[1], self.hover_range[2])
     end
   end
 end
 
-function BufDiv:buf_event(event, path, ...)
+function BufRenderer:buf_event(event, path, ...)
   local args = {...}
 
   path = path or self.path
 
   if not path then return end
 
-  if not self.div:event(path, event, self:buf_make_event_context(), unpack(args)) and self.parent then
+  if not self.element:event(path, event, self:buf_make_event_context(), unpack(args)) and self.parent then
     -- bubble up to parent
     return self.parent:buf_event(event, self.parent_path, ...)
   end
 end
 
----@return DivEventContext
-function BufDiv:buf_make_event_context()
+---@class ElementEventContext
+---@field rerender fun()
+---@field rehover fun()
+---@field self BufRenderer
+
+---@return ElementEventContext
+function BufRenderer:buf_make_event_context()
   return {
     rerender = function() self:buf_render() end,
     rehover = function() self:buf_hover() end,
@@ -641,35 +641,35 @@ function BufDiv:buf_make_event_context()
   }
 end
 
-function BufDiv:buf_enter_win()
+function BufRenderer:buf_enter_win()
   local deepest_tooltip = self:buf_get_deepest_tooltip()
   if deepest_tooltip:buf_last_win_valid() then
     vim.api.nvim_set_current_win(deepest_tooltip.last_win)
   end
 end
 
-function BufDiv:buf_get_deepest_tooltip()
+function BufRenderer:buf_get_deepest_tooltip()
   while self.tooltip do
     self = self.tooltip
   end
   return self
 end
 
-function BufDiv:buf_hop_to()
+function BufRenderer:buf_hop_to()
   while self.parent do
     self = self.parent
   end
-  self:buf_hop(function(div) return div.highlightable end, require"hop.hint_util".callbacks.win_goto)
+  self:buf_hop(function(element) return element.highlightable end, require"hop.hint_util".callbacks.win_goto)
 end
 
-function BufDiv:buf_hop(filter_fn, callback_fn)
+function BufRenderer:buf_hop(filter_fn, callback_fn)
   local winpos = vim.api.nvim_win_get_position(0)
   local strategy = {
     get_hint_list = function()
       local hints = {}
       local windows = {}
 
-      ---@param root BufDiv
+      ---@param root BufRenderer
       local function buf_get_hints(root)
         local this_buf = root.buf
         local this_win = root.last_win
@@ -678,8 +678,8 @@ function BufDiv:buf_hop(filter_fn, callback_fn)
         local lines = root.lines
         local window_dist = require"hop.hint_util".manh_dist(winpos, vim.api.nvim_win_get_position(this_win))
 
-        root.div:filter(function(div, _, raw_pos)
-          if not filter_fn(div) then return end
+        root.element:filter(function(element, _, raw_pos)
+          if not filter_fn(element) then return end
           local pos = raw_pos_to_pos(raw_pos, lines)
           local hint =
           {
@@ -694,7 +694,7 @@ function BufDiv:buf_hop(filter_fn, callback_fn)
           hint.wdist = window_dist
           hint.win = this_win
 
-          -- prevent duplicate hints; this works because we are pre-order traversing the div tree
+          -- prevent duplicate hints; this works because we are pre-order traversing the element tree
           if not vim.deep_equal(hint, hints[#hints]) then
             table.insert(hints, hint)
           end
@@ -721,4 +721,9 @@ function BufDiv:buf_hop(filter_fn, callback_fn)
   require"hop".hint(strategy)
 end
 
-return { BufDiv = BufDiv, Div = Div, concat = concat, _by_buf = _by_buf }
+return {
+  BufRenderer = BufRenderer,
+  Element = Element,
+  concat = concat,
+  _by_buf = _by_buf,
+}
