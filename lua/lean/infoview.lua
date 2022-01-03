@@ -13,9 +13,9 @@ local protocol = require'vim.lsp.protocol'
 local infoview = {
   -- mapping from infoview IDs to infoviews
   ---@type table<number, Infoview>
-  _by_id = {},
-  -- mapping from tabpage handles to infoviews
-  ---@type table<any, Infoview>
+  _infoviews = {},
+  -- all current infoviews
+  ---@type Infoview[]
   _by_tabpage = {},
   -- mapping from info IDs to infos
   ---@type table<number, Info>
@@ -79,7 +79,6 @@ local Info = {}
 
 --- A "view" on an info (i.e. window).
 ---@class Infoview
----@field id number
 ---@field info Info
 ---@field window integer
 ---@field private __orientation "vertical"|"horizontal"
@@ -117,16 +116,12 @@ end
 ---@param open boolean: whether to open the infoview after initializing
 ---@return Infoview
 function Infoview:new(open)
-  local new_infoview = {
-    id = #infoview._by_id + 1,
-    __width = options.width,
-    __height = options.height,
-  }
+  local new_infoview = { __width = options.width, __height = options.height }
   self.__index = self
   setmetatable(new_infoview, self)
 
   new_infoview.info = Info:new{ parent = new_infoview }
-  table.insert(infoview._by_id, new_infoview)
+  table.insert(infoview._infoviews, new_infoview)
   if not open then new_infoview:close() else new_infoview:open() end
 
   return new_infoview
@@ -909,7 +904,7 @@ end
 
 --- Close all open infoviews (across all tabs).
 function infoview.close_all()
-  for _, each in pairs(infoview._by_id) do
+  for _, each in ipairs(infoview._infoviews) do
     each:close()
   end
 end
