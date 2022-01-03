@@ -55,9 +55,9 @@ local options = {
 --- An individual pin.
 ---@class Pin
 ---@field id number
----@field data_div Div
----@field div Div
----@field ticker table
+---@field private __data_div Div
+---@field private __div Div
+---@field private __ticker table
 ---@field private __parent_infos table<Info, boolean>
 ---@field private __ui_position_params UIParams
 ---@field private __use_widgets boolean
@@ -352,7 +352,7 @@ function Info:new(opts)
   end
 
   self.__bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/curr", true), self.__pins_div, options.mappings)
-  self.__diff_bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/diff"), self.pin.div, options.mappings)
+  self.__diff_bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/diff"), self.pin.__div, options.mappings)
 
   -- Show/hide current pin extmark when entering/leaving infoview.
   set_augroup("LeanInfoviewShowPin", string.format([[
@@ -396,7 +396,7 @@ function Info:__set_diff_pin(params)
   if not self.__diff_pin then
     self.__diff_pin = Pin:new(options.autopause, options.use_widgets)
     self.__diff_pin:__add_parent_info(self)
-    self.__diff_bufdiv.div = self.__diff_pin.div
+    self.__diff_bufdiv.__div = self.__diff_pin.__div
     self.__diff_pin:show_extmark(nil, diff_pin_hl_group)
   end
 
@@ -425,7 +425,7 @@ function Info:__clear_diff_pin()
   if not self.__diff_pin then return end
   self.__diff_pin:__remove_parent_info(self)
   self.__diff_pin = nil
-  self.__diff_bufdiv.div = self.pin.div
+  self.__diff_bufdiv.__div = self.pin.__div
   self:render()
 end
 
@@ -494,7 +494,7 @@ function Info:__render_pins()
 
     local pin_div = html.Div:new("", "pin_wrapper")
     pin_div:add_div(header_div)
-    if pin.div then pin_div:add_div(pin.div) end
+    if pin.__div then pin_div:add_div(pin.__div) end
 
     return pin_div
   end
@@ -559,11 +559,11 @@ function Pin:new(paused, use_widgets)
   local new_pin = {
     id = self.next_id,
     paused = paused,
-    ticker = util.Ticker:new(),
-    data_div = html.Div:new("", "pin-data", nil),
-    div = html.Div:new("", "pin", nil),
-    __use_widgets = use_widgets,
+    __data_div = html.Div:new("", "pin-data", nil),
+    __div = html.Div:new("", "pin", nil),
     __parent_infos = {},
+    __ticker = util.Ticker:new(),
+    __use_widgets = use_widgets,
   }
   self.next_id = self.next_id + 1
   infoview._pin_by_id[new_pin.id] = new_pin
@@ -707,14 +707,14 @@ function Pin:pause()
   if self.paused then return end
   self.paused = true
 
-  self.data_div = self.data_div:dummy_copy()
+  self.__data_div = self.__data_div:dummy_copy()
   if not self:set_loading(false) then
-    self.div.divs = { self.data_div }
+    self.__div.divs = { self.__data_div }
     self:__render_parents()
   end
 
   -- abort any pending requests
-  self.ticker:lock()
+  self.__ticker:lock()
 end
 
 ---Restart updating this pin.
@@ -745,18 +745,18 @@ end
 -- Indicate that the pin is either loading or done loading, if it isn't already set as such.
 function Pin:set_loading(loading)
   if loading and not self.loading then
-    self.div.divs = {}
-    local data_div_copy = self.data_div:dummy_copy()
+    self.__div.divs = {}
+    local data_div_copy = self.__data_div:dummy_copy()
 
-    self.div:add_div(data_div_copy)
+    self.__div:add_div(data_div_copy)
 
     self.loading = true
 
     self:__render_parents()
     return true
   elseif not loading and self.loading then
-    self.div.divs = {}
-    self.div:add_div(self.data_div)
+    self.__div.divs = {}
+    self.__div:add_div(self.__data_div)
 
     self.loading = false
 
@@ -770,7 +770,7 @@ end
 function Pin:async_update(force, _, lean3_opts)
   if not force and self.paused then return end
 
-  local tick = self.ticker:lock()
+  local tick = self.__ticker:lock()
 
   if self.__position_params and (force or not self.paused) then
     self:__update(tick, lean3_opts)
@@ -903,7 +903,7 @@ function Pin:__update(tick, lean3_opts)
   end
 
   ::finish::
-  self.data_div = new_data_div
+  self.__data_div = new_data_div
   return true
 end
 
