@@ -612,6 +612,7 @@ function Pin:__update_extmark_style(buf, line, col)
   if not buf then
     buf = self.extmark_buf
     local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, self.extmark, {})
+    if vim.tbl_isempty(extmark_pos) then return end
     line = extmark_pos[1]
     col = extmark_pos[2]
   end

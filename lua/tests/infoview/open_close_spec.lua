@@ -192,4 +192,33 @@ describe('infoview open/close', function()
       )
     end)
   end)
+
+  it('closes when its buffer is deleted and stays closed until reopened', function(_)
+    local current_infoview = infoview.get_current_infoview()
+    current_infoview:open()
+    assert.same.elements(
+      { lean_window, current_infoview.window },
+      vim.api.nvim_tabpage_list_wins(0)
+    )
+
+    vim.cmd('split third_non_lean_window')
+    local non_lean_window = vim.api.nvim_get_current_win()
+
+    -- Close the Lean source window via :bd
+    vim.fn.win_execute(lean_window, "bdelete")
+    assert.are.same_elements(
+      { current_infoview.window, non_lean_window },
+      vim.api.nvim_tabpage_list_wins(0)
+    )
+
+    -- Close the infoview window now too
+    vim.api.nvim_win_close(current_infoview.window, true)
+    assert.are.same({ non_lean_window }, vim.api.nvim_tabpage_list_wins(0))
+
+    current_infoview:open()
+    assert.same.elements(
+      { non_lean_window, current_infoview.window },
+      vim.api.nvim_tabpage_list_wins(0)
+    )
+  end)
 end)
