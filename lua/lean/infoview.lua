@@ -68,13 +68,13 @@ local Pin = {next_id = 1}
 ---@field id number
 ---@field pin Pin
 ---@field pins Pin[]
----@field win_event_disable boolean
 ---@field private __auto_diff_pin Pin
 ---@field private __bufdiv BufDiv
 ---@field private __diff_bufdiv BufDiv
 ---@field private __diff_pin Pin
 ---@field private __pins_div Div
 ---@field private __parent_infoviews Infoview[]
+---@field private __win_event_disable boolean
 local Info = {}
 
 --- A "view" on an info (i.e. window).
@@ -173,7 +173,7 @@ end
 function Infoview:__open_win(buf, orientation)
   if not self.is_open then return end
 
-  self.info.win_event_disable = true
+  self.info.__win_event_disable = true
   local window_before_split = vim.api.nvim_get_current_win()
   vim.api.nvim_set_current_win(self.window)
 
@@ -190,7 +190,7 @@ function Infoview:__open_win(buf, orientation)
   vim.api.nvim_buf_set_option(buf, 'filetype', 'leaninfo')
 
   vim.api.nvim_set_current_win(window_before_split)
-  self.info.win_event_disable = false
+  self.info.__win_event_disable = false
 
   return new_win
 end
@@ -198,7 +198,7 @@ end
 function Infoview:__refresh()
   local valid_windows = {}
 
-  self.info.win_event_disable = true
+  self.info.__win_event_disable = true
   for _, win in pairs({self.window, self.__diff_win}) do
     if win and vim.api.nvim_win_is_valid(win) then
       table.insert(valid_windows, win)
@@ -220,7 +220,7 @@ function Infoview:__refresh()
       end
     end)
   end
-  self.info.win_event_disable = false
+  self.info.__win_event_disable = false
 end
 
 --- Either open or close a diff window for this infoview depending on whether its info has a diff pin.
@@ -250,14 +250,14 @@ end
 function Infoview:__close_diff()
   if not self.is_open or not self.__diff_win then return end
 
-  self.info.win_event_disable = true
+  self.info.__win_event_disable = true
   vim.api.nvim_win_call(self.window, function() vim.api.nvim_command"diffoff" end)
 
   if vim.api.nvim_win_is_valid(self.__diff_win) then
     vim.api.nvim_win_call(self.__diff_win, function() vim.api.nvim_command"diffoff" end)
     vim.api.nvim_win_close(self.__diff_win, true)
   end
-  self.info.win_event_disable = false
+  self.info.__win_event_disable = false
 
   self.__diff_win = nil
 
@@ -274,11 +274,11 @@ function Infoview:close()
 
   self:__close_diff()
 
-  self.info.win_event_disable = true
+  self.info.__win_event_disable = true
   if vim.api.nvim_win_is_valid(self.window) then
     vim.api.nvim_win_close(self.window, true)
   end
-  self.info.win_event_disable = false
+  self.info.__win_event_disable = false
 
   self.window = nil
   self.is_open = false
@@ -326,9 +326,9 @@ function Info:new(opts)
     id = #infoview._info_by_id + 1,
     pin = Pin:new(options.autopause, options.use_widgets),
     pins = {},
-    win_event_disable = false,
     __parent_infoviews = { opts.parent },
     __pins_div = html.Div:new("", "info", nil),
+    __win_event_disable = false,
   }
   table.insert(infoview._info_by_id, new_info)
 
@@ -919,7 +919,7 @@ end
 ---@param id number @info id
 function infoview.__was_closed(id)
   local info = infoview._info_by_id[id]
-  if info.win_event_disable then return end
+  if info.__win_event_disable then return end
   info:close_parent_infoviews()
 end
 
@@ -928,7 +928,7 @@ end
 ---@param id number @info id
 function infoview.__diff_was_closed(id)
   local info = infoview._info_by_id[id]
-  if info.win_event_disable then return end
+  if info.__win_event_disable then return end
   info:__clear_diff_pin()
 end
 
@@ -937,7 +937,7 @@ end
 ---@param id number @info id
 function infoview.__show_curr_pin(id)
   local info = infoview._info_by_id[id]
-  if info.win_event_disable then return end
+  if info.__win_event_disable then return end
   info:maybe_show_pin_extmark("current")
 end
 
@@ -946,7 +946,7 @@ end
 ---@param id number @info id
 function infoview.__hide_curr_pin(id)
   local info = infoview._info_by_id[id]
-  if info.win_event_disable then return end
+  if info.__win_event_disable then return end
   info.pin:hide_extmark()
 end
 
@@ -954,7 +954,7 @@ end
 --- @param id number @Info id
 function infoview.__update(id)
   local info = id and infoview._info_by_id[id] or infoview.get_current_infoview().info
-  if info.win_event_disable then return end
+  if info.__win_event_disable then return end
 
   if not is_lean_buffer() then return end
   info:set_last_window()
