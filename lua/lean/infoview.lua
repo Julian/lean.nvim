@@ -80,11 +80,11 @@ local Info = {}
 --- A "view" on an info (i.e. window).
 ---@class Infoview
 ---@field id number
----@field width number
----@field height number
 ---@field info Info
 ---@field window integer
----@field orientation "vertical"|"horizontal"
+---@field private __orientation "vertical"|"horizontal"
+---@field private __width number
+---@field private __height number
 ---@field private __diff_win integer
 local Infoview = {}
 
@@ -119,8 +119,8 @@ end
 function Infoview:new(open)
   local new_infoview = {
     id = #infoview._by_id + 1,
-    width = options.width,
-    height = options.height,
+    __width = options.width,
+    __height = options.height,
   }
   self.__index = self
   setmetatable(new_infoview, self)
@@ -143,11 +143,11 @@ function Infoview:open()
 
   local ch_aspect_ratio = 2.5 -- characters are 2.5x taller than they are wide
   if win_width > ch_aspect_ratio * win_height then -- vertical split
-    self.orientation = "vertical"
-    vim.cmd("botright " .. self.width .. "vsplit")
+    self.__orientation = "vertical"
+    vim.cmd("botright " .. self.__width .. "vsplit")
   else -- horizontal split
-    self.orientation = "horizontal"
-    vim.cmd("botright " .. self.height .. "split")
+    self.__orientation = "horizontal"
+    vim.cmd("botright " .. self.__height .. "split")
   end
   vim.cmd(string.format("buffer %d", self.info.__bufdiv.buf))
   -- Set the filetype now. Any earlier, and only buffer-local options will be
@@ -177,12 +177,12 @@ function Infoview:__open_win(buf, orientation)
   local window_before_split = vim.api.nvim_get_current_win()
   vim.api.nvim_set_current_win(self.window)
 
-  if self.orientation == "vertical" then
-    vim.cmd(orientation .. self.width .. "vsplit")
-    vim.cmd("vertical resize " .. self.width)
+  if self.__orientation == "vertical" then
+    vim.cmd(orientation .. self.__width .. "vsplit")
+    vim.cmd("vertical resize " .. self.__width)
   else
-    vim.cmd(orientation .. self.height .. "split")
-    vim.cmd("resize " .. self.height)
+    vim.cmd(orientation .. self.__height .. "split")
+    vim.cmd("resize " .. self.__height)
   end
   local new_win = vim.api.nvim_get_current_win()
 
@@ -213,10 +213,10 @@ function Infoview:__refresh()
 
   for _, win in pairs(valid_windows) do
     vim.api.nvim_win_call(win, function()
-      if self.orientation == "vertical" then
-        vim.cmd("vertical resize " .. self.width)
+      if self.__orientation == "vertical" then
+        vim.cmd("vertical resize " .. self.__width)
       else
-        vim.cmd("resize " .. self.height)
+        vim.cmd("resize " .. self.__height)
       end
     end)
   end
