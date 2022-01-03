@@ -2,10 +2,11 @@ local lean = require('lean')
 local helpers = require('tests.helpers')
 local fixtures = require('tests.fixtures')
 
-require('tests.helpers').setup {
+require('lean').setup {
   lsp = { enable = true },
   lsp3 = { enable = true },
 }
+
 describe('lean.current_search_paths', function()
   for kind, path in unpack(fixtures.lean_project.files_it) do
     it(string.format('returns the paths for %s files', kind), function()

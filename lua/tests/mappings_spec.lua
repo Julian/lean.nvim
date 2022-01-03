@@ -1,7 +1,8 @@
 local lean = require('lean')
 local clean_buffer = require('tests.helpers').clean_buffer
 
-require('tests.helpers').setup {}
+require('lean').setup{}
+
 for _, ft in pairs({"lean3", "lean"}) do
 describe(ft .. ' mappings', function()
   it('binds mappings in the current buffer and not others', clean_buffer(ft, '',

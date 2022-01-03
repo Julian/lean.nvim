@@ -1,7 +1,6 @@
-local helpers = require('tests.helpers')
 local abbreviations = require('lean.abbreviations')
 
-helpers.setup{ abbreviations = { enable = true } }
+require('lean').setup{ abbreviations = { enable = true } }
 
 describe('programmatic API', function()
   it('provides access to loaded abbreviations', function()

@@ -9,7 +9,7 @@ local function wait_for_expansion()
   end)
 end
 
-helpers.setup { abbreviations = { builtin = true } }
+require('lean').setup { abbreviations = { builtin = true } }
 
 for _, ft in pairs{"lean3", "lean"} do
 

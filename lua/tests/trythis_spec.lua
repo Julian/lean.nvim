@@ -1,6 +1,7 @@
 local helpers = require('tests.helpers')
 
-helpers.setup { lsp3 = { enable = true } }
+require('lean').setup { lsp3 = { enable = true } }
+
 describe('trythis', function()
   it('replaces a single try this', helpers.clean_buffer("lean3", [[
 meta def whatshouldIdo := (do tactic.trace "Try this: existsi 2; refl\n")

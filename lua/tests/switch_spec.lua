@@ -1,7 +1,8 @@
 local helpers = require('tests.helpers')
 local clean_buffer = helpers.clean_buffer
 
-helpers.setup {}
+require('lean').setup{}
+
 describe('switch', function()
   it('switches between left and right', clean_buffer("lean3", [[
 #check mul_right_comm

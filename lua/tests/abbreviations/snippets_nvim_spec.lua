@@ -1,6 +1,6 @@
 local helpers = require('tests.helpers')
 
-helpers.setup { abbreviations = { snippets = true } }
+require('lean').setup { abbreviations = { snippets = true } }
 
 for _, ft in pairs{"lean3", "lean"} do
 

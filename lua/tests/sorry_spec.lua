@@ -1,7 +1,8 @@
 local helpers = require('tests.helpers')
 local clean_buffer = helpers.clean_buffer
 
-helpers.setup { lsp3 = { enable = true } }
+require('lean').setup { lsp3 = { enable = true } }
+
 describe('sorry', function()
   it('inserts sorries for each remaining goal', clean_buffer("lean3", [[
 def foo (n : nat) : n = n := begin

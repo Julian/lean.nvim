@@ -1,6 +1,6 @@
 local helpers = require('tests.helpers')
 
-helpers.setup {
+require('lean').setup {
   lsp = { enable = true },
   lsp3 = { enable = true },
 }
