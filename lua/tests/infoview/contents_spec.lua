@@ -145,13 +145,14 @@ describe('infoview content (auto-)update', function()
     )
     local current_infoview = infoview.get_current_infoview()
     current_infoview:close()
-    local succeeded, result = pcall(current_infoview.get_lines, current_infoview)
-    assert.is_false(succeeded)
-    assert.is.truthy(result:match("infoview is not open"))
+    assert.has.errors(
+      function() current_infoview:get_lines() end,
+      "infoview is not open"
+    )
 
     -- But succeeds again when re-opened
     current_infoview:open()
-    current_infoview:get_lines()
+    assert.has.no.errors(function() current_infoview:get_lines() end)
   end)
 
   describe('in multiple tabs', function()
