@@ -1,0 +1,12 @@
+#!/usr/bin/python3
+"""
+So sorry leanpkg, but brew install coreutils takes 1 minute in CI.
+"""
+import os
+import sys
+path = next(arg for arg in sys.argv[1:] if not arg.startswith("-"))
+realpath = os.path.realpath(path)
+parent = os.path.dirname(realpath)
+if not os.path.exists(parent):
+    raise FileNotFoundError(parent)
+sys.stdout.write(realpath)

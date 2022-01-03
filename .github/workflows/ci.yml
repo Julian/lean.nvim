@@ -30,10 +30,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install macos dependencies
-        run: |
-          brew update
-          brew install coreutils
+      - name: Give leanpkg (fake) greadlink on macOS
+        run: cp scripts/fake_greadlink /usr/local/bin/greadlink
         if: runner.os == 'macOS'
 
       - name: Install elan
