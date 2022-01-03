@@ -721,4 +721,4 @@ function BufDiv:buf_hop(filter_fn, callback_fn)
   require"hop".hint(strategy)
 end
 
-return { BufDiv = BufDiv, Div = Div, concat = concat }
+return { BufDiv = BufDiv, Div = Div, concat = concat, _by_buf = _by_buf }
