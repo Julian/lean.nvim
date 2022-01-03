@@ -67,12 +67,13 @@ local Pin = {next_id = 1}
 ---@class Info
 ---@field id number
 ---@field pin Pin
----@field diff_pin Pin
 ---@field pins Pin[]
----@field pins_div Div
 ---@field bufdiv BufDiv
 ---@field diff_bufdiv BufDiv
 ---@field win_event_disable boolean
+---@field private __auto_diff_pin Pin
+---@field private __diff_pin Pin
+---@field private __pins_div Div
 ---@field private __parent_infoviews Infoview[]
 local Info = {}
 
@@ -222,11 +223,11 @@ function Infoview:__refresh()
   self.info.win_event_disable = false
 end
 
---- Either open or close a diff window for this infoview depending on whether its info has a diff_pin.
+--- Either open or close a diff window for this infoview depending on whether its info has a diff pin.
 function Infoview:__refresh_diff()
   if not self.is_open then return end
 
-  if not self.info.diff_pin then self:__close_diff() return end
+  if not self.info.__diff_pin then self:__close_diff() return end
 
   local diff_bufdiv = self.info.diff_bufdiv
 
@@ -325,9 +326,9 @@ function Info:new(opts)
     id = #infoview._info_by_id + 1,
     pin = Pin:new(options.autopause, options.use_widgets),
     pins = {},
-    pins_div = html.Div:new("", "info", nil),
     win_event_disable = false,
     __parent_infoviews = { opts.parent },
+    __pins_div = html.Div:new("", "info", nil),
   }
   table.insert(infoview._info_by_id, new_info)
 
@@ -335,7 +336,7 @@ function Info:new(opts)
   setmetatable(new_info, self)
   self = new_info
 
-  self.pins_div.events = {
+  self.__pins_div.events = {
     goto_last_window = function()
       if self.last_window then
         vim.api.nvim_set_current_win(self.last_window)
@@ -350,7 +351,7 @@ function Info:new(opts)
     return bufnr
   end
 
-  self.bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/curr", true), self.pins_div, options.mappings)
+  self.bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/curr", true), self.__pins_div, options.mappings)
   self.diff_bufdiv = html.BufDiv:new(mk_buf("lean://info/" .. self.id .. "/diff"), self.pin.div, options.mappings)
 
   -- Show/hide current pin extmark when entering/leaving infoview.
@@ -391,15 +392,15 @@ function Info:add_pin()
 end
 
 ---@param params UIParams
-function Info:set_diff_pin(params)
-  if not self.diff_pin then
-    self.diff_pin = Pin:new(options.autopause, options.use_widgets)
-    self.diff_pin:__add_parent_info(self)
-    self.diff_bufdiv.div = self.diff_pin.div
-    self.diff_pin:show_extmark(nil, diff_pin_hl_group)
+function Info:__set_diff_pin(params)
+  if not self.__diff_pin then
+    self.__diff_pin = Pin:new(options.autopause, options.use_widgets)
+    self.__diff_pin:__add_parent_info(self)
+    self.diff_bufdiv.div = self.__diff_pin.div
+    self.__diff_pin:show_extmark(nil, diff_pin_hl_group)
   end
 
-  self.diff_pin:move(params)
+  self.__diff_pin:move(params)
 
   self:render()
 end
@@ -420,10 +421,10 @@ function Info:clear_pins()
   self:render()
 end
 
-function Info:clear_diff_pin()
-  if not self.diff_pin then return end
-  self.diff_pin:__remove_parent_info(self)
-  self.diff_pin = nil
+function Info:__clear_diff_pin()
+  if not self.__diff_pin then return end
+  self.__diff_pin:__remove_parent_info(self)
+  self.__diff_pin = nil
   self.diff_bufdiv.div = self.pin.div
   self:render()
 end
@@ -443,7 +444,7 @@ end
 
 --- Update this info's pins div.
 function Info:__render_pins()
-  self.pins_div.divs = {}
+  self.__pins_div.divs = {}
   local function render_pin(pin, current)
     local header_div = html.Div:new("", "pin-header")
     if infoview.debug then
@@ -498,11 +499,11 @@ function Info:__render_pins()
     return pin_div
   end
 
-  self.pins_div:add_div(render_pin(self.pin, true))
+  self.__pins_div:add_div(render_pin(self.pin, true))
 
   for _, pin in ipairs(self.pins) do
-    self.pins_div:add_div(html.Div:new("\n\n", "pin_spacing"))
-    self.pins_div:add_div(render_pin(pin, false))
+    self.__pins_div:add_div(html.Div:new("\n\n", "pin_spacing"))
+    self.__pins_div:add_div(render_pin(pin, false))
   end
 end
 
@@ -511,9 +512,7 @@ function Info:render()
   self:__render_pins()
 
   self.bufdiv:buf_render()
-  if self.diff_pin then
-    self.diff_bufdiv:buf_render()
-  end
+  if self.__diff_pin then self.diff_bufdiv:buf_render() end
 
   for _, parent in ipairs(self.__parent_infoviews) do
     parent:__refresh_diff()
@@ -528,30 +527,30 @@ end
 function Info:__update_auto_diff_pin(params)
   if self.pin.__ui_position_params and util.position_params_valid(self.pin.__ui_position_params) then
     -- update diff pin to previous position
-    self:set_diff_pin(self.pin.__ui_position_params)
+    self:__set_diff_pin(self.pin.__ui_position_params)
   elseif params then
     -- if previous position invalid, use current position
-    self:set_diff_pin(params)
+    self:__set_diff_pin(params)
   end
 end
 
 --- Move the current pin to the specified location.
 ---@param params UIParams
 function Info:move_pin(params)
-  if self.auto_diff_pin then self:__update_auto_diff_pin(params) end
+  if self.__auto_diff_pin then self:__update_auto_diff_pin(params) end
   self.pin:move(params)
 end
 
 --- Toggle auto diff pin mode.
 --- @param clear boolean @clear the pin when disabling auto diff pin mode?
-function Info:toggle_auto_diff_pin(clear)
-  if self.auto_diff_pin then
-    self.auto_diff_pin = false
-    if clear then self:clear_diff_pin() end
+function Info:__toggle_auto_diff_pin(clear)
+  if self.__auto_diff_pin then
+    self.__auto_diff_pin = false
+    if clear then self:__clear_diff_pin() end
   else
-    self.auto_diff_pin = true
+    self.__auto_diff_pin = true
     -- only update the diff pin if there isn't already one
-    if not self.diff_pin then self:__update_auto_diff_pin() end
+    if not self.__diff_pin then self:__update_auto_diff_pin() end
   end
 end
 
@@ -930,7 +929,7 @@ end
 function infoview.__diff_was_closed(id)
   local info = infoview._info_by_id[id]
   if info.win_event_disable then return end
-  info:clear_diff_pin()
+  info:__clear_diff_pin()
 end
 
 --- An infoview was entered, show the extmark for the current pin.
@@ -1077,7 +1076,7 @@ function infoview.set_diff_pin()
   if not is_lean_buffer() then return end
   infoview.open()
   infoview.get_current_infoview().info:set_last_window()
-  infoview.get_current_infoview().info:set_diff_pin(util.make_position_params())
+  infoview.get_current_infoview().info:__set_diff_pin(util.make_position_params())
 end
 
 function infoview.clear_pins()
@@ -1090,14 +1089,14 @@ end
 function infoview.clear_diff_pin()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then
-    iv.info:clear_diff_pin()
+    iv.info:__clear_diff_pin()
   end
 end
 
 function infoview.toggle_auto_diff_pin(clear)
   if not is_lean_buffer() then return end
   infoview.open()
-  infoview.get_current_infoview().info:toggle_auto_diff_pin(clear)
+  infoview.get_current_infoview().info:__toggle_auto_diff_pin(clear)
 end
 
 function infoview.enable_widgets()
