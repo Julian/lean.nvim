@@ -257,7 +257,7 @@ local function tagged_text_msg_embed(t, sess)
         header.highlightable = true
         header.events = { click = click }
 
-        div.divs = {header}
+        div.children = { header }
 
         if is_open then
           if expanded then

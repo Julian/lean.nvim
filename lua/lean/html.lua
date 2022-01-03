@@ -7,7 +7,7 @@ local util = require('lean._util')
 ---@field text string @the text to show when rendering this div
 ---@field name string @a named handle for this div, used when path-searching
 ---@field hlgroup string|fun():string @the highlight group for this div's text, or a function that returns it
----@field divs Div[] @this div's child divs
+---@field children Div[] @this div's children
 ---@field tooltip? Div Optional tooltip
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this div when hovering over it
 ---@field _size? integer Computed size of this div, updated by `Div:to_string`
@@ -26,16 +26,16 @@ function Div:new(text, name, hlgroup)
     text = text or "",
     name = name or "",
     hlgroup = hlgroup,
-    divs = {},
+    children = {},
   }, self)
   return new_div
 end
 
----Add a div to this div's `divs`.
----@param div Div @child div to add to this div's `divs`
----@return Div @the added div
+---Add a div to this div's children.
+---@param div Div @child div to add
+---@return Div @the added child
 function Div:add_div(div)
-  table.insert(self.divs, div)
+  table.insert(self.children, div)
   return div
 end
 
@@ -81,7 +81,7 @@ function Div:_get_highlights()
     end
 
     pos = pos + #div.text
-    for _, child in ipairs(div.divs) do
+    for _, child in ipairs(div.children) do
       go(child, pos)
       pos = pos + child._size
     end
@@ -100,7 +100,7 @@ function Div:to_string()
   local function go(div)
     table.insert(pieces, div.text)
     local size = #div.text
-    for _, child in ipairs(div.divs) do
+    for _, child in ipairs(div.children) do
       go(child)
       size = size + child._size
     end
@@ -132,10 +132,10 @@ function Div:pos_from_path(path)
     if i == 1 then -- first path node encodes root
       if p.name ~= self.name then return nil end
     else
-      if #self.divs < p.idx then return nil end
+      if #self.children < p.idx then return nil end
       pos = pos + #self.text
-      for j = 1, p.idx - 1 do pos = pos + self.divs[j]._size end
-      self = self.divs[p.idx]
+      for j = 1, p.idx - 1 do pos = pos + self.children[j]._size end
+      self = self.children[p.idx]
     end
   end
   local offset = path[#path].offset or 0
@@ -147,7 +147,7 @@ end
 
 ---Get the div stack and div arrived at by following the given path.
 ---@param path PathNode[] @the path to follow
----@return Div[]|nil @the stack of divs at this path, or nil if the path is invalid
+---@return Div[]|nil @the stack of children at this path, or nil if the path is invalid
 ---@return Div|nil @the div at this path, or nil if the path is invalid
 function Div:div_from_path(path)
   local stack = { self }
@@ -155,8 +155,8 @@ function Div:div_from_path(path)
     if i == 1 then -- first path node encodes root
       if p.name ~= self.name then return nil, nil end
     else
-      if #self.divs < p.idx then return nil, nil end
-      self = self.divs[p.idx]
+      if #self.children < p.idx then return nil, nil end
+      self = self.children[p.idx]
       table.insert(stack, self)
     end
   end
@@ -222,7 +222,7 @@ end
 ---(requires previous call to Div:to_string)
 ---@param pos integer byte position
 ---@return PathNode[]|nil the path at this position
----@return Div[]|nil the stack of divs along this path
+---@return Div[]|nil the stack of children along this path
 function Div:path_from_pos(pos)
   local path = { { idx = 0, name = self.name } }
   local stack = { self }
@@ -233,7 +233,7 @@ function Div:path_from_pos(pos)
     return path, stack
   end
   pos = pos - #self.text
-  for idx, child in ipairs(self.divs) do
+  for idx, child in ipairs(self.children) do
     if child._size == nil then return nil end
     if pos < child._size then
       table.insert(path, { idx = idx, name = child.name })
@@ -276,7 +276,7 @@ end
 function Div:find(check)
   if check(self) then return self end
 
-  for _, div in pairs(self.divs) do
+  for _, div in pairs(self.children) do
     local found = div:find(check)
     if found then return found end
   end
@@ -285,7 +285,7 @@ end
 function Div:__filter(path, pos, fn)
   pos = pos + #self.text
 
-  for idx, child in ipairs(self.divs) do
+  for idx, child in ipairs(self.children) do
     local new_path = {unpack(path)}
     table.insert(new_path, {idx = idx, name = child.name})
     fn(child, new_path, pos)
@@ -308,8 +308,8 @@ end
 function Div:dummy_copy()
   local dummy = Div:new(self.text, self.name, self.hlgroup)
   dummy.highlightable = self.highlightable
-  for _, child in ipairs(self.divs) do
-    table.insert(dummy.divs, child:dummy_copy())
+  for _, child in ipairs(self.children) do
+    table.insert(dummy.children, child:dummy_copy())
   end
   if self.tooltip then
     dummy.tooltip = self.tooltip:dummy_copy()

@@ -433,7 +433,7 @@ end
 
 --- Update this info's pins div.
 function Info:__render_pins()
-  self.__pins_div.divs = {}
+  self.__pins_div.children = {}
   local function render_pin(pin, current)
     local header_div = html.Div:new("", "pin-header")
     if infoview.debug then
@@ -701,7 +701,7 @@ function Pin:pause()
 
   self.__data_div = self.__data_div:dummy_copy()
   if not self:set_loading(false) then
-    self.__div.divs = { self.__data_div }
+    self.__div.children = { self.__data_div }
     self:__render_parents()
   end
 
@@ -737,7 +737,7 @@ end
 -- Indicate that the pin is either loading or done loading, if it isn't already set as such.
 function Pin:set_loading(loading)
   if loading and not self.loading then
-    self.__div.divs = {}
+    self.__div.children = {}
     local data_div_copy = self.__data_div:dummy_copy()
 
     self.__div:add_div(data_div_copy)
@@ -747,7 +747,7 @@ function Pin:set_loading(loading)
     self:__render_parents()
     return true
   elseif not loading and self.loading then
-    self.__div.divs = {}
+    self.__div.children = {}
     self.__div:add_div(self.__data_div)
 
     self.loading = false
