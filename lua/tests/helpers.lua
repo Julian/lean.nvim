@@ -119,16 +119,8 @@ function helpers.clean_buffer(ft, contents, callback)
     vim.opt_local.swapfile = false
     vim.opt.filetype = ft
 
-    vim.api.nvim_buf_call(bufnr, function()
-      if not vim.tbl_isempty(vim.lsp.buf_get_clients()) then
-        helpers.wait_for_ready_lsp()
-      end
-
-      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
-      callback{
-        source_file = { bufnr = bufnr },
-      }
-    end)
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
+    vim.api.nvim_buf_call(bufnr, function() callback{ source_file = { bufnr = bufnr } } end)
   end
 end
 
