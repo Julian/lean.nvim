@@ -129,7 +129,7 @@ end
 
 --- Open this infoview if it isn't already open
 function Infoview:open()
-  if self.is_open then return end
+  if self.window then return end
 
   local window_before_split = vim.api.nvim_get_current_win()
 
@@ -149,12 +149,8 @@ function Infoview:open()
   -- properly set in the infoview, since the buffer isn't actually shown in a
   -- window until we run :buffer above.
   vim.api.nvim_buf_set_option(self.info.__bufdiv.buf, 'filetype', 'leaninfo')
-  local window = vim.api.nvim_get_current_win()
-
+  self.window = vim.api.nvim_get_current_win()
   vim.api.nvim_set_current_win(window_before_split)
-
-  self.window = window
-  self.is_open = true
 
   self.info:focus_on_current_buffer()
 
@@ -166,7 +162,7 @@ end
 --- @param orientation string @"leftabove" or "rightbelow"
 --- @return number @new window handle or nil if the infoview is closed
 function Infoview:__open_win(buf, orientation)
-  if not self.is_open then return end
+  if not self.window then return end
 
   self.info.__win_event_disable = true
   local window_before_split = vim.api.nvim_get_current_win()
@@ -220,7 +216,7 @@ end
 
 --- Either open or close a diff window for this infoview depending on whether its info has a diff pin.
 function Infoview:__refresh_diff()
-  if not self.is_open then return end
+  if not self.window then return end
 
   if not self.info.__diff_pin then self:__close_diff() return end
 
@@ -243,7 +239,7 @@ end
 
 --- Close this infoview's diff window.
 function Infoview:__close_diff()
-  if not self.is_open or not self.__diff_win then return end
+  if not self.window or not self.__diff_win then return end
 
   self.info.__win_event_disable = true
   vim.api.nvim_win_call(self.window, function() vim.api.nvim_command"diffoff" end)
@@ -261,11 +257,7 @@ end
 
 --- Close this infoview.
 function Infoview:close()
-  if not self.is_open then
-    -- in case it is nil
-    self.is_open = false
-    return
-  end
+  if not self.window then return end
 
   self:__close_diff()
 
@@ -276,14 +268,13 @@ function Infoview:close()
   self.info.__win_event_disable = false
 
   self.window = nil
-  self.is_open = false
 
   self.info:focus_on_current_buffer()
 end
 
 --- Retrieve the contents of the infoview as a table.
 function Infoview:get_lines(start_line, end_line)
-  if not self.is_open then error("infoview is not open") end
+  if not self.window then error("infoview is not open") end
   start_line = start_line or 0
   end_line = end_line or -1
   return vim.api.nvim_buf_get_lines(self.info.__bufdiv.buf, start_line, end_line, true)
@@ -291,21 +282,21 @@ end
 
 --- Toggle this infoview being open.
 function Infoview:toggle()
-  if self.is_open then self:close() else self:open() end
+  if self.window then self:close() else self:open() end
 end
 
 --- Set the currently active Lean buffer to update the info.
 function Info:focus_on_current_buffer()
   if not is_lean_buffer() then return end
-  local is_open = false
+  local any_open = false
   for _, parent in ipairs(self.__parent_infoviews) do
-    if parent.is_open then
-      is_open = true
+    if parent.window then
+      any_open = true
       break
     end
   end
 
-  if is_open then
+  if any_open then
     set_augroup("LeanInfoviewUpdate", string.format([[
       autocmd CursorMoved <buffer> lua require'lean.infoview'.__update(%d)
       autocmd CursorMovedI <buffer> lua require'lean.infoview'.__update(%d)
