@@ -1,5 +1,5 @@
-local async = require"plenary.async"
-local util = require"lean._util"
+local async = require('plenary.async')
+local util = require('lean._util')
 
 ---An HTML-style div.
 ---@class Div
@@ -721,7 +721,4 @@ function BufDiv:buf_hop(filter_fn, callback_fn)
   require"hop".hint(strategy)
 end
 
-return {Div = Div, BufDiv = BufDiv, util = {
-  pos_to_raw_pos = pos_to_raw_pos,
-  raw_pos_to_pos = raw_pos_to_pos,
-}, _by_buf = _by_buf, concat = concat}
+return { BufDiv = BufDiv, Div = Div, concat = concat }
