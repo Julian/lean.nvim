@@ -57,6 +57,10 @@ local options = {
 ---@field id number
 ---@field private __data_div Div
 ---@field private __div Div
+---@field private __extmark number
+---@field private __extmark_buf number
+---@field private __extmark_hl_group string
+---@field private __extmark_virt_text table
 ---@field private __ticker table
 ---@field private __parent_infos table<Info, boolean>
 ---@field private __ui_position_params UIParams
@@ -370,7 +374,7 @@ end
 function Info:add_pin()
   local new_params = vim.deepcopy(self.pin.__ui_position_params)
   table.insert(self.pins, self.pin)
-  self:maybe_show_pin_extmark(tostring(self.pin.id))
+  self:__maybe_show_pin_extmark(tostring(self.pin.id))
   self:__new_current_pin()
   self.pin:move(new_params)
   self:render()
@@ -382,7 +386,7 @@ function Info:__set_diff_pin(params)
     self.__diff_pin = Pin:new(options.autopause, options.use_widgets)
     self.__diff_pin:__add_parent_info(self)
     self.__diff_bufdiv.__div = self.__diff_pin.__div
-    self.__diff_pin:show_extmark(nil, diff_pin_hl_group)
+    self.__diff_pin:__show_extmark(nil, diff_pin_hl_group)
   end
 
   self.__diff_pin:move(params)
@@ -415,11 +419,11 @@ function Info:__clear_diff_pin()
 end
 
 --- Show a pin extmark if it is appropriate based on configuration.
-function Info:maybe_show_pin_extmark(...)
+function Info:__maybe_show_pin_extmark(...)
   if not options.indicators or options.indicators == "never" then return end
   -- self.pins is apparently all *other* pins, so we check it's empty
   if options.indicators == "auto" and #self.pins == 0 then return end
-  self.pin:show_extmark(...)
+  self.pin:__show_extmark(...)
 end
 
 --- Set the current window as the last window used to update this Info.
@@ -573,7 +577,9 @@ end
 local extmark_ns = vim.api.nvim_create_namespace("LeanNvimPinExtmarks")
 
 function Pin:_teardown()
-  if self.extmark then vim.api.nvim_buf_del_extmark(self.extmark_buf, extmark_ns, self.extmark) end
+  if self.__extmark then
+    vim.api.nvim_buf_del_extmark(self.__extmark_buf, extmark_ns, self.__extmark)
+  end
   infoview._pin_by_id[self.id] = nil
 end
 
@@ -585,12 +591,12 @@ end
 --- Update this pin's current position.
 ---@param params UIParams
 function Pin:set_position_params(params)
-  self:update_extmark(params)
+  self:__update_extmark(params)
 end
 
 --- Update pin extmark based on position, used when resetting pin position.
 ---@param params UIParams
-function Pin:update_extmark(params)
+function Pin:__update_extmark(params)
   if not params then return end
 
   local buf = vim.fn.bufnr(params.filename)
@@ -606,12 +612,12 @@ function Pin:update_extmark(params)
 end
 
 function Pin:__update_extmark_style(buf, line, col)
-  if not buf and not self.extmark then return end
+  if not buf and not self.__extmark then return end
 
   -- not a brand new extmark
   if not buf then
-    buf = self.extmark_buf
-    local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, self.extmark, {})
+    buf = self.__extmark_buf
+    local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, self.__extmark, {})
     if vim.tbl_isempty(extmark_pos) then return end
     line = extmark_pos[1]
     col = extmark_pos[2]
@@ -630,24 +636,24 @@ function Pin:__update_extmark_style(buf, line, col)
     end
   end
 
-  self.extmark = vim.api.nvim_buf_set_extmark(buf, extmark_ns,
+  self.__extmark = vim.api.nvim_buf_set_extmark(buf, extmark_ns,
     line, col,
     {
-      id = self.extmark;
+      id = self.__extmark;
       end_col = end_col;
-      hl_group = self.extmark_hl_group;
-      virt_text = self.extmark_virt_text;
+      hl_group = self.__extmark_hl_group;
+      virt_text = self.__extmark_virt_text;
       virt_text_pos = "right_align";
     })
-  self.extmark_buf = buf
+  self.__extmark_buf = buf
 end
 
 --- Update pin position based on extmark, used directly when changing text, indirectly when setting position.
 function Pin:update_position()
-  local extmark = self.extmark
+  local extmark = self.__extmark
   if not extmark then return end
 
-  local buf = self.extmark_buf
+  local buf = self.__extmark_buf
   if buf == -1 then return end
 
   local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, extmark, {})
@@ -672,19 +678,19 @@ function Pin:update_position()
   self.__ui_position_params = new_ui_params
 end
 
-function Pin:show_extmark(name, hlgroup)
-  self.extmark_hl_group = hlgroup or pin_hl_group
+function Pin:__show_extmark(name, hlgroup)
+  self.__extmark_hl_group = hlgroup or pin_hl_group
   if name then
-    self.extmark_virt_text = {{"← " .. (name or tostring(self.id)), "Comment"}}
+    self.__extmark_virt_text = {{"← " .. (name or tostring(self.id)), "Comment"}}
   else
-    self.extmark_virt_text = nil
+    self.__extmark_virt_text = nil
   end
   self:__update_extmark_style()
 end
 
-function Pin:hide_extmark()
-  self.extmark_hl_group = nil
-  self.extmark_virt_text = nil
+function Pin:__hide_extmark()
+  self.__extmark_hl_group = nil
+  self.__extmark_virt_text = nil
   self:__update_extmark_style()
 end
 
@@ -924,7 +930,7 @@ end
 function infoview.__show_curr_pin(id)
   local info = infoview._info_by_id[id]
   if info.__win_event_disable then return end
-  info:maybe_show_pin_extmark("current")
+  info:__maybe_show_pin_extmark("current")
 end
 
 --- An infoview was left, hide the extmark for the current pin.
@@ -933,7 +939,7 @@ end
 function infoview.__hide_curr_pin(id)
   local info = infoview._info_by_id[id]
   if info.__win_event_disable then return end
-  info.pin:hide_extmark()
+  info.pin:__hide_extmark()
 end
 
 --- Update the info contents appropriately for Lean 4 or 3.
