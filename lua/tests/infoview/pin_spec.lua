@@ -99,7 +99,8 @@ describe('infoview pins', function()
     ]]
   end))
 
-  it('can be re-placed after being cleared', helpers.clean_buffer('lean', dedent[[
+  -- FIXME: This seems to fail with errors saying it's misusing vim.schedule.
+  pending('can be re-placed after being cleared', helpers.clean_buffer('lean', dedent[[
     theorem has_tactic_goal : p ∨ q → q ∨ p := by
       intro h
       cases h with
@@ -112,8 +113,8 @@ describe('infoview pins', function()
     ]], function()
     helpers.move_cursor{ to = {4, 5} }
     infoview.get_current_infoview().info:add_pin()
-    -- infoview.get_current_infoview().info:clear_pins()
-    -- infoview.get_current_infoview().info:add_pin()
+    infoview.get_current_infoview().info:clear_pins()
+    infoview.get_current_infoview().info:add_pin()
     helpers.wait_for_infoview_contents('case inl.*case inl')
     assert.infoview_contents.are(string.format([[
       ▶ 1 goal
