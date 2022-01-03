@@ -159,9 +159,8 @@ end
 
 --- API for opening an auxilliary window relative to the current infoview window.
 --- @param buf number @buffer to put in the new window
---- @param orientation string @"leftabove" or "rightbelow"
 --- @return number @new window handle or nil if the infoview is closed
-function Infoview:__open_win(buf, orientation)
+function Infoview:__open_win(buf)
   if not self.window then return end
 
   self.info.__win_event_disable = true
@@ -169,11 +168,11 @@ function Infoview:__open_win(buf, orientation)
   vim.api.nvim_set_current_win(self.window)
 
   if self.__orientation == "vertical" then
-    vim.cmd(orientation .. self.__width .. "vsplit")
-    vim.cmd("vertical resize " .. self.__width)
+    vim.cmd('leftabove ' .. self.__width .. 'vsplit')
+    vim.cmd('vertical resize ' .. self.__width)
   else
-    vim.cmd(orientation .. self.__height .. "split")
-    vim.cmd("resize " .. self.__height)
+    vim.cmd('leftabove ' .. self.__height .. 'split')
+    vim.cmd('resize ' .. self.__height)
   end
   local new_win = vim.api.nvim_get_current_win()
 
@@ -223,7 +222,7 @@ function Infoview:__refresh_diff()
   local diff_bufdiv = self.info.__diff_bufdiv
 
   if not self.__diff_win then
-    self.__diff_win = self:__open_win(diff_bufdiv.buf, "leftabove")
+    self.__diff_win = self:__open_win(diff_bufdiv.buf)
   end
 
   for _, win in pairs({self.__diff_win, self.window}) do
