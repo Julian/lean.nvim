@@ -41,7 +41,7 @@ describe('infoview content (auto-)update', function()
     -- In theory we don't care where we are, but the right answer changes
     assert.are.same(vim.api.nvim_win_get_cursor(0), {1, 0})
 
-    helpers.wait_for_infoview_contents('^1')
+    helpers.wait_for_infoview_contents('\n1')
     -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
@@ -54,7 +54,7 @@ describe('infoview content (auto-)update', function()
     assert.are_not.same(vim.api.nvim_win_get_cursor(0), {3, 0})
 
     helpers.move_cursor{ to = {3, 0} }
-    helpers.wait_for_infoview_contents('^9')
+    helpers.wait_for_infoview_contents('\n9')
     -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
@@ -69,7 +69,7 @@ describe('infoview content (auto-)update', function()
     vim.cmd('split')
     local second_window = vim.api.nvim_get_current_win()
     assert.are.same(vim.api.nvim_win_get_cursor(0), {3, 0})
-    helpers.wait_for_infoview_contents('^9')
+    helpers.wait_for_infoview_contents('\n9')
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
@@ -77,7 +77,7 @@ describe('infoview content (auto-)update', function()
     ]]
 
     helpers.move_cursor{ to = {1, 0} }
-    helpers.wait_for_infoview_contents('^1')
+    helpers.wait_for_infoview_contents('\n1')
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
       1
@@ -86,7 +86,7 @@ describe('infoview content (auto-)update', function()
 
     -- Now switch back to the other window and...
     vim.cmd[[wincmd p]]
-    helpers.wait_for_infoview_contents('^9')
+    helpers.wait_for_infoview_contents('\n9')
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
@@ -122,7 +122,7 @@ describe('infoview content (auto-)update', function()
     helpers.move_cursor{ to = {1, 0} }
 
     infoview.get_current_infoview():open()
-    helpers.wait_for_infoview_contents('^1')
+    helpers.wait_for_infoview_contents('\n1')
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
       1
@@ -130,7 +130,7 @@ describe('infoview content (auto-)update', function()
     ]]
 
     helpers.move_cursor{ to = {3, 0} }
-    helpers.wait_for_infoview_contents('^9')
+    helpers.wait_for_infoview_contents('\n9')
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
@@ -164,7 +164,7 @@ describe('infoview content (auto-)update', function()
       )
 
       helpers.move_cursor{ to = {1, 0} }
-      helpers.wait_for_infoview_contents('^1')
+      helpers.wait_for_infoview_contents('\n1')
       assert.infoview_contents.are[[
         ▶ 1:1-1:6: information:
         1
@@ -173,7 +173,7 @@ describe('infoview content (auto-)update', function()
 
       vim.cmd('tabnew' .. fixtures.lean_project.path .. '/Test/Squares.lean')
       helpers.move_cursor{ to = {3, 0} }
-      helpers.wait_for_infoview_contents('^9')
+      helpers.wait_for_infoview_contents('\n9')
       assert.infoview_contents.are[[
         ▶ 3:1-3:6: information:
         9.000000
@@ -199,7 +199,7 @@ describe('infoview content (auto-)update', function()
       vim.cmd('tabprevious')
 
       helpers.move_cursor{ to = {3, 0} }
-      helpers.wait_for_infoview_contents('^9')
+      helpers.wait_for_infoview_contents('\n9')
       assert.infoview_contents.are[[
         ▶ 3:1-3:6: information:
         9.000000
@@ -207,7 +207,7 @@ describe('infoview content (auto-)update', function()
       ]]
 
       helpers.move_cursor{ to = {1, 0} }
-      helpers.wait_for_infoview_contents('^1')
+      helpers.wait_for_infoview_contents('\n1')
       assert.infoview_contents.are[[
         ▶ 1:1-1:6: information:
         1

@@ -81,8 +81,8 @@ end
 function helpers.wait_for_infoview_contents(contents)
   local current_infoview = infoview.get_current_infoview()
   local succeeded, _ = vim.wait(5000, function()
-    for _, line in ipairs(current_infoview:get_lines()) do
-      if line:match(contents) then return true end
+    if table.concat(current_infoview:get_lines(), "\n"):match(contents) then
+      return true
     end
   end)
   local message = string.format(
