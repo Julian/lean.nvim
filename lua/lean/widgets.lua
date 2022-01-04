@@ -19,6 +19,21 @@ local Element = {
 }
 Element.__index = Element
 
+---Renders elements within a specific buffer.
+---@class BufRenderer
+---@field buf integer Buffer number of the buffer the element renders to
+---@field element Element the element rendered by this renderer
+---@field lines? string[] Rendered lines.
+---@field path? PathNode[] Current cursor path
+---@field last_win? integer Window number of the last event
+---@field keymaps table Extra keymaps (inherited by tooltips)
+---@field hover_range? integer[][] (0,0)-range of the highlighted node
+---@field tooltip? BufRenderer currently open tooltip
+---@field parent? BufRenderer Parent renderer
+---@field parent_path? PathNode[] Path in parent element, events bubble up to the parent there
+local BufRenderer = {}
+BufRenderer.__index = BufRenderer
+
 ---Create a new Element.
 ---@return Element
 function Element:new(obj)
@@ -302,31 +317,25 @@ function Element:dummy_copy()
   return dummy
 end
 
+---Create an element which joins a list-like table of elements with the provided separator.
 ---@param elements Element[]
 ---@param sep string
-local function concat(elements, sep)
-  local out = Element:new()
-  for i, d in ipairs(elements) do
-    if i > 1 then out:add_child(Element:new{ text = sep }) end
-    out:add_child(d)
+---@return Element
+function Element:concat(elements, sep)
+  local children = {}
+  for index, child in ipairs(elements) do
+    if index > 1 then table.insert(children, Element:new{ text = sep }) end
+    table.insert(children, child)
   end
-  return out
+  return self:new{ children = children }
 end
 
----Renders elements within a specific buffer.
----@class BufRenderer
----@field buf integer Buffer number of the buffer the element renders to
----@field element Element the element rendered by this renderer
----@field lines? string[] Rendered lines.
----@field path? PathNode[] Current cursor path
----@field last_win? integer Window number of the last event
----@field keymaps table Extra keymaps (inherited by tooltips)
----@field hover_range? integer[][] (0,0)-range of the highlighted node
----@field tooltip? BufRenderer currently open tooltip
----@field parent? BufRenderer Parent renderer
----@field parent_path? PathNode[] Path in parent element, events bubble up to the parent there
-local BufRenderer = {}
-BufRenderer.__index = BufRenderer
+---Create a BufRenderer that renders this Element.
+---@param buf number
+---@param keymaps? table Extra keymaps
+function Element:renderer(obj)
+  return BufRenderer:new(obj.buf, self, obj.keymaps)
+end
 
 -- Maps BufRenderer.buf to BufRenderer
 --- @type table<number, BufRenderer>
@@ -549,7 +558,7 @@ function BufRenderer:buf_hover(force_update_highlight)
       self.tooltip.element = new_tooltip_element
     else
       local bufnr = vim.api.nvim_create_buf(false, true)
-      self.tooltip = BufRenderer:new(bufnr, new_tooltip_element, self.keymaps)
+      self.tooltip = new_tooltip_element:renderer { buf = bufnr, keymaps = self.keymaps }
       vim.api.nvim_buf_set_option(self.tooltip.buf, "bufhidden", "wipe")
     end
 
@@ -711,9 +720,4 @@ function BufRenderer:buf_hop(filter_fn, callback_fn)
   require"hop".hint(strategy)
 end
 
-return {
-  BufRenderer = BufRenderer,
-  Element = Element,
-  concat = concat,
-  _by_buf = _by_buf,
-}
+return { BufRenderer = BufRenderer, Element = Element, _by_buf = _by_buf }

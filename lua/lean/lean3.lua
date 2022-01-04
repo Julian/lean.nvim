@@ -1,10 +1,10 @@
 local dirname = require('lspconfig.util').path.dirname
 
+local Element = require('lean.widgets').Element
 local components = require('lean.infoview.components')
 local lsp = require('lean.lsp')
 local util = require('lean._util')
 local subprocess_check_output = util.subprocess_check_output
-local widgets = require('lean.widgets')
 
 local lean3 = {}
 
@@ -68,17 +68,17 @@ function lean3.update_infoview(
   local client = lsp.get_lean3_server(bufnr)
   if not client then return end
 
-  local parent_element = widgets.Element:new{ name = "lean-3-widget" }
+  local parent_element = Element:new{ name = "lean-3-widget" }
   local widget
 
   local list_first
   local goal_first = true
 
   local function parse_widget(result)
-    local element = widgets.Element:new()
+    local element = Element:new()
     local function parse_children(children)
       local prev_element
-      local this_element = widgets.Element:new{ name = "children" }
+      local this_element = Element:new{ name = "children" }
       for _, child in pairs(children) do
         local last_hard_stop = false
         if prev_element then
@@ -126,7 +126,7 @@ function lean3.update_infoview(
         end
 
         if last_hard_stop and this_hard_start then
-          this_element:add_child(widgets.Element:new{ text = " ", name = "separator" })
+          this_element:add_child(Element:new{ text = " ", name = "separator" })
         end
 
         this_element:add_child(new_element)
@@ -140,7 +140,7 @@ function lean3.update_infoview(
 
     local function parse_select(children, select_element, current_value)
       local no_filter_element, no_filter_val, current_text
-      local this_element = widgets.Element:new{ name = "select-children" }
+      local this_element = Element:new{ name = "select-children" }
       for child_i, child in pairs(children) do
         local new_element = parse_widget(child)
         new_element.events.click = function(ctx)
@@ -149,7 +149,7 @@ function lean3.update_infoview(
         new_element.highlightable = true
         this_element:add_child(new_element)
         if child_i ~= #children then
-          this_element:add_child(widgets.Element:new{ text = "\n", name = 'select-separator' })
+          this_element:add_child(Element:new{ text = "\n", name = 'select-separator' })
         end
 
         if child.c[1] == "no filter" then
@@ -167,7 +167,7 @@ function lean3.update_infoview(
     if type(result) == "string" then
       result = result:gsub('^%s*(.-)%s$', '%1')
 
-      element:add_child(widgets.Element:new{ text = result, name = 'widget-element-string' })
+      element:add_child(Element:new{ text = result, name = 'widget-element-string' })
 
       return element
     elseif is_widget_element(result) then
@@ -187,7 +187,7 @@ function lean3.update_infoview(
         if list_first then
           list_first = false
         else
-          element:add_child(widgets.Element:new{ text = '\n', name = 'list-separator' })
+          element:add_child(Element:new{ text = '\n', name = 'list-separator' })
         end
       end
 
@@ -195,17 +195,17 @@ function lean3.update_infoview(
       if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
 
       if class_name == "goal-goals" then
-        element:add_child(widgets.Element:new{ text = '▶ ', name = 'goal-prefix' })
+        element:add_child(Element:new{ text = '▶ ', name = 'goal-prefix' })
         goal_first = false
       end
       if class_name == "lh-copy mt2" and not goal_first then
-        element:add_child(widgets.Element:new{ text = '\n', name = 'goal-separator' })
+        element:add_child(Element:new{ text = '\n', name = 'goal-separator' })
       end
 
       local debug_tags = false
       if debug_tags then
         element:add_child(
-          widgets.Element:new{
+          Element:new{
             text = "<" .. tag ..
               " attributes(" .. vim.inspect(attributes) .. ")" ..
               " events(" .. vim.inspect(result.e) .. ")" ..
@@ -214,7 +214,7 @@ function lean3.update_infoview(
           }
         )
       end
-      local element_element = widgets.Element:new{
+      local element_element = Element:new{
         name = "element",
         hlgroup = hlgroup
       }
@@ -260,7 +260,7 @@ function lean3.update_infoview(
 
       if tag == "hr" then
         element_element:add_child(
-          widgets.Element:new{
+          Element:new{
             text = "|",
             name = "rule",
             hlgroup = "leanInfoFieldSep",
@@ -277,7 +277,7 @@ function lean3.update_infoview(
             return true
           end
         end
-        local select_menu_element = widgets.Element:new{
+        local select_menu_element = Element:new{
           text = current_text .. "\n",
           name = "current-select"
         }
@@ -291,7 +291,7 @@ function lean3.update_infoview(
         element_element:add_tooltip(parse_widget(tooltip))
       end
       if debug_tags then
-        element:add_child(widgets.Element:new{ text = "</" .. tag .. ">", name = "element" })
+        element:add_child(Element:new{ text = "</" .. tag .. ">", name = "element" })
       end
       return element
     else
@@ -305,7 +305,7 @@ function lean3.update_infoview(
 
   if require"lean.progress".is_processing_at(params) then
     if show_processing then
-      data_element:add_child(widgets.Element:new{ text = "Processing file...", name = "processing-msg" })
+      data_element:add_child(Element:new{ text = "Processing file...", name = "processing-msg" })
     end
     goto finish
   end
@@ -351,14 +351,14 @@ function lean3.update_infoview(
   if not state_element then
     local _, result = util.client_a_request(client, "$/lean/plainGoal", params)
     if result and type(result) == "table" then
-      state_element = widgets.concat(components.goal(result), '\n\n')
+      state_element = Element:concat(components.goal(result), '\n\n')
     end
   end
 
   if state_element and not state_element:is_empty() then
     parent_element:add_child(state_element)
   elseif show_no_info_message then
-    parent_element:add_child(widgets.Element:new{ text = "No info.", name = "no-tactic-term" })
+    parent_element:add_child(Element:new{ text = "No info.", name = "no-tactic-term" })
   end
 
   -- update all other pins for the same URI so they aren't left with a stale "session"
@@ -374,7 +374,7 @@ function lean3.update_infoview(
   ::finish::
 
   for _, diag in ipairs(components.diagnostics(bufnr, params.position.line)) do
-    parent_element:add_child(widgets.Element:new{ text = '\n\n' })
+    parent_element:add_child(Element:new{ text = '\n\n' })
     parent_element:add_child(diag)
   end
 

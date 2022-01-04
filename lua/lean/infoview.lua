@@ -2,13 +2,13 @@ local protocol = require('vim.lsp.protocol')
 
 local a = require('plenary.async')
 
+local Element = require('lean.widgets').Element
 local components = require('lean.infoview.components')
 local lean3 = require('lean.lean3')
 local leanlsp = require('lean.lsp')
 local is_lean_buffer = require('lean').is_lean_buffer
 local util = require('lean._util')
 local set_augroup = util.set_augroup
-local widgets = require('lean.widgets')
 local rpc = require('lean.rpc')
 
 local infoview = {
@@ -317,7 +317,7 @@ function Info:new(opts)
     pin = Pin:new(options.autopause, options.use_widgets),
     pins = {},
     __parent_infoviews = { opts.parent },
-    __pins_element = widgets.Element:new{ name = "info" },
+    __pins_element = Element:new{ name = "info" },
     __win_event_disable = false,
   }
   table.insert(infoview._info_by_id, new_info)
@@ -341,16 +341,14 @@ function Info:new(opts)
     return bufnr
   end
 
-  self.__renderer = widgets.BufRenderer:new(
-    mk_buf("lean://info/" .. self.id .. "/curr", true),
-    self.__pins_element,
-    options.mappings
-  )
-  self.__diff_renderer = widgets.BufRenderer:new(
-    mk_buf("lean://info/" .. self.id .. "/diff"),
-    self.pin.__element,
-    options.mappings
-  )
+  self.__renderer = self.__pins_element:renderer{
+    buf = mk_buf("lean://info/" .. self.id .. "/curr", true),
+    keymaps = options.mappings
+  }
+  self.__diff_renderer = self.pin.__element:renderer{
+    buf = mk_buf("lean://info/" .. self.id .. "/diff"),
+    keymaps = options.mappings
+  }
 
   -- Show/hide current pin extmark when entering/leaving infoview.
   set_augroup("LeanInfoviewShowPin", string.format([[
@@ -443,10 +441,10 @@ end
 --- Update this info's pins element.
 function Info:__render_pins()
   local function render_pin(pin, current)
-    local header_element = widgets.Element:new{ name = "pin-header" }
+    local header_element = Element:new{ name = "pin-header" }
     if infoview.debug then
       header_element:add_child(
-        widgets.Element:new{
+        Element:new{
           text = "-- PIN " .. tostring(pin.id),
           name = "pin-id-header"
         }
@@ -454,7 +452,7 @@ function Info:__render_pins()
 
       local function add_attribute(text, name)
         header_element:add_child(
-          widgets.Element:new{
+          Element:new{
             text = " [" .. text .. "]",
             name = name .. "-attribute"
           }
@@ -475,13 +473,13 @@ function Info:__render_pins()
         filename = params.filename
       end
       if not infoview.debug then
-        header_element:add_child(widgets.Element:new{ text = "-- ", name = "pin-id-header" })
+        header_element:add_child(Element:new{ text = "-- ", name = "pin-id-header" })
       else
-        header_element:add_child(widgets.Element:new{ text = ": ", name = "pin-header-separator" })
+        header_element:add_child(Element:new{ text = ": ", name = "pin-header-separator" })
       end
       local location_text = ("%s at %d:%d"):format(filename,
         params.row + 1, params.col + 1)
-      header_element:add_child(widgets.Element:new{ text = location_text, name = "pin-location" })
+      header_element:add_child(Element:new{ text = location_text, name = "pin-location" })
 
       header_element.highlightable = true
       header_element.events = {
@@ -496,10 +494,10 @@ function Info:__render_pins()
       }
     end
     if not header_element:is_empty() then
-      header_element:add_child(widgets.Element:new{ text = "\n", name = "pin-header-end" })
+      header_element:add_child(Element:new{ text = "\n", name = "pin-header-end" })
     end
 
-    local pin_element = widgets.Element:new{
+    local pin_element = Element:new{
       name = "pin_wrapper",
       children = { header_element }
     }
@@ -510,7 +508,7 @@ function Info:__render_pins()
 
   self.__pins_element.__children = { render_pin(self.pin, true) }  -- FIXME: private!
   for _, pin in ipairs(self.pins) do
-    self.__pins_element:add_child(widgets.Element:new{ text = "\n\n", name = "pin_spacing" })
+    self.__pins_element:add_child(Element:new{ text = "\n\n", name = "pin_spacing" })
     self.__pins_element:add_child(render_pin(pin, false))
   end
 end
@@ -567,8 +565,8 @@ function Pin:new(paused, use_widgets)
   local new_pin = {
     id = self.next_id,
     paused = paused,
-    __data_element = widgets.Element:new{ name = "pin-data" },
-    __element = widgets.Element:new{ name = "pin" },
+    __data_element = Element:new{ name = "pin-data" },
+    __element = Element:new{ name = "pin" },
     __parent_infos = {},
     __ticker = util.Ticker:new(),
     __use_widgets = use_widgets,
@@ -791,7 +789,7 @@ Pin.update = a.void(Pin.async_update)
 function Pin:__update(tick, lean3_opts)
   self:set_loading(true)
   local blocks = {} ---@type Element[]
-  local new_data_element = widgets.Element:new{ name = "pin-data" }
+  local new_data_element = Element:new{ name = "pin-data" }
 
   local params = self.__position_params
 
@@ -824,7 +822,7 @@ function Pin:__update(tick, lean3_opts)
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then
         new_data_element:add_child(
-          widgets.Element:new{
+          Element:new{
             text = "Processing file...",
             name = "processing-msg"
           }
@@ -881,7 +879,7 @@ function Pin:__update(tick, lean3_opts)
     vim.list_extend(blocks, goal_element)
     vim.list_extend(blocks, term_goal_element)
     if options.show_no_info_message and #goal_element + #term_goal_element == 0 then
-      table.insert(blocks, widgets.Element:new{ text = "No info.", name = "no-tactic-term" })
+      table.insert(blocks, Element:new{ text = "No info.", name = "no-tactic-term" })
     end
 
     local diagnostics_element
@@ -898,7 +896,7 @@ function Pin:__update(tick, lean3_opts)
 
     vim.list_extend(blocks, diagnostics_element or components.diagnostics(buf, line))
 
-    new_data_element:add_child(widgets.concat(blocks, '\n\n'))
+    new_data_element:add_child(Element:concat(blocks, '\n\n'))
 
     if not tick:check() then return true end
   end

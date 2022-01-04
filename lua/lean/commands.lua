@@ -1,12 +1,12 @@
 local a = require('plenary.async')
 
 local components = require('lean.infoview.components')
+local Element = require('lean.widgets').Element
 local infoview = require('lean.infoview')
 local lean = require('lean')
 local leanlsp = require('lean.lsp')
 local progress = require('lean.progress')
 local rpc = require('lean.rpc')
-local widgets = require('lean.widgets')
 
 local commands = {}
 
@@ -22,7 +22,7 @@ local function show_popup(element)
     vim.split(str, '\n'), 'leaninfo',
     { focus_id = 'lean_goal' })
 
-  local renderer = widgets.BufRenderer:new(bufnr, element, infoview.mappings)
+  local renderer = element:renderer{ buf = bufnr, keymaps = infoview.mappings }
   renderer.last_win = winnr
   renderer:buf_render()
 end
@@ -31,9 +31,9 @@ end
 ---@param err any?
 local function show_popup_or_error(elements, err)
   if elements then
-    show_popup(widgets.concat(elements, '\n\n'))
+    show_popup(Element:concat(elements, '\n\n'))
   elseif err then
-    show_popup(widgets.Element:new{ text = vim.inspect(err) })
+    show_popup(Element:new{ text = vim.inspect(err) })
   end
 end
 
