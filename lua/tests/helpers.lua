@@ -124,17 +124,6 @@ function helpers.edit_lean_buffer(filename)
   helpers.wait_for_filetype()
 end
 
---- Wait a few seconds for server progress to complete on the current buffer, erroring if it doesn't.
-function helpers.wait_for_server_progress()
-  -- the first fileProgress notification should come within this time,
-  -- so we avoid the initial nil case (for backwards compatibility)
-  local succeeded, _ = vim.wait(10000, function()
-    return not require"lean.progress".is_processing(
-      vim.uri_from_bufnr(vim.api.nvim_get_current_buf()))
-  end)
-  assert.message("Waited for server progress to complete but never did.").True(succeeded)
-end
-
 --- Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
   local buf = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n')
