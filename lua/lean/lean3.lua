@@ -235,7 +235,7 @@ function lean3.update_infoview(
           events[div_event] = function(ctx, value)
             local args = type(value) == 'string' and { type = 'string', value = value }
               or { type = 'unit' }
-            pin:async_update(false, 0, ctx, {widget_event = {
+            pin:async_update(false, ctx, {widget_event = {
               widget = widget,
               kind = event,
               handler = handler,

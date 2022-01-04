@@ -758,13 +758,13 @@ function Pin:set_loading(loading)
   return false
 end
 
-function Pin:async_update(force, delay, _, lean3_opts)
+function Pin:async_update(force, _, lean3_opts)
   if not force and self.paused then return end
 
   local tick = self.__ticker:lock()
 
   if self.__position_params and (force or not self.paused) then
-    self:__update(tick, delay, lean3_opts)
+    self:__update(tick, lean3_opts)
   end
   if not tick:check() then return end
 
@@ -776,16 +776,10 @@ end
 Pin.update = a.void(Pin.async_update)
 
 --- async function to update this pin's contents given the current position.
-function Pin:__update(tick, delay, lean3_opts)
-  delay = delay or 100
-
+function Pin:__update(tick, lean3_opts)
   self:set_loading(true)
   local blocks = {} ---@type Div[]
   local new_data_div = html.Div:new("", "pin-data", nil)
-
-  if delay > 0 then
-    util.wait_timer(delay)
-  end
 
   local params = self.__position_params
 
@@ -830,7 +824,7 @@ function Pin:__update(tick, delay, lean3_opts)
       local goal, err = self.sess:getInteractiveGoals(params)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, delay, lean3_opts)
+        return self:__update(tick, lean3_opts)
       end
       if not err then
         goal_div = components.interactive_goals(goal, self.sess)
@@ -841,7 +835,7 @@ function Pin:__update(tick, delay, lean3_opts)
       local err, goal = leanlsp.plain_goal(params, buf)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, delay, lean3_opts)
+        return self:__update(tick, lean3_opts)
       end
       goal_div = components.goal(goal)
     end
@@ -851,7 +845,7 @@ function Pin:__update(tick, delay, lean3_opts)
       local term_goal, err = self.sess:getInteractiveTermGoal(params)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, delay, lean3_opts)
+        return self:__update(tick, lean3_opts)
       end
       if not err then
         term_goal_div = components.interactive_term_goal(term_goal, self.sess)
@@ -862,7 +856,7 @@ function Pin:__update(tick, delay, lean3_opts)
       local err, term_goal = leanlsp.plain_term_goal(params, buf)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, delay, lean3_opts)
+        return self:__update(tick, lean3_opts)
       end
       term_goal_div = components.term_goal(term_goal)
     end
@@ -878,7 +872,7 @@ function Pin:__update(tick, delay, lean3_opts)
       local diags, err = self.sess:getInteractiveDiagnostics({ start = line, ['end'] = line + 1 })
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, delay, lean3_opts)
+        return self:__update(tick, lean3_opts)
       end
       if not err then
         diagnostics_div = components.interactive_diagnostics(diags, line, self.sess)
@@ -975,7 +969,7 @@ function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
     if pin.__position_params and pin.__position_params.textDocument.uri == vim.uri_from_bufnr(bufnr) then
       vim.schedule_wrap(function()
         pin:update_position()
-        pin:update(false, 500)
+        pin:update(false)
       end)()
     end
   end
