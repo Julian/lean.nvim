@@ -442,7 +442,6 @@ end
 
 --- Update this info's pins element.
 function Info:__render_pins()
-  self.__pins_element.children = {}
   local function render_pin(pin, current)
     local header_element = widgets.Element:new("", "pin-header")
     if infoview.debug then
@@ -497,8 +496,7 @@ function Info:__render_pins()
     return pin_element
   end
 
-  self.__pins_element:add_child(render_pin(self.pin, true))
-
+  self.__pins_element.__children = { render_pin(self.pin, true) }  -- FIXME: private!
   for _, pin in ipairs(self.pins) do
     self.__pins_element:add_child(widgets.Element:new("\n\n", "pin_spacing"))
     self.__pins_element:add_child(render_pin(pin, false))
@@ -710,7 +708,7 @@ function Pin:pause()
 
   self.__data_element = self.__data_element:dummy_copy()
   if not self:set_loading(false) then
-    self.__element.children = { self.__data_element }
+    self.__element.__children = { self.__data_element }  -- FIXME: Private!
     self:__render_parents()
   end
 
@@ -746,21 +744,13 @@ end
 -- Indicate that the pin is either loading or done loading, if it isn't already set as such.
 function Pin:set_loading(loading)
   if loading and not self.loading then
-    self.__element.children = {}
-    local data_element_copy = self.__data_element:dummy_copy()
-
-    self.__element:add_child(data_element_copy)
-
+    self.__element.__children = { self.__data_element:dummy_copy() }  -- FIXME: Private!
     self.loading = true
-
     self:__render_parents()
     return true
   elseif not loading and self.loading then
-    self.__element.children = {}
-    self.__element:add_child(self.__data_element)
-
+    self.__element.__children = { self.__data_element }  -- FIXME: Private!
     self.loading = false
-
     self:__render_parents()
     return true
   end

@@ -267,12 +267,11 @@ local function tagged_text_msg_embed(t, sess)
 
       local click
       local function render()
-        local header = Element:new(
-          string.format(is_open and '[%s] ▼' or '[%s] ▶', category))
+        local header = Element:new(string.format(is_open and '[%s] ▼' or '[%s] ▶', category))
         header.highlightable = true
         header.events = { click = click }
 
-        element.children = { header }
+        element:add_child(header)
 
         if is_open then
           if expanded then

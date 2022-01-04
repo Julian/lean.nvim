@@ -8,11 +8,11 @@ local util = require('lean._util')
 ---@field text string @the text to show when rendering this element
 ---@field name string @a named handle for this element, used when path-searching
 ---@field hlgroup string|fun():string @the highlight group for this element's text, or a function that returns it
----@field children Element[] @this element's children
 ---@field tooltip? Element Optional tooltip
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this element when hovering over it
 ---@field _size? integer Computed size of this element, updated by `Element:to_string`
 ---@field disable_update? boolean
+---@field private __children Element[] @this element's children
 local Element = {}
 Element.__index = Element
 
@@ -27,7 +27,7 @@ function Element:new(text, name, hlgroup)
     text = text or "",
     name = name or "",
     hlgroup = hlgroup,
-    children = {},
+    __children = {},
   }, self)
 end
 
@@ -35,7 +35,7 @@ end
 ---@param child Element @child element to add
 ---@return Element @the added child
 function Element:add_child(child)
-  table.insert(self.children, child)
+  table.insert(self.__children, child)
 end
 
 ---Set this element's tooltip.
@@ -71,7 +71,7 @@ function Element:_get_highlights()
     end
 
     pos = pos + #element.text
-    for _, child in ipairs(element.children) do
+    for _, child in ipairs(element.__children) do
       go(child, pos)
       pos = pos + child._size
     end
@@ -90,7 +90,7 @@ function Element:to_string()
   local function go(element)
     table.insert(pieces, element.text)
     local size = #element.text
-    for _, child in ipairs(element.children) do
+    for _, child in ipairs(element.__children) do
       go(child)
       size = size + child._size
     end
@@ -122,10 +122,10 @@ function Element:pos_from_path(path)
     if i == 1 then -- first path node encodes root
       if p.name ~= self.name then return nil end
     else
-      if #self.children < p.idx then return nil end
+      if #self.__children < p.idx then return nil end
       pos = pos + #self.text
-      for j = 1, p.idx - 1 do pos = pos + self.children[j]._size end
-      self = self.children[p.idx]
+      for j = 1, p.idx - 1 do pos = pos + self.__children[j]._size end
+      self = self.__children[p.idx]
     end
   end
   local offset = path[#path].offset or 0
@@ -145,8 +145,8 @@ function Element:div_from_path(path)
     if i == 1 then -- first path node encodes root
       if p.name ~= self.name then return nil, nil end
     else
-      if #self.children < p.idx then return nil, nil end
-      self = self.children[p.idx]
+      if #self.__children < p.idx then return nil, nil end
+      self = self.__children[p.idx]
       table.insert(stack, self)
     end
   end
@@ -223,7 +223,7 @@ function Element:path_from_pos(pos)
     return path, stack
   end
   pos = pos - #self.text
-  for idx, child in ipairs(self.children) do
+  for idx, child in ipairs(self.__children) do
     if child._size == nil then return nil end
     if pos < child._size then
       table.insert(path, { idx = idx, name = child.name })
@@ -261,7 +261,7 @@ end
 function Element:find(check)
   if check(self) then return self end
 
-  for _, child in pairs(self.children) do
+  for _, child in pairs(self.__children) do
     local found = child:find(check)
     if found then return found end
   end
@@ -270,7 +270,7 @@ end
 function Element:__filter(path, pos, fn)
   pos = pos + #self.text
 
-  for idx, child in ipairs(self.children) do
+  for idx, child in ipairs(self.__children) do
     local new_path = {unpack(path)}
     table.insert(new_path, {idx = idx, name = child.name})
     fn(child, new_path, pos)
@@ -293,8 +293,8 @@ end
 function Element:dummy_copy()
   local dummy = Element:new(self.text, self.name, self.hlgroup)
   dummy.highlightable = self.highlightable
-  for _, child in ipairs(self.children) do
-    table.insert(dummy.children, child:dummy_copy())
+  for _, child in ipairs(self.__children) do
+    table.insert(dummy.__children, child:dummy_copy())
   end
   if self.tooltip then
     dummy.tooltip = self.tooltip:dummy_copy()
