@@ -148,7 +148,9 @@ function lean3.update_infoview(
         end
         new_element.highlightable = true
         this_element:add_child(new_element)
-        if child_i ~= #children then this_element:add_child(widgets.Element:new("\n", "select-separator")) end
+        if child_i ~= #children then
+          this_element:add_child(widgets.Element:new("\n", "select-separator"))
+        end
 
         if child.c[1] == "no filter" then
           no_filter_element = new_element
@@ -213,8 +215,9 @@ function lean3.update_infoview(
           )
         )
       end
-      local element_element = element:add_child(widgets.Element:new("", "element", hlgroup))
+      local element_element = widgets.Element:new("", "element", hlgroup)
       element_element.events = events
+      element:add_child(element_element)
 
       -- close tooltip button
       if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
@@ -266,9 +269,8 @@ function lean3.update_infoview(
             return true
           end
         end
-        local select_menu_element = element_element:add_child(
-          widgets.Element:new(current_text .. "\n", "current-select")
-        )
+        local select_menu_element = widgets.Element:new(current_text .. "\n", "current-select")
+        element_element:add_child(select_menu_element)
         select_menu_element:add_tooltip(select_children_element)
       else
         element_element:add_child(parse_children(children))

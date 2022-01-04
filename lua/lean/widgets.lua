@@ -36,7 +36,6 @@ end
 ---@return Element @the added child
 function Element:add_child(child)
   table.insert(self.children, child)
-  return child
 end
 
 ---Set this element's tooltip.

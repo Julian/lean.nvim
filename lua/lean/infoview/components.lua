@@ -48,14 +48,13 @@ function components.goal(goal)
 
   local element = Element:new("", "plain-goals")
 
-  local goals_list = element:add_child(
-    Element:new(
-      #goal.goals == 0 and H('goals accomplished 🎉')
-        or #goal.goals == 1 and H('1 goal')
-        or H(string.format('%d goals', #goal.goals)),
-      "plain-goals-list"
-    )
+  local goals_list = Element:new(
+    #goal.goals == 0 and H('goals accomplished 🎉')
+      or #goal.goals == 1 and H('1 goal')
+      or H(string.format('%d goals', #goal.goals)),
+    "plain-goals-list"
   )
+  element:add_child(goals_list)
 
   for _, this_goal in pairs(goal.goals) do
     goals_list:add_child(Element:new("\n" .. this_goal, "plain-goal"))
@@ -168,16 +167,20 @@ local function interactive_goal(goal, sess)
   end
 
   for _, hyp in ipairs(goal.hyps) do
-    local hyp_element = element:add_child(Element:new(table.concat(hyp.names, ' ') .. ' : ', "hyp"))
+    local hyp_element = Element:new(table.concat(hyp.names, ' ') .. ' : ', "hyp")
+    element:add_child(hyp_element)
 
     hyp_element:add_child(code_with_infos(hyp.type, sess))
     if hyp.val ~= nil then
-      local hyp_val = hyp_element:add_child(Element:new(" := ", "hyp_val"))
+      local hyp_val = Element:new(" := ", "hyp_val")
       hyp_val:add_child(code_with_infos(hyp.val, sess))
+      hyp_element:add_child(hyp_val)
     end
     hyp_element:add_child(Element:new("\n", "hypothesis-separator"))
   end
-  element:add_child(Element:new('⊢ ', "goal")):add_child(code_with_infos(goal.type, sess))
+  local goal_element = Element:new('⊢ ', "goal")
+  goal_element:add_child(code_with_infos(goal.type, sess))
+  element:add_child(goal_element)
 
   return element
 end
@@ -214,12 +217,12 @@ function components.interactive_term_goal(goal, sess)
 
   local element = Element:new("", "interactive-term-goal")
 
-  element:add_child(
-    Element:new(
-      H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
-      "term-state"
-    )
-  ):add_child(interactive_goal(goal, sess))
+  local term_state_element = Element:new(
+    H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
+    "term-state"
+  )
+  term_state_element:add_child(interactive_goal(goal, sess))
+  element:add_child(term_state_element)
 
   return { element }
 end
