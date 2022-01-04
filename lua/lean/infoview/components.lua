@@ -82,7 +82,7 @@ local function code_with_infos(t, sess)
     element:insert_div(t.text, "text")
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
-      element:add_div(code_with_infos(s, sess))
+      element:add_child(code_with_infos(s, sess))
     end
   elseif t.tag ~= nil then
     local info_with_ctx = t.tag[1].info
@@ -100,14 +100,14 @@ local function code_with_infos(t, sess)
       local tooltip_element = mk_tooltip_element()
 
       if info_popup.exprExplicit ~= nil then
-        tooltip_element:add_div(code_with_infos(info_popup.exprExplicit, sess))
+        tooltip_element:add_child(code_with_infos(info_popup.exprExplicit, sess))
         if info_popup.type ~= nil then
           tooltip_element:insert_div(' :\n')
         end
       end
 
       if info_popup.type ~= nil then
-        tooltip_element:add_div(code_with_infos(info_popup.type, sess))
+        tooltip_element:add_child(code_with_infos(info_popup.type, sess))
       end
 
       if info_popup.doc ~= nil then
@@ -147,7 +147,7 @@ local function code_with_infos(t, sess)
     }
     element.highlightable = true
 
-    element:add_div(code_with_infos(t.tag[2], sess))
+    element:add_child(code_with_infos(t.tag[2], sess))
   end
 
   return element
@@ -165,14 +165,14 @@ local function interactive_goal(goal, sess)
   for _, hyp in ipairs(goal.hyps) do
     local hyp_element = element:insert_div(table.concat(hyp.names, ' ') .. ' : ', "hyp")
 
-    hyp_element:add_div(code_with_infos(hyp.type, sess))
+    hyp_element:add_child(code_with_infos(hyp.type, sess))
     if hyp.val ~= nil then
       local hyp_val = hyp_element:insert_div(" := ", "hyp_val")
-      hyp_val:add_div(code_with_infos(hyp.val, sess))
+      hyp_val:add_child(code_with_infos(hyp.val, sess))
     end
     hyp_element:insert_div("\n", "hypothesis-separator")
   end
-  element:insert_div('⊢ ', "goal"):add_div(code_with_infos(goal.type, sess))
+  element:insert_div('⊢ ', "goal"):add_child(code_with_infos(goal.type, sess))
 
   return element
 end
@@ -191,7 +191,7 @@ function components.interactive_goals(goal, sess)
 
   for i, this_goal in ipairs(goal.goals) do
     if i ~= 1 then element:insert_div('\n\n') end
-    element:add_div(interactive_goal(this_goal, sess))
+    element:add_child(interactive_goal(this_goal, sess))
   end
 
   return { element }
@@ -209,7 +209,7 @@ function components.interactive_term_goal(goal, sess)
   element:insert_div(
     H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
     "term-state")
-    :add_div(interactive_goal(goal, sess))
+    :add_child(interactive_goal(goal, sess))
 
   return { element }
 end
@@ -236,7 +236,7 @@ local function tagged_text_msg_embed(t, sess)
     element:insert_div(t.text, "text")
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
-      element:add_div(tagged_text_msg_embed(s, sess))
+      element:add_child(tagged_text_msg_embed(s, sess))
     end
   elseif t.tag ~= nil then
     local embed = t.tag[1]
@@ -263,7 +263,7 @@ local function tagged_text_msg_embed(t, sess)
 
         if is_open then
           if expanded then
-            element:add_div(tagged_text_msg_embed(expanded, sess))
+            element:add_child(tagged_text_msg_embed(expanded, sess))
           elseif expanded_err then
             element:insert_div(vim.inspect(expanded_err))
           else
@@ -310,7 +310,7 @@ function components.interactive_diagnostics(diags, line, sess)
           H(string.format('%s: %s:\n',
             range_to_string(diag.range),
             DiagnosticSeverity[diag.severity]:lower())), "diagnostic")
-      element:add_div(tagged_text_msg_embed(diag.message, sess))
+      element:add_child(tagged_text_msg_embed(diag.message, sess))
       table.insert(elements, element)
     end
   end

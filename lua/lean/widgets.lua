@@ -34,7 +34,7 @@ end
 ---Add a child to this element.
 ---@param child Element @child element to add
 ---@return Element @the added child
-function Element:add_div(child)
+function Element:add_child(child)
   table.insert(self.children, child)
   return child
 end
@@ -53,7 +53,7 @@ end
 ---@param hlgroup string
 ---@return Element @the added element
 function Element:insert_div(text, name, hlgroup)
-  return self:add_div(Element:new(text, name, hlgroup))
+  return self:add_child(Element:new(text, name, hlgroup))
 end
 
 ---@class ElementHighlight
@@ -318,7 +318,7 @@ local function concat(elements, sep)
   local out = Element:new()
   for i, d in ipairs(elements) do
     if i > 1 then out:insert_div(sep) end
-    out:add_div(d)
+    out:add_child(d)
   end
   return out
 end

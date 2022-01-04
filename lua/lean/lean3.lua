@@ -129,7 +129,7 @@ function lean3.update_infoview(
           this_element:insert_div(" ", "separator")
         end
 
-        this_element:add_div(new_element)
+        this_element:add_child(new_element)
 
         prev_element = new_element
 
@@ -147,7 +147,7 @@ function lean3.update_infoview(
           return select_element.events.change(ctx, child.a.value)
         end
         new_element.highlightable = true
-        this_element:add_div(new_element)
+        this_element:add_child(new_element)
         if child_i ~= #children then this_element:insert_div("\n", "select-separator") end
 
         if child.c[1] == "no filter" then
@@ -264,7 +264,7 @@ function lean3.update_infoview(
         local select_menu_element = element_element:insert_div(current_text .. "\n", "current-select")
         select_menu_element:add_tooltip(select_children_element)
       else
-        element_element:add_div(parse_children(children))
+        element_element:add_child(parse_children(children))
       end
 
       if tooltip then
@@ -275,7 +275,7 @@ function lean3.update_infoview(
       end
       return element
     else
-      element:add_div(parse_children(result.c))
+      element:add_child(parse_children(result.c))
       return element
     end
   end
@@ -336,9 +336,9 @@ function lean3.update_infoview(
   end
 
   if state_element and not state_element:is_empty() then
-    parent_element:add_div(state_element)
+    parent_element:add_child(state_element)
   elseif show_no_info_message then
-    parent_element:add_div(widgets.Element:new("No info.", "no-tactic-term"))
+    parent_element:add_child(widgets.Element:new("No info.", "no-tactic-term"))
   end
 
   -- update all other pins for the same URI so they aren't left with a stale "session"
@@ -355,10 +355,10 @@ function lean3.update_infoview(
 
   for _, diag in ipairs(components.diagnostics(bufnr, params.position.line)) do
     parent_element:insert_div('\n\n')
-    parent_element:add_div(diag)
+    parent_element:add_child(diag)
   end
 
-  data_element:add_div(parent_element)
+  data_element:add_child(parent_element)
 
   return true
 end

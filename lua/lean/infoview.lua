@@ -491,17 +491,17 @@ function Info:__render_pins()
     end
 
     local pin_element = widgets.Element:new("", "pin_wrapper")
-    pin_element:add_div(header_element)
-    if pin.__element then pin_element:add_div(pin.__element) end
+    pin_element:add_child(header_element)
+    if pin.__element then pin_element:add_child(pin.__element) end
 
     return pin_element
   end
 
-  self.__pins_element:add_div(render_pin(self.pin, true))
+  self.__pins_element:add_child(render_pin(self.pin, true))
 
   for _, pin in ipairs(self.pins) do
-    self.__pins_element:add_div(widgets.Element:new("\n\n", "pin_spacing"))
-    self.__pins_element:add_div(render_pin(pin, false))
+    self.__pins_element:add_child(widgets.Element:new("\n\n", "pin_spacing"))
+    self.__pins_element:add_child(render_pin(pin, false))
   end
 end
 
@@ -749,7 +749,7 @@ function Pin:set_loading(loading)
     self.__element.children = {}
     local data_element_copy = self.__data_element:dummy_copy()
 
-    self.__element:add_div(data_element_copy)
+    self.__element:add_child(data_element_copy)
 
     self.loading = true
 
@@ -757,7 +757,7 @@ function Pin:set_loading(loading)
     return true
   elseif not loading and self.loading then
     self.__element.children = {}
-    self.__element:add_div(self.__data_element)
+    self.__element:add_child(self.__data_element)
 
     self.loading = false
 
@@ -891,7 +891,7 @@ function Pin:__update(tick, lean3_opts)
 
     vim.list_extend(blocks, diagnostics_element or components.diagnostics(buf, line))
 
-    new_data_element:add_div(widgets.concat(blocks, '\n\n'))
+    new_data_element:add_child(widgets.concat(blocks, '\n\n'))
 
     if not tick:check() then return true end
   end
