@@ -368,21 +368,21 @@ function BufRenderer:new(buf, element, keymaps)
   _by_buf[buf] = self
 
   util.set_augroup("WidgetPosition", string.format([[
-    autocmd CursorMoved <buffer=%d> lua require'lean.widgets'._by_buf[%d]:buf_update_cursor()
-    autocmd BufEnter <buffer=%d> lua require'lean.widgets'._by_buf[%d]:buf_update_cursor()
+    autocmd CursorMoved <buffer=%d> lua require'lean.widgets'._by_buf[%d]:update_cursor()
+    autocmd BufEnter <buffer=%d> lua require'lean.widgets'._by_buf[%d]:update_cursor()
   ]], buf, buf, buf, buf), buf)
 
   local mappings = {n = {}}
   if keymaps then
     for key, event in pairs(keymaps) do
-      mappings.n[key] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:buf_event("%s")<CR>]]):format(buf, event)
+      mappings.n[key] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:event("%s")<CR>]]):format(buf, event)
     end
-    mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:buf_enter_tooltip()<CR>]]):format(buf)
+    mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(buf)
     mappings.n["<S-Tab>"] = (
-      [[<Cmd>lua require'lean.widgets'._by_buf[%d]:buf_goto_parent_tooltip()<CR>]]
+      [[<Cmd>lua require'lean.widgets'._by_buf[%d]:goto_parent_tooltip()<CR>]]
     ):format(buf)
-    mappings.n["J"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:buf_enter_tooltip()<CR>]]):format(buf)
-    mappings.n["S"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:buf_hop_to()<CR>]]):format(buf)
+    mappings.n["J"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(buf)
+    mappings.n["S"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:hop_to()<CR>]]):format(buf)
   end
   util.load_mappings(mappings, buf)
 
@@ -390,7 +390,7 @@ function BufRenderer:new(buf, element, keymaps)
 end
 
 ---@param keep_tooltips_open? boolean
-function BufRenderer:buf_close(keep_tooltips_open)
+function BufRenderer:close(keep_tooltips_open)
   if vim.api.nvim_buf_is_valid(self.buf) then
     vim.api.nvim_buf_delete(self.buf, {force = true})
     gc()
@@ -399,7 +399,7 @@ function BufRenderer:buf_close(keep_tooltips_open)
     self.tooltip.parent = nil
     self.tooltip.parent_path = nil
     if not keep_tooltips_open then
-      self.tooltip:buf_close()
+      self.tooltip:close()
       self.tooltip = nil
     end
   end
@@ -408,7 +408,7 @@ end
 local widgets_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
 local hl_ns = vim.api.nvim_create_namespace('LeanNvimInfoHighlight')
 
-function BufRenderer:buf_render()
+function BufRenderer:render()
   local buf = self.buf
 
   if not vim.api.nvim_buf_is_valid(buf) then return end
@@ -438,10 +438,10 @@ function BufRenderer:buf_render()
 
   if self.path then
     -- on a rerender any previously existing paths may be invalid
-    -- TODO: cache div_from_path() return value to use in buf_hover
+    -- TODO: cache div_from_path() return value to use in hover()
     if not self.element:div_from_path(self.path) then
       self.path = nil
-    elseif self:buf_last_win_valid() then
+    elseif self:last_win_valid() then
       local raw_pos, offset = self.element:pos_from_path(self.path)
       local pos = raw_pos_to_pos(raw_pos + offset, lines)
       pos[1] = pos[1] + 1
@@ -449,39 +449,39 @@ function BufRenderer:buf_render()
     end
   end
 
-  self:buf_hover(true)
+  self:hover(true)
 end
 
-function BufRenderer:buf_enter_tooltip()
-  if self.tooltip and self.tooltip:buf_last_win_valid() then
+function BufRenderer:enter_tooltip()
+  if self.tooltip and self.tooltip:last_win_valid() then
     vim.api.nvim_set_current_win(self.tooltip.last_win)
   end
 end
 
-function BufRenderer:buf_goto_parent_tooltip()
-  if self.parent and self.parent:buf_last_win_valid() then
+function BufRenderer:goto_parent_tooltip()
+  if self.parent and self.parent:last_win_valid() then
     vim.api.nvim_set_current_win(self.parent.last_win)
   end
 end
 
-function BufRenderer:buf_last_win_valid()
+function BufRenderer:last_win_valid()
   return self.last_win
     and vim.api.nvim_win_is_valid(self.last_win)
     and vim.api.nvim_win_get_buf(self.last_win) == self.buf
 end
 
-function BufRenderer:buf_update_cursor(win)
+function BufRenderer:update_cursor(win)
   if self.disable_update then return end
   win = win or vim.api.nvim_get_current_win()
   if vim.api.nvim_win_get_buf(win) == self.buf then
     self.last_win = win
   end
-  if not self:buf_last_win_valid() then return end
+  if not self:last_win_valid() then return end
 
-  local path_changed = self:buf_update_position()
+  local path_changed = self:update_position()
 
   if path_changed then
-    self:buf_hover()
+    self:hover()
   end
 end
 
@@ -501,7 +501,7 @@ local function path_equal(path_a, path_b)
   return true
 end
 
-function BufRenderer:buf_update_position()
+function BufRenderer:update_position()
   local path_before = self.path
   local cursor_pos = vim.api.nvim_win_get_cursor(self.last_win)
   local raw_pos = pos_to_raw_pos(cursor_pos, self.lines)
@@ -510,22 +510,22 @@ function BufRenderer:buf_update_position()
   self.path = self.element:path_from_pos(raw_pos)
 
   if not path_equal(path_before, self.path) then
-    self:buf_event("cursor_leave", path_before)
-    self:buf_event("cursor_enter", self.path)
+    self:event("cursor_leave", path_before)
+    self:event("cursor_enter", self.path)
     return true
   end
 
   return false
 end
 
-function BufRenderer:buf_hover(force_update_highlight)
+function BufRenderer:hover(force_update_highlight)
   local path = self.path
 
   local old_hover_range = self.hover_range
 
   if not path then
     if self.tooltip ~= nil then
-      self.tooltip:buf_close()
+      self.tooltip:close()
       self.tooltip = nil
     end
     vim.api.nvim_buf_clear_namespace(self.buf, hl_ns, 0, -1)
@@ -544,7 +544,7 @@ function BufRenderer:buf_hover(force_update_highlight)
   local new_tooltip_element = tt_parent_element and tt_parent_element.tooltip
 
   if self.tooltip ~= nil and new_tooltip_element == nil then
-    self.tooltip:buf_close()
+    self.tooltip:close()
     self.tooltip = nil
   end
 
@@ -578,7 +578,7 @@ function BufRenderer:buf_hover(force_update_highlight)
       zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
     }
 
-    if not self.tooltip:buf_last_win_valid() then
+    if not self.tooltip:last_win_valid() then
       -- fresh non-reused tooltip, open window
       self.tooltip.disable_update = true
       self.tooltip.last_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
@@ -592,7 +592,7 @@ function BufRenderer:buf_hover(force_update_highlight)
       self.tooltip.last_win_options = vim.deepcopy(win_options)
     end
 
-    self.tooltip:buf_render()
+    self.tooltip:render()
   end
 
   if hover_element_path and hover_element then
@@ -613,16 +613,16 @@ function BufRenderer:buf_hover(force_update_highlight)
   end
 end
 
-function BufRenderer:buf_event(event, path, ...)
+function BufRenderer:event(event, path, ...)
   local args = {...}
 
   path = path or self.path
 
   if not path then return end
 
-  if not self.element:event(path, event, self:buf_make_event_context(), unpack(args)) and self.parent then
+  if not self.element:event(path, event, self:make_event_context(), unpack(args)) and self.parent then
     -- bubble up to parent
-    return self.parent:buf_event(event, self.parent_path, ...)
+    return self.parent:event(event, self.parent_path, ...)
   end
 end
 
@@ -632,36 +632,36 @@ end
 ---@field self BufRenderer
 
 ---@return ElementEventContext
-function BufRenderer:buf_make_event_context()
+function BufRenderer:make_event_context()
   return {
-    rerender = function() self:buf_render() end,
-    rehover = function() self:buf_hover() end,
+    rerender = function() self:render() end,
+    rehover = function() self:hover() end,
     self = self,
   }
 end
 
-function BufRenderer:buf_enter_win()
-  local deepest_tooltip = self:buf_get_deepest_tooltip()
-  if deepest_tooltip:buf_last_win_valid() then
+function BufRenderer:enter_win()
+  local deepest_tooltip = self:get_deepest_tooltip()
+  if deepest_tooltip:last_win_valid() then
     vim.api.nvim_set_current_win(deepest_tooltip.last_win)
   end
 end
 
-function BufRenderer:buf_get_deepest_tooltip()
+function BufRenderer:get_deepest_tooltip()
   while self.tooltip do
     self = self.tooltip
   end
   return self
 end
 
-function BufRenderer:buf_hop_to()
+function BufRenderer:hop_to()
   while self.parent do
     self = self.parent
   end
-  self:buf_hop(function(element) return element.highlightable end, require"hop.hint_util".callbacks.win_goto)
+  self:hop(function(element) return element.highlightable end, require"hop.hint_util".callbacks.win_goto)
 end
 
-function BufRenderer:buf_hop(filter_fn, callback_fn)
+function BufRenderer:hop(filter_fn, callback_fn)
   local winpos = vim.api.nvim_win_get_position(0)
   local strategy = {
     get_hint_list = function()
@@ -669,7 +669,7 @@ function BufRenderer:buf_hop(filter_fn, callback_fn)
       local windows = {}
 
       ---@param root BufRenderer
-      local function buf_get_hints(root)
+      local function get_hints(root)
         local this_buf = root.buf
         local this_win = root.last_win
         if not this_win then return end
@@ -700,11 +700,11 @@ function BufRenderer:buf_hop(filter_fn, callback_fn)
         end)
 
         if root.tooltip then
-          buf_get_hints(root.tooltip)
+          get_hints(root.tooltip)
         end
       end
 
-      buf_get_hints(self)
+      get_hints(self)
 
       -- just for greying out
       self.disable_update = true

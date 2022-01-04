@@ -517,8 +517,8 @@ end
 function Info:render()
   self:__render_pins()
 
-  self.__renderer:buf_render()
-  if self.__diff_pin then self.__diff_renderer:buf_render() end
+  self.__renderer:render()
+  if self.__diff_pin then self.__diff_renderer:render() end
 
   for _, parent in ipairs(self.__parent_infoviews) do
     parent:__refresh_diff()
@@ -1119,10 +1119,10 @@ function infoview.go_to()
   infoview.open()
   local curr_info = infoview.get_current_infoview().info
   -- if there is no last win, just go straight to the window itself
-  if not curr_info.__renderer:buf_last_win_valid() then
+  if not curr_info.__renderer:last_win_valid() then
     vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
   else
-    curr_info.__renderer:buf_enter_win()
+    curr_info.__renderer:enter_win()
   end
 end
 
