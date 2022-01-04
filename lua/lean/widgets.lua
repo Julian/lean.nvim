@@ -13,7 +13,10 @@ local util = require('lean._util')
 ---@field _size? integer Computed size of this element, updated by `Element:to_string`
 ---@field disable_update? boolean
 ---@field private __children Element[] @this element's children
-local Element = {}
+local Element = {
+  text = "",
+  name = "",
+}
 Element.__index = Element
 
 ---Create a new Element.
@@ -21,14 +24,14 @@ Element.__index = Element
 ---@param name string @a named handle for this element, used when path-searching
 ---@param hlgroup string @the highlight group used for this element's text
 ---@return Element
-function Element:new(text, name, hlgroup)
-  return setmetatable({
-    events = {},
-    text = text or "",
-    name = name or "",
-    hlgroup = hlgroup,
-    __children = {},
-  }, self)
+function Element:new(obj)
+  obj = obj or {}
+  local children = obj.children or {}
+  obj.children = nil
+  return setmetatable(
+    vim.tbl_extend("keep", obj, { events = {}, __children = children }),
+    self
+  )
 end
 
 ---Add a child to this element.
@@ -291,7 +294,7 @@ end
 
 -- Creates an impotent deep copy of this element (both tag-stripped and event-disabled).
 function Element:dummy_copy()
-  local dummy = Element:new(self.text, self.name, self.hlgroup)
+  local dummy = Element:new{ text = self.text, name = self.name, hlgroup = self.hlgroup }
   dummy.highlightable = self.highlightable
   for _, child in ipairs(self.__children) do
     table.insert(dummy.__children, child:dummy_copy())
@@ -307,7 +310,7 @@ end
 local function concat(elements, sep)
   local out = Element:new()
   for i, d in ipairs(elements) do
-    if i > 1 then out:add_child(Element:new(sep)) end
+    if i > 1 then out:add_child(Element:new{ text = sep }) end
     out:add_child(d)
   end
   return out

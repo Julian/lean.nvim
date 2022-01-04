@@ -33,7 +33,7 @@ local function show_popup_or_error(elements, err)
   if elements then
     show_popup(widgets.concat(elements, '\n\n'))
   elseif err then
-    show_popup(widgets.Element:new(vim.inspect(err)))
+    show_popup(widgets.Element:new{ text = vim.inspect(err) })
   end
 end
 

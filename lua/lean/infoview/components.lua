@@ -18,7 +18,7 @@ end
 
 ---@param text string?
 local function mk_tooltip_element(text)
-  local element = Element:new(text)
+  local element = Element:new{ text = text }
   local stop_bubbling = function() end
   element.events = {
     click = stop_bubbling,
@@ -46,18 +46,18 @@ end
 function components.goal(goal)
   if type(goal) ~= "table" or not goal.goals then return {} end
 
-  local element = Element:new("", "plain-goals")
+  local element = Element:new{ name = "plain-goals" }
 
-  local goals_list = Element:new(
-    #goal.goals == 0 and H('goals accomplished 🎉')
+  local goals_list = Element:new{
+    text = #goal.goals == 0 and H('goals accomplished 🎉')
       or #goal.goals == 1 and H('1 goal')
       or H(string.format('%d goals', #goal.goals)),
-    "plain-goals-list"
-  )
+    name = "plain-goals-list"
+  }
   element:add_child(goals_list)
 
   for _, this_goal in pairs(goal.goals) do
-    goals_list:add_child(Element:new("\n" .. this_goal, "plain-goal"))
+    goals_list:add_child(Element:new{ text = '\n' .. this_goal, name = 'plain-goal' })
   end
 
   return { element }
@@ -70,20 +70,20 @@ function components.term_goal(term_goal)
   if type(term_goal) ~= "table" or not term_goal.goal then return {} end
 
   return {
-    Element:new(
-      H(string.format('expected type (%s)', range_to_string(term_goal.range)) .. "\n" .. term_goal.goal),
-      "term-goal"
-    )
+    Element:new{
+      text = H(string.format('expected type (%s)', range_to_string(term_goal.range)) .. "\n" .. term_goal.goal),
+      name = 'term-goal'
+    }
   }
 end
 
 ---@param t CodeWithInfos
 ---@param sess Subsession
 local function code_with_infos(t, sess)
-  local element = Element:new("", "code-with-infos")
+  local element = Element:new{ name = "code-with-infos" }
 
   if t.text ~= nil then
-    element:add_child(Element:new(t.text, "text"))
+    element:add_child(Element:new{ text = t.text, name = "text" })
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
       element:add_child(code_with_infos(s, sess))
@@ -106,7 +106,7 @@ local function code_with_infos(t, sess)
       if info_popup.exprExplicit ~= nil then
         tooltip_element:add_child(code_with_infos(info_popup.exprExplicit, sess))
         if info_popup.type ~= nil then
-          tooltip_element:add_child(Element:new(' :\n'))
+          tooltip_element:add_child(Element:new{ text = ' :\n' })
         end
       end
 
@@ -115,8 +115,8 @@ local function code_with_infos(t, sess)
       end
 
       if info_popup.doc ~= nil then
-        tooltip_element:add_child(Element:new('\n\n'))
-        tooltip_element:add_child(Element:new(info_popup.doc)) -- TODO: markdown
+        tooltip_element:add_child(Element:new{ text = '\n\n' })
+        tooltip_element:add_child(Element:new{ text = info_popup.doc }) -- TODO: markdown
       end
 
       return tooltip_element
@@ -160,28 +160,39 @@ end
 ---@param goal InteractiveGoal | InteractiveTermGoal
 ---@param sess Subsession
 local function interactive_goal(goal, sess)
-  local element = Element:new('', 'interactive-goal')
+  local element = Element:new{ name = 'interactive-goal' }
 
   if goal.userName ~= nil then
-    element:add_child(Element:new(string.format('case %s\n', goal.userName)))
+    element:add_child(Element:new{ text = string.format('case %s\n', goal.userName) })
   end
 
   for _, hyp in ipairs(goal.hyps) do
-    local hyp_element = Element:new(table.concat(hyp.names, ' ') .. ' : ', "hyp")
+    local hyp_element = Element:new{
+      text = table.concat(hyp.names, ' ') .. ' : ',
+      name = "hyp",
+      children = { code_with_infos(hyp.type, sess) }
+    }
     element:add_child(hyp_element)
 
-    hyp_element:add_child(code_with_infos(hyp.type, sess))
     if hyp.val ~= nil then
-      local hyp_val = Element:new(" := ", "hyp_val")
-      hyp_val:add_child(code_with_infos(hyp.val, sess))
-      hyp_element:add_child(hyp_val)
+      hyp_element:add_child(
+        Element:new{
+          text = " := ",
+          name = 'hyp_val',
+          children = { code_with_infos(hyp.val, sess) }
+        }
+      )
     end
-    hyp_element:add_child(Element:new("\n", "hypothesis-separator"))
+    hyp_element:add_child(Element:new{ text = "\n", name = 'hypothesis-separator' })
   end
-  local goal_element = Element:new('⊢ ', "goal")
-  goal_element:add_child(code_with_infos(goal.type, sess))
-  element:add_child(goal_element)
 
+  element:add_child(
+    Element:new{
+      text = '⊢ ',
+      name = 'goal',
+      children = { code_with_infos(goal.type, sess) }
+    }
+  )
   return element
 end
 
@@ -191,17 +202,19 @@ end
 function components.interactive_goals(goal, sess)
   if goal == nil then return {} end
 
-  local element = Element:new("", "interactive-goals")
-  element:add_child(
-    Element:new(
-      #goal.goals == 0 and H('goals accomplished 🎉')
-        or #goal.goals == 1 and H('1 goal\n')
-        or H(string.format('%d goals\n', #goal.goals))
-    )
-  )
+  local element = Element:new{
+    name = 'interactive-goals',
+    children = {
+      Element:new{
+        text = #goal.goals == 0 and H('goals accomplished 🎉')
+          or #goal.goals == 1 and H('1 goal\n')
+          or H(string.format('%d goals\n', #goal.goals))
+      }
+    }
+  }
 
   for i, this_goal in ipairs(goal.goals) do
-    if i ~= 1 then element:add_child(Element:new('\n\n')) end
+    if i ~= 1 then element:add_child(Element:new{ text = '\n\n' }) end
     element:add_child(interactive_goal(this_goal, sess))
   end
 
@@ -215,12 +228,12 @@ end
 function components.interactive_term_goal(goal, sess)
   if not goal then return {} end
 
-  local element = Element:new("", "interactive-term-goal")
+  local element = Element:new{ name = 'interactive-term-goal' }
 
-  local term_state_element = Element:new(
-    H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
-    "term-state"
-  )
+  local term_state_element = Element:new{
+    text = H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
+    name = 'term-state'
+  }
   term_state_element:add_child(interactive_goal(goal, sess))
   element:add_child(term_state_element)
 
@@ -232,10 +245,14 @@ end
 function components.diagnostics(bufnr, line)
   local elements = {}
   for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics(bufnr, line)) do
-    table.insert(elements, Element:new(
-        H(string.format('%s: %s:',
+    table.insert(
+      elements, Element:new{
+        text = H(string.format('%s: %s:',
           range_to_string(diag.range),
-          DiagnosticSeverity[diag.severity]:lower())) .. "\n" .. diag.message, "diagnostic"))
+          DiagnosticSeverity[diag.severity]:lower())) .. "\n" .. diag.message,
+        name = 'diagnostic'
+      }
+    )
   end
   return elements
 end
@@ -243,10 +260,10 @@ end
 ---@param t TaggedTextMsgEmbed
 ---@param sess Subsession
 local function tagged_text_msg_embed(t, sess)
-  local element = Element:new("", "code-with-infos")
+  local element = Element:new{ name = 'code-with-infos' }
 
   if t.text ~= nil then
-    element:add_child(Element:new(t.text, "text"))
+    element:add_child(Element:new{ text = t.text, name = 'text' })
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
       element:add_child(tagged_text_msg_embed(s, sess))
@@ -267,7 +284,7 @@ local function tagged_text_msg_embed(t, sess)
 
       local click
       local function render()
-        local header = Element:new(string.format(is_open and '[%s] ▼' or '[%s] ▶', category))
+        local header = Element:new{ text = string.format(is_open and '[%s] ▼' or '[%s] ▶', category) }
         header.highlightable = true
         header.events = { click = click }
 
@@ -277,9 +294,9 @@ local function tagged_text_msg_embed(t, sess)
           if expanded then
             element:add_child(tagged_text_msg_embed(expanded, sess))
           elseif expanded_err then
-            element:add_child(Element:new(vim.inspect(expanded_err)))
+            element:add_child(Element:new{ text = vim.inspect(expanded_err) })
           else
-            element:add_child(Element:new(' loading...'))
+            element:add_child(Element:new{ text = ' loading...' })
           end
         end
         return true
@@ -318,10 +335,12 @@ function components.interactive_diagnostics(diags, line, sess)
   local elements = {}
   for _, diag in pairs(diags) do
     if diag.range.start.line == line then
-      local element = Element:new(
-          H(string.format('%s: %s:\n',
+      local element = Element:new{
+          text = H(string.format('%s: %s:\n',
             range_to_string(diag.range),
-            DiagnosticSeverity[diag.severity]:lower())), "diagnostic")
+            DiagnosticSeverity[diag.severity]:lower())),
+          name = 'diagnostic'
+      }
       element:add_child(tagged_text_msg_embed(diag.message, sess))
       table.insert(elements, element)
     end
