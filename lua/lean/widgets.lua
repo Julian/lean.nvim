@@ -47,15 +47,6 @@ function Element:add_tooltip(element)
   return element
 end
 
---- Insert an element initialized with the given params.
----@param text string
----@param name string
----@param hlgroup string
----@return Element @the added element
-function Element:insert_div(text, name, hlgroup)
-  return self:add_child(Element:new(text, name, hlgroup))
-end
-
 ---@class ElementHighlight
 ---@field start integer
 ---@field end integer
@@ -317,7 +308,7 @@ end
 local function concat(elements, sep)
   local out = Element:new()
   for i, d in ipairs(elements) do
-    if i > 1 then out:insert_div(sep) end
+    if i > 1 then out:add_child(Element:new(sep)) end
     out:add_child(d)
   end
   return out

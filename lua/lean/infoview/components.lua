@@ -6,9 +6,10 @@
 ---@tag lean.infoview.components
 
 local DiagnosticSeverity = vim.lsp.protocol.DiagnosticSeverity
-local components = {}
 
-local widgets = require('lean.widgets')
+local Element = require('lean.widgets').Element
+
+local components = {}
 
 --- Format a heading.
 local function H(contents)
@@ -17,7 +18,7 @@ end
 
 ---@param text string?
 local function mk_tooltip_element(text)
-  local element = widgets.Element:new(text)
+  local element = Element:new(text)
   local stop_bubbling = function() end
   element.events = {
     click = stop_bubbling,
@@ -45,15 +46,19 @@ end
 function components.goal(goal)
   if type(goal) ~= "table" or not goal.goals then return {} end
 
-  local element = widgets.Element:new("", "plain-goals")
+  local element = Element:new("", "plain-goals")
 
-  local goals_list = element:insert_div(
-    #goal.goals == 0 and H('goals accomplished 🎉') or
-    #goal.goals == 1 and H('1 goal') or
-    H(string.format('%d goals', #goal.goals)), "plain-goals-list")
+  local goals_list = element:add_child(
+    Element:new(
+      #goal.goals == 0 and H('goals accomplished 🎉')
+        or #goal.goals == 1 and H('1 goal')
+        or H(string.format('%d goals', #goal.goals)),
+      "plain-goals-list"
+    )
+  )
 
   for _, this_goal in pairs(goal.goals) do
-    goals_list:insert_div("\n" .. this_goal, "plain-goal")
+    goals_list:add_child(Element:new("\n" .. this_goal, "plain-goal"))
   end
 
   return { element }
@@ -66,7 +71,7 @@ function components.term_goal(term_goal)
   if type(term_goal) ~= "table" or not term_goal.goal then return {} end
 
   return {
-    widgets.Element:new(
+    Element:new(
       H(string.format('expected type (%s)', range_to_string(term_goal.range)) .. "\n" .. term_goal.goal),
       "term-goal"
     )
@@ -76,10 +81,10 @@ end
 ---@param t CodeWithInfos
 ---@param sess Subsession
 local function code_with_infos(t, sess)
-  local element = widgets.Element:new("", "code-with-infos")
+  local element = Element:new("", "code-with-infos")
 
   if t.text ~= nil then
-    element:insert_div(t.text, "text")
+    element:add_child(Element:new(t.text, "text"))
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
       element:add_child(code_with_infos(s, sess))
@@ -102,7 +107,7 @@ local function code_with_infos(t, sess)
       if info_popup.exprExplicit ~= nil then
         tooltip_element:add_child(code_with_infos(info_popup.exprExplicit, sess))
         if info_popup.type ~= nil then
-          tooltip_element:insert_div(' :\n')
+          tooltip_element:add_child(Element:new(' :\n'))
         end
       end
 
@@ -111,8 +116,8 @@ local function code_with_infos(t, sess)
       end
 
       if info_popup.doc ~= nil then
-        tooltip_element:insert_div('\n\n')
-        tooltip_element:insert_div(info_popup.doc) -- TODO: markdown
+        tooltip_element:add_child(Element:new('\n\n'))
+        tooltip_element:add_child(Element:new(info_popup.doc)) -- TODO: markdown
       end
 
       return tooltip_element
@@ -156,23 +161,23 @@ end
 ---@param goal InteractiveGoal | InteractiveTermGoal
 ---@param sess Subsession
 local function interactive_goal(goal, sess)
-  local element = widgets.Element:new('', 'interactive-goal')
+  local element = Element:new('', 'interactive-goal')
 
   if goal.userName ~= nil then
-    element:insert_div(string.format('case %s\n', goal.userName))
+    element:add_child(Element:new(string.format('case %s\n', goal.userName)))
   end
 
   for _, hyp in ipairs(goal.hyps) do
-    local hyp_element = element:insert_div(table.concat(hyp.names, ' ') .. ' : ', "hyp")
+    local hyp_element = element:add_child(Element:new(table.concat(hyp.names, ' ') .. ' : ', "hyp"))
 
     hyp_element:add_child(code_with_infos(hyp.type, sess))
     if hyp.val ~= nil then
-      local hyp_val = hyp_element:insert_div(" := ", "hyp_val")
+      local hyp_val = hyp_element:add_child(Element:new(" := ", "hyp_val"))
       hyp_val:add_child(code_with_infos(hyp.val, sess))
     end
-    hyp_element:insert_div("\n", "hypothesis-separator")
+    hyp_element:add_child(Element:new("\n", "hypothesis-separator"))
   end
-  element:insert_div('⊢ ', "goal"):add_child(code_with_infos(goal.type, sess))
+  element:add_child(Element:new('⊢ ', "goal")):add_child(code_with_infos(goal.type, sess))
 
   return element
 end
@@ -183,14 +188,17 @@ end
 function components.interactive_goals(goal, sess)
   if goal == nil then return {} end
 
-  local element = widgets.Element:new("", "interactive-goals")
-  element:insert_div(
-    #goal.goals == 0 and H('goals accomplished 🎉') or
-    #goal.goals == 1 and H('1 goal\n') or
-    H(string.format('%d goals\n', #goal.goals)))
+  local element = Element:new("", "interactive-goals")
+  element:add_child(
+    Element:new(
+      #goal.goals == 0 and H('goals accomplished 🎉')
+        or #goal.goals == 1 and H('1 goal\n')
+        or H(string.format('%d goals\n', #goal.goals))
+    )
+  )
 
   for i, this_goal in ipairs(goal.goals) do
-    if i ~= 1 then element:insert_div('\n\n') end
+    if i ~= 1 then element:add_child(Element:new('\n\n')) end
     element:add_child(interactive_goal(this_goal, sess))
   end
 
@@ -204,12 +212,14 @@ end
 function components.interactive_term_goal(goal, sess)
   if not goal then return {} end
 
-  local element = widgets.Element:new("", "interactive-term-goal")
+  local element = Element:new("", "interactive-term-goal")
 
-  element:insert_div(
-    H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
-    "term-state")
-    :add_child(interactive_goal(goal, sess))
+  element:add_child(
+    Element:new(
+      H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
+      "term-state"
+    )
+  ):add_child(interactive_goal(goal, sess))
 
   return { element }
 end
@@ -219,7 +229,7 @@ end
 function components.diagnostics(bufnr, line)
   local elements = {}
   for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics(bufnr, line)) do
-    table.insert(elements, widgets.Element:new(
+    table.insert(elements, Element:new(
         H(string.format('%s: %s:',
           range_to_string(diag.range),
           DiagnosticSeverity[diag.severity]:lower())) .. "\n" .. diag.message, "diagnostic"))
@@ -230,10 +240,10 @@ end
 ---@param t TaggedTextMsgEmbed
 ---@param sess Subsession
 local function tagged_text_msg_embed(t, sess)
-  local element = widgets.Element:new("", "code-with-infos")
+  local element = Element:new("", "code-with-infos")
 
   if t.text ~= nil then
-    element:insert_div(t.text, "text")
+    element:add_child(Element:new(t.text, "text"))
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
       element:add_child(tagged_text_msg_embed(s, sess))
@@ -254,7 +264,7 @@ local function tagged_text_msg_embed(t, sess)
 
       local click
       local function render()
-        local header = widgets.Element:new(
+        local header = Element:new(
           string.format(is_open and '[%s] ▼' or '[%s] ▶', category))
         header.highlightable = true
         header.events = { click = click }
@@ -265,9 +275,9 @@ local function tagged_text_msg_embed(t, sess)
           if expanded then
             element:add_child(tagged_text_msg_embed(expanded, sess))
           elseif expanded_err then
-            element:insert_div(vim.inspect(expanded_err))
+            element:add_child(Element:new(vim.inspect(expanded_err)))
           else
-            element:insert_div(' loading...')
+            element:add_child(Element:new(' loading...'))
           end
         end
         return true
@@ -306,7 +316,7 @@ function components.interactive_diagnostics(diags, line, sess)
   local elements = {}
   for _, diag in pairs(diags) do
     if diag.range.start.line == line then
-      local element = widgets.Element:new(
+      local element = Element:new(
           H(string.format('%s: %s:\n',
             range_to_string(diag.range),
             DiagnosticSeverity[diag.severity]:lower())), "diagnostic")

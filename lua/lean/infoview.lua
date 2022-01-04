@@ -446,10 +446,10 @@ function Info:__render_pins()
   local function render_pin(pin, current)
     local header_element = widgets.Element:new("", "pin-header")
     if infoview.debug then
-      header_element:insert_div("-- PIN " .. tostring(pin.id), "pin-id-header")
+      header_element:add_child(widgets.Element:new("-- PIN " .. tostring(pin.id), "pin-id-header"))
 
       local function add_attribute(text, name)
-        header_element:insert_div(" [" .. text .. "]", name .. "-attribute")
+        header_element:add_child(widgets.Element:new(" [" .. text .. "]", name .. "-attribute"))
       end
       if current then add_attribute("CURRENT", "current") end
       if pin.paused then add_attribute("PAUSED", "paused") end
@@ -466,13 +466,13 @@ function Info:__render_pins()
         filename = params.filename
       end
       if not infoview.debug then
-        header_element:insert_div("-- ", "pin-id-header")
+        header_element:add_child(widgets.Element:new("-- ", "pin-id-header"))
       else
-        header_element:insert_div(": ", "pin-header-separator")
+        header_element:add_child(widgets.Element:new(": ", "pin-header-separator"))
       end
       local location_text = ("%s at %d:%d"):format(filename,
         params.row + 1, params.col + 1)
-      header_element:insert_div(location_text, "pin-location")
+      header_element:add_child(widgets.Element:new(location_text, "pin-location"))
 
       header_element.highlightable = true
       header_element.events = {
@@ -487,7 +487,7 @@ function Info:__render_pins()
       }
     end
     if not header_element:is_empty() then
-      header_element:insert_div("\n", "pin-header-end")
+      header_element:add_child(widgets.Element:new("\n", "pin-header-end"))
     end
 
     local pin_element = widgets.Element:new("", "pin_wrapper")
@@ -821,7 +821,7 @@ function Pin:__update(tick, lean3_opts)
 
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then
-        new_data_element:insert_div("Processing file...", "processing-msg")
+        new_data_element:add_child(widgets.Element:new("Processing file...", "processing-msg"))
       end
       goto finish
     end

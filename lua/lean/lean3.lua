@@ -126,7 +126,7 @@ function lean3.update_infoview(
         end
 
         if last_hard_stop and this_hard_start then
-          this_element:insert_div(" ", "separator")
+          this_element:add_child(widgets.Element:new(" ", "separator"))
         end
 
         this_element:add_child(new_element)
@@ -148,7 +148,7 @@ function lean3.update_infoview(
         end
         new_element.highlightable = true
         this_element:add_child(new_element)
-        if child_i ~= #children then this_element:insert_div("\n", "select-separator") end
+        if child_i ~= #children then this_element:add_child(widgets.Element:new("\n", "select-separator")) end
 
         if child.c[1] == "no filter" then
           no_filter_element = new_element
@@ -165,7 +165,7 @@ function lean3.update_infoview(
     if type(result) == "string" then
       result = result:gsub('^%s*(.-)%s$', '%1')
 
-      element:insert_div(result, "widget-element-string")
+      element:add_child(widgets.Element:new(result, "widget-element-string"))
 
       return element
     elseif is_widget_element(result) then
@@ -185,7 +185,7 @@ function lean3.update_infoview(
         if list_first then
           list_first = false
         else
-          element:insert_div("\n", "list-separator")
+          element:add_child(widgets.Element:new("\n", "list-separator"))
         end
       end
 
@@ -193,22 +193,27 @@ function lean3.update_infoview(
       if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
 
       if class_name == "goal-goals" then
-        element:insert_div('▶ ', "goal-prefix")
+        element:add_child(widgets.Element:new('▶ ', "goal-prefix"))
         goal_first = false
       end
       if class_name == "lh-copy mt2" and not goal_first then
-        element:insert_div('\n', "goal-separator")
+        element:add_child(widgets.Element:new('\n', "goal-separator"))
       end
 
       local debug_tags = false
       if debug_tags then
-        --element:insert_div("<" .. tag .. ">", "element")
-        element:insert_div("<" .. tag ..
-        " attributes(" .. vim.inspect(attributes) .. ")" ..
-        " events(" .. vim.inspect(result.e) .. ")" ..
-        ">", "element")
+        --element:add_child(widgets.Element:new("<" .. tag .. ">", "element"))
+        element:add_child(
+          widgets.Element:new(
+            "<" .. tag ..
+              " attributes(" .. vim.inspect(attributes) .. ")" ..
+              " events(" .. vim.inspect(result.e) .. ")" ..
+            ">",
+            "element"
+          )
+        )
       end
-      local element_element = element:insert_div("", "element", hlgroup)
+      local element_element = element:add_child(widgets.Element:new("", "element", hlgroup))
       element_element.events = events
 
       -- close tooltip button
@@ -249,7 +254,7 @@ function lean3.update_infoview(
       end
 
       if tag == "hr" then
-        element_element:insert_div("|", "rule", "leanInfoFieldSep")
+        element_element:add_child(widgets.Element:new("|", "rule", "leanInfoFieldSep"))
       end
 
       if options.show_filter and tag == "select" then
@@ -261,7 +266,9 @@ function lean3.update_infoview(
             return true
           end
         end
-        local select_menu_element = element_element:insert_div(current_text .. "\n", "current-select")
+        local select_menu_element = element_element:add_child(
+          widgets.Element:new(current_text .. "\n", "current-select")
+        )
         select_menu_element:add_tooltip(select_children_element)
       else
         element_element:add_child(parse_children(children))
@@ -271,7 +278,7 @@ function lean3.update_infoview(
         element_element:add_tooltip(parse_widget(tooltip))
       end
       if debug_tags then
-        element:insert_div("</" .. tag .. ">", "element")
+        element:add_child(widgets.Element:new("</" .. tag .. ">", "element"))
       end
       return element
     else
@@ -285,7 +292,7 @@ function lean3.update_infoview(
 
   if require"lean.progress".is_processing_at(params) then
     if show_processing then
-      data_element:insert_div("Processing file...", "processing-msg")
+      data_element:add_child(widgets.Element:new("Processing file...", "processing-msg"))
     end
     goto finish
   end
@@ -354,7 +361,7 @@ function lean3.update_infoview(
   ::finish::
 
   for _, diag in ipairs(components.diagnostics(bufnr, params.position.line)) do
-    parent_element:insert_div('\n\n')
+    parent_element:add_child(widgets.Element:new('\n\n'))
     parent_element:add_child(diag)
   end
 
