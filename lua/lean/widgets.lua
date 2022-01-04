@@ -20,9 +20,6 @@ local Element = {
 Element.__index = Element
 
 ---Create a new Element.
----@param text string @the text to show when rendering this element
----@param name string @a named handle for this element, used when path-searching
----@param hlgroup string @the highlight group used for this element's text
 ---@return Element
 function Element:new(obj)
   obj = obj or {}
