@@ -591,9 +591,15 @@ function Pin:new(obj)
   return pin
 end
 
---- Set whether this pin uses a widget or a plain goal/term goal.
-function Pin:enable_widgets(use_widgets)
-  self.__use_widgets = use_widgets
+--- Enable widgets for this pin.
+function Pin:enable_widgets()
+  self.__use_widgets = true
+  self:update()
+end
+
+--- Disable widgets (in favor of plaintext goals) for this pin.
+function Pin:disable_widgets()
+  self.__use_widgets = false
   self:update()
 end
 
@@ -1120,12 +1126,12 @@ end
 
 function infoview.enable_widgets()
   local iv = infoview.get_current_infoview()
-  if iv ~= nil then iv.info.pin:set_widget(true) end
+  if iv ~= nil then iv.info.pin:enable_widgets() end
 end
 
 function infoview.disable_widgets()
   local iv = infoview.get_current_infoview()
-  if iv ~= nil then iv.info.pin:set_widget(false) end
+  if iv ~= nil then iv.info.pin:disable_widgets() end
 end
 
 function infoview.go_to()
