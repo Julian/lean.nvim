@@ -114,12 +114,6 @@ function infoview.enable_debug()
   infoview.debug = true
 end
 
---- Get the infoview corresponding to the current window.
----@return Infoview
-function infoview.get_current_infoview()
-  return infoview._by_tabpage[vim.api.nvim_win_get_tabpage(0)]
-end
-
 --- Create a new infoview.
 ---@param open boolean: whether to open the infoview after initializing
 ---@return Infoview
@@ -1055,6 +1049,12 @@ function infoview.__bufenter()
     attached_buffers[bufnr] = true
   end
   infoview.__update()
+end
+
+--- Get the infoview corresponding to the current window.
+---@return Infoview
+function infoview.get_current_infoview()
+  return infoview._by_tabpage[vim.api.nvim_win_get_tabpage(0)]
 end
 
 --- Open an infoview for the current buffer if it isn't already open.
