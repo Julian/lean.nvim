@@ -9,7 +9,7 @@ local helpers = {_clean_buffer_counter = 1}
 
 --- Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(text, feed_opts)
-  feed_opts = feed_opts or 'n'
+  feed_opts = feed_opts or 'mtx'
   local to_feed = vim.api.nvim_replace_termcodes(text, true, false, true)
   vim.api.nvim_feedkeys(to_feed, feed_opts, true)
 end
