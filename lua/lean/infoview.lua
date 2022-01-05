@@ -67,6 +67,7 @@ local options = {
 ---@field private __ui_position_params UIParams
 ---@field private __use_widgets boolean
 local Pin = {next_id = 1}
+Pin.__index = Pin
 
 --- An individual info.
 ---@class Info
@@ -81,6 +82,7 @@ local Pin = {next_id = 1}
 ---@field private __parent_infoviews Infoview[]
 ---@field private __win_event_disable boolean
 local Info = {}
+Info.__index = Info
 
 --- A "view" on an info (i.e. window).
 ---@class Infoview
@@ -91,6 +93,7 @@ local Info = {}
 ---@field private __height number
 ---@field private __diff_win integer
 local Infoview = {}
+Infoview.__index = Infoview
 
 local pin_hl_group = "LeanNvimPin"
 vim.highlight.create(pin_hl_group, {
@@ -122,7 +125,6 @@ end
 ---@return Infoview
 function Infoview:new(open)
   local new_infoview = { __width = options.width, __height = options.height }
-  self.__index = self
   setmetatable(new_infoview, self)
 
   new_infoview.info = Info:new{ parent = new_infoview }
@@ -312,41 +314,42 @@ end
 
 ---@return Info
 function Info:new(opts)
-  local new_info = {
+  local pins_element = Element:new{
+    name = "info",
+    events = {
+      goto_last_window = function()
+        if not self.last_window then return end
+        vim.api.nvim_set_current_win(self.last_window)
+      end
+    }
+  }
+  local new_info = setmetatable({
     id = #infoview._info_by_id + 1,
-    pin = Pin:new(options.autopause, options.use_widgets),
     pins = {},
     __parent_infoviews = { opts.parent },
-    __pins_element = Element:new{ name = "info" },
+    __pins_element = pins_element,
     __win_event_disable = false,
+  }, self)
+  new_info.pin = Pin:new{
+    paused = options.autopause,
+    use_widgets = options.use_widgets,
+    parent = new_info
   }
   table.insert(infoview._info_by_id, new_info)
 
-  self.__index = self
-  setmetatable(new_info, self)
-  self = new_info
-
-  self.__pins_element.events = {
-    goto_last_window = function()
-      if self.last_window then
-        vim.api.nvim_set_current_win(self.last_window)
-      end
-    end
-  }
-
   local function mk_buf(name, listed)
-    local bufnr = vim.api.nvim_create_buf(listed or false, true)
+    local bufnr = vim.api.nvim_create_buf(listed, true)
     vim.api.nvim_buf_set_option(bufnr, "bufhidden", "hide")
     vim.api.nvim_buf_set_name(bufnr, name)
     return bufnr
   end
 
-  self.__renderer = self.__pins_element:renderer{
-    buf = mk_buf("lean://info/" .. self.id .. "/curr", true),
+  new_info.__renderer = new_info.__pins_element:renderer{
+    buf = mk_buf("lean://info/" .. new_info.id .. "/curr", true),
     keymaps = options.mappings
   }
-  self.__diff_renderer = self.pin.__element:renderer{
-    buf = mk_buf("lean://info/" .. self.id .. "/diff"),
+  new_info.__diff_renderer = new_info.pin.__element:renderer{
+    buf = mk_buf("lean://info/" .. new_info.id .. "/diff", false),
     keymaps = options.mappings
   }
 
@@ -354,31 +357,32 @@ function Info:new(opts)
   set_augroup("LeanInfoviewShowPin", string.format([[
     autocmd WinEnter <buffer=%d> lua require'lean.infoview'.__show_curr_pin(%d)
     autocmd WinLeave <buffer=%d> lua require'lean.infoview'.__hide_curr_pin(%d)
-  ]], self.__renderer.buf, self.id, self.__renderer.buf, self.id), self.__renderer.buf)
+  ]], new_info.__renderer.buf, new_info.id, new_info.__renderer.buf, new_info.id), new_info.__renderer.buf)
 
   -- Make sure we notice even if someone manually :q's the infoview window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__was_closed(%d)
-  ]], self.__renderer.buf, self.id), self.__renderer.buf)
+  ]], new_info.__renderer.buf, new_info.id), new_info.__renderer.buf)
 
   -- Make sure we notice even if someone manually :q's the diff window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__diff_was_closed(%d)
-  ]], self.__diff_renderer.buf, self.id), self.__diff_renderer.buf)
+  ]], new_info.__diff_renderer.buf, new_info.id), new_info.__diff_renderer.buf)
 
-  self.pin:__add_parent_info(self)
+  new_info:render()
 
-  self:render()
-
-  return self
+  return new_info
 end
 
 function Info:add_pin()
   local new_params = vim.deepcopy(self.pin.__ui_position_params)
   table.insert(self.pins, self.pin)
   self:__maybe_show_pin_extmark(tostring(self.pin.id))
-  self.pin = Pin:new(options.autopause, options.use_widgets)
-  self.pin:__add_parent_info(self)
+  self.pin = Pin:new{
+    paused = options.autopause,
+    use_widgets = options.use_widgets,
+    parent = self
+  }
   self.pin:move(new_params)
   self:render()
 end
@@ -386,8 +390,11 @@ end
 ---@param params UIParams
 function Info:__set_diff_pin(params)
   if not self.__diff_pin then
-    self.__diff_pin = Pin:new(options.autopause, options.use_widgets)
-    self.__diff_pin:__add_parent_info(self)
+    self.__diff_pin = Pin:new{
+      paused = options.autopause,
+      use_widgets = options.use_widgets,
+      parent = self
+    }
     self.__diff_renderer.__element = self.__diff_pin.__element
     self.__diff_pin:__show_extmark(nil, diff_pin_hl_group)
   end
@@ -557,23 +564,37 @@ function Info:__toggle_auto_diff_pin(clear)
 end
 
 ---@return Pin
-function Pin:new(paused, use_widgets)
-  local new_pin = {
-    id = self.next_id,
-    paused = paused,
-    __data_element = Element:new{ name = "pin-data" },
-    __element = Element:new{ name = "pin" },
-    __parent_infos = {},
-    __ticker = util.Ticker:new(),
-    __use_widgets = use_widgets,
-  }
+function Pin:new(obj)
+  obj = obj or {}
+
+  local paused = obj.paused or false
+  local use_widgets = obj.use_widgets or true
+  obj.paused = nil
+  obj.use_widgets = nil
+
+  local parent_infos = {}
+  if obj.parent ~= nil then
+    parent_infos[obj.parent] = true
+    obj.parent = nil
+  end
+
+  local pin = setmetatable(
+    vim.tbl_extend("keep", obj, {
+      id = self.next_id,
+      paused = paused,
+      __data_element = Element:new{ name = "pin-data" },
+      __element = Element:new{ name = "pin" },
+      __parent_infos = parent_infos,
+      __ticker = util.Ticker:new(),
+      __use_widgets = use_widgets,
+    }),
+    self
+  )
+
   self.next_id = self.next_id + 1
-  infoview._pin_by_id[new_pin.id] = new_pin
+  infoview._pin_by_id[pin.id] = pin
 
-  self.__index = self
-  setmetatable(new_pin, self)
-
-  return new_pin
+  return pin
 end
 
 --- Set whether this pin uses a widget or a plain goal/term goal.
