@@ -66,7 +66,7 @@ local options = {
 ---@field private __parent_infos table<Info, boolean>
 ---@field private __ui_position_params UIParams
 ---@field private __use_widgets boolean
-local Pin = {next_id = 1}
+local Pin = { next_id = 1, __extmark_ns = vim.api.nvim_create_namespace("") }
 Pin.__index = Pin
 
 --- An individual info.
@@ -608,13 +608,11 @@ function Pin:__add_parent_info(new_parent)
   self.__parent_infos[new_parent] = true
 end
 
-local extmark_ns = vim.api.nvim_create_namespace("LeanNvimPinExtmarks")
-
 function Pin:__remove_parent_info(info)
   self.__parent_infos[info] = nil
   if vim.tbl_isempty(self.__parent_infos) then
     if self.__extmark then
-      vim.api.nvim_buf_del_extmark(self.__extmark_buf, extmark_ns, self.__extmark)
+      vim.api.nvim_buf_del_extmark(self.__extmark_buf, self.__extmark_ns, self.__extmark)
     end
     infoview._pin_by_id[self.id] = nil
   end
@@ -649,7 +647,7 @@ function Pin:__update_extmark_style(buf, line, col)
   -- not a brand new extmark
   if not buf then
     buf = self.__extmark_buf
-    local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, self.__extmark, {})
+    local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, self.__extmark_ns, self.__extmark, {})
     if vim.tbl_isempty(extmark_pos) then return end
     line = extmark_pos[1]
     col = extmark_pos[2]
@@ -668,7 +666,7 @@ function Pin:__update_extmark_style(buf, line, col)
     end
   end
 
-  self.__extmark = vim.api.nvim_buf_set_extmark(buf, extmark_ns,
+  self.__extmark = vim.api.nvim_buf_set_extmark(buf, self.__extmark_ns,
     line, col,
     {
       id = self.__extmark;
@@ -688,7 +686,7 @@ function Pin:update_position()
   local buf = self.__extmark_buf
   if buf == -1 then return end
 
-  local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, extmark_ns, extmark, {})
+  local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, self.__extmark_ns, extmark, {})
 
   local encoding = util._get_offset_encoding(buf) or "utf-32"
   local use_utf16 = encoding == "utf-16"
