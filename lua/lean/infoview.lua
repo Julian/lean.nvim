@@ -373,16 +373,12 @@ function Info:new(opts)
   return self
 end
 
-function Info:__new_current_pin()
-  self.pin = Pin:new(options.autopause, options.use_widgets)
-  self.pin:__add_parent_info(self)
-end
-
 function Info:add_pin()
   local new_params = vim.deepcopy(self.pin.__ui_position_params)
   table.insert(self.pins, self.pin)
   self:__maybe_show_pin_extmark(tostring(self.pin.id))
-  self:__new_current_pin()
+  self.pin = Pin:new(options.autopause, options.use_widgets)
+  self.pin:__add_parent_info(self)
   self.pin:move(new_params)
   self:render()
 end
