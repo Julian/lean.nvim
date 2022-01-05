@@ -610,16 +610,14 @@ end
 
 local extmark_ns = vim.api.nvim_create_namespace("LeanNvimPinExtmarks")
 
-function Pin:_teardown()
-  if self.__extmark then
-    vim.api.nvim_buf_del_extmark(self.__extmark_buf, extmark_ns, self.__extmark)
-  end
-  infoview._pin_by_id[self.id] = nil
-end
-
 function Pin:__remove_parent_info(info)
   self.__parent_infos[info] = nil
-  if vim.tbl_isempty(self.__parent_infos) then self:_teardown() end
+  if vim.tbl_isempty(self.__parent_infos) then
+    if self.__extmark then
+      vim.api.nvim_buf_del_extmark(self.__extmark_buf, extmark_ns, self.__extmark)
+    end
+    infoview._pin_by_id[self.id] = nil
+  end
 end
 
 --- Update this pin's current position.
