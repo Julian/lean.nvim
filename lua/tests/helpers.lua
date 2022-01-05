@@ -3,7 +3,6 @@ local assert = require('luassert')
 local dedent = require('lean._util').dedent
 local fixtures = require('tests.fixtures')
 local infoview = require('lean.infoview')
-local lean = require('lean')
 local progress = require('lean.progress')
 
 local helpers = {_clean_buffer_counter = 1}
@@ -37,18 +36,12 @@ function helpers.move_cursor(opts)
 end
 
 function helpers.wait_for_ready_lsp()
-  assert.message("LSP isn't enabled.").is_true(
-    lean.config.lsp.enable or lean.config.lsp3.enable
-  )
   local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
   assert.message('LSP server was never ready.').True(succeeded)
 end
 
 --- Wait until a single line in the infoview matches the given contents.
 function helpers.wait_for_infoview_contents(contents)
-  assert.message("LSP isn't enabled.").is_true(
-    lean.config.lsp.enable or lean.config.lsp3.enable
-  )
   local current_infoview = infoview.get_current_infoview()
   local succeeded, _ = vim.wait(5000, function()
     if table.concat(current_infoview:get_lines(), "\n"):match(contents) then
