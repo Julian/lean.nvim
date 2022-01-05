@@ -9,7 +9,12 @@ require('lean').setup{}
 
 describe('infoview enable/disable_widgets', function()
   describe('lean 3', helpers.clean_buffer('lean3', 'example : 2 = 2 := by refl', function()
-    it('can be disabled', function(_)
+    -- These tests are flaky, possibly for the same reason that 'shows a term
+    -- goal' is from contents_spec. Namely, sometimes the Lean process seems to
+    -- do absolutely nothing and sit there never returning a response (even an
+    -- initial one). Marking these pending until we figure out what's happening
+    -- there, presumably some request getting sent before the server is ready.
+    pending('can be disabled', function(_)
       helpers.wait_for_ready_lsp()
       infoview.disable_widgets()
       helpers.move_cursor{ to = {1, 22} }
@@ -21,7 +26,7 @@ describe('infoview enable/disable_widgets', function()
       ]]
     end)
 
-    it('can re-enable widgets', function(_)
+    pending('can re-enable widgets', function(_)
       infoview.enable_widgets()
       helpers.move_cursor{ to = {1, 22} }
       helpers.wait_for_infoview_contents('filter')
