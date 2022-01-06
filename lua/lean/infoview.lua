@@ -95,20 +95,6 @@ Info.__index = Info
 local Infoview = {}
 Infoview.__index = Infoview
 
-local pin_hl_group = "LeanNvimPin"
-vim.highlight.create(pin_hl_group, {
-  cterm = 'underline',
-  ctermbg = '3',
-  gui   = 'underline',
-}, true)
-
-local diff_pin_hl_group = "LeanNvimDiffPin"
-vim.highlight.create(diff_pin_hl_group, {
-  cterm = 'underline',
-  ctermbg = '7',
-  gui   = 'underline',
-}, true)
-
 --- Enables printing of extra debugging information in the infoview.
 function infoview.enable_debug()
   infoview.debug = true
@@ -390,7 +376,7 @@ function Info:__set_diff_pin(params)
       parent = self
     }
     self.__diff_renderer.__element = self.__diff_pin.__element
-    self.__diff_pin:__show_extmark(nil, diff_pin_hl_group)
+    self.__diff_pin:__show_extmark(nil, 'leanDiffPinned')
   end
 
   self.__diff_pin:move(params)
@@ -709,7 +695,7 @@ function Pin:update_position()
 end
 
 function Pin:__show_extmark(name, hlgroup)
-  self.__extmark_hl_group = hlgroup or pin_hl_group
+  self.__extmark_hl_group = hlgroup or 'leanPinned'
   if name then
     self.__extmark_virt_text = {{"← " .. (name or tostring(self.id)), "Comment"}}
   else

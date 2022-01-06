@@ -107,6 +107,9 @@ hi def link leanNameLiteral       Identifier
 
 hi def link leanSorry             Error
 
+hi def link leanPinned        DiagnosticUnderlineHint
+hi def link leanDiffPinned    DiagnosticUnderlineInfo
+
 syn sync minlines=200
 syn sync maxlines=500
 
