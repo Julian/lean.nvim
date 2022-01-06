@@ -1,5 +1,4 @@
 local infoview = require('lean.infoview')
-local helpers = require('tests.helpers')
 
 require('lean').setup{}
 
@@ -8,7 +7,7 @@ describe('infoview.close_all', function()
     assert.is.equal(#vim.api.nvim_tabpage_list_wins(0), 1)
     local lean_window = vim.api.nvim_get_current_win()
 
-    helpers.edit_lean_buffer("temp.lean")
+    vim.cmd('edit! temp.lean')
     local current_infoview = infoview.get_current_infoview()
 
     current_infoview:open()
@@ -24,30 +23,26 @@ describe('infoview.close_all', function()
   it('closes many infoviews, some already closed', function(_)
     local tabpages = {}
 
-    vim.cmd("tabnew")
-    helpers.edit_lean_buffer("temp1.lean")
+    vim.cmd('tabnew temp1.lean')
     table.insert(tabpages, vim.api.nvim_get_current_tabpage())
     local temp1 = unpack(vim.api.nvim_tabpage_list_wins(tabpages[#tabpages]))
     local temp1_infoview = infoview.get_current_infoview()
     temp1_infoview:open()
 
-    vim.cmd("tabnew")
-    helpers.edit_lean_buffer("temp2.lean")
+    vim.cmd('tabnew temp2.lean')
     table.insert(tabpages, vim.api.nvim_get_current_tabpage())
     local temp2 = unpack(vim.api.nvim_tabpage_list_wins(tabpages[#tabpages]))
     local temp2_infoview = infoview.get_current_infoview()
     temp2_infoview:open()
 
-    vim.cmd("tabnew")
-    helpers.edit_lean_buffer("temp3.lean")
+    vim.cmd('tabnew temp3.lean')
     table.insert(tabpages, vim.api.nvim_get_current_tabpage())
     local temp3 = unpack(vim.api.nvim_tabpage_list_wins(tabpages[#tabpages]))
     local temp3_infoview = infoview.get_current_infoview()
     temp3_infoview:open()
     temp3_infoview:close()
 
-    vim.cmd("tabnew")
-    helpers.edit_lean_buffer("temp4.lean")
+    vim.cmd('tabnew temp4.lean')
     table.insert(tabpages, vim.api.nvim_get_current_tabpage())
     local temp4 = unpack(vim.api.nvim_tabpage_list_wins(tabpages[#tabpages]))
     local temp4_infoview = infoview.get_current_infoview()

@@ -115,11 +115,6 @@ function helpers.wait_for_filetype()
   assert.message("filetype was never set").is_truthy(result)
 end
 
-function helpers.edit_lean_buffer(filename)
-  vim.api.nvim_command("edit! " .. filename)
-  helpers.wait_for_filetype()
-end
-
 --- Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
   local buf = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n')

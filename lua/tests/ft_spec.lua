@@ -9,20 +9,20 @@ require('lean').setup {
 describe('ft.detect', function()
   for kind, path in unpack(fixtures.lean_project.files_it) do
     it('detects ' .. kind .. ' lean 4 files', function()
-      helpers.edit_lean_buffer(path)
+      vim.cmd('edit! ' .. path)
       assert.are_equal("lean", vim.opt.filetype:get())
     end)
   end
 
   for kind, path in unpack(fixtures.lean3_project.files_it) do
     it('detects ' .. kind .. ' lean 3 files', function()
-      helpers.edit_lean_buffer(path)
+      vim.cmd('edit! ' .. path)
       assert.are_equal("lean3", vim.opt.filetype:get())
     end)
   end
 
   it('detects lean 4 standard library files', function()
-    helpers.edit_lean_buffer(fixtures.lean_project.path .. '/Test/JumpToStdlib.lean')
+    vim.cmd('edit! ' .. fixtures.lean_project.path .. '/Test/JumpToStdlib.lean')
     assert.are_equal("lean", vim.opt.filetype:get())
     local initial_path = vim.api.nvim_buf_get_name(0)
 
@@ -37,7 +37,7 @@ describe('ft.detect', function()
   end)
 
   it('detects lean 3 standard library files', function()
-    helpers.edit_lean_buffer(fixtures.lean3_project.path .. '/src/jump_to_stdlib.lean')
+    vim.cmd('edit! ' .. fixtures.lean3_project.path .. '/src/jump_to_stdlib.lean')
     assert.are_equal('lean3', vim.opt.filetype:get())
     local initial_path = vim.api.nvim_buf_get_name(0)
 

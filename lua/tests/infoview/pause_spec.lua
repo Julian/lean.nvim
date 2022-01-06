@@ -14,7 +14,7 @@ require('lean').setup{
 describe('infoview pause/unpause', function()
 
   it("can pause and unpause updates", function(_)
-    helpers.edit_lean_buffer(fixtures.lean_project.path .. '/Test/Squares.lean')
+    vim.cmd('edit! ' .. fixtures.lean_project.path .. '/Test/Squares.lean')
     helpers.move_cursor{ to = {3, 0} }
     helpers.wait_for_infoview_contents('\n9')
     -- FIXME: Trailing extra newline.

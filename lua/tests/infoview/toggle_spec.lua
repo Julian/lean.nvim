@@ -1,6 +1,6 @@
+require('tests.helpers')
 local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
-local helpers = require('tests.helpers')
 
 require('lean').setup{}
 
@@ -10,7 +10,7 @@ describe('Infoview.toggle', function()
 
   it('closes an open infoview', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
-    helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
     lean_window = vim.api.nvim_get_current_win()
     local current_infoview = infoview.get_current_infoview()
 
@@ -38,7 +38,7 @@ describe('Infoview.toggle', function()
     local tab2_window = vim.api.nvim_get_current_win()
 
     assert.are.same({ tab2_window }, vim.api.nvim_tabpage_list_wins(0))
-    helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
     local tab2_infoview = infoview.get_current_infoview()
     local tab2_infoview_window = tab2_infoview.window
     assert.are.same_elements(
@@ -48,7 +48,7 @@ describe('Infoview.toggle', function()
 
     vim.cmd(":quit")
     assert.are.same(vim.api.nvim_get_current_win(), tab2_infoview_window)
-    helpers.edit_lean_buffer(fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
     assert.are.same({ tab2_infoview_window }, vim.api.nvim_tabpage_list_wins(0))
 
     local second_infoview = infoview.get_current_infoview()
