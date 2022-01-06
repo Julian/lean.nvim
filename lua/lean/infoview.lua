@@ -103,14 +103,14 @@ end
 --- Create a new infoview.
 ---@param open boolean: whether to open the infoview after initializing
 ---@return Infoview
-function Infoview:new(open)
-  local new_infoview = { __width = options.width, __height = options.height }
-  setmetatable(new_infoview, self)
-
+function Infoview:new(obj)
+  obj = obj or {}
+  local new_infoview = setmetatable({
+    __width = obj.width or options.width,
+    __height = obj.height or options.height
+  }, self)
   new_infoview.info = Info:new{ parent = new_infoview }
   table.insert(infoview._infoviews, new_infoview)
-  if not open then new_infoview:close() else new_infoview:open() end
-
   return new_infoview
 end
 
@@ -1052,9 +1052,10 @@ end
 --- Open an infoview for the current buffer if it isn't already open.
 function infoview.__maybe_autoopen()
   local tabpage = vim.api.nvim_win_get_tabpage(0)
-  if not infoview._by_tabpage[tabpage] then
-    infoview._by_tabpage[tabpage] = Infoview:new(options.autoopen)
-  end
+  if infoview._by_tabpage[tabpage] then return end
+  local new_infoview = Infoview:new{}
+  infoview._by_tabpage[tabpage] = new_infoview
+  if options.autoopen then new_infoview:open() else new_infoview:close() end
 end
 
 function infoview.open()
