@@ -117,8 +117,10 @@ end
 
 --- Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
-  local buf = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n')
-  assert.equal(arguments[1], buf)
+  local expected = arguments[1][1] or arguments[1]
+  local bufnr = arguments[1].bufnr or 0
+  local got = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
+  assert.equal(expected, got)
   return true
 end
 

@@ -80,12 +80,12 @@ example : ∃ n, n = 2 := by {
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.contents.are([[
+    assert.contents.are[[
 meta def whatshouldIdo := (do tactic.trace "Try this: existsi 2,\n  refl,\n")
 example : ∃ n, n = 2 := by {
   existsi 2,
   refl,
-}]])
+}]]
   end))
 
   -- Emitted by e.g. library_search

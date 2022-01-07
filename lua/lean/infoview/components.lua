@@ -80,7 +80,7 @@ end
 ---@param t CodeWithInfos
 ---@param sess Subsession
 local function code_with_infos(t, sess)
-  local element = Element:new{ name = "code-with-infos" }
+  local element = Element:new{ name = 'code-with-infos' }
 
   if t.text ~= nil then
     element:add_child(Element:new{ text = t.text, name = "text" })
