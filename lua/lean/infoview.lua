@@ -480,10 +480,7 @@ function Info:__render_pins()
       header_element:add_child(Element:new{ text = "\n", name = "pin-header-end" })
     end
 
-    local pin_element = Element:new{
-      name = "pin_wrapper",
-      children = { header_element }
-    }
+    local pin_element = Element:new{ name = "pin_wrapper", children = { header_element } }
     if pin.__element then pin_element:add_child(pin.__element) end
 
     return pin_element
@@ -604,34 +601,24 @@ function Pin:__remove_parent_info(info)
   end
 end
 
---- Update this pin's current position.
----@param params UIParams
-function Pin:set_position_params(params)
-  self:__update_extmark(params)
-end
-
 --- Update pin extmark based on position, used when resetting pin position.
 ---@param params UIParams
 function Pin:__update_extmark(params)
   if not params then return end
-
   local buf = vim.fn.bufnr(params.filename)
+  if buf == -1 then return end
+  local line = params.row
+  local col = params.col
 
-  if buf ~= -1 then
-    local line = params.row
-    local col = params.col
+  self:__update_extmark_style(buf, line, col)
 
-    self:__update_extmark_style(buf, line, col)
-
-    self:update_position()
-  end
+  self:update_position()
 end
 
 function Pin:__update_extmark_style(buf, line, col)
-  if not buf and not self.__extmark then return end
-
   -- not a brand new extmark
   if not buf then
+    if not self.__extmark then return end
     buf = self.__extmark_buf
     local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, self.__extmark_ns, self.__extmark, {})
     if vim.tbl_isempty(extmark_pos) then return end
@@ -740,7 +727,7 @@ end
 --- Triggered when manually moving a pin.
 ---@param params UIParams
 function Pin:move(params)
-  self:set_position_params(params)
+  self:__update_extmark(params)
   self:update()
 end
 
