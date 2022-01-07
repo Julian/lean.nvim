@@ -1,5 +1,3 @@
-local dirname = require('lspconfig.util').path.dirname
-
 local Element = require('lean.widgets').Element
 local components = require('lean.infoview.components')
 local lsp = require('lean.lsp')
@@ -8,20 +6,6 @@ local subprocess_check_output = util.subprocess_check_output
 
 local lean3 = {}
 
-
---- Detect whether the current buffer is a Lean 3 file using elan.
-function lean3.__detect_elan(filename)
-  local bufnr = vim.fn.bufnr(filename)
-  if bufnr == -1 then return end
-
-  local path = vim.uri_to_fname(vim.uri_from_bufnr(bufnr))
-  local version_string = (require"lean._util".subprocess_check_output
-    { command = "lean", args = {"--version"}, cwd = dirname(path) })[1]
-  local _, _, version_num = version_string:find("version (%d+)%.%d+%.%d+")
-  if version_num == "3" then return true end
-
-  return false
-end
 
 --- Return the current Lean 3 search path.
 ---
