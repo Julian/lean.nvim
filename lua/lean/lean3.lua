@@ -216,9 +216,9 @@ function lean3.update_infoview(
       end
       local element_element = Element:new{
         name = "element",
-        hlgroup = hlgroup
+        hlgroup = hlgroup,
+        events = events
       }
-      element_element.events = events
       element:add_child(element_element)
 
       -- close tooltip button
