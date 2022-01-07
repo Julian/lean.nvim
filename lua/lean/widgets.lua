@@ -31,7 +31,10 @@ Element.__index = Element
 ---@field tooltip? BufRenderer currently open tooltip
 ---@field parent? BufRenderer Parent renderer
 ---@field parent_path? PathNode[] Path in parent element, events bubble up to the parent there
-local BufRenderer = {}
+local BufRenderer = {
+  __widgets_ns = vim.api.nvim_create_namespace("LeanWidget"),
+  __hl_ns = vim.api.nvim_create_namespace('LeanHighlight')
+}
 BufRenderer.__index = BufRenderer
 
 ---Create a new Element.
@@ -334,7 +337,7 @@ end
 ---@param buf number
 ---@param keymaps? table Extra keymaps
 function Element:renderer(obj)
-  return BufRenderer:new(obj.buf, self, obj.keymaps)
+  return BufRenderer:new(vim.tbl_extend("error", obj, { element = self }))
 end
 
 -- Maps BufRenderer.buf to BufRenderer
@@ -352,39 +355,35 @@ local function gc()
   end
 end
 
+---Create a new BufRenderer.
 ---@param buf number
 ---@param element Element
 ---@param keymaps? table Extra keymaps
-function BufRenderer:new(buf, element, keymaps)
-  gc()
+function BufRenderer:new(obj)
+  gc()  -- EXPLAINME: Why?
 
-  vim.api.nvim_buf_set_option(buf, "modifiable", false)
-  local new_renderer = setmetatable({
-    buf = buf,
-    keymaps = keymaps,
-    element = element,
-  }, self)
-  self = new_renderer
-  _by_buf[buf] = self
+  obj = obj or {}
+  local new_renderer = setmetatable(obj, self)
+  vim.api.nvim_buf_set_option(obj.buf, "modifiable", false)
+  _by_buf[obj.buf] = new_renderer
 
   util.set_augroup("WidgetPosition", string.format([[
     autocmd CursorMoved <buffer=%d> lua require'lean.widgets'._by_buf[%d]:update_cursor()
     autocmd BufEnter <buffer=%d> lua require'lean.widgets'._by_buf[%d]:update_cursor()
-  ]], buf, buf, buf, buf), buf)
+  ]], obj.buf, obj.buf, obj.buf, obj.buf), obj.buf)
 
-  local mappings = {n = {}}
-  if keymaps then
-    for key, event in pairs(keymaps) do
-      mappings.n[key] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:event("%s")<CR>]]):format(buf, event)
-    end
-    mappings.n["<Tab>"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(buf)
-    mappings.n["<S-Tab>"] = (
-      [[<Cmd>lua require'lean.widgets'._by_buf[%d]:goto_parent_tooltip()<CR>]]
-    ):format(buf)
-    mappings.n["J"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(buf)
-    mappings.n["S"] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:hop_to()<CR>]]):format(buf)
+  local mappings = {
+    n = {
+      ['<Tab>'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(obj.buf),
+      ['<S-Tab>'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:goto_parent_tooltip()<CR>]]):format(obj.buf),
+      ['J'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(obj.buf),
+      ['S'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:hop_to()<CR>]]):format(obj.buf),
+    }
+  }
+  for key, event in pairs(obj.keymaps or {}) do
+    mappings.n[key] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:event("%s")<CR>]]):format(obj.buf, event)
   end
-  util.load_mappings(mappings, buf)
+  util.load_mappings(mappings, obj.buf)
 
   return new_renderer
 end
@@ -405,15 +404,13 @@ function BufRenderer:close(keep_tooltips_open)
   end
 end
 
-local widgets_ns = vim.api.nvim_create_namespace("LeanNvimInfo")
-local hl_ns = vim.api.nvim_create_namespace('LeanNvimInfoHighlight')
 
 function BufRenderer:render()
   local buf = self.buf
 
   if not vim.api.nvim_buf_is_valid(buf) then return end
 
-  vim.api.nvim_buf_clear_namespace(buf, widgets_ns, 0, -1)
+  vim.api.nvim_buf_clear_namespace(buf, self.__widgets_ns, 0, -1)
 
   local text = self.element:to_string()
   local lines = vim.split(text, '\n')
@@ -433,7 +430,7 @@ function BufRenderer:render()
   for _, hl in ipairs(hls) do
     local start_pos = raw_pos_to_pos(hl.start, lines)
     local end_pos = raw_pos_to_pos(hl["end"], lines)
-    vim.highlight.range(buf, widgets_ns, hl.hlgroup, start_pos, end_pos)
+    vim.highlight.range(buf, self.__widgets_ns, hl.hlgroup, start_pos, end_pos)
   end
 
   if self.path then
@@ -528,7 +525,7 @@ function BufRenderer:hover(force_update_highlight)
       self.tooltip:close()
       self.tooltip = nil
     end
-    vim.api.nvim_buf_clear_namespace(self.buf, hl_ns, 0, -1)
+    vim.api.nvim_buf_clear_namespace(self.buf, self.__hl_ns, 0, -1)
     self.hover_range = nil
     return
   end
@@ -555,17 +552,20 @@ function BufRenderer:hover(force_update_highlight)
     local bufpos = raw_pos_to_pos(self.element:pos_from_path(tt_parent_path), self.lines)
 
     if self.tooltip then -- reuse old tooltip window
+      -- FIXME: Some method call instead of mutating attributes
       self.tooltip.element = new_tooltip_element
+      self.tooltip.parent = self
+      self.tooltip.parent_path = tt_parent_element_path
     else
       local bufnr = vim.api.nvim_create_buf(false, true)
-      self.tooltip = new_tooltip_element:renderer { buf = bufnr, keymaps = self.keymaps }
+      self.tooltip = new_tooltip_element:renderer {
+        buf = bufnr,
+        keymaps = self.keymaps,
+        parent = self,
+        parent_path = tt_parent_element_path
+      }
       vim.api.nvim_buf_set_option(self.tooltip.buf, "bufhidden", "wipe")
     end
-
-    self.tooltip.parent = self
-    self.tooltip.parent_path = tt_parent_element_path
-
-    local tooltip_buf = self.tooltip.buf
 
     local win_options = {
       relative = "win",
@@ -575,13 +575,13 @@ function BufRenderer:hover(force_update_highlight)
       height = height,
       border = "none",
       bufpos = bufpos,
-      zindex = 50 + tooltip_buf -- later tooltips are guaranteed to have greater buffer handles
+      zindex = 50 + self.tooltip.buf -- later tooltips are guaranteed to have greater buffer handles
     }
 
     if not self.tooltip:last_win_valid() then
       -- fresh non-reused tooltip, open window
       self.tooltip.disable_update = true
-      self.tooltip.last_win = vim.api.nvim_open_win(tooltip_buf, false, win_options)
+      self.tooltip.last_win = vim.api.nvim_open_win(self.tooltip.buf, false, win_options)
       self.tooltip.disable_update = false
       -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
       vim.api.nvim_command("redraw")
@@ -605,10 +605,10 @@ function BufRenderer:hover(force_update_highlight)
   end
 
   if force_update_highlight or not vim.deep_equal(old_hover_range, self.hover_range) then
-    vim.api.nvim_buf_clear_namespace(self.buf, hl_ns, 0, -1)
+    vim.api.nvim_buf_clear_namespace(self.buf, self.__hl_ns, 0, -1)
     local hlgroup = 'widgetElementHighlight'
     if self.hover_range then
-      vim.highlight.range(self.buf, hl_ns, hlgroup, self.hover_range[1], self.hover_range[2])
+      vim.highlight.range(self.buf, self.__hl_ns, hlgroup, self.hover_range[1], self.hover_range[2])
     end
   end
 end
