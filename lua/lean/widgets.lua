@@ -356,11 +356,8 @@ local function gc()
 end
 
 ---Create a new BufRenderer.
----@param buf number
----@param element Element
----@param keymaps? table Extra keymaps
 function BufRenderer:new(obj)
-  gc()  -- EXPLAINME: Why?
+  gc()
 
   obj = obj or {}
   local new_renderer = setmetatable(obj, self)
