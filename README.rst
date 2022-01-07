@@ -248,11 +248,22 @@ Full Configuration & Settings Information
       -- so you can use the I/i keybindings to manually trigger these
       lean3 = { mouse_events = false },
 
-      -- What filetype should be associated with standalone Lean files?
-      -- Can be set to "lean3" if you prefer that default.
-      -- Having a leanpkg.toml or lean-toolchain file should always mean
-      -- autodetection works correctly.
-      ft = { default = "lean" },
+      ft = {
+        -- What filetype should be associated with standalone Lean files?
+        -- Can be set to "lean3" if you prefer that default.
+        -- Having a leanpkg.toml or lean-toolchain file should always mean
+        -- autodetection works correctly.
+        default = "lean",
+
+        -- A list of patterns which will be used to protect any matching
+        -- Lean file paths from being accidentally modified (by marking the
+        -- buffer as `nomodifiable`).
+        nomodifiable = {
+            -- by default, this list includes the Lean standard libraries,
+            -- as well as files within dependency directories (e.g. `_target`)
+            -- Set this to an empty table to disable.
+        }
+      },
 
       -- Abbreviation support
       abbreviations = {

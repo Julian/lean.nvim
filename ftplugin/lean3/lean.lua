@@ -26,3 +26,5 @@ if vim.g.loaded_matchit and not vim.b.match_words then
     ','
   )
 end
+
+require'lean.ft'.__maybe_make_nomodifiable(vim.api.nvim_get_current_buf())

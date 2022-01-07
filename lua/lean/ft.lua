@@ -1,9 +1,21 @@
 local ft = {}
-local options = { default = "lean", _DEFAULTS = { default = "lean" } }
 
 local _LEAN3_STANDARD_LIBRARY = '.*/[^/]*lean[%-]+3.+/lib/'
 local _LEAN3_VERSION_MARKER = '.*lean_version.*\".*:3.*'
 local _LEAN4_VERSION_MARKER = '.*lean_version.*\".*lean4:.*'
+
+local options = {
+  default = "lean",
+  _DEFAULTS = {
+    default = "lean",
+    nomodifiable = {
+      '.*/lib/lean/src/.*',  -- Lean 4 standard library
+      '.*/lean_packages/.*',  -- Lean 4 dependencies
+      _LEAN3_STANDARD_LIBRARY .. '.*',
+      '/_target/.*/.*.lean'  -- Lean 3 dependencies
+    }
+  }
+}
 
 local find_project_root = require('lspconfig.util').root_pattern(
   'leanpkg.toml',
@@ -47,6 +59,17 @@ end
 
 function ft.enable(opts)
   options = vim.tbl_extend("force", options._DEFAULTS, opts)
+end
+
+---Make the given buffer `nomodifiable` if its file name matches a configured list.
+function ft.__maybe_make_nomodifiable(bufnr)
+  local name = vim.api.nvim_buf_get_name(bufnr)
+  for _, pattern in ipairs(options.nomodifiable) do
+    if name:match(pattern) then
+      vim.api.nvim_buf_set_option(bufnr, 'modifiable', false)
+      return
+    end
+  end
 end
 
 return ft
