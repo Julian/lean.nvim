@@ -2,7 +2,8 @@
 ---Tests for the console UI framework in isolation (from a Lean file or Lean widgets).
 ---@brief ]]
 
-local Element = require('lean.widgets').Element
+local widgets = require('lean.widgets')
+local Element = widgets.Element
 
 describe('Element:concat', function()
   it('creates an Element concatenated by a separator', function()
@@ -28,7 +29,11 @@ describe('Element:concat', function()
 end)
 
 describe('Element:renderer', function()
-  pending('creates a BufRenderer rendering the element', function()
-    -- Creating BufRenderers currently has lots of side effects.
+  it('creates a BufRenderer rendering the element', function()
+    local element = Element:new{ text = "foo", name = "foo-name" }
+    assert.is.same(
+      widgets.BufRenderer:new{ buf = 1, element = element },
+      element:renderer{ buf = 1 }
+    )
   end)
 end)
