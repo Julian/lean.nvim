@@ -19,8 +19,10 @@ local function show_popup(element)
   end
 
   local bufnr, winnr = vim.lsp.util.open_floating_preview(
-    vim.split(str, '\n'), 'leaninfo',
-    { focus_id = 'lean_goal' })
+    vim.split(str, '\n'),
+    'leaninfo',
+    { focus_id = 'lean_goal', border = 'rounded' }
+  )
 
   local renderer = element:renderer{ buf = bufnr, keymaps = infoview.mappings }
   renderer.last_win = winnr
