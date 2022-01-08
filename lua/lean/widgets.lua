@@ -279,7 +279,7 @@ end
 function Element:find(check)
   if check(self) then return self end
 
-  for _, child in pairs(self.__children) do
+  for _, child in ipairs(self.__children) do
     local found = child:find(check)
     if found then return found end
   end
