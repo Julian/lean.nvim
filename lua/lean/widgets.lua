@@ -577,7 +577,7 @@ function BufRenderer:hover(force_update_highlight)
       style = "minimal",
       width = width,
       height = height,
-      border = "none",
+      border = "rounded",
       bufpos = bufpos,
       zindex = 50 + self.tooltip.buf -- later tooltips are guaranteed to have greater buffer handles
     }
