@@ -703,7 +703,7 @@ function Pin:pause()
   self.paused = true
 
   self.__data_element = self.__data_element:dummy_copy()
-  if not self:set_loading(false) then
+  if not self:__finished_loading() then
     self.__element.__children = { self.__data_element }  -- FIXME: Private!
     self:__render_parents()
   end
@@ -737,21 +737,22 @@ function Pin:__render_parents()
   end
 end
 
--- Indicate that the pin is either loading or done loading, if it isn't already set as such.
-function Pin:set_loading(loading)
-  if loading and not self.loading then
-    self.__element.__children = { self.__data_element:dummy_copy() }  -- FIXME: Private!
-    self.loading = true
-    self:__render_parents()
-    return true
-  elseif not loading and self.loading then
-    self.__element.__children = { self.__data_element }  -- FIXME: Private!
-    self.loading = false
-    self:__render_parents()
-    return true
-  end
+---Indicate that the pin has started loading.
+function Pin:__started_loading()
+  if self.loading then return false end
+  self.loading = true
+  self.__element.__children = { self.__data_element:dummy_copy() }  -- FIXME: Private!
+  self:__render_parents()
+  return true
+end
 
-  return false
+---Indicate that the pin has finished loading.
+function Pin:__finished_loading()
+  if not self.loading then return false end
+  self.loading = false
+  self.__element.__children = { self.__data_element }  -- FIXME: Private!
+  self:__render_parents()
+  return true
 end
 
 function Pin:async_update(force, _, lean3_opts)
@@ -764,7 +765,7 @@ function Pin:async_update(force, _, lean3_opts)
   end
   if not tick:check() then return end
 
-  if not self:set_loading(false) then
+  if not self:__finished_loading() then
     self:__render_parents()
   end
 end
@@ -773,7 +774,7 @@ Pin.update = a.void(Pin.async_update)
 
 --- async function to update this pin's contents given the current position.
 function Pin:__update(tick, lean3_opts)
-  self:set_loading(true)
+  self:__started_loading()
   local blocks = {} ---@type Element[]
   local new_data_element = Element:new{ name = "pin-data" }
 
