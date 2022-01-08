@@ -31,7 +31,7 @@ describe('infoview enable/disable_widgets', function()
         { lean_window, current_infoview.window },
         vim.api.nvim_tabpage_list_wins(0)
       )
-      helpers.feed("<CR>")
+      helpers.feed('<CR>')
 
       local tooltip_bufnr
       vim.wait(1000, function()
@@ -46,7 +46,7 @@ describe('infoview enable/disable_widgets', function()
       assert.contents.are{ 'Type :\nType 1', bufnr = tooltip_bufnr }
 
       -- Close the tooltip.
-      helpers.feed("<Esc>")
+      helpers.feed('<Esc>')
       assert.are.same_elements(
         { lean_window, current_infoview.window },
         vim.api.nvim_tabpage_list_wins(0)

@@ -42,13 +42,13 @@ local options = {
     use_widgets = true,
 
     mappings = {
-      ["K"] = 'click',
-      ["<CR>"] = 'click',
-      ["I"] = 'mouse_enter',
-      ["i"] = 'mouse_leave',
-      ["<Esc>"] = 'clear_all',
-      ["C"] = 'clear_all',
-      ["<LocalLeader><Tab>"] = 'goto_last_window'
+      ['K'] = 'click',
+      ['<CR>'] = 'click',
+      ['I'] = 'mouse_enter',
+      ['i'] = 'mouse_leave',
+      ['<Esc>'] = 'clear_all',
+      ['C'] = 'clear_all',
+      ['<LocalLeader><Tab>'] = 'goto_last_window'
     }
   }
 }
