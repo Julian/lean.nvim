@@ -24,7 +24,7 @@ local function show_popup(element)
 
   local renderer = element:renderer{ buf = bufnr, keymaps = infoview.mappings }
   renderer.last_win = winnr
-  renderer:buf_render()
+  renderer:render()
 end
 
 ---@param elements Element[]?
