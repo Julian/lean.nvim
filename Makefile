@@ -19,6 +19,9 @@ test: build-test-fixtures
 _test:
 	./lua/tests/scripts/run_tests.sh
 
+profile-test: build-test-fixtures
+	hyperfine --warmup 2 $(ARGS) "$(MAKE) _test"
+
 coverage:
 	$(MAKE) LEAN_NVIM_COVERAGE=1 test
 	luacov
