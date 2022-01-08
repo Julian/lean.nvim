@@ -96,7 +96,6 @@ describe('infoview enable/disable_widgets', function()
 
       -- Close the tooltip.
       helpers.feed('<Esc>')
-      vim.wait(500)
       assert.are.same_elements(
         { lean_window, current_infoview.window },
         vim.api.nvim_tabpage_list_wins(0)
