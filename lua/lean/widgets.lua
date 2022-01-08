@@ -274,7 +274,8 @@ function Element:event(path, event_name, ...)
   return true
 end
 
----Returns true if check is true for one of the descendants
+---Returns the first element matching the given check function.
+---Searches first this element itself, then its children, then its tooltip.
 ---@param check fun(element:Element):boolean
 function Element:find(check)
   if check(self) then return self end
