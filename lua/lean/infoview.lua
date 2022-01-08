@@ -385,10 +385,12 @@ function Info:__set_diff_pin(params)
 end
 
 --- Close all parent infoviews.
-function Info:close_parent_infoviews()
+function Info:__was_closed()
   for _, parent in ipairs(self.__parent_infoviews) do
     parent:close()
   end
+  -- Ensure tooltips close.
+  self.__renderer:event('clear_all')
 end
 
 function Info:clear_pins()
@@ -890,10 +892,11 @@ function Pin:__update(tick, lean3_opts)
 
   ::finish::
   new_data_element.events.clear_all = function(ctx) ---@param ctx ElementEventContext
-    vim.api.nvim_set_current_win(ctx.self.last_win)
+    local last_window = ctx.self.last_win
     new_data_element:find(function (element) ---@param element Element
       if element.events.clear then element.events.clear(ctx) end
     end)
+    pcall(vim.api.nvim_set_current_win, last_window)
   end
   self.__data_element = new_data_element
   return true
@@ -912,7 +915,7 @@ end
 function infoview.__was_closed(id)
   local info = infoview._info_by_id[id]
   if info.__win_event_disable then return end
-  info:close_parent_infoviews()
+  info:__was_closed()
 end
 
 --- An infoview diff window was closed.

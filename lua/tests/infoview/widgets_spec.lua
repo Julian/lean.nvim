@@ -5,9 +5,25 @@
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 
+---Wait until a window that isn't one of the known ones shows up.
+---@param known table
+local function wait_for_new_window(known)
+  local new_window
+  local succeeded = vim.wait(1000, function()
+    for _, window in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if not vim.tbl_contains(known, window) then
+        new_window = window
+        return true
+      end
+    end
+  end)
+  assert.message('Never found a new window').is_true(succeeded)
+  return new_window
+end
+
 require('lean').setup{}
 
-describe('infoview enable/disable_widgets', function()
+describe('infoview widgets', function()
   describe('lean 4', helpers.clean_buffer('lean', '#check Nat', function()
 
     local lean_window = vim.api.nvim_get_current_win()
@@ -27,30 +43,38 @@ describe('infoview enable/disable_widgets', function()
       vim.api.nvim_set_current_win(current_infoview.window)
       helpers.move_cursor{ to = {2, 4} }  -- `Type`
 
-      assert.are.same_elements(
-        { lean_window, current_infoview.window },
-        vim.api.nvim_tabpage_list_wins(0)
-      )
+      local known_windows = { lean_window, current_infoview.window }
+      assert.are.same_elements(known_windows, vim.api.nvim_tabpage_list_wins(0))
+
       helpers.feed('<CR>')
-
-      local tooltip_bufnr
-      vim.wait(1000, function()
-        for _, window in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-          if window ~= lean_window and window ~= current_infoview.window then
-            tooltip_bufnr = vim.api.nvim_win_get_buf(window)
-            return true
-          end
-        end
-      end)
-
+      local tooltip_bufnr = vim.api.nvim_win_get_buf(wait_for_new_window(known_windows))
       assert.contents.are{ 'Type :\nType 1', bufnr = tooltip_bufnr }
 
       -- Close the tooltip.
       helpers.feed('<Esc>')
-      assert.are.same_elements(
-        { lean_window, current_infoview.window },
-        vim.api.nvim_tabpage_list_wins(0)
-      )
+      assert.are.same_elements(known_windows, vim.api.nvim_tabpage_list_wins(0))
+    end)
+
+    it('does not abandon tooltips when windows are closed', function()
+      vim.cmd('tabnew #')
+      local tab2_window = vim.api.nvim_get_current_win()
+      local tab2_infoview = infoview.get_current_infoview()
+      helpers.move_cursor{ to = {1, 8} }
+      helpers.wait_for_infoview_contents('Nat')
+      vim.api.nvim_set_current_win(tab2_infoview.window)
+      helpers.move_cursor{ to = {2, 4} }  -- `Type`
+      helpers.feed('<CR>')
+
+      wait_for_new_window({ tab2_window, tab2_infoview.window })
+      assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+
+      assert.is.equal(2, #vim.api.nvim_list_tabpages())
+
+      -- Now close the other 2 windows, and the tooltip should close too.
+      vim.api.nvim_win_close(tab2_infoview.window, false)
+      vim.api.nvim_win_close(tab2_window, false)
+
+      assert.is.equal(1, #vim.api.nvim_list_tabpages())
     end)
   end))
 
