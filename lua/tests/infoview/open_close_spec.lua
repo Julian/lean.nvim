@@ -44,7 +44,7 @@ describe('infoview open/close', function()
     assert.is.truthy(
       vim.tbl_contains(windows, infoview.get_current_infoview().window)
     )
-    vim.cmd("edit " .. fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit ' .. fixtures.lean3_project.some_existing_file)
     assert.are.same(windows, vim.api.nvim_tabpage_list_wins(0))
   end)
 
@@ -55,14 +55,14 @@ describe('infoview open/close', function()
       vim.tbl_contains(windows, infoview.get_current_infoview().window)
     )
 
-    vim.cmd("split")
+    vim.cmd('split')
     table.insert(windows, vim.api.nvim_get_current_win())
     assert.are.same_elements(windows, vim.api.nvim_tabpage_list_wins(0))
 
     vim.cmd('edit! ' .. fixtures.lean3_project.some_nested_existing_file)
     assert.are.same_elements(windows, vim.api.nvim_tabpage_list_wins(0))
 
-    vim.cmd("quit")
+    vim.cmd('quit')
     table.remove(windows, #windows)  -- the second Lean source window
     assert.are.same_elements(windows, vim.api.nvim_tabpage_list_wins(0))
   end)
@@ -74,13 +74,13 @@ describe('infoview open/close', function()
     vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
 
-    vim.cmd("split")
+    vim.cmd('split')
     assert.are.same_elements(
       { lean_window, vim.api.nvim_get_current_win() },
       vim.api.nvim_tabpage_list_wins(0)
     )
 
-    vim.cmd("close")
+    vim.cmd('close')
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
   end)
 
@@ -109,7 +109,7 @@ describe('infoview open/close', function()
 
     -- Close via :quit
     vim.api.nvim_set_current_win(current_infoview.window)
-    vim.cmd("quit")
+    vim.cmd('quit')
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
 
     -- Does not reopen when editing or splitting new Lean windows
@@ -129,7 +129,7 @@ describe('infoview open/close', function()
       vim.api.nvim_tabpage_list_wins(0)
     )
 
-    vim.cmd("close")
+    vim.cmd('close')
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
 
     -- Reopen, then close via :close, and assert the same as above
@@ -140,7 +140,7 @@ describe('infoview open/close', function()
     )
 
     vim.api.nvim_set_current_win(current_infoview.window)
-    vim.cmd("close")
+    vim.cmd('close')
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
 
     vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
@@ -155,7 +155,7 @@ describe('infoview open/close', function()
         vim.api.nvim_tabpage_list_wins(0)
       )
 
-      vim.cmd("tabnew")
+      vim.cmd('tabnew')
       local tab2_window = vim.api.nvim_get_current_win()
       assert.are.same({ tab2_window }, vim.api.nvim_tabpage_list_wins(0))
 
@@ -173,19 +173,19 @@ describe('infoview open/close', function()
       tab2_infoview:close()
       assert.are.same({ tab2_window }, vim.api.nvim_tabpage_list_wins(0))
 
-      vim.cmd("tabprevious")
+      vim.cmd('tabprevious')
       assert.same.elements(
         { lean_window, tab1_infoview.window },
         vim.api.nvim_tabpage_list_wins(0)
       )
 
       -- And assert the same via command mode just in case
-      vim.cmd("tabnext")
+      vim.cmd('tabnext')
       tab2_infoview:open()
       vim.api.nvim_set_current_win(tab2_infoview.window)
-      vim.cmd("quit")
+      vim.cmd('quit')
 
-      vim.cmd("tabprevious")
+      vim.cmd('tabprevious')
       assert.same.elements(
         { lean_window, tab1_infoview.window },
         vim.api.nvim_tabpage_list_wins(0)
@@ -205,7 +205,7 @@ describe('infoview open/close', function()
     local non_lean_window = vim.api.nvim_get_current_win()
 
     -- Close the Lean source window via :bd
-    vim.fn.win_execute(lean_window, "bdelete")
+    vim.fn.win_execute(lean_window, 'bdelete')
     assert.are.same_elements(
       { current_infoview.window, non_lean_window },
       vim.api.nvim_tabpage_list_wins(0)
