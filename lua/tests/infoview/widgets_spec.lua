@@ -55,13 +55,55 @@ describe('infoview enable/disable_widgets', function()
   end))
 
   describe('lean 3', helpers.clean_buffer('lean3', 'example : 2 = 2 := by refl', function()
+
+    local lean_window = vim.api.nvim_get_current_win()
+    local current_infoview = infoview.get_current_infoview()
+
     -- These tests are flaky, possibly for the same reason that 'shows a term
     -- goal' is from contents_spec. Namely, sometimes the Lean process seems to
     -- do absolutely nothing and sit there never returning a response (even an
     -- initial one). Marking these pending until we figure out what's happening
     -- there, presumably some request getting sent before the server is ready.
+    pending('shows widget tooltips', function(_)
+      helpers.move_cursor{ to = {1, 10} }
+      helpers.wait_for_infoview_contents('ℕ')
+      assert.infoview_contents.are[[
+        ▶ expected type:
+        ⊢ ℕ
+      ]]
+
+      vim.api.nvim_set_current_win(current_infoview.window)
+      helpers.move_cursor{ to = {2, 4} }  -- `ℕ`
+
+      assert.are.same_elements(
+        { lean_window, current_infoview.window },
+        vim.api.nvim_tabpage_list_wins(0)
+      )
+      helpers.feed('<CR>')
+
+      local tooltip_bufnr
+      vim.wait(1000, function()
+        for _, window in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          if window ~= lean_window and window ~= current_infoview.window then
+            tooltip_bufnr = vim.api.nvim_win_get_buf(window)
+            return true
+          end
+        end
+      end)
+
+      -- x is the tooltip closer.
+      assert.contents.are{ 'x Type | ℕ', bufnr = tooltip_bufnr }
+
+      -- Close the tooltip.
+      helpers.feed('<Esc>')
+      vim.wait(500)
+      assert.are.same_elements(
+        { lean_window, current_infoview.window },
+        vim.api.nvim_tabpage_list_wins(0)
+      )
+    end)
+
     pending('can be disabled', function(_)
-      helpers.wait_for_ready_lsp()
       infoview.disable_widgets()
       helpers.move_cursor{ to = {1, 22} }
       helpers.wait_for_infoview_contents('2 = 2')

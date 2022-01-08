@@ -279,8 +279,14 @@ end
 function Element:find(check)
   if check(self) then return self end
 
+  local found
   for _, child in ipairs(self.__children) do
-    local found = child:find(check)
+    found = child:find(check)
+    if found then return found end
+  end
+
+  if self.tooltip then
+    found = self.tooltip:find(check)
     if found then return found end
   end
 end

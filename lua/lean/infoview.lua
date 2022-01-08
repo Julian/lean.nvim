@@ -888,14 +888,13 @@ function Pin:__update(tick, lean3_opts)
     if not tick:check() then return true end
   end
 
+  ::finish::
   new_data_element.events.clear_all = function(ctx) ---@param ctx ElementEventContext
     vim.api.nvim_set_current_win(ctx.self.last_win)
     new_data_element:find(function (element) ---@param element Element
       if element.events.clear then element.events.clear(ctx) end
     end)
   end
-
-  ::finish::
   self.__data_element = new_data_element
   return true
 end
