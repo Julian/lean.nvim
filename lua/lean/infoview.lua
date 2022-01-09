@@ -254,9 +254,6 @@ function Infoview:close()
   self.info.__win_event_disable = false
 
   self.window = nil
-
-  -- Why are we focusing on things after closing?
-  self:focus_on_current_buffer()
 end
 
 --- Retrieve the contents of the infoview as a table.
