@@ -18,9 +18,6 @@ local infoview = {
   -- mapping from infoview IDs to infoviews
   ---@type table<number, Infoview>
   _by_tabpage = {},
-  -- mapping from info IDs to infos
-  ---@type table<number, Info>
-  _info_by_id = {},
   -- mapping from pin IDs to pins
   ---@type table<number, Pin>
   _pin_by_id = {},
@@ -109,8 +106,8 @@ function Infoview:new(obj)
     __width = obj.width or options.width,
     __height = obj.height or options.height
   }, self)
-  new_infoview.info = Info:new{ infoview = new_infoview }
   table.insert(infoview._infoviews, new_infoview)
+  new_infoview.info = Info:new{ infoview = new_infoview }
   return new_infoview
 end
 
@@ -252,6 +249,7 @@ function Infoview:close()
     vim.api.nvim_win_close(self.window, true)
   end
   self.info.__win_event_disable = false
+  self.info:__was_closed()
 
   self.window = nil
 end
@@ -293,7 +291,6 @@ function Info:new(opts)
     }
   }
   local new_info = setmetatable({
-    id = #infoview._info_by_id + 1,
     pins = {},
     __infoview = opts.infoview,
     __pins_element = pins_element,
@@ -304,7 +301,6 @@ function Info:new(opts)
     use_widgets = options.use_widgets,
     parent = new_info
   }
-  table.insert(infoview._info_by_id, new_info)
 
   local function mk_buf(name, listed)
     local bufnr = vim.api.nvim_create_buf(listed, true)
@@ -314,29 +310,29 @@ function Info:new(opts)
   end
 
   new_info.__renderer = new_info.__pins_element:renderer{
-    buf = mk_buf("lean://info/" .. new_info.id .. "/curr", true),
+    buf = mk_buf("lean://info/" .. #infoview._infoviews .. "/curr", true),
     keymaps = options.mappings
   }
   new_info.__diff_renderer = new_info.pin.__element:renderer{
-    buf = mk_buf("lean://info/" .. new_info.id .. "/diff", false),
+    buf = mk_buf("lean://info/" .. #infoview._infoviews .. "/diff", false),
     keymaps = options.mappings
   }
 
   -- Show/hide current pin extmark when entering/leaving infoview.
   set_augroup("LeanInfoviewShowPin", string.format([[
-    autocmd WinEnter <buffer=%d> lua require'lean.infoview'.__show_curr_pin(%d)
-    autocmd WinLeave <buffer=%d> lua require'lean.infoview'.__hide_curr_pin(%d)
-  ]], new_info.__renderer.buf, new_info.id, new_info.__renderer.buf, new_info.id), new_info.__renderer.buf)
+    autocmd WinEnter <buffer=%d> lua require'lean.infoview'.__show_curr_pin()
+    autocmd WinLeave <buffer=%d> lua require'lean.infoview'.__hide_curr_pin()
+  ]], new_info.__renderer.buf, new_info.__renderer.buf), new_info.__renderer.buf)
 
   -- Make sure we notice even if someone manually :q's the infoview window.
   set_augroup("LeanInfoviewClose", string.format([[
-    autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__was_closed(%d)
-  ]], new_info.__renderer.buf, new_info.id), new_info.__renderer.buf)
+    autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__was_closed()
+  ]], new_info.__renderer.buf), new_info.__renderer.buf)
 
   -- Make sure we notice even if someone manually :q's the diff window.
   set_augroup("LeanInfoviewClose", string.format([[
-    autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__diff_was_closed(%d)
-  ]], new_info.__diff_renderer.buf, new_info.id), new_info.__diff_renderer.buf)
+    autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__diff_was_closed()
+  ]], new_info.__diff_renderer.buf), new_info.__diff_renderer.buf)
 
   new_info:render()
 
@@ -375,7 +371,6 @@ end
 
 --- Close all parent infoviews.
 function Info:__was_closed()
-  self.__infoview:close()
   -- Ensure tooltips close.
   self.__renderer:event('clear_all')
 end
@@ -895,18 +890,18 @@ end
 
 --- An infoview was closed, either directly via `Infoview.close` or manually.
 --- Will be triggered via a `WinClosed` autocmd.
----@param id number @info id
-function infoview.__was_closed(id)
-  local info = infoview._info_by_id[id]
-  if info.__win_event_disable then return end
-  info:__was_closed()
+function infoview.__was_closed()
+  local current_infoview = infoview.get_current_infoview()
+  if current_infoview.info.__win_event_disable then return end
+  current_infoview:close()
 end
 
 --- An infoview diff window was closed.
 --- Will be triggered via a `WinClosed` autocmd.
 ---@param id number @info id
-function infoview.__diff_was_closed(id)
-  local info = infoview._info_by_id[id]
+function infoview.__diff_was_closed()
+  local current_infoview = infoview.get_current_infoview()
+  local info = current_infoview.info
   if info.__win_event_disable then return end
   info:__clear_diff_pin()
 end
@@ -914,17 +909,21 @@ end
 --- An infoview was entered, show the extmark for the current pin.
 --- Will be triggered via a `WinEnter` autocmd.
 ---@param id number @info id
-function infoview.__show_curr_pin(id)
-  local info = infoview._info_by_id[id]
+function infoview.__show_curr_pin()
+  local current_infoview = infoview.get_current_infoview()
+  if not current_infoview then return end
+  local info = current_infoview.info
   if info.__win_event_disable then return end
-  info:__maybe_show_pin_extmark("current")
+  current_infoview.info:__maybe_show_pin_extmark("current")
 end
 
 --- An infoview was left, hide the extmark for the current pin.
 --- Will be triggered via a `WinLeave` autocmd.
 ---@param id number @info id
-function infoview.__hide_curr_pin(id)
-  local info = infoview._info_by_id[id]
+function infoview.__hide_curr_pin()
+  local current_infoview = infoview.get_current_infoview()
+  if not current_infoview then return end
+  local info = current_infoview.info
   if info.__win_event_disable then return end
   info.pin:__hide_extmark()
 end
