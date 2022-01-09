@@ -139,7 +139,7 @@ function Infoview:open()
   self.window = vim.api.nvim_get_current_win()
   vim.api.nvim_set_current_win(window_before_split)
 
-  self.info:focus_on_current_buffer()
+  self:focus_on_current_buffer()
 
   self:__refresh_diff()
 end
@@ -255,7 +255,8 @@ function Infoview:close()
 
   self.window = nil
 
-  self.info:focus_on_current_buffer()
+  -- Why are we focusing on things after closing?
+  self:focus_on_current_buffer()
 end
 
 --- Retrieve the contents of the infoview as a table.
@@ -271,13 +272,13 @@ function Infoview:toggle()
   if self.window then self:close() else self:open() end
 end
 
---- Set the currently active Lean buffer to update the info.
-function Info:focus_on_current_buffer()
-  if self.__infoview.window then
-    set_augroup("LeanInfoviewUpdate", string.format([[
-      autocmd CursorMoved <buffer> lua require'lean.infoview'.__update(%d)
-      autocmd CursorMovedI <buffer> lua require'lean.infoview'.__update(%d)
-    ]], self.id, self.id), 0)
+--- Set the currently active Lean buffer to update the infoview.
+function Infoview:focus_on_current_buffer()
+  if self.window then
+    set_augroup("LeanInfoviewUpdate", [[
+      autocmd CursorMoved <buffer> lua require'lean.infoview'.__update()
+      autocmd CursorMovedI <buffer> lua require'lean.infoview'.__update()
+    ]], 0)
   else
     set_augroup("LeanInfoviewUpdate", "", 0)
   end
@@ -932,12 +933,11 @@ function infoview.__hide_curr_pin(id)
 end
 
 --- Update the info contents appropriately for Lean 4 or 3.
---- @param id number @Info id
-function infoview.__update(id)
-  local info = id and infoview._info_by_id[id] or infoview.get_current_infoview().info
-  if info.__win_event_disable then return end
-
+function infoview.__update()
   if not is_lean_buffer() then return end
+  local current_infoview = infoview.get_current_infoview()
+  local info = current_infoview.info
+  if info.__win_event_disable then return end
   info:set_last_window()
   pcall(info.move_pin, info, util.make_position_params())
 end
@@ -983,7 +983,7 @@ function infoview.make_buffer_focusable(name)
   if bufnr == vim.api.nvim_get_current_buf() then
     -- because FileType can happen after BufEnter
     infoview.__bufenter()
-    infoview.get_current_infoview().info:focus_on_current_buffer()
+    infoview.get_current_infoview():focus_on_current_buffer()
   end
 
   -- WinEnter is necessary for the edge case where you have
@@ -992,7 +992,7 @@ function infoview.make_buffer_focusable(name)
   set_augroup("LeanInfoviewSetFocus", string.format([[
     autocmd BufEnter <buffer=%d> lua require'lean.infoview'.__bufenter()
     autocmd BufEnter,WinEnter <buffer=%d> lua if require'lean.infoview'.get_current_infoview()]] ..
-    [[ then require'lean.infoview'.get_current_infoview().info:focus_on_current_buffer() end
+    [[ then require'lean.infoview'.get_current_infoview():focus_on_current_buffer() end
   ]], bufnr, bufnr), 0)
 end
 
