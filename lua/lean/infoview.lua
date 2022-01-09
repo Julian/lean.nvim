@@ -79,7 +79,7 @@ Pin.__index = Pin
 ---@field private __diff_renderer BufRenderer
 ---@field private __diff_pin Pin
 ---@field private __pins_element Element
----@field private __parent_infoviews Infoview[]
+---@field private __infoview Infoview @the infoview this info is attached to
 ---@field private __win_event_disable boolean
 local Info = {}
 Info.__index = Info
@@ -109,7 +109,7 @@ function Infoview:new(obj)
     __width = obj.width or options.width,
     __height = obj.height or options.height
   }, self)
-  new_infoview.info = Info:new{ parent = new_infoview }
+  new_infoview.info = Info:new{ infoview = new_infoview }
   table.insert(infoview._infoviews, new_infoview)
   return new_infoview
 end
@@ -273,16 +273,7 @@ end
 
 --- Set the currently active Lean buffer to update the info.
 function Info:focus_on_current_buffer()
-  if not is_lean_buffer() then return end
-  local any_open = false
-  for _, parent in ipairs(self.__parent_infoviews) do
-    if parent.window then
-      any_open = true
-      break
-    end
-  end
-
-  if any_open then
+  if self.__infoview.window then
     set_augroup("LeanInfoviewUpdate", string.format([[
       autocmd CursorMoved <buffer> lua require'lean.infoview'.__update(%d)
       autocmd CursorMovedI <buffer> lua require'lean.infoview'.__update(%d)
@@ -306,7 +297,7 @@ function Info:new(opts)
   local new_info = setmetatable({
     id = #infoview._info_by_id + 1,
     pins = {},
-    __parent_infoviews = { opts.parent },
+    __infoview = opts.infoview,
     __pins_element = pins_element,
     __win_event_disable = false,
   }, self)
@@ -386,9 +377,7 @@ end
 
 --- Close all parent infoviews.
 function Info:__was_closed()
-  for _, parent in ipairs(self.__parent_infoviews) do
-    parent:close()
-  end
+  self.__infoview:close()
   -- Ensure tooltips close.
   self.__renderer:event('clear_all')
 end
@@ -502,10 +491,7 @@ function Info:render()
   self.__renderer:render()
   if self.__diff_pin then self.__diff_renderer:render() end
 
-  for _, parent in ipairs(self.__parent_infoviews) do
-    parent:__refresh_diff()
-  end
-
+  self.__infoview:__refresh_diff()
   collectgarbage()
 end
 
