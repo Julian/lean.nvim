@@ -12,11 +12,11 @@ local set_augroup = util.set_augroup
 local rpc = require('lean.rpc')
 
 local infoview = {
-  -- mapping from infoview IDs to infoviews
-  ---@type table<number, Infoview>
-  _infoviews = {},
   -- all current infoviews
   ---@type Infoview[]
+  _infoviews = {},
+  -- mapping from infoview IDs to infoviews
+  ---@type table<number, Infoview>
   _by_tabpage = {},
   -- mapping from info IDs to infos
   ---@type table<number, Info>
