@@ -820,18 +820,18 @@ function Pin:__update(tick, lean3_opts)
       goto finish
     end
 
-    self.sess = rpc.open(buf, params)
+    local sess = rpc.open(buf, params)
     if not tick:check() then return true end
 
     local goal_element
     if self.__use_widgets then
-      local goal, err = self.sess:getInteractiveGoals(params)
+      local goal, err = sess:getInteractiveGoals(params)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
         return self:__update(tick, lean3_opts)
       end
       if not err then
-        goal_element = components.interactive_goals(goal, self.sess)
+        goal_element = components.interactive_goals(goal, sess)
       end
     end
 
@@ -846,13 +846,13 @@ function Pin:__update(tick, lean3_opts)
 
     local term_goal_element
     if self.__use_widgets then
-      local term_goal, err = self.sess:getInteractiveTermGoal(params)
+      local term_goal, err = sess:getInteractiveTermGoal(params)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
         return self:__update(tick, lean3_opts)
       end
       if not err then
-        term_goal_element = components.interactive_term_goal(term_goal, self.sess)
+        term_goal_element = components.interactive_term_goal(term_goal, sess)
       end
     end
 
@@ -873,13 +873,13 @@ function Pin:__update(tick, lean3_opts)
 
     local diagnostics_element
     if self.__use_widgets then
-      local diags, err = self.sess:getInteractiveDiagnostics({ start = line, ['end'] = line + 1 })
+      local diags, err = sess:getInteractiveDiagnostics({ start = line, ['end'] = line + 1 })
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
         return self:__update(tick, lean3_opts)
       end
       if not err then
-        diagnostics_element = components.interactive_diagnostics(diags, line, self.sess)
+        diagnostics_element = components.interactive_diagnostics(diags, line, sess)
       end
     end
 
