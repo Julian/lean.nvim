@@ -12,9 +12,6 @@ local set_augroup = util.set_augroup
 local rpc = require('lean.rpc')
 
 local infoview = {
-  -- all current infoviews
-  ---@type Infoview[]
-  _infoviews = {},
   -- mapping from infoview IDs to infoviews
   ---@type table<number, Infoview>
   _by_tabpage = {},
@@ -103,7 +100,6 @@ function Infoview:new(obj)
     __width = obj.width or options.width,
     __height = obj.height or options.height
   }, self)
-  table.insert(infoview._infoviews, new_infoview)
   new_infoview.info = Info:new{ infoview = new_infoview }
   return new_infoview
 end
@@ -306,12 +302,13 @@ function Info:new(opts)
     return bufnr
   end
 
+  local count = vim.tbl_count(infoview._by_tabpage)
   new_info.__renderer = new_info.__pins_element:renderer{
-    buf = mk_buf("lean://info/" .. #infoview._infoviews .. "/curr", true),
+    buf = mk_buf("lean://info/" .. count .. "/curr", true),
     keymaps = options.mappings
   }
   new_info.__diff_renderer = new_info.pin.__element:renderer{
-    buf = mk_buf("lean://info/" .. #infoview._infoviews .. "/diff", false),
+    buf = mk_buf("lean://info/" .. count .. "/diff", false),
     keymaps = options.mappings
   }
 
@@ -858,7 +855,7 @@ end
 
 --- Close all open infoviews (across all tabs).
 function infoview.close_all()
-  for _, each in ipairs(infoview._infoviews) do
+  for _, each in ipairs(vim.tbl_values(infoview._by_tabpage)) do
     each:close()
   end
 end
@@ -916,7 +913,7 @@ end
 --- Update pins corresponding to the given URI.
 function infoview.__update_pin_by_uri(uri)
   if infoview.enabled then
-  for _, each in ipairs(infoview._infoviews) do
+  for _, each in pairs(infoview._by_tabpage) do
     local pins = { each.info.pin }
     vim.list_extend(pins, each.info.pins)
     for _, pin in ipairs(pins) do
@@ -930,7 +927,7 @@ end
 
 --- on_lines callback to update pins position according to the given textDocument/didChange parameters.
 function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
-  for _, each in ipairs(infoview._infoviews) do
+  for _, each in pairs(infoview._by_tabpage) do
     local pins = { each.info.pin }
     vim.list_extend(pins, each.info.pins)
     for _, pin in ipairs(pins) do
