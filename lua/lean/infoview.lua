@@ -46,7 +46,7 @@ local options = {
 
 --- An individual pin.
 ---@class Pin
----@field id number
+---@field id string @a label to identify the pin
 ---@field private __data_element Element
 ---@field private __element Element
 ---@field private __extmark number
@@ -57,7 +57,7 @@ local options = {
 ---@field private __info Info
 ---@field private __ui_position_params UIParams
 ---@field private __use_widgets boolean
-local Pin = { next_id = 1, __extmark_ns = vim.api.nvim_create_namespace("") }
+local Pin = { __extmark_ns = vim.api.nvim_create_namespace("") }
 Pin.__index = Pin
 
 --- An individual info.
@@ -291,6 +291,7 @@ function Info:new(opts)
     __win_event_disable = false,
   }, self)
   new_info.pin = Pin:new{
+    id = '1',
     paused = options.autopause,
     use_widgets = options.use_widgets,
     parent = new_info
@@ -337,8 +338,9 @@ end
 function Info:add_pin()
   local new_params = vim.deepcopy(self.pin.__ui_position_params)
   table.insert(self.pins, self.pin)
-  self:__maybe_show_pin_extmark(tostring(self.pin.id))
+  self:__maybe_show_pin_extmark(self.pin.id)
   self.pin = Pin:new{
+    id = tostring(#self.pins + 1),
     paused = options.autopause,
     use_widgets = options.use_widgets,
     parent = self
@@ -351,6 +353,7 @@ end
 function Info:__set_diff_pin(params)
   if not self.__diff_pin then
     self.__diff_pin = Pin:new{
+      id = 'diff',
       paused = options.autopause,
       use_widgets = options.use_widgets,
       parent = self
@@ -407,7 +410,7 @@ function Info:__render_pins()
     if infoview.debug then
       header_element:add_child(
         Element:new{
-          text = "-- PIN " .. tostring(pin.id),
+          text = "-- PIN " .. pin.id,
           name = "pin-id-header"
         }
       )
@@ -640,7 +643,7 @@ end
 function Pin:__show_extmark(name, hlgroup)
   self.__extmark_hl_group = hlgroup or 'leanPinned'
   if name then
-    self.__extmark_virt_text = {{"← " .. (name or tostring(self.id)), "Comment"}}
+    self.__extmark_virt_text = {{"← " .. (name or self.id), "Comment"}}
   else
     self.__extmark_virt_text = nil
   end
