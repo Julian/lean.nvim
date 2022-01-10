@@ -175,16 +175,16 @@ function Infoview:__refresh()
 
   for _, win in pairs(valid_windows) do
     vim.api.nvim_win_call(win, function()
-      vim.api.nvim_command("set winfixwidth")
+      vim.api.nvim_command('set winfixwidth')
     end)
   end
 
   for _, win in pairs(valid_windows) do
     vim.api.nvim_win_call(win, function()
       if self.__orientation == "vertical" then
-        vim.cmd("vertical resize " .. self.__width)
+        vim.cmd('vertical resize ' .. self.__width)
       else
-        vim.cmd("resize " .. self.__height)
+        vim.cmd('resize ' .. self.__height)
       end
     end)
   end
