@@ -409,18 +409,12 @@ function Info:__render_pins()
     local header_element = Element:new{ name = "pin-header" }
     if infoview.debug then
       header_element:add_child(
-        Element:new{
-          text = "-- PIN " .. pin.id,
-          name = "pin-id-header"
-        }
+        Element:new{ text = "-- PIN " .. pin.id, name = "pin-id-header" }
       )
 
       local function add_attribute(text, name)
         header_element:add_child(
-          Element:new{
-            text = " [" .. text .. "]",
-            name = name .. "-attribute"
-          }
+          Element:new{ text = " [" .. text .. "]", name = name .. "-attribute" }
         )
       end
       if current then add_attribute("CURRENT", "current") end
