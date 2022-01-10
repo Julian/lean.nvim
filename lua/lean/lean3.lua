@@ -347,10 +347,14 @@ function lean3.update_infoview(
 
   -- update all other pins for the same URI so they aren't left with a stale "session"
   if opts and opts.widget_event then
-    for _, other_pin in pairs(require"lean.infoview"._pin_by_id) do
-      if other_pin ~= pin and other_pin.__position_params and
-        other_pin.__position_params.textDocument.uri == pin.__position_params.textDocument.uri then
-        other_pin:update()
+    for _, each in pairs(require'lean.infoview'._by_tabpage) do  -- FIXME: Private!
+      local pins = { each.info.pin }
+      vim.list_extend(pins, each.info.pins)
+      for _, other_pin in ipairs(pins) do
+        if other_pin ~= pin and other_pin.__position_params and
+          other_pin.__position_params.textDocument.uri == pin.__position_params.textDocument.uri then
+          other_pin:update()
+        end
       end
     end
   end

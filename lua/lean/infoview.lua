@@ -18,9 +18,6 @@ local infoview = {
   -- mapping from infoview IDs to infoviews
   ---@type table<number, Infoview>
   _by_tabpage = {},
-  -- mapping from pin IDs to pins
-  ---@type table<number, Pin>
-  _pin_by_id = {},
   --- Whether to print additional debug information in the infoview.
   ---@type boolean
   debug = false,
@@ -530,9 +527,8 @@ function Pin:new(obj)
   obj.paused = nil
   obj.use_widgets = nil
 
-  local pin = setmetatable(
+  return setmetatable(
     vim.tbl_extend("keep", obj, {
-      id = self.next_id,
       paused = paused,
       __data_element = Element:new{ name = "pin-data" },
       __element = Element:new{ name = "pin" },
@@ -542,11 +538,6 @@ function Pin:new(obj)
     }),
     self
   )
-
-  self.next_id = self.next_id + 1
-  infoview._pin_by_id[pin.id] = pin
-
-  return pin
 end
 
 --- Enable widgets for this pin.
@@ -566,7 +557,6 @@ function Pin:__teardown()
   if self.__extmark then
     vim.api.nvim_buf_del_extmark(self.__extmark_buf, self.__extmark_ns, self.__extmark)
   end
-  infoview._pin_by_id[self.id] = nil
 end
 
 --- Update pin extmark based on position, used when resetting pin position.
@@ -926,22 +916,30 @@ end
 --- Update pins corresponding to the given URI.
 function infoview.__update_pin_by_uri(uri)
   if infoview.enabled then
-    for _, pin in pairs(infoview._pin_by_id) do
+  for _, each in ipairs(infoview._infoviews) do
+    local pins = { each.info.pin }
+    vim.list_extend(pins, each.info.pins)
+    for _, pin in ipairs(pins) do
       if pin.__position_params and pin.__position_params.textDocument.uri == uri then
         pin:update()
       end
     end
   end
+  end
 end
 
 --- on_lines callback to update pins position according to the given textDocument/didChange parameters.
 function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
-  for _, pin in pairs(infoview._pin_by_id) do
-    if pin.__position_params and pin.__position_params.textDocument.uri == vim.uri_from_bufnr(bufnr) then
-      vim.schedule_wrap(function()
-        pin:update_position()
-        pin:update(false)
-      end)()
+  for _, each in ipairs(infoview._infoviews) do
+    local pins = { each.info.pin }
+    vim.list_extend(pins, each.info.pins)
+    for _, pin in ipairs(pins) do
+      if pin.__position_params and pin.__position_params.textDocument.uri == vim.uri_from_bufnr(bufnr) then
+        vim.schedule_wrap(function()
+          pin:update_position()
+          pin:update(false)
+        end)()
+      end
     end
   end
 end
