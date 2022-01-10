@@ -115,18 +115,19 @@ function Infoview:open()
 
   local ch_aspect_ratio = 2.5 -- characters are 2.5x taller than they are wide
   if win_width > ch_aspect_ratio * win_height then -- vertical split
-    self.__orientation = "vertical"
-    vim.cmd("botright " .. self.__width .. "vsplit")
+    self.__orientation = 'vertical'
+    vim.cmd('botright ' .. self.__width .. 'vsplit')
   else -- horizontal split
-    self.__orientation = "horizontal"
-    vim.cmd("botright " .. self.__height .. "split")
+    self.__orientation = 'horizontal'
+    vim.cmd('botright ' .. self.__height .. 'split')
   end
-  vim.cmd(string.format("buffer %d", self.info.__renderer.buf))
+  vim.api.nvim_win_set_buf(0, self.info.__renderer.buf)
   -- Set the filetype now. Any earlier, and only buffer-local options will be
   -- properly set in the infoview, since the buffer isn't actually shown in a
-  -- window until we run :buffer above.
+  -- window until we run nvim_win_set_buf.
   vim.api.nvim_buf_set_option(self.info.__renderer.buf, 'filetype', 'leaninfo')
   self.window = vim.api.nvim_get_current_win()
+
   vim.api.nvim_set_current_win(window_before_split)
 
   self:focus_on_current_buffer()
@@ -144,7 +145,7 @@ function Infoview:__open_win(buf)
   local window_before_split = vim.api.nvim_get_current_win()
   vim.api.nvim_set_current_win(self.window)
 
-  if self.__orientation == "vertical" then
+  if self.__orientation == 'vertical' then
     vim.cmd('leftabove ' .. self.__width .. 'vsplit')
     vim.cmd('vertical resize ' .. self.__width)
   else
