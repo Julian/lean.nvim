@@ -62,7 +62,6 @@ Pin.__index = Pin
 
 --- An individual info.
 ---@class Info
----@field id number
 ---@field pin Pin
 ---@field pins Pin[]
 ---@field private __auto_diff_pin Pin
