@@ -60,7 +60,7 @@ local options = {
 ---@field private __extmark_hl_group string
 ---@field private __extmark_virt_text table
 ---@field private __ticker table
----@field private __parent_infos table<Info, boolean>
+---@field private __info Info
 ---@field private __ui_position_params UIParams
 ---@field private __use_widgets boolean
 local Pin = { next_id = 1, __extmark_ns = vim.api.nvim_create_namespace("") }
@@ -377,7 +377,7 @@ end
 
 function Info:clear_pins()
   for _, pin in pairs(self.pins) do
-    pin:__remove_parent_info(self)
+    pin:__teardown()
   end
 
   self.pins = {}
@@ -386,7 +386,7 @@ end
 
 function Info:__clear_diff_pin()
   if not self.__diff_pin then return end
-  self.__diff_pin:__remove_parent_info(self)
+  self.__diff_pin:__teardown()
   self.__diff_pin = nil
   self.__diff_renderer.__element = self.pin.__element
   self:render()
@@ -530,19 +530,13 @@ function Pin:new(obj)
   obj.paused = nil
   obj.use_widgets = nil
 
-  local parent_infos = {}
-  if obj.parent ~= nil then
-    parent_infos[obj.parent] = true
-    obj.parent = nil
-  end
-
   local pin = setmetatable(
     vim.tbl_extend("keep", obj, {
       id = self.next_id,
       paused = paused,
       __data_element = Element:new{ name = "pin-data" },
       __element = Element:new{ name = "pin" },
-      __parent_infos = parent_infos,
+      __info = obj.parent,
       __ticker = util.Ticker:new(),
       __use_widgets = use_widgets,
     }),
@@ -567,19 +561,12 @@ function Pin:disable_widgets()
   self:update()
 end
 
----@param new_parent Info
-function Pin:__add_parent_info(new_parent)
-  self.__parent_infos[new_parent] = true
-end
-
-function Pin:__remove_parent_info(info)
-  self.__parent_infos[info] = nil
-  if vim.tbl_isempty(self.__parent_infos) then
-    if self.__extmark then
-      vim.api.nvim_buf_del_extmark(self.__extmark_buf, self.__extmark_ns, self.__extmark)
-    end
-    infoview._pin_by_id[self.id] = nil
+function Pin:__teardown()
+  self.__info = nil
+  if self.__extmark then
+    vim.api.nvim_buf_del_extmark(self.__extmark_buf, self.__extmark_ns, self.__extmark)
   end
+  infoview._pin_by_id[self.id] = nil
 end
 
 --- Update pin extmark based on position, used when resetting pin position.
@@ -713,9 +700,7 @@ function Pin:move(params)
 end
 
 function Pin:__render_parents()
-  for parent, _ in pairs(self.__parent_infos) do
-    parent:render()
-  end
+  self.__info:render()
 end
 
 ---Indicate that the pin has started loading.
