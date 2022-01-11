@@ -57,7 +57,7 @@ local options = {
 ---@field private __info Info
 ---@field private __ui_position_params UIParams
 ---@field private __use_widgets boolean
-local Pin = { __extmark_ns = vim.api.nvim_create_namespace("") }
+local Pin = { __extmark_ns = vim.api.nvim_create_namespace("lean.pins") }
 Pin.__index = Pin
 
 --- An individual info.

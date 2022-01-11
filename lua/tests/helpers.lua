@@ -20,6 +20,19 @@ function helpers.insert(text, feed_opts)
   helpers.feed('i' .. text, feed_opts)
 end
 
+function helpers.all_lean_extmarks(buffer, start, end_)
+  local extmarks = {}
+  for namespace, ns_id in pairs(vim.api.nvim_get_namespaces()) do
+    if namespace:match('^lean.') then
+      vim.list_extend(
+        extmarks,
+        vim.api.nvim_buf_get_extmarks(buffer, ns_id, start, end_, { details = true })
+      )
+    end
+  end
+  return extmarks
+end
+
 --- Move the cursor to a new location.
 ---
 --- Ideally this function wouldn't exist, and one would call

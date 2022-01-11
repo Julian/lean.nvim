@@ -98,7 +98,7 @@ local function snippets_nvim_enable(snippets, lean_abbreviations)
   snippets.snippets = all_snippets
 end
 
-local abbr_mark_ns = vim.api.nvim_create_namespace('leanAbbreviationMark')
+local abbr_mark_ns = vim.api.nvim_create_namespace('lean.abbreviations')
 
 local function get_extmark_range(abbr_ns, id, buffer)
   local row, col, details = unpack(

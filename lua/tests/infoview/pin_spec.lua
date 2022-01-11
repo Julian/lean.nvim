@@ -20,10 +20,14 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
   ]], function()
   -- FIXME: This test seems to fail in CI on 0.5.1, and only on macOS.
   if vim.version().major >= 1 or vim.version().minor >= 6 then
-    it('can be placed and cleared', function()
+
+    local first_pin_position
+
+    it('can be placed', function()
       local filename = vim.api.nvim_buf_get_name(0)
 
-      helpers.move_cursor{ to = {7, 5} }
+      first_pin_position = {7, 5}
+      helpers.move_cursor{ to = first_pin_position }
       helpers.wait_for_infoview_contents('case inr')
       assert.infoview_contents.are[[
         ▶ 1 goal
@@ -80,6 +84,22 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
         ⊢ p ∨ q → q ∨ p
       ]], filename, filename))
 
+      assert.is.equal(2, #infoview.get_current_infoview().info.pins)
+    end)
+
+    it('shows pin locations via extmarks', function()
+        assert.is_not.equal(0, #infoview.get_current_infoview().info.pins)
+        local before_pin = { first_pin_position[1] - 1, 0 }
+        local after_pin = { first_pin_position[1] + 1, 0 }
+        local extmarks = helpers.all_lean_extmarks(0, before_pin, after_pin)
+        assert.is.equal(1, #extmarks)
+        local details = extmarks[1][4]
+        assert.is.equal('← 1', details.virt_text[1][1])
+    end)
+
+    it('can be cleared', function()
+      assert.is_true(#infoview.get_current_infoview().info.pins > 0)
+
       infoview.clear_pins()
       assert.infoview_contents.are[[
         ▶ 1 goal
@@ -99,6 +119,8 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
         h2 : q
         ⊢ q ∨ p
       ]]
+
+      assert.is.equal(0, #infoview.get_current_infoview().info.pins)
     end)
   end
 

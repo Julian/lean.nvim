@@ -32,8 +32,8 @@ Element.__index = Element
 ---@field parent? BufRenderer Parent renderer
 ---@field parent_path? PathNode[] Path in parent element, events bubble up to the parent there
 local BufRenderer = {
-  __widgets_ns = vim.api.nvim_create_namespace("LeanWidget"),
-  __hl_ns = vim.api.nvim_create_namespace('LeanHighlight')
+  __widgets_ns = vim.api.nvim_create_namespace('lean.widgets'),
+  __hl_ns = vim.api.nvim_create_namespace('lean.highlights')
 }
 BufRenderer.__index = BufRenderer
 
