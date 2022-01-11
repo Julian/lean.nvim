@@ -33,7 +33,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
         ⊢ q ∨ p
       ]]
 
-      infoview.get_current_infoview().info:add_pin()
+      infoview.add_pin()
       -- FIXME: The pin add temporarily clears the infoview (until an update).
       --        Maybe it shouldn't and should just be appending itself to the
       --        existing contents (in which case an immediate assertion here
@@ -56,7 +56,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       ]], filename))
 
       helpers.move_cursor{ to = {1, 49} }
-      infoview.get_current_infoview().info:add_pin()
+      infoview.add_pin()
 
       helpers.move_cursor{ to = {5, 4} }
       helpers.wait_for_infoview_contents('case inl.h')
@@ -80,7 +80,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
         ⊢ p ∨ q → q ∨ p
       ]], filename, filename))
 
-      infoview.get_current_infoview().info:clear_pins()
+      infoview.clear_pins()
       assert.infoview_contents.are[[
         ▶ 1 goal
         case inl.h
@@ -105,9 +105,9 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
   -- FIXME: This seems to fail with errors saying it's misusing vim.schedule.
   pending('can be re-placed after being cleared', function()
     helpers.move_cursor{ to = {4, 5} }
-    infoview.get_current_infoview().info:add_pin()
-    infoview.get_current_infoview().info:clear_pins()
-    infoview.get_current_infoview().info:add_pin()
+    infoview.add_pin()
+    infoview.clear_pins()
+    infoview.add_pin()
     helpers.wait_for_infoview_contents('case inl.*case inl')
     assert.infoview_contents.are(string.format([[
       ▶ 1 goal
@@ -127,9 +127,9 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
 
   describe('edits around pin', function()
 
-    infoview.get_current_infoview().info:clear_pins()
+    infoview.clear_pins()
     helpers.move_cursor{ to = {4, 12} }
-    infoview.get_current_infoview().info:add_pin()
+    infoview.add_pin()
 
     it('moves pin when lines are added above it', function()
       vim.api.nvim_buf_set_lines(0, 0, 0, true, { 'theorem foo : 2 = 2 := rfl', '' })
