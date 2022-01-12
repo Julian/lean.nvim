@@ -5,16 +5,6 @@ local dedent = require('lean._util').dedent
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 
----Return the orientation of a given window handle.
----@return 'square'|'vertical'|'horizontal'
-local function orientation(window)
-  local width = vim.api.nvim_win_get_width(window)
-  local height = vim.api.nvim_win_get_height(window)
-  if width == height then return 'square'
-  elseif width < height then return 'vertical'
-  else return 'horizontal' end
-end
-
 require('lean').setup{ lsp = { enable = true } }
 
 describe('infoview pins', helpers.clean_buffer('lean', dedent[[
@@ -329,8 +319,6 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
         { lean_window, current_infoview.window, diff_window },
         vim.api.nvim_tabpage_list_wins(0)
       )
-
-      assert.is.equal(orientation(current_infoview.window), orientation(diff_window))
 
       assert.is_true(vim.api.nvim_win_get_option(current_infoview.window, 'diff'))
       assert.is_true(vim.api.nvim_win_get_option(diff_window, 'diff'))
