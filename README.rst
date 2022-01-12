@@ -90,9 +90,7 @@ Features
 --------
 
 * Abbreviation (unicode character) insertion, can also provide a
-  `nvim-compe <https://github.com/hrsh7th/nvim-compe>`_ or
-  `snippets.nvim <https://github.com/norcalli/snippets.nvim>`_
-  source.
+  `nvim-compe <https://github.com/hrsh7th/nvim-compe>`_ source.
 
 * An infoview which can show persistent goal, term & tactic state,
   as well as interactive widgets in both
@@ -270,7 +268,6 @@ Full Configuration & Settings Information
         -- Set one of the following to true to enable abbreviations
         builtin = false, -- built-in expander
         compe = false, -- nvim-compe source
-        snippets = false, -- snippets.nvim source
         -- additional abbreviations:
         extra = {
           -- Add a \wknight abbreviation to insert ♘

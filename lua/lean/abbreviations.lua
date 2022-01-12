@@ -10,7 +10,6 @@ local abbreviations = {}
 
 local buf_imaps = {}
 local _MEMOIZED = nil
-local _CURSOR_MARKER = '$CURSOR'
 
 --- Load the Lean abbreviations as a Lua table.
 function abbreviations.load()
@@ -85,17 +84,6 @@ local function compe_nvim_enable(compe, lean_abbreviations)
   local Config = require('compe.config').get()
   Config.source = Config.source or {}
   Config.source['lean_abbreviations'] = { disabled = false }
-end
-
-local function snippets_nvim_enable(snippets, lean_abbreviations)
-  for from, to in pairs(lean_abbreviations) do
-    lean_abbreviations[from] = to:gsub(_CURSOR_MARKER, '$0')
-  end
-
-  local all_snippets = snippets.snippets or {}
-  all_snippets.lean3 = lean_abbreviations
-  all_snippets.lean = lean_abbreviations
-  snippets.snippets = all_snippets
 end
 
 local abbr_mark_ns = vim.api.nvim_create_namespace('lean.abbreviations')
@@ -256,10 +244,6 @@ function abbreviations.enable(opts)
   abbreviations.abbreviations = abbreviations.load()
   for from, to in pairs(opts.extra or {}) do
     abbreviations.abbreviations[from] = to
-  end
-
-  if opts.snippets then
-    snippets_nvim_enable(require('snippets'), add_leader(abbreviations.leader, abbreviations.abbreviations))
   end
 
   if opts.compe then
