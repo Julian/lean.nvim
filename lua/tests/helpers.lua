@@ -69,6 +69,22 @@ function helpers.wait_for_infoview_contents(contents)
   assert.message(message).True(succeeded)
 end
 
+---Wait until a window that isn't one of the known ones shows up.
+---@param known table
+function helpers.wait_for_new_window(known)
+  local new_window
+  local succeeded = vim.wait(1000, function()
+    for _, window in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if not vim.tbl_contains(known, window) then
+        new_window = window
+        return true
+      end
+    end
+  end)
+  assert.message('Never found a new window').is_true(succeeded)
+  return new_window
+end
+
 -- Even though we can delete a buffer, so should be able to reuse names,
 -- we do this to ensure if a test fails, future ones still get new "files".
 local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr, ft)

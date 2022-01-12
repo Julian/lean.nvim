@@ -5,6 +5,16 @@ local dedent = require('lean._util').dedent
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 
+---Return the orientation of a given window handle.
+---@return 'square'|'vertical'|'horizontal'
+local function orientation(window)
+  local width = vim.api.nvim_win_get_width(window)
+  local height = vim.api.nvim_win_get_height(window)
+  if width == height then return 'square'
+  elseif width < height then return 'vertical'
+  else return 'horizontal' end
+end
+
 require('lean').setup{ lsp = { enable = true } }
 
 describe('infoview pins', helpers.clean_buffer('lean', dedent[[
@@ -313,18 +323,14 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       helpers.move_cursor{ to = {3, 2} }
       infoview.set_diff_pin()
 
-      local windows = vim.api.nvim_tabpage_list_wins(0)
-      local diff_window
-      for _, window in ipairs(windows) do
-        if window ~= lean_window and window ~= current_infoview.window then
-          diff_window = window
-        end
-      end
+      local diff_window = helpers.wait_for_new_window{ lean_window, current_infoview.window }
 
       assert.are.same_elements(
         { lean_window, current_infoview.window, diff_window },
-        windows
+        vim.api.nvim_tabpage_list_wins(0)
       )
+
+      assert.is.equal(orientation(current_infoview.window), orientation(diff_window))
 
       assert.is_true(vim.api.nvim_win_get_option(current_infoview.window, 'diff'))
       assert.is_true(vim.api.nvim_win_get_option(diff_window, 'diff'))
@@ -343,18 +349,12 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
 
       current_infoview:open()
 
-      local windows = vim.api.nvim_tabpage_list_wins(0)
       -- The window is not necessarily the same one as before.
-      local diff_window
-      for _, window in ipairs(windows) do
-        if window ~= lean_window and window ~= current_infoview.window then
-          diff_window = window
-        end
-      end
+      local diff_window = helpers.wait_for_new_window{ lean_window, current_infoview.window }
 
       assert.are.same_elements(
         { lean_window, current_infoview.window, diff_window },
-        windows
+        vim.api.nvim_tabpage_list_wins(0)
       )
 
       assert.is_true(vim.api.nvim_win_get_option(current_infoview.window, 'diff'))
@@ -380,12 +380,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
     it('can be :quit', function()
       assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
       local current_infoview = infoview.get_current_infoview()
-      local diff_window
-      for _, window in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-        if window ~= lean_window and window ~= current_infoview.window then
-          diff_window = window
-        end
-      end
+      local diff_window = helpers.wait_for_new_window{ lean_window, current_infoview.window }
       vim.api.nvim_set_current_win(diff_window)
       vim.cmd('quit')
       assert.are.same(

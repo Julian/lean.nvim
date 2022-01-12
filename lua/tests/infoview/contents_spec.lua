@@ -24,10 +24,7 @@ local fixtures = require('tests.fixtures')
 local helpers = require('tests.helpers')
 
 
-require('lean').setup{
-  lsp = { enable = true },
-  lsp3 = { enable = true }
-}
+require('lean').setup{}
 
 describe('infoview content (auto-)update', function()
 
