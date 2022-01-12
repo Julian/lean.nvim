@@ -297,11 +297,9 @@ function lean3.update_infoview(
   if use_widgets then
     local err, result
     if not (opts and opts.widget_event) then
-      local _err, _result = util.client_a_request(client, "$/lean/discoverWidget", params)
-      err, result = _err, _result
+      err, result = util.client_a_request(client, "$/lean/discoverWidget", params)
     else
-      local _err, _result = util.client_a_request(client, "$/lean/widgetEvent", opts.widget_event)
-      err, result = _err, _result
+      err, result = util.client_a_request(client, "$/lean/widgetEvent", opts.widget_event)
       if result and result.record then result = result.record end
     end
 

@@ -113,10 +113,10 @@ function Infoview:open()
   local win_height = vim.api.nvim_win_get_height(window_before_split)
 
   local ch_aspect_ratio = 2.5 -- characters are 2.5x taller than they are wide
-  if win_width > ch_aspect_ratio * win_height then -- vertical split
+  if win_width > ch_aspect_ratio * win_height then
     self.__orientation = 'vertical'
     vim.cmd('botright ' .. self.__width .. 'vsplit')
-  else -- horizontal split
+  else
     self.__orientation = 'horizontal'
     vim.cmd('botright ' .. self.__height .. 'split')
   end
