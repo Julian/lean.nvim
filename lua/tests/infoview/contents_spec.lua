@@ -287,7 +287,6 @@ describe('infoview content (auto-)update', function()
 
         helpers.move_cursor{ to = {20, 58} }
         helpers.wait_for_infoview_contents('^$')
-        -- FIXME: The 'No info.' message is broken.
         assert.infoview_contents.are[[
         ]]
 
@@ -387,7 +386,6 @@ describe('infoview content (auto-)update', function()
 
           helpers.move_cursor{ to = {24, 58} }
           helpers.wait_for_infoview_contents('^$')
-          -- FIXME: The 'No info.' message is broken.
           assert.infoview_contents.are[[
           ]]
 
