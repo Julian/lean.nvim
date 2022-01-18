@@ -33,30 +33,32 @@ describe('Infoview.toggle', function()
     )
   end)
 
-  pending('reopens when an infoview has been reused for editing a file', function()
-    vim.cmd("tabnew")
-    local tab2_window = vim.api.nvim_get_current_win()
+  it('reopens when an infoview has been reused for editing a file', function()
+    vim.cmd('tabnew')
+    local transient_window = vim.api.nvim_get_current_win()
 
-    assert.are.same({ tab2_window }, vim.api.nvim_tabpage_list_wins(0))
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
-    local tab2_infoview = infoview.get_current_infoview()
-    local tab2_infoview_window = tab2_infoview.window
+    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    local initial_infoview = infoview.get_current_infoview()
+    local initial_infoview_window = initial_infoview.window
     assert.are.same_elements(
-      { tab2_window, tab2_infoview_window },
+      { transient_window, initial_infoview_window },
       vim.api.nvim_tabpage_list_wins(0)
     )
 
-    vim.cmd(":quit")
-    assert.are.same(vim.api.nvim_get_current_win(), tab2_infoview_window)
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
-    assert.are.same({ tab2_infoview_window }, vim.api.nvim_tabpage_list_wins(0))
+    vim.cmd(':quit')
+    assert.is.equal(initial_infoview_window, vim.api.nvim_get_current_win())
+    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    assert.are.same({ initial_infoview_window }, vim.api.nvim_tabpage_list_wins(0))
 
     local second_infoview = infoview.get_current_infoview()
+    assert.is_not.equal(second_infoview.window, initial_infoview_window)
     second_infoview:toggle()
     assert.are.same_elements(
-      { tab2_infoview_window, second_infoview.window },
+      { initial_infoview_window, second_infoview.window },
       vim.api.nvim_tabpage_list_wins(0)
     )
+
+    vim.cmd('tabclose')
   end)
 
   it('toggles back and forth', function()

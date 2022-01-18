@@ -321,12 +321,12 @@ function Info:new(opts)
 
   -- Make sure we notice even if someone manually :q's the infoview window.
   set_augroup("LeanInfoviewClose", string.format([[
-    autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__was_closed()
+    autocmd BufHidden <buffer=%d> lua require'lean.infoview'.__was_closed()
   ]], new_info.__renderer.buf), new_info.__renderer.buf)
 
   -- Make sure we notice even if someone manually :q's the diff window.
   set_augroup("LeanInfoviewClose", string.format([[
-    autocmd WinClosed <buffer=%d> lua require'lean.infoview'.__diff_was_closed()
+    autocmd BufHidden <buffer=%d> lua require'lean.infoview'.__diff_was_closed()
   ]], new_info.__diff_renderer.buf), new_info.__diff_renderer.buf)
 
   new_info:render()
