@@ -156,6 +156,7 @@ describe('infoview open/close', function()
       )
 
       vim.cmd('tabnew')
+      local tab2 = vim.api.nvim_get_current_tabpage()
       local tab2_window = vim.api.nvim_get_current_win()
       assert.are.same({ tab2_window }, vim.api.nvim_tabpage_list_wins(0))
 
@@ -190,6 +191,8 @@ describe('infoview open/close', function()
         { lean_window, tab1_infoview.window },
         vim.api.nvim_tabpage_list_wins(0)
       )
+
+      vim.cmd('tabclose ' .. tab2)
     end)
   end)
 
@@ -220,6 +223,12 @@ describe('infoview open/close', function()
       { non_lean_window, current_infoview.window },
       vim.api.nvim_tabpage_list_wins(0)
     )
+
+    -- Cleanup by now opening a Lean file in the window we opened, so future
+    -- tests can use it (grr, global state...).
+    vim.api.nvim_set_current_win(non_lean_window)
+    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    lean_window = non_lean_window
   end)
 
   it('reopens when an infoview has been reused for editing a file', function()
