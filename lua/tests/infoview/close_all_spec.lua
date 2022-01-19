@@ -60,12 +60,12 @@ describe('infoview.close_all', function()
     infoview.close_all()
 
     assert.are.same(
-      vim.tbl_map(vim.api.nvim_tabpage_list_wins, tabpages), {
+      {
         { temp1 },
         { temp2 },
         { temp3 },
         { temp4 },
-      }
+      }, vim.tbl_map(vim.api.nvim_tabpage_list_wins, tabpages)
     )
   end)
 end)
