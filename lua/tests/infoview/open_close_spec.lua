@@ -17,7 +17,7 @@ describe('infoview open/close', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     lean_window = vim.api.nvim_get_current_win()
 
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
     local cursor = vim.api.nvim_win_get_cursor(0)
     local current_infoview = infoview.get_current_infoview()
 
@@ -44,7 +44,7 @@ describe('infoview open/close', function()
     assert.is.truthy(
       vim.tbl_contains(windows, infoview.get_current_infoview().window)
     )
-    vim.cmd('edit ' .. fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit ' .. fixtures.lean_project.some_existing_file)
     assert.are.same(windows, vim.api.nvim_tabpage_list_wins(0))
   end)
 
@@ -59,7 +59,7 @@ describe('infoview open/close', function()
     table.insert(windows, vim.api.nvim_get_current_win())
     assert.are.same_elements(windows, vim.api.nvim_tabpage_list_wins(0))
 
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_nested_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean_project.some_nested_existing_file)
     assert.are.same_elements(windows, vim.api.nvim_tabpage_list_wins(0))
 
     vim.cmd('quit')
@@ -71,7 +71,7 @@ describe('infoview open/close', function()
     infoview.get_current_infoview():close()
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
 
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
 
     vim.cmd('split')
@@ -90,7 +90,7 @@ describe('infoview open/close', function()
     current_infoview:close()
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
 
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
 
     current_infoview:open()
@@ -113,7 +113,7 @@ describe('infoview open/close', function()
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
 
     -- Does not reopen when editing or splitting new Lean windows
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_nested_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean_project.some_nested_existing_file)
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
 
     vim.cmd('split')
@@ -123,7 +123,7 @@ describe('infoview open/close', function()
       vim.api.nvim_tabpage_list_wins(0)
     )
 
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
     assert.are.same_elements(
       { lean_window, split },
       vim.api.nvim_tabpage_list_wins(0)
@@ -143,7 +143,7 @@ describe('infoview open/close', function()
     vim.cmd('close')
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
 
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
     assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
   end)
 
