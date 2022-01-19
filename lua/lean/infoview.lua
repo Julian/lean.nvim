@@ -852,7 +852,7 @@ end
 
 --- Close all open infoviews (across all tabs).
 function infoview.close_all()
-  for _, each in ipairs(vim.tbl_values(infoview._by_tabpage)) do
+  for _, each in pairs(infoview._by_tabpage) do
     each:close()
   end
 end
