@@ -231,7 +231,7 @@ describe('infoview open/close', function()
     lean_window = non_lean_window
   end)
 
-  it('reopens when an infoview has been reused for editing a file', function()
+  it('can be reopened when an infoview buffer was reused for editing a file', function()
     vim.cmd('tabnew')
     local transient_window = vim.api.nvim_get_current_win()
 
@@ -257,5 +257,26 @@ describe('infoview open/close', function()
     )
 
     vim.cmd('tabclose')
+  end)
+
+  pending('can be reopened when the last remaining infoview buffer was reused for editing a file', function()
+    assert.is.equal(1, #vim.api.nvim_list_tabpages())
+    local initial_infoview = infoview.get_current_infoview()
+    local initial_infoview_window = initial_infoview.window
+    assert.same.elements(
+      { lean_window, initial_infoview_window },
+      vim.api.nvim_tabpage_list_wins(0)
+    )
+    vim.api.nvim_win_close(lean_window, false)
+    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    assert.are.same({ initial_infoview_window }, vim.api.nvim_tabpage_list_wins(0))
+
+    local second_infoview = infoview.get_current_infoview()
+    assert.is_not.equal(second_infoview.window, initial_infoview_window)
+    second_infoview:open()
+    assert.are.same_elements(
+      { initial_infoview_window, second_infoview.window },
+      vim.api.nvim_tabpage_list_wins(0)
+    )
   end)
 end)
