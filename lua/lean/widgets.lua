@@ -345,8 +345,7 @@ function Element:concat(elements, sep)
 end
 
 ---Create a BufRenderer that renders this Element.
----@param buf number
----@param keymaps? table Extra keymaps
+---@param obj table
 function Element:renderer(obj)
   return BufRenderer:new(vim.tbl_extend("error", obj, { element = self }))
 end
