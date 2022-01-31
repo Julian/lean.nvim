@@ -49,6 +49,10 @@ function Element:new(obj)
   )
 end
 
+function Element:clear_children()
+  self.__children = {}
+end
+
 ---Add a child to this element.
 ---@param child Element @child element to add
 ---@return Element @the added child
