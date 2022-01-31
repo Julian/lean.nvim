@@ -38,6 +38,218 @@ local to_event = {
   ["onChange"] = "change";
 }
 
+local function parse_children(children, options)
+  local prev_element
+  local this_element = Element:new{ name = "children" }
+  for _, child in pairs(children) do
+    local last_hard_stop = false
+    if prev_element then
+      local prev_element_string = prev_element:to_string()
+      if #prev_element_string > 0 then
+        local last_byte_idx = 0
+        if #prev_element_string > 0 then
+          last_byte_idx = vim.str_byteindex(prev_element_string, vim.fn.strchars(prev_element_string) - 1) + 1
+        end
+
+        local last_char = prev_element_string:sub(last_byte_idx, #prev_element_string)
+        if last_char ~= " "
+          and last_char ~= "\n"
+          and last_char ~= "("
+          and last_char ~= "["
+          and last_char ~= "{"
+          and last_char ~= "@"
+          and last_char ~= "↑"
+          and last_char ~= "⇑"
+          and last_char ~= "↥"
+          and last_char ~= "¬"
+          then
+          last_hard_stop = true
+        end
+      end
+    end
+
+    local new_element = lean3.parse_widget(child, options)
+    local new_element_string = new_element:to_string()
+    if #new_element_string == 0 then goto continue end
+
+    local this_hard_start = false
+    if #new_element_string > 0 then
+      local first_char = new_element_string:sub(1, 1)
+      if first_char ~= " "
+        and first_char ~= "\n"
+        and first_char ~= ")"
+        and first_char ~= "]"
+        and first_char ~= "}"
+        and first_char ~= ","
+        and first_char ~= "."
+        then
+        this_hard_start = true
+      end
+    end
+
+    if last_hard_stop and this_hard_start then
+      this_element:add_child(Element:new{ text = " ", name = "separator" })
+    end
+
+    this_element:add_child(new_element)
+
+    prev_element = new_element
+
+    ::continue::
+  end
+  return this_element
+end
+
+local function parse_select(children, select_element, current_value, options)
+  local no_filter_element, no_filter_val, current_text
+  local this_element = Element:new{ name = "select-children" }
+  for child_i, child in pairs(children) do
+    local new_element = lean3.parse_widget(child, options)
+    new_element.events.click = function(ctx)
+      return select_element.events.change(ctx, child.a.value)
+    end
+    new_element.highlightable = true
+    this_element:add_child(new_element)
+    if child_i ~= #children then
+      this_element:add_child(Element:new{ text = "\n", name = 'select-separator' })
+    end
+
+    if child.c[1] == "no filter" then
+      no_filter_element = new_element
+      no_filter_val = child.a.value
+    end
+
+    if child.a.value == current_value then
+      current_text = child.c[1]
+    end
+  end
+  return this_element, no_filter_element, no_filter_val, current_text
+end
+
+function lean3.parse_widget(result, options)
+  if type(result) == "string" then
+    result = result:gsub('^%s*(.-)%s$', '%1')
+    return Element:new{ text = result, name = 'widget-element-string' }
+  elseif is_widget_element(result) then
+    local tag = result.t
+    local children = result.c
+    local attributes = result.a
+    local class_name = attributes and attributes.className
+    local tooltip = result.tt
+    local events = {}
+    local hlgroup
+
+    hlgroup = class_to_hlgroup[class_name]
+    if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
+
+    local element = Element:new {
+      name = 'element',
+      hlgroup = hlgroup,
+      events = events,
+    }
+
+    if class_name == "goal-goals" then
+      element:add_child(Element:new{ text = '▶ ', name = 'goal-prefix' })
+    end
+
+    -- close tooltip button
+    if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
+      element.events.clear = function()
+        element.events["click"]()
+      end
+    end
+
+    if result.e then
+      for event, handler in pairs(result.e) do
+        local element_event = to_event[event]
+        if not options.mouse_events then
+          if element_event == "cursor_enter" then
+            element_event = "mouse_enter"
+          end
+          if element_event == "cursor_leave" then
+            element_event = "mouse_leave"
+          end
+        end
+        local clickable_event = element_event == "click" or element_event == "change"
+        if clickable_event then element.highlightable = true end
+        events[element_event] = function(ctx, value)
+          local args = type(value) == 'string' and { type = 'string', value = value }
+            or { type = 'unit' }
+          options.send_widget_event{
+            kind = event,
+            handler = handler,
+            args = args,
+          }
+          if element_event == "cursor_leave" then
+            ctx.self:buf_event("cursor_enter")
+          end
+        end
+      end
+    end
+
+    if tag == "hr" then
+      element:add_child(
+        Element:new{
+          text = "|",
+          name = "rule",
+          hlgroup = "leanInfoFieldSep",
+        }
+      )
+    end
+
+    if options.show_filter and tag == "select" then
+      local select_children_element, no_filter_element, no_filter_val, current_text =
+        parse_select(children, element, attributes.value, options)
+      if no_filter_val and no_filter_val ~= attributes.value then
+        element.events.clear = function()
+          no_filter_element.events.click()
+          return true
+        end
+      end
+      local select_menu_element = Element:new{
+        text = current_text .. "\n",
+        name = "current-select"
+      }
+      element:add_child(select_menu_element)
+      select_menu_element:add_tooltip(select_children_element)
+    elseif tag == 'ul' then
+      for i, child in ipairs(children) do
+        if i > 2 and child.a and child.a.className == 'lh-copy mt2' then
+          element:add_child(Element:new{ text = '\n\n', name = 'goal-separator' })
+        elseif i > 1 then
+          element:add_child(Element:new{ text = '\n', name = 'list-separator' })
+        end
+        element:add_child(lean3.parse_widget(child, options))
+      end
+    else
+      element:add_child(parse_children(children, options))
+    end
+
+    if tooltip then
+      element:add_tooltip(lean3.parse_widget(tooltip, options))
+    end
+
+    local debug_tags = false
+    if debug_tags then
+      element = Element:new{
+        name = "debug-tags",
+        children = {
+          Element:new{ text = "<" .. tag ..
+              " attributes(" .. vim.inspect(attributes) .. ")" ..
+              " events(" .. vim.inspect(result.e) .. ")" ..
+            ">" },
+          element,
+          Element:new{ text = "</" .. tag .. ">" },
+        },
+      }
+    end
+
+    return element
+  else
+    return parse_children(result.c, options)
+  end
+end
+
 function lean3.update_infoview(
   pin,
   data_element,
@@ -53,236 +265,6 @@ function lean3.update_infoview(
   if not client then return end
 
   local parent_element = Element:new{ name = "lean-3-widget" }
-  local widget
-
-  local list_first
-  local goal_first = true
-
-  local function parse_widget(result)
-    local element = Element:new()
-    local function parse_children(children)
-      local prev_element
-      local this_element = Element:new{ name = "children" }
-      for _, child in pairs(children) do
-        local last_hard_stop = false
-        if prev_element then
-          local prev_element_string = prev_element:to_string()
-          if #prev_element_string > 0 then
-            local last_byte_idx = 0
-            if #prev_element_string > 0 then
-              last_byte_idx = vim.str_byteindex(prev_element_string, vim.fn.strchars(prev_element_string) - 1) + 1
-            end
-
-            local last_char = prev_element_string:sub(last_byte_idx, #prev_element_string)
-            if last_char ~= " "
-              and last_char ~= "\n"
-              and last_char ~= "("
-              and last_char ~= "["
-              and last_char ~= "{"
-              and last_char ~= "@"
-              and last_char ~= "↑"
-              and last_char ~= "⇑"
-              and last_char ~= "↥"
-              and last_char ~= "¬"
-              then
-              last_hard_stop = true
-            end
-          end
-        end
-
-        local new_element = parse_widget(child)
-        local new_element_string = new_element:to_string()
-        if #new_element_string == 0 then goto continue end
-
-        local this_hard_start = false
-        if #new_element_string > 0 then
-          local first_char = new_element_string:sub(1, 1)
-          if first_char ~= " "
-            and first_char ~= "\n"
-            and first_char ~= ")"
-            and first_char ~= "]"
-            and first_char ~= "}"
-            and first_char ~= ","
-            and first_char ~= "."
-            then
-            this_hard_start = true
-          end
-        end
-
-        if last_hard_stop and this_hard_start then
-          this_element:add_child(Element:new{ text = " ", name = "separator" })
-        end
-
-        this_element:add_child(new_element)
-
-        prev_element = new_element
-
-        ::continue::
-      end
-      return this_element
-    end
-
-    local function parse_select(children, select_element, current_value)
-      local no_filter_element, no_filter_val, current_text
-      local this_element = Element:new{ name = "select-children" }
-      for child_i, child in pairs(children) do
-        local new_element = parse_widget(child)
-        new_element.events.click = function(ctx)
-          return select_element.events.change(ctx, child.a.value)
-        end
-        new_element.highlightable = true
-        this_element:add_child(new_element)
-        if child_i ~= #children then
-          this_element:add_child(Element:new{ text = "\n", name = 'select-separator' })
-        end
-
-        if child.c[1] == "no filter" then
-          no_filter_element = new_element
-          no_filter_val = child.a.value
-        end
-
-        if child.a.value == current_value then
-          current_text = child.c[1]
-        end
-      end
-      return this_element, no_filter_element, no_filter_val, current_text
-    end
-
-    if type(result) == "string" then
-      result = result:gsub('^%s*(.-)%s$', '%1')
-
-      element:add_child(Element:new{ text = result, name = 'widget-element-string' })
-
-      return element
-    elseif is_widget_element(result) then
-      local tag = result.t
-      local children = result.c
-      local attributes = result.a
-      local class_name = attributes and attributes.className
-      local tooltip = result.tt
-      local events = {}
-      local hlgroup
-
-      if tag == "ul" then
-        list_first = true
-      end
-
-      if tag == "li" then
-        if list_first then
-          list_first = false
-        else
-          element:add_child(Element:new{ text = '\n', name = 'list-separator' })
-        end
-      end
-
-      hlgroup = class_to_hlgroup[class_name]
-      if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
-
-      if class_name == "goal-goals" then
-        element:add_child(Element:new{ text = '▶ ', name = 'goal-prefix' })
-        goal_first = false
-      end
-      if class_name == "lh-copy mt2" and not goal_first then
-        element:add_child(Element:new{ text = '\n', name = 'goal-separator' })
-      end
-
-      local debug_tags = false
-      if debug_tags then
-        element:add_child(
-          Element:new{
-            text = "<" .. tag ..
-              " attributes(" .. vim.inspect(attributes) .. ")" ..
-              " events(" .. vim.inspect(result.e) .. ")" ..
-            ">",
-            name = "element"
-          }
-        )
-      end
-      local element_element = Element:new{
-        name = "element",
-        hlgroup = hlgroup,
-        events = events
-      }
-      element:add_child(element_element)
-
-      -- close tooltip button
-      if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
-        element_element.events.clear = function()
-          element_element.events["click"]()
-        end
-      end
-
-      if result.e then
-        for event, handler in pairs(result.e) do
-          local element_event = to_event[event]
-          if not options.mouse_events then
-            if element_event == "cursor_enter" then
-              element_event = "mouse_enter"
-            end
-            if element_event == "cursor_leave" then
-              element_event = "mouse_leave"
-            end
-          end
-          local clickable_event = element_event == "click" or element_event == "change"
-          if clickable_event then element_element.highlightable = true end
-          events[element_event] = function(ctx, value)
-            local args = type(value) == 'string' and { type = 'string', value = value }
-              or { type = 'unit' }
-            pin:async_update(false, ctx, {widget_event = {
-              widget = widget,
-              kind = event,
-              handler = handler,
-              args = args,
-              textDocument = pin.__position_params.textDocument
-            }})
-            if element_event == "cursor_leave" then
-              ctx.self:buf_event("cursor_enter")
-            end
-          end
-        end
-      end
-
-      if tag == "hr" then
-        element_element:add_child(
-          Element:new{
-            text = "|",
-            name = "rule",
-            hlgroup = "leanInfoFieldSep",
-          }
-        )
-      end
-
-      if options.show_filter and tag == "select" then
-        local select_children_element, no_filter_element, no_filter_val, current_text =
-          parse_select(children, element_element, attributes.value)
-        if no_filter_val and no_filter_val ~= attributes.value then
-          element_element.events.clear = function()
-            no_filter_element.events.click()
-            return true
-          end
-        end
-        local select_menu_element = Element:new{
-          text = current_text .. "\n",
-          name = "current-select"
-        }
-        element_element:add_child(select_menu_element)
-        select_menu_element:add_tooltip(select_children_element)
-      else
-        element_element:add_child(parse_children(children))
-      end
-
-      if tooltip then
-        element_element:add_tooltip(parse_widget(tooltip))
-      end
-      if debug_tags then
-        element:add_child(Element:new{ text = "</" .. tag .. ">", name = "element" })
-      end
-      return element
-    else
-      element:add_child(parse_children(result.c))
-      return element
-    end
-  end
 
   params = vim.deepcopy(params)
   local state_element --- @type Element?
@@ -325,8 +307,16 @@ function lean3.update_infoview(
         end
       end
 
-      widget = result.widget
-      state_element = parse_widget(result.widget.html)
+      local widget = result.widget
+      state_element = lean3.parse_widget(result.widget.html, {
+        mouse_events = options.mouse_events,
+        show_filter = options.show_filter,
+        send_widget_event = function(ev)
+          ev.textDocument = pin.__position_params.textDocument
+          ev.widget = widget
+          pin:async_update(false, { widget_event = ev })
+        end,
+      })
     end
   end
 

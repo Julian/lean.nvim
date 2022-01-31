@@ -704,7 +704,7 @@ function Pin:__finished_loading()
   return true
 end
 
-function Pin:async_update(force, _, lean3_opts)
+function Pin:async_update(force, lean3_opts)
   if not force and self.paused then return end
 
   local tick = self.__ticker:lock()
