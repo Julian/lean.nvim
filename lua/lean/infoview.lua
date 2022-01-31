@@ -654,11 +654,6 @@ function Pin:pause()
   if self.paused then return end
   self.paused = true
 
-  self.__data_element = self.__data_element:dummy_copy()
-  if not self:__finished_loading() then
-    self.__element.__children = { self.__data_element }  -- FIXME: Private!
-    self:__render_parents()
-  end
 
   -- abort any pending requests
   self.__ticker:lock()
@@ -691,7 +686,7 @@ end
 function Pin:__started_loading()
   if self.loading then return false end
   self.loading = true
-  self.__element.__children = { self.__data_element:dummy_copy() }  -- FIXME: Private!
+  self.__element.__children = { self.__data_element }  -- FIXME: Private!
   self:__render_parents()
   return true
 end
