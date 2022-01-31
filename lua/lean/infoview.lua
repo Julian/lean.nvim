@@ -238,17 +238,10 @@ end
 --- Close this infoview.
 function Infoview:close()
   if not self.window then return end
-
   self:__close_diff()
-
-  self.info.__win_event_disable = true
-  if vim.api.nvim_win_is_valid(self.window) then
-    vim.api.nvim_win_close(self.window, true)
-  end
-  self.info.__win_event_disable = false
-  self.info:__was_closed()
-
+  vim.api.nvim_win_close(self.window, true)
   self.window = nil
+  self.info:__was_closed()
 end
 
 --- Retrieve the contents of the infoview as a table.
@@ -370,9 +363,8 @@ function Info:__set_diff_pin(params)
   self:render()
 end
 
---- Close all parent infoviews.
+-- Ensure tooltips close.
 function Info:__was_closed()
-  -- Ensure tooltips close.
   self.__renderer:event('clear_all')
 end
 
