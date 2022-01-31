@@ -53,7 +53,7 @@ local options = {
 ---@field private __extmark_buf number
 ---@field private __extmark_hl_group string
 ---@field private __extmark_virt_text table
----@field private __ticker table
+---@field private __ticker Ticker
 ---@field private __info Info
 ---@field private __ui_position_params UIParams
 ---@field private __use_widgets boolean
