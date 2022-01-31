@@ -9,6 +9,9 @@ function lsp.enable(opts)
       vim.lsp.handlers['textDocument/publishDiagnostics'](...)
     end;
   })
+  opts.init_options = vim.tbl_extend("keep", opts.init_options or {}, {
+    hasWidgets = true,
+  })
   require('lspconfig').leanls.setup(opts)
 end
 
