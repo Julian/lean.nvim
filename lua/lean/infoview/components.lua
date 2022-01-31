@@ -263,7 +263,7 @@ local function tagged_text_msg_embed(t, sess)
   local element = Element:new{ name = 'code-with-infos' }
 
   if t.text ~= nil then
-    element:add_child(Element:new{ text = t.text, name = 'text' })
+    element.text = t.text
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
       element:add_child(tagged_text_msg_embed(s, sess))
@@ -288,16 +288,13 @@ local function tagged_text_msg_embed(t, sess)
         header.highlightable = true
         header.events = { click = click }
 
-        element:clear_children()
-        element:add_child(header)
+        element:set_children{ header }
 
         if is_open then
           if expanded then
             element:add_child(tagged_text_msg_embed(expanded, sess))
           elseif expanded_err then
             element:add_child(Element:new{ text = vim.inspect(expanded_err) })
-          else
-            element:add_child(Element:new{ text = ' loading...' })
           end
         end
         return true
@@ -310,9 +307,6 @@ local function tagged_text_msg_embed(t, sess)
           is_open = true
 
           if not expanded then
-            render()
-            ctx.rerender()
-
             expanded, expanded_err = sess:msgToInteractive(msg_data, indent)
           end
         end

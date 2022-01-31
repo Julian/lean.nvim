@@ -90,8 +90,12 @@ function infoview.enable_debug()
   infoview.debug = true
 end
 
+---@class InfoviewNewArgs
+---@field width? integer
+---@field height? integer
+
 --- Create a new infoview.
----@param open boolean: whether to open the infoview after initializing
+---@param obj InfoviewNewArgs
 ---@return Infoview
 function Infoview:new(obj)
   obj = obj or {}
@@ -461,7 +465,7 @@ function Info:__render_pins()
     return pin_element
   end
 
-  self.__pins_element.__children = { render_pin(self.pin, true) }  -- FIXME: private!
+  self.__pins_element:set_children{ render_pin(self.pin, true) }
   for _, pin in ipairs(self.pins) do
     self.__pins_element:add_child(Element:new{ text = "\n\n", name = "pin_spacing" })
     self.__pins_element:add_child(render_pin(pin, false))
@@ -654,11 +658,6 @@ function Pin:pause()
   if self.paused then return end
   self.paused = true
 
-  self.__data_element = self.__data_element:dummy_copy()
-  if not self:__finished_loading() then
-    self.__element.__children = { self.__data_element }  -- FIXME: Private!
-    self:__render_parents()
-  end
 
   -- abort any pending requests
   self.__ticker:lock()
@@ -691,7 +690,7 @@ end
 function Pin:__started_loading()
   if self.loading then return false end
   self.loading = true
-  self.__element.__children = { self.__data_element:dummy_copy() }  -- FIXME: Private!
+  self.__element:set_children{ self.__data_element }
   self:__render_parents()
   return true
 end
@@ -700,7 +699,7 @@ end
 function Pin:__finished_loading()
   if not self.loading then return false end
   self.loading = false
-  self.__element.__children = { self.__data_element }  -- FIXME: Private!
+  self.__element:set_children{ self.__data_element }
   self:__render_parents()
   return true
 end
@@ -867,7 +866,6 @@ end
 
 --- An infoview diff window was closed.
 --- Will be triggered via a `WinClosed` autocmd.
----@param id number @info id
 function infoview.__diff_was_closed()
   local current_infoview = infoview.get_current_infoview()
   local info = current_infoview.info
@@ -877,7 +875,6 @@ end
 
 --- An infoview was entered, show the extmark for the current pin.
 --- Will be triggered via a `WinEnter` autocmd.
----@param id number @info id
 function infoview.__show_curr_pin()
   local current_infoview = infoview.get_current_infoview()
   if not current_infoview then return end
@@ -888,7 +885,6 @@ end
 
 --- An infoview was left, hide the extmark for the current pin.
 --- Will be triggered via a `WinLeave` autocmd.
----@param id number @info id
 function infoview.__hide_curr_pin()
   local current_infoview = infoview.get_current_infoview()
   if not current_infoview then return end
