@@ -349,7 +349,6 @@ describe('infoview content (auto-)update', function()
         assert.infoview_contents.are[[
           filter: no filter
           ▶ 1 goal
-
           p q : Prop
           ⊢ p ∨ q → q ∨ p
         ]]
@@ -361,7 +360,6 @@ describe('infoview content (auto-)update', function()
         assert.infoview_contents.are[[
           filter: no filter
           ▶ 2 goals
-
           case nat.zero
           ⊢ 0 = 0
 
