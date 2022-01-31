@@ -295,8 +295,6 @@ local function tagged_text_msg_embed(t, sess)
             element:add_child(tagged_text_msg_embed(expanded, sess))
           elseif expanded_err then
             element:add_child(Element:new{ text = vim.inspect(expanded_err) })
-          else
-            element:add_child(Element:new{ text = ' loading...' })
           end
         end
         return true
@@ -309,9 +307,6 @@ local function tagged_text_msg_embed(t, sess)
           is_open = true
 
           if not expanded then
-            render()
-            ctx.rerender()
-
             expanded, expanded_err = sess:msgToInteractive(msg_data, indent)
           end
         end
