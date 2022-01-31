@@ -58,8 +58,9 @@ function Element:new(args)
   return setmetatable(obj, self)
 end
 
-function Element:clear_children()
-  self.__children = {}
+---@param children? Element[]
+function Element:set_children(children)
+  self.__children = children or {}
 end
 
 ---Add a child to this element.

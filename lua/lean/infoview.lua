@@ -461,7 +461,7 @@ function Info:__render_pins()
     return pin_element
   end
 
-  self.__pins_element.__children = { render_pin(self.pin, true) }  -- FIXME: private!
+  self.__pins_element:set_children{ render_pin(self.pin, true) }
   for _, pin in ipairs(self.pins) do
     self.__pins_element:add_child(Element:new{ text = "\n\n", name = "pin_spacing" })
     self.__pins_element:add_child(render_pin(pin, false))
@@ -686,7 +686,7 @@ end
 function Pin:__started_loading()
   if self.loading then return false end
   self.loading = true
-  self.__element.__children = { self.__data_element }  -- FIXME: Private!
+  self.__element:set_children{ self.__data_element }
   self:__render_parents()
   return true
 end
@@ -695,7 +695,7 @@ end
 function Pin:__finished_loading()
   if not self.loading then return false end
   self.loading = false
-  self.__element.__children = { self.__data_element }  -- FIXME: Private!
+  self.__element:set_children{ self.__data_element }
   self:__render_parents()
   return true
 end
