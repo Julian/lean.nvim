@@ -7,16 +7,13 @@ local util = require('lean._util')
 ---@field events table<string, fun()> @event function map
 ---@field text string @the text to show when rendering this element
 ---@field name string @a named handle for this element, used when path-searching
----@field hlgroup string|fun():string @the highlight group for this element's text, or a function that returns it
+---@field hlgroup? string|fun():string @the highlight group for this element's text, or a function that returns it
 ---@field tooltip? Element Optional tooltip
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this element when hovering over it
 ---@field _size? integer Computed size of this element, updated by `Element:to_string`
 ---@field disable_update? boolean
 ---@field private __children Element[] @this element's children
-local Element = {
-  text = "",
-  name = "",
-}
+local Element = {}
 Element.__index = Element
 
 ---Renders elements within a specific buffer.
@@ -37,16 +34,28 @@ local BufRenderer = {
 }
 BufRenderer.__index = BufRenderer
 
+---@class ElementNewArgs
+---@field events table<string, fun()> @event function map
+---@field text string @the text to show when rendering this element
+---@field name string @a named handle for this element, used when path-searching
+---@field hlgroup? string|fun():string @the highlight group for this element's text, or a function that returns it
+---@field highlightable boolean @(for buffer rendering) whether to highlight this element when hovering over it
+---@field children Element[] @this element's children
+
 ---Create a new Element.
+---@param args ElementNewArgs
 ---@return Element
-function Element:new(obj)
-  obj = obj or {}
-  local children = obj.children or {}
-  obj.children = nil
-  return setmetatable(
-    vim.tbl_extend("keep", obj, { events = {}, __children = children }),
-    self
-  )
+function Element:new(args)
+  args = args or {}
+  local obj = {
+    text = args.text or '',
+    name = args.name or '',
+    hlgroup = args.hlgroup,
+    highlightable = args.highlightable,
+    __children = args.children or {},
+    events = args.events or {},
+  }
+  return setmetatable(obj, self)
 end
 
 function Element:clear_children()
