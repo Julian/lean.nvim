@@ -704,13 +704,13 @@ function Pin:__finished_loading()
   return true
 end
 
-function Pin:async_update(force, lean3_opts)
+function Pin:async_update(force)
   if not force and self.paused then return end
 
   local tick = self.__ticker:lock()
 
   if self.__position_params and (force or not self.paused) then
-    self:__update(tick, lean3_opts)
+    self:__update(tick)
   end
   if not tick:check() then return end
 
@@ -722,7 +722,7 @@ end
 Pin.update = a.void(Pin.async_update)
 
 --- async function to update this pin's contents given the current position.
-function Pin:__update(tick, lean3_opts)
+function Pin:__update(tick)
   self:__started_loading()
   local blocks = {} ---@type Element[]
   local new_data_element = Element:new{ name = "pin-data" }
@@ -739,22 +739,6 @@ function Pin:__update(tick, lean3_opts)
   do
     local line = params.position.line
 
-    if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
-      lean3_opts = lean3_opts or {}
-      lean3.update_infoview(
-        self,
-        new_data_element,
-        buf,
-        params,
-        self.__use_widgets,
-        lean3_opts,
-        options.lean3,
-        options.show_processing,
-        options.show_no_info_message
-      )
-      goto finish
-    end
-
     if require"lean.progress".is_processing_at(params) then
       if options.show_processing then
         new_data_element:add_child(
@@ -767,6 +751,12 @@ function Pin:__update(tick, lean3_opts)
       goto finish
     end
 
+    if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
+      new_data_element:add_child(
+        lean3.render_pin(self, buf, params, self.__use_widgets, options.lean3))
+      goto finish
+    end
+
     local sess = rpc.open(buf, params)
     if not tick:check() then return true end
 
@@ -775,7 +765,7 @@ function Pin:__update(tick, lean3_opts)
       local goal, err = sess:getInteractiveGoals(params)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, lean3_opts)
+        return self:__update(tick)
       end
       if not err then
         goal_element = components.interactive_goals(goal, sess)
@@ -786,7 +776,7 @@ function Pin:__update(tick, lean3_opts)
       local err, goal = leanlsp.plain_goal(params, buf)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, lean3_opts)
+        return self:__update(tick)
       end
       goal_element = components.goal(goal)
     end
@@ -796,7 +786,7 @@ function Pin:__update(tick, lean3_opts)
       local term_goal, err = sess:getInteractiveTermGoal(params)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, lean3_opts)
+        return self:__update(tick)
       end
       if not err then
         term_goal_element = components.interactive_term_goal(term_goal, sess)
@@ -807,7 +797,7 @@ function Pin:__update(tick, lean3_opts)
       local err, term_goal = leanlsp.plain_term_goal(params, buf)
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, lean3_opts)
+        return self:__update(tick)
       end
       term_goal_element = components.term_goal(term_goal)
     end
@@ -823,7 +813,7 @@ function Pin:__update(tick, lean3_opts)
       local diags, err = sess:getInteractiveDiagnostics({ start = line, ['end'] = line + 1 })
       if not tick:check() then return true end
       if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, lean3_opts)
+        return self:__update(tick)
       end
       if not err then
         diagnostics_element = components.interactive_diagnostics(diags, line, sess)

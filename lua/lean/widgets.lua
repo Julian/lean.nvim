@@ -671,11 +671,16 @@ function BufRenderer:get_deepest_tooltip()
   return self
 end
 
-function BufRenderer:hop_to()
+function BufRenderer:get_root_ancestor()
   while self.parent do
     self = self.parent
   end
-  self:hop(function(element) return element.highlightable end, require"hop.hint_util".callbacks.win_goto)
+  return self
+end
+
+function BufRenderer:hop_to()
+  self:get_root_ancestor()
+      :hop(function(element) return element.highlightable end, require"hop.hint_util".callbacks.win_goto)
 end
 
 function BufRenderer:hop(filter_fn, callback_fn)

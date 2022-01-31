@@ -175,11 +175,11 @@ function lean3.parse_widget(result, options)
         events[element_event] = function(ctx, value)
           local args = type(value) == 'string' and { type = 'string', value = value }
             or { type = 'unit' }
-          options.send_widget_event{
+          options.send_widget_event(ctx, {
             kind = event,
             handler = handler,
             args = args,
-          }
+          })
           if element_event == "cursor_leave" then
             ctx.self:buf_event("cursor_enter")
           end
@@ -250,113 +250,93 @@ function lean3.parse_widget(result, options)
   end
 end
 
-function lean3.update_infoview(
-  pin,
-  data_element,
-  bufnr,
-  params,
-  use_widgets,
-  opts,
-  options,
-  show_processing,
-  show_no_info_message
-)
-  local client = lsp.get_lean3_server(bufnr)
-  if not client then return end
-
-  local parent_element = Element:new{ name = "lean-3-widget" }
-
-  params = vim.deepcopy(params)
-  local state_element --- @type Element?
-
-  if require"lean.progress".is_processing_at(params) then
-    if show_processing then
-      data_element:add_child(Element:new{ text = "Processing file...", name = "processing-msg" })
+--- @return Element?
+local function render_goal(pin, client, params, use_widgets, options)
+  local function reveal_position(file_name, line, column)
+    local this_infoview = require"lean.infoview".get_current_infoview()
+    local this_info = this_infoview and this_infoview.info
+    local this_window = this_info and this_info.last_window
+    -- effect.file_name == nil means current file
+    local this_buf = file_name and
+      vim.uri_to_bufnr(vim.uri_from_fname(file_name)) or
+      (this_info and vim.uri_to_bufnr(params.textDocument.uri))
+    if this_window and vim.api.nvim_win_is_valid(this_window) then
+      if this_buf then
+        vim.api.nvim_win_set_buf(this_window, this_buf)
+      end
+      vim.api.nvim_set_current_win(this_window)
+      vim.api.nvim_win_set_cursor(this_window, {line, column})
     end
-    goto finish
   end
 
   if use_widgets then
-    local err, result
-    if not (opts and opts.widget_event) then
-      err, result = util.client_a_request(client, "$/lean/discoverWidget", params)
-    else
-      err, result = util.client_a_request(client, "$/lean/widgetEvent", opts.widget_event)
-      if result and result.record then result = result.record end
-    end
+    local err, result = util.client_a_request(client, "$/lean/discoverWidget", params)
 
     if not err and result and result.widget and result.widget.html then
-      if result.effects then
-        for _, effect in pairs(result.effects) do
-          if effect.kind == "reveal_position" then
-            local this_infoview = require"lean.infoview".get_current_infoview()
-            local this_info = this_infoview and this_infoview.info
-            local this_window = this_info and this_info.last_window
-            -- effect.file_name == nil means current file
-            local this_buf = effect.file_name and
-              vim.uri_to_bufnr(vim.uri_from_fname(effect.file_name)) or
-              (this_info and vim.uri_to_bufnr(params.textDocument.uri))
-            if this_window and vim.api.nvim_win_is_valid(this_window) then
-              if this_buf then
-                vim.api.nvim_win_set_buf(this_window, this_buf)
-              end
-              vim.api.nvim_set_current_win(this_window)
-              vim.api.nvim_win_set_cursor(this_window, {effect.line, effect.column})
-            end
-          end
-        end
-      end
-
-      local widget = result.widget
-      state_element = lean3.parse_widget(result.widget.html, {
+      local widget = {
+        line = result.widget.line,
+        column = result.widget.column,
+        id = result.widget.id,
+      }
+      local goal_elem = Element:new{ name = 'lean-3-widget' }
+      local parse_options
+      parse_options = {
         mouse_events = options.mouse_events,
         show_filter = options.show_filter,
-        send_widget_event = function(ev)
+        send_widget_event = function(ctx, ev)
           ev.textDocument = pin.__position_params.textDocument
           ev.widget = widget
-          pin:async_update(false, { widget_event = ev })
+          local event_err, event_result = util.client_a_request(client, "$/lean/widgetEvent", ev)
+          if not event_result or not event_result.record then error(vim.inspect(event_err)) end
+          event_result = event_result.record
+
+          if not event_result.widget then error('no widget') end
+          if not event_result.widget.html then error('no html') end
+
+          for _, effect in pairs(event_result.effects or {}) do
+            if effect.kind == "reveal_position" then
+              reveal_position(effect.file_name, effect.line, effect.column)
+            end
+          end
+
+          goal_elem:set_children{lean3.parse_widget(event_result.widget.html, parse_options)}
+          ctx.self:get_root_ancestor():render()
+
+          -- update all other pins for the same URI so they aren't left with a stale "session"
+          for _, each in pairs(require'lean.infoview'._by_tabpage) do  -- FIXME: Private!
+            local pins = { each.info.pin }
+            vim.list_extend(pins, each.info.pins)
+            for _, other_pin in ipairs(pins) do
+              if other_pin ~= pin and other_pin.__position_params and
+                other_pin.__position_params.textDocument.uri == pin.__position_params.textDocument.uri then
+                other_pin:update()
+              end
+            end
+          end
         end,
-      })
+      }
+      goal_elem:set_children{lean3.parse_widget(result.widget.html, parse_options)}
+      return {goal_elem}
     end
   end
 
-  if not state_element then
-    local _, result = util.client_a_request(client, "$/lean/plainGoal", params)
-    if result and type(result) == "table" then
-      state_element = Element:concat(components.goal(result), '\n\n')
-    end
+  local _, result = util.client_a_request(client, "$/lean/plainGoal", params)
+  if result and type(result) == "table" then
+    return components.goal(result)
   end
+end
 
-  if state_element and not state_element:is_empty() then
-    parent_element:add_child(state_element)
-  elseif show_no_info_message then
-    parent_element:add_child(Element:new{ text = "No info.", name = "no-tactic-term" })
-  end
+function lean3.render_pin(pin, bufnr, params, use_widgets, options)
+  local client = lsp.get_lean3_server(bufnr)
+  if not client then return end
 
-  -- update all other pins for the same URI so they aren't left with a stale "session"
-  if opts and opts.widget_event then
-    for _, each in pairs(require'lean.infoview'._by_tabpage) do  -- FIXME: Private!
-      local pins = { each.info.pin }
-      vim.list_extend(pins, each.info.pins)
-      for _, other_pin in ipairs(pins) do
-        if other_pin ~= pin and other_pin.__position_params and
-          other_pin.__position_params.textDocument.uri == pin.__position_params.textDocument.uri then
-          other_pin:update()
-        end
-      end
-    end
-  end
+  params = vim.deepcopy(params)
 
-  ::finish::
+  local blocks = render_goal(pin, client, params, use_widgets, options)
 
-  for _, diag in ipairs(components.diagnostics(bufnr, params.position.line)) do
-    parent_element:add_child(Element:new{ text = '\n\n' })
-    parent_element:add_child(diag)
-  end
+  vim.list_extend(blocks, components.diagnostics(bufnr, params.position.line))
 
-  data_element:add_child(parent_element)
-
-  return true
+  return Element:concat(blocks, '\n\n')
 end
 
 function lean3.lsp_enable(opts)
