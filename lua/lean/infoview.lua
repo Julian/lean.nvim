@@ -90,8 +90,12 @@ function infoview.enable_debug()
   infoview.debug = true
 end
 
+---@class InfoviewNewArgs
+---@field width? integer
+---@field height? integer
+
 --- Create a new infoview.
----@param open boolean: whether to open the infoview after initializing
+---@param obj InfoviewNewArgs
 ---@return Infoview
 function Infoview:new(obj)
   obj = obj or {}
@@ -862,7 +866,6 @@ end
 
 --- An infoview diff window was closed.
 --- Will be triggered via a `WinClosed` autocmd.
----@param id number @info id
 function infoview.__diff_was_closed()
   local current_infoview = infoview.get_current_infoview()
   local info = current_infoview.info
@@ -872,7 +875,6 @@ end
 
 --- An infoview was entered, show the extmark for the current pin.
 --- Will be triggered via a `WinEnter` autocmd.
----@param id number @info id
 function infoview.__show_curr_pin()
   local current_infoview = infoview.get_current_infoview()
   if not current_infoview then return end
@@ -883,7 +885,6 @@ end
 
 --- An infoview was left, hide the extmark for the current pin.
 --- Will be triggered via a `WinLeave` autocmd.
----@param id number @info id
 function infoview.__hide_curr_pin()
   local current_infoview = infoview.get_current_infoview()
   if not current_infoview then return end
