@@ -130,7 +130,6 @@ describe('infoview widgets', function()
       assert.infoview_contents.are[[
         filter: no filter
         ▶ 1 goal
-
         ⊢ 2 = 2
       ]]
     end)
