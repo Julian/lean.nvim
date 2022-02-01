@@ -2,6 +2,7 @@ local Element = require('lean.widgets').Element
 local components = require('lean.infoview.components')
 local lsp = require('lean.lsp')
 local util = require('lean._util')
+local a = require'plenary.async.util'
 local subprocess_check_output = util.subprocess_check_output
 
 local lean3 = {}
@@ -154,8 +155,9 @@ function lean3.parse_widget(result, options)
 
     -- close tooltip button
     if tag == "button" and result.c and result.c[1] == "x" or result.c[1] == "×" then
-      element.events.clear = function()
-        element.events["click"]()
+      element.events.clear = function(ctx)
+        -- ignore errors, another clear event might have closed tooltip already
+        a.apcall(element.events.click, ctx)
       end
     end
 
@@ -201,9 +203,9 @@ function lean3.parse_widget(result, options)
       local select_children_element, no_filter_element, no_filter_val, current_text =
         parse_select(children, element, attributes.value, options)
       if no_filter_val and no_filter_val ~= attributes.value then
-        element.events.clear = function()
-          no_filter_element.events.click()
-          return true
+        element.events.clear = function(ctx)
+          -- ignore errors, another clear event might have closed tooltip already
+          a.apcall(no_filter_element.events.click, ctx)
         end
       end
       local select_menu_element = Element:new{
