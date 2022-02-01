@@ -875,6 +875,7 @@ end
 function infoview.__update()
   if not is_lean_buffer() then return end
   local current_infoview = infoview.get_current_infoview()
+  if not current_infoview then return end
   local info = current_infoview.info
   if info.__win_event_disable then return end
   info:set_last_window()
