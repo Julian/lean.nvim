@@ -53,7 +53,7 @@ local options = {
 ---@field private __extmark_buf number
 ---@field private __extmark_hl_group string
 ---@field private __extmark_virt_text table
----@field private __ticker table
+---@field private __ticker Ticker
 ---@field private __info Info
 ---@field private __ui_position_params UIParams
 ---@field private __use_widgets boolean
@@ -696,13 +696,13 @@ function Pin:__finished_loading()
   return true
 end
 
-function Pin:async_update(force, _, lean3_opts)
+function Pin:async_update(force)
   if not force and self.paused then return end
 
   local tick = self.__ticker:lock()
 
   if self.__position_params and (force or not self.paused) then
-    self:__update(tick, lean3_opts)
+    self:__update(tick)
   end
   if not tick:check() then return end
 
@@ -713,123 +713,109 @@ end
 
 Pin.update = a.void(Pin.async_update)
 
---- async function to update this pin's contents given the current position.
-function Pin:__update(tick, lean3_opts)
-  self:__started_loading()
-  local blocks = {} ---@type Element[]
-  local new_data_element = Element:new{ name = "pin-data" }
-
+---@param tick Tick
+---@return Element?
+function Pin:__mk_data_elem(tick)
   local params = self.__position_params
+  local line = params.position.line
+
+  ::retry::
 
   local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   if buf == -1 then
     error("No corresponding buffer found for update.")
-    return false
   end
 
-  --- TODO if changes are currently being debounced for this buffer, add debounce timer delay
-  do
-    local line = params.position.line
-
-    if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
-      lean3_opts = lean3_opts or {}
-      lean3.update_infoview(
-        self,
-        new_data_element,
-        buf,
-        params,
-        self.__use_widgets,
-        lean3_opts,
-        options.lean3,
-        options.show_processing,
-        options.show_no_info_message
-      )
-      goto finish
+  if require"lean.progress".is_processing_at(params) then
+    if options.show_processing then
+      return Element:new{
+        text = "Processing file...",
+        name = "processing-msg"
+      }
     end
-
-    if require"lean.progress".is_processing_at(params) then
-      if options.show_processing then
-        new_data_element:add_child(
-          Element:new{
-            text = "Processing file...",
-            name = "processing-msg"
-          }
-        )
-      end
-      goto finish
-    end
-
-    local sess = rpc.open(buf, params)
-    if not tick:check() then return true end
-
-    local goal_element
-    if self.__use_widgets then
-      local goal, err = sess:getInteractiveGoals(params)
-      if not tick:check() then return true end
-      if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, lean3_opts)
-      end
-      if not err then
-        goal_element = components.interactive_goals(goal, sess)
-      end
-    end
-
-    if not goal_element then
-      local err, goal = leanlsp.plain_goal(params, buf)
-      if not tick:check() then return true end
-      if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, lean3_opts)
-      end
-      goal_element = components.goal(goal)
-    end
-
-    local term_goal_element
-    if self.__use_widgets then
-      local term_goal, err = sess:getInteractiveTermGoal(params)
-      if not tick:check() then return true end
-      if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, lean3_opts)
-      end
-      if not err then
-        term_goal_element = components.interactive_term_goal(term_goal, sess)
-      end
-    end
-
-    if not term_goal_element then
-      local err, term_goal = leanlsp.plain_term_goal(params, buf)
-      if not tick:check() then return true end
-      if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, lean3_opts)
-      end
-      term_goal_element = components.term_goal(term_goal)
-    end
-
-    vim.list_extend(blocks, goal_element)
-    vim.list_extend(blocks, term_goal_element)
-    if options.show_no_info_message and #goal_element + #term_goal_element == 0 then
-      table.insert(blocks, Element:new{ text = "No info.", name = "no-tactic-term" })
-    end
-
-    local diagnostics_element
-    if self.__use_widgets then
-      local diags, err = sess:getInteractiveDiagnostics({ start = line, ['end'] = line + 1 })
-      if not tick:check() then return true end
-      if err and err.code == protocol.ErrorCodes.ContentModified then
-        return self:__update(tick, lean3_opts)
-      end
-      if not err then
-        diagnostics_element = components.interactive_diagnostics(diags, line, sess)
-      end
-    end
-
-    vim.list_extend(blocks, diagnostics_element or components.diagnostics(buf, line))
-
-    new_data_element:add_child(Element:concat(blocks, '\n\n'))
-
-    if not tick:check() then return true end
+    return Element:new()
   end
 
-  ::finish::
+  if vim.api.nvim_buf_get_option(buf, "ft") == "lean3" then
+    return lean3.render_pin(self, buf, params, self.__use_widgets, options.lean3)
+  end
+
+  local sess = rpc.open(buf, params)
+  if not tick:check() then return end
+
+  local goal_element
+  if self.__use_widgets then
+    local goal, err = sess:getInteractiveGoals(params)
+    if not tick:check() then return end
+    if err and err.code == protocol.ErrorCodes.ContentModified then
+      goto retry
+    end
+    if not err then
+      goal_element = components.interactive_goals(goal, sess)
+    end
+  end
+
+  if not goal_element then
+    local err, goal = leanlsp.plain_goal(params, buf)
+    if not tick:check() then return end
+    if err and err.code == protocol.ErrorCodes.ContentModified then
+      goto retry
+    end
+    goal_element = components.goal(goal)
+  end
+
+  local term_goal_element
+  if self.__use_widgets then
+    local term_goal, err = sess:getInteractiveTermGoal(params)
+    if not tick:check() then return end
+    if err and err.code == protocol.ErrorCodes.ContentModified then
+      goto retry
+    end
+    if not err then
+      term_goal_element = components.interactive_term_goal(term_goal, sess)
+    end
+  end
+
+  if not term_goal_element then
+    local err, term_goal = leanlsp.plain_term_goal(params, buf)
+    if not tick:check() then return end
+    if err and err.code == protocol.ErrorCodes.ContentModified then
+      goto retry
+    end
+    term_goal_element = components.term_goal(term_goal)
+  end
+
+  local blocks = {}
+  vim.list_extend(blocks, goal_element)
+  vim.list_extend(blocks, term_goal_element)
+  if options.show_no_info_message and #goal_element + #term_goal_element == 0 then
+    table.insert(blocks, Element:new{ text = "No info.", name = "no-tactic-term" })
+  end
+
+  local diagnostics_element
+  if self.__use_widgets then
+    local diags, err = sess:getInteractiveDiagnostics({ start = line, ['end'] = line + 1 })
+    if not tick:check() then return end
+    if err and err.code == protocol.ErrorCodes.ContentModified then
+      goto retry
+    end
+    if not err then
+      diagnostics_element = components.interactive_diagnostics(diags, line, sess)
+    end
+  end
+
+  vim.list_extend(blocks, diagnostics_element or components.diagnostics(buf, line))
+
+  return Element:concat(blocks, '\n\n')
+end
+
+--- async function to update this pin's contents given the current position.
+function Pin:__update(tick)
+  self:__started_loading()
+
+  local new_data_element = self:__mk_data_elem(tick)
+  if not new_data_element or not tick:check() then return end
+
   new_data_element.events.clear_all = function(ctx) ---@param ctx ElementEventContext
     local last_window = ctx.self.last_win
     new_data_element:find(function (element) ---@param element Element
@@ -837,8 +823,8 @@ function Pin:__update(tick, lean3_opts)
     end)
     pcall(vim.api.nvim_set_current_win, last_window)
   end
+
   self.__data_element = new_data_element
-  return true
 end
 
 --- Close all open infoviews (across all tabs).
