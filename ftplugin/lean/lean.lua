@@ -5,7 +5,7 @@ vim.opt.wildignore:append[[*.olean]]
 
 vim.opt_local.iskeyword = [[@,48-57,_,-,!,#,$,%]]
 vim.opt_local.comments = [[s0:/-,mb:\ ,ex:-/,:--]]
-vim.opt_local.commentstring=[[/-\ %s\ -/]]
+vim.opt_local.commentstring=[[/- %s -/]]
 
 vim.opt_local.includeexpr = [[substitute(v:fname, '\.', '/', 'g') . '.lean']]
 

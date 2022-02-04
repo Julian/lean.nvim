@@ -11,6 +11,7 @@ vim.cmd[[
   runtime! plugin/lspconfig.vim
   runtime! plugin/plenary.vim
   runtime! plugin/switch.vim
+  runtime! plugin/tcomment.vim
 ]]
 
 -- plenary forks subprocesses, so enable coverage here when appropriate

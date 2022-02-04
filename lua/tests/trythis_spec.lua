@@ -1,6 +1,6 @@
 local helpers = require('tests.helpers')
 
-require('lean').setup { lsp3 = { enable = true } }
+require('lean').setup {}
 
 describe('trythis', function()
   it('replaces a single try this', helpers.clean_buffer("lean3", [[
