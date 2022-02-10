@@ -7,8 +7,8 @@ syn case match
 
 " keywords
 
-syn keyword leanCommand prelude import include omit export open mutual
-syn keyword leanCommandPrefix local private protected noncomputable meta
+syn keyword leanCommand prelude import include omit export open open_locale mutual
+syn keyword leanCommandPrefix local localized private protected noncomputable meta
 syn keyword leanModifier renaming hiding where extends using with at rec deriving
 
 syn keyword leanCommand namespace section
