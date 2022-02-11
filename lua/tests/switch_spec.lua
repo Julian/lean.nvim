@@ -41,4 +41,20 @@ describe('switch', function()
     vim.cmd('Switch')
     assert.is.same('#check stop', vim.api.nvim_get_current_line())
   end))
+
+  it('switches between exact <> and refine <>', clean_buffer("lean3", [[
+exact ⟨foo, bar⟩
+]], function()
+    vim.api.nvim_command('normal! 1gg0')
+    vim.cmd('Switch')
+    assert.is.same('refine ⟨foo, bar⟩', vim.api.nvim_get_current_line())
+  end))
+
+  it('does not switch between exact foo and refine foo', clean_buffer("lean3", [[
+exact foo
+]], function()
+    vim.api.nvim_command('normal! 1gg0')
+    vim.cmd('Switch')
+    assert.is.same('exact foo', vim.api.nvim_get_current_line())
+  end))
 end)
