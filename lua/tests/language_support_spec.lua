@@ -2,24 +2,38 @@
 --- Tests for basic Lean language support.
 ---@brief ]]
 
+local dedent = require('lean._util').dedent
 local helpers = require('tests.helpers')
 
 require('lean').setup{}
 
-describe('commenting', function()
-  it('comments out single lines', helpers.clean_buffer('lean', 'def best := 37', function()
+for _, ft in pairs({"lean3", "lean"}) do
+describe(ft .. ' commenting', function()
+  it('comments out single lines', helpers.clean_buffer(ft, 'def best := 37', function()
     vim.cmd('TComment')
-    assert.is.same(
-      '/- def best := 37 -/',
-      vim.api.nvim_get_current_line()
-    )
+    assert.contents.are('-- def best := 37')
   end))
 
-  it('comments out single lines in lean 3', helpers.clean_buffer('lean3', 'def best := 37', function()
-    vim.cmd('TComment')
-    assert.is.same(
-      '/- def best := 37 -/',
-      vim.api.nvim_get_current_line()
-    )
+  it('comments out multiple lines inline by default', helpers.clean_buffer(ft, [[
+def foo := 12
+def bar := 37]], function()
+    vim.cmd(':% TComment')
+    assert.contents.are(dedent[[
+      -- def foo := 12
+      -- def bar := 37
+    ]])
+  end))
+
+  it('can comment out block comments', helpers.clean_buffer(ft, [[
+def foo := 12
+def bar := 37]], function()
+    vim.cmd(':% TCommentBlock')
+    assert.contents.are(dedent[[
+      /-
+      def foo := 12
+      def bar := 37
+      -/
+    ]])
   end))
 end)
+end
