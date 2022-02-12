@@ -57,4 +57,20 @@ exact foo
     vim.cmd('Switch')
     assert.is.same('exact foo', vim.api.nvim_get_current_line())
   end))
+
+  it('switches between simp only [foo] and simp', clean_buffer("lean3", [[
+simp only [foo, bar, baz]
+]], function()
+    vim.api.nvim_command('normal! 1gg0')
+    vim.cmd('Switch')
+    assert.is.same('simp', vim.api.nvim_get_current_line())
+  end))
+
+  it('switches between simp and squeeze_simp', clean_buffer("lean3", [[
+simp
+]], function()
+    vim.api.nvim_command('normal! 1gg0')
+    vim.cmd('Switch')
+    assert.is.same('squeeze_simp', vim.api.nvim_get_current_line())
+  end))
 end)
