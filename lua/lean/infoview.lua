@@ -299,34 +299,36 @@ function Info:new(opts)
   }
 
   local count = vim.tbl_count(infoview._by_tabpage)
-  new_info.__renderer = new_info.__pins_element:renderer{
-    buf = util.create_buf{
-      name = 'lean://info/' .. count .. '/curr',
-      options = { bufhidden = 'hide' },
-      scratch = true,
-    },
-    keymaps = options.mappings
-  }
-  new_info.__diff_renderer = new_info.pin.__element:renderer{
-    buf = util.create_buf{
-      name = 'lean://info/' .. count .. '/diff',
-      options = { bufhidden = 'hide' },
-      listed = false,
-      scratch = true,
-    },
-    keymaps = options.mappings
-  }
 
+  local pin_bufnr = util.create_buf{
+    name = 'lean://info/' .. count .. '/curr',
+    options = { bufhidden = 'hide' },
+    scratch = true,
+  }
+  new_info.__renderer = new_info.__pins_element:renderer{
+    buf = pin_bufnr,
+    keymaps = options.mappings,
+  }
   -- Show/hide current pin extmark when entering/leaving infoview.
   set_augroup("LeanInfoviewShowPin", string.format([[
     autocmd WinEnter <buffer=%d> lua require'lean.infoview'.__show_curr_pin()
     autocmd WinLeave <buffer=%d> lua require'lean.infoview'.__hide_curr_pin()
-  ]], new_info.__renderer.buf, new_info.__renderer.buf), new_info.__renderer.buf)
+  ]], pin_bufnr, pin_bufnr), pin_bufnr)
 
+  local diff_bufnr = util.create_buf{
+    name = 'lean://info/' .. count .. '/diff',
+    options = { bufhidden = 'hide' },
+    listed = false,
+    scratch = true,
+  }
+  new_info.__diff_renderer = new_info.pin.__element:renderer{
+    buf = diff_bufnr,
+    keymaps = options.mappings,
+  }
   -- Make sure we notice even if someone manually :q's the diff window.
   set_augroup("LeanInfoviewClose", string.format([[
     autocmd BufHidden <buffer=%d> lua require'lean.infoview'.__diff_was_closed()
-  ]], new_info.__diff_renderer.buf), new_info.__diff_renderer.buf)
+  ]], diff_bufnr), diff_bufnr)
 
   new_info:render()
 
