@@ -133,6 +133,11 @@ function Infoview:open()
 
   vim.api.nvim_set_current_win(window_before_split)
 
+  -- Make sure we notice even if someone manually :q's the infoview window.
+  set_augroup("LeanInfoviewClose", string.format([[
+    autocmd BufHidden <buffer=%d> lua require'lean.infoview'.__was_closed(%d)
+  ]], self.info.__renderer.buf, self.window), self.info.__renderer.buf)
+
   self:focus_on_current_buffer()
 
   self:__refresh_diff()
@@ -315,11 +320,6 @@ function Info:new(opts)
     autocmd WinEnter <buffer=%d> lua require'lean.infoview'.__show_curr_pin()
     autocmd WinLeave <buffer=%d> lua require'lean.infoview'.__hide_curr_pin()
   ]], new_info.__renderer.buf, new_info.__renderer.buf), new_info.__renderer.buf)
-
-  -- Make sure we notice even if someone manually :q's the infoview window.
-  set_augroup("LeanInfoviewClose", string.format([[
-    autocmd BufHidden <buffer=%d> lua require'lean.infoview'.__was_closed()
-  ]], new_info.__renderer.buf), new_info.__renderer.buf)
 
   -- Make sure we notice even if someone manually :q's the diff window.
   set_augroup("LeanInfoviewClose", string.format([[
@@ -836,10 +836,17 @@ end
 
 --- An infoview was closed, either directly via `Infoview.close` or manually.
 --- Will be triggered via a `WinClosed` autocmd.
-function infoview.__was_closed()
-  local current_infoview = infoview.get_current_infoview()
-  if current_infoview.info.__win_event_disable then return end
-  current_infoview:close()
+function infoview.__was_closed(window)
+  -- FIXME: Why is infoview._by_tabpage[tabpage] here the wrong infoview!?
+  --        Try using it and it will fail the `closes independently via quit`
+  --        test.
+  -- local tabpage, _ = unpack(vim.fn.win_id2tabwin(window))
+  for _, each in ipairs(infoview._by_tabpage) do
+    if each.window == window then
+      if each.info.__win_event_disable then return end
+      each:close()
+    end
+  end
 end
 
 --- An infoview diff window was closed.

@@ -194,6 +194,23 @@ describe('infoview open/close', function()
 
       vim.cmd('tabclose ' .. tab2)
     end)
+
+    it('closes independently via :quit', function(_)
+      vim.cmd('tabedit ' .. fixtures.lean_project.some_existing_file)
+      local tab2_windows = vim.api.nvim_tabpage_list_wins(0)
+      assert.is.equal(2, #tab2_windows)
+
+      vim.cmd('tabedit ' .. fixtures.lean_project.some_existing_file)
+      assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
+
+      -- Close the two tab 3 windows
+      vim.cmd('quit')
+      vim.cmd('quit')
+
+      assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
+
+      vim.cmd('tabclose')
+    end)
   end)
 
   it('closes when its buffer is deleted and stays closed until reopened', function(_)
