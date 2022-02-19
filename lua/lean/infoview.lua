@@ -841,7 +841,7 @@ function infoview.__was_closed(window)
   --        Try using it and it will fail the `closes independently via quit`
   --        test.
   -- local tabpage, _ = unpack(vim.fn.win_id2tabwin(window))
-  for _, each in ipairs(infoview._by_tabpage) do
+  for _, each in pairs(infoview._by_tabpage) do
     if each.window == window then
       if each.info.__win_event_disable then return end
       each:close()
