@@ -574,14 +574,16 @@ function BufRenderer:hover(force_update_highlight)
       self.tooltip.parent = self
       self.tooltip.parent_path = tt_parent_element_path
     else
-      local bufnr = vim.api.nvim_create_buf(false, true)
-      self.tooltip = new_tooltip_element:renderer {
-        buf = bufnr,
+      self.tooltip = new_tooltip_element:renderer{
+        buf = util.create_buf{
+          listed = false,
+          scratch = true,
+          options = { bufhidden = 'wipe' },
+        },
         keymaps = self.keymaps,
         parent = self,
         parent_path = tt_parent_element_path
       }
-      vim.api.nvim_buf_set_option(self.tooltip.buf, "bufhidden", "wipe")
     end
 
     local win_options = {

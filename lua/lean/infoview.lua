@@ -298,20 +298,22 @@ function Info:new(opts)
     parent = new_info
   }
 
-  local function mk_buf(name, listed)
-    local bufnr = vim.api.nvim_create_buf(listed, true)
-    vim.api.nvim_buf_set_option(bufnr, "bufhidden", "hide")
-    vim.api.nvim_buf_set_name(bufnr, name)
-    return bufnr
-  end
-
   local count = vim.tbl_count(infoview._by_tabpage)
   new_info.__renderer = new_info.__pins_element:renderer{
-    buf = mk_buf("lean://info/" .. count .. "/curr", true),
+    buf = util.create_buf{
+      name = 'lean://info/' .. count .. '/curr',
+      options = { bufhidden = 'hide' },
+      scratch = true,
+    },
     keymaps = options.mappings
   }
   new_info.__diff_renderer = new_info.pin.__element:renderer{
-    buf = mk_buf("lean://info/" .. count .. "/diff", false),
+    buf = util.create_buf{
+      name = 'lean://info/' .. count .. '/diff',
+      options = { bufhidden = 'hide' },
+      listed = false,
+      scratch = true,
+    },
     keymaps = options.mappings
   }
 

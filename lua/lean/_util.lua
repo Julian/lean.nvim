@@ -1,6 +1,6 @@
 -- Stuff that should live in some standard library.
-local Job = require("plenary.job")
-local a = require("plenary.async")
+local Job = require('plenary.job')
+local a = require('plenary.async')
 -- local control = require'plenary.async.control'
 
 local M = {}
@@ -23,6 +23,26 @@ function M.set_augroup(name, autocmds, buffer)
       %s
     augroup END
   ]], name, name, buffer_string, autocmds))
+end
+
+---@class CreateBufParams
+---@field name string @the name of the new buffer
+---@field options table<string, any> @a table of options each suitable for nvim_buf_set_option
+---@field listed boolean @see :h nvim_create_buf (default true)
+---@field scratch boolean @see :h nvim_create_buf (default false)
+
+---Create a new buffer.
+---@param params CreateBufParams @new buffer options
+---@return integer: the new `bufnr`
+function M.create_buf(params)
+  if params.listed == nil then params.listed = true end
+  if params.scratch == nil then params.scratch = false end
+  local bufnr = vim.api.nvim_create_buf(params.listed, params.scratch)
+  for option, value in pairs(params.options or {}) do
+    vim.api.nvim_buf_set_option(bufnr, option, value)
+  end
+  if params.name ~= nil then vim.api.nvim_buf_set_name(bufnr, params.name) end
+  return bufnr
 end
 
 --- Run a subprocess, blocking on exit, and returning its stdout.

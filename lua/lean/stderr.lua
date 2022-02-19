@@ -1,5 +1,8 @@
-local log = require'vim.lsp.log'
-local infoview = require'lean.infoview'
+local log = require('vim.lsp.log')
+
+local infoview = require('lean.infoview')
+local util = require('lean._util')
+
 local stderr = {}
 
 -- Opens a window for the stderr buffer.
@@ -35,8 +38,7 @@ function stderr.enable()
       local chunk = select(4, ...)
       vim.schedule(function()
         if not stderr_bufnr or not vim.api.nvim_buf_is_valid(stderr_bufnr) then
-          stderr_bufnr = vim.api.nvim_create_buf(false, true)
-          vim.api.nvim_buf_set_name(stderr_bufnr, "lean://stderr")
+          stderr_bufnr = util.create_buf{ name = 'lean://stderr', listed = false, scratch = true }
           stderr_winnr = nil
         end
         if not stderr_winnr or not vim.api.nvim_win_is_valid(stderr_winnr) then
