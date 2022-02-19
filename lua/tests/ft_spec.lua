@@ -38,7 +38,8 @@ describe('ft.detect', function()
 
   it('marks lean 4 standard library files nomodifiable by default', function()
     local name = vim.api.nvim_buf_get_name(0)
-    assert.is_truthy(name:match('.*/lib/lean/src/.*'))
+    local is_stdlib = name:match('.*/src/lean/.*') or name:match('.*/lib/lean/src/.*')
+    assert.message("Didn't jump to core Lean!").is_truthy(is_stdlib)
     assert.is_falsy(vim.opt.modifiable:get())
   end)
 

@@ -9,10 +9,11 @@ local options = {
   _DEFAULTS = {
     default = "lean",
     nomodifiable = {
-      '.*/lib/lean/src/.*',  -- Lean 4 standard library
+      '.*/src/lean/.*',       -- Lean 4 standard library
+      '.*/lib/lean/src/.*',   -- Lean 4 legacy standard library
       '.*/lean_packages/.*',  -- Lean 4 dependencies
       _LEAN3_STANDARD_LIBRARY .. '.*',
-      '/_target/.*/.*.lean'  -- Lean 3 dependencies
+      '/_target/.*/.*.lean'   -- Lean 3 dependencies
     }
   }
 }
