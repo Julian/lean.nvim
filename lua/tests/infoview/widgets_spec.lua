@@ -72,7 +72,7 @@ describe('infoview widgets', function()
     -- do absolutely nothing and sit there never returning a response (even an
     -- initial one). Marking these pending until we figure out what's happening
     -- there, presumably some request getting sent before the server is ready.
-    pending('shows widget tooltips', function(_)
+    it('shows widget tooltips', function(_)
       helpers.move_cursor{ to = {1, 10} }
       helpers.wait_for_infoview_contents('ℕ')
       assert.infoview_contents.are[[
@@ -83,31 +83,20 @@ describe('infoview widgets', function()
       vim.api.nvim_set_current_win(current_infoview.window)
       helpers.move_cursor{ to = {2, 4} }  -- `ℕ`
 
-      assert.are.same_elements(
-        { lean_window, current_infoview.window },
-        vim.api.nvim_tabpage_list_wins(0)
-      )
+      local known_windows = { lean_window, current_infoview.window }
+      assert.are.same_elements(known_windows, vim.api.nvim_tabpage_list_wins(0))
+
       helpers.feed('<CR>')
 
-      local tooltip_bufnr
-      vim.wait(1000, function()
-        for _, window in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-          if window ~= lean_window and window ~= current_infoview.window then
-            tooltip_bufnr = vim.api.nvim_win_get_buf(window)
-            return true
-          end
-        end
-      end)
+      local tooltip_bufnr = vim.api.nvim_win_get_buf(helpers.wait_for_new_window(known_windows))
 
       -- x is the tooltip closer.
       assert.contents.are{ 'x Type | ℕ', bufnr = tooltip_bufnr }
 
       -- Close the tooltip.
       helpers.feed('<Esc>')
-      assert.are.same_elements(
-        { lean_window, current_infoview.window },
-        vim.api.nvim_tabpage_list_wins(0)
-      )
+      vim.wait(1000, function() return #vim.api.nvim_tabpage_list_wins(0) == 2 end)
+      assert.are.same_elements(known_windows, vim.api.nvim_tabpage_list_wins(0))
     end)
 
     pending('can be disabled', function(_)
