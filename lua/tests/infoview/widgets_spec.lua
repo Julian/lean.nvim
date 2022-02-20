@@ -72,7 +72,7 @@ describe('infoview widgets', function()
     -- do absolutely nothing and sit there never returning a response (even an
     -- initial one). Marking these pending until we figure out what's happening
     -- there, presumably some request getting sent before the server is ready.
-    it('shows widget tooltips', function(_)
+    pending('shows widget tooltips', function(_)
       helpers.move_cursor{ to = {1, 10} }
       helpers.wait_for_infoview_contents('ℕ')
       assert.infoview_contents.are[[
