@@ -245,6 +245,10 @@ function Infoview:close()
   if not self.window then return end
   self:__close_diff()
   vim.api.nvim_win_close(self.window, true)
+  self:__was_closed()
+end
+
+function Infoview:__was_closed()
   self.window = nil
   self.info:__was_closed()
 end
@@ -848,7 +852,7 @@ function infoview.__was_closed(window)
   for _, each in pairs(infoview._by_tabpage) do
     if each.window == window then
       if each.info.__win_event_disable then return end
-      each:close()
+      each:__was_closed()
     end
   end
 end

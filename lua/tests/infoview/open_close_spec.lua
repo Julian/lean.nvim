@@ -276,7 +276,7 @@ describe('infoview open/close', function()
     vim.cmd('tabclose')
   end)
 
-  pending('can be reopened when the last remaining infoview buffer was reused for editing a file', function()
+  it('can be reopened when the last remaining infoview buffer was reused for editing a file', function()
     assert.is.equal(1, #vim.api.nvim_list_tabpages())
     local initial_infoview = infoview.get_current_infoview()
     local initial_infoview_window = initial_infoview.window
