@@ -1,8 +1,8 @@
 local ft = {}
 
 local _LEAN3_STANDARD_LIBRARY = '.*/[^/]*lean[%-]+3.+/lib/'
-local _LEAN3_VERSION_MARKER = '.*lean_version.*\".*:3.*'
-local _LEAN4_VERSION_MARKER = '.*lean_version.*\".*lean4:.*'
+local _LEAN3_VERSION_MARKER = '.*lean_version.*".*:3.*'
+local _LEAN4_VERSION_MARKER = '.*lean_version.*".*lean4:.*'
 
 local options = {
   default = "lean",
