@@ -39,10 +39,9 @@ describe('builtin abbreviations', function()
         assert.contents.are[[ε]]
       end))
 
-      pending('leaves the cursor in the right spot on <Tab>', helpers.clean_buffer(ft, '', function()
-        helpers.insert[[\<<Tab>]]
+      it('leaves the cursor in the right spot on <Tab>', helpers.clean_buffer(ft, '', function()
+        helpers.insert[[\<<Tab>abc]]
         wait_for_expansion()
-        helpers.insert[[abc]]
         assert.contents.are[[⟨abc]]
       end))
 

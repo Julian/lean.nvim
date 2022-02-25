@@ -132,7 +132,7 @@ function abbreviations._insert_char_pre()
 
   if abbreviations.abbr_mark then
     if vim.tbl_contains({'{', '}', '(', ')', ' '}, char) then
-      return abbreviations.convert(true)
+      return vim.schedule(abbreviations.convert)
     end
   end
 
@@ -167,23 +167,23 @@ function abbreviations._insert_char_pre()
     })
     -- override only for the duration of the abbreviation (clashes with autocompletion plugins)
     backup_buf_imap('<CR>')
-    vim.api.nvim_buf_set_keymap(0, 'i', '<CR>', 'v:lua._lean_abbreviations_enter_expr()', {expr = true, noremap = true})
+    vim.api.nvim_buf_set_keymap(
+      0,
+      'i',
+      '<CR>',
+      [[<C-o>:lua require'lean.abbreviations'.convert()<CR><CR>]],
+      { noremap = true }
+    )
     backup_buf_imap('<Tab>')
-    vim.api.nvim_buf_set_keymap(0, 'i', '<Tab>', 'v:lua._lean_abbreviations_tab_expr()', {expr = true, noremap = true})
+    vim.api.nvim_buf_set_keymap(
+      0,
+      'i',
+      '<Tab>',
+      [[<Cmd>lua require'lean.abbreviations'.convert()<CR>]],
+     { noremap = true }
+    )
     return
   end
-end
-
-function _G._lean_abbreviations_enter_expr()
-  abbreviations.convert(true)
-  return '\n'
-end
-
-function _G._lean_abbreviations_tab_expr()
-  abbreviations.convert(true)
-  -- FIXME: Really we want return '', i.e. to do nothing and just expand,
-  --        but that seems to not do anything...
-  return vim.api.nvim_replace_termcodes('<Left><Right>', true, false, true)
 end
 
 local function convert_abbrev(abbrev)
@@ -210,7 +210,7 @@ local function convert_abbrev(abbrev)
   return repl .. convert_abbrev(abbrev:sub(matchlen + 1))
 end
 
-function abbreviations.convert(needs_schedule)
+function abbreviations.convert()
   if not abbreviations.abbr_mark then return end
   local row1, col1, row2, col2 = get_extmark_range(abbr_mark_ns, abbreviations.abbr_mark)
   _clear_abbr_mark()
@@ -218,14 +218,14 @@ function abbreviations.convert(needs_schedule)
 
   local tmp_extmark = vim.api.nvim_buf_set_extmark(0, abbr_mark_ns, row1, col1,
     { end_line = row2, end_col = col2 })
-  local conv = function()
-    row1, col1, row2, col2 = get_extmark_range(abbr_mark_ns, tmp_extmark)
-    if not row1 or row1 ~= row2 then return end
-    vim.api.nvim_buf_del_extmark(0, abbr_mark_ns, tmp_extmark)
-    local text = vim.api.nvim_buf_get_lines(0, row1, row1+1, true)[1]:sub(col1 + 1, col2)
-    vim.api.nvim_buf_set_text(0, row1, col1, row2, col2, {convert_abbrev(text)})
-  end
-  if needs_schedule then vim.schedule(conv) else conv() end
+
+  row1, col1, row2, col2 = get_extmark_range(abbr_mark_ns, tmp_extmark)
+  if not row1 or row1 ~= row2 then return end
+  vim.api.nvim_buf_del_extmark(0, abbr_mark_ns, tmp_extmark)
+  local text = vim.api.nvim_buf_get_lines(0, row1, row1+1, true)[1]:sub(col1 + 1, col2)
+  local converted = convert_abbrev(text)
+  vim.api.nvim_buf_set_text(0, row1, col1, row2, col2, {converted})
+  vim.api.nvim_win_set_cursor(0, { row1 + 1, col1 + #converted })
 end
 
 local function enable_builtin()
