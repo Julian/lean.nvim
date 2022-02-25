@@ -6,17 +6,15 @@ local _LEAN4_VERSION_MARKER = '.*lean_version.*".*lean4:.*'
 
 local options = {
   default = "lean",
-  _DEFAULTS = {
-    default = "lean",
-    nomodifiable = {
-      '.*/src/lean/.*',       -- Lean 4 standard library
-      '.*/lib/lean/src/.*',   -- Lean 4 legacy standard library
-      '.*/lean_packages/.*',  -- Lean 4 dependencies
-      _LEAN3_STANDARD_LIBRARY .. '.*',
-      '/_target/.*/.*.lean'   -- Lean 3 dependencies
-    }
+  nomodifiable = {
+    '.*/src/lean/.*',       -- Lean 4 standard library
+    '.*/lib/lean/src/.*',   -- Lean 4 legacy standard library
+    '.*/lean_packages/.*',  -- Lean 4 dependencies
+    _LEAN3_STANDARD_LIBRARY .. '.*',
+    '/_target/.*/.*.lean'   -- Lean 3 dependencies
   }
 }
+options._DEFAULTS = vim.deepcopy(options)
 
 local find_project_root = require('lspconfig.util').root_pattern(
   'leanpkg.toml',
