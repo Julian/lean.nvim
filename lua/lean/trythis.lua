@@ -55,6 +55,7 @@ function trythis.swap()
         vim.split(suggestion.replacement, '\n')
       )
 
+      trythis.trim_doubled_ats(suggestion.replacement:match(' at .*'))
       trythis.trim_unnecessary_mode_switching()
       return
     end
@@ -70,6 +71,24 @@ function trythis.trim_unnecessary_mode_switching()
   if start_col ~= nil then
     local start_row, _ = unpack(vim.api.nvim_win_get_cursor(0))
     vim.api.nvim_buf_set_text(0, start_row - 1, start_col, start_row - 1, end_col, {})
+  end
+end
+
+--- Trim `at foo at foo` to just `at foo` once.
+function trythis.trim_doubled_ats(at)
+  if not at then return end
+  local line = vim.api.nvim_get_current_line()
+  local start_col, end_col = line:find(at .. at)
+  if start_col ~= nil then
+    local start_row, _ = unpack(vim.api.nvim_win_get_cursor(0))
+    vim.api.nvim_buf_set_text(
+      0,
+      start_row - 1,
+      start_col,
+      start_row - 1,
+      end_col - #at + 1,
+      {}
+    )
   end
 end
 

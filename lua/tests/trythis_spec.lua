@@ -102,6 +102,21 @@ example {n : nat} : n = n := by whatshouldIdo]], function()
     )
   end))
 
+  -- A line containing `squeeze_simp [foo] at bar` will re-suggest `at bar`, so
+  -- ensure it doesn't appear twice
+  it('trims simp at foo when it will be duplicated', helpers.clean_buffer("lean3", [[
+meta def whatshouldIdo := (do tactic.trace "Try this: simp [foo] at bar")
+example {n : nat} : n = n := by whatshouldIdo at bar]], function()
+    vim.api.nvim_command('normal G$')
+    helpers.wait_for_line_diagnostics()
+
+    require('lean.trythis').swap()
+    assert.is.same(
+      'example {n : nat} : n = n := by simp [foo] at bar',
+      vim.api.nvim_get_current_line()
+    )
+  end))
+
   it('replaces squashed suggestions from earlier in the line', helpers.clean_buffer("lean3", [[
 meta def whatshouldIdo := (do tactic.trace "Try this: exact rfl")
 example {n : nat} : n = n := by whatshouldIdo]], function()
