@@ -94,7 +94,10 @@ local function get_extmark_range(abbr_ns, id, buffer)
   return row, col, details and details.end_row, details and details.end_col
 end
 
-local function backup_buf_imap(key)
+---inoremap a key temporarily for the duration of the abbreviation expansion
+---@param string key
+---@param string to
+local function inoremap_temporarily(key, to)
   local imap = vim.fn.maparg(key, "i", false, true)
   if vim.fn.empty(imap) == 0 then
     buf_imaps[key] = {
@@ -108,6 +111,8 @@ local function backup_buf_imap(key)
       },
     }
   end
+
+  vim.api.nvim_buf_set_keymap(0, 'i', key, to, { noremap = true })
 end
 
 local function restore_buf_imaps()
@@ -166,23 +171,8 @@ function abbreviations._insert_char_pre()
       end_right_gravity = true,
     })
     -- override only for the duration of the abbreviation (clashes with autocompletion plugins)
-    backup_buf_imap('<CR>')
-    vim.api.nvim_buf_set_keymap(
-      0,
-      'i',
-      '<CR>',
-      [[<C-o>:lua require'lean.abbreviations'.convert()<CR><CR>]],
-      { noremap = true }
-    )
-    backup_buf_imap('<Tab>')
-    vim.api.nvim_buf_set_keymap(
-      0,
-      'i',
-      '<Tab>',
-      [[<Cmd>lua require'lean.abbreviations'.convert()<CR>]],
-     { noremap = true }
-    )
-    return
+    inoremap_temporarily('<CR>', [[<C-o>:lua require'lean.abbreviations'.convert()<CR><CR>]])
+    inoremap_temporarily('<Tab>', [[<Cmd>lua require'lean.abbreviations'.convert()<CR>]])
   end
 end
 
