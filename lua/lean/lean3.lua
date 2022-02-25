@@ -335,6 +335,7 @@ function lean3.render_pin(pin, bufnr, params, use_widgets, options)
   params = vim.deepcopy(params)
 
   local blocks = render_goal(pin, client, params, use_widgets, options)
+  if not blocks then return end
 
   vim.list_extend(blocks, components.diagnostics(bufnr, params.position.line))
 
