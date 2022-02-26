@@ -27,8 +27,10 @@ function sorry.fill()
     local goals = #response.result.goals
     if goals then
       local index = vim.api.nvim_win_get_cursor(0)[1]
-      local lines = tbl_repeat(calculate_indent(index) .. "{ sorry },", goals)
+      local indent = calculate_indent(index)
+      local lines = tbl_repeat(indent .. "{ sorry },", goals)
       vim.api.nvim_buf_set_lines(0, index, index, true, lines)
+      vim.api.nvim_win_set_cursor(0, { index + 1, #indent + 2 })  -- the 's'
       return
     end
   end

@@ -21,6 +21,24 @@ def foo (n : nat) : n = n := begin
 end]], table.concat(vim.fn.getline(1, '$'), '\n'))
   end))
 
+  it('leaves the cursor in the first sorry', clean_buffer("lean3", [[
+def foo (n : nat) : n = n := begin
+  induction n with d hd,
+end]], function()
+    vim.api.nvim_command('normal! 3gg$')
+    helpers.wait_for_line_diagnostics()
+
+    vim.api.nvim_command('normal! 2gg$')
+    require('lean.sorry').fill()
+    vim.api.nvim_command('normal! cefoo')
+    assert.is.same([[
+def foo (n : nat) : n = n := begin
+  induction n with d hd,
+  { foo },
+  { sorry },
+end]], table.concat(vim.fn.getline(1, '$'), '\n'))
+  end))
+
   it('indents sorry blocks when needed',
     clean_buffer("lean3", [[
 def foo (n : nat) : n = n := begin
