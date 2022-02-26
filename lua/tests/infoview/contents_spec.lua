@@ -30,7 +30,7 @@ describe('infoview content (auto-)update', function()
 
   local lean_window
 
-  it("shows the initial cursor location's infoview", function(_)
+  it("shows the initial cursor location's infoview", function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
 
     vim.cmd('edit! ' .. fixtures.lean_project.path .. '/Test/Squares.lean')
@@ -47,7 +47,7 @@ describe('infoview content (auto-)update', function()
     ]]
   end)
 
-  it('updates when the cursor moves', function(_)
+  it('updates when the cursor moves', function()
     assert.are_not.same(vim.api.nvim_win_get_cursor(0), {3, 0})
 
     helpers.move_cursor{ to = {3, 0} }
@@ -60,7 +60,7 @@ describe('infoview content (auto-)update', function()
     ]]
   end)
 
-  it('is shared between separate windows', function(_)
+  it('is shared between separate windows', function()
     assert.is.equal(lean_window, vim.api.nvim_get_current_win())
 
     vim.cmd('split')
@@ -93,7 +93,7 @@ describe('infoview content (auto-)update', function()
     vim.api.nvim_win_close(second_window, false)
   end)
 
-  it('does not update for non-Lean buffers', function(_)
+  it('does not update for non-Lean buffers', function()
     assert.is.equal(lean_window, vim.api.nvim_get_current_win())
 
     local original_lines = infoview.get_current_infoview():get_lines()
@@ -104,7 +104,7 @@ describe('infoview content (auto-)update', function()
     vim.cmd('close!')
   end)
 
-  it('does not error while closed and continues updating when reopened', function(_)
+  it('does not error while closed and continues updating when reopened', function()
     assert.are.same_elements(
       { lean_window, infoview.get_current_infoview().window },
       vim.api.nvim_tabpage_list_wins(0)
@@ -135,7 +135,7 @@ describe('infoview content (auto-)update', function()
     ]]
   end)
 
-  it('does not have line contents while closed', function(_)
+  it('does not have line contents while closed', function()
     assert.are.same_elements(
       { lean_window, infoview.get_current_infoview().window },
       vim.api.nvim_tabpage_list_wins(0)
@@ -153,7 +153,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   describe('in multiple tabs', function()
-    it('updates separate infoviews independently', function(_)
+    it('updates separate infoviews independently', function()
       local tab1_infoview = infoview.get_current_infoview()
       assert.same.elements(
         { lean_window, tab1_infoview.window },
@@ -188,7 +188,7 @@ describe('infoview content (auto-)update', function()
       }
     end)
 
-    it('updates separate infoviews independently when one is closed', function(_)
+    it('updates separate infoviews independently when one is closed', function()
       local tab2 = vim.api.nvim_get_current_tabpage()
       assert.is_not.equal(vim.api.nvim_win_get_tabpage(lean_window), tab2)
 
@@ -397,7 +397,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   describe('processing message', helpers.clean_buffer('lean', '#eval IO.sleep 5000', function()
-    it('is shown while a file is processing', function(_)
+    it('is shown while a file is processing', function()
       local uri = vim.uri_from_fname(vim.api.nvim_buf_get_name(0))
       local result = vim.wait(5000, function() return require('lean.progress').is_processing(uri) end)
       assert.message('file was never processing').is_true(result)
