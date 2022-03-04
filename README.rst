@@ -291,6 +291,11 @@ Full Configuration & Settings Information
       -- Infoview support
       infoview = {
         -- Automatically open an infoview on entering a Lean buffer?
+        -- Should be a function that will be called anytime a new Lean file
+        -- is opened. Return true to open an infoview, otherwise false.
+        -- Setting this to `true` is the same as `function() return true end`,
+        -- i.e. autoopen for any Lean file, or setting it to `false` is the
+        -- same as `function() return false end`, i.e. never autoopen.
         autoopen = true,
 
         -- Set infoview windows' starting dimensions.

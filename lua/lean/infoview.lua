@@ -933,6 +933,7 @@ function infoview.enable(opts)
   options = vim.tbl_extend("force", options._DEFAULTS, opts)
   infoview.mappings = options.mappings
   infoview.enabled = true
+  infoview.set_autoopen(options.autoopen)
   set_augroup("LeanInfoviewInit", [[
     autocmd FileType lean3 lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
     autocmd FileType lean lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
@@ -961,6 +962,11 @@ end
 
 --- Set whether a new infoview is automatically opened when entering Lean buffers.
 function infoview.set_autoopen(autoopen)
+  if autoopen == true then
+    autoopen = function() return true end
+  elseif autoopen == false then
+    autoopen = function() return false end
+  end
   options.autoopen = autoopen
 end
 
@@ -994,7 +1000,7 @@ function infoview.__maybe_autoopen()
   if infoview._by_tabpage[tabpage] then return end
   local new_infoview = Infoview:new{}
   infoview._by_tabpage[tabpage] = new_infoview
-  if options.autoopen then new_infoview:open() end
+  if options.autoopen() then new_infoview:open() end
 end
 
 function infoview.open()
