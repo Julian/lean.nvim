@@ -695,15 +695,6 @@ function Pin:__started_loading()
   return true
 end
 
----Indicate that the pin has finished loading.
-function Pin:__finished_loading()
-  if not self.loading then return false end
-  self.loading = false
-  self.__element:set_children{ self.__data_element }
-  self:__render_parents()
-  return true
-end
-
 function Pin:async_update(force)
   if not force and self.paused then return end
 
@@ -714,7 +705,9 @@ function Pin:async_update(force)
   end
   if not tick:check() then return end
 
-  if not self:__finished_loading() then
+  if self.loading then
+    self.loading = false
+    self.__element:set_children{ self.__data_element }
     self:__render_parents()
   end
 end
