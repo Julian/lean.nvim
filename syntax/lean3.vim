@@ -32,8 +32,8 @@ syn keyword leanTactic
         \ by_contradiction calc cancel_denoms case cases cases_matching
         \ casesm cases_type cc change choose classical clear
         \ clear_aux_decl clear_except clear_value comp_val congr
-        \ constructor continuity contradiction contrapose conv to_lhs
-        \ to_rhs convert convert_to dec_trivial delta destruct done
+        \ constructor continuity contradiction contrapose
+        \ convert convert_to dec_trivial delta destruct done
         \ dsimp dunfold eapply econstructor elide unelide equiv_rw
         \ equiv_rw_type erewrite erw exact exacts exfalso existsi
         \ ext1 ext extract_goal fail_if_success fapply fconstructor
@@ -59,6 +59,7 @@ syn keyword leanTactic
         \ trace_state transitivity transport triv trivial trunc_cases
         \ try type_check unfold unfold1 unfold_cases unfold_coes
         \ unfold_projs unify_equations use with_cases wlog zify
+        \ conv to_lhs to_rhs conv_lhs conv_rhs
         \ resetI unfreezingI introI introsI casesI substI haveI letI exactI
         \ contained
 " Try to highlight `set` the tactic while ignoring set-the-type annotation
