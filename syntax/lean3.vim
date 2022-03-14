@@ -78,6 +78,9 @@ syn match leanCommand "#eval"
 syn match leanCommand "#check"
 syn match leanCommand "#print"
 syn match leanCommand "#reduce"
+syn match leanCommand "#norm_num"
+syn match leanCommand "#explode"
+syn match leanCommand "#explode_widget"
 
 syn keyword leanSorry sorry
 syn keyword leanSorry admit
