@@ -71,7 +71,7 @@ syn region leanTacticMode matchgroup=Label start='\<begin\>' end='\<end\>'
     \ contains=ALLBUT,leanDeclarationName,leanEncl,leanAttributeArgs
 
 syn keyword leanKeyword end
-syn keyword leanKeyword forall fun Pi from have show assume suffices let if else then in with calc match do this
+syn keyword leanKeyword forall fun Pi from have show assume suffices let if else then in calc match do this
 syn keyword leanSort Sort Prop Type
 syn keyword leanCommand set_option run_cmd
 syn match leanCommand "#eval"
