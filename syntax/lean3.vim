@@ -61,6 +61,7 @@ syn keyword leanTactic
         \ unfold_projs unify_equations use with_cases wlog zify
         \ conv to_lhs to_rhs conv_lhs conv_rhs
         \ resetI unfreezingI introI introsI casesI substI haveI letI exactI
+        \ exact_mod_cast apply_mod_cast rw_mod_cast assumption_mod_cast
         \ contained
 " Try to highlight `set` the tactic while ignoring set-the-type annotation
 syn match  leanTactic '\(→\s*\)\@<!\<set \(\k\+)\)\@!' contained
