@@ -62,16 +62,16 @@ syn keyword leanTactic
         \ resetI unfreezingI introI introsI casesI substI haveI letI exactI
         \ contained
 " Try to highlight `set` the tactic while ignoring set-the-type annotation
-syn match  leanTactic '\<set \(\k\+)\)\@!'
+syn match  leanTactic '\(→\s*\)\@<!\<set \(\k\+)\)\@!' contained
 syn match  leanSemi ';' skipwhite skipempty contained nextgroup=leanTacticBlock,leanTactic,leanSorry
 syn match  leanBy '\<by\>' skipwhite skipempty nextgroup=leanTacticBlock,leanTactic,leanSorry
 syn region leanTacticBlock start='{' end='}' contained
-    \ contains=ALLBUT,leanDeclarationName,leanEncl,leanAttributeArgs
+    \ contains=ALLBUT,leanKeyword,leanDeclarationName,leanEncl,leanAttributeArgs
 syn region leanTacticMode matchgroup=Label start='\<begin\>' end='\<end\>'
-    \ contains=ALLBUT,leanDeclarationName,leanEncl,leanAttributeArgs
+    \ contains=ALLBUT,leanKeyword,leanDeclarationName,leanEncl,leanAttributeArgs
 
 syn keyword leanKeyword end
-syn keyword leanKeyword forall fun Pi from have show assume suffices let if else then in calc match do this
+syn keyword leanKeyword forall fun Pi from have show assume let if else then in calc match do this
 syn keyword leanSort Sort Prop Type
 syn keyword leanCommand set_option run_cmd
 syn match leanCommand "#eval"
