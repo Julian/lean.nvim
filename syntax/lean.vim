@@ -28,7 +28,7 @@ syn keyword leanCommand precedence postfix prefix notation infix infixl infixr
 syn keyword leanKeyword by end
 syn keyword leanKeyword forall fun from have show assume suffices let if else then in with calc match do this
 syn keyword leanKeyword try catch finally for unless return mut continue break
-syn keyword leanKeyword Sort Prop Type
+syn keyword leanSort Sort Prop Type
 syn keyword leanCommand set_option run_cmd
 syn match leanCommand "#eval"
 syn match leanCommand "#check"
@@ -36,6 +36,7 @@ syn match leanCommand "#print"
 syn match leanCommand "#reduce"
 
 syn keyword leanSorry sorry
+syn keyword leanSorry admit
 syn match leanSorry "#exit"
 
 syn region leanAttributeArgs start='\[' end='\]' contained contains=leanString,leanNumber,leanAttributeArgs
@@ -93,6 +94,7 @@ hi def link leanComment           Comment
 hi def link leanBlockComment      leanComment
 
 hi def link leanKeyword           Keyword
+hi def link leanSort              Type
 hi def link leanCommand           leanKeyword
 hi def link leanCommandPrefix     PreProc
 hi def link leanAttributeArgs     leanCommandPrefix
@@ -113,8 +115,8 @@ hi def link leanNameLiteral       Identifier
 
 hi def link leanSorry             Error
 
-hi def link leanPinned        DiagnosticUnderlineHint
-hi def link leanDiffPinned    DiagnosticUnderlineInfo
+hi def link leanPinned            DiagnosticUnderlineHint
+hi def link leanDiffPinned        DiagnosticUnderlineInfo
 
 syn sync minlines=200
 syn sync maxlines=500
