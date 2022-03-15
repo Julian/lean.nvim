@@ -22,7 +22,6 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest]
         nvim-version:
-          - v0.5.1
           - v0.6.1
           - nightly
         lean-version:

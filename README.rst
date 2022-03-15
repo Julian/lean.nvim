@@ -13,12 +13,6 @@ Prerequisites
 ``lean.nvim`` supports neovim 0.6 or a recent neovim nightly (one
 newer than December 25, 2021).
 
-If you are on neovim 0.5.1, ensure you have ``set hidden`` in
-your neovim ``init.lua`` or ``init.vim``, otherwise you may see
-degraded performance from the infoview when opening and closing Lean
-files. See `here <https://github.com/Julian/lean.nvim/issues/19>`_ for
-details. Newer versions of neovim ``set hidden`` by default.
-
 Installation
 ------------
 

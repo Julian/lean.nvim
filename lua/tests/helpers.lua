@@ -120,11 +120,7 @@ end
 function helpers.wait_for_line_diagnostics()
   local succeeded, _ = vim.wait(5000, function()
     if progress.is_processing(vim.uri_from_bufnr(0)) then return false end
-    local diags = vim.diagnostic ~= nil
-      and -- neovim 0.6
-        vim.diagnostic.get(0, {lnum = vim.api.nvim_win_get_cursor(0)[1] - 1})
-      or -- neovim 0.5
-        vim.lsp.diagnostic.get_line_diagnostics()
+    local diags = vim.diagnostic.get(0, {lnum = vim.api.nvim_win_get_cursor(0)[1] - 1})
 
     -- Lean 4 sends file progress notification too late :-(
     if #diags == 1 then

@@ -18,111 +18,108 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       apply Or.inl
       assumption
   ]], function()
-  -- FIXME: This test seems to fail in CI on 0.5.1, and only on macOS.
-  if vim.version().major >= 1 or vim.version().minor >= 6 then
 
-    local first_pin_position
+  local first_pin_position
 
-    it('can be placed', function()
-      local filename = vim.api.nvim_buf_get_name(0)
+  it('can be placed', function()
+    local filename = vim.api.nvim_buf_get_name(0)
 
-      first_pin_position = {7, 5}
-      helpers.move_cursor{ to = first_pin_position }
-      helpers.wait_for_infoview_contents('case inr')
-      assert.infoview_contents.are[[
-        ▶ 1 goal
-        case inr
-        p q : Prop
-        h2 : q
-        ⊢ q ∨ p
-      ]]
+    first_pin_position = {7, 5}
+    helpers.move_cursor{ to = first_pin_position }
+    helpers.wait_for_infoview_contents('case inr')
+    assert.infoview_contents.are[[
+      ▶ 1 goal
+      case inr
+      p q : Prop
+      h2 : q
+      ⊢ q ∨ p
+    ]]
 
-      infoview.add_pin()
-      -- FIXME: The pin add temporarily clears the infoview (until an update).
-      --        Maybe it shouldn't and should just be appending itself to the
-      --        existing contents (in which case an immediate assertion here
-      --        should be added).
-      helpers.move_cursor{ to = {4, 5} }
-      helpers.wait_for_infoview_contents('case inl')
-      assert.infoview_contents.are(string.format([[
-        ▶ 1 goal
-        case inl
-        p q : Prop
-        h1 : p
-        ⊢ q ∨ p
+    infoview.add_pin()
+    -- FIXME: The pin add temporarily clears the infoview (until an update).
+    --        Maybe it shouldn't and should just be appending itself to the
+    --        existing contents (in which case an immediate assertion here
+    --        should be added).
+    helpers.move_cursor{ to = {4, 5} }
+    helpers.wait_for_infoview_contents('case inl')
+    assert.infoview_contents.are(string.format([[
+      ▶ 1 goal
+      case inl
+      p q : Prop
+      h1 : p
+      ⊢ q ∨ p
 
-        -- %s at 7:6
-        ▶ 1 goal
-        case inr
-        p q : Prop
-        h2 : q
-        ⊢ q ∨ p
-      ]], filename))
+      -- %s at 7:6
+      ▶ 1 goal
+      case inr
+      p q : Prop
+      h2 : q
+      ⊢ q ∨ p
+    ]], filename))
 
-      helpers.move_cursor{ to = {1, 49} }
-      infoview.add_pin()
+    helpers.move_cursor{ to = {1, 49} }
+    infoview.add_pin()
 
-      helpers.move_cursor{ to = {5, 4} }
-      helpers.wait_for_infoview_contents('case inl.h')
-      assert.infoview_contents.are(string.format([[
-        ▶ 1 goal
-        case inl.h
-        p q : Prop
-        h1 : p
-        ⊢ p
+    helpers.move_cursor{ to = {5, 4} }
+    helpers.wait_for_infoview_contents('case inl.h')
+    assert.infoview_contents.are(string.format([[
+      ▶ 1 goal
+      case inl.h
+      p q : Prop
+      h1 : p
+      ⊢ p
 
-        -- %s at 7:6
-        ▶ 1 goal
-        case inr
-        p q : Prop
-        h2 : q
-        ⊢ q ∨ p
+      -- %s at 7:6
+      ▶ 1 goal
+      case inr
+      p q : Prop
+      h2 : q
+      ⊢ q ∨ p
 
-        -- %s at 1:50
-        ▶ 1 goal
-        p q : Prop
-        ⊢ p ∨ q → q ∨ p
-      ]], filename, filename))
+      -- %s at 1:50
+      ▶ 1 goal
+      p q : Prop
+      ⊢ p ∨ q → q ∨ p
+    ]], filename, filename))
 
-      assert.is.equal(2, #infoview.get_current_infoview().info.pins)
-    end)
+    assert.is.equal(2, #infoview.get_current_infoview().info.pins)
+  end)
 
-    it('shows pin locations via extmarks', function()
-        assert.is_not.equal(0, #infoview.get_current_infoview().info.pins)
-        local before_pin = { first_pin_position[1] - 1, 0 }
-        local after_pin = { first_pin_position[1] + 1, 0 }
-        local extmarks = helpers.all_lean_extmarks(0, before_pin, after_pin)
-        assert.is.equal(1, #extmarks)
-        local details = extmarks[1][4]
-        assert.is.equal('← 1', details.virt_text[1][1])
-    end)
+  it('shows pin locations via extmarks', function()
+      assert.is_not.equal(0, #infoview.get_current_infoview().info.pins)
+      local before_pin = { first_pin_position[1] - 1, 0 }
+      local after_pin = { first_pin_position[1] + 1, 0 }
+      local extmarks = helpers.all_lean_extmarks(0, before_pin, after_pin)
+      assert.is.equal(1, #extmarks)
+      local details = extmarks[1][4]
+      assert.is.equal('← 1', details.virt_text[1][1])
+  end)
 
-    it('can be cleared', function()
-      assert.is_true(#infoview.get_current_infoview().info.pins > 0)
+  it('can be cleared', function()
+    assert.is_true(#infoview.get_current_infoview().info.pins > 0)
 
-      infoview.clear_pins()
-      assert.infoview_contents.are[[
-        ▶ 1 goal
-        case inl.h
-        p q : Prop
-        h1 : p
-        ⊢ p
-      ]]
+    infoview.clear_pins()
+    assert.infoview_contents.are[[
+      ▶ 1 goal
+      case inl.h
+      p q : Prop
+      h1 : p
+      ⊢ p
+    ]]
 
-      -- Still shows the right contents after a final movement / update
-      helpers.move_cursor{ to = {7, 5} }
-      helpers.wait_for_infoview_contents('case inr')
-      assert.infoview_contents.are[[
-        ▶ 1 goal
-        case inr
-        p q : Prop
-        h2 : q
-        ⊢ q ∨ p
-      ]]
+    -- Still shows the right contents after a final movement / update
+    helpers.move_cursor{ to = {7, 5} }
+    helpers.wait_for_infoview_contents('case inr')
+    assert.infoview_contents.are[[
+      ▶ 1 goal
+      case inr
+      p q : Prop
+      h2 : q
+      ⊢ q ∨ p
+    ]]
 
-      assert.is.equal(0, #infoview.get_current_infoview().info.pins)
-    end)
-  end
+    assert.is.equal(0, #infoview.get_current_infoview().info.pins)
+  end)
 
   -- FIXME: This seems to fail with errors saying it's misusing vim.schedule.
   pending('can be re-placed after being cleared', function()
