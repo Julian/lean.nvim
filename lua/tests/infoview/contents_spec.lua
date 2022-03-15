@@ -105,10 +105,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('does not error while closed and continues updating when reopened', function()
-    assert.are.same_elements(
-      { lean_window, infoview.get_current_infoview().window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(lean_window, infoview.get_current_infoview().window)
     assert.are_not.same(vim.api.nvim_win_get_cursor(0), {1, 0})
 
     infoview.get_current_infoview():close()
@@ -136,10 +133,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('does not have line contents while closed', function()
-    assert.are.same_elements(
-      { lean_window, infoview.get_current_infoview().window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(lean_window, infoview.get_current_infoview().window)
     local current_infoview = infoview.get_current_infoview()
     current_infoview:close()
     assert.has.errors(
@@ -155,10 +149,7 @@ describe('infoview content (auto-)update', function()
   describe('in multiple tabs', function()
     it('updates separate infoviews independently', function()
       local tab1_infoview = infoview.get_current_infoview()
-      assert.same.elements(
-        { lean_window, tab1_infoview.window },
-        vim.api.nvim_tabpage_list_wins(0)
-      )
+      assert.windows.are(lean_window, tab1_infoview.window)
 
       helpers.move_cursor{ to = {1, 0} }
       helpers.wait_for_infoview_contents('\n1')

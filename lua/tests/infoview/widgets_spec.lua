@@ -28,7 +28,7 @@ describe('infoview widgets', function()
       helpers.move_cursor{ to = {2, 4} }  -- `Type`
 
       local known_windows = { lean_window, current_infoview.window }
-      assert.are.same_elements(known_windows, vim.api.nvim_tabpage_list_wins(0))
+      assert.windows.are(known_windows)
 
       helpers.feed('<CR>')
       local tooltip_bufnr = vim.api.nvim_win_get_buf(helpers.wait_for_new_window(known_windows))
@@ -36,7 +36,7 @@ describe('infoview widgets', function()
 
       -- Close the tooltip.
       helpers.feed('<Esc>')
-      assert.are.same_elements(known_windows, vim.api.nvim_tabpage_list_wins(0))
+      assert.windows.are(known_windows)
     end)
 
     it('does not abandon tooltips when windows are closed', function()
@@ -84,7 +84,7 @@ describe('infoview widgets', function()
       helpers.move_cursor{ to = {2, 4} }  -- `ℕ`
 
       local known_windows = { lean_window, current_infoview.window }
-      assert.are.same_elements(known_windows, vim.api.nvim_tabpage_list_wins(0))
+      assert.windows.are(known_windows)
 
       helpers.feed('<CR>')
 
@@ -96,7 +96,7 @@ describe('infoview widgets', function()
       -- Close the tooltip.
       helpers.feed('<Esc>')
       vim.wait(1000, function() return #vim.api.nvim_tabpage_list_wins(0) == 2 end)
-      assert.are.same_elements(known_windows, vim.api.nvim_tabpage_list_wins(0))
+      assert.windows.are(known_windows)
     end)
 
     pending('can be disabled', function(_)

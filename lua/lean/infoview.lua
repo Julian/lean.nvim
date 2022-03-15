@@ -990,15 +990,20 @@ end
 --- Open an infoview for the current buffer if it isn't already open.
 function infoview.__maybe_autoopen()
   local tabpage = vim.api.nvim_win_get_tabpage(0)
-  if infoview._by_tabpage[tabpage] then return end
+  if infoview._by_tabpage[tabpage] or not options.autoopen() then return end
   local new_infoview = Infoview:new{}
   infoview._by_tabpage[tabpage] = new_infoview
-  if options.autoopen() then new_infoview:open() end
+  new_infoview:open()
 end
 
 function infoview.open()
-  infoview.__maybe_autoopen()
-  infoview.get_current_infoview():open()
+  local tabpage = vim.api.nvim_win_get_tabpage(0)
+  local current_infoview = infoview.get_current_infoview()
+  if not current_infoview then
+    current_infoview = Infoview:new{}
+    infoview._by_tabpage[tabpage] = current_infoview
+  end
+  current_infoview:open()
 end
 
 function infoview.toggle()

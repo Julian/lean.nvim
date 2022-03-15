@@ -13,10 +13,7 @@ describe('infoview autoopen', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
     lean_window = vim.api.nvim_get_current_win()
-    assert.are.same_elements(
-      { lean_window, infoview.get_current_infoview().window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(lean_window, infoview.get_current_infoview().window)
   end)
 
   it('reuses the same infoview for new Lean files in the same tab', function(_)
@@ -28,7 +25,7 @@ describe('infoview autoopen', function()
 
     vim.cmd('split ' .. fixtures.lean3_project.some_nested_existing_file)
     table.insert(windows, vim.api.nvim_get_current_win())
-    assert.are.same_elements(windows, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(windows)
 
     vim.cmd('quit')
   end)
@@ -38,16 +35,13 @@ describe('infoview autoopen', function()
 
     vim.cmd('tabnew')
     local tab2_window = vim.api.nvim_get_current_win()
-    assert.are.same({ tab2_window }, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(tab2_window)
 
     vim.cmd('edit! ' .. fixtures.lean3_project.some_nested_existing_file)
     local tab2_infoview = infoview.get_current_infoview()
     assert.are_not.same(tab1_infoview, tab2_infoview)
 
-    assert.same.elements(
-      { tab2_window, tab2_infoview.window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(tab2_window, tab2_infoview.window)
 
     vim.cmd('tabclose')
   end)
@@ -59,7 +53,7 @@ describe('infoview autoopen', function()
     vim.cmd('edit some_other_file.foo')
     local non_lean_window = vim.api.nvim_get_current_win()
 
-    assert.are.same({ non_lean_window }, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(non_lean_window)
 
     vim.cmd('tabclose')
   end)
@@ -72,25 +66,19 @@ describe('infoview autoopen', function()
     )
 
     infoview.get_current_infoview():close()
-    assert.is.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(lean_window)
 
     vim.cmd('split ' .. fixtures.lean3_project.some_nested_existing_file)
-    assert.are.same_elements(
-      { lean_window, vim.api.nvim_get_current_win() },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(lean_window, vim.api.nvim_get_current_win())
 
     vim.cmd('quit')
   end)
 
   it('allows infoviews to reopen manually after closing', function(_)
-    assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(lean_window)
     local closed_infoview = infoview.get_current_infoview()
     closed_infoview:open()
-    assert.are.same_elements(
-      { lean_window, closed_infoview.window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(lean_window, closed_infoview.window)
   end)
 
   it('can be disabled', function(_)
@@ -98,18 +86,15 @@ describe('infoview autoopen', function()
     infoview.set_autoopen(false)
     local tab2_window = vim.api.nvim_get_current_win()
     vim.cmd('edit! ' .. fixtures.lean3_project.some_nested_existing_file)
-    assert.is.same({ tab2_window }, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(tab2_window)
 
     -- But windows can still be opened and closed manually
+    infoview.open()
     local tab2_infoview = infoview.get_current_infoview()
-    tab2_infoview:open()
-    assert.same.elements(
-      { tab2_window, tab2_infoview.window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(tab2_window, tab2_infoview.window)
 
     tab2_infoview:close()
-    assert.is.same({ tab2_window }, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(tab2_window)
 
     vim.cmd('tabclose')
   end)
@@ -122,9 +107,6 @@ describe('infoview autoopen', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
     local current_window = vim.api.nvim_get_current_win()
-    assert.are.same_elements(
-      { current_window, infoview.get_current_infoview().window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(current_window, infoview.get_current_infoview().window)
   end)
 end)

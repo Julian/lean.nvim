@@ -305,20 +305,14 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
     it('opens a diff window when placed', function()
       lean_window = vim.api.nvim_get_current_win()
       local current_infoview = infoview.get_current_infoview()
-      assert.are.same_elements(
-        { lean_window, current_infoview.window },
-        vim.api.nvim_tabpage_list_wins(0)
-      )
+      assert.windows.are(lean_window, current_infoview.window)
 
       helpers.move_cursor{ to = {3, 2} }
       infoview.set_diff_pin()
 
       local diff_window = helpers.wait_for_new_window{ lean_window, current_infoview.window }
 
-      assert.are.same_elements(
-        { lean_window, current_infoview.window, diff_window },
-        vim.api.nvim_tabpage_list_wins(0)
-      )
+      assert.windows.are(lean_window, current_infoview.window, diff_window)
 
       assert.is_true(vim.api.nvim_win_get_option(current_infoview.window, 'diff'))
       assert.is_true(vim.api.nvim_win_get_option(diff_window, 'diff'))
@@ -328,11 +322,11 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       local current_infoview = infoview.get_current_infoview()
       assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
       current_infoview:close()
-      assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
+      assert.windows.are(lean_window)
     end)
 
     it('reopens a diff window when the infoview is reopened', function()
-      assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
+      assert.windows.are(lean_window)
       local current_infoview = infoview.get_current_infoview()
 
       current_infoview:open()
@@ -340,10 +334,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       -- The window is not necessarily the same one as before.
       local diff_window = helpers.wait_for_new_window{ lean_window, current_infoview.window }
 
-      assert.are.same_elements(
-        { lean_window, current_infoview.window, diff_window },
-        vim.api.nvim_tabpage_list_wins(0)
-      )
+      assert.windows.are(lean_window, current_infoview.window, diff_window)
 
       assert.is_true(vim.api.nvim_win_get_option(current_infoview.window, 'diff'))
       assert.is_true(vim.api.nvim_win_get_option(diff_window, 'diff'))
@@ -352,10 +343,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
     it('closes when cleared', function()
       assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
       infoview.clear_diff_pin()
-      assert.are.same(
-          { lean_window, infoview.get_current_infoview().window },
-          vim.api.nvim_tabpage_list_wins(0)
-      )
+      assert.windows.are(lean_window, infoview.get_current_infoview().window)
     end)
 
     it('can be re-placed', function()
@@ -371,10 +359,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       local diff_window = helpers.wait_for_new_window{ lean_window, current_infoview.window }
       vim.api.nvim_set_current_win(diff_window)
       vim.cmd('quit')
-      assert.are.same(
-          { lean_window, infoview.get_current_infoview().window },
-          vim.api.nvim_tabpage_list_wins(0)
-      )
+      assert.windows.are(lean_window, infoview.get_current_infoview().window)
     end)
   end)
 end))

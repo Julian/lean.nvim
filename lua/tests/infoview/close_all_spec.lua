@@ -1,3 +1,4 @@
+require('tests.helpers')
 local infoview = require('lean.infoview')
 
 require('lean').setup{}
@@ -11,13 +12,10 @@ describe('infoview.close_all', function()
     local current_infoview = infoview.get_current_infoview()
 
     current_infoview:open()
-    assert.are.same(
-      vim.api.nvim_tabpage_list_wins(0),
-      { lean_window, current_infoview.window }
-    )
+    assert.windows.are(lean_window, current_infoview.window)
 
     infoview.close_all()
-    assert.are.same(vim.api.nvim_tabpage_list_wins(0), { lean_window })
+    assert.windows.are(lean_window)
   end)
 
   it('closes many infoviews, some already closed', function(_)

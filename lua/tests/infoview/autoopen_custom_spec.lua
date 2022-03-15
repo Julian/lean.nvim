@@ -13,21 +13,16 @@ require('lean').setup{
 }
 
 describe('infoview custom autoopen', function()
-  local lean_window
-
   it('uses the configured function to decide whether to autoopen', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
-    lean_window = vim.api.nvim_get_current_win()
+    local lean_window = vim.api.nvim_get_current_win()
 
     vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
-    assert.are.same_elements({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(lean_window)
 
     should_autoopen = true
 
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
-    assert.are.same_elements(
-      { lean_window, infoview.get_current_infoview().window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    vim.cmd('edit! ' .. fixtures.lean3_project.some_nested_existing_file)
+    assert.windows.are(lean_window, infoview.get_current_infoview().window)
   end)
 end)

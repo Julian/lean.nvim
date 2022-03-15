@@ -14,42 +14,30 @@ describe('Infoview.toggle', function()
     lean_window = vim.api.nvim_get_current_win()
     local current_infoview = infoview.get_current_infoview()
 
-    assert.are.same_elements(
-      { lean_window, current_infoview.window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(lean_window, current_infoview.window)
 
     current_infoview:toggle()
-    assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(lean_window)
   end)
 
   it('opens a closed infoview', function()
-    assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(lean_window)
     local current_infoview = infoview.get_current_infoview()
     current_infoview:toggle()
-    assert.are.same_elements(
-      { lean_window, current_infoview.window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(lean_window, current_infoview.window)
   end)
 
   it('toggles back and forth', function()
     local current_infoview = infoview.get_current_infoview()
-    assert.are.same_elements(
-      { lean_window, current_infoview.window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(lean_window, current_infoview.window)
 
     current_infoview:toggle()
-    assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(lean_window)
 
     current_infoview:toggle()
-    assert.are.same_elements(
-      { lean_window, current_infoview.window },
-      vim.api.nvim_tabpage_list_wins(0)
-    )
+    assert.windows.are(lean_window, current_infoview.window)
 
     current_infoview:toggle()
-    assert.are.same({ lean_window }, vim.api.nvim_tabpage_list_wins(0))
+    assert.windows.are(lean_window)
   end)
 end)
