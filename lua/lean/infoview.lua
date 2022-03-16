@@ -984,12 +984,12 @@ end
 --- Get the infoview corresponding to the current window.
 ---@return Infoview
 function infoview.get_current_infoview()
-  return infoview._by_tabpage[vim.api.nvim_win_get_tabpage(0)]
+  return infoview._by_tabpage[vim.api.nvim_get_current_tabpage()]
 end
 
 --- Open an infoview for the current buffer if it isn't already open.
 function infoview.__maybe_autoopen()
-  local tabpage = vim.api.nvim_win_get_tabpage(0)
+  local tabpage = vim.api.nvim_get_current_tabpage()
   if infoview._by_tabpage[tabpage] or not options.autoopen() then return end
   local new_infoview = Infoview:new{}
   infoview._by_tabpage[tabpage] = new_infoview
@@ -997,7 +997,7 @@ function infoview.__maybe_autoopen()
 end
 
 function infoview.open()
-  local tabpage = vim.api.nvim_win_get_tabpage(0)
+  local tabpage = vim.api.nvim_get_current_tabpage()
   local current_infoview = infoview.get_current_infoview()
   if not current_infoview then
     current_infoview = Infoview:new{}
