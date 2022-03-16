@@ -177,21 +177,18 @@ assert:register('assertion', 'has_all', has_all)
 
 --- Assert a tabpage has the given windows open in it.
 local function has_open_windows(_, arguments)
-  local expected, count
+  local expected
   if arguments.n == 1 and type(arguments[1]) == 'table' then
     expected = arguments[1]
-    count = #expected
+    expected.n = #expected
   else
-    count = arguments.n
-    arguments.n = nil
     expected = arguments
   end
   local got = vim.api.nvim_tabpage_list_wins(0)
+  got.n = #got
   table.sort(expected)
   table.sort(got)
   assert.are.same(expected, got)
-  local wrong_count = 'Expected %d != %d windows'
-  assert.message(wrong_count:format(count, #got)).is.equal(count, #got)
   return true
 end
 
