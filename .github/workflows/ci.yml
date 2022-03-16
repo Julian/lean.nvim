@@ -57,4 +57,4 @@ jobs:
           git clone --depth 1 https://github.com/nvim-lua/plenary.nvim packpath/plenary.nvim
 
       - name: Run tests
-        run: make test
+        run: make TEST_SEQUENTIAL=1 test
