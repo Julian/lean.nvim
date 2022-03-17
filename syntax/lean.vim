@@ -6,7 +6,7 @@
 syn case match
 
 " Add . to keywords for syntax purposes
-syn iskeyword a-z,A-Z,_,48-57,192-255,!,.
+syn iskeyword a-z,A-Z,_,48-57,192-255,!,.,%
 
 " keywords
 
