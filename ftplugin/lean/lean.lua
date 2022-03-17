@@ -3,7 +3,7 @@ vim.b.did_ftplugin = 1
 
 vim.opt.wildignore:append[[*.olean]]
 
-vim.opt_local.iskeyword = [[@,48-57,_,-,.,!,#,$,%]]
+vim.opt_local.iskeyword = [[a-z,A-Z,_,48-57,192-255,!]]
 vim.opt_local.comments = [[s0:/-,mb:\ ,ex:-/,:--]]
 vim.opt_local.commentstring=[[/- %s -/]]
 
