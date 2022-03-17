@@ -23,6 +23,10 @@ local find_project_root = require('lspconfig.util').root_pattern(
 )
 
 function ft.detect(filename)
+  if filename:match('^fugitive://.*') then
+    filename = pcall(vim.fn.FugitiveReal, filename)
+  end
+
   local abspath = vim.fn.fnamemodify(filename, ":p")
   local filetype = options.default
   if abspath:match(_LEAN3_STANDARD_LIBRARY) then
