@@ -395,6 +395,7 @@ function BufRenderer:new(obj)
       ['<S-Tab>'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:goto_parent_tooltip()<CR>]]):format(obj.buf),
       ['J'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(obj.buf),
       ['S'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:hop_to()<CR>]]):format(obj.buf),
+      ['<LocalLeader>\\'] = '<Cmd>LeanAbbreviationsReverseLookup<CR>',
     }
   }
   for key, event in pairs(obj.keymaps or {}) do

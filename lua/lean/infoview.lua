@@ -39,7 +39,7 @@ local options = {
       ['i'] = 'mouse_leave',
       ['<Esc>'] = 'clear_all',
       ['C'] = 'clear_all',
-      ['<LocalLeader><Tab>'] = 'goto_last_window'
+      ['<LocalLeader><Tab>'] = 'goto_last_window',
     }
   }
 }
