@@ -62,13 +62,14 @@ syn keyword leanTactic
         \ trace_state transitivity transport triv trivial trunc_cases
         \ try type_check unfold unfold1 unfold_cases unfold_coes
         \ unfold_projs unify_equations use with_cases wlog zify
-        \ conv to_lhs to_rhs conv_lhs conv_rhs
+        \ to_lhs to_rhs conv_lhs conv_rhs
         \ resetI unfreezingI introI introsI casesI substI haveI letI exactI
         \ exact_mod_cast apply_mod_cast rw_mod_cast assumption_mod_cast
         \ contained
 " Try to highlight `set` the tactic while ignoring set-the-type annotation
 syn match  leanTactic '\(→\s*\)\@<!\<set \(\k\+)\)\@!' contained
-syn match  leanSemi ';' skipwhite skipempty contained nextgroup=leanTacticBlock,leanTactic,leanSorry
+syn match  leanTactic '\<conv\>' contained skipwhite skipempty nextgroup=leanTacticBlock,leanTactic,leanSorry
+syn match  leanSemi ';' skipwhite skipempty nextgroup=leanTacticBlock,leanTactic,leanSorry
 syn match  leanBy '\<by\>' skipwhite skipempty nextgroup=leanTacticBlock,leanTactic,leanSorry
 syn region leanTacticBlock start='{' end='}' contained
     \ contains=ALLBUT,leanKeyword,leanDeclarationName,leanEncl,leanAttributeArgs
