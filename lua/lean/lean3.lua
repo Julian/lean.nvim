@@ -233,15 +233,18 @@ function lean3.parse_widget(result, options)
 
     local debug_tags = false
     if debug_tags then
+      local debug_attr = attributes
+                         and (' attributes(' .. vim.inspect(attributes) .. ')')
+                          or ''
+      local debug_events = vim.tbl_isempty(events)
+                           and ''
+                           or (' events(' .. vim.inspect(events) .. ')')
       element = Element:new{
         name = "debug-tags",
         children = {
-          Element:new{ text = "<" .. tag ..
-              " attributes(" .. vim.inspect(attributes) .. ")" ..
-              " events(" .. vim.inspect(result.e) .. ")" ..
-            ">" },
+          Element:new{ text = '<' .. tag .. debug_attr .. debug_events .. '>' },
           element,
-          Element:new{ text = "</" .. tag .. ">" },
+          Element:new{ text = '</' .. tag .. '>' },
         },
       }
     end
