@@ -940,7 +940,9 @@ function infoview.make_buffer_focusable(name)
   if bufnr == vim.api.nvim_get_current_buf() then
     -- because FileType can happen after BufEnter
     infoview.__bufenter()
-    infoview.get_current_infoview():focus_on_current_buffer()
+    local current_infoview = infoview.get_current_infoview()
+    if not current_infoview then return end
+    current_infoview:focus_on_current_buffer()
   end
 
   -- WinEnter is necessary for the edge case where you have
