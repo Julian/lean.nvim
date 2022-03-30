@@ -72,7 +72,7 @@ describe('builtin abbreviations', function()
     end)
 
     -- Really this needs to place the cursor too, but for now we just strip
-    pending('handles placing the $CURSOR', helpers.clean_buffer(ft, '', function()
+    it('handles placing the $CURSOR', helpers.clean_buffer(ft, '', function()
       helpers.insert[[foo \<><Tab>bar, baz]]
       assert.is.equal('foo ⟨bar, baz⟩', vim.api.nvim_get_current_line())
     end))

@@ -214,8 +214,18 @@ function abbreviations.convert()
   vim.api.nvim_buf_del_extmark(0, abbr_mark_ns, tmp_extmark)
   local text = vim.api.nvim_buf_get_lines(0, row1, row1+1, true)[1]:sub(col1 + 1, col2)
   local converted = convert_abbrev(text)
+
+  -- Put the cursor at $CURSOR if it's present, otherwise at the end.
+  local new_cursor_col_shift, _ = converted:find('$CURSOR')
+  if new_cursor_col_shift then
+    converted = converted:gsub('$CURSOR', '')
+    new_cursor_col_shift = new_cursor_col_shift - 1
+  else
+    new_cursor_col_shift = #converted
+  end
+
   vim.api.nvim_buf_set_text(0, row1, col1, row2, col2, {converted})
-  vim.api.nvim_win_set_cursor(0, { row1 + 1, col1 + #converted })
+  vim.api.nvim_win_set_cursor(0, { row1 + 1, col1 + new_cursor_col_shift })
 end
 
 local function enable_builtin()
