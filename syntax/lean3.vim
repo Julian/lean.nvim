@@ -12,7 +12,8 @@ syn iskeyword a-z,A-Z,_,48-57,192-255,!,.
 
 syn keyword leanCommand prelude import include omit export open open_locale mutual
 syn keyword leanCommandPrefix local localized private protected noncomputable meta
-syn keyword leanModifier renaming hiding where extends using with at only rec deriving
+syn keyword leanModifier
+    \ renaming hiding where extends generalizing using with at only rec deriving
 
 syn keyword leanCommand namespace section
 
@@ -52,7 +53,7 @@ syn keyword leanTactic
         \ obtain omega pi_instance pretty_cases push_neg rcases refine
         \ refine_struct refl reflexivity rename rename_var repeat
         \ replace revert revert_after revert_deps revert_target_deps
-        \ rewrite_search ring ring2 ring_exp rintro rintros rotate rw
+        \ rewrite_search ring ring2 ring_exp ring_nf rintro rintros rotate rw
         \ rewrite rwa scc show show_term simp simp_intros simp_result
         \ simp_rw simpa skip slice solve1 solve_by_elim
         \ specialize split split_ifs squeeze_simp squeeze_simpa
@@ -65,7 +66,28 @@ syn keyword leanTactic
         \ to_lhs to_rhs conv_lhs conv_rhs
         \ resetI unfreezingI introI introsI casesI substI haveI letI exactI
         \ exact_mod_cast apply_mod_cast rw_mod_cast assumption_mod_cast
+        \ push_cast
         \ contained
+syn match  leanTactic '\(
+    \abel\|
+    \abel1\|
+    \cases_type\|
+    \choose\|
+    \continuity\|
+    \contrapose\|
+    \dec_trivial\|
+    \library_search\|
+    \measurability\|
+    \reassoc\|
+    \ring\|
+    \ring_exp\|
+    \ring_exp_eq\|
+    \simp\|
+    \simpa\|
+    \tauto\|
+    \tautology
+    \\)!'
+    \ contained
 " Try to highlight `set` the tactic while ignoring set-the-type annotation
 syn match  leanTactic '\(→\s*\)\@<!\<set \(\k\+)\)\@!' contained
 syn match  leanTactic '\<conv\>' contained skipwhite skipempty nextgroup=leanTacticBlock,leanTactic,leanSorry
