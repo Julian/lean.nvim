@@ -254,11 +254,16 @@ function Infoview:__was_closed()
 end
 
 --- Retrieve the contents of the infoview as a table.
-function Infoview:get_lines(start_line, end_line)
+---@param start_line number
+---@param end_line number
+---@param diff boolean @whether to get lines from the diff renderer instead
+function Infoview:get_lines(start_line, end_line, diff)
   if not self.window then error("infoview is not open") end
   start_line = start_line or 0
   end_line = end_line or -1
-  return vim.api.nvim_buf_get_lines(self.info.__renderer.buf, start_line, end_line, true)
+  local buf = diff and self.info.__diff_renderer and self.info.__diff_renderer.buf
+    or self.info.__renderer.buf
+  return vim.api.nvim_buf_get_lines(buf, start_line, end_line, true)
 end
 
 --- Toggle this infoview being open.
@@ -362,7 +367,7 @@ function Info:__set_diff_pin(params)
       use_widgets = options.use_widgets,
       parent = self
     }
-    self.__diff_renderer.__element = self.__diff_pin.__element
+    self.__diff_renderer.element = self.__diff_pin.__element
     self.__diff_pin:__show_extmark(nil, 'leanDiffPinned')
   end
 
@@ -389,7 +394,7 @@ function Info:__clear_diff_pin()
   if not self.__diff_pin then return end
   self.__diff_pin:__teardown()
   self.__diff_pin = nil
-  self.__diff_renderer.__element = self.pin.__element
+  self.__diff_renderer.element = self.pin.__element
   self:render()
 end
 

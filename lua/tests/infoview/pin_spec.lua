@@ -250,7 +250,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       helpers.move_cursor{ to = {4, 7} }
       vim.cmd[[normal cl37]]  -- h1 -> h37
       helpers.move_cursor{ to = {1, 50} }
-      helpers.wait_for_infoview_contents('1 goal.*1 goal.*h37')
+      helpers.wait_for_infoview_contents('1 goal\np.*1 goal.*h37')
       assert.infoview_contents.are(string.format([[
         ▶ 1 goal
         p q : Prop
@@ -266,6 +266,11 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
     end)
 
     it('does not move pin when changes are made on its line after its column', function()
+      helpers.move_cursor{ to = {4, 13} }
+      helpers.wait_for_infoview_contents('case inl.*case inl')
+      vim.cmd[[normal a    ]]
+      helpers.move_cursor{ to = {1, 50} }
+      helpers.wait_for_infoview_contents('1 goal\np.*1 goal.*h37')
       assert.infoview_contents.are(string.format([[
         ▶ 1 goal
         p q : Prop
@@ -278,25 +283,17 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
         h37 : p
         ⊢ q ∨ p
       ]], vim.api.nvim_buf_get_name(0)))
-      helpers.move_cursor{ to = {4, 13} }
-      vim.cmd[[normal a    ]]
-      helpers.wait_for_infoview_contents('1 goal.*1 goal.*h37')
+
+      infoview.clear_pins()
       assert.infoview_contents.are(string.format([[
         ▶ 1 goal
         p q : Prop
         ⊢ p ∨ q → q ∨ p
-
-        -- %s at 4:12
-        ▶ 1 goal
-        case inl
-        p q : Prop
-        h37 : p
-        ⊢ q ∨ p
       ]], vim.api.nvim_buf_get_name(0)))
     end)
   end)
 
-  describe('diff pins',  function()
+  describe('diff pins', function()
     local lean_window
 
     it('opens a diff window when placed', function()
@@ -304,8 +301,26 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       local current_infoview = infoview.get_current_infoview()
       assert.windows.are(lean_window, current_infoview.window)
 
-      helpers.move_cursor{ to = {3, 2} }
+      helpers.move_cursor{ to = {4, 5} }
+      helpers.wait_for_infoview_contents('case inl')
       infoview.set_diff_pin()
+      helpers.wait_for_infoview_contents('case inl', true)
+
+      assert.infoview_contents.are(string.format([[
+        ▶ 1 goal
+        case inl
+        p q : Prop
+        h37 : p
+        ⊢ q ∨ p
+      ]], vim.api.nvim_buf_get_name(0)))
+
+      assert.diff_contents.are(string.format([[
+        ▶ 1 goal
+        case inl
+        p q : Prop
+        h37 : p
+        ⊢ q ∨ p
+      ]], vim.api.nvim_buf_get_name(0)))
 
       local diff_window = helpers.wait_for_new_window{ lean_window, current_infoview.window }
 
@@ -313,6 +328,28 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
 
       assert.is_true(vim.api.nvim_win_get_option(current_infoview.window, 'diff'))
       assert.is_true(vim.api.nvim_win_get_option(diff_window, 'diff'))
+    end)
+
+    it('maintain separate text', function()
+      helpers.move_cursor{ to = {5, 5} }
+      helpers.wait_for_infoview_contents('case inl.h')
+      helpers.wait_for_infoview_contents('case inl', true)
+
+      assert.infoview_contents.are(string.format([[
+        ▶ 1 goal
+        case inl.h
+        p q : Prop
+        h37 : p
+        ⊢ p
+      ]], vim.api.nvim_buf_get_name(0)))
+
+      assert.diff_contents.are(string.format([[
+        ▶ 1 goal
+        case inl
+        p q : Prop
+        h37 : p
+        ⊢ q ∨ p
+      ]], vim.api.nvim_buf_get_name(0)))
     end)
 
     it('closes the diff window if the infoview is closed', function()

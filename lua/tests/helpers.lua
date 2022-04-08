@@ -54,17 +54,17 @@ function helpers.wait_for_ready_lsp()
 end
 
 --- Wait until a single line in the infoview matches the given contents.
-function helpers.wait_for_infoview_contents(contents)
+function helpers.wait_for_infoview_contents(contents, diff)
   local current_infoview = infoview.get_current_infoview()
   local succeeded, _ = vim.wait(5000, function()
-    if table.concat(current_infoview:get_lines(), "\n"):match(contents) then
+    if table.concat(current_infoview:get_lines(nil, nil, diff), "\n"):match(contents) then
       return true
     end
   end)
   local message = string.format(
     "Infoview never contained %q. Last contents were %q.",
     contents,
-    table.concat(current_infoview:get_lines(), '\n')
+    table.concat(current_infoview:get_lines(nil, nil, diff), '\n')
   )
   assert.message(message).True(succeeded)
 end
@@ -152,15 +152,18 @@ end
 assert:register('assertion', 'contents', has_buf_contents)
 
 --- Assert about the current infoview contents.
-local function has_infoview_contents(_, arguments)
-  local expected = dedent(arguments[1][1] or arguments[1])
-  local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
-  local got = table.concat(target_infoview:get_lines(), '\n')
-  assert.are.same(expected, got)
-  return true
+local function has_infoview_contents(diff)
+  return function (_, arguments)
+    local expected = dedent(arguments[1][1] or arguments[1])
+    local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
+    local got = table.concat(target_infoview:get_lines(nil, nil, diff), '\n')
+    assert.are.same(expected, got)
+    return true
+  end
 end
 
-assert:register('assertion', 'infoview_contents', has_infoview_contents)
+assert:register('assertion', 'infoview_contents', has_infoview_contents(false))
+assert:register('assertion', 'diff_contents', has_infoview_contents(true))
 
 local function has_all(_, arguments)
   local text = arguments[1]
