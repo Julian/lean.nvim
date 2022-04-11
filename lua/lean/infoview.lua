@@ -430,7 +430,7 @@ function Info:__render_pins()
       local bufnr = vim.fn.bufnr(params.filename)
       local filename
       if bufnr ~= -1 then
-        filename = vim.fn.bufname(bufnr)
+        filename = vim.api.nvim_buf_get_name(bufnr)
       else
         filename = params.filename
       end
