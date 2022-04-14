@@ -285,11 +285,11 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       ]], vim.api.nvim_buf_get_name(0)))
 
       infoview.clear_pins()
-      assert.infoview_contents.are(string.format([[
+      assert.infoview_contents.are[[
         ▶ 1 goal
         p q : Prop
         ⊢ p ∨ q → q ∨ p
-      ]], vim.api.nvim_buf_get_name(0)))
+      ]]
     end)
   end)
 
@@ -306,21 +306,21 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       infoview.set_diff_pin()
       helpers.wait_for_diff_contents('case inl')
 
-      assert.infoview_contents.are(string.format([[
+      assert.infoview_contents.are[[
         ▶ 1 goal
         case inl
         p q : Prop
         h37 : p
         ⊢ q ∨ p
-      ]], vim.api.nvim_buf_get_name(0)))
+      ]]
 
-      assert.diff_contents.are(string.format([[
+      assert.diff_contents.are[[
         ▶ 1 goal
         case inl
         p q : Prop
         h37 : p
         ⊢ q ∨ p
-      ]], vim.api.nvim_buf_get_name(0)))
+      ]]
 
       local diff_window = helpers.wait_for_new_window{ lean_window, current_infoview.window }
 
@@ -330,26 +330,26 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       assert.is_true(vim.api.nvim_win_get_option(diff_window, 'diff'))
     end)
 
-    it('maintain separate text', function()
+    it('maintains separate text', function()
       helpers.move_cursor{ to = {5, 5} }
       helpers.wait_for_infoview_contents('case inl.h')
       helpers.wait_for_diff_contents('case inl')
 
-      assert.infoview_contents.are(string.format([[
+      assert.infoview_contents.are[[
         ▶ 1 goal
         case inl.h
         p q : Prop
         h37 : p
         ⊢ p
-      ]], vim.api.nvim_buf_get_name(0)))
+      ]]
 
-      assert.diff_contents.are(string.format([[
+      assert.diff_contents.are[[
         ▶ 1 goal
         case inl
         p q : Prop
         h37 : p
         ⊢ q ∨ p
-      ]], vim.api.nvim_buf_get_name(0)))
+      ]]
     end)
 
     it('closes the diff window if the infoview is closed', function()
