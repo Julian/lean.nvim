@@ -118,7 +118,7 @@ end
 
 --- Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
-  local succeeded, _ = vim.wait(5000, function()
+  local succeeded, _ = vim.wait(15000, function()
     if progress.is_processing(vim.uri_from_bufnr(0)) then return false end
     local diags = vim.diagnostic.get(0, {lnum = vim.api.nvim_win_get_cursor(0)[1] - 1})
 
