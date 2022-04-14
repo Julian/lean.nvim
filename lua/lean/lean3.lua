@@ -304,7 +304,7 @@ local function render_goal(pin, client, params, use_widgets, options)
             end
           end
 
-          goal_elem:set_children{lean3.parse_widget(event_result.widget.html, parse_options)}
+          goal_elem:set_children{ lean3.parse_widget(event_result.widget.html, parse_options) }
           ctx.self:get_root_ancestor():render()
 
           -- update all other pins for the same URI so they aren't left with a stale "session"
@@ -320,7 +320,7 @@ local function render_goal(pin, client, params, use_widgets, options)
           end
         end,
       }
-      goal_elem:set_children{lean3.parse_widget(result.widget.html, parse_options)}
+      goal_elem:set_children{ lean3.parse_widget(result.widget.html, parse_options) }
       return {goal_elem}
     end
   end
