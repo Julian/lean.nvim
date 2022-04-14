@@ -304,7 +304,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       helpers.move_cursor{ to = {4, 5} }
       helpers.wait_for_infoview_contents('case inl')
       infoview.set_diff_pin()
-      helpers.wait_for_infoview_contents('case inl', true)
+      helpers.wait_for_diff_contents('case inl')
 
       assert.infoview_contents.are(string.format([[
         ▶ 1 goal
@@ -333,7 +333,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
     it('maintain separate text', function()
       helpers.move_cursor{ to = {5, 5} }
       helpers.wait_for_infoview_contents('case inl.h')
-      helpers.wait_for_infoview_contents('case inl', true)
+      helpers.wait_for_diff_contents('case inl')
 
       assert.infoview_contents.are(string.format([[
         ▶ 1 goal
