@@ -304,12 +304,11 @@ function Info:new(opts)
       end
     }
   }
-  local diff_pin_element = Element:new{ name = "diff", }
   local new_info = setmetatable({
     pins = {},
     __infoview = opts.infoview,
     __pins_element = pins_element,
-    __diff_pin_element = diff_pin_element,
+    __diff_pin_element = Element:new{ name = "diff" },
     __win_event_disable = false,
   }, self)
   new_info.pin = Pin:new{
@@ -379,7 +378,7 @@ function Info:__set_diff_pin(params)
       use_widgets = options.use_widgets,
       parent = self
     }
-    self.__diff_pin_element:set_children({self.__diff_pin.__element})
+    self.__diff_pin_element:set_children{ self.__diff_pin.__element }
     self.__diff_pin:__show_extmark(nil, 'leanDiffPinned')
   end
 
