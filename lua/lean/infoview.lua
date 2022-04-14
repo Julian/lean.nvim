@@ -69,6 +69,7 @@ Pin.__index = Pin
 ---@field private __diff_renderer BufRenderer
 ---@field private __diff_pin Pin
 ---@field private __pins_element Element
+---@field private __diff_pin_element Element
 ---@field private __infoview Infoview @the infoview this info is attached to
 ---@field private __win_event_disable boolean
 local Info = {}
@@ -294,10 +295,12 @@ function Info:new(opts)
       end
     }
   }
+  local diff_pin_element = Element:new{ name = "diff", }
   local new_info = setmetatable({
     pins = {},
     __infoview = opts.infoview,
     __pins_element = pins_element,
+    __diff_pin_element = diff_pin_element,
     __win_event_disable = false,
   }, self)
   new_info.pin = Pin:new{
@@ -330,7 +333,7 @@ function Info:new(opts)
     listed = false,
     scratch = true,
   }
-  new_info.__diff_renderer = new_info.pin.__element:renderer{
+  new_info.__diff_renderer = new_info.__diff_pin_element:renderer{
     buf = diff_bufnr,
     keymaps = options.mappings,
   }
@@ -367,7 +370,7 @@ function Info:__set_diff_pin(params)
       use_widgets = options.use_widgets,
       parent = self
     }
-    self.__diff_renderer.element = self.__diff_pin.__element
+    self.__diff_pin_element:set_children({self.__diff_pin.__element})
     self.__diff_pin:__show_extmark(nil, 'leanDiffPinned')
   end
 
@@ -394,7 +397,7 @@ function Info:__clear_diff_pin()
   if not self.__diff_pin then return end
   self.__diff_pin:__teardown()
   self.__diff_pin = nil
-  self.__diff_renderer.element = self.pin.__element
+  self.__diff_pin_element:set_children(nil)
   self:render()
 end
 
