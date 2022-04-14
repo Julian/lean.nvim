@@ -53,31 +53,34 @@ function helpers.wait_for_ready_lsp()
   assert.message('LSP server was never ready.').True(succeeded)
 end
 
---- Wait until a single line from the text produced by `get_lines_fn` matches `contents`.
-local function __wait_for_contents(contents, get_lines_fn)
-  local last
-  local succeeded, _ = vim.wait(5000, function()
-    last = get_lines_fn()
-    if table.concat(last, "\n"):match(contents) then
-      return true
-    end
-  end)
-  return succeeded, table.concat(last, '\n')
+--- Produce a helper which waits until the text produced by `get_lines_fn`
+--- matches some to-be-provided-`contents`.
+---
+---@param get_lines_fn function
+---@param failure_message string @a message with two `string.format` placeholders
+local function __contents_waiter(get_lines_fn, failure_message)
+  return function(contents)
+    local last
+    local succeeded, _ = vim.wait(5000, function()
+      last = table.concat(get_lines_fn(), '\n')
+      if last:match(contents) then return true end
+    end)
+    local message = string.format(failure_message, contents, last)
+    assert.message(message).True(succeeded)
+  end
 end
 
-function helpers.wait_for_infoview_contents(contents)
-  local succeeded, last = __wait_for_contents(contents,
-    function() return infoview.get_current_infoview():get_lines() end )
-  local message = string.format("Infoview never contained %q. Last contents were %q.", contents, last)
-  assert.message(message).True(succeeded)
-end
+--- Wait until the infoview contains provided `contents`.
+helpers.wait_for_infoview_contents = __contents_waiter(
+  function() return infoview.get_current_infoview():get_lines() end,
+  'Infoview never contained %q. Last contents were %q.'
+)
 
-function helpers.wait_for_diff_contents(contents)
-  local succeeded, last = __wait_for_contents(contents,
-    function() return infoview.get_current_infoview():get_diff_lines() end )
-  local message = string.format("Diff never contained %q. Last contents were %q.", contents, last)
-  assert.message(message).True(succeeded)
-end
+--- Wait until the infoview's diff window contains provided `contents`.
+helpers.wait_for_diff_contents = __contents_waiter(
+  function() return infoview.get_current_infoview():get_diff_lines() end,
+  'Diff never contained %q. Last contents were %q.'
+)
 
 ---Wait until a window that isn't one of the known ones shows up.
 ---@param known table
