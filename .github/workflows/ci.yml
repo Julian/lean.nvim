@@ -25,7 +25,7 @@ jobs:
           - v0.6.1
           - nightly
         lean-version:
-          - "leanprover-community/lean:3.41.0"
+          - "leanprover-community/lean:3.42.1"
     steps:
       - uses: actions/checkout@v2
 
