@@ -1022,6 +1022,7 @@ function infoview.open()
     infoview._by_tabpage[tabpage] = current_infoview
   end
   current_infoview:open()
+  return current_infoview
 end
 
 function infoview.toggle()
@@ -1040,16 +1041,16 @@ end
 
 function infoview.add_pin()
   if not is_lean_buffer() then return end
-  infoview.open()
-  infoview.get_current_infoview().info:set_last_window()
-  infoview.get_current_infoview().info:add_pin()
+  local current_infoview = infoview.open()
+  current_infoview.info:set_last_window()
+  current_infoview.info:add_pin()
 end
 
 function infoview.set_diff_pin()
   if not is_lean_buffer() then return end
-  infoview.open()
-  infoview.get_current_infoview().info:set_last_window()
-  infoview.get_current_infoview().info:__set_diff_pin(util.make_position_params())
+  local current_infoview = infoview.open()
+  current_infoview.info:set_last_window()
+  current_infoview.info:__set_diff_pin(util.make_position_params())
 end
 
 function infoview.clear_pins()
@@ -1068,8 +1069,8 @@ end
 
 function infoview.toggle_auto_diff_pin(clear)
   if not is_lean_buffer() then return end
-  infoview.open()
-  infoview.get_current_infoview().info:__toggle_auto_diff_pin(clear)
+  local current_infoview = infoview.open()
+  current_infoview.info:__toggle_auto_diff_pin(clear)
 end
 
 function infoview.enable_widgets()
@@ -1083,8 +1084,7 @@ function infoview.disable_widgets()
 end
 
 function infoview.go_to()
-  infoview.open()
-  local curr_info = infoview.get_current_infoview().info
+  local curr_info = infoview.open().info
   -- if there is no last win, just go straight to the window itself
   if not curr_info.__renderer:last_win_valid() then
     vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
