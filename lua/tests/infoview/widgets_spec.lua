@@ -15,7 +15,6 @@ describe('infoview widgets', function()
 
     it('shows widget tooltips', function(_)
       helpers.move_cursor{ to = {1, 8} }
-      helpers.wait_for_infoview_contents('Nat')
       assert.infoview_contents.are[[
         ▶ expected type (1:8-1:11)
         ⊢ Type
@@ -44,7 +43,7 @@ describe('infoview widgets', function()
       local tab2_window = vim.api.nvim_get_current_win()
       local tab2_infoview = infoview.get_current_infoview()
       helpers.move_cursor{ to = {1, 8} }
-      helpers.wait_for_infoview_contents('Nat')
+      helpers.wait_for_loading_pins()
       vim.api.nvim_set_current_win(tab2_infoview.window)
       helpers.move_cursor{ to = {2, 4} }  -- `Type`
       helpers.feed('<CR>')
@@ -74,7 +73,6 @@ describe('infoview widgets', function()
     -- there, presumably some request getting sent before the server is ready.
     pending('shows widget tooltips', function(_)
       helpers.move_cursor{ to = {1, 10} }
-      helpers.wait_for_infoview_contents('ℕ')
       assert.infoview_contents.are[[
         ▶ expected type:
         ⊢ ℕ
@@ -102,7 +100,6 @@ describe('infoview widgets', function()
     pending('can be disabled', function(_)
       infoview.disable_widgets()
       helpers.move_cursor{ to = {1, 22} }
-      helpers.wait_for_infoview_contents('2 = 2')
       -- we're looking for `filter` to not be shown as our widget
       assert.infoview_contents.are[[
         ▶ 1 goal
@@ -113,7 +110,6 @@ describe('infoview widgets', function()
     pending('can re-enable widgets', function(_)
       infoview.enable_widgets()
       helpers.move_cursor{ to = {1, 22} }
-      helpers.wait_for_infoview_contents('filter')
       -- we're looking for `filter` as our widget
       -- FIXME: Extra newline only with widgets enabled
       assert.infoview_contents.are[[

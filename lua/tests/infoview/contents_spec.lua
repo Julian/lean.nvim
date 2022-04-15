@@ -38,7 +38,6 @@ describe('infoview content (auto-)update', function()
     -- In theory we don't care where we are, but the right answer changes
     assert.are.same(vim.api.nvim_win_get_cursor(0), {1, 0})
 
-    helpers.wait_for_infoview_contents('\n1')
     -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
@@ -51,7 +50,6 @@ describe('infoview content (auto-)update', function()
     assert.are_not.same(vim.api.nvim_win_get_cursor(0), {3, 0})
 
     helpers.move_cursor{ to = {3, 0} }
-    helpers.wait_for_infoview_contents('\n9')
     -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
@@ -66,7 +64,6 @@ describe('infoview content (auto-)update', function()
     vim.cmd('split')
     local second_window = vim.api.nvim_get_current_win()
     assert.are.same(vim.api.nvim_win_get_cursor(0), {3, 0})
-    helpers.wait_for_infoview_contents('\n9')
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
@@ -74,7 +71,6 @@ describe('infoview content (auto-)update', function()
     ]]
 
     helpers.move_cursor{ to = {1, 0} }
-    helpers.wait_for_infoview_contents('\n1')
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
       1
@@ -83,7 +79,6 @@ describe('infoview content (auto-)update', function()
 
     -- Now switch back to the other window and...
     vim.cmd[[wincmd p]]
-    helpers.wait_for_infoview_contents('\n9')
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
@@ -116,7 +111,6 @@ describe('infoview content (auto-)update', function()
     helpers.move_cursor{ to = {1, 0} }
 
     infoview.get_current_infoview():open()
-    helpers.wait_for_infoview_contents('\n1')
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
       1
@@ -124,7 +118,6 @@ describe('infoview content (auto-)update', function()
     ]]
 
     helpers.move_cursor{ to = {3, 0} }
-    helpers.wait_for_infoview_contents('\n9')
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
@@ -152,7 +145,6 @@ describe('infoview content (auto-)update', function()
       assert.windows.are(lean_window, tab1_infoview.window)
 
       helpers.move_cursor{ to = {1, 0} }
-      helpers.wait_for_infoview_contents('\n1')
       assert.infoview_contents.are[[
         ▶ 1:1-1:6: information:
         1
@@ -161,7 +153,6 @@ describe('infoview content (auto-)update', function()
 
       vim.cmd('tabnew' .. fixtures.lean_project.path .. '/Test/Squares.lean')
       helpers.move_cursor{ to = {3, 0} }
-      helpers.wait_for_infoview_contents('\n9')
       assert.infoview_contents.are[[
         ▶ 3:1-3:6: information:
         9.000000
@@ -187,7 +178,6 @@ describe('infoview content (auto-)update', function()
       vim.cmd('tabprevious')
 
       helpers.move_cursor{ to = {3, 0} }
-      helpers.wait_for_infoview_contents('\n9')
       assert.infoview_contents.are[[
         ▶ 3:1-3:6: information:
         9.000000
@@ -195,7 +185,6 @@ describe('infoview content (auto-)update', function()
       ]]
 
       helpers.move_cursor{ to = {1, 0} }
-      helpers.wait_for_infoview_contents('\n1')
       assert.infoview_contents.are[[
         ▶ 1:1-1:6: information:
         1
@@ -217,7 +206,6 @@ describe('infoview content (auto-)update', function()
 
       it('shows a term goal', function()
         helpers.move_cursor{ to = {3, 27} }
-        helpers.wait_for_infoview_contents('expected type')
         assert.infoview_contents.are[[
           ▶ expected type (3:28-3:36)
           ⊢ Nat
@@ -226,7 +214,6 @@ describe('infoview content (auto-)update', function()
 
       it('shows a tactic goal', function()
         helpers.move_cursor{ to = {6, 0} }
-        helpers.wait_for_infoview_contents('1 goal')
         assert.infoview_contents.are[[
           ▶ 1 goal
           p q : Prop
@@ -236,7 +223,6 @@ describe('infoview content (auto-)update', function()
 
       it('shows mixed goals', function()
         helpers.move_cursor{ to = {7, 8} }
-        helpers.wait_for_infoview_contents('7:9')
         assert.infoview_contents.are[[
           ▶ 1 goal
           p q : Prop
@@ -252,7 +238,6 @@ describe('infoview content (auto-)update', function()
 
       it('shows multiple goals', function()
         helpers.move_cursor{ to = {17, 2} }
-        helpers.wait_for_infoview_contents('goals')
         assert.infoview_contents.are[[
           ▶ 2 goals
           case zero
@@ -266,7 +251,6 @@ describe('infoview content (auto-)update', function()
 
       it('properly handles multibyte characters', function()
         helpers.move_cursor{ to = {20, 62} }
-        helpers.wait_for_infoview_contents('expected type')
         assert.infoview_contents.are[[
           ▶ expected type (20:54-20:57)
           𝔽 : Type
@@ -274,12 +258,10 @@ describe('infoview content (auto-)update', function()
         ]]
 
         helpers.move_cursor{ to = {20, 58} }
-        helpers.wait_for_infoview_contents('^$')
         assert.infoview_contents.are[[
         ]]
 
         helpers.move_cursor{ to = {20, 60} }
-        helpers.wait_for_infoview_contents('expected type')
         assert.infoview_contents.are[[
           ▶ expected type (20:54-20:57)
           𝔽 : Type
@@ -293,13 +275,11 @@ describe('infoview content (auto-)update', function()
         ---        even before being refactored though, as it passes with or without the relevant
         ---        lines in infoview.lua)
         helpers.move_cursor{ to = {23, 1} }
-        helpers.wait_for_infoview_contents('37')
         assert.infoview_contents.are[[
           ▶ 1 goal
           ⊢ 37 = 37
         ]]
         vim.api.nvim_buf_set_lines(0, 21, 22, true, {"def will_be_modified : 2 = 2 := by"})
-        helpers.wait_for_infoview_contents('2')
         assert.infoview_contents.are[[
           ▶ 1 goal
           ⊢ 2 = 2
@@ -313,19 +293,6 @@ describe('infoview content (auto-)update', function()
 
       it('shows a term goal', function()
         helpers.move_cursor{ to = {3, 27} }
-        -- FIXME: There is a race condition here which likely is an actual
-        --        (minor) bug. In CI, which is slower than locally, the below
-        --        will often flakily fail without the pcall-and-retry. This
-        --        likely is the update starting too early, and should be
-        --        detected (and delayed) in the real code, but for now it's
-        --        just hacked around here.
-        local succeeded, _ = pcall(helpers.wait_for_infoview_contents, 'expected type')
-        if not succeeded then
-          -- move away and back to retry
-          helpers.move_cursor{ to = {2, 0} }
-          helpers.move_cursor{ to = {3, 27} }
-          helpers.wait_for_infoview_contents('expected type')
-        end
 
         assert.infoview_contents.are[[
           ▶ expected type:
@@ -335,7 +302,6 @@ describe('infoview content (auto-)update', function()
 
       it('shows a tactic goal', function()
         helpers.move_cursor{ to = {6, 0} }
-        helpers.wait_for_infoview_contents('1 goal')
         -- FIXME: extra internal newline compared to Lean 4
         assert.infoview_contents.are[[
           filter: no filter
@@ -347,7 +313,6 @@ describe('infoview content (auto-)update', function()
 
       it('shows multiple goals', function()
         helpers.move_cursor{ to = {20, 2} }
-        helpers.wait_for_infoview_contents('goals')
         assert.infoview_contents.are[[
           filter: no filter
           ▶ 2 goals
@@ -363,7 +328,6 @@ describe('infoview content (auto-)update', function()
       if vim.version().major >= 1 or vim.version().minor >= 6 then
         it('properly handles multibyte characters', function()
           helpers.move_cursor{ to = {24, 61} }
-          helpers.wait_for_infoview_contents('expected type')
           assert.infoview_contents.are[[
             ▶ expected type:
             𝔽 : Type
@@ -371,12 +335,10 @@ describe('infoview content (auto-)update', function()
           ]]
 
           helpers.move_cursor{ to = {24, 58} }
-          helpers.wait_for_infoview_contents('^$')
           assert.infoview_contents.are[[
           ]]
 
           helpers.move_cursor{ to = {24, 60} }
-          helpers.wait_for_infoview_contents('expected type')
           assert.infoview_contents.are[[
             ▶ expected type:
             𝔽 : Type
@@ -392,7 +354,7 @@ describe('infoview content (auto-)update', function()
       local uri = vim.uri_from_fname(vim.api.nvim_buf_get_name(0))
       local result = vim.wait(5000, function() return require('lean.progress').is_processing(uri) end)
       assert.message('file was never processing').is_true(result)
-      assert.infoview_contents.are('Processing file...')
+      assert.infoview_contents_nowait.are('Processing file...')
     end)
   end))
 end)

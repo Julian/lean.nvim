@@ -48,15 +48,29 @@ function helpers.move_cursor(opts)
   vim.cmd[[doautocmd CursorMoved]]
 end
 
-function helpers.wait_for_loading_pins()
-  local info = infoview.get_current_infoview().info
-  local succeeded, _ = vim.wait(5000, function()
+--- Wait for all of the pins associated with the given infoview to finish loading/processing.
+---@param iv Infoview
+function helpers.wait_for_loading_pins(iv)
+  iv = iv or infoview.get_current_infoview()
+  local info = iv.info
+  local last, last_loading, last_processing
+  local succeeded, _ = vim.wait(7000, function()
     for _, pin in pairs(vim.list_extend({info.pin, info.__diff_pin}, info.pins)) do
-      if pin.loading or require"lean.progress".test_is_processing_at(pin.__position_params)  then return false end
+      local processing = pin.__position_params and
+        require"lean.progress".test_is_processing_at(pin.__position_params)
+      if pin.loading or processing then
+        last = pin.id
+        last_loading = pin.loading
+        last_processing = processing
+        return false
+      end
     end
     return true
   end)
-  assert.message('Pins never finished loading.').True(succeeded)
+  local msg = last_loading and "loading" or ""
+  if last_loading and last_processing then msg = msg .. "/" end
+  msg = msg .. (last_processing and "processing" or "")
+  assert.message(string.format('Pin %s never finished %s.', tostring(last) or "", msg)).True(succeeded)
 end
 
 function helpers.wait_for_ready_lsp()
@@ -179,6 +193,17 @@ assert:register('assertion', 'contents', has_buf_contents)
 local function has_infoview_contents(_, arguments)
   local expected = dedent(arguments[1][1] or arguments[1])
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
+  helpers.wait_for_loading_pins(target_infoview)
+  local got = table.concat(target_infoview:get_lines(), '\n')
+  assert.are.same(expected, got)
+  return true
+end
+
+
+--- Assert about the current infoview contents without waiting for the pins to load.
+local function has_infoview_contents_nowait(_, arguments)
+  local expected = dedent(arguments[1][1] or arguments[1])
+  local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
   local got = table.concat(target_infoview:get_lines(), '\n')
   assert.are.same(expected, got)
   return true
@@ -193,6 +218,7 @@ local function has_diff_contents(_, arguments)
 end
 
 assert:register('assertion', 'infoview_contents', has_infoview_contents)
+assert:register('assertion', 'infoview_contents_nowait', has_infoview_contents_nowait)
 assert:register('assertion', 'diff_contents', has_diff_contents)
 
 local function has_all(_, arguments)
