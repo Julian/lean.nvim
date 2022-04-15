@@ -707,7 +707,6 @@ function Pin:__started_loading()
   if self.loading then return false end
   self.loading = true
   self.__element:set_children{ self.__data_element }
-  self:__render_parents()
   return true
 end
 
@@ -828,7 +827,7 @@ end
 
 --- async function to update this pin's contents given the current position.
 function Pin:__update(tick)
-  self:__started_loading()
+  if self:__started_loading() then self:__render_parents() end
 
   local new_data_element = self:__mk_data_elem(tick)
   if not new_data_element or not tick:check() then return end
@@ -928,10 +927,12 @@ function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
     vim.list_extend(pins, each.info.pins)
     for _, pin in ipairs(pins) do
       if pin.__position_params and pin.__position_params.textDocument.uri == vim.uri_from_bufnr(bufnr) then
-        vim.schedule_wrap(function()
+        -- immediately mark the pin as loading (useful for tests)
+        if pin:__started_loading() then vim.schedule(function() pin:__render_parents() end) end
+        vim.schedule(function()
           pin:update_position()
           pin:update(false)
-        end)()
+        end)
       end
     end
   end

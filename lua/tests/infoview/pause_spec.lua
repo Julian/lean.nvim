@@ -16,7 +16,6 @@ describe('infoview pause/unpause', function()
   it("can pause and unpause updates", function(_)
     vim.cmd('edit! ' .. fixtures.lean_project.path .. '/Test/Squares.lean')
     helpers.move_cursor{ to = {3, 0} }
-    helpers.wait_for_infoview_contents('\n9')
     -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
@@ -25,7 +24,6 @@ describe('infoview pause/unpause', function()
     ]]
 
     helpers.move_cursor{ to = {1, 0} }
-    helpers.wait_for_infoview_contents('\n1')
     -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
@@ -52,7 +50,6 @@ describe('infoview pause/unpause', function()
 
     -- Unpausing triggers an update.
     pin:unpause()
-    helpers.wait_for_infoview_contents('\n9')
     -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
@@ -62,7 +59,6 @@ describe('infoview pause/unpause', function()
 
     -- And continued movement continues updating.
     helpers.move_cursor{ to = {1, 0} }
-    helpers.wait_for_infoview_contents('\n1')
     -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
