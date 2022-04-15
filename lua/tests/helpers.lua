@@ -49,6 +49,17 @@ function helpers.move_cursor(opts)
   vim.cmd[[doautocmd CursorMoved]]
 end
 
+function helpers.wait_for_loading_pins()
+  local info = infoview.get_current_infoview().info
+  local succeeded, _ = vim.wait(5000, function()
+    for _, pin in pairs(vim.list_extend({info.pin, info.__diff_pin}, info.pins)) do
+      if pin.loading or require"lean.progress".test_is_processing_at(pin.__position_params)  then return false end
+    end
+    return true
+  end)
+  assert.message('Pins never finished loading.').True(succeeded)
+end
+
 function helpers.wait_for_ready_lsp()
   local succeeded, _ = vim.wait(15000, vim.lsp.buf.server_ready)
   assert.message('LSP server was never ready.').True(succeeded)
