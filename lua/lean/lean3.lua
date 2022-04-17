@@ -3,6 +3,7 @@ local components = require('lean.infoview.components')
 local lsp = require('lean.lsp')
 local util = require('lean._util')
 local a = require'plenary.async.util'
+local progress = require"lean.progress"
 local subprocess_check_output = util.subprocess_check_output
 
 local lean3 = {}
@@ -321,13 +322,26 @@ local function render_goal(pin, client, params, use_widgets, options)
         end,
       }
       goal_elem:set_children{ lean3.parse_widget(result.widget.html, parse_options) }
+      -- if we get a valid response here but the server still hasn't reported progress, we don't ever
+      -- expect it to, so we can initialize this (this is mostly useful for testing)
+      if not progress.proc_infos[pin.__position_params.textDocument.uri] then
+        print"HERE 2"
+        progress.proc_infos[pin.__position_params.textDocument.uri] = {}
+      end
+
       return {goal_elem}
     end
   end
 
   local _, result = util.client_a_request(client, "$/lean/plainGoal", params)
   if result and type(result) == "table" then
-    return components.goal(result)
+    result = components.goal(result)
+    print"HERE 0"
+    if #result > 0 and not progress.proc_infos[pin.__position_params.textDocument.uri] then
+      print"HERE 1"
+      progress.proc_infos[pin.__position_params.textDocument.uri] = {}
+    end
+    return result
   end
 end
 
