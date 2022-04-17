@@ -70,7 +70,8 @@ function helpers.wait_for_loading_pins(iv)
   local msg = last_loading and "loading" or ""
   if last_loading and last_processing then msg = msg .. "/" end
   msg = msg .. (last_processing and "processing" or "")
-  assert.message(string.format('Pin %s never finished %s.', tostring(last) or "", msg)).True(succeeded)
+  assert.message(string.format('Pin %s never finished %s.',
+    tostring(last) or "", msg)).True(succeeded)
 end
 
 function helpers.wait_for_ready_lsp()
