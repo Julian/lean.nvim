@@ -13,7 +13,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install luarocks
         sudo luarocks install luacheck
-    - uses: pre-commit/action@v2.0.0
+    - uses: pre-commit/action@v2.0.3
 
   ci:
     runs-on: ${{ matrix.os }}
@@ -22,7 +22,7 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest]
         nvim-version:
-          - v0.6.1
+          - stable
           - nightly
         lean-version:
           - "leanprover-community/lean:3.42.1"
@@ -39,7 +39,7 @@ jobs:
             echo "$HOME/.elan/bin/" >> $GITHUB_PATH
 
       - name: Install Neovim
-        uses: rhysd/action-setup-vim@v1.2.8
+        uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
           version: ${{ matrix.nvim-version }}
