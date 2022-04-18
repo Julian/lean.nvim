@@ -151,6 +151,7 @@
   "infixr"
   "postfix"
   "notation"
+  "macro"
   "macro_rules"
   "syntax"
   "elab"
