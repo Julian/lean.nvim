@@ -49,7 +49,7 @@ function helpers.move_cursor(opts)
 end
 
 function helpers.wait_for_ready_lsp()
-  local succeeded, _ = vim.wait(5000, vim.lsp.buf.server_ready)
+  local succeeded, _ = vim.wait(15000, vim.lsp.buf.server_ready)
   assert.message('LSP server was never ready.').True(succeeded)
 end
 
@@ -61,7 +61,7 @@ end
 local function __contents_waiter(get_lines_fn, failure_message)
   return function(contents)
     local last
-    local succeeded, _ = vim.wait(5000, function()
+    local succeeded, _ = vim.wait(15000, function()
       last = table.concat(get_lines_fn(), '\n')
       if last:match(contents) then return true end
     end)
@@ -149,7 +149,7 @@ function helpers.wait_for_line_diagnostics()
 end
 
 function helpers.wait_for_filetype()
-  local result, _ = vim.wait(10000, require"lean".is_lean_buffer)
+  local result, _ = vim.wait(15000, require"lean".is_lean_buffer)
   assert.message("filetype was never set").is_truthy(result)
 end
 

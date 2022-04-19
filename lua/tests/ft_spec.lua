@@ -30,7 +30,7 @@ describe('ft.detect', function()
     helpers.wait_for_infoview_contents(': Type')
 
     vim.lsp.buf.definition()
-    assert.is_truthy(vim.wait(5000, function() return vim.api.nvim_buf_get_name(0) ~= initial_path end))
+    assert.is_truthy(vim.wait(15000, function() return vim.api.nvim_buf_get_name(0) ~= initial_path end))
 
     helpers.wait_for_filetype()
     assert.are_equal('lean', vim.opt.filetype:get())
@@ -57,7 +57,7 @@ describe('ft.detect', function()
     helpers.wait_for_infoview_contents(': Type')
 
     vim.lsp.buf.definition()
-    assert.is_truthy(vim.wait(5000, function() return vim.api.nvim_buf_get_name(0) ~= initial_path end))
+    assert.is_truthy(vim.wait(15000, function() return vim.api.nvim_buf_get_name(0) ~= initial_path end))
 
     helpers.wait_for_filetype()
     assert.are_equal('lean3', vim.opt.filetype:get())
