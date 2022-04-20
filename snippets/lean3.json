@@ -1,0 +1,31 @@
+{
+  "calc": {
+    "prefix": "calc",
+    "body": [
+        "calc ${1:start} = ${2:first} : by ${3:sorry}",
+        "       ... = ${4:second} : by ${5:sorry}",
+        "       ... = ${6:last} : by ${7:sorry},"
+    ],
+    "description": "Scaffolding for authoring `calc` blocks"
+  },
+  "obtain": {
+    "prefix": "obtain",
+    "body": ["obtain ⟨${1:name}, h$1⟩ := ${2:term}"],
+    "description": "The `obtain` tactic, with some autonaming"
+  },
+  "example": {
+    "prefix": "example",
+    "body": ["example : ${1:type} := ${2:term}"],
+    "description": "An `example` declaration"
+  },
+  "namespace": {
+    "prefix": ["ns", "namespace"],
+    "body": ["namespace ${1:name}", "", "end $1"],
+    "description": "A new Lean namespace"
+  },
+  "section": {
+    "prefix": "section",
+    "body": ["section ${1:name}", "", "end $1"],
+    "description": "A new Lean section"
+  }
+}

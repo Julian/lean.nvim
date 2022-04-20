@@ -4,6 +4,10 @@
       {
         "language": "lean",
         "path": "./snippets/lean.json"
+      },
+      {
+        "language": "lean3",
+        "path": "./snippets/lean3.json"
       }
     ]
   }

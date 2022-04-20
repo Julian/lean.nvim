@@ -1,13 +1,8 @@
 {
-  "obtain": {
-    "prefix": "obtain",
-    "body": ["obtain ⟨${1:name}, h$1⟩ := ${2:term}"],
-    "description": "The `obtain` tactic, with some autonaming"
-  },
   "example": {
     "prefix": "example",
     "body": ["example : ${1:type} := ${2:term}"],
-    "description": "A new Lean namespace"
+    "description": "An `example` declaration"
   },
   "namespace": {
     "prefix": ["ns", "namespace"],
