@@ -2,6 +2,7 @@ local DiagnosticSeverity = require('vim.lsp.protocol').DiagnosticSeverity
 
 local trythis = {}
 
+local BY_EXACT = vim.regex[[\<by exact ]]
 
 local function suggestions_from(diagnostic)
   local suggestions = {}
@@ -58,8 +59,7 @@ end
 --
 --  Right now only handles `by exact`.
 function trythis.trim_unnecessary_mode_switching()
-  local line = vim.api.nvim_get_current_line()
-  local start_col, end_col = line:find(' by exact ')
+  local start_col, end_col = BY_EXACT:match_str(vim.api.nvim_get_current_line())
   if start_col ~= nil then
     local start_row, _ = unpack(vim.api.nvim_win_get_cursor(0))
     vim.api.nvim_buf_set_text(0, start_row - 1, start_col, start_row - 1, end_col, {})
