@@ -309,8 +309,17 @@ Full Configuration & Settings Information
         priority = 10,
       },
 
-      -- Print Lean's stderr messages to a vim buffer
-      stderr = { enable = true },
+      -- Redirect Lean's stderr messages somehwere (to a buffer by default)
+      stderr = {
+        enable = true,
+        -- a callback which will be called with (multi-line) stderr output
+        -- e.g., use:
+        --   on_lines = function(lines) vim.notify(lines) end
+        -- if you want to redirect stderr to `vim.notify`.
+        -- The default implementation will redirect to a dedicated stderr
+        -- window.
+        on_lines = nil,
+      },
     }
 
 Other Plugins

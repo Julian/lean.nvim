@@ -60,9 +60,8 @@ function lean.setup(opts)
 
   require'lean.ft'.enable(opts.ft or {})
 
-  if not opts.stderr or opts.stderr.enable then
-    require'lean.stderr'.enable()
-  end
+  opts.stderr = opts.stderr or {}
+  if opts.stderr.enable ~= false then require'lean.stderr'.enable(opts.stderr or {}) end
 
   vim.cmd[[
     command LeanInfoviewToggle :lua require'lean.infoview'.toggle()
