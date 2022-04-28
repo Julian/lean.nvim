@@ -1,3 +1,5 @@
+local lean_lsp_diagnostics = require('lean._util').lean_lsp_diagnostics
+
 local trythis = {}
 
 local BY_EXACT = vim.regex[[\<by exact ]]
@@ -25,10 +27,10 @@ end
 --  See https://github.com/leanprover/vscode-lean/blob/8ad0609f560f279512ff792589f06d18aa92fb3f/src/tacticsuggestions.ts#L76
 --  for the VSCode implementation.
 function trythis.swap()
-  local diagnostics = vim.diagnostic.get(0, {
+  local diagnostics = lean_lsp_diagnostics{
     lnum = vim.api.nvim_win_get_cursor(0)[1] - 1,
     severity = vim.diagnostic.severity.INFO,
-  })
+  }
   for _, diagnostic in ipairs(diagnostics) do
     local suggestions = suggestions_from(diagnostic)
     if not vim.tbl_isempty(suggestions) then

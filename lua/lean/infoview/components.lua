@@ -6,7 +6,7 @@
 ---@tag lean.infoview.components
 
 local Element = require('lean.widgets').Element
-local SEVERITY = require('lean._util').SEVERITY
+local DIAGNOSTIC_SEVERITY = require('lean._util').DIAGNOSTIC_SEVERITY
 
 local components = {}
 
@@ -248,7 +248,7 @@ function components.diagnostics(bufnr, line)
       elements, Element:new{
         text = H(string.format('%s: %s:',
           range_to_string(diag.range),
-          SEVERITY[diag.severity])) .. "\n" .. diag.message,
+          DIAGNOSTIC_SEVERITY[diag.severity])) .. "\n" .. diag.message,
         name = 'diagnostic'
       }
     )
@@ -332,7 +332,7 @@ function components.interactive_diagnostics(diags, line, sess)
       local element = Element:new{
           text = H(string.format('%s: %s:\n',
             range_to_string(diag.range),
-            SEVERITY[diag.severity])),
+            DIAGNOSTIC_SEVERITY[diag.severity])),
           name = 'diagnostic'
       }
       element:add_child(tagged_text_msg_embed(diag.message, sess))
