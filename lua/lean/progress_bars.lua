@@ -22,7 +22,6 @@ local function _update(bufnr)
     if not diagnostics[start_line] then
       diagnostics[start_line] = {
         lnum = proc_info.range.start.line,
-        end_lnum = proc_info.range['end'].line,
         col = 0,
         message = "Processing...",
         severity = vim.diagnostic.severity.INFO,
