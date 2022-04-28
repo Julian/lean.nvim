@@ -13,10 +13,11 @@ function M.tbl_repeat(value, times)
 end
 
 --- Fetch the diagnostics for all Lean LSP clients from the current buffer.
-function M.lean_lsp_diagnostics(opts)
+function M.lean_lsp_diagnostics(opts, bufnr)
+  bufnr = bufnr or 0
   opts = opts or {}
   local diagnostics = {}
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
+  for _, client in pairs(vim.lsp.buf_get_clients(bufnr or 0)) do
     if client.name:match('^lean') then
       opts.namespace = vim.lsp.diagnostic.get_namespace(client.id)
       vim.list_extend(diagnostics, vim.diagnostic.get(0, opts))
