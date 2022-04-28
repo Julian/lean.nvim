@@ -1,4 +1,5 @@
 local helpers = require('tests.helpers')
+local lean_lsp_diagnostics = require('lean._util').lean_lsp_diagnostics
 
 require('lean').setup {
   lsp = { enable = true },
@@ -10,9 +11,9 @@ describe('diagnostics', function()
     [[ example : false := by trivial ]],
   function()
     helpers.wait_for_line_diagnostics()
-    local diags = vim.lsp.diagnostic.get_line_diagnostics(0)
+    local diags = lean_lsp_diagnostics()
     assert.are_equal(1, #diags)
-    assert.are_equal(1, diags[1].severity)
+    assert.are_equal(vim.diagnostic.severity.ERROR, diags[1].severity)
     assert(diags[1].message:match("tactic .*failed"))
   end))
 
@@ -20,9 +21,9 @@ describe('diagnostics', function()
     [[ example : False := by trivial ]],
   function()
     helpers.wait_for_line_diagnostics()
-    local diags = vim.lsp.diagnostic.get_line_diagnostics(0)
+    local diags = lean_lsp_diagnostics()
     assert.are_equal(1, #diags)
-    assert.are_equal(1, diags[1].severity)
+    assert.are_equal(vim.diagnostic.severity.ERROR, diags[1].severity)
     assert(diags[1].message:match("tactic .*failed"))
   end))
 end)

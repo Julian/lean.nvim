@@ -5,9 +5,8 @@
 
 ---@tag lean.infoview.components
 
-local DiagnosticSeverity = vim.lsp.protocol.DiagnosticSeverity
-
 local Element = require('lean.widgets').Element
+local util = require('lean._util')
 
 local components = {}
 
@@ -243,18 +242,21 @@ end
 --- Diagnostic information for the current line from the Lean server.
 ---@return Element[]
 function components.diagnostics(bufnr, line)
-  local elements = {}
-  for _, diag in pairs(vim.lsp.diagnostic.get_line_diagnostics(bufnr, line)) do
-    table.insert(
-      elements, Element:new{
-        text = H(string.format('%s: %s:',
-          range_to_string(diag.range),
-          DiagnosticSeverity[diag.severity]:lower())) .. "\n" .. diag.message,
-        name = 'diagnostic'
-      }
-    )
-  end
-  return elements
+  return vim.tbl_map(function(diagnostic)
+    return Element:new{
+      name = 'diagnostic',
+      text = H(string.format(
+        '%s: %s:\n%s',
+        range_to_string{
+          start = { line = diagnostic.lnum, character = diagnostic.col },
+          ['end'] = { line = diagnostic.end_lnum, character = diagnostic.end_col },
+        },
+        util.DIAGNOSTIC_SEVERITY[diagnostic.severity],
+        diagnostic.message
+      )),
+    }
+    end, util.lean_lsp_diagnostics({ lnum = line }, bufnr)
+  )
 end
 
 ---@param t TaggedTextMsgEmbed
@@ -333,7 +335,7 @@ function components.interactive_diagnostics(diags, line, sess)
       local element = Element:new{
           text = H(string.format('%s: %s:\n',
             range_to_string(diag.range),
-            DiagnosticSeverity[diag.severity]:lower())),
+            util.DIAGNOSTIC_SEVERITY[diag.severity])),
           name = 'diagnostic'
       }
       element:add_child(tagged_text_msg_embed(diag.message, sess))
