@@ -325,7 +325,6 @@ local function render_goal(pin, client, params, use_widgets, options)
       -- if we get a valid response here but the server still hasn't reported progress, we don't ever
       -- expect it to, so we can initialize this (this is mostly useful for testing)
       if not progress.proc_infos[pin.__position_params.textDocument.uri] then
-        print"HERE 2"
         progress.proc_infos[pin.__position_params.textDocument.uri] = {}
       end
 
@@ -336,9 +335,7 @@ local function render_goal(pin, client, params, use_widgets, options)
   local _, result = util.client_a_request(client, "$/lean/plainGoal", params)
   if result and type(result) == "table" then
     result = components.goal(result)
-    print"HERE 0"
     if #result > 0 and not progress.proc_infos[pin.__position_params.textDocument.uri] then
-      print"HERE 1"
       progress.proc_infos[pin.__position_params.textDocument.uri] = {}
     end
     return result
