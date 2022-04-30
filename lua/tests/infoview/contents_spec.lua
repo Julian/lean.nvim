@@ -299,12 +299,16 @@ describe('infoview content (auto-)update', function()
         --        likely is the update starting too early, and should be
         --        detected (and delayed) in the real code, but for now it's
         --        just hacked around here.
-        local succeeded, _ = pcall(helpers.wait_for_infoview_contents, 'expected type')
+        -- NOTE(rish): from my experiments this is a result of the Lean 3 server
+        --             sometimes neglecting to send a $/lean/fileProgress update
+        --             at all (which is needed to re-issue an update request) --
+        --             so there's maybe not much we can do about it...
+        local succeeded, _ = pcall(helpers.wait_for_loading_pins)
         if not succeeded then
           -- move away and back to retry
           helpers.move_cursor{ to = {2, 0} }
           helpers.move_cursor{ to = {3, 27} }
-          helpers.wait_for_infoview_contents('expected type')
+          helpers.wait_for_loading_pins()
         end
 
         assert.infoview_contents.are[[
