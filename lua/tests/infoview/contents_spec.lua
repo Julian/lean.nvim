@@ -319,7 +319,6 @@ describe('infoview content (auto-)update', function()
 
       it('shows a tactic goal', function()
         helpers.move_cursor{ to = {6, 0} }
-        -- FIXME: extra internal newline compared to Lean 4
         assert.infoview_contents.are[[
           filter: no filter
           ▶ 1 goal
