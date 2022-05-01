@@ -5,8 +5,8 @@
 --- sprinkle print debugging around `infoview.Pin:__update`. Don't forget some
 --- functions are run asynchronously, so if you don't see an update, it may be
 --- because a test has finished before the promise fires, which usually means
---- the test needs to wait for an update (using e.g.
----`helpers.wait_for_infoview_contents`).
+--- the test needs to wait for an update (which `assert.infoview_contents`
+--- does automatically, so use it).
 ---
 --- Note that unfortunately as "usual" for neovim tests, those below are not
 --- independent, so if you see unexpected behavior even though tests below

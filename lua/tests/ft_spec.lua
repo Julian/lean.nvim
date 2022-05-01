@@ -54,11 +54,7 @@ describe('ft.detect', function()
     local initial_path = vim.api.nvim_buf_get_name(0)
 
     vim.api.nvim_command('normal G$')
-    -- FIXME When I run this locally with `wait_for_loading_pins` instead,
-    -- it fails (never finishes processing). It looks like the only reason
-    -- this check works because it's getting these contents from the
-    -- diagnostics, rather than the pins themselves (which don't actually load).
-    helpers.wait_for_infoview_contents(': Type')
+    helpers.wait_for_line_diagnostics()
 
     vim.lsp.buf.definition()
     assert.is_truthy(vim.wait(15000, function() return vim.api.nvim_buf_get_name(0) ~= initial_path end))
