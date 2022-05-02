@@ -537,7 +537,10 @@ function Pin:new(obj)
   obj = obj or {}
 
   local paused = obj.paused or false
-  local use_widgets = obj.use_widgets or true
+  local use_widgets = obj.use_widgets
+  if use_widgets == nil then
+    use_widgets = true
+  end
   obj.paused = nil
   obj.use_widgets = nil
 
