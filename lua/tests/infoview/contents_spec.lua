@@ -23,8 +23,7 @@ local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
 local helpers = require('tests.helpers')
 
-
-require('lean').setup{}
+require('lean').setup{ infoview = { use_widgets = false } }
 
 describe('infoview content (auto-)update', function()
 
@@ -237,12 +236,11 @@ describe('infoview content (auto-)update', function()
       end)
 
       it('shows multiple goals', function()
-        helpers.move_cursor{ to = {17, 2} }
+        helpers.move_cursor{ to = {16, 2} }
         assert.infoview_contents.are[[
           ▶ 2 goals
           case zero
           ⊢ Nat.zero = Nat.zero
-
           case succ
           n✝ : Nat
           ⊢ Nat.succ n✝ = Nat.succ n✝
@@ -293,26 +291,9 @@ describe('infoview content (auto-)update', function()
 
       it('shows a term goal', function()
         helpers.move_cursor{ to = {3, 27} }
-        -- FIXME: There is a race condition here which likely is an actual
-        --        (minor) bug. In CI, which is slower than locally, the below
-        --        will often flakily fail without the pcall-and-retry. This
-        --        likely is the update starting too early, and should be
-        --        detected (and delayed) in the real code, but for now it's
-        --        just hacked around here.
-        -- NOTE(rish): from my experiments this is a result of the Lean 3 server
-        --             sometimes neglecting to send a $/lean/fileProgress update
-        --             at all (which is needed to re-issue an update request) --
-        --             so there's maybe not much we can do about it...
-        local succeeded, _ = pcall(helpers.wait_for_loading_pins)
-        if not succeeded then
-          -- move away and back to retry
-          helpers.move_cursor{ to = {2, 0} }
-          helpers.move_cursor{ to = {3, 27} }
-          helpers.wait_for_loading_pins()
-        end
 
         assert.infoview_contents.are[[
-          ▶ expected type:
+          ▶ 1 goal
           ⊢ ℕ
         ]]
       end)
@@ -320,7 +301,6 @@ describe('infoview content (auto-)update', function()
       it('shows a tactic goal', function()
         helpers.move_cursor{ to = {6, 0} }
         assert.infoview_contents.are[[
-          filter: no filter
           ▶ 1 goal
           p q : Prop
           ⊢ p ∨ q → q ∨ p
@@ -330,11 +310,9 @@ describe('infoview content (auto-)update', function()
       it('shows multiple goals', function()
         helpers.move_cursor{ to = {20, 2} }
         assert.infoview_contents.are[[
-          filter: no filter
           ▶ 2 goals
           case nat.zero
           ⊢ 0 = 0
-
           case nat.succ
           n : ℕ
           ⊢ n.succ = n.succ
@@ -345,18 +323,21 @@ describe('infoview content (auto-)update', function()
         it('properly handles multibyte characters', function()
           helpers.move_cursor{ to = {24, 61} }
           assert.infoview_contents.are[[
-            ▶ expected type:
+            ▶ 1 goal
             𝔽 : Type
             ⊢ 𝔽 = 𝔽
           ]]
 
+          -- NOTE: spurious (checks for a zero-length Lean 3 response,
+          -- which could have multiple causes)
           helpers.move_cursor{ to = {24, 58} }
-          assert.infoview_contents.are[[
+          helpers.wait_for_loading_pins()
+          assert.infoview_contents_nowait.are[[
           ]]
 
           helpers.move_cursor{ to = {24, 60} }
           assert.infoview_contents.are[[
-            ▶ expected type:
+            ▶ 1 goal
             𝔽 : Type
             ⊢ 𝔽 = 𝔽
           ]]
