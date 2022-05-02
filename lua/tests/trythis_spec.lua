@@ -118,7 +118,7 @@ example : foo := ⟨by whatshouldIdo⟩]], function()
     )
   end))
 
-  -- A line containing `squeeze_simp [foo] at bar` will re-suggest `at bar`, so
+  -- A line containing `squeeze_simp at bar` will re-suggest `at bar`, so
   -- ensure it doesn't appear twice
   it('trims simp at foo when it will be duplicated', helpers.clean_buffer("lean3", [[
 meta def whatshouldIdo := (do tactic.trace "Try this: simp [foo] at bar")
@@ -129,6 +129,35 @@ example {n : nat} : n = n := by whatshouldIdo at bar]], function()
     require('lean.trythis').swap()
     assert.is.same(
       'example {n : nat} : n = n := by simp [foo] at bar',
+      vim.api.nvim_get_current_line()
+    )
+  end))
+
+  -- Handle `squeeze_simp [foo]` similarly.
+  it('trims simp [foo] when it will be duplicated', helpers.clean_buffer("lean3", [[
+meta def whatshouldIdo (L : list name) := (do tactic.trace "Try this: simp [foo, baz]")
+example {n : nat} : n = n := by whatshouldIdo [`nat]
+]], function()
+    vim.api.nvim_command('normal G$k')
+    helpers.wait_for_line_diagnostics()
+
+    require('lean.trythis').swap()
+    assert.is.same(
+      'example {n : nat} : n = n := by simp [foo, baz]',
+      vim.api.nvim_get_current_line()
+    )
+  end))
+
+  -- Handle `squeeze_simp [foo] at bar` similarly.
+  it('trims simp [foo] at bar when it will be duplicated', helpers.clean_buffer("lean3", [[
+meta def whatshouldIdo (L : list name) := (do tactic.trace "Try this: simp [foo, baz] at bar")
+example {n : nat} : n = n := by whatshouldIdo [`nat] at bar]], function()
+    vim.api.nvim_command('normal G$')
+    helpers.wait_for_line_diagnostics()
+
+    require('lean.trythis').swap()
+    assert.is.same(
+      'example {n : nat} : n = n := by simp [foo, baz] at bar',
       vim.api.nvim_get_current_line()
     )
   end))
