@@ -2,7 +2,7 @@ local lean_lsp_diagnostics = require('lean._util').lean_lsp_diagnostics
 
 local trythis = {}
 
-local BY_EXACT = vim.regex[[\<by exact ]]
+local BY_EXACT = vim.regex[[\<\(by exact \)\|\(begin\_s*exact.*\_s*end\)]]
 
 local function suggestions_from(diagnostic)
   local suggestions = {}
@@ -43,8 +43,8 @@ function trythis.swap()
       local end_row, end_col = unpack(vim.fn.searchpos('\\>', 'cW'))
 
       local rest = vim.api.nvim_buf_get_text(0, end_row - 1, end_col - 1, end_row - 1, -1, {})[1]
-      if rest:match('%s*%[') then
-        local bracket_row, bracket_col = unpack(vim.fn.searchpairpos('\\s\\*\\[', '', '\\]', 'cW'))
+      if rest:match('%s*[[{]') then
+        local bracket_row, bracket_col = unpack(vim.fn.searchpairpos('\\s\\*[[{]', '', '[\\]}]', 'cW'))
         if bracket_row ~= 0 or bracket_col ~= 0 then
           end_row, end_col = bracket_row, bracket_col + 1
         end
