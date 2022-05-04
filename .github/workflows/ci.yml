@@ -35,7 +35,7 @@ jobs:
 
       - name: Install elan
         run: |
-            curl https://raw.githubusercontent.com/Kha/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain "${{ matrix.lean-version }}" -y
+            curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain "${{ matrix.lean-version }}" -y
             echo "$HOME/.elan/bin/" >> $GITHUB_PATH
 
       - name: Install Neovim
