@@ -168,7 +168,32 @@ assert:register('assertion', 'contents', has_buf_contents)
 local function has_infoview_contents(_, arguments)
   local expected = dedent(arguments[1][1] or arguments[1])
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
-  helpers.wait_for_loading_pins(target_infoview)
+  -- In Lean 3, the fileProgress notification is unreliable,
+  -- so we may think we're done processing when we're actually not.
+  -- This means that we'll sometimes get an empty response and then call it a day.
+  -- To address this, we assume that we'll only assert
+  -- nonempty contents in the Lean 3 tests, and retry updating the current pin
+  -- until we get something.
+  if vim.opt.filetype:get() == "lean3" then
+    assert.are_not.same(expected, "")
+    local succeeded, _ = pcall(helpers.wait_for_loading_pins, target_infoview)
+    local curr_pin = target_infoview.info.pin
+
+    local got
+    for _ = 1,10 do
+      got = curr_pin.__element:to_string()
+      if not succeeded or #got == 0 then
+        curr_pin:update()
+        succeeded = pcall(helpers.wait_for_loading_pins, target_infoview)
+      else
+        break
+      end
+    end
+
+    assert.message("never got Lean 3 data").is_true(succeeded and #got ~= 0)
+  else
+    helpers.wait_for_loading_pins(target_infoview)
+  end
   local got = table.concat(target_infoview:get_lines(), '\n')
   assert.are.same(expected, got)
   return true
