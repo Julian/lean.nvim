@@ -102,14 +102,14 @@ describe('infoview content (auto-)update', function()
     assert.windows.are(lean_window, infoview.get_current_infoview().window)
     assert.are_not.same(vim.api.nvim_win_get_cursor(0), {1, 0})
 
-    infoview.get_current_infoview():close()
+    infoview.close()
 
     -- Move around a bit.
     helpers.move_cursor{ to = {1, 0} }
     helpers.move_cursor{ to = {2, 0} }
     helpers.move_cursor{ to = {1, 0} }
 
-    infoview.get_current_infoview():open()
+    infoview.open()
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
       1
@@ -126,16 +126,15 @@ describe('infoview content (auto-)update', function()
 
   it('does not have line contents while closed', function()
     assert.windows.are(lean_window, infoview.get_current_infoview().window)
-    local current_infoview = infoview.get_current_infoview()
-    current_infoview:close()
+    infoview.close()
     assert.has.errors(
-      function() current_infoview:get_lines() end,
+      function() infoview.get_current_infoview():get_lines() end,
       "infoview is not open"
     )
 
     -- But succeeds again when re-opened
-    current_infoview:open()
-    assert.has.no.errors(function() current_infoview:get_lines() end)
+    infoview.open()
+    assert.has.no.errors(function() infoview.get_current_infoview():get_lines() end)
   end)
 
   describe('in multiple tabs', function()
@@ -173,7 +172,7 @@ describe('infoview content (auto-)update', function()
       local tab2 = vim.api.nvim_get_current_tabpage()
       assert.is_not.equal(vim.api.nvim_win_get_tabpage(lean_window), tab2)
 
-      infoview.get_current_infoview():close()
+      infoview.close()
       vim.cmd('tabprevious')
 
       helpers.move_cursor{ to = {3, 0} }

@@ -61,11 +61,9 @@ describe('infoview autoopen', function()
   it('does not auto-reopen an infoview that has been closed', function(_)
     local windows = vim.api.nvim_tabpage_list_wins(0)
     assert.is.equal(#windows, 2)  -- +1 above
-    assert.is.truthy(
-      vim.tbl_contains(windows, infoview.get_current_infoview().window)
-    )
+    assert.is.truthy(vim.tbl_contains(windows, infoview.get_current_infoview().window))
 
-    infoview.get_current_infoview():close()
+    infoview.close()
     assert.windows.are(lean_window)
 
     vim.cmd('split ' .. fixtures.lean3_project.some_nested_existing_file)
@@ -76,9 +74,8 @@ describe('infoview autoopen', function()
 
   it('allows infoviews to reopen manually after closing', function(_)
     assert.windows.are(lean_window)
-    local closed_infoview = infoview.get_current_infoview()
-    closed_infoview:open()
-    assert.windows.are(lean_window, closed_infoview.window)
+    local reopened_infoview = infoview.open()
+    assert.windows.are(lean_window, reopened_infoview.window)
   end)
 
   it('can be disabled', function(_)
@@ -89,8 +86,7 @@ describe('infoview autoopen', function()
     assert.windows.are(tab2_window)
 
     -- But windows can still be opened and closed manually
-    infoview.open()
-    local tab2_infoview = infoview.get_current_infoview()
+    local tab2_infoview = infoview.open()
     assert.windows.are(tab2_window, tab2_infoview.window)
 
     tab2_infoview:close()

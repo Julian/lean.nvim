@@ -1030,6 +1030,12 @@ function infoview.open()
   return current_infoview
 end
 
+--- Close the current infoview (or ensure it is already closed).
+function infoview.close()
+  local current_infoview = infoview.get_current_infoview()
+  if current_infoview then current_infoview:close() end
+end
+
 --- Toggle whether the current infoview is opened or closed.
 function infoview.toggle()
   local iv = infoview.get_current_infoview()

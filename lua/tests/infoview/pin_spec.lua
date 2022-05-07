@@ -337,19 +337,15 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
     end)
 
     it('closes the diff window if the infoview is closed', function()
-      local current_infoview = infoview.get_current_infoview()
       assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
-      current_infoview:close()
+      infoview.close()
       assert.windows.are(lean_window)
     end)
 
     it('reopens a diff window when the infoview is reopened', function()
       assert.windows.are(lean_window)
-      local current_infoview = infoview.get_current_infoview()
 
-      current_infoview:open()
-
-      -- The window is not necessarily the same one as before.
+      local current_infoview = infoview.open()
       local diff_window = helpers.wait_for_new_window{ lean_window, current_infoview.window }
 
       assert.windows.are(lean_window, current_infoview.window, diff_window)
