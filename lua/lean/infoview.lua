@@ -1018,6 +1018,7 @@ function infoview.__maybe_autoopen()
   new_infoview:open()
 end
 
+--- Open the current infoview (or ensure it is already open).
 function infoview.open()
   local tabpage = vim.api.nvim_get_current_tabpage()
   local current_infoview = infoview.get_current_infoview()
@@ -1029,6 +1030,7 @@ function infoview.open()
   return current_infoview
 end
 
+--- Toggle whether the current infoview is opened or closed.
 function infoview.toggle()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then
@@ -1038,11 +1040,13 @@ function infoview.toggle()
   end
 end
 
+--- Toggle whether the current pin receives updates.
 function infoview.pin_toggle_pause()
   local iv = infoview.get_current_infoview()
   if iv then iv.info.pin:toggle_pause() end
 end
 
+--- Add a pin to the current cursor location.
 function infoview.add_pin()
   if not is_lean_buffer() then return end
   local current_infoview = infoview.open()
@@ -1050,6 +1054,7 @@ function infoview.add_pin()
   current_infoview.info:add_pin()
 end
 
+--- Set the location for a diff pin to the current cursor location.
 function infoview.set_diff_pin()
   if not is_lean_buffer() then return end
   local current_infoview = infoview.open()
@@ -1057,6 +1062,7 @@ function infoview.set_diff_pin()
   current_infoview.info:__set_diff_pin(util.make_position_params())
 end
 
+--- Clear any pins in the current infoview.
 function infoview.clear_pins()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then
@@ -1064,6 +1070,7 @@ function infoview.clear_pins()
   end
 end
 
+--- Clear a diff pin in the current infoview.
 function infoview.clear_diff_pin()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then
@@ -1071,22 +1078,26 @@ function infoview.clear_diff_pin()
   end
 end
 
+--- Toggle whether "auto-diff" mode is active for the current infoview.
 function infoview.toggle_auto_diff_pin(clear)
   if not is_lean_buffer() then return end
   local current_infoview = infoview.open()
   current_infoview.info:__toggle_auto_diff_pin(clear)
 end
 
+--- Enable widgets in the current infoview.
 function infoview.enable_widgets()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then iv.info.pin:enable_widgets() end
 end
 
+--- Disable widgets in the current infoview.
 function infoview.disable_widgets()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then iv.info.pin:disable_widgets() end
 end
 
+--- Move the cursor to the infoview window.
 function infoview.go_to()
   local curr_info = infoview.open().info
   -- if there is no last win, just go straight to the window itself
