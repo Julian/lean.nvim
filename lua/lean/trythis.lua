@@ -2,6 +2,7 @@ local lean_lsp_diagnostics = require('lean._util').lean_lsp_diagnostics
 
 local trythis = {}
 
+local DOUBLE_AT = vim.regex[[ at .*\ze at .*]]
 local BY_EXACT = vim.regex[[\<\(by exact \)\|\(begin\_s*exact.*\_s*end\)]]
 
 local function suggestions_from(diagnostic)
@@ -59,7 +60,7 @@ function trythis.swap()
         vim.split(suggestion.replacement, '\n')
       )
 
-      trythis.trim_doubled_ats(suggestion.replacement:match(' at .*'))
+      trythis.trim_doubled_ats()
       trythis.trim_unnecessary_mode_switching()
       return
     end
@@ -78,21 +79,18 @@ function trythis.trim_unnecessary_mode_switching()
 end
 
 --- Trim `at foo at foo` to just `at foo` once.
-function trythis.trim_doubled_ats(at)
-  if not at then return end
-  local line = vim.api.nvim_get_current_line()
-  local start_col, end_col = line:find(at .. at)
-  if start_col ~= nil then
-    local start_row, _ = unpack(vim.api.nvim_win_get_cursor(0))
-    vim.api.nvim_buf_set_text(
-      0,
-      start_row - 1,
-      start_col,
-      start_row - 1,
-      end_col - #at + 1,
-      {}
-    )
-  end
+function trythis.trim_doubled_ats()
+  local start_col, end_col = DOUBLE_AT:match_str(vim.api.nvim_get_current_line())
+  if not start_col then return end
+  local start_row, _ = unpack(vim.api.nvim_win_get_cursor(0))
+  vim.api.nvim_buf_set_text(
+    0,
+    start_row - 1,
+    start_col,
+    start_row - 1,
+    end_col,
+    {}
+  )
 end
 
 return trythis

@@ -162,6 +162,20 @@ example {n : nat} : n = n := by whatshouldIdo [`nat] at bar]], function()
     )
   end))
 
+  -- Handle `squeeze_simp [foo] at *` similarly.
+  it('trims simp [foo] at * when it will be duplicated', helpers.clean_buffer('lean3', [[
+meta def whatshouldIdo (L : list name) := (do tactic.trace "Try this: simp [foo, baz] at *")
+example {n : nat} : n = n := by whatshouldIdo [`nat] at *]], function()
+    vim.api.nvim_command('normal G$')
+    helpers.wait_for_line_diagnostics()
+
+    require('lean.trythis').swap()
+    assert.is.same(
+      'example {n : nat} : n = n := by simp [foo, baz] at *',
+      vim.api.nvim_get_current_line()
+    )
+  end))
+
   it('replaces squashed suggestions from earlier in the line', helpers.clean_buffer('lean3', [[
 meta def whatshouldIdo := (do tactic.trace "Try this: exact rfl")
 example {n : nat} : n = n := by whatshouldIdo]], function()
