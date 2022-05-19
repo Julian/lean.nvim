@@ -301,4 +301,22 @@ function Subsession:msgToInteractive(msg, indent)
     { msg = msg, indent = indent })
 end
 
+---@alias LspDocumentUri string
+
+---@class LspLocationLink
+---@field originSelectionRange? LspRange
+---@field targetUri LspDocumentUri
+---@field targetRange LspRange
+---@field targetSelectionRange LspRange
+
+---@alias GoToKind 'declaration'|'definition'|'type'
+
+---@param kind GoToKind
+---@param info InfoWithCtx
+---@return LspLocationLink[]
+---@return any error
+function Subsession:getGoToLocation(kind, info)
+  return self:call('Lean.Widget.getGoToLocation', { kind = kind, info = info })
+end
+
 return rpc
