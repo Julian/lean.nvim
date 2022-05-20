@@ -149,7 +149,7 @@ either within Lean source files or within Infoview windows:
 In Lean Files
 ^^^^^^^^^^^^^
 
-The key binding ``<LocalLeader>`` below refers to a configurable prefix key 
+The key binding ``<LocalLeader>`` below refers to a configurable prefix key
 within vim (and neovim). You can check what this key is set to within neovim
 by running the command ``:echo maplocalleader``. An error like
 ``E121: Undefined variable: maplocalleader`` indicates that it may not be set
