@@ -1,10 +1,243 @@
-================================================================================
+ lean.nvim is a plugin providing Neovim support for the Lean interactive
+ theorem prover, developed by Leonardo de Moura at Microsoft Research.
+
+ To find out more, see https://github.com/Julian/lean.nvim.
+
                                                                      *lean.nvim*
+lean.setup({opts})                                                  *lean.setup*
+     Setup function to be run in your init.lua (or init.vim).
 
-lean.nvim is a plugin providing Neovim support for the Lean interactive theorem
-prover, developed by Leonardo de Moura at Microsoft Research.
-
-To find out more, see https://github.com/Julian/lean.nvim.
+    Parameters: ~
+        {opts}  (table:)  Configuration options
 
 
- vim:tw=78:ts=8:ft=help:norl:
+lean.use_suggested_mappings()                      *lean.use_suggested_mappings*
+
+
+
+lean.is_lean_buffer()                                      *lean.is_lean_buffer*
+     Is the current buffer a lean buffer?
+
+
+lean.is_lean3_buffer()                                    *lean.is_lean3_buffer*
+     Is the current buffer a lean 3 buffer?
+
+
+lean.current_search_paths()                          *lean.current_search_paths*
+     Return the current Lean search path.
+
+
+     Includes both the Lean core libraries as well as project-specific
+     directories.
+
+
+Pin                                                                        *Pin*
+
+
+    Fields: ~
+        {id}       (string)                @a label to identify the pin
+
+
+Info                                                                      *Info*
+
+
+    Fields: ~
+        {pin}      (Pin)
+        {pins}     (Pin[])
+
+
+Infoview                                                              *Infoview*
+
+
+    Fields: ~
+        {info}     (Info)
+        {window}   (integer)
+
+
+infoview.enable_debug()                                  *infoview.enable_debug*
+     Enables printing of extra debugging information in the infoview.
+
+
+InfoviewNewArgs                                                *InfoviewNewArgs*
+
+
+    Fields: ~
+        {width}   (?)  integer
+        {height}  (?)  integer
+
+
+infoview.close_all()                                        *infoview.close_all*
+     Close all open infoviews (across all tabs).
+
+
+infoview.__was_closed()                                  *infoview.__was_closed*
+     An infoview was closed, either directly via `Infoview.close` or manually.
+     Will be triggered via a `WinClosed` autocmd.
+
+
+infoview.__diff_was_closed()                        *infoview.__diff_was_closed*
+     An infoview diff window was closed.
+     Will be triggered via a `WinClosed` autocmd.
+
+
+infoview.__show_curr_pin()                            *infoview.__show_curr_pin*
+     An infoview was entered, show the extmark for the current pin.
+     Will be triggered via a `WinEnter` autocmd.
+
+
+infoview.__hide_curr_pin()                            *infoview.__hide_curr_pin*
+     An infoview was left, hide the extmark for the current pin.
+     Will be triggered via a `WinLeave` autocmd.
+
+
+infoview.__update()                                          *infoview.__update*
+     Update the info contents appropriately for Lean 4 or 3.
+
+
+infoview.__update_pin_by_uri()                    *infoview.__update_pin_by_uri*
+     Update pins corresponding to the given URI.
+
+
+infoview.__update_pin_positions()              *infoview.__update_pin_positions*
+     on_lines callback to update pins position according to the given textDocument/didChange parameters.
+
+
+infoview.enable()                                              *infoview.enable*
+     Enable and open the infoview across all Lean buffers.
+
+
+infoview.make_buffer_focusable()                *infoview.make_buffer_focusable*
+     Configure the infoview to update when this buffer is active.
+
+
+infoview.set_autoopen()                                  *infoview.set_autoopen*
+     Set whether a new infoview is automatically opened when entering Lean buffers.
+
+
+infoview.set_autopause()                                *infoview.set_autopause*
+     Set whether a new pin is automatically paused.
+
+
+infoview.__bufenter()                                      *infoview.__bufenter*
+     Callback when entering a Lean buffer.
+
+
+infoview.get_current_infoview()                  *infoview.get_current_infoview*
+     Get the infoview corresponding to the current window.
+
+    Returns: ~
+        {Infoview}
+
+
+infoview.__maybe_autoopen()                          *infoview.__maybe_autoopen*
+     Open an infoview for the current buffer if it isn't already open.
+
+
+infoview.open()                                                  *infoview.open*
+     Open the current infoview (or ensure it is already open).
+
+
+infoview.close()                                                *infoview.close*
+     Close the current infoview (or ensure it is already closed).
+
+
+infoview.toggle()                                              *infoview.toggle*
+     Toggle whether the current infoview is opened or closed.
+
+
+infoview.pin_toggle_pause()                          *infoview.pin_toggle_pause*
+     Toggle whether the current pin receives updates.
+
+
+infoview.add_pin()                                            *infoview.add_pin*
+     Add a pin to the current cursor location.
+
+
+infoview.set_diff_pin()                                  *infoview.set_diff_pin*
+     Set the location for a diff pin to the current cursor location.
+
+
+infoview.clear_pins()                                      *infoview.clear_pins*
+     Clear any pins in the current infoview.
+
+
+infoview.clear_diff_pin()                              *infoview.clear_diff_pin*
+     Clear a diff pin in the current infoview.
+
+
+infoview.toggle_auto_diff_pin()                  *infoview.toggle_auto_diff_pin*
+     Toggle whether "auto-diff" mode is active for the current infoview.
+
+
+infoview.enable_widgets()                              *infoview.enable_widgets*
+     Enable widgets in the current infoview.
+
+
+infoview.disable_widgets()                            *infoview.disable_widgets*
+     Disable widgets in the current infoview.
+
+
+infoview.go_to()                                                *infoview.go_to*
+     Move the cursor to the infoview window.
+
+
+ Support for abbreviations (unicode character replacement).
+
+                                                            *lean.abbreviations*
+abbreviations.load()                                        *abbreviations.load*
+     Load the Lean abbreviations as a Lua table.
+
+
+abbreviations.reverse_lookup()                    *abbreviations.reverse_lookup*
+     Retrieve the table of abbreviations that would produce the given symbol.
+
+
+abbreviations.show_reverse_lookup()          *abbreviations.show_reverse_lookup*
+     Show a preview window with the reverse-lookup of the current character.
+
+
+abbreviations._insert_char_pre()                *abbreviations._insert_char_pre*
+
+
+
+abbreviations.convert()                                  *abbreviations.convert*
+
+
+
+abbreviations.enable()                                    *abbreviations.enable*
+
+
+
+sorry.fill()                                                        *sorry.fill*
+     Fill the current cursor position with `sorry`s to discharge all goals.
+
+
+     I.e., given 3 current goals, with 2 in front of the cursor, will insert:
+          { foo },<cursor>
+          { sorry },
+          { sorry },
+
+
+trythis.swap()                                                    *trythis.swap*
+     Swap the first suggestion from Lean with the word under the cursor.
+
+
+                                       *trythis.trim_unnecessary_mode_switching*
+trythis.trim_unnecessary_mode_switching()
+     Trim unnecessary switching between tactic and term modes.
+
+
+trythis.trim_doubled_ats()                            *trythis.trim_doubled_ats*
+     Trim `at foo at foo` to just `at foo` once.
+
+
+ Support for `:checkhealth` for lean.nvim.
+
+health.check()                                                    *health.check*
+     Check whether lean.nvim is healthy.
+
+
+     Call me via `:checkhealth lean`.
+
+
+vim:tw=78:ts=8:noet:ft=help:norl:
