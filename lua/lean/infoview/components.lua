@@ -144,9 +144,37 @@ local function code_with_infos(t, sess)
       end
     end
 
+    ---@param kind GoToKind
+    local go_to = function(_, kind)
+      local links, err = sess:getGoToLocation(kind, info_with_ctx)
+      if err or #links == 0 then return end
+
+      -- Switch to window of current Lean file
+      local this_infoview = require"lean.infoview".get_current_infoview()
+      local this_info = this_infoview and this_infoview.info
+      local this_window = this_info and this_info.last_window
+      if this_window then vim.api.nvim_set_current_win(this_window) end
+
+      vim.lsp.util.jump_to_location(links[1], 'utf-16')
+      if #links > 1 then
+        vim.fn.setqflist({}, ' ', {
+          title = 'LSP locations',
+          items = vim.lsp.util.locations_to_items(links, 'utf-16'),
+        })
+        vim.api.nvim_command('botright copen')
+      end
+    end
+    local go_to_def = function(ctx) go_to(ctx, 'definition') end
+    local go_to_decl = function(ctx) go_to(ctx, 'declaration') end
+    local go_to_type = function(ctx) go_to(ctx, 'type') end
+
     element.events = {
       click = click,
       clear = function(ctx) if info_open then do_reset(ctx) end end,
+      go_to = go_to,
+      go_to_def = go_to_def,
+      go_to_decl = go_to_decl,
+      go_to_type = go_to_type,
     }
     element.highlightable = true
 
