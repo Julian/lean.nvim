@@ -23,6 +23,7 @@ local options = {
   _DEFAULTS = {
     width = 50,
     height = 20,
+    horizontal_position = 'bottom',
 
     autoopen = true,
     autopause = false,
@@ -85,6 +86,7 @@ Info.__index = Info
 ---@field private __orientation "vertical"|"horizontal"
 ---@field private __width number
 ---@field private __height number
+---@field private __horizontal_position "top"|"bottom"
 ---@field private __diff_win integer
 local Infoview = {}
 Infoview.__index = Infoview
@@ -105,7 +107,8 @@ function Infoview:new(obj)
   obj = obj or {}
   local new_infoview = setmetatable({
     __width = obj.width or options.width,
-    __height = obj.height or options.height
+    __height = obj.height or options.height,
+    __horizontal_position = obj.horizontal_position or options.horizontal_position,
   }, self)
   new_infoview.info = Info:new{ infoview = new_infoview }
   return new_infoview
@@ -126,7 +129,18 @@ function Infoview:open()
     vim.cmd('botright ' .. self.__width .. 'vsplit')
   else
     self.__orientation = 'horizontal'
-    vim.cmd('botright ' .. self.__height .. 'split')
+    local position = self.__horizontal_position == 'bottom' and 'botright '
+                                                             or 'topleft '
+    vim.cmd(position .. self.__height .. 'split')
+    -- FIXME: No idea why this is required (and the below immediate call to
+    --        nvim_set_current_win is insufficient). Without doing things this
+    --        way, when setting position to "top", either syntax highlighting
+    --        breaks in the Lean window, or the cursor isn't properly placed in
+    --        the Lean window (and stays in the top infoview window). For now
+    --        doing this twice seems harmless for any other scenario.
+    if vim.fn.has('vim_starting') == 1 then
+      vim.schedule(function() vim.api.nvim_set_current_win(window_before_split) end)
+    end
   end
   vim.api.nvim_win_set_buf(0, self.info.__renderer.buf)
   -- Set the filetype now. Any earlier, and only buffer-local options will be

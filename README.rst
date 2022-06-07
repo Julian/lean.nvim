@@ -310,6 +310,10 @@ Full Configuration & Settings Information
         width = 50,
         height = 20,
 
+        -- Put the infoview on the top or bottom when horizontal?
+        -- top | bottom
+        horizontal_position = "bottom",
+
         -- Show indicators for pin locations when entering an infoview window?
         -- always | never | auto (= only when there are multiple pins)
         indicators = "auto",
