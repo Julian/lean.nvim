@@ -241,18 +241,6 @@ end
 M.Tick = Tick
 M.Ticker = Ticker
 
---- List workspace folders.
---- Backport from https://github.com/neovim/neovim/pull/15059
-function M.list_workspace_folders()
-  local workspace_folders = {}
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
-    for _, folder in pairs(client.workspaceFolders) do
-      table.insert(workspace_folders, folder.name)
-    end
-  end
-  return workspace_folders
-end
-
 ---@class UIParams
 ---@field filename string
 ---@field row number

@@ -119,7 +119,7 @@ function lean.current_search_paths()
   if lean.is_lean3_buffer() then
     paths = require'lean.lean3'.__current_search_paths()
   else
-    local root = util.list_workspace_folders()[1]
+    local root = vim.lsp.buf.list_workspace_folders()[1]
     if not root then root = vim.fn.getcwd() end
 
     local executable = (
