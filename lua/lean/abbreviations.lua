@@ -95,8 +95,8 @@ local function get_extmark_range(abbr_ns, id, buffer)
 end
 
 ---inoremap a key temporarily for the duration of the abbreviation expansion
----@param string key
----@param string to
+---@param key string
+---@param to string
 local function inoremap_temporarily(key, to)
   local imap = vim.fn.maparg(key, "i", false, true)
   if vim.fn.empty(imap) == 0 then

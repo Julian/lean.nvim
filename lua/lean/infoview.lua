@@ -99,6 +99,7 @@ end
 ---@class InfoviewNewArgs
 ---@field width? integer
 ---@field height? integer
+---@field horizontal_position? "top"|"bottom"
 
 --- Create a new infoview.
 ---@param obj InfoviewNewArgs
@@ -518,7 +519,7 @@ end
 
 --- Update the diff pin to use the current pin's positon params if they are valid,
 --- and the provided params if they are not.
----@param params UIParams
+---@param params? UIParams
 function Info:__update_auto_diff_pin(params)
   if self.pin.__ui_position_params and util.position_params_valid(self.pin.__ui_position_params) then
     -- update diff pin to previous position
