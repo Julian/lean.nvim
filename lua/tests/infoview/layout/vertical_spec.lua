@@ -6,7 +6,7 @@ require('tests.helpers')
 local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
 
--- Emulate a 24x80 portrait display.
+-- Emulate an 80x24 landscape display.
 vim.o.columns = 80
 vim.o.lines = 24
 
@@ -20,12 +20,12 @@ describe('infoview window', function()
   it('is on the right with the cursor in the Lean window', function(_)
     vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
 
-    assert.are.same(vim.fn.winlayout(), {  -- see :h winlayout
-      'row', {
+    assert.are.same({
+      'row', {  -- see :h winlayout
         { 'leaf', lean_window },
         { 'leaf', infoview.get_current_infoview().window },
       },
-    })
-    assert.is.equal(vim.api.nvim_get_current_win(), lean_window)
+    }, vim.fn.winlayout())
+    assert.is.equal(lean_window, vim.api.nvim_get_current_win())
   end)
 end)

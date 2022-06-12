@@ -20,12 +20,12 @@ describe('infoview window', function()
   it('is on bottom with the cursor in the Lean window', function(_)
     vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
 
-    assert.are.same(vim.fn.winlayout(), {  -- see :h winlayout
-      'col', {
+    assert.are.same({
+      'col', {  -- see :h winlayout
         { 'leaf', lean_window },
         { 'leaf', infoview.get_current_infoview().window },
       },
-    })
-    assert.is.equal(vim.api.nvim_get_current_win(), lean_window)
+    }, vim.fn.winlayout())
+    assert.is.equal(lean_window, vim.api.nvim_get_current_win())
   end)
 end)
