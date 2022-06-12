@@ -62,8 +62,9 @@ InfoviewNewArgs                                                *InfoviewNewArgs*
 
 
     Fields: ~
-        {width}   (?)  integer
-        {height}  (?)  integer
+        {width}                (?)  integer
+        {height}               (?)  integer
+        {horizontal_position}  (?)  "top"|"bottom"
 
 
 infoview.close_all()                                        *infoview.close_all*
