@@ -115,14 +115,18 @@ function Infoview:new(obj)
   return new_infoview
 end
 
+function Infoview.__should_be_vertical(_)
+  local ch_aspect_ratio = 2.5 -- characters are 2.5x taller than they are wide
+  return vim.o.columns > ch_aspect_ratio * vim.o.lines
+end
+
 --- Open this infoview if it isn't already open
 function Infoview:open()
   if self.window then return end
 
   local window_before_split = vim.api.nvim_get_current_win()
 
-  local ch_aspect_ratio = 2.5 -- characters are 2.5x taller than they are wide
-  if vim.o.columns > ch_aspect_ratio * vim.o.lines then
+  if self:__should_be_vertical() then
     self.__orientation = 'vertical'
     vim.cmd('botright ' .. self.__width .. 'vsplit')
   else
@@ -157,6 +161,24 @@ function Infoview:open()
   self:focus_on_current_buffer()
 
   self:__refresh_diff()
+end
+
+---Move this infoview's window (vertically or horizontally) based on the
+---current screen dimensions.
+function Infoview:reposition()
+  -- Don't touch layouts where there's more than two windows open.
+  if #vim.api.nvim_tabpage_list_wins(0) ~= 2 then return end
+
+  local orientation = unpack(vim.fn.winlayout())
+  if self:__should_be_vertical() then
+    if orientation == 'col' then
+      vim.api.nvim_win_call(self.window, function() vim.cmd[[wincmd L]] end)
+    end
+  elseif orientation == 'row' then
+    local command = self.__horizontal_position == 'bottom' and 'wincmd J'
+                                                            or 'wincmd K'
+    vim.api.nvim_win_call(self.window, function() vim.cmd(command) end)
+  end
 end
 
 --- API for opening an auxilliary window relative to the current infoview window.
@@ -1127,6 +1149,14 @@ function infoview.go_to()
   else
     curr_info.__renderer:enter_win()
   end
+end
+
+--- Move the current infoview to the appropriate spot based on the
+--- current screen dimensions.
+--- Does nothing if there are more than 2 open windows.
+function infoview.reposition()
+  local iv = infoview.get_current_infoview()
+  if iv ~= nil then iv:reposition() end
 end
 
 return infoview

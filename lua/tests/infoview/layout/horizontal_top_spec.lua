@@ -28,4 +28,24 @@ describe('infoview window', function()
     }, vim.fn.winlayout())
     assert.is.equal(lean_window, vim.api.nvim_get_current_win())
   end)
+
+  it('puts the infoview on top after repositioning', function(_)
+    assert.are.same({
+      'col', {  -- see :h winlayout
+        { 'leaf', infoview.get_current_infoview().window },
+        { 'leaf', lean_window },
+      },
+    }, vim.fn.winlayout())
+    vim.cmd[[wincmd L]]
+
+    infoview.reposition()
+
+    assert.are.same({
+      'col', {  -- see :h winlayout
+        { 'leaf', infoview.get_current_infoview().window },
+        { 'leaf', lean_window },
+      },
+    }, vim.fn.winlayout())
+    assert.is.equal(lean_window, vim.api.nvim_get_current_win())
+  end)
 end)
