@@ -139,9 +139,7 @@ function lean3.parse_widget(result, options)
     local class_name = attributes and attributes.className
     local tooltip = result.tt
     local events = {}
-    local hlgroup
-
-    hlgroup = class_to_hlgroup[class_name]
+    local hlgroup = class_to_hlgroup[class_name]
     if tag == "button" then hlgroup = hlgroup or "leanInfoButton" end
 
     local element = Element:new {

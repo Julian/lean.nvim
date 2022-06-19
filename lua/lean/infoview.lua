@@ -292,8 +292,8 @@ function Infoview:__was_closed()
 end
 
 --- Retrieve the contents of the infoview as a table.
----@param start_line number
----@param end_line number
+---@param start_line? number
+---@param end_line? number
 function Infoview:get_lines(start_line, end_line)
   if not self.window then error("infoview is not open") end
 
@@ -303,8 +303,8 @@ function Infoview:get_lines(start_line, end_line)
 end
 
 --- Retrieve the contents of the diff window as a table.
----@param start_line number
----@param end_line number
+---@param start_line? number
+---@param end_line? number
 function Infoview:get_diff_lines(start_line, end_line)
   if not self.__diff_win then error("diff window is not open") end
 

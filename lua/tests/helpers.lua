@@ -41,16 +41,18 @@ end
 --- autocmds. This function exists therefore to make tests which have slightly
 --- less implementation details in them (the manual firing of that autocmd).
 ---
----@param opts table
----@field window integer @the window handle. Defaults to the current window.
----@field to table @the new cursor position (1-row indexed, as per nvim_win_set_cursor)
+---@param opts MoveCursorOpts
 function helpers.move_cursor(opts)
   vim.api.nvim_win_set_cursor(opts.window or 0, opts.to)
   vim.cmd[[doautocmd CursorMoved]]
 end
 
+---@class MoveCursorOpts
+---@field window integer @the window handle. Defaults to the current window.
+---@field to table @the new cursor position (1-row indexed, as per nvim_win_set_cursor)
+
 --- Wait for all of the pins associated with the given infoview to finish loading/processing.
----@param iv Infoview
+---@param iv? Infoview
 function helpers.wait_for_loading_pins(iv)
   iv = iv or infoview.get_current_infoview()
   local info = iv.info
