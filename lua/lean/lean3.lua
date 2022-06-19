@@ -102,6 +102,21 @@ local function parse_children(children, options)
   return this_element
 end
 
+local function parse_input(input_element, current_value)
+  local rendered = current_value ~= '' and current_value or '▁▁▁▁▁▁'
+  return Element:new{
+    name = 'input',
+    text = string.format('［  %s  ］', rendered),
+    events = {
+      click = function(ctx)
+        vim.ui.input({ prompt = 'Input: ' }, function(input)
+          input_element.events.change(ctx, input)
+        end)
+      end,
+    }
+  }
+end
+
 local function parse_select(children, select_element, current_value, options)
   local no_filter_element, no_filter_val, current_text
   local this_element = Element:new{ name = "select-children" }
@@ -222,6 +237,10 @@ function lean3.parse_widget(result, options)
         end
         element:add_child(lean3.parse_widget(child, options))
       end
+    elseif tag == 'input' then
+      element:add_child(parse_input(element, attributes.value))
+    elseif tag == 'InlineMath' then
+      element:add_child(Element:new{ text = attributes.math })
     else
       element:add_child(parse_children(children, options))
     end
