@@ -71,7 +71,7 @@ describe('infoview widgets', function()
     -- do absolutely nothing and sit there never returning a response (even an
     -- initial one). Marking these pending until we figure out what's happening
     -- there, presumably some request getting sent before the server is ready.
-    pending('shows widget tooltips', function(_)
+    it('shows widget tooltips', function(_)
       helpers.move_cursor{ to = {1, 10} }
       assert.infoview_contents.are[[
         ▶ expected type:
@@ -93,13 +93,16 @@ describe('infoview widgets', function()
 
       -- Close the tooltip.
       helpers.feed('<Esc>')
-      vim.wait(1000, function() return #vim.api.nvim_tabpage_list_wins(0) == 2 end)
+      vim.wait(5000, function() return #vim.api.nvim_tabpage_list_wins(0) == 2 end)
       assert.windows.are(known_windows)
+
+      vim.api.nvim_set_current_win(lean_window)
     end)
 
-    pending('can be disabled', function(_)
+    it('can be disabled', function(_)
       infoview.disable_widgets()
-      helpers.move_cursor{ to = {1, 22} }
+      helpers.move_cursor{ to = {1, 23} }
+      helpers.wait_for_loading_pins()
       -- we're looking for `filter` to not be shown as our widget
       assert.infoview_contents.are[[
         ▶ 1 goal
@@ -107,7 +110,7 @@ describe('infoview widgets', function()
       ]]
     end)
 
-    pending('can re-enable widgets', function(_)
+    it('can re-enable widgets', function(_)
       infoview.enable_widgets()
       helpers.move_cursor{ to = {1, 22} }
       -- we're looking for `filter` as our widget
