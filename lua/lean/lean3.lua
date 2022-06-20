@@ -40,7 +40,7 @@ local to_event = {
   ["onChange"] = "change";
 }
 
-local function parse_children(children, options)
+local function parse_children(children, options, separator_element)
   local prev_element
   local this_element = Element:new{ name = "children" }
   for _, child in pairs(children) do
@@ -94,6 +94,11 @@ local function parse_children(children, options)
     end
 
     this_element:add_child(new_element)
+
+    -- FIXME: Refactor this so it instead returns children rather than
+    -- constructing the element itself, which will allow this to be done by the
+    -- caller.
+    if separator_element then this_element:add_child(separator_element) end
 
     prev_element = new_element
 
@@ -241,6 +246,8 @@ function lean3.parse_widget(result, options)
       element:add_child(parse_input(element, attributes.value))
     elseif tag == 'InlineMath' then
       element:add_child(Element:new{ text = attributes.math })
+    elseif class_name == 'flex flex-column' then
+      element:add_child(parse_children(children, options, Element:new{ text = '\n' }))
     else
       element:add_child(parse_children(children, options))
     end
