@@ -5,7 +5,12 @@
 require('tests.helpers')
 local infoview = require('lean.infoview')
 
-require('lean').setup{ infoview = { autoopen = false } }
+local WIDTH = 20
+local HEIGHT = 10
+
+require('lean').setup{
+  infoview = { autoopen = false, width = WIDTH, height = HEIGHT },
+}
 
 describe('infoview window', function()
 
@@ -19,6 +24,10 @@ describe('infoview window', function()
       { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
       vim.fn.winlayout()
     )
+    assert.are.same(
+      vim.api.nvim_win_get_height(infoview.get_current_infoview().window),
+      HEIGHT
+    )
     vim.o.columns = 80
     vim.o.lines = 24
 
@@ -27,6 +36,10 @@ describe('infoview window', function()
     assert.are.same(
       { 'row', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
       vim.fn.winlayout()
+    )
+    assert.are.same(
+      vim.api.nvim_win_get_width(infoview.get_current_infoview().window),
+      WIDTH
     )
 
     infoview.close()
@@ -62,6 +75,10 @@ describe('infoview window', function()
       { 'row', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
       vim.fn.winlayout()
     )
+    assert.are.same(
+      vim.api.nvim_win_get_width(infoview.get_current_infoview().window),
+      WIDTH
+    )
     vim.o.columns = 24
     vim.o.lines = 80
 
@@ -70,6 +87,10 @@ describe('infoview window', function()
     assert.are.same(
       { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
       vim.fn.winlayout()
+    )
+    assert.are.same(
+      vim.api.nvim_win_get_height(infoview.get_current_infoview().window),
+      HEIGHT
     )
 
     infoview.close()

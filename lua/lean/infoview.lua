@@ -173,11 +173,13 @@ function Infoview:reposition()
   if self:__should_be_vertical() then
     if orientation == 'col' then
       vim.api.nvim_win_call(self.window, function() vim.cmd[[wincmd L]] end)
+      vim.api.nvim_win_set_width(self.window, options.width)
     end
   elseif orientation == 'row' then
     local command = self.__horizontal_position == 'bottom' and 'wincmd J'
                                                             or 'wincmd K'
     vim.api.nvim_win_call(self.window, function() vim.cmd(command) end)
+    vim.api.nvim_win_set_height(self.window, options.height)
   end
 end
 
