@@ -1,6 +1,5 @@
 import Lake
 open Lake DSL
 
-package foo {
-  defaultFacet := PackageFacet.oleans,
-}
+package foo
+@[defaultTarget] lean_lib foo

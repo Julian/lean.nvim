@@ -1,10 +1,7 @@
 import Lake
 open Lake DSL
 
-package Test {
-  defaultFacet := PackageFacet.oleans,
-  dependencies := #[{
-    name := `foo
-    src := Source.path ("foo")
-  }]
-}
+package test
+@[defaultTarget] lean_lib Test
+
+require foo from "foo"
