@@ -6,14 +6,14 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
     - name: Install luacheck
       run: |
         sudo apt-get update
         sudo apt-get install luarocks
         sudo luarocks install luacheck
-    - uses: pre-commit/action@v2.0.3
+    - uses: pre-commit/action@v3.0.0
 
   ci:
     runs-on: ${{ matrix.os }}
@@ -25,7 +25,7 @@ jobs:
           - stable
           - nightly
         lean-version:
-          - "leanprover-community/lean:3.42.1"
+          - "leanprover-community/lean:3.43.0"
     steps:
       - uses: actions/checkout@v2
 
