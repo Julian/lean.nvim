@@ -118,7 +118,7 @@ describe('infoview window', function()
     infoview.close()
   end)
 
-  it('does not touch layouts with more than two windows', function(_)
+  it('resizes windows without moving them when there are more than 2', function(_)
     vim.o.columns = 80
     vim.o.lines = 24
 
@@ -136,14 +136,16 @@ describe('infoview window', function()
     infoview.reposition()
     assert.are.same(layout, vim.fn.winlayout())
 
-    vim.o.columns = 24
-    vim.o.lines = 80
-
     vim.o.columns = 80
     vim.o.lines = 24
 
     infoview.reposition()
     assert.are.same(layout, vim.fn.winlayout())
+
+    assert.are.same(
+      vim.api.nvim_win_get_height(infoview.get_current_infoview().window),
+      HEIGHT
+    )
 
     infoview.close()
   end)

@@ -163,23 +163,52 @@ function Infoview:open()
   self:__refresh_diff()
 end
 
+---Move this infoview's window to the right of the tab, then size it properly.
+function Infoview:move_to_right()
+  vim.api.nvim_win_call(self.window, function() vim.cmd[[wincmd L]] end)
+  vim.api.nvim_win_set_width(self.window, options.width)
+end
+
+---Move this infoview's window to the top of the tab, then size it properly.
+function Infoview:move_to_top()
+  vim.api.nvim_win_call(self.window, function() vim.cmd[[wincmd K]] end)
+  vim.api.nvim_win_set_height(self.window, options.height)
+end
+
+---Move this infoview's window to the bottom of the tab, then size it properly.
+function Infoview:move_to_bottom()
+  vim.api.nvim_win_call(self.window, function() vim.cmd[[wincmd J]] end)
+  vim.api.nvim_win_set_height(self.window, options.height)
+end
+
 ---Move this infoview's window (vertically or horizontally) based on the
 ---current screen dimensions.
 function Infoview:reposition()
-  -- Don't touch layouts where there's more than two windows open.
-  if #vim.api.nvim_tabpage_list_wins(0) ~= 2 then return end
+  if not self.window then return end
 
   local orientation = unpack(vim.fn.winlayout())
+
+  -- Resize but don't move window layouts if there are more than 2 windows.
+  if #vim.api.nvim_tabpage_list_wins(0) ~= 2 then
+    if orientation == 'col' then
+      vim.api.nvim_win_set_width(self.window, options.width)
+    else
+      vim.api.nvim_win_set_height(self.window, options.height)
+    end
+
+    return
+  end
+
   if self:__should_be_vertical() then
     if orientation == 'col' then
-      vim.api.nvim_win_call(self.window, function() vim.cmd[[wincmd L]] end)
-      vim.api.nvim_win_set_width(self.window, options.width)
+      self:move_to_right()
     end
   elseif orientation == 'row' then
-    local command = self.__horizontal_position == 'bottom' and 'wincmd J'
-                                                            or 'wincmd K'
-    vim.api.nvim_win_call(self.window, function() vim.cmd(command) end)
-    vim.api.nvim_win_set_height(self.window, options.height)
+    if self.__horizontal_position == 'bottom' then
+      self:move_to_bottom()
+    else
+      self:move_to_top()
+    end
   end
 end
 
