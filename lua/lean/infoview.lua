@@ -191,9 +191,9 @@ function Infoview:reposition()
   -- Resize but don't move window layouts if there are more than 2 windows.
   if #vim.api.nvim_tabpage_list_wins(0) ~= 2 then
     if orientation == 'col' then
-      vim.api.nvim_win_set_width(self.window, options.width)
-    else
       vim.api.nvim_win_set_height(self.window, options.height)
+    else
+      vim.api.nvim_win_set_width(self.window, options.width)
     end
 
     return

@@ -143,8 +143,8 @@ describe('infoview window', function()
     assert.are.same(layout, vim.fn.winlayout())
 
     assert.are.same(
-      vim.api.nvim_win_get_height(infoview.get_current_infoview().window),
-      HEIGHT
+      vim.api.nvim_win_get_width(infoview.get_current_infoview().window),
+      WIDTH
     )
 
     infoview.close()
