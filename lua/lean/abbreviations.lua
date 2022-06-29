@@ -69,23 +69,6 @@ function abbreviations.show_reverse_lookup()
   vim.lsp.util.open_floating_preview(lines)
 end
 
-local function add_leader(leader, abbrevs)
-  local with_leader = {}
-  for from, to in pairs(abbrevs) do
-    with_leader[leader .. from] = to
-  end
-  return with_leader
-end
-
-local function compe_nvim_enable(compe, lean_abbreviations)
-  local Source = require'lean._compe'.new(lean_abbreviations)
-  compe.register_source('lean_abbreviations', Source)
-
-  local Config = require('compe.config').get()
-  Config.source = Config.source or {}
-  Config.source['lean_abbreviations'] = { disabled = false }
-end
-
 local abbr_mark_ns = vim.api.nvim_create_namespace('lean.abbreviations')
 
 local function get_extmark_range(abbr_ns, id, buffer)
@@ -228,16 +211,6 @@ function abbreviations.convert()
   vim.api.nvim_win_set_cursor(0, { row1 + 1, col1 + new_cursor_col_shift })
 end
 
-local function enable_builtin()
-  set_augroup("LeanAbbreviations", [[
-    autocmd InsertCharPre *.lean lua require'lean.abbreviations'._insert_char_pre()
-    autocmd InsertLeave *.lean lua require'lean.abbreviations'.convert()
-    autocmd BufLeave *.lean lua require'lean.abbreviations'.convert()
-  ]])
-  vim.cmd[[hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray]]
-  -- CursorMoved CursorMovedI as well?
-end
-
 function abbreviations.enable(opts)
   abbreviations.leader = opts.leader or '\\'
 
@@ -246,13 +219,12 @@ function abbreviations.enable(opts)
     abbreviations.abbreviations[from] = to
   end
 
-  if opts.compe then
-    compe_nvim_enable(require('compe'), add_leader(abbreviations.leader, abbreviations.abbreviations))
-  end
-
-  if opts.builtin then
-    enable_builtin()
-  end
+  set_augroup("LeanAbbreviations", [[
+    autocmd InsertCharPre *.lean lua require'lean.abbreviations'._insert_char_pre()
+    autocmd InsertLeave *.lean lua require'lean.abbreviations'.convert()
+    autocmd BufLeave *.lean lua require'lean.abbreviations'.convert()
+  ]])
+  vim.cmd[[hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray]]
 end
 
 return abbreviations

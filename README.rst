@@ -83,8 +83,8 @@ aforementioned repository) are also welcome.
 Features
 --------
 
-* Abbreviation (unicode character) insertion, can also provide a
-  `nvim-compe <https://github.com/hrsh7th/nvim-compe>`_ source.
+* Abbreviation (unicode character) insertion (currently in insert mode only,
+  with plans to do so for search and command modes)
 
 * An infoview which can show persistent goal, term & tactic state,
   as well as interactive widgets in both
@@ -273,9 +273,8 @@ Full Configuration & Settings Information
 
       -- Abbreviation support
       abbreviations = {
-        -- Set one of the following to true to enable abbreviations
-        builtin = false, -- built-in expander
-        compe = false, -- nvim-compe source
+        -- Enable expanding of unicode abbreviations?
+        enable = true,
         -- additional abbreviations:
         extra = {
           -- Add a \wknight abbreviation to insert ♘
