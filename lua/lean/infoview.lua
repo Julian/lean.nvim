@@ -1112,6 +1112,7 @@ function infoview.toggle()
   else
     infoview.open()
   end
+  infoview.__update()
 end
 
 --- Toggle whether the current pin receives updates.
