@@ -161,6 +161,7 @@ function Infoview:open()
   self:focus_on_current_buffer()
 
   self:__refresh_diff()
+  self:__update()
 end
 
 ---Move this infoview's window to the right of the tab, then size it properly.
@@ -266,6 +267,14 @@ function Infoview:__refresh()
     end)
   end
   self.info.__win_event_disable = false
+end
+
+--REMOVEME: We shouldn't need both __refresh and __update
+function Infoview:__update()
+  local info = self.info
+  if info.__win_event_disable then return end
+  info:set_last_window()
+  pcall(info.move_pin, info, util.make_position_params())
 end
 
 --- Either open or close a diff window for this infoview depending on whether its info has a diff pin.
@@ -970,10 +979,7 @@ function infoview.__update()
   if not is_lean_buffer() then return end
   local current_infoview = infoview.get_current_infoview()
   if not current_infoview then return end
-  local info = current_infoview.info
-  if info.__win_event_disable then return end
-  info:set_last_window()
-  pcall(info.move_pin, info, util.make_position_params())
+  return current_infoview:__update()
 end
 
 --- Update pins corresponding to the given URI.
