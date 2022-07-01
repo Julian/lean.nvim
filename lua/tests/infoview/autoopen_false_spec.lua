@@ -1,8 +1,8 @@
-require('tests.helpers')
 local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
+local helpers = require('tests.helpers')
 
-require('lean').setup{ infoview = { autoopen = false } }
+require('lean').setup{ infoview = { autoopen = false, use_widgets = false } }
 
 describe('infoview', function()
 
@@ -10,7 +10,7 @@ describe('infoview', function()
 
   it('does not automatically open infoviews', function(_)
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
     -- FIXME: This obviously shouldn't require running twice, but without
     --        it, somehow the test run differs from interactive use!
     --        Specifically, ft.detect doesn't run at all until the second
@@ -21,7 +21,7 @@ describe('infoview', function()
     --        to be here twice to prevent regressions like #245.
     --        To know whether you can remove this, undo the change from #245
     --        and ensure this test properly fails.
-    vim.cmd('edit! ' .. fixtures.lean3_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
     lean_window = vim.api.nvim_get_current_win()
     assert.windows.are(lean_window)
   end)
@@ -30,5 +30,18 @@ describe('infoview', function()
     assert.windows.are(lean_window)
     infoview.open()
     assert.windows.are(lean_window, infoview.get_current_infoview().window)
+    infoview.close()
+  end)
+
+  it('shows infoview contents immediately after they are opened', function(_)
+    vim.cmd('edit! ' .. fixtures.lean_project.path .. '/Test.lean')
+    assert.windows.are(lean_window)
+    infoview.open()
+    helpers.move_cursor{ to = {3, 27} }
+    assert.infoview_contents.are[[
+      ▶ expected type (3:28-3:36)
+      ⊢ Nat
+    ]]
+    infoview.close()
   end)
 end)
