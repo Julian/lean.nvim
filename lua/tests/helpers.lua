@@ -55,6 +55,7 @@ end
 ---@param iv? Infoview
 function helpers.wait_for_loading_pins(iv)
   iv = iv or infoview.get_current_infoview()
+  if not iv then error("Infoview is not open!") end
   local info = iv.info
   local last, last_loading, last_processing
   local succeeded, _ = vim.wait(7000, function()
