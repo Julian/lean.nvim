@@ -220,17 +220,18 @@ describe('infoview content (auto-)update', function()
       end)
 
       it('shows mixed goals', function()
-        helpers.move_cursor{ to = {7, 8} }
+        helpers.move_cursor{ to = {9, 11} }
         assert.infoview_contents.are[[
           ▶ 1 goal
+          case inl.h
           p q : Prop
-          h : p ∨ q
-          ⊢ q ∨ p
+          h1 : p
+          ⊢ p
 
-          ▶ expected type (7:9-7:10)
+          ▶ expected type (9:11-9:17)
           p q : Prop
-          h : p ∨ q
-          ⊢ p ∨ q
+          h1 : p
+          ⊢ ∀ {a b : Prop}, b → a ∨ b
         ]]
       end)
 
