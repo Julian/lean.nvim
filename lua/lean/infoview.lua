@@ -937,6 +937,10 @@ function infoview.__was_closed(window)
   --        Try using it and it will fail the `closes independently via quit`
   --        test.
   -- local tabpage, _ = unpack(vim.fn.win_id2tabwin(window))
+  -- local closed_infoview = infoview._by_tabpage[tabpage]
+  -- if closed_infoview.info.__win_event_disable then return end
+  -- closed_infoview:__was_closed()
+
   for _, each in pairs(infoview._by_tabpage) do
     if each.window == window then
       if each.info.__win_event_disable then return end
@@ -1145,17 +1149,13 @@ end
 --- Clear any pins in the current infoview.
 function infoview.clear_pins()
   local iv = infoview.get_current_infoview()
-  if iv ~= nil then
-    iv.info:clear_pins()
-  end
+  if iv then iv.info:clear_pins() end
 end
 
 --- Clear a diff pin in the current infoview.
 function infoview.clear_diff_pin()
   local iv = infoview.get_current_infoview()
-  if iv ~= nil then
-    iv.info:__clear_diff_pin()
-  end
+  if iv then iv.info:__clear_diff_pin() end
 end
 
 --- Toggle whether "auto-diff" mode is active for the current infoview.
@@ -1193,7 +1193,7 @@ end
 --- Does nothing if there are more than 2 open windows.
 function infoview.reposition()
   local iv = infoview.get_current_infoview()
-  if iv ~= nil then iv:reposition() end
+  if iv then iv:reposition() end
 end
 
 return infoview
