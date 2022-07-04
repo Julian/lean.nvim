@@ -285,4 +285,30 @@ function M._get_offset_encoding(bufnr)
   end
 end
 
+local format_line_ending = {
+  ['unix'] = '\n',
+  ['dos'] = '\r\n',
+  ['mac'] = '\r',
+}
+
+---@private
+---@param bufnr (number)
+---@returns (string)
+local function buf_get_line_ending(bufnr)
+  return format_line_ending[vim.api.nvim_buf_get_option(bufnr, 'fileformat')] or '\n'
+end
+
+--- Returns full text of buffer {bufnr} as a string.
+---
+---@param bufnr (number) Buffer handle, or 0 for current.
+---@returns Buffer text as string.
+function M.buf_get_full_text(bufnr)
+  local line_ending = buf_get_line_ending(bufnr)
+  local text = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, true), line_ending)
+  if vim.api.nvim_buf_get_option(bufnr, 'eol') then
+    text = text .. line_ending
+  end
+  return text
+end
+
 return M

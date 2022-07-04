@@ -1,5 +1,5 @@
 local lsp = { handlers = {} }
-local util = require"lean._util"
+local util = require'lean._util'
 
 function lsp.enable(opts)
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
@@ -83,6 +83,23 @@ function lsp.handlers.diagnostics_handler (_, params)
   end
 
   require"lean.infoview".__update_pin_by_uri(params.uri)
+end
+
+---Refresh file dependencies for an open Lean 4 file.
+---See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
+---@param bufnr? number
+function lsp.refresh_file_dependencies(bufnr)
+  bufnr = bufnr or 0
+  local client = lsp.get_lean4_server(bufnr)
+
+  local uri = vim.uri_from_bufnr(bufnr)
+  client.notify('textDocument/didClose', { textDocument = { uri = uri } })
+  client.notify('textDocument/didOpen', { textDocument = {
+      version = 0,
+      uri = uri,
+      languageId = client.config.get_language_id(bufnr, vim.bo.filetype),
+      text = util.buf_get_full_text(bufnr),
+  }})
 end
 
 return lsp
