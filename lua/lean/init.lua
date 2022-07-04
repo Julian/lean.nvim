@@ -64,6 +64,8 @@ function lean.setup(opts)
   if opts.stderr.enable ~= false then require'lean.stderr'.enable(opts.stderr or {}) end
 
   vim.cmd[[
+    command LeanRefreshFileDependencies :lua require'lean.lsp'.refresh_file_dependencies()
+
     command LeanInfoviewToggle :lua require'lean.infoview'.toggle()
     command LeanInfoviewPinTogglePause :lua require'lean.infoview'.pin_toggle_pause()
     command LeanInfoviewAddPin :lua require'lean.infoview'.add_pin()

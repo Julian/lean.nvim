@@ -85,4 +85,21 @@ function lsp.handlers.diagnostics_handler (_, params)
   require"lean.infoview".__update_pin_by_uri(params.uri)
 end
 
+---Refresh file dependencies for an open Lean 4 file.
+---See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
+---@param bufnr? number
+function lsp.refresh_file_dependencies(bufnr)
+  bufnr = bufnr or 0
+  local client = lsp.get_lean4_server(bufnr)
+
+  local uri = vim.uri_from_bufnr(bufnr)
+  client.notify('textDocument/didClose', { textDocument = { uri = uri } })
+  client.notify('textDocument/didOpen', { textDocument = {
+      version = 0,
+      uri = uri,
+      languageId = client.config.get_language_id(bufnr, vim.bo.filetype),
+      text = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, true), '\n')
+  }})
+end
+
 return lsp
