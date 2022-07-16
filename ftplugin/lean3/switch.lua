@@ -1,7 +1,7 @@
 if not vim.g.loaded_switch then return end
 
 local function segment(word)
-  return [[\(\<\|[_.]\)\zs]] .. word .. [[\ze\(\>\|[_.]\)]]
+  return [[\(\<\|[_.']\)\zs]] .. word .. [[\ze\(\>\|[_.']\)]]
 end
 
 function _G.switch_lean_simp(original)
@@ -55,4 +55,6 @@ vim.b.switch_definitions = {
   { [ segment('bot') ] = 'top', [ segment('top') ] = 'bot' },
   { [ segment('inl') ] = 'inr', [ segment('inr') ] = 'inl' },
   { [ segment('left') ] = 'right', [ segment('right') ] = 'left' },
+  { [ segment('mul') ] = 'add', [ segment('add') ] = 'mul' },
+  { [ segment('zero') ] = 'one', [ segment('one') ] = 'zero' },
 }

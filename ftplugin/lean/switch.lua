@@ -1,7 +1,7 @@
 if not vim.g.loaded_switch then return end
 
 local function segment(word)
-  return [[\(\<\|[_.]\)\zs]] .. word .. [[\ze\(\>\|[_.]\)]]
+  return [[\(\<\|[_.']\)\zs]] .. word .. [[\ze\(\>\|[_.']\)]]
 end
 
 vim.b.switch_definitions = {

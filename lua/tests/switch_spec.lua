@@ -38,6 +38,26 @@ describe('switch', function()
     assert.contents.are[[#check stop]]
   end))
 
+  it('switches between mul and add',
+    clean_buffer('lean3', [[#check add_one]], function()
+    vim.api.nvim_command('normal! 1gg9|')
+    vim.cmd('Switch')
+    assert.contents.are[[#check mul_one]]
+
+    vim.cmd('Switch')
+    assert.contents.are[[#check add_one]]
+  end))
+
+  it('switches between zero and one',
+    clean_buffer('lean3', [[#check mul_one]], function()
+    vim.api.nvim_command('normal! 1gg$')
+    vim.cmd('Switch')
+    assert.contents.are[[#check mul_zero]]
+
+    vim.cmd('Switch')
+    assert.contents.are[[#check mul_one]]
+  end))
+
   it('switches between exact <> and refine <>',
     clean_buffer('lean3', [[exact ⟨foo, bar⟩]], function()
     vim.api.nvim_command('normal! 1gg0')
