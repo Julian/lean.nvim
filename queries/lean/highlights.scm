@@ -5,13 +5,6 @@
 (section
   name: (identifier) @namespace)
 
-; Variables
-(identifier) @variable
-
-;; Identifier naming conventions
-((identifier) @type
- (#match? @type "^[A-Z]"))
-
 (arrow) @type
 (product) @type
 
@@ -59,6 +52,11 @@
 
 (where_decl
   type: (identifier) @type)
+
+(implicit_binder
+    type: (identifier) @type)
+(explicit_binder
+    type: (identifier) @type)
 
 (proj
   name: (identifier) @field)
