@@ -203,8 +203,6 @@ begin
     apply hxy,
   }
 end]], function()
-    local expected = vim.api.nvim_buf_get_lines(0, 0, 5, true)
-
     vim.api.nvim_command('normal 6gg3|')
     helpers.wait_for_line_diagnostics()
 
@@ -219,5 +217,18 @@ example {X Y Z : Type} {f : X → Y} {g : Y → Z} (hf : function.injective f) (
 begin
   exact λ x y hxy, hf (hg hxy)
 end]]
+  end))
+
+  it('handles suggestions with quotes', helpers.clean_buffer('lean3', [[
+meta def whatshouldIdo := (do tactic.trace "Try this: \"hi")
+example : true := by whatshouldIdo]], function()
+    vim.api.nvim_command('normal G$')
+    helpers.wait_for_line_diagnostics()
+
+    require('lean.trythis').swap()
+    assert.is.same(
+      'example : true := by "hi',
+      vim.api.nvim_get_current_line()
+    )
   end))
 end)
