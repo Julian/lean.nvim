@@ -287,9 +287,24 @@ function components.diagnostics(bufnr, line)
   )
 end
 
+local function abbreviate_common_prefix(a, b)
+  local i = a:find'[.]'
+  local j = b:find'[.]'
+  if i and j and i == j and a:sub(1,i) == b:sub(1,i) then
+    return abbreviate_common_prefix(a:sub(i+1), b:sub(i+1))
+  elseif not i and j and b:sub(1,j-1) == a then
+    return b:sub(j+1)
+  elseif a == b then
+    return ''
+  else
+    return b
+  end
+end
+
 ---@param t TaggedTextMsgEmbed
 ---@param sess Subsession
-local function tagged_text_msg_embed(t, sess)
+---@param parent_cls? string
+local function tagged_text_msg_embed(t, sess, parent_cls)
   local element = Element:new{ name = 'code-with-infos' }
 
   if t.text ~= nil then
@@ -345,6 +360,68 @@ local function tagged_text_msg_embed(t, sess)
       end
 
       render()
+    elseif embed.trace ~= nil then
+      local indent = embed.trace.indent
+      local cls = embed.trace.cls
+      local msg = embed.trace.msg
+      local collapsed = embed.trace.collapsed
+      local children = embed.trace.children
+      local children_err
+
+      local abbr_cls = cls
+      if parent_cls ~= nil then
+        abbr_cls = abbreviate_common_prefix(parent_cls, cls)
+      end
+
+      local is_open = not collapsed
+
+      local click
+      local function render()
+        local header = Element:new{ text = string.format('%s[%s] ', (' '):rep(indent), abbr_cls) }
+        header:add_child(tagged_text_msg_embed(msg, sess))
+        if children.lazy or #children.strict > 0 then
+          header.highlightable = true
+          header.events = { click = click }
+          header:add_child(Element:new{ text = (is_open and ' ▼' or ' ▶') .. '\n' })
+        else
+          header:add_child(Element:new{ text = '\n' })
+        end
+
+        element:set_children{ header }
+
+        if is_open then
+          if children_err then
+            element:add_child(Element:new{ text = vim.inspect(children_err) })
+          elseif children.strict ~= nil then
+            for _, child in ipairs(children.strict) do
+              element:add_child(tagged_text_msg_embed(child, sess, cls))
+            end
+          end
+        end
+        return true
+      end
+
+      click = function(ctx)
+        if is_open then
+          is_open = false
+        else
+          is_open = true
+
+          if children.lazy ~= nil then
+            local new_kids, err = sess:lazyTraceChildrenToInteractive(children.lazy)
+            children_err = err
+            children = { strict = new_kids }
+          end
+        end
+        render()
+        ctx.rerender()
+      end
+
+      render()
+    else
+      element:add_child(Element:new{
+        text = 'unknown tag:\n' .. vim.inspect(embed) .. '\n' .. vim.inspect(t.tag[2]) .. '\n'
+      })
     end
   end
 
