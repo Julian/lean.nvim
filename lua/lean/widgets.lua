@@ -681,68 +681,100 @@ function BufRenderer:get_root_ancestor()
   return self
 end
 
-function BufRenderer:hop_to()
-  self:get_root_ancestor()
-      :hop(function(element) return element.highlightable end, require"hop.hint_util".callbacks.win_goto)
+function BufRenderer:hop_to(opts, callback_fn)
+  callback_fn = callback_fn or function () return require"hop".go_to_jump_target_cb end
+  self:get_root_ancestor():hop(opts, callback_fn(self))
 end
 
-function BufRenderer:hop(filter_fn, callback_fn)
-  local winpos = vim.api.nvim_win_get_position(0)
-  local strategy = {
-    get_hint_list = function()
-      local hints = {}
-      local windows = {}
-
-      ---@param root BufRenderer
-      local function get_hints(root)
-        local this_buf = root.buf
-        local this_win = root.last_win
-        if not this_win then return end
-        table.insert(windows, this_win)
-        local lines = root.lines
-        local window_dist = require"hop.hint_util".manh_dist(winpos, vim.api.nvim_win_get_position(this_win))
-
-        root.element:filter(function(element, _, raw_pos)
-          if not filter_fn(element) then return end
-          local pos = raw_pos_to_pos(raw_pos, lines)
-          local hint =
-          {
-            line = pos[1] + 1,
-            col = pos[2] + 1,
-            buf = this_buf,
-          }
-
-          -- extra metadata
-          hint.dist = require"hop.hint_util".manh_dist(vim.api.nvim_win_get_cursor(this_win),
-            {hint.line, hint.col - 1})
-          hint.wdist = window_dist
-          hint.win = this_win
-
-          -- prevent duplicate hints; this works because we are pre-order traversing the element tree
-          if not vim.deep_equal(hint, hints[#hints]) then
-            table.insert(hints, hint)
-          end
-        end)
-
-        if root.tooltip then
-          get_hints(root.tooltip)
-        end
-      end
-
-      get_hints(self)
-
-      -- just for greying out
-      self.disable_update = true
-      local views_data = require"hop.hint_util".create_views_data(windows)
-      self.disable_update = false
-
-      return hints, {grey_out = require"hop.hint_util".get_grey_out(views_data)}
+-- TODO extract
+function BufRenderer:hop_definition(opts)
+  async.void(function()
+    ---@param jt HopJumpTarget
+    self:get_root_ancestor():hop(opts, function (jt)
+      self:event("go_to_def", jt.path)
     end,
-    callback = callback_fn,
-    comparator = require"hop.hint_util".comparators.win_cursor_dist_comparator
-  }
+    ---@param elt Element
+    function(elt, path)
+      return elt.events["has_go_to"] ~= nil and elt.events["has_go_to"]({}, "definition") and {path = path}
+    end)
+  end)()
+end
 
-  require"hop".hint(strategy)
+-- TODO extract
+function BufRenderer:hop_hover(opts)
+    ---@param jt HopJumpTarget
+  self:get_root_ancestor():hop(opts, function (jt)
+    self:event("click", jt.path)
+  end)
+end
+
+function BufRenderer:hop(opts, callback_fn, filter_fn)
+  ---@param element Element
+  filter_fn = filter_fn or function(element, path) return element.highlightable and {path = path} end
+
+  local winpos = vim.api.nvim_win_get_position(0)
+  local manh_dist = require"hop.jump_target".manh_dist
+
+  ---@return HopJumpDict
+  local get_jump_target_list = function()
+    ---@type HopJumpTarget[]
+    local jump_targets = {}
+    ---@type HopIndirectJumpTarget[]
+    local indirect_jump_targets = {}
+
+    ---@param root BufRenderer
+    local function get_jump_targets(root)
+      local this_buf = root.buf
+      local this_win = root.last_win
+      if not this_win then return end
+      local lines = root.lines
+      local window_dist = manh_dist(winpos, vim.api.nvim_win_get_position(this_win))
+
+      local idx = 1
+      root.element:filter(function(element, path, raw_pos)
+        local filter_result = filter_fn(element, path)
+        if not filter_result then return end
+        local to_merge = filter_result or {}
+        local pos = raw_pos_to_pos(raw_pos, lines)
+        ---@type HopJumpTarget
+        local jump_target =
+        {
+          line = pos[1],
+          column = pos[2] + 1,
+          buffer = this_buf,
+          window = this_win,
+        }
+        -- extend with any additional needed metadata
+        jump_target = vim.tbl_extend("keep", jump_target, to_merge)
+
+        local score = manh_dist(vim.api.nvim_win_get_cursor(this_win),
+          {jump_target.line, jump_target.column - 1}) + window_dist
+        ---@type HopIndirectJumpTarget
+        local indirect_jump_target =
+        {
+          index = idx,
+          score = score
+        }
+
+        -- prevent duplicate jump_targets; this works because we are pre-order traversing the element tree
+        if not vim.deep_equal(jump_target, jump_targets[#jump_targets]) then
+          table.insert(jump_targets, jump_target)
+          table.insert(indirect_jump_targets, indirect_jump_target)
+          idx = idx + 1
+        end
+      end)
+
+      if root.tooltip then
+        get_jump_targets(root.tooltip)
+      end
+    end
+
+    get_jump_targets(self)
+
+    return {jump_targets = jump_targets, indirect_jump_targets = indirect_jump_targets}
+  end
+
+  require"hop".hint_with_callback(get_jump_target_list, opts, callback_fn)
 end
 
 return { BufRenderer = BufRenderer, Element = Element, _by_buf = _by_buf }

@@ -144,6 +144,15 @@ local function code_with_infos(t, sess)
       end
     end
 
+    --FIXME this is essentially a thunked boolean field, adding it as an event
+    --is not exactly, but I'm not sure where to stick it at the moment
+    ---@param kind GoToKind
+    local has_go_to = function(_, kind)
+      local links, err = sess:getGoToLocation(kind, info_with_ctx)
+      if err or #links == 0 then return false end
+      return true
+    end
+
     ---@param kind GoToKind
     local go_to = function(_, kind)
       local links, err = sess:getGoToLocation(kind, info_with_ctx)
@@ -173,6 +182,7 @@ local function code_with_infos(t, sess)
       clear = function(ctx) if info_open then do_reset(ctx) end end,
       go_to = go_to,
       go_to_def = go_to_def,
+      has_go_to = has_go_to,
       go_to_decl = go_to_decl,
       go_to_type = go_to_type,
     }

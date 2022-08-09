@@ -1188,6 +1188,42 @@ function infoview.go_to()
   end
 end
 
+--- Hop to an interactive infoview element by moving to that element.
+function infoview.hop()
+  local curr_iv = infoview.open()
+  local curr_info = curr_iv.info
+  local opts = {}
+  opts.jump_on_sole_occurrence = false
+  if vim.api.nvim_get_current_win ~= curr_iv.window then
+    opts.multi_windows = true
+  end
+  curr_info.__renderer:hop_to(opts)
+end
+
+--- Hop to an interactive infoview element by going to its definition.
+function infoview.hop_definition()
+  local curr_iv = infoview.open()
+  local curr_info = curr_iv.info
+  local opts = {}
+  opts.jump_on_sole_occurrence = false
+  if vim.api.nvim_get_current_win ~= curr_iv.window then
+    opts.multi_windows = true
+  end
+  curr_info.__renderer:hop_definition(opts)
+end
+
+--- Hop to an interactive infoview element by clicking on it (i.e. LSP hover).
+function infoview.hop_hover()
+  local curr_iv = infoview.open()
+  local curr_info = curr_iv.info
+  local opts = {}
+  opts.jump_on_sole_occurrence = false
+  if vim.api.nvim_get_current_win ~= curr_iv.window then
+    opts.multi_windows = true
+  end
+  curr_info.__renderer:hop_hover(opts)
+end
+
 --- Move the current infoview to the appropriate spot based on the
 --- current screen dimensions.
 --- Does nothing if there are more than 2 open windows.

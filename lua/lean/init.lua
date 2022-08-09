@@ -24,6 +24,9 @@ local lean = {
       ['<LocalLeader>w'] = '<Cmd>LeanInfoviewEnableWidgets<CR>';
       ['<LocalLeader>W'] = '<Cmd>LeanInfoviewDisableWidgets<CR>';
       ['<LocalLeader><Tab>'] = '<Cmd>LeanGotoInfoview<CR>';
+      ['<LocalLeader>jj'] = '<Cmd>LeanHopInfoview<CR>';
+      ['<LocalLeader>jd'] = '<Cmd>LeanHopInfoviewDefinition<CR>';
+      ['<LocalLeader>jh'] = '<Cmd>LeanHopInfoviewHover<CR>';
       ['<LocalLeader>s'] = '<Cmd>LeanSorryFill<CR>';
       ['<LocalLeader>t'] = '<Cmd>LeanTryThis<CR>';
       ['<LocalLeader>\\'] = '<Cmd>LeanAbbreviationsReverseLookup<CR>';
@@ -80,6 +83,10 @@ function lean.setup(opts)
     command LeanGotoInfoview :lua require'lean.infoview'.go_to()
 
     command LeanAbbreviationsReverseLookup :lua require'lean.abbreviations'.show_reverse_lookup()
+
+    command LeanHopInfoview :lua require'lean.infoview'.hop()
+    command LeanHopInfoviewDefinition :lua require'lean.infoview'.hop_definition()
+    command LeanHopInfoviewHover :lua require'lean.infoview'.hop_hover()
 
     command LeanSorryFill :lua require'lean.sorry'.fill()
     command LeanTryThis :lua require'lean.trythis'.swap()
