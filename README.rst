@@ -313,6 +313,12 @@ Full Configuration & Settings Information
         -- top | bottom
         horizontal_position = "bottom",
 
+        -- Always open the infoview window in a separate tabpage.
+        -- Might be useful if you are using a screen reader and don't want too
+        -- many dynamic updates in the terminal at the same time.
+        -- Note that `height` and `width` will be ignored in this case.
+        separate_tab = false,
+
         -- Show indicators for pin locations when entering an infoview window?
         -- always | never | auto (= only when there are multiple pins)
         indicators = "auto",

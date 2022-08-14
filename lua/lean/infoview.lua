@@ -24,6 +24,7 @@ local options = {
     width = 50,
     height = 20,
     horizontal_position = 'bottom',
+    separate_tab = false,
 
     autoopen = true,
     autopause = false,
@@ -87,6 +88,7 @@ Info.__index = Info
 ---@field private __width number
 ---@field private __height number
 ---@field private __horizontal_position "top"|"bottom"
+---@field private __separate_tab? bool
 ---@field private __diff_win integer
 local Infoview = {}
 Infoview.__index = Infoview
@@ -100,6 +102,7 @@ end
 ---@field width? integer
 ---@field height? integer
 ---@field horizontal_position? "top"|"bottom"
+---@field separate_tab? bool
 
 --- Create a new infoview.
 ---@param obj InfoviewNewArgs
@@ -110,14 +113,19 @@ function Infoview:new(obj)
     __width = obj.width or options.width,
     __height = obj.height or options.height,
     __horizontal_position = obj.horizontal_position or options.horizontal_position,
+    __separate_tab = obj.separate_tab or options.separate_tab,
   }, self)
   new_infoview.info = Info:new{ infoview = new_infoview }
   return new_infoview
 end
 
-function Infoview.__should_be_vertical(_)
-  local ch_aspect_ratio = 2.5 -- characters are 2.5x taller than they are wide
-  return vim.o.columns > ch_aspect_ratio * vim.o.lines
+function Infoview:__should_be_vertical()
+  if self.__separate_tab then
+    return false
+  else
+    local ch_aspect_ratio = 2.5 -- characters are 2.5x taller than they are wide
+    return vim.o.columns > ch_aspect_ratio * vim.o.lines
+  end
 end
 
 --- Open this infoview if it isn't already open
@@ -131,9 +139,13 @@ function Infoview:open()
     vim.cmd('botright ' .. self.__width .. 'vsplit')
   else
     self.__orientation = 'horizontal'
-    local position = self.__horizontal_position == 'bottom' and 'botright '
-                                                             or 'topleft '
-    vim.cmd(position .. self.__height .. 'split')
+    if self.__separate_tab then
+      vim.cmd('tabnew')
+    else
+      local position = self.__horizontal_position == 'bottom' and 'botright '
+                                                               or 'topleft '
+      vim.cmd(position .. self.__height .. 'split')
+    end
     -- FIXME: No idea why this is required (and the below immediate call to
     --        nvim_set_current_win is insufficient). Without doing things this
     --        way, when setting position to "top", either syntax highlighting
@@ -185,7 +197,7 @@ end
 ---Move this infoview's window (vertically or horizontally) based on the
 ---current screen dimensions.
 function Infoview:reposition()
-  if not self.window then return end
+  if not self.window or self.__separate_tab then return end
 
   local orientation = unpack(vim.fn.winlayout())
 
@@ -227,8 +239,12 @@ function Infoview:__open_win(buf)
     vim.cmd('leftabove ' .. self.__width .. 'vsplit')
     vim.cmd('vertical resize ' .. self.__width)
   else
-    vim.cmd('leftabove ' .. self.__height .. 'split')
-    vim.cmd('resize ' .. self.__height)
+    if self.__separate_tab then
+      vim.cmd('tabnew')
+    else
+      vim.cmd('leftabove ' .. self.__height .. 'split')
+      vim.cmd('resize ' .. self.__height)
+    end
   end
   local new_win = vim.api.nvim_get_current_win()
 
@@ -262,7 +278,9 @@ function Infoview:__refresh()
       if self.__orientation == "vertical" then
         vim.cmd('vertical resize ' .. self.__width)
       else
-        vim.cmd('resize ' .. self.__height)
+        if not self.__separate_tab then
+          vim.cmd('resize ' .. self.__height)
+        end
       end
     end)
   end
