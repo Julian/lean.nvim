@@ -1,5 +1,5 @@
 ---@brief [[
---- Tests for infoview layout on a landscape display.
+--- Tests for infoview layout using a new tab.
 ---@brief ]]
 
 require('tests.helpers')
