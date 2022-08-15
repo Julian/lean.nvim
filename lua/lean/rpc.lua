@@ -256,10 +256,24 @@ end
 ---@field append? TaggedTextMsgEmbed[]
 ---@field tag? {[1]: MsgEmbed} -- the second field is always the empty string
 
+---@class LazyTraceChildren
+
+---@class StrictOrLazyTraceChildren
+---@field strict? TaggedTextMsgEmbed[]
+---@field lazy? LazyTraceChildren
+
+---@class TraceEmbed
+---@field indent integer
+---@field cls string
+---@field msg TaggedTextMsgEmbed
+---@field collapsed boolean
+---@field children StrictOrLazyTraceChildren
+
 ---@class MsgEmbed
 ---@field expr? CodeWithInfos
 ---@field goal? InteractiveGoal
 ---@field lazyTrace? {[1]: number, [2]: string, [3]: MessageData}
+---@field trace? TraceEmbed
 
 ---@class MessageData
 
@@ -299,6 +313,13 @@ end
 function Subsession:msgToInteractive(msg, indent)
   return self:call('Lean.Widget.InteractiveDiagnostics.msgToInteractive',
     { msg = msg, indent = indent })
+end
+
+---@param children LazyTraceChildren
+---@return TaggedTextMsgEmbed[]
+---@return any error
+function Subsession:lazyTraceChildrenToInteractive(children)
+  return self:call('Lean.Widget.lazyTraceChildrenToInteractive', children)
 end
 
 ---@alias LspDocumentUri string
