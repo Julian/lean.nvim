@@ -8,7 +8,7 @@ local set_augroup = require('lean._util').set_augroup
 
 local abbreviations = {}
 
-local buf_imaps = {}
+local cleanup_imaps = function() end
 local _MEMOIZED = nil
 
 --- Load the Lean abbreviations as a Lua table.
@@ -77,42 +77,10 @@ local function get_extmark_range(abbr_ns, id, buffer)
   return row, col, details and details.end_row, details and details.end_col
 end
 
----inoremap a key temporarily for the duration of the abbreviation expansion
----@param key string
----@param to string
-local function inoremap_temporarily(key, to)
-  local imap = vim.fn.maparg(key, "i", false, true)
-  if vim.fn.empty(imap) == 0 then
-    buf_imaps[key] = {
-      rhs = imap.rhs,
-      opts = {
-        noremap = imap.noremap == 1,
-        expr = imap.expr == 1,
-        silent = imap.silent == 1,
-        nowait = imap.nowait == 1,
-        script = imap.script == 1,
-      },
-    }
-  end
-
-  vim.api.nvim_buf_set_keymap(0, 'i', key, to, { noremap = true })
-end
-
-local function restore_buf_imaps()
-  for k, v in pairs(buf_imaps) do
-    if type(v) == 'table' and next(v) then
-      vim.api.nvim_buf_set_keymap(0, 'i', k, v.rhs, v.opts)
-      buf_imaps[k] = nil
-    end
-  end
-end
-
 local function _clear_abbr_mark()
   vim.api.nvim_buf_del_extmark(0, abbr_mark_ns, abbreviations.abbr_mark)
   abbreviations.abbr_mark = nil
-  vim.api.nvim_buf_del_keymap(0, 'i', '<CR>')
-  vim.api.nvim_buf_del_keymap(0, 'i', '<Tab>')
-  restore_buf_imaps()
+  cleanup_imaps()
 end
 
 function abbreviations._insert_char_pre()
@@ -153,9 +121,24 @@ function abbreviations._insert_char_pre()
       right_gravity = false,
       end_right_gravity = true,
     })
-    -- override only for the duration of the abbreviation (clashes with autocompletion plugins)
-    inoremap_temporarily('<CR>', [[<C-o>:lua require'lean.abbreviations'.convert()<CR><CR>]])
-    inoremap_temporarily('<Tab>', [[<Cmd>lua require'lean.abbreviations'.convert()<CR>]])
+
+    local _cleanup = {}
+    for key, to in pairs{
+      ['<CR>'] = [[<C-o>:lua require'lean.abbreviations'.convert()<CR><CR>]],
+      ['<Tab>'] = [[<Cmd>lua require'lean.abbreviations'.convert()<CR>]],
+    } do
+      local imap = vim.fn.maparg(key, 'i', false, true)
+      if vim.fn.empty(imap) == 0 then
+        table.insert(_cleanup, function() vim.fn.mapset('i', false, imap) end)
+      else
+        table.insert(_cleanup, function() vim.api.nvim_buf_del_keymap(0, 'i', key) end)
+      end
+      vim.api.nvim_buf_set_keymap(0, 'i', key, to, { noremap = true })
+    end
+    cleanup_imaps = function()
+      for _, cleanup in ipairs(_cleanup) do cleanup() end
+      cleanup_imaps = function() end
+    end
   end
 end
 
