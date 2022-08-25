@@ -122,21 +122,35 @@ function abbreviations._insert_char_pre()
       end_right_gravity = true,
     })
 
-    local _cleanup = {}
-    for key, to in pairs{
+    local mappings = {
       ['<CR>'] = [[<C-o>:lua require'lean.abbreviations'.convert()<CR><CR>]],
       ['<Tab>'] = [[<Cmd>lua require'lean.abbreviations'.convert()<CR>]],
-    } do
-      local imap = vim.fn.maparg(key, 'i', false, true)
-      if vim.fn.empty(imap) == 0 then
-        table.insert(_cleanup, function() vim.fn.mapset('i', false, imap) end)
-      else
-        table.insert(_cleanup, function() vim.api.nvim_buf_del_keymap(0, 'i', key) end)
+    }
+    local _cleanup = {}
+    for _, imap in ipairs(vim.api.nvim_buf_get_keymap(0, 'i')) do
+      if mappings[imap.lhs] then
+        _cleanup[imap.lhs] = function()
+          vim.api.nvim_buf_set_keymap(0, 'i', imap.lhs, imap.rhs or '', {
+            nowait = imap.nowait,
+            silent = imap.silent,
+            script = imap.script,
+            expr = imap.expr,
+            unique = imap.unique,
+            callback = imap.callback,
+          })
+        end
+      end
+    end
+
+    for key, to in pairs(mappings) do
+      if not _cleanup[key] then
+        _cleanup[key] = function() vim.api.nvim_buf_del_keymap(0, 'i', key) end
       end
       vim.api.nvim_buf_set_keymap(0, 'i', key, to, { noremap = true })
     end
+
     cleanup_imaps = function()
-      for _, cleanup in ipairs(_cleanup) do cleanup() end
+      for _, cleanup in pairs(_cleanup) do cleanup() end
       cleanup_imaps = function() end
     end
   end
