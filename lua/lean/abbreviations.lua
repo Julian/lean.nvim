@@ -157,8 +157,8 @@ function abbreviations._insert_char_pre()
 end
 
 function abbreviations._cmdwin_enter()
-  local came_from = vim.fn.win_getid(vim.fn.winnr('#'))
-  local ft = vim.api.nvim_get_option_value('filetype', { win = came_from })
+  local came_from = vim.fn.winbufnr(vim.fn.win_getid(vim.fn.winnr('#')))
+  local ft = vim.api.nvim_buf_get_option(came_from, 'filetype')
   if not ft:match('^lean*') then
     set_augroup('LeanAbbreviationCmdwin', '')
     return
