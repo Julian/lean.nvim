@@ -104,6 +104,13 @@ describe('unicode abbreviation expansion', function()
       helpers.insert[[(\a]]
       assert.contents.are[[(α]]
     end))
+
+    it('expands abbreviations in command mode', helpers.clean_buffer(ft, '', function()
+      helpers.insert[[foo ε bar]]
+      vim.cmd('normal $')
+      helpers.feed[[q/a\e<Space><CR>ibaz]]
+      assert.is.equal('foo bazε bar', vim.api.nvim_get_current_line())
+    end))
   end)
 end)
 

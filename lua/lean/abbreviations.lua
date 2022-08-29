@@ -156,6 +156,24 @@ function abbreviations._insert_char_pre()
   end
 end
 
+function abbreviations._cmdwin_enter()
+  local came_from = vim.fn.win_getid(vim.fn.winnr('#'))
+  local ft = vim.api.nvim_get_option_value('filetype', { win = came_from })
+  if not ft:match('^lean*') then
+    set_augroup('LeanAbbreviationCmdwin', '')
+    return
+  end
+  set_augroup('LeanAbbreviationCmdwin', [[
+    autocmd InsertCharPre <buffer> lua require'lean.abbreviations'._insert_char_pre()
+    autocmd InsertLeave <buffer> lua require'lean.abbreviations'.convert()
+    autocmd BufLeave <buffer> lua require'lean.abbreviations'.convert()
+  ]])
+end
+
+function abbreviations._cmdwin_leave()
+  set_augroup('LeanAbbreviationCmdwin', '')
+end
+
 local function convert_abbrev(abbrev)
   if abbrev:find(abbreviations.leader) ~= 1 then return abbrev end
   abbrev = abbrev:sub(#abbreviations.leader + 1)
@@ -219,6 +237,8 @@ function abbreviations.enable(opts)
   set_augroup("LeanAbbreviations", [[
     autocmd InsertCharPre *.lean lua require'lean.abbreviations'._insert_char_pre()
     autocmd InsertLeave *.lean lua require'lean.abbreviations'.convert()
+    autocmd CmdwinEnter * lua require'lean.abbreviations'._cmdwin_enter()
+    autocmd CmdwinLeave * lua require'lean.abbreviations'._cmdwin_leave()
     autocmd BufLeave *.lean lua require'lean.abbreviations'.convert()
   ]])
   vim.cmd[[hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray]]
