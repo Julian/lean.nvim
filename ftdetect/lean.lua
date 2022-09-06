@@ -8,24 +8,17 @@ local find_project_root = require('lspconfig.util').root_pattern(
   'lean-toolchain'
 )
 
-lean_nvim_ft_options = {
-  default = "lean",
-  nomodifiable = {
-    '.*/src/lean/.*',       -- Lean 4 standard library
-    '.*/lib/lean/src/.*',   -- Lean 4 legacy standard library
-    '.*/lean_packages/.*',  -- Lean 4 dependencies
-    _LEAN3_STANDARD_LIBRARY .. '.*',
-    '/_target/.*/.*.lean'   -- Lean 3 dependencies
-  }
-}
-
 local function detect(filename)
   if filename:match('^fugitive://.*') then
     filename = pcall(vim.fn.FugitiveReal, filename)
   end
 
   local abspath = vim.fn.fnamemodify(filename, ":p")
-  local filetype = lean_nvim_ft_options.default
+  local filetype = lean_nvim_default_filetype
+  if not filetype then
+    filetype = 'lean'
+  end
+
   if abspath:match(_LEAN3_STANDARD_LIBRARY) then
     filetype = 'lean3'
   else
