@@ -21,7 +21,7 @@ function ft.enable(opts)
     -- this means we have to manage it
     global_default_managed = true
   end
-  options= vim.tbl_extend("force", options._DEFAULTS, opts)
+  options= vim.tbl_extend("force", options, opts)
   if global_default_managed then
     lean_nvim_default_filetype = options.default
   end

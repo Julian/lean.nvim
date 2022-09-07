@@ -116,11 +116,11 @@ end
 
 function commands.enable()
   vim.cmd[[
-    command LeanPlainGoal :lua require'lean.commands'.show_goal(false)
-    command LeanPlainTermGoal :lua require'lean.commands'.show_term_goal(false)
-    command LeanGoal :lua require'lean.commands'.show_goal()
-    command LeanTermGoal :lua require'lean.commands'.show_term_goal()
-    command LeanLineDiagnostics :lua require'lean.commands'.show_line_diagnostics()
+    command! LeanPlainGoal :lua require'lean.commands'.show_goal(false)
+    command! LeanPlainTermGoal :lua require'lean.commands'.show_term_goal(false)
+    command! LeanGoal :lua require'lean.commands'.show_goal()
+    command! LeanTermGoal :lua require'lean.commands'.show_term_goal()
+    command! LeanLineDiagnostics :lua require'lean.commands'.show_line_diagnostics()
   ]]
 end
 

@@ -43,7 +43,6 @@ function lean.setup(opts)
 
   opts.infoview = opts.infoview or {}
   require'lean.infoview'.enable(opts.infoview)
-
   require'lean.commands'.enable()
 
   opts.lsp3 = opts.lsp3 or {}
@@ -64,31 +63,34 @@ function lean.setup(opts)
   if opts.stderr.enable ~= false then require'lean.stderr'.enable(opts.stderr or {}) end
 
   vim.cmd[[
-    command LeanRestartFile :lua require'lean.lsp'.restart_file()
-    command LeanRefreshFileDependencies :lua require'lean.lsp'.restart_file()
+    command! LeanRestartFile :lua require'lean.lsp'.restart_file()
+    command! LeanRefreshFileDependencies :lua require'lean.lsp'.restart_file()
 
-    command LeanInfoviewToggle :lua require'lean.infoview'.toggle()
-    command LeanInfoviewPinTogglePause :lua require'lean.infoview'.pin_toggle_pause()
-    command LeanInfoviewAddPin :lua require'lean.infoview'.add_pin()
-    command LeanInfoviewClearPins :lua require'lean.infoview'.clear_pins()
-    command LeanInfoviewSetDiffPin :lua require'lean.infoview'.set_diff_pin()
-    command LeanInfoviewClearDiffPin :lua require'lean.infoview'.clear_diff_pin()
-    command LeanInfoviewToggleAutoDiffPin :lua require'lean.infoview'.toggle_auto_diff_pin(true)
-    command LeanInfoviewToggleNoClearAutoDiffPin :lua require'lean.infoview'.toggle_auto_diff_pin(false)
-    command LeanInfoviewEnableWidgets :lua require'lean.infoview'.enable_widgets()
-    command LeanInfoviewDisableWidgets :lua require'lean.infoview'.disable_widgets()
-    command LeanGotoInfoview :lua require'lean.infoview'.go_to()
+    command! LeanInfoviewToggle :lua require'lean.infoview'.toggle()
+    command! LeanInfoviewPinTogglePause :lua require'lean.infoview'.pin_toggle_pause()
+    command! LeanInfoviewAddPin :lua require'lean.infoview'.add_pin()
+    command! LeanInfoviewClearPins :lua require'lean.infoview'.clear_pins()
+    command! LeanInfoviewSetDiffPin :lua require'lean.infoview'.set_diff_pin()
+    command! LeanInfoviewClearDiffPin :lua require'lean.infoview'.clear_diff_pin()
+    command! LeanInfoviewToggleAutoDiffPin :lua require'lean.infoview'.toggle_auto_diff_pin(true)
+    command! LeanInfoviewToggleNoClearAutoDiffPin :lua require'lean.infoview'.toggle_auto_diff_pin(false)
+    command! LeanInfoviewEnableWidgets :lua require'lean.infoview'.enable_widgets()
+    command! LeanInfoviewDisableWidgets :lua require'lean.infoview'.disable_widgets()
+    command! LeanGotoInfoview :lua require'lean.infoview'.go_to()
 
-    command LeanAbbreviationsReverseLookup :lua require'lean.abbreviations'.show_reverse_lookup()
+    command! LeanAbbreviationsReverseLookup :lua require'lean.abbreviations'.show_reverse_lookup()
 
-    command LeanSorryFill :lua require'lean.sorry'.fill()
-    command LeanTryThis :lua require'lean.trythis'.swap()
+    command! LeanSorryFill :lua require'lean.sorry'.fill()
+    command! LeanTryThis :lua require'lean.trythis'.swap()
   ]]
 
   if opts.mappings == true then
     vim.cmd[[
-      autocmd FileType lean3 lua require'lean'.use_suggested_mappings(true)
-      autocmd FileType lean lua require'lean'.use_suggested_mappings(true)
+      augroup lean_nvim_mappings
+        autocmd!
+        autocmd FileType lean3 lua require'lean'.use_suggested_mappings(true)
+        autocmd FileType lean lua require'lean'.use_suggested_mappings(true)
+      augroup END
     ]]
   end
 
