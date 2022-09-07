@@ -1,7 +1,8 @@
 local progress = require('lean.progress')
 
-local M = {}
-local options = { _DEFAULTS = { priority = 10, character = '⋯' } }
+local progress_bars = {}
+local options = {  priority = 10, character = '⋯' }
+options._DEFAULTS = vim.deepcopy(options)
 
 local sign_group_name = 'leanSignProgress'
 local sign_name = 'leanSignProgress'
@@ -41,8 +42,8 @@ end
 -- Table from bufnr to timer object.
 local timers = {}
 
-function M.update(params)
-  if not M.enabled then return end
+function progress_bars.update(params)
+  if not progress_bars.enabled then return end
   -- TODO FIXME can potentially create new buffer
   local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
 
@@ -54,15 +55,15 @@ function M.update(params)
   end
 end
 
-function M.enable(opts)
-  options = vim.tbl_extend("force", options._DEFAULTS, opts)
+function progress_bars.enable(opts)
+  options = vim.tbl_extend("force", options, opts)
 
   vim.fn.sign_define(sign_name, {
     text = options.character,
     texthl = 'leanSignProgress',
   })
   vim.cmd[[hi def leanSignProgress guifg=orange ctermfg=215]]
-  M.enabled = true
+  progress_bars.enabled = true
 end
 
-return M
+return progress_bars

@@ -20,34 +20,34 @@ local infoview = {
   debug = false,
 }
 local options = {
-  _DEFAULTS = {
-    width = 50,
-    height = 20,
-    horizontal_position = 'bottom',
-    separate_tab = false,
+  width = 50,
+  height = 20,
+  horizontal_position = 'bottom',
+  separate_tab = false,
 
-    autoopen = true,
-    autopause = false,
-    indicators = "auto",
-    lean3 = { show_filter = true, mouse_events = false },
-    show_processing = true,
-    show_no_info_message = false,
-    use_widgets = true,
+  autoopen = true,
+  autopause = false,
+  indicators = "auto",
+  lean3 = { show_filter = true, mouse_events = false },
+  show_processing = true,
+  show_no_info_message = false,
+  use_widgets = true,
 
-    mappings = {
-      ['K'] = 'click',
-      ['<CR>'] = 'click',
-      ['gd'] = 'go_to_def',
-      ['gD'] = 'go_to_decl',
-      ['gy'] = 'go_to_type',
-      ['I'] = 'mouse_enter',
-      ['i'] = 'mouse_leave',
-      ['<Esc>'] = 'clear_all',
-      ['C'] = 'clear_all',
-      ['<LocalLeader><Tab>'] = 'goto_last_window',
-    }
+  mappings = {
+    ['K'] = 'click',
+    ['<CR>'] = 'click',
+    ['gd'] = 'go_to_def',
+    ['gD'] = 'go_to_decl',
+    ['gy'] = 'go_to_type',
+    ['I'] = 'mouse_enter',
+    ['i'] = 'mouse_leave',
+    ['<Esc>'] = 'clear_all',
+    ['C'] = 'clear_all',
+    ['<LocalLeader><Tab>'] = 'goto_last_window',
   }
 }
+
+options._DEFAULTS = vim.deepcopy(options)
 
 --- An individual pin.
 ---@class Pin
@@ -1039,13 +1039,13 @@ end
 
 --- Enable and open the infoview across all Lean buffers.
 function infoview.enable(opts)
-  options = vim.tbl_extend("force", options._DEFAULTS, opts)
+  options = vim.tbl_extend("force", options, opts)
   infoview.mappings = options.mappings
   infoview.enabled = true
   infoview.set_autoopen(options.autoopen)
   set_augroup("LeanInfoviewInit", [[
-    autocmd FileType lean3 lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
-    autocmd FileType lean lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
+    autocmd! FileType lean3 lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
+    autocmd! FileType lean lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
   ]])
 end
 
