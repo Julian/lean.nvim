@@ -26,7 +26,6 @@ lean.is_lean3_buffer()                                    *lean.is_lean3_buffer*
 lean.current_search_paths()                          *lean.current_search_paths*
      Return the current Lean search path.
 
-
      Includes both the Lean core libraries as well as project-specific
      directories.
 
@@ -35,23 +34,23 @@ Pin                                                                        *Pin*
 
 
     Fields: ~
-        {id}       (string)                @a label to identify the pin
+        {id}  (string)  @a label to identify the pin
 
 
 Info                                                                      *Info*
 
 
     Fields: ~
-        {pin}      (Pin)
-        {pins}     (Pin[])
+        {pin}   (Pin)
+        {pins}  (Pin[])
 
 
 Infoview                                                              *Infoview*
 
 
     Fields: ~
-        {info}     (Info)
-        {window}   (integer)
+        {info}    (Info)
+        {window}  (integer)
 
 
 infoview.enable_debug()                                  *infoview.enable_debug*
@@ -65,42 +64,11 @@ InfoviewNewArgs                                                *InfoviewNewArgs*
         {width}                (?)  integer
         {height}               (?)  integer
         {horizontal_position}  (?)  "top"|"bottom"
+        {separate_tab}         (?)  bool
 
 
 infoview.close_all()                                        *infoview.close_all*
      Close all open infoviews (across all tabs).
-
-
-infoview.__was_closed()                                  *infoview.__was_closed*
-     An infoview was closed, either directly via `Infoview.close` or manually.
-     Will be triggered via a `WinClosed` autocmd.
-
-
-infoview.__diff_was_closed()                        *infoview.__diff_was_closed*
-     An infoview diff window was closed.
-     Will be triggered via a `WinClosed` autocmd.
-
-
-infoview.__show_curr_pin()                            *infoview.__show_curr_pin*
-     An infoview was entered, show the extmark for the current pin.
-     Will be triggered via a `WinEnter` autocmd.
-
-
-infoview.__hide_curr_pin()                            *infoview.__hide_curr_pin*
-     An infoview was left, hide the extmark for the current pin.
-     Will be triggered via a `WinLeave` autocmd.
-
-
-infoview.__update()                                          *infoview.__update*
-     Update the info contents appropriately for Lean 4 or 3.
-
-
-infoview.__update_pin_by_uri()                    *infoview.__update_pin_by_uri*
-     Update pins corresponding to the given URI.
-
-
-infoview.__update_pin_positions()              *infoview.__update_pin_positions*
-     on_lines callback to update pins position according to the given textDocument/didChange parameters.
 
 
 infoview.enable()                                              *infoview.enable*
@@ -119,19 +87,11 @@ infoview.set_autopause()                                *infoview.set_autopause*
      Set whether a new pin is automatically paused.
 
 
-infoview.__bufenter()                                      *infoview.__bufenter*
-     Callback when entering a Lean buffer.
-
-
 infoview.get_current_infoview()                  *infoview.get_current_infoview*
      Get the infoview corresponding to the current window.
 
     Returns: ~
         {Infoview}
-
-
-infoview.__maybe_autoopen()                          *infoview.__maybe_autoopen*
-     Open an infoview for the current buffer if it isn't already open.
 
 
 infoview.open()                                                  *infoview.open*
@@ -203,10 +163,6 @@ abbreviations.show_reverse_lookup()          *abbreviations.show_reverse_lookup*
      Show a preview window with the reverse-lookup of the current character.
 
 
-abbreviations._insert_char_pre()                *abbreviations._insert_char_pre*
-
-
-
 abbreviations.convert()                                  *abbreviations.convert*
 
 
@@ -217,7 +173,6 @@ abbreviations.enable()                                    *abbreviations.enable*
 
 sorry.fill()                                                        *sorry.fill*
      Fill the current cursor position with `sorry`s to discharge all goals.
-
 
      I.e., given 3 current goals, with 2 in front of the cursor, will insert:
           { foo },<cursor>
@@ -242,7 +197,6 @@ trythis.trim_doubled_ats()                            *trythis.trim_doubled_ats*
 
 health.check()                                                    *health.check*
      Check whether lean.nvim is healthy.
-
 
      Call me via `:checkhealth lean`.
 
