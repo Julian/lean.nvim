@@ -32,6 +32,9 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       p q : Prop
       h2 : q
       ⊢ q ∨ p
+
+      ▶ expected type (7:3-7:6)
+      ⊢ ∀ {a b : Prop}, b → a ∨ b
     ]]
 
     infoview.add_pin()
@@ -47,12 +50,18 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       h1 : p
       ⊢ q ∨ p
 
+      ▶ expected type (4:3-4:6)
+      ⊢ ∀ {a b : Prop}, a → a ∨ b
+
       -- %s at 7:6
       ▶ 1 goal
       case inr
       p q : Prop
       h2 : q
       ⊢ q ∨ p
+
+      ▶ expected type (7:3-7:6)
+      ⊢ ∀ {a b : Prop}, b → a ∨ b
     ]], filename))
 
     helpers.move_cursor{ to = {1, 49} }
@@ -72,6 +81,9 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       p q : Prop
       h2 : q
       ⊢ q ∨ p
+
+      ▶ expected type (7:3-7:6)
+      ⊢ ∀ {a b : Prop}, b → a ∨ b
 
       -- %s at 1:50
       ▶ 1 goal
@@ -112,6 +124,9 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       p q : Prop
       h2 : q
       ⊢ q ∨ p
+
+      ▶ expected type (7:3-7:6)
+      ⊢ ∀ {a b : Prop}, b → a ∨ b
     ]]
 
     assert.is.equal(0, #infoview.get_current_infoview().info.pins)
@@ -298,6 +313,9 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
         p q : Prop
         h37 : p
         ⊢ q ∨ p
+
+        ▶ expected type (4:3-4:6)
+        ⊢ ∀ {a b : Prop}, a → a ∨ b
       ]]
 
       assert.diff_contents.are[[
@@ -306,6 +324,9 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
         p q : Prop
         h37 : p
         ⊢ q ∨ p
+
+        ▶ expected type (4:3-4:6)
+        ⊢ ∀ {a b : Prop}, a → a ∨ b
       ]]
 
       local diff_window = helpers.wait_for_new_window{ lean_window, current_infoview.window }
@@ -333,6 +354,9 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
         p q : Prop
         h37 : p
         ⊢ q ∨ p
+
+        ▶ expected type (4:3-4:6)
+        ⊢ ∀ {a b : Prop}, a → a ∨ b
       ]]
     end)
 
