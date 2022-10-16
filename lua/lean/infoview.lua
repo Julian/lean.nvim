@@ -590,6 +590,16 @@ function Info:render()
   self.__renderer:render()
   if self.__diff_pin then self.__diff_renderer:render() end
 
+  -- Set the cursor to the line with first goal (just after the marker).
+  for i, line in ipairs(vim.api.nvim_buf_get_lines(self.__renderer.buf, 0, -1, false)) do
+    if line:find("^⊢ ") then
+      vim.api.nvim_win_call(self.__infoview.window,
+        function() vim.cmd.normal(i .. 'z-2l') end
+      )
+      break
+    end
+  end
+
   self.__infoview:__refresh_diff()
   collectgarbage()
 end
@@ -1006,7 +1016,7 @@ end
 
 --- Update pins corresponding to the given URI.
 function infoview.__update_pin_by_uri(uri)
-  if infoview.enabled then
+  if not infoview.enabled then return end
   for _, each in pairs(infoview._by_tabpage) do
     local pins = { each.info.pin }
     vim.list_extend(pins, each.info.pins)
@@ -1015,7 +1025,6 @@ function infoview.__update_pin_by_uri(uri)
         pin:update()
       end
     end
-  end
   end
 end
 

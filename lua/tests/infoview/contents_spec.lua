@@ -346,6 +346,28 @@ describe('infoview content (auto-)update', function()
     end)
   end)
 
+  for ft, goal in pairs{ lean = '⊢ true = true', lean3 = '⊢ true' } do
+    describe(ft .. ' cursor position', helpers.clean_buffer(ft, '', function()
+      it('is set to the goal line', function()
+        local lines = { 'example ' }
+        for i=1, 100 do
+          table.insert(lines, "(h" .. i .. " : " .. i .. " = " .. i .. ")")
+        end
+        table.insert(lines, ': true :=')
+        table.insert(lines, 'sorry')
+
+        vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+        helpers.move_cursor{ to = { #lines, 1 } }
+        helpers.wait_for_loading_pins()
+
+        vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
+
+        assert.are.equal(vim.api.nvim_get_current_line(), goal)
+        assert.are.equal(vim.api.nvim_win_get_cursor(0)[2], #'⊢ ')
+      end)
+    end))
+  end
+
   describe('processing message', helpers.clean_buffer('lean', '#eval IO.sleep 5000', function()
     it('is shown while a file is processing', function()
       local uri = vim.uri_from_fname(vim.api.nvim_buf_get_name(0))
