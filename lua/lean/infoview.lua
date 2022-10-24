@@ -819,7 +819,11 @@ function Pin:__started_loading()
 end
 
 function Pin:async_update(force)
-  if not force and self.paused then return end
+  -- FIXME: For one, we're guarding here against the infoview being updated
+  --        while it's closed, which if we continued, would end up calling
+  --        render. That doesn't seem right, somewhere that should happen
+  --        higher up than here.
+  if not force and self.paused or not self.__info.__infoview.window then return end
 
   local tick = self.__ticker:lock()
 
