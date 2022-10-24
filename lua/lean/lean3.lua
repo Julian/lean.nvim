@@ -193,6 +193,8 @@ function lean3.parse_widget(result, options)
         end
         local clickable_event = element_event == "click" or element_event == "change"
         if clickable_event then element.highlightable = true end
+        ---@param ctx ElementEventContext
+        ---@param value any
         events[element_event] = function(ctx, value)
           local args = type(value) == 'string' and { type = 'string', value = value }
             or { type = 'unit' }
@@ -202,7 +204,7 @@ function lean3.parse_widget(result, options)
             args = args,
           })
           if element_event == "cursor_leave" then
-            ctx.self:buf_event("cursor_enter")
+            ctx.self:event("cursor_enter")
           end
         end
       end
@@ -313,6 +315,7 @@ local function render_goal(pin, client, params, use_widgets, options)
       parse_options = {
         mouse_events = options.mouse_events,
         show_filter = options.show_filter,
+        ---@param ctx ElementEventContext
         send_widget_event = function(ctx, ev)
           ev.textDocument = pin.__position_params.textDocument
           ev.widget = widget

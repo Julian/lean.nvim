@@ -633,6 +633,7 @@ function BufRenderer:hover(force_update_highlight)
   end
 end
 
+---@return nil
 function BufRenderer:event(event, path, ...)
   local args = {...}
 
@@ -674,6 +675,7 @@ function BufRenderer:get_deepest_tooltip()
   return self
 end
 
+---@return BufRenderer
 function BufRenderer:get_root_ancestor()
   while self.parent do
     self = self.parent
