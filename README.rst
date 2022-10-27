@@ -335,6 +335,8 @@ Full Configuration & Settings Information
       -- Redirect Lean's stderr messages somehwere (to a buffer by default)
       stderr = {
         enable = true,
+        -- height of the window
+        height = 5,
         -- a callback which will be called with (multi-line) stderr output
         -- e.g., use:
         --   on_lines = function(lines) vim.notify(lines) end
