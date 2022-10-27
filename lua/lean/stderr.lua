@@ -5,8 +5,9 @@ local util = require('lean._util')
 
 local stderr = {}
 local current = {}
+local stderr_height
 
---- Open a window for the stderr buffer.
+--- Open a window for the stderr buffer of the configured height.
 local function open_window(stderr_bufnr)
   local old_win = vim.api.nvim_get_current_win()
 
@@ -19,7 +20,7 @@ local function open_window(stderr_bufnr)
     vim.cmd(('botright sbuffer %d'):format(stderr_bufnr))
   end
 
-  vim.cmd'resize 5'
+  vim.cmd(('resize %d'):format(stderr_height))
   local stderr_winnr = vim.api.nvim_get_current_win()
   vim.api.nvim_buf_set_option(stderr_bufnr, 'filetype', 'leanstderr')
   vim.api.nvim_set_current_win(old_win)
@@ -27,7 +28,7 @@ local function open_window(stderr_bufnr)
 end
 
 ---Show stderr output in a separate stderr buffer.
----@param string message @a (possibly multi-line) string from stderr
+---@param message string @a (possibly multi-line) string from stderr
 function stderr.show(message)
   vim.schedule(function()
     if not current.bufnr or not vim.api.nvim_buf_is_valid(current.bufnr) then
@@ -40,6 +41,7 @@ function stderr.show(message)
     local lines = vim.split(message, '\n')
     local num_lines = vim.api.nvim_buf_line_count(current.bufnr)
     if lines[#lines] == '' then table.remove(lines) end
+    num_lines = num_lines + #lines
     vim.api.nvim_buf_set_lines(current.bufnr, num_lines, num_lines, false, lines)
     if vim.api.nvim_get_current_win() ~= current.winnr then
       vim.api.nvim_win_set_cursor(current.winnr, {num_lines, 0})
@@ -51,6 +53,7 @@ end
 function stderr.enable(config)
   local on_lines = config.on_lines or stderr.show
   local old_error = log.error
+  stderr_height = config.height or 5
   -- TODO: add upstream neovim API
   log.error = function(...)
     local argc = select('#', ...)
