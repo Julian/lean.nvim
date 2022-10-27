@@ -41,6 +41,7 @@ function stderr.show(message)
     local lines = vim.split(message, '\n')
     local num_lines = vim.api.nvim_buf_line_count(current.bufnr)
     if lines[#lines] == '' then table.remove(lines) end
+    num_lines = num_lines + #lines
     vim.api.nvim_buf_set_lines(current.bufnr, num_lines, num_lines, false, lines)
     if vim.api.nvim_get_current_win() ~= current.winnr then
       vim.api.nvim_win_set_cursor(current.winnr, {num_lines, 0})
