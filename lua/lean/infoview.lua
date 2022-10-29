@@ -591,12 +591,14 @@ function Info:render()
   if self.__diff_pin then self.__diff_renderer:render() end
 
   -- Set the cursor to the line with first goal (just after the marker).
-  for i, line in ipairs(vim.api.nvim_buf_get_lines(self.__renderer.buf, 0, -1, false)) do
-    if line:find("^⊢ ") then
-      vim.api.nvim_win_call(self.__infoview.window,
-        function() vim.cmd.normal(i .. 'z-2l') end
-      )
-      break
+  if vim.api.nvim_get_current_win() ~= self.__infoview.window then
+    for i, line in ipairs(vim.api.nvim_buf_get_lines(self.__renderer.buf, 0, -1, false)) do
+      if line:find("^⊢ ") then
+        vim.api.nvim_win_call(self.__infoview.window,
+          function() vim.cmd.normal(i .. 'z-2l') end
+        )
+        break
+      end
     end
   end
 
