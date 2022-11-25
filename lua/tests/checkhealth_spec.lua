@@ -6,7 +6,7 @@ describe('checkhealth', function()
     assert.has_match([[
 .*lean.nvim.*
 .*- .*OK.* `lean ----version`
-.*- Lean .*version .+
+.*-.* Lean .*version .+
 .*- .*OK.* `lean--language--server`
 ]], table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n'))
   end)
