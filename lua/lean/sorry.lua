@@ -3,7 +3,6 @@ local tbl_repeat = require('lean._util').tbl_repeat
 local sorry = {}
 
 local function calculate_indent(line)
-  -- This manual calculation ugliness hopefully will get helped by tree-sitter.
   local indent = vim.fn.indent(line)
   if indent == 0 then
     indent = vim.fn.indent(vim.fn.prevnonblank(line))

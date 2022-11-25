@@ -59,27 +59,6 @@ Lean 4
 For Lean 4 support, a recent Lean 4 nightly build is recommended (one at
 least from mid-October 2021).
 
-In addition to the instructions above, there is experimental `nvim-treesitter
-<https://github.com/nvim-treesitter/nvim-treesitter>`_ support being
-developed in `<https://github.com/Julian/tree-sitter-lean>`_ which can
-be used for enhanced indentation (TODO), text object (TODO), syntax
-highlighting and querying but which is still very nascent.
-
-If you wish to try it, it can be installed by adding e.g.:
-
-.. code-block:: vim
-
-    Plug 'nvim-treesitter/nvim-treesitter'
-    Plug 'nvim-treesitter/nvim-treesitter-textobjects'
-
-if you do not already have tree sitter installed.
-
-As above, many simple syntactical things are not yet implemented (help
-is of course welcome). You likely will want to flip back and forth
-between it and the standard syntax highlighting via ``:TSBufDisable
-highlight`` whenever encountering misparsed terms. Bug reports (to the
-aforementioned repository) are also welcome.
-
 Features
 --------
 
