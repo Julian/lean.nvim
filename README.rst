@@ -57,7 +57,7 @@ Lean 4
 ^^^^^^
 
 For Lean 4 support, a recent Lean 4 nightly build is recommended (one at
-least from mid-October 2021).
+least from late 2022).
 
 Features
 --------
