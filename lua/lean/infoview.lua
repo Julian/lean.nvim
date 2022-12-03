@@ -595,7 +595,7 @@ function Info:render()
     for i, line in ipairs(vim.api.nvim_buf_get_lines(self.__renderer.buf, 0, -1, false)) do
       if line:find("^⊢ ") then
         vim.api.nvim_win_call(self.__infoview.window,
-          function() vim.cmd.normal(i .. 'z-2l') end
+          function() vim.cmd('normal ' .. i .. 'z-2l') end
         )
         break
       end
