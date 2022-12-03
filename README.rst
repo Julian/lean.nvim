@@ -10,7 +10,9 @@ https://user-images.githubusercontent.com/329822/161458848-815be138-58cd-45ed-bd
 Prerequisites
 -------------
 
-``lean.nvim`` supports neovim 0.6+ (including nightlies).
+``lean.nvim`` supports the latest stable neovim release (currently 0.8.1) as well as the latest nightly.
+
+(This matches what neovim itself supports upstream, which often guides what plugins end up working with).
 
 Installation
 ------------
