@@ -2,8 +2,7 @@
 lean.nvim
 =========
 
-``neovim`` support for the `Lean Theorem Prover
-<https://leanprover.github.io/lean4/doc/>`_.
+``neovim`` support for the `Lean Theorem Prover <https://leanprover.github.io/lean4/doc/>`_.
 
 https://user-images.githubusercontent.com/329822/161458848-815be138-58cd-45ed-bd94-bfc03e9f97a0.mov
 
@@ -17,10 +16,10 @@ Prerequisites
 Installation
 ------------
 
-Install via your favorite plugin manager. E.g., with
-`vim-plug <https://github.com/junegunn/vim-plug>`_ via:
+Install via your favorite plugin manager.
+E.g., with `vim-plug <https://github.com/junegunn/vim-plug>`_ via:
 
-.. code-block:: vim
+.. code:: vim
 
     Plug 'Julian/lean.nvim'
     Plug 'neovim/nvim-lspconfig'
@@ -33,75 +32,55 @@ Install via your favorite plugin manager. E.g., with
     Plug 'andrewradev/switch.vim'  " For Lean switch support
     Plug 'tomtom/tcomment_vim'     " For commenting motions
 
-``lean.nvim`` already includes syntax highlighting and Lean filetype
-support, so installing the ``lean.vim`` (i.e. non-neovim) plugin is not
-required or recommended.
+``lean.nvim`` already includes syntax highlighting and Lean filetype support, so installing the ``lean.vim`` (i.e. non-neovim) plugin is not required or recommended.
 
-``lean.nvim`` supports both `Lean 3
-<https://github.com/leanprover-community/lean>`_ as well as the emerging
-`Lean 4 <https://github.com/leanprover/lean4>`_.
+Both `Lean 3 <https://github.com/leanprover-community/lean>`_ and `Lean 4 <https://github.com/leanprover/lean4>`_ are supported.
 
 Lean 3
 ^^^^^^
 
-For Lean 3 support, in addition to the instructions above, you should
-install ``lean-language-server``, which can be done via e.g.:
+For Lean 3 support, in addition to the instructions above, you should install ``lean-language-server``, which can be done via e.g.:
 
-.. code-block:: sh
+.. code:: sh
 
     $ npm install -g lean-language-server
 
-Given that Lean 3's language server is separate from
-Lean itself, also ensure you've `installed Lean 3 itself
-<https://leanprover-community.github.io/get_started.html>`_.
+Given that Lean 3's language server is separate from Lean itself, also ensure you've `installed Lean 3 itself <https://leanprover-community.github.io/get_started.html>`_.
 
 Lean 4
 ^^^^^^
 
-For Lean 4 support, a recent Lean 4 nightly build is recommended (one at
-least from late 2022).
+For Lean 4 support, a recent Lean 4 nightly build is recommended (one at least from late 2022).
 
 Features
 --------
 
-* Abbreviation (unicode character) insertion (currently in insert mode only,
-  with plans to do so for search and command modes)
+* Abbreviation (unicode character) insertion (in insert mode & the command window accessible via ``q/``)
 
-* An infoview which can show persistent goal, term & tactic state,
-  as well as interactive widgets in both
-  `Lean 4 <https://github.com/leanprover/lean4/pull/596>`__ and
-  `3 <https://www.youtube.com/watch?v=8NUBQEZYuis>`__!
+* An infoview which can show persistent goal, term & tactic state, as well as `interactive widget <https://www.youtube.com/watch?v=8NUBQEZYuis>`_ support (which should function for most widgets renderable as text)
 
 * Hover (preview) commands:
 
   * ``:LeanGoal`` for showing goal state in a preview window
 
-  * ``:LeanTermGoal`` for showing term-mode type information
-    in a preview window
+  * ``:LeanTermGoal`` for showing term-mode type information in a preview window
 
-* `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base
-  definitions for Lean
+* `switch.vim <https://github.com/AndrewRadev/switch.vim/>`_ base definitions for Lean
 
-* Simple snippets (in `VSCode-compatible format
-  <https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax>`_,
-  so usable with e.g. `vim-vsnip <https://github.com/hrsh7th/vim-vsnip>`_)
+* Simple snippets (in `VSCode-compatible format <https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax>`_, usable with e.g. `vim-vsnip <https://github.com/hrsh7th/vim-vsnip>`_)
 
-* Lean library search path access via
-  ``lean.current_search_path()``, suitable for use with e.g.
-  `telescope.nvim <https://github.com/nvim-telescope/telescope.nvim/>`_ for
-  live grepping. See the wiki for `a sample configuration
-  <https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#live-grep>`_.
+* Lean library search path access via ``lean.current_search_path()``, suitable for use with e.g. `telescope.nvim <https://github.com/nvim-telescope/telescope.nvim/>`_ for
+  live grepping.
+  See the wiki for `a sample configuration <https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#live-grep>`_.
 
-* Simple (or simplistic) implementations of some editing helpers, such as ``try
-  this`` suggestion replacement
+* Simple implementations of some editing helpers, such as ``try this`` suggestion replacement
 
 Configuration & Usage
 ---------------------
 
-The short version -- after following the installation instructions above,
-add the below to ``~/.config/nvim/plugin/lean.lua`` or an equivalent:
+The short version -- after following the installation instructions above, add the below to ``~/.config/nvim/plugin/lean.lua`` or an equivalent:
 
-.. code-block:: lua
+.. code:: lua
 
     require('lean').setup{
       abbreviations = { builtin = true },
@@ -112,31 +91,22 @@ add the below to ``~/.config/nvim/plugin/lean.lua`` or an equivalent:
 
 where ``on_attach`` should be your preferred LSP attach handler.
 
-If you do not already have a preferred setup which includes LSP key
-mappings and (auto)completion, you may find the `fuller example here in
-the wiki <https://github.com/Julian/lean.nvim/wiki/Getting-Started>`_
-helpful.
+If you do not already have a preferred setup which includes LSP key mappings and (auto)completion, you may find the `fuller example here in the wiki <https://github.com/Julian/lean.nvim/wiki/Getting-Started>`_ helpful.
 
-More detail on the full list of supported configuration options can be
-found below.
+More detail on the full list of supported configuration options can be found below.
 
 Mappings
 --------
 
-If you've set ``mappings = true`` in your configuration (or have called
-``lean.use_suggested_mappings()`` explicitly), a number of keys will be mapped
-either within Lean source files or within Infoview windows:
+If you've set ``mappings = true`` in your configuration (or have called ``lean.use_suggested_mappings()`` explicitly), a number of keys will be mapped either within Lean source files or within Infoview windows:
 
 In Lean Files
 ^^^^^^^^^^^^^
 
-The key binding ``<LocalLeader>`` below refers to a configurable prefix key
-within vim (and neovim). You can check what this key is set to within neovim
-by running the command ``:echo maplocalleader``. An error like
-``E121: Undefined variable: maplocalleader`` indicates that it may not be set
-to any key. This can be configured by putting a line in your
-``~/.config/nvim/init.vim`` of the form ``let maplocalleader = "\<Space>"``
-(in this example, mapping ``<LocalLeader>`` to ``<Space>``).
+The key binding ``<LocalLeader>`` below refers to a configurable prefix key within vim (and neovim).
+You can check what this key is set to within neovim by running the command ``:echo maplocalleader``.
+An error like ``E121: Undefined variable: maplocalleader`` indicates that it may not be set to any key.
+This can be configured by putting a line in your ``~/.config/nvim/init.vim`` of the form ``let maplocalleader = "\<Space>"`` (in this example, mapping ``<LocalLeader>`` to ``<Space>``).
 
 +------------------------+----------------------------------------------------+
 |        Key             |                           Function                 |
@@ -170,12 +140,9 @@ to any key. This can be configured by putting a line in your
 
 .. note::
 
-   See ``:help <LocalLeader>`` if you haven't previously interacted
-   with the local leader key. Some vim users remap this key to make it
-   easier to reach, so you may want to consider what key that means
-   for your own keyboard layout. My (Julian's) ``<Leader>`` is set to
-   ``<Space>``, and my ``<LocalLeader>`` to ``<Space><Space>``, which
-   may be a good choice for you if you have no other preference.
+   See ``:help <LocalLeader>`` if you haven't previously interacted with the local leader key.
+   Some vim users remap this key to make it easier to reach, so you may want to consider what key that means for your own keyboard layout.
+   My (Julian's) ``<Leader>`` is set to ``<Space>``, and my ``<LocalLeader>`` to ``<Space><Space>``, which may be a good choice for you if you have no other preference.
 
 In Infoview Windows
 ^^^^^^^^^^^^^^^^^^^
@@ -215,7 +182,7 @@ In Infoview Windows
 Full Configuration & Settings Information
 -----------------------------------------
 
-.. code-block:: lua
+.. code:: lua
 
     require('lean').setup{
       -- Enable the Lean language server(s)?
@@ -331,57 +298,47 @@ Full Configuration & Settings Information
 Other Plugins
 -------------
 
-Particularly if you're also a VSCode user, there may be other plugins
-you're interested in. Below is a (hopelessly incomplete) list of a few:
+Particularly if you're also a VSCode user, there may be other plugins you're interested in.
+Below is a (hopelessly incomplete) list of a few:
 
-* `nvim-lightbulb <https://github.com/kosayoda/nvim-lightbulb>`_ for
-  signalling when code actions are available
+* `nvim-lightbulb <https://github.com/kosayoda/nvim-lightbulb>`_ for signalling when code actions are available
 
-* `goto-preview <https://github.com/rmagatti/goto-preview>`_ for
-  peeking definitions (instead of jumping to them)
+* `goto-preview <https://github.com/rmagatti/goto-preview>`_ for peeking definitions (instead of jumping to them)
 
-* `lsp-status.nvim <https://github.com/nvim-lua/lsp-status.nvim>`_ for
-  showing LSP information in your status bar
-
-* `lsp-trouble <https://github.com/folke/lsp-trouble.nvim>`_ for
-  showing a grouped view of diagnostics to pair with the "infauxview"
+* `lsp-status.nvim <https://github.com/nvim-lua/lsp-status.nvim>`_ for showing LSP information in your status bar
 
 Contributing
 ------------
 
-Contributions are most welcome. Feel free to send pull requests for anything
-you'd like to see, or open an issue if you'd like to discuss.
+Contributions are most welcome.
+Feel free to send pull requests for anything you'd like to see, or open an issue if you'd like to discuss.
 
 Running the tests can be done via the ``Makefile``:
 
-.. code-block:: sh
+.. code:: sh
 
     $ make test
 
 which will execute against a minimal ``vimrc`` isolated from your own setup.
 
-.. code-block:: sh
+.. code:: sh
 
     $ TEST_FILE=lua/tests/foo_spec.lua make test
 
 can be used to run just one specific test file, which can be faster.
 
-Some linting and style checking is done via `pre-commit
-<https://pre-commit.com/#install>`_, which once installed (via the linked
-instructions) can be run via:
+Some linting and style checking is done via `pre-commit <https://pre-commit.com/#install>`_, which once installed (via the linked instructions) is run via:
 
-.. code-block:: sh
+.. code:: sh
 
     $ make lint
 
-or on each commit automatically by running ``pre-commit install`` in your
-repository checkout.
+or on each commit automatically if you have run ``pre-commit install`` in your repository checkout.
 
 You can also use
 
-.. code-block:: sh
+.. code:: sh
 
     $ make nvim SETUP_TABLE='{ lsp3 = { enable = true }, mappings = true }'
 
-to get a normal running neovim (again isolated from your own configuration),
-where ``SETUP_TABLE`` is a (Lua) table like one would pass to ``lean.setup``.
+to get a normal running neovim (again isolated from your own configuration), where ``SETUP_TABLE`` is a (Lua) table like one would pass to ``lean.setup``.
