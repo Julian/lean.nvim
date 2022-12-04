@@ -104,7 +104,7 @@ Semantic highlighting support in neovim is still `being merged in upstream <http
 If you're impatient or eager however, you can enable the functionality immediately by installing a plugin for semantic highlighting `such as this one <https://github.com/theHamsta/nvim-semantic-tokens>`_.
 
 Note that if you do so, you still will want to map the semantic highlighting groups to your color scheme appropriately.
-For a sample setup, see `the wiki <https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#semantic-highlighting>`_
+For a sample setup, see `the wiki <https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#semantic-highlighting>`_.
 
 Mappings
 --------
