@@ -2,9 +2,9 @@
   "calc": {
     "prefix": "calc",
     "body": [
-        "calc ${1:start} = ${2:first} : by ${3:sorry}",
-        "       ... = ${4:second} : by ${5:sorry}",
-        "       ... = ${6:last} : by ${7:sorry},"
+      "calc ${1:start} = ${2:first} : by ${3:sorry}",
+      "       ... = ${4:second} : by ${5:sorry}",
+      "       ... = ${6:last} : by ${7:sorry},"
     ],
     "description": "Scaffolding for authoring `calc` blocks"
   },
