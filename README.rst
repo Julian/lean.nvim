@@ -32,9 +32,9 @@ E.g., with `vim-plug <https://github.com/junegunn/vim-plug>`_ via:
     Plug 'andrewradev/switch.vim'  " For Lean switch support
     Plug 'tomtom/tcomment_vim'     " For commenting motions
 
-``lean.nvim`` already includes syntax highlighting and Lean filetype support, so installing the ``lean.vim`` (i.e. non-neovim) plugin is not required or recommended.
-
 Both `Lean 3 <https://github.com/leanprover-community/lean>`_ and `Lean 4 <https://github.com/leanprover/lean4>`_ are supported.
+
+``lean.nvim`` already includes syntax highlighting and Lean filetype support, so installing the ``lean.vim`` (i.e. non-neovim) plugin is not required or recommended.
 
 Lean 3
 ^^^^^^
@@ -92,8 +92,19 @@ The short version -- after following the installation instructions above, add th
 where ``on_attach`` should be your preferred LSP attach handler.
 
 If you do not already have a preferred setup which includes LSP key mappings and (auto)completion, you may find the `fuller example here in the wiki <https://github.com/Julian/lean.nvim/wiki/Getting-Started>`_ helpful.
-
 More detail on the full list of supported configuration options can be found below.
+
+Semantic Highlighting
+---------------------
+
+Lean 4 supports `semantic highlighting <https://leanprover.github.io/lean4/doc/semantic_highlighting.html>`_, in which the Lean server itself will signal how to highlight terms and symbols within the editor using information available to it.
+
+Semantic highlighting support in neovim is still `being merged in upstream <https://github.com/neovim/neovim/pull/21100>`_ and is likely to be available in version 0.9 (or shortly thereafter), at which point this functionality will be usable in neovim.
+
+If you're impatient or eager however, you can enable the functionality immediately by installing a plugin for semantic highlighting `such as this one <https://github.com/theHamsta/nvim-semantic-tokens>`_.
+
+Note that if you do so, you still will want to map the semantic highlighting groups to your color scheme appropriately.
+For a sample setup, see `the wiki <https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#semantic-highlighting>`_
 
 Mappings
 --------
