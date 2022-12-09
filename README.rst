@@ -28,6 +28,8 @@ E.g., with `vim-plug <https://github.com/junegunn/vim-plug>`_ via:
     " Optional Dependencies:
 
     Plug 'hrsh7th/nvim-cmp'        " For LSP completion
+    Plug 'hrsh7th/cmp-nvim-lsp'
+    Plug 'hrsh7th/cmp-buffer'
     Plug 'hrsh7th/vim-vsnip'       " For snippets
     Plug 'andrewradev/switch.vim'  " For Lean switch support
     Plug 'tomtom/tcomment_vim'     " For commenting motions
