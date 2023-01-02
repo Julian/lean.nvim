@@ -17,8 +17,33 @@ jobs:
           sudo luarocks install luacheck
       - uses: pre-commit/action@v3.0.0
 
+  lean3-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.lean_version }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - id: get-version
+        name: Get the Lean 3 version used by fixtures
+        shell: python
+        run: |
+          from pathlib import Path
+          import os
+          import json
+          import tomllib
+
+          leanpkg, = Path(".").rglob("leanpkg.toml")
+          metadata = tomllib.loads(leanpkg.read_text())["package"]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+            out.write(f"lean_version={json.dumps([metadata['lean_version']])}")
+
   ci:
+    needs: lean3-version
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
@@ -26,8 +51,8 @@ jobs:
         nvim-version:
           - stable
           - nightly
-        lean-version:
-          - "leanprover-community/lean:3.49.1"
+        lean-version: ${{ fromJson(needs.lean3-version.outputs.version) }}
+
     steps:
       - uses: actions/checkout@v3
 
