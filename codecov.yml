@@ -1,7 +1,0 @@
-coverage:
-  status:
-    patch: false
-    project:
-      default:
-        informational: true
-comment: false
