@@ -1,1 +1,3 @@
-{"version": 3, "packages": [{"path": {"name": "foo", "dir": "./foo"}}]}
+{"version": 4,
+ "packagesDir": "./lake-packages",
+ "packages": [{"path": {"name": "foo", "dir": "./foo"}}]}
