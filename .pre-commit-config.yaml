@@ -20,8 +20,8 @@ repos:
             vscode-lean/abbreviations.json|
             .*/lake-manifest.json
           )
-  - repo: https://github.com/Calinou/pre-commit-luacheck
-    rev: v1.0.0
+  - repo: https://github.com/lunarmodules/luacheck
+    rev: v1.1.0
     hooks:
       - id: luacheck
   - repo: https://github.com/myint/rstcheck
