@@ -76,8 +76,9 @@ describe('infoview content (auto-)update', function()
 
     ]]
 
-    -- Now switch back to the other window and...
-    vim.cmd[[wincmd p]]
+    -- Now switch back to the other window and we see the original location...
+    -- Firing CursorMoved manually is required now that neovim#23711 is merged
+    vim.cmd[[wincmd p | doautocmd CursorMoved]]
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
