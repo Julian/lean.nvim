@@ -7,7 +7,7 @@ end
 vim.b.switch_definitions = {
   vim.g.switch_builtins.true_false,
   { '#check', '#eval', '#reduce' },
-  { [[\(begin\n\s*\|by \)\@<!sorry]], [[begin\r  sorry\rend]] },
+  { 'sorry', 'exact?', 'apply?' },
   vim.fn['switch#Words']{ 'tt', 'ff' },
   { '=', '≠' },
   { '∈', '∉' },
