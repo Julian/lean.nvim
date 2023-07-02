@@ -1,4 +1,12 @@
 {
+  "calc": {
+    "prefix": "calc",
+    "body": [
+      "calc ${1:start} = ${2:first} := by ${3:sorry}",
+      "  _ = ${4:second} : by ${5:sorry}"
+    ],
+    "description": "Scaffolding for authoring `calc` blocks"
+  },
   "example": {
     "prefix": "example",
     "body": ["example : ${1:type} := ${2:term}"],
