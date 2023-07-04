@@ -10,6 +10,8 @@ syn match leanInfoWarning "^▶.*: warning:$"
 syn match leanInfoInfo "^▶.*: information:$"
 syn match leanInfoComment "--.*"
 
+syn match leanInfoInaccessibleHyp "^.*✝.*\ze : "
+
 hi def link leanInfoGoals Title
 hi def link leanInfoGoalCase Statement
 hi def link leanInfoGoalHyp Type
@@ -30,3 +32,5 @@ hi def link leanInfoButton Pmenu
 hi def link leanInfoField Folded
 hi def link leanInfoFieldAlt Folded
 hi def link leanInfoFieldSep DbgBreakPt
+
+hi def link leanInfoInaccessibleHyp Comment
