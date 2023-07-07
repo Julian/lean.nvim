@@ -1,0 +1,25 @@
+name: Abbreviations
+
+on:
+  schedule:
+    - cron: "44 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+      - name: Download VSCode abbreviations
+        run: |
+          gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover/vscode-lean/contents/src/abbreviation/abbreviations.json' >vscode-lean/abbreviations.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Sync abbreviations with the VSCode definitions
