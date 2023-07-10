@@ -7,7 +7,7 @@ local control = require'plenary.async.control'
 ---@class RpcRef
 
 ---@class Session
----@field client any vim.lsp.client object
+---@field client lsp.Client
 ---@field uri string
 ---@field connected boolean
 ---@field session_id string?
@@ -19,7 +19,7 @@ local control = require'plenary.async.control'
 local Session = {}
 Session.__index = Session
 
----@param client any vim.lsp.client object
+---@param client lsp.Client
 ---@param bufnr number
 ---@param uri string
 ---@return Session
