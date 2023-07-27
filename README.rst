@@ -209,7 +209,7 @@ Full Configuration & Settings Information
       lsp = {
         on_attach = on_attach,
         init_options = {
-          -- See Lean.Data.Lsp.InitializationOptions for details and further options.
+          -- See Lean.Lsp.InitializationOptions for details and further options.
 
           -- Time (in milliseconds) which must pass since latest edit until elaboration begins.
           -- Lower values may make editing feel faster at the cost of higher CPU usage.
