@@ -13,6 +13,10 @@ build-test-fixtures:
 	cd ./lua/tests/fixtures/example-lean3-project/ && leanpkg build
 	cd ./lua/tests/fixtures/example-lean4-project/ && lake build
 
+bump-test-fixtures:
+	cd ./lua/tests/fixtures/example-lean3-project/ && leanproject up
+	gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' >./lua/tests/fixtures/example-lean4-project/lean-toolchain
+
 test: build-test-fixtures
 	./lua/tests/scripts/run_tests.sh
 
