@@ -206,7 +206,20 @@ Full Configuration & Settings Information
       -- See https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#leanls for details.
 
       -- Lean 4  (on_attach is as above, your LSP handler)
-      lsp = { on_attach = on_attach },
+      lsp = {
+        on_attach = on_attach,
+        init_options = {
+          -- See Lean.Data.Lsp.InitializationOptions for details and further options.
+
+          -- Time (in milliseconds) which must pass since latest edit until elaboration begins.
+          -- Lower values may make editing feel faster at the cost of higher CPU usage.
+          editDelay = 200,
+
+          -- Whether to signal that widgets are supported.
+          -- Enabled by default, as support for most widgets is implemented in lean.nvim.
+          hasWidgets = true,
+        }
+      },
 
       -- Lean 3  (on_attach is as above, your LSP handler)
       lsp3 = { on_attach = on_attach },
