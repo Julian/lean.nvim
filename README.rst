@@ -116,10 +116,10 @@ If you've set ``mappings = true`` in your configuration (or have called ``lean.u
 In Lean Files
 ^^^^^^^^^^^^^
 
-The key binding ``<LocalLeader>`` below refers to a configurable prefix key within vim (and neovim).
+The key binding ``<LocalLeader>`` below refers to a configurable prefix key within neovim.
 You can check what this key is set to within neovim by running the command ``:echo maplocalleader``.
 An error like ``E121: Undefined variable: maplocalleader`` indicates that it may not be set to any key.
-This can be configured by putting a line in your ``~/.config/nvim/init.vim`` of the form ``let maplocalleader = "\<Space>"`` (in this example, mapping ``<LocalLeader>`` to ``<Space>``).
+This can be configured by putting a line at the top of your ``~/.config/nvim/init.lua`` of the form ``vim.g.maplocalleader = '  '`` (in this example, mapping ``<LocalLeader>`` to hitting the space key twice).
 
 +------------------------+----------------------------------------------------+
 |        Key             |                           Function                 |
@@ -154,7 +154,7 @@ This can be configured by putting a line in your ``~/.config/nvim/init.vim`` of 
 .. note::
 
    See ``:help <LocalLeader>`` if you haven't previously interacted with the local leader key.
-   Some vim users remap this key to make it easier to reach, so you may want to consider what key that means for your own keyboard layout.
+   Some nvim users remap this key to make it easier to reach, so you may want to consider what key that means for your own keyboard layout.
    My (Julian's) ``<Leader>`` is set to ``<Space>``, and my ``<LocalLeader>`` to ``<Space><Space>``, which may be a good choice for you if you have no other preference.
 
 In Infoview Windows
