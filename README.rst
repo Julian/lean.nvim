@@ -93,7 +93,6 @@ The short version -- after following the installation instructions above, add th
     require('lean').setup{
       abbreviations = { builtin = true },
       lsp = { on_attach = on_attach },
-      lsp3 = { on_attach = on_attach },
       mappings = true,
     }
 
@@ -326,7 +325,7 @@ Full Configuration & Settings Information
         on_lines = nil,
       },
 
-      -- Legacy Lean 3 support  (on_attach is as above, your LSP handler)
+      -- Legacy Lean 3 support (on_attach is as above, your LSP handler)
       lsp3 = { on_attach = on_attach },
 
       -- mouse_events = true will simulate mouse events in the Lean 3 infoview, this is buggy at the moment
@@ -378,6 +377,6 @@ You can also use
 
 .. code:: sh
 
-    $ make nvim SETUP_TABLE='{ lsp3 = { enable = true }, mappings = true }'
+    $ make nvim SETUP_TABLE='{ lsp = { enable = true }, mappings = true }'
 
 to get a normal running neovim (again isolated from your own configuration), where ``SETUP_TABLE`` is a (Lua) table like one would pass to ``lean.setup``.
