@@ -17,7 +17,31 @@ Installation
 ------------
 
 Install via your favorite plugin manager.
-E.g., with `vim-plug <https://github.com/junegunn/vim-plug>`_ via:
+
+For example with `lazy.nvim <https://github.com/folke/lazy.nvim>`_:
+
+.. code:: lua
+
+    {
+      'Julian/lean.nvim',
+      event = { 'BufReadPre *.lean', 'BufNewFile *.lean' },
+
+      dependencies = {
+        'neovim/nvim-lspconfig',
+        'nvim-lua/plenary.nvim',
+        -- you also will likely want nvim-cmp or some completion engine
+      },
+
+      -- see details below for full configuration options
+      opts = {
+        lsp = {
+          on_attach = on_attach,
+        },
+        mappings = true,
+      }
+    }
+
+or with `vim-plug <https://github.com/junegunn/vim-plug>`_:
 
 .. code:: vim
 
