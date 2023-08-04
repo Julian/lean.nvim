@@ -58,25 +58,7 @@ or with `vim-plug <https://github.com/junegunn/vim-plug>`_:
     Plug 'andrewradev/switch.vim'  " For Lean switch support
     Plug 'tomtom/tcomment_vim'     " For commenting motions
 
-Both `Lean 3 <https://github.com/leanprover-community/lean>`_ and `Lean 4 <https://github.com/leanprover/lean4>`_ are supported.
-
 ``lean.nvim`` already includes syntax highlighting and Lean filetype support, so installing the ``lean.vim`` (i.e. non-neovim) plugin is not required or recommended.
-
-Lean 3
-^^^^^^
-
-For Lean 3 support, in addition to the instructions above, you should install ``lean-language-server``, which can be done via e.g.:
-
-.. code:: sh
-
-    $ npm install -g lean-language-server
-
-Given that Lean 3's language server is separate from Lean itself, also ensure you've `installed Lean 3 itself <https://leanprover-community.github.io/get_started.html>`_.
-
-Lean 4
-^^^^^^
-
-For Lean 4 support, a recent Lean 4 nightly build is recommended (one at least from late 2022).
 
 Features
 --------
@@ -212,6 +194,17 @@ In Infoview Windows
 +------------------------+----------------------------------------------------+
 
 
+Lean 3
+------
+
+Support for the (end of life-d) Lean 3 is also available.
+In addition to the instructions above, and in addition to installing Lean 3 itself, you will need to install the separate Lean 3 ``lean-language-server``, which can be done via e.g.:
+
+.. code:: sh
+
+    $ npm install -g lean-language-server
+
+
 Full Configuration & Settings Information
 -----------------------------------------
 
@@ -240,13 +233,6 @@ Full Configuration & Settings Information
           hasWidgets = true,
         }
       },
-
-      -- Lean 3  (on_attach is as above, your LSP handler)
-      lsp3 = { on_attach = on_attach },
-
-      -- mouse_events = true will simulate mouse events in the Lean 3 infoview, this is buggy at the moment
-      -- so you can use the I/i keybindings to manually trigger these
-      lean3 = { mouse_events = false },
 
       ft = {
         -- What filetype should be associated with standalone Lean files?
@@ -339,6 +325,13 @@ Full Configuration & Settings Information
         -- window.
         on_lines = nil,
       },
+
+      -- Legacy Lean 3 support  (on_attach is as above, your LSP handler)
+      lsp3 = { on_attach = on_attach },
+
+      -- mouse_events = true will simulate mouse events in the Lean 3 infoview, this is buggy at the moment
+      -- so you can use the I/i keybindings to manually trigger these
+      lean3 = { mouse_events = false },
     }
 
 Other Plugins
