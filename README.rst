@@ -91,7 +91,6 @@ The short version -- after following the installation instructions above, add th
 .. code:: lua
 
     require('lean').setup{
-      abbreviations = { builtin = true },
       lsp = { on_attach = on_attach },
       mappings = true,
     }
