@@ -8,6 +8,8 @@ vim.b.switch_definitions = {
   vim.g.switch_builtins.true_false,
   { '#check', '#eval', '#reduce' },
   { 'sorry', 'exact?', 'apply?' },
+  { 'simp', 'simp?' },
+  { 'aesop', 'aesop?' },
   vim.fn['switch#Words']{ 'tt', 'ff' },
   { '=', '≠' },
   { '∈', '∉' },
