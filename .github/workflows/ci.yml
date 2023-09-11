@@ -6,7 +6,7 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: "3.x"
@@ -22,7 +22,7 @@ jobs:
     outputs:
       version: ${{ steps.get-version.outputs.lean_version }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: "3.11"
@@ -54,7 +54,7 @@ jobs:
         lean-version: ${{ fromJson(needs.lean3-version.outputs.version) }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Give leanpkg (fake) greadlink on macOS
         run: cp scripts/fake_greadlink /usr/local/bin/greadlink
