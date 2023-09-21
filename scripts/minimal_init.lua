@@ -27,7 +27,7 @@ end
 if vim.env.LEAN_NVIM_DEBUG then
   local port = 8088
   if vim.env.LEAN_NVIM_DEBUG ~= "" and vim.env.LEAN_NVIM_DEBUG ~= "1" then
-    port = tonumber(port)
+    port = tonumber(vim.env.LEAN_NVIM_DEBUG)
   end
   require'osv'.launch{ host = '127.0.0.1', port = port }
   vim.wait(5000)
