@@ -29,7 +29,7 @@ function sorry.fill()
       sorrytext = "{ sorry },"
       offset = 2
   else
-      sorrytext = "· sorry "
+      sorrytext = "· sorry"
       offset = 3
   end
   for _, response in pairs(responses) do
