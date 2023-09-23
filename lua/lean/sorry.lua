@@ -23,21 +23,26 @@ end
 function sorry.fill()
   local params = vim.lsp.util.make_position_params()
   local responses = vim.lsp.buf_request_sync(0, '$/lean/plainGoal', params)
-
   local sorrytext, offset
-  if vim.bo.filetype == "lean3" then
-      sorrytext = "{ sorry },"
-      offset = 2
-  else
-      sorrytext = "· sorry"
-      offset = 3
-  end
+
+  if not responses then return end
   for _, response in pairs(responses) do
     if not response.result or not response.result.goals or vim.tbl_isempty(response.result.goals) then return end
     local goals = #response.result.goals
     if goals then
       local index = vim.api.nvim_win_get_cursor(0)[1]
       local indent = calculate_indent(index)
+
+      if vim.bo.filetype == "lean3" then
+	sorrytext = "{ sorry },"
+	offset = 2
+      elseif goals == 1 then
+	sorrytext = "sorry"
+	offset = 0
+      else
+	sorrytext = "· sorry"
+	offset = 3
+      end
       local lines = tbl_repeat(indent .. sorrytext, goals)
       vim.api.nvim_buf_set_lines(0, index, index, true, lines)
       vim.api.nvim_win_set_cursor(0, { index + 1, #indent + offset })  -- the 's'
