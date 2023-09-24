@@ -75,13 +75,5 @@ jobs:
         run: sudo npm install -g lean-language-server
         if: contains(matrix.lean-version, 'lean:3')
 
-      - name: Install nvim dependencies
-        run: |
-          mkdir packpath
-          git clone --depth 1 https://github.com/AndrewRadev/switch.vim/ packpath/switch.vim
-          git clone --depth 1 https://github.com/tomtom/tcomment_vim packpath/tcomment_vim
-          git clone --depth 1 https://github.com/neovim/nvim-lspconfig packpath/nvim-lspconfig
-          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim packpath/plenary.nvim
-
       - name: Run tests
         run: make TEST_SEQUENTIAL=1 test

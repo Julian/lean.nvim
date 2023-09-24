@@ -6,6 +6,7 @@ SETUP = "lua require'lean'.setup$(SETUP_TABLE)"
 nvim:
 	nvim --noplugin -u scripts/minimal_init.lua -c $(SETUP) $(ARGS)
 
+
 docgen:
 	nvim --headless --noplugin -u scripts/minimal_init.lua -c "luafile ./scripts/gendocs.lua" -c "qa"
 
@@ -19,7 +20,17 @@ bump-test-fixtures:
 	git add --all
 	git commit -m "Bump the Lean versions in CI."
 
-test: build-test-fixtures
+clean-deps:
+	rm -rf packpath/
+
+clone-deps: clean-deps
+	mkdir packpath && cd packpath && \
+	git clone --filter=blob:none https://github.com/AndrewRadev/switch.vim && \
+	git clone --filter=blob:none https://github.com/neovim/nvim-lspconfig && \
+	git clone --filter=blob:none https://github.com/nvim-lua/plenary.nvim && \
+	git clone --filter=blob:none https://github.com/tomtom/tcomment_vim
+
+test: build-test-fixtures clone-deps
 	./lua/tests/scripts/run_tests.sh
 
 _test:
