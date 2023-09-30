@@ -88,7 +88,7 @@ Configuration & Usage
 
 The short version -- if you followed the instructions above for ``lazy.nvim``, simply ensure your ``opts`` table contains at least an ``lsp`` table defining ``on_attach`` to be your preferred LSP attach handler, and ``mappings = true`` to enable key mappings, as shown in the example above.
 
-If you do not already have a preferred setup which includes LSP key mappings and (auto)completion, you may find the `fuller example here in the wiki <https://github.com/Julian/lean.nvim/wiki/Getting-Started>`_ helpful.
+If you do not already have a preferred setup which includes LSP key mappings and (auto)completion, you may find the `fuller example here in the wiki <https://github.com/Julian/lean.nvim/wiki/Getting-Started-From-the-Ground-Up>`_ helpful.
 
 If you are using another plugin manager such as ``vim-plug``, after following the installation instructions, add the below to ``~/.config/nvim/plugin/lean.lua`` or an equivalent:
 
