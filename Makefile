@@ -33,10 +33,10 @@ clone-deps: clean-deps
 	git clone --filter=blob:none https://github.com/tomtom/tcomment_vim
 
 test: build-test-fixtures clone-deps
-	./lua/tests/scripts/run_tests.sh
+	nvim --headless -u ./scripts/minimal_init.lua -l ./scripts/run_tests.lua
 
 _test:
-	./lua/tests/scripts/run_tests.sh
+	nvim --headless -u ./scripts/minimal_init.lua -l ./scripts/run_tests.lua
 
 profile-test: build-test-fixtures
 	hyperfine --warmup 2 $(ARGS) "$(MAKE) _test"
