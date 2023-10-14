@@ -69,7 +69,7 @@ Pin.__index = Pin
 ---@class Info
 ---@field pin Pin
 ---@field pins Pin[]
----@field private __auto_diff_pin Pin
+---@field private __auto_diff_pin boolean
 ---@field private __renderer BufRenderer
 ---@field private __diff_renderer BufRenderer
 ---@field private __diff_pin Pin
@@ -88,7 +88,7 @@ Info.__index = Info
 ---@field private __width number
 ---@field private __height number
 ---@field private __horizontal_position "top"|"bottom"
----@field private __separate_tab? bool
+---@field private __separate_tab? boolean
 ---@field private __diff_win integer
 local Infoview = {}
 Infoview.__index = Infoview
@@ -102,7 +102,7 @@ end
 ---@field width? integer
 ---@field height? integer
 ---@field horizontal_position? "top"|"bottom"
----@field separate_tab? bool
+---@field separate_tab? boolean
 
 --- Create a new infoview.
 ---@param obj InfoviewNewArgs
@@ -227,7 +227,7 @@ end
 
 --- API for opening an auxilliary window relative to the current infoview window.
 --- @param buf number @buffer to put in the new window
---- @return number @new window handle or nil if the infoview is closed
+--- @return number? @new window handle or nil if the infoview is closed
 function Infoview:__open_win(buf)
   if not self.window then return end
 
@@ -304,6 +304,7 @@ function Infoview:__refresh_diff()
   local diff_renderer = self.info.__diff_renderer
 
   if not self.__diff_win then
+    ---@diagnostic disable-next-line: assign-type-mismatch
     self.__diff_win = self:__open_win(diff_renderer.buf)
   end
 
@@ -715,7 +716,7 @@ function Pin:__update_extmark_style(buf, line, col)
       -- vim.str_utfindex rounds up to the next UTF16 index if in the middle of a UTF8 sequence;
       -- so convert next byte to UTF16 and back to get UTF8 index of next codepoint
       local _, next_utf16 = vim.str_utfindex(buf_line, col + 1)
-      end_col = (col < #buf_line) and vim.str_byteindex(buf_line, next_utf16, true)
+      end_col = vim.str_byteindex(buf_line, next_utf16, true)
     else
       end_col = col
     end

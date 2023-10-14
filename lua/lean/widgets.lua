@@ -8,7 +8,7 @@ local util = require('lean._util')
 ---@field text string @the text to show when rendering this element
 ---@field name string @a named handle for this element, used when path-searching
 ---@field hlgroup? string|fun(string):string @the highlight group for this element's text, or a function that returns it
----@field tooltip? Element Optional tooltip
+---@field tooltip? Element? tooltip
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this element when hovering over it
 ---@field _size? integer Computed size of this element, updated by `Element:to_string`
 ---@field disable_update? boolean
@@ -23,6 +23,7 @@ Element.__index = Element
 ---@field lines? string[] Rendered lines.
 ---@field path? PathNode[] Current cursor path
 ---@field last_win? integer Window number of the last event
+---@field last_win_options? table When used as a tooltip, the window options.
 ---@field keymaps table Extra keymaps (inherited by tooltips)
 ---@field hover_range? integer[][] (0,0)-range of the highlighted node
 ---@field tooltip? BufRenderer currently open tooltip
@@ -35,12 +36,12 @@ local BufRenderer = {
 BufRenderer.__index = BufRenderer
 
 ---@class ElementNewArgs
----@field events table<string, fun()> @event function map
----@field text string @the text to show when rendering this element
----@field name string @a named handle for this element, used when path-searching
+---@field events? table<string, fun(ctx:ElementEventContext)> @event function map
+---@field text? string @the text to show when rendering this element
+---@field name? string @a named handle for this element, used when path-searching
 ---@field hlgroup? string|fun():string @the highlight group for this element's text, or a function that returns it
----@field highlightable boolean @(for buffer rendering) whether to highlight this element when hovering over it
----@field children Element[] @this element's children
+---@field highlightable boolean? @(for buffer rendering) whether to highlight this element when hovering over it
+---@field children? Element[] @this element's children
 
 ---Create a new Element.
 ---@param args? ElementNewArgs
@@ -51,7 +52,7 @@ function Element:new(args)
     text = args.text or '',
     name = args.name or '',
     hlgroup = args.hlgroup,
-    highlightable = args.highlightable,
+    highlightable = args.highlightable or false,
     __children = args.children or {},
     events = args.events or {},
   }
@@ -65,7 +66,7 @@ end
 
 ---Add a child to this element.
 ---@param child Element @child element to add
----@return Element @the added child
+---@return nil
 function Element:add_child(child)
   table.insert(self.__children, child)
 end
@@ -76,6 +77,12 @@ end
 function Element:add_tooltip(element)
   self.tooltip = element
   return element
+end
+
+---Remove this element's tooltip.
+---@return nil
+function Element:remove_tooltip()
+  self.tooltip = nil
 end
 
 ---@class ElementHighlight
@@ -162,8 +169,8 @@ function Element:pos_from_path(path)
   end
   local offset = path[#path].offset or 0
   -- in case this is an invalid or outdated path
-  offset = (#self.text - 1 >= offset) and offset
-  offset = offset or 0
+  local maybe_offset = (#self.text - 1 >= offset) and offset
+  offset = maybe_offset or 0
   return pos, offset
 end
 
@@ -197,10 +204,11 @@ end
 
 -- Finds the innermost element satisfying a predicate
 ---@param path PathNode[]
----@param check fun(element:Element):boolean
----@return Element @The element satisfying check
----@return Element[] @The element stack up to and including that element
----@return PathNode[] @The subpath up to that element
+---@param check fun(element:Element):any
+---@return Element found The element satisfying check
+---@return Element[] stack The element stack up to and including that element
+---@return PathNode[] subpath The subpath up to that element
+---@overload fun(path: PathNode[], check):nil if no element is found
 function Element:find_innermost_along(path, check)
   local stack, _ = self:div_from_path(path)
   if stack == nil then return end
@@ -274,7 +282,6 @@ end
 ---@param event_name string @the path to trigger the event at
 function Element:event(path, event_name, ...)
   local event_element = self:find_innermost_along(path,
-    ---@param element Element
     function (element) return element.events and element.events[event_name] end)
   if not event_element then
     return false
@@ -290,7 +297,7 @@ end
 
 ---Returns the first element matching the given check function.
 ---Searches first this element itself, then its children, then its tooltip.
----@param check fun(element:Element):boolean
+---@param check fun(element:Element):boolean?
 function Element:find(check)
   if check(self) then return self end
 
@@ -501,8 +508,8 @@ function BufRenderer:update_cursor(win)
 end
 
 --- Checks if two paths are equal, ignoring auxillary metadata (e.g. offsets)
----@param path_a PathNode[] @first path
----@param path_b PathNode[] @second path
+---@param path_a PathNode[]? @first path
+---@param path_b PathNode[]? @second path
 local function path_equal(path_a, path_b)
   if path_a == nil and path_b == nil then return true end
   if not path_a or not path_b then return false end
@@ -669,6 +676,7 @@ function BufRenderer:enter_win()
 end
 
 function BufRenderer:get_deepest_tooltip()
+  ---@diagnostic disable-next-line: need-check-nil
   while self.tooltip do
     self = self.tooltip
   end
@@ -677,9 +685,11 @@ end
 
 ---@return BufRenderer
 function BufRenderer:get_root_ancestor()
+  ---@diagnostic disable-next-line: need-check-nil
   while self.parent do
     self = self.parent
   end
+  ---@diagnostic disable-next-line: return-type-mismatch
   return self
 end
 

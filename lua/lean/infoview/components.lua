@@ -94,7 +94,7 @@ local function code_with_infos(t, sess)
 
     local do_reset = function(ctx)
       info_open = false
-      element:add_tooltip(nil)
+      element:remove_tooltip()
       ctx.rehover()
     end
 

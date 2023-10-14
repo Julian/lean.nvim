@@ -40,10 +40,10 @@ function M.set_augroup(name, autocmds, buffer)
 end
 
 ---@class CreateBufParams
----@field name string @the name of the new buffer
----@field options table<string, any> @a table of options each suitable for nvim_buf_set_option
----@field listed boolean @see :h nvim_create_buf (default true)
----@field scratch boolean @see :h nvim_create_buf (default false)
+---@field name? string @the name of the new buffer
+---@field options? table<string, any> @a table of options each suitable for nvim_buf_set_option
+---@field listed? boolean @see :h nvim_create_buf (default true)
+---@field scratch? boolean @see :h nvim_create_buf (default false)
 
 ---Create a new buffer.
 ---@param params CreateBufParams @new buffer options
@@ -70,7 +70,7 @@ function M.subprocess_check_output(opts, timeout)
   local job = Job:new(opts)
 
   job:start()
-  if not job:wait(timeout) then return end
+  job:wait(timeout)
 
   if job.code == 0 then
     return job:result()

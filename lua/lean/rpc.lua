@@ -7,6 +7,7 @@ local control = require'plenary.async.control'
 ---@class RpcRef
 
 ---@class Session
+---@diagnostic disable-next-line: undefined-doc-name
 ---@field client lsp.Client
 ---@field uri string
 ---@field connected boolean
@@ -19,6 +20,7 @@ local control = require'plenary.async.control'
 local Session = {}
 Session.__index = Session
 
+---@diagnostic disable-next-line: undefined-doc-name
 ---@param client lsp.Client
 ---@param bufnr number
 ---@param uri string
@@ -37,6 +39,7 @@ function Session:new(client, bufnr, uri)
   self.keepalive_timer = vim.loop.new_timer()
   self.keepalive_timer:start(20000, 20000, vim.schedule_wrap(function()
     if not self:is_closed() and self.session_id ~= nil then
+      ---@diagnostic disable-next-line: undefined-field
       self.client.notify('$/lean/rpc/keepAlive', {
         uri = self.uri,
         sessionId = self.session_id,
@@ -52,6 +55,7 @@ function Session:new(client, bufnr, uri)
 end
 
 function Session:is_closed()
+  ---@diagnostic disable-next-line: undefined-field
   if self.client and self.client.is_stopped() then
     self:close_without_releasing()
   end
@@ -75,6 +79,7 @@ end
 function Session:release_now(refs)
   for _, ptr in ipairs(refs) do table.insert(self.to_release, ptr) end
   if #self.to_release == 0 or self:is_closed() then return end
+  ---@diagnostic disable-next-line: undefined-field
   self.client.notify('$/lean/rpc/release', {
     uri = self.uri,
     sessionId = self.session_id,
@@ -116,6 +121,7 @@ end
 ---@return any error
 function Session:call(pos, method, params)
   while not self.connected do
+    ---@diagnostic disable-next-line: undefined-field
     self.on_connected:wait()
   end
   if self.connect_err ~= nil then
@@ -174,6 +180,7 @@ local function connect(bufnr)
       sess.session_id = result.sessionId
       sess.connect_err = nil
     end
+    ---@diagnostic disable-next-line: undefined-field
     sess.on_connected:notify_all()
     return err
   end)()
@@ -233,7 +240,7 @@ end
 ---@field goals InteractiveGoal[]
 
 ---@param pos PlainGoalParams
----@return InteractiveGoals | nil
+---@return InteractiveGoals goals
 ---@return any error
 function Subsession:getInteractiveGoals(pos)
   return self:call('Lean.Widget.getInteractiveGoals', pos)
@@ -245,7 +252,7 @@ end
 ---@field range     LspRange
 
 ---@param pos PlainTermGoalParams
----@return InteractiveTermGoal | nil
+---@return InteractiveTermGoal
 ---@return any error
 function Subsession:getInteractiveTermGoal(pos)
   return self:call('Lean.Widget.getInteractiveTermGoal', pos)
