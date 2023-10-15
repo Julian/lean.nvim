@@ -28,6 +28,7 @@ clean-deps:
 clone-deps: clean-deps
 	mkdir packpath && cd packpath && \
 	git clone --filter=blob:none https://github.com/AndrewRadev/switch.vim && \
+	git clone --filter=blob:none https://github.com/Julian/inanis.nvim && \
 	git clone --filter=blob:none https://github.com/neovim/nvim-lspconfig && \
 	git clone --filter=blob:none https://github.com/nvim-lua/plenary.nvim && \
 	git clone --filter=blob:none https://github.com/tomtom/tcomment_vim

@@ -1,4 +1,4 @@
-local harness = require('plenary.test_harness')
+local harness = require('inanis')
 local opts = {
   minimal_init = './scripts/minimal_init.lua',
   sequential = vim.env.TEST_SEQUENTIAL ~= nil,
