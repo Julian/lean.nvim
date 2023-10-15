@@ -11,7 +11,7 @@ docgen:
 	nvim --headless --noplugin -u scripts/minimal_init.lua -c "luafile ./scripts/gendocs.lua" -c "qa"
 
 build-test-fixtures:
-	if [ -x $$(command -v leanpkg) ]; then \
+	if [ -x "$$(command -v leanpkg)" ]; then \
 		cd ./lua/tests/fixtures/example-lean3-project/ && leanpkg build; \
 	fi
 	cd ./lua/tests/fixtures/example-lean4-project/ && lake build
