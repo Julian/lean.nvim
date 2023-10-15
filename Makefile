@@ -52,3 +52,6 @@ install-luacov:
 
 lint:
 	pre-commit run --all-files
+	if [ -x $$(command -v lua-language-server) ]; then \
+		lua-language-server --check lua/lean --checklevel=Warning --configpath $(PWD)/.luarc.json; \
+	fi
