@@ -217,7 +217,7 @@ Full Configuration & Settings Information
       --
       -- See https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#leanls for details.
 
-      -- Lean 4  (on_attach is as above, your LSP handler)
+      -- Lean Language Server Support (on_attach is as above, your LSP handler)
       lsp = {
         on_attach = on_attach,
         init_options = {

@@ -1,5 +1,5 @@
 " Vim syntax file
-" Language:		Lean 4
+" Language:		Lean
 " Filename extensions:	*.lean
 " Maintainer:           Gabriel Ebner
 
@@ -65,7 +65,7 @@ syn keyword	leanTodo 	containedin=leanComment TODO FIXME BUG FIX
 
 syn match leanStringEscape '\\.' contained
 syn region leanString start='"' end='"' contains=leanInterpolation,leanStringEscape
-" HACK: Lean 4 supports both interpolated and non-interpolated strings
+" HACK: Lean supports both interpolated and non-interpolated strings
 " We want "{" to be highlighted as a string (because it often occurs in
 " syntax definitions).
 syn region leanInterpolation contained start='{\(\s*"\)\@!' end='}' contains=TOP keepend
