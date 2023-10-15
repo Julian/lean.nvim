@@ -3,6 +3,7 @@ leanpkg.path
 
 /luapath
 /packpath
+/pack
 
 /lua/tests/fixtures/example-lean4-project/build
 /lua/tests/fixtures/example-lean4-project/foo/build
