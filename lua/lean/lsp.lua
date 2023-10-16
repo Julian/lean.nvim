@@ -19,6 +19,7 @@ end
 --- given bufnr.
 function lsp.get_lean4_server(bufnr)
   local lean_client
+  -- local clients = vim.lsp.get_clients{ name = 'leanls' }
   vim.lsp.for_each_buffer_client(bufnr, function (client)
     if client.name == 'leanls' then lean_client = client end
   end)

@@ -1,9 +1,10 @@
+local a = require'plenary.async.util'
+
 local Element = require('lean.widgets').Element
 local components = require('lean.infoview.components')
 local lsp = require('lean.lsp')
 local util = require('lean._util')
-local a = require'plenary.async.util'
-local progress = require"lean.progress"
+local progress = require('lean.progress')
 local subprocess_check_output = util.subprocess_check_output
 
 local lean3 = {}
