@@ -212,12 +212,8 @@ Full Configuration & Settings Information
     require('lean').setup{
       -- Enable the Lean language server(s)?
       --
-      -- false to disable, otherwise should be a table of options to pass to
-      --  `leanls` and/or `lean3ls`.
-      --
+      -- false to disable, otherwise should be a table of options to pass to `leanls`
       -- See https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#leanls for details.
-
-      -- Lean Language Server Support (on_attach is as above, your LSP handler)
       lsp = {
         on_attach = on_attach,
         init_options = {
@@ -234,12 +230,6 @@ Full Configuration & Settings Information
       },
 
       ft = {
-        -- What filetype should be associated with standalone Lean files?
-        -- Can be set to "lean3" if you prefer that default.
-        -- Having a leanpkg.toml or lean-toolchain file should always mean
-        -- autodetection works correctly.
-        default = "lean",
-
         -- A list of patterns which will be used to protect any matching
         -- Lean file paths from being accidentally modified (by marking the
         -- buffer as `nomodifiable`).
