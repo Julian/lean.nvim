@@ -1,12 +1,14 @@
 local assert = require('luassert')
 
-local dedent = require('lean._util').dedent
-local lean_lsp_diagnostics = require('lean._util').lean_lsp_diagnostics
 local fixtures = require('tests.fixtures')
 local infoview = require('lean.infoview')
 local progress = require('lean.progress')
+local util = require('lean._util')
 
-local helpers = {_clean_buffer_counter = 1}
+local helpers = {
+  _clean_buffer_counter = 1,
+  has_lean3 = require('lean.lean3').works(),
+}
 
 --- Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(text, feed_opts)
@@ -136,7 +138,7 @@ end
 function helpers.wait_for_line_diagnostics()
   local succeeded, _ = vim.wait(15000, function()
     if progress.is_processing(vim.uri_from_bufnr(0)) then return false end
-    local diagnostics = lean_lsp_diagnostics{
+    local diagnostics = util.lean_lsp_diagnostics{
       lnum = vim.api.nvim_win_get_cursor(0)[1] - 1
     }
 
@@ -171,7 +173,7 @@ assert:register('assertion', 'contents', has_buf_contents)
 
 --- Assert about the current infoview contents.
 local function has_infoview_contents(_, arguments)
-  local expected = dedent(arguments[1][1] or arguments[1])
+  local expected = util.dedent(arguments[1][1] or arguments[1])
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
   -- In Lean 3, the fileProgress notification is unreliable,
   -- so we may think we're done processing when we're actually not.
@@ -207,7 +209,7 @@ end
 
 --- Assert about the current infoview contents without waiting for the pins to load.
 local function has_infoview_contents_nowait(_, arguments)
-  local expected = dedent(arguments[1][1] or arguments[1])
+  local expected = util.dedent(arguments[1][1] or arguments[1])
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
   local got = table.concat(target_infoview:get_lines(), '\n')
   assert.are.same(expected, got)
@@ -215,7 +217,7 @@ local function has_infoview_contents_nowait(_, arguments)
 end
 
 local function has_diff_contents(_, arguments)
-  local expected = dedent(arguments[1][1] or arguments[1])
+  local expected = util.dedent(arguments[1][1] or arguments[1])
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
   local got = table.concat(target_infoview:get_diff_lines(), '\n')
   assert.are.same(expected, got)

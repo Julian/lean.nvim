@@ -1,4 +1,5 @@
-local a = require'plenary.async.util'
+local Job = require('plenary.job')
+local a = require('plenary.async.util')
 
 local Element = require('lean.widgets').Element
 local components = require('lean.infoview.components')
@@ -8,6 +9,20 @@ local progress = require('lean.progress')
 local subprocess_check_output = util.subprocess_check_output
 
 local lean3 = {}
+
+
+--- Check if Lean 3 is installed on the current system.
+---
+--- @return boolean succeeded whether starting Lean 3 worked or not
+function lean3.works()
+  local succeeded, lean3ls = pcall(Job.new, Job, {
+    command = 'lean-language-server',
+    args = { '--stdio' },
+    writer = ''
+  })
+  if succeeded then lean3ls:sync() end
+  return succeeded
+end
 
 
 --- Return the current Lean 3 search path.
