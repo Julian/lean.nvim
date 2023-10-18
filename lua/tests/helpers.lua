@@ -5,10 +5,22 @@ local infoview = require('lean.infoview')
 local progress = require('lean.progress')
 local util = require('lean._util')
 
-local helpers = {
-  _clean_buffer_counter = 1,
-  has_lean3 = require('lean.lean3').works(),
-}
+local helpers = { _clean_buffer_counter = 1 }
+
+--- Run the given tests if Lean 3 is available, otherwise skip.
+if require('lean.lean3').works() then
+  function helpers.if_has_lean3(description, fn)
+    return describe(description, fn)
+  end
+else
+  function helpers.if_has_lean3(description, _)
+    return describe(description, function()
+      it('lean 3 missing', function()
+        print('Lean 3 missing. Skipping.')
+      end)
+    end)
+  end
+end
 
 --- Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(text, feed_opts)

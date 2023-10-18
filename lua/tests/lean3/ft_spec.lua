@@ -3,7 +3,7 @@ local fixtures = require('tests.fixtures')
 
 require('lean').setup { lsp3 = { enable = true } }
 
-describe('ft.detect', function()
+helpers.if_has_lean3('ft.detect', function()
   for kind, path in unpack(fixtures.lean3_project.files_it) do
     it('detects ' .. kind .. ' lean 3 files', function()
       vim.cmd('edit! ' .. path)

@@ -1,6 +1,6 @@
-require('tests.helpers')
+local if_has_lean3 = require('tests.helpers').if_has_lean3
 
-describe('checkhealth', function()
+if_has_lean3('checkhealth', function()
   it('passes the health check', function()
     vim.api.nvim_command('silent checkhealth lean3')
     assert.has_match([[
