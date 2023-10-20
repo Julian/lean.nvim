@@ -4,11 +4,19 @@ local function segment(word)
   return [[\(\<\|[_.']\)\zs]] .. word .. [[\ze\(\>\|[_.']\)]]
 end
 
+function _G.switch_lean_simp(original)
+  if original[2] == '' and original[3] == '' then
+    return 'simp?'
+  else
+    return 'simp'
+  end
+end
+
 vim.b.switch_definitions = {
   vim.g.switch_builtins.true_false,
   { '#check', '#eval', '#reduce' },
   { 'sorry', 'exact?', 'apply?' },
-  { 'simp', 'simp?' },
+  { 'exact ⟨', 'refine ⟨' },
   { 'aesop', 'aesop?' },
   vim.fn['switch#Words']{ 'tt', 'ff' },
   { '=', '≠' },
@@ -35,7 +43,14 @@ vim.b.switch_definitions = {
   { '8', '₈', '⁸' },
   { '9', '₉', '⁹' },
   { 'ℕ', 'ℚ', 'ℝ', 'ℂ' },
+
+  {
+    [ [=[\<simp\(?\?\)\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = _G.switch_lean_simp,
+  },
+
   { [ segment('bot') ] = 'top', [ segment('top') ] = 'bot' },
   { [ segment('inl') ] = 'inr', [ segment('inr') ] = 'inl' },
   { [ segment('left') ] = 'right', [ segment('right') ] = 'left' },
+  { [ segment('mul') ] = 'add', [ segment('add') ] = 'mul' },
+  { [ segment('zero') ] = 'one', [ segment('one') ] = 'zero' },
 }

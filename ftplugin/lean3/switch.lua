@@ -4,7 +4,7 @@ local function segment(word)
   return [[\(\<\|[_.']\)\zs]] .. word .. [[\ze\(\>\|[_.']\)]]
 end
 
-function _G.switch_lean_simp(original)
+function _G.switch_lean3_simp(original)
   if original[2] == '' then
     return 'squeeze_simp'
   else
@@ -48,8 +48,8 @@ vim.b.switch_definitions = {
   { 'ℕ', 'ℚ', 'ℝ', 'ℂ' },
 
   {
-    [ [=[\<simp\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = _G.switch_lean_simp,
-    [ [=[\<squeeze_simp\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = _G.switch_lean_simp,
+    [ [=[\<simp\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = _G.switch_lean3_simp,
+    [ [=[\<squeeze_simp\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = _G.switch_lean3_simp,
   },
 
   { [ segment('bot') ] = 'top', [ segment('top') ] = 'bot' },
