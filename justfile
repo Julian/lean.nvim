@@ -51,7 +51,7 @@ _clone-test-dependencies: _clean-test-dependencies
 
 # Rebuild some test fixtures used in the test suite.
 _rebuild-test-fixtures:
-    #!/usr/bin/env zsh
+    #!/usr/bin/env sh
     set -euxo pipefail
     cd "{{ fixtures }}/example-lean3-project/"
     leanpkg help 2>&1 >/dev/null && leanpkg build || echo "Lean 3 not found."
