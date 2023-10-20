@@ -11,7 +11,7 @@ end
 
 require('lean').setup {}
 
-describe('unicode abbreviation expansion', function()
+helpers.if_has_lean3('unicode abbreviation expansion', function()
   it('autoexpands abbreviations', helpers.clean_buffer('lean3', '', function()
     helpers.insert[[\a]]
     assert.contents.are[[α]]
