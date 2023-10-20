@@ -196,175 +196,110 @@ describe('infoview content (auto-)update', function()
   end)
 
   describe('components', function()
-    describe('lean 4', function()
+    vim.cmd('edit! ' .. fixtures.lean_project.path .. '/Test.lean')
 
-      vim.cmd('edit! ' .. fixtures.lean_project.path .. '/Test.lean')
-
-      it('shows a term goal', function()
-        helpers.move_cursor{ to = {3, 27} }
-        assert.infoview_contents.are[[
-          ▶ expected type (3:28-3:36)
-          ⊢ Nat
-        ]]
-      end)
-
-      it('shows a tactic goal', function()
-        helpers.move_cursor{ to = {6, 0} }
-        assert.infoview_contents.are[[
-          ▶ 1 goal
-          p q : Prop
-          ⊢ p ∨ q → q ∨ p
-        ]]
-      end)
-
-      it('shows mixed goals', function()
-        helpers.move_cursor{ to = {9, 11} }
-        assert.infoview_contents.are[[
-          ▶ 1 goal
-          case inl.h
-          p q : Prop
-          h1 : p
-          ⊢ p
-
-          ▶ expected type (9:11-9:17)
-          p q : Prop
-          h1 : p
-          ⊢ ∀ {a b : Prop}, b → a ∨ b
-        ]]
-      end)
-
-      it('shows multiple goals', function()
-        helpers.move_cursor{ to = {16, 2} }
-        assert.infoview_contents.are[[
-          ▶ 2 goals
-          case zero
-          ⊢ Nat.zero = Nat.zero
-          case succ
-          n✝ : Nat
-          ⊢ Nat.succ n✝ = Nat.succ n✝
-        ]]
-      end)
-
-      it('properly handles multibyte characters', function()
-        helpers.move_cursor{ to = {20, 62} }
-        assert.infoview_contents.are[[
-          ▶ expected type (20:54-20:57)
-          𝔽 : Type
-          ⊢ 𝔽 = 𝔽
-        ]]
-
-        helpers.move_cursor{ to = {20, 58} }
-        assert.infoview_contents.are[[
-        ]]
-
-        helpers.move_cursor{ to = {20, 60} }
-        assert.infoview_contents.are[[
-          ▶ expected type (20:54-20:57)
-          𝔽 : Type
-          ⊢ 𝔽 = 𝔽
-       ]]
-      end)
-
-      it('autoupdates when contents are modified without the cursor moving', function()
-        --- FIXME: This test is meant to ensure that we re-send requests on ContentModified LSP
-        ---        errors, but it doesn't seem to do that (it doesn't seem to do particularly that
-        ---        even before being refactored though, as it passes with or without the relevant
-        ---        lines in infoview.lua)
-        helpers.move_cursor{ to = {23, 1} }
-        assert.infoview_contents.are[[
-          ▶ 1 goal
-          ⊢ 37 = 37
-        ]]
-        vim.api.nvim_buf_set_lines(0, 21, 22, true, {"def will_be_modified : 2 = 2 := by"})
-        assert.infoview_contents.are[[
-          ▶ 1 goal
-          ⊢ 2 = 2
-        ]]
-      end)
+    it('shows a term goal', function()
+      helpers.move_cursor{ to = {3, 27} }
+      assert.infoview_contents.are[[
+        ▶ expected type (3:28-3:36)
+        ⊢ Nat
+      ]]
     end)
 
-    describe('lean 3', function()
+    it('shows a tactic goal', function()
+      helpers.move_cursor{ to = {6, 0} }
+      assert.infoview_contents.are[[
+        ▶ 1 goal
+        p q : Prop
+        ⊢ p ∨ q → q ∨ p
+      ]]
+    end)
 
-      vim.cmd('edit! ' .. fixtures.lean3_project.path .. '/src/bar/baz.lean')
+    it('shows mixed goals', function()
+      helpers.move_cursor{ to = {9, 11} }
+      assert.infoview_contents.are[[
+        ▶ 1 goal
+        case inl.h
+        p q : Prop
+        h1 : p
+        ⊢ p
 
-      it('shows a term goal', function()
-        helpers.move_cursor{ to = {3, 27} }
+        ▶ expected type (9:11-9:17)
+        p q : Prop
+        h1 : p
+        ⊢ ∀ {a b : Prop}, b → a ∨ b
+      ]]
+    end)
 
-        assert.infoview_contents.are[[
-          ▶ 1 goal
-          ⊢ ℕ
-        ]]
-      end)
+    it('shows multiple goals', function()
+      helpers.move_cursor{ to = {16, 2} }
+      assert.infoview_contents.are[[
+        ▶ 2 goals
+        case zero
+        ⊢ Nat.zero = Nat.zero
+        case succ
+        n✝ : Nat
+        ⊢ Nat.succ n✝ = Nat.succ n✝
+      ]]
+    end)
 
-      it('shows a tactic goal', function()
-        helpers.move_cursor{ to = {6, 0} }
-        assert.infoview_contents.are[[
-          ▶ 1 goal
-          p q : Prop
-          ⊢ p ∨ q → q ∨ p
-        ]]
-      end)
+    it('properly handles multibyte characters', function()
+      helpers.move_cursor{ to = {20, 62} }
+      assert.infoview_contents.are[[
+        ▶ expected type (20:54-20:57)
+        𝔽 : Type
+        ⊢ 𝔽 = 𝔽
+      ]]
 
-      it('shows multiple goals', function()
-        helpers.move_cursor{ to = {20, 2} }
-        assert.infoview_contents.are[[
-          ▶ 2 goals
-          case nat.zero
-          ⊢ 0 = 0
-          case nat.succ
-          n : ℕ
-          ⊢ n.succ = n.succ
-        ]]
-      end)
+      helpers.move_cursor{ to = {20, 58} }
+      assert.infoview_contents.are[[
+      ]]
 
-      if vim.version().major >= 1 or vim.version().minor >= 6 then
-        it('properly handles multibyte characters', function()
-          helpers.move_cursor{ to = {24, 61} }
-          assert.infoview_contents.are[[
-            ▶ 1 goal
-            𝔽 : Type
-            ⊢ 𝔽 = 𝔽
-          ]]
+      helpers.move_cursor{ to = {20, 60} }
+      assert.infoview_contents.are[[
+        ▶ expected type (20:54-20:57)
+        𝔽 : Type
+        ⊢ 𝔽 = 𝔽
+      ]]
+    end)
 
-          -- NOTE: spurious (checks for a zero-length Lean 3 response,
-          -- which could have multiple causes)
-          helpers.move_cursor{ to = {24, 58} }
-          helpers.wait_for_loading_pins()
-          assert.infoview_contents_nowait.are[[
-          ]]
-
-          helpers.move_cursor{ to = {24, 60} }
-          assert.infoview_contents.are[[
-            ▶ 1 goal
-            𝔽 : Type
-            ⊢ 𝔽 = 𝔽
-          ]]
-        end)
-      end
+    it('autoupdates when contents are modified without the cursor moving', function()
+      --- FIXME: This test is meant to ensure that we re-send requests on ContentModified LSP
+      ---        errors, but it doesn't seem to do that (it doesn't seem to do particularly that
+      ---        even before being refactored though, as it passes with or without the relevant
+      ---        lines in infoview.lua)
+      helpers.move_cursor{ to = {23, 1} }
+      assert.infoview_contents.are[[
+        ▶ 1 goal
+        ⊢ 37 = 37
+      ]]
+      vim.api.nvim_buf_set_lines(0, 21, 22, true, {"def will_be_modified : 2 = 2 := by"})
+      assert.infoview_contents.are[[
+        ▶ 1 goal
+        ⊢ 2 = 2
+      ]]
     end)
   end)
 
-  for ft, goal in pairs{ lean = '⊢ true = true', lean3 = '⊢ true' } do
-    describe(ft .. ' cursor position', helpers.clean_buffer(ft, '', function()
-      it('is set to the goal line', function()
-        local lines = { 'example ' }
-        for i=1, 100 do
-          table.insert(lines, "(h" .. i .. " : " .. i .. " = " .. i .. ")")
-        end
-        table.insert(lines, ': true :=')
-        table.insert(lines, 'sorry')
+  describe('cursor position', helpers.clean_buffer('lean', '', function()
+    it('is set to the goal line', function()
+      local lines = { 'example ' }
+      for i=1, 100 do
+        table.insert(lines, "(h" .. i .. " : " .. i .. " = " .. i .. ")")
+      end
+      table.insert(lines, ': true :=')
+      table.insert(lines, 'sorry')
 
-        vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
-        helpers.move_cursor{ to = { #lines, 1 } }
-        helpers.wait_for_loading_pins()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+      helpers.move_cursor{ to = { #lines, 1 } }
+      helpers.wait_for_loading_pins()
 
-        vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
+      vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
 
-        assert.current_line.is(goal)
-        assert.are.equal(vim.api.nvim_win_get_cursor(0)[2], #'⊢ ')
-      end)
-    end))
-  end
+      assert.current_line.is('⊢ true = true')
+      assert.are.equal(vim.api.nvim_win_get_cursor(0)[2], #'⊢ ')
+    end)
+  end))
 
   describe('processing message', helpers.clean_buffer('lean', '#eval IO.sleep 5000', function()
     it('is shown while a file is processing', function()
