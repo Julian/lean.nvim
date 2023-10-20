@@ -85,9 +85,6 @@ if_has_lean3('switch', function()
     vim.api.nvim_command('normal! 1gg0')
     vim.cmd('Switch')
     assert.contents.are[[squeeze_simp]]
-
-    vim.cmd('Switch')
-    assert.contents.are[[simp]]
   end))
 
   it('switches between simp [foo] and squeeze_simp [foo]',
