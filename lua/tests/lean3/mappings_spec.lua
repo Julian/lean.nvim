@@ -1,18 +1,18 @@
 local lean = require('lean')
-local clean_buffer = require('tests.helpers').clean_buffer
+local helpers = require('tests.helpers')
 
-require('lean').setup{}
+require('lean').setup {}
 
-describe('mappings', function()
-  it('are bound in the current buffer and not others', clean_buffer('lean', '', function()
+helpers.if_has_lean3('mappings', function()
+  it('are bound the current buffer and not others', helpers.clean_buffer('lean3', '', function()
     lean.use_suggested_mappings(true)
     assert.is.same(
       lean.mappings.n['<LocalLeader>i'],
       vim.fn.maparg("<LocalLeader>i", 'n')
     )
 
-    vim.cmd.new()
+    vim.cmd('new')
     assert.is.same('', vim.fn.maparg("<LocalLeader>i", 'n'))
-    vim.cmd.bwipeout()
+    vim.cmd('bwipeout')
   end))
 end)
