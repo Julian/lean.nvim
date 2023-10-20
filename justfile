@@ -51,5 +51,5 @@ _clone-test-dependencies: _clean-test-dependencies
 
 # Rebuild some test fixtures used in the test suite.
 _rebuild-test-fixtures:
-    cd "{{ justfile_directory() }}/lua/tests/fixtures/example-lean3-project/"; {{ if `leanpkg help 2>&1 >/dev/null; echo $?` != "0" { "" } else { `leanpkg build` } }}
-    cd "{{ justfile_directory() }}/lua/tests/fixtures/example-lean4-project/"; lake build
+    cd "{{ fixtures }}/example-lean3-project/"; {{ if `leanpkg help 2>&1 >/dev/null; echo $?` == "0" { `leanpkg build` } else { "" } }}
+    cd "{{ fixtures }}/example-lean4-project/"; lake build
