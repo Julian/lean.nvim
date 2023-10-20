@@ -60,7 +60,7 @@ end
 ---@param opts MoveCursorOpts
 function helpers.move_cursor(opts)
   vim.api.nvim_win_set_cursor(opts.window or 0, opts.to)
-  vim.cmd[[doautocmd CursorMoved]]
+  vim.cmd.doautocmd('CursorMoved')
 end
 
 ---@class MoveCursorOpts

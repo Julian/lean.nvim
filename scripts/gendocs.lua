@@ -26,7 +26,7 @@ docs.test = function(input_dir, output_file)
 
   output_file_handle:write(" vim:tw=78:ts=8:ft=help:norl:\n")
   output_file_handle:close()
-  vim.cmd [[checktime]]
+  vim.cmd.checktime()
 end
 
 docs.test('./lua/lean/', 'doc/lean.txt')

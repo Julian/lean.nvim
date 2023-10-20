@@ -10,7 +10,7 @@ require('lean').setup{}
 for _, ft in pairs({"lean3", "lean"}) do
 describe(ft .. ' commenting', function()
   it('comments out single lines', helpers.clean_buffer(ft, 'def best := 37', function()
-    vim.cmd('TComment')
+    vim.cmd.TComment()
     assert.contents.are('-- def best := 37')
   end))
 

@@ -62,7 +62,7 @@ function progress_bars.enable(opts)
     text = options.character,
     texthl = 'leanSignProgress',
   })
-  vim.cmd[[hi def leanSignProgress guifg=orange ctermfg=215]]
+  vim.cmd.hi('def leanSignProgress guifg=orange ctermfg=215')
   progress_bars.enabled = true
 end
 

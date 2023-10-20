@@ -49,7 +49,7 @@ describe('infoview window', function()
     vim.o.columns = 24
     vim.o.lines = 80
     local current_infoview = infoview.open()
-    vim.cmd[[wincmd L]]
+    vim.cmd.wincmd('L')
     assert.are.same(
       { 'row', { { 'leaf', current_infoview.window }, { 'leaf', lean_window } } },
       vim.fn.winlayout()
@@ -100,7 +100,7 @@ describe('infoview window', function()
     vim.o.columns = 80
     vim.o.lines = 24
     local current_infoview = infoview.open()
-    vim.cmd[[wincmd K]]
+    vim.cmd.wincmd('K')
     assert.are.same(
       { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
       vim.fn.winlayout()
@@ -123,7 +123,7 @@ describe('infoview window', function()
     vim.o.lines = 24
 
     infoview.open()
-    vim.cmd[[split]]
+    vim.cmd.split()
 
     local layout = vim.fn.winlayout()
 
@@ -151,7 +151,7 @@ describe('infoview window', function()
   end)
 
   it('does not touch leaf windows', function(_)
-    vim.cmd[[wincmd o]]
+    vim.cmd.wincmd('o')
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     local layout = vim.fn.winlayout()
     infoview.reposition()

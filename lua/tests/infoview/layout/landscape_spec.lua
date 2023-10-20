@@ -32,7 +32,7 @@ describe('infoview window', function()
   it('opens on the right of stacked splits at full height', function(_)
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     local top_window = vim.api.nvim_get_current_win()
-    vim.cmd[[botright split]]
+    vim.cmd('botright split')
     local bottom_window = vim.api.nvim_get_current_win()
 
     assert.are.same({  -- see :h winlayout

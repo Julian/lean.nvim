@@ -36,7 +36,7 @@ describe('infoview window', function()
         { 'leaf', lean_window },
       },
     }, vim.fn.winlayout())
-    vim.cmd[[wincmd L]]
+    vim.cmd.wincmd('L')
 
     infoview.reposition()
 

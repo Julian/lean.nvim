@@ -23,17 +23,17 @@ describe('infoview autoopen', function()
       vim.tbl_contains(windows, infoview.get_current_infoview().window)
     )
 
-    vim.cmd('split ' .. fixtures.lean_project.some_nested_existing_file)
+    vim.cmd.split(fixtures.lean_project.some_nested_existing_file)
     table.insert(windows, vim.api.nvim_get_current_win())
     assert.windows.are(windows)
 
-    vim.cmd('quit')
+    vim.cmd.quit()
   end)
 
   it('automatically opens additional infoviews for new tabs', function(_)
     local tab1_infoview = infoview.get_current_infoview()
 
-    vim.cmd('tabnew')
+    vim.cmd.tabnew()
     local tab2_window = vim.api.nvim_get_current_win()
     assert.windows.are(tab2_window)
 
@@ -43,19 +43,19 @@ describe('infoview autoopen', function()
 
     assert.windows.are(tab2_window, tab2_infoview.window)
 
-    vim.cmd('tabclose')
+    vim.cmd.tabclose()
   end)
 
   it('does not (auto-)open infoviews for non-Lean files', function(_)
-    vim.cmd('tabnew')
+    vim.cmd.tabnew()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
 
-    vim.cmd('edit some_other_file.foo')
+    vim.cmd.edit('some_other_file.foo')
     local non_lean_window = vim.api.nvim_get_current_win()
 
     assert.windows.are(non_lean_window)
 
-    vim.cmd('tabclose')
+    vim.cmd.tabclose()
   end)
 
   it('does not auto-reopen an infoview that has been closed', function(_)
@@ -66,10 +66,10 @@ describe('infoview autoopen', function()
     infoview.close()
     assert.windows.are(lean_window)
 
-    vim.cmd('split ' .. fixtures.lean_project.some_nested_existing_file)
+    vim.cmd.split(fixtures.lean_project.some_nested_existing_file)
     assert.windows.are(lean_window, vim.api.nvim_get_current_win())
 
-    vim.cmd('quit')
+    vim.cmd.quit()
   end)
 
   it('allows infoviews to reopen manually after closing', function(_)
@@ -79,7 +79,7 @@ describe('infoview autoopen', function()
   end)
 
   it('can be disabled', function(_)
-    vim.cmd('tabnew')
+    vim.cmd.tabnew()
     infoview.set_autoopen(false)
     local tab2_window = vim.api.nvim_get_current_win()
     vim.cmd('edit! ' .. fixtures.lean_project.some_nested_existing_file)
@@ -92,7 +92,7 @@ describe('infoview autoopen', function()
     tab2_infoview:close()
     assert.windows.are(tab2_window)
 
-    vim.cmd('tabclose')
+    vim.cmd.tabclose()
   end)
 
   it('can be re-enabled after being disabled', function(_)

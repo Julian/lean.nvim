@@ -43,7 +43,7 @@ helpers.if_has_lean3('unicode abbreviation expansion', function()
     end))
 
     it('inserts nothing on <Tab> mid-line', helpers.clean_buffer('lean3', 'foo bar baz quux,', function()
-      vim.cmd('normal $')
+      vim.cmd.normal('$')
       helpers.insert[[ \comp<Tab> spam]]
       wait_for_expansion()
       assert.contents.are[[foo bar baz quux ∘ spam,]]
@@ -104,7 +104,7 @@ helpers.if_has_lean3('unicode abbreviation expansion', function()
 
   it('expands abbreviations in command mode', helpers.clean_buffer('lean3', '', function()
     helpers.insert[[foo ε bar]]
-    vim.cmd('normal $')
+    vim.cmd.normal('$')
     helpers.feed[[q/a\e<Space><CR>ibaz]]
     assert.current_line.is('foo bazε bar')
   end))

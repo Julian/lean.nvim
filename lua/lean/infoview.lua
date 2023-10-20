@@ -140,7 +140,7 @@ function Infoview:open()
   else
     self.__orientation = 'horizontal'
     if self.__separate_tab then
-      vim.cmd('tabnew')
+      vim.cmd.tabnew()
     else
       local position = self.__horizontal_position == 'bottom' and 'botright '
                                                                or 'topleft '
@@ -178,19 +178,19 @@ end
 
 ---Move this infoview's window to the right of the tab, then size it properly.
 function Infoview:move_to_right()
-  vim.api.nvim_win_call(self.window, function() vim.cmd[[wincmd L]] end)
+  vim.api.nvim_win_call(self.window, function() vim.cmd.wincmd('L') end)
   vim.api.nvim_win_set_width(self.window, options.width)
 end
 
 ---Move this infoview's window to the top of the tab, then size it properly.
 function Infoview:move_to_top()
-  vim.api.nvim_win_call(self.window, function() vim.cmd[[wincmd K]] end)
+  vim.api.nvim_win_call(self.window, function() vim.cmd.wincmd('K') end)
   vim.api.nvim_win_set_height(self.window, options.height)
 end
 
 ---Move this infoview's window to the bottom of the tab, then size it properly.
 function Infoview:move_to_bottom()
-  vim.api.nvim_win_call(self.window, function() vim.cmd[[wincmd J]] end)
+  vim.api.nvim_win_call(self.window, function() vim.cmd.wincmd('J') end)
   vim.api.nvim_win_set_height(self.window, options.height)
 end
 
@@ -240,7 +240,7 @@ function Infoview:__open_win(buf)
     vim.cmd('vertical resize ' .. self.__width)
   else
     if self.__separate_tab then
-      vim.cmd('tabnew')
+      vim.cmd.tabnew()
     else
       vim.cmd('leftabove ' .. self.__height .. 'split')
       vim.cmd('resize ' .. self.__height)

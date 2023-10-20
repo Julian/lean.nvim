@@ -254,7 +254,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
 
     it('moves pin when changes are made on its line before its column', function()
       helpers.move_cursor{ to = {4, 7} }
-      vim.cmd[[normal cl37]]  -- h1 -> h37
+      vim.cmd.normal('cl37')  -- h1 -> h37
       helpers.move_cursor{ to = {1, 50} }
       assert.infoview_contents.are(string.format([[
         ▶ 1 goal
@@ -272,7 +272,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
 
     it('does not move pin when changes are made on its line after its column', function()
       helpers.move_cursor{ to = {4, 13} }
-      vim.cmd[[normal a    ]]
+      vim.cmd.normal('a    ')
       helpers.move_cursor{ to = {1, 50} }
       assert.infoview_contents.are(string.format([[
         ▶ 1 goal
@@ -396,7 +396,7 @@ describe('infoview pins', helpers.clean_buffer('lean', dedent[[
       local current_infoview = infoview.get_current_infoview()
       local diff_window = helpers.wait_for_new_window{ lean_window, current_infoview.window }
       vim.api.nvim_set_current_win(diff_window)
-      vim.cmd('quit')
+      vim.cmd.quit()
       assert.windows.are(lean_window, infoview.get_current_infoview().window)
     end)
   end)

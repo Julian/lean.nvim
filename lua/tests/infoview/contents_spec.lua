@@ -60,7 +60,7 @@ describe('infoview content (auto-)update', function()
   it('is shared between separate windows', function()
     assert.current_window.is(lean_window)
 
-    vim.cmd('split')
+    vim.cmd.split()
     local second_window = vim.api.nvim_get_current_win()
     assert.are.same(vim.api.nvim_win_get_cursor(0), {3, 0})
     assert.infoview_contents.are[[
@@ -92,7 +92,7 @@ describe('infoview content (auto-)update', function()
     assert.current_window.is(lean_window)
 
     local original_lines = infoview.get_current_infoview():get_lines()
-    vim.cmd('split some_non_lean_file.tmp')
+    vim.cmd.split('some_non_lean_file.tmp')
     helpers.insert('some stuff')
     assert.are.same(original_lines, infoview.get_current_infoview():get_lines())
 
@@ -150,7 +150,7 @@ describe('infoview content (auto-)update', function()
 
       ]]
 
-      vim.cmd('tabnew' .. fixtures.lean_project.path .. '/Test/Squares.lean')
+      vim.cmd.tabnew(fixtures.lean_project.path .. '/Test/Squares.lean')
       helpers.move_cursor{ to = {3, 0} }
       assert.infoview_contents.are[[
         ▶ 3:1-3:6: information:
@@ -174,7 +174,7 @@ describe('infoview content (auto-)update', function()
       assert.is_not.equal(vim.api.nvim_win_get_tabpage(lean_window), tab2)
 
       infoview.close()
-      vim.cmd('tabprevious')
+      vim.cmd.tabprevious()
 
       helpers.move_cursor{ to = {3, 0} }
       assert.infoview_contents.are[[

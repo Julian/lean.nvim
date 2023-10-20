@@ -41,7 +41,7 @@ describe('infoview widgets', helpers.clean_buffer('lean', '#check Nat', function
   end)
 
   it('does not abandon tooltips when windows are closed', function()
-    vim.cmd('tabnew #')
+    vim.cmd.tabnew('#')
     local tab2_window = vim.api.nvim_get_current_win()
     local tab2_infoview = infoview.get_current_infoview()
     helpers.move_cursor{ to = {1, 8} }
