@@ -75,5 +75,8 @@ jobs:
         run: sudo npm install -g lean-language-server
         if: contains(matrix.lean-version, 'lean:3')
 
+      - uses: extractions/setup-just@v1
       - name: Run tests
-        run: make TEST_SEQUENTIAL=1 test
+        run: just test
+        env:
+          TEST_SEQUENTIAL: 1

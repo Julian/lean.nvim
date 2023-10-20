@@ -4,9 +4,10 @@ local opts = {
   sequential = vim.env.TEST_SEQUENTIAL ~= nil,
 }
 
-local test_file = vim.env.TEST_FILE or './lua/tests/'
-if vim.fn.isdirectory(test_file) == 1 then
-  harness.test_directory(test_file, opts)
-else
-  harness.test_file(test_file, opts)
+for _, test_file in ipairs(arg) do
+  if vim.fn.isdirectory(test_file) == 1 then
+    harness.test_directory(test_file, opts)
+  else
+    harness.test_file(test_file, opts)
+  end
 end
