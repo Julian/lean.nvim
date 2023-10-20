@@ -25,7 +25,7 @@ describe('switch', function()
   end))
 
   it('switches between zero and one',
-    clean_buffer('lean3', [[#check Nat.mul_one]], function()
+    clean_buffer('lean', [[#check Nat.mul_one]], function()
     vim.api.nvim_command('normal! 1gg$')
     vim.cmd('Switch')
     assert.contents.are[[#check Nat.mul_zero]]
