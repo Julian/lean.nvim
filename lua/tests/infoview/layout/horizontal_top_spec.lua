@@ -26,7 +26,7 @@ describe('infoview window', function()
         { 'leaf', lean_window },
       },
     }, vim.fn.winlayout())
-    assert.is.equal(lean_window, vim.api.nvim_get_current_win())
+    assert.current_window.is(lean_window)
   end)
 
   it('puts the infoview on top after repositioning', function(_)
@@ -46,6 +46,6 @@ describe('infoview window', function()
         { 'leaf', lean_window },
       },
     }, vim.fn.winlayout())
-    assert.is.equal(lean_window, vim.api.nvim_get_current_win())
+    assert.current_window.is(lean_window)
   end)
 end)

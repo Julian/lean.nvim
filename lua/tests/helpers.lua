@@ -174,6 +174,27 @@ function helpers.wait_for_filetype()
   assert.message("filetype was never set").is_truthy(result)
 end
 
+--- Assert about the current line.
+local function has_current_line(_, arguments)
+  assert.equal(arguments[1], vim.api.nvim_get_current_line())
+  return true
+end
+assert:register('assertion', 'current_line', has_current_line)
+
+--- Assert about the current tabpage.
+local function has_current_tabpage(_, arguments)
+  assert.equal(arguments[1], vim.api.nvim_get_current_tabpage())
+  return true
+end
+assert:register('assertion', 'current_tabpage', has_current_tabpage)
+
+--- Assert about the current window.
+local function has_current_window(_, arguments)
+  assert.equal(arguments[1], vim.api.nvim_get_current_win())
+  return true
+end
+assert:register('assertion', 'current_window', has_current_window)
+
 --- Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
   local expected = arguments[1][1] or arguments[1]

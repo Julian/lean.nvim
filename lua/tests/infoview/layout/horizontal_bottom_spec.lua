@@ -26,6 +26,6 @@ describe('infoview window', function()
         { 'leaf', infoview.get_current_infoview().window },
       },
     }, vim.fn.winlayout())
-    assert.is.equal(lean_window, vim.api.nvim_get_current_win())
+    assert.current_window.is(lean_window)
   end)
 end)

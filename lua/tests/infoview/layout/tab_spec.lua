@@ -20,7 +20,7 @@ describe('infoview window', function()
     assert.is.equal(2, #tabpages)
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(tabpages[2]))
 
-    assert.is.equal(lean_window, vim.api.nvim_get_current_win())
+    assert.current_window.is(lean_window)
 
     infoview.close()
 
@@ -45,7 +45,7 @@ describe('infoview window', function()
     assert.is.equal(2, #tabpages)
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(tabpages[2]))
 
-    assert.is.equal(lean_window, vim.api.nvim_get_current_win())
+    assert.current_window.is(lean_window)
 
     infoview.close()
 

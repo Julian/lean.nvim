@@ -58,7 +58,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('is shared between separate windows', function()
-    assert.is.equal(lean_window, vim.api.nvim_get_current_win())
+    assert.current_window.is(lean_window)
 
     vim.cmd('split')
     local second_window = vim.api.nvim_get_current_win()
@@ -89,7 +89,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('does not update for non-Lean buffers', function()
-    assert.is.equal(lean_window, vim.api.nvim_get_current_win())
+    assert.current_window.is(lean_window)
 
     local original_lines = infoview.get_current_infoview():get_lines()
     vim.cmd('split some_non_lean_file.tmp')
@@ -191,10 +191,7 @@ describe('infoview content (auto-)update', function()
       ]]
 
       vim.cmd(tab2 .. 'tabclose')
-      assert.is.equal(
-        vim.api.nvim_win_get_tabpage(lean_window),
-        vim.api.nvim_get_current_tabpage()
-      )
+      assert.current_tabpage.is(vim.api.nvim_win_get_tabpage(lean_window))
     end)
   end)
 
@@ -363,7 +360,7 @@ describe('infoview content (auto-)update', function()
 
         vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
 
-        assert.are.equal(vim.api.nvim_get_current_line(), goal)
+        assert.current_line.is(goal)
         assert.are.equal(vim.api.nvim_win_get_cursor(0)[2], #'⊢ ')
       end)
     end))

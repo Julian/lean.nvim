@@ -10,10 +10,7 @@ example : ∃ n, n = 2 := by whatshouldIdo]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example : ∃ n, n = 2 := by existsi 2; refl',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example : ∃ n, n = 2 := by existsi 2; refl')
   end))
 
   it('replaces a single try this from by', helpers.clean_buffer('lean3', [[
@@ -23,10 +20,7 @@ example : ∃ n, n = 2 := by whatshouldIdo]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example : ∃ n, n = 2 := by existsi 2; refl',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example : ∃ n, n = 2 := by existsi 2; refl')
   end))
 
   it('replaces a single try this from earlier in the line', helpers.clean_buffer('lean3', [[
@@ -36,10 +30,7 @@ example : ∃ n, n = 2 := by whatshouldIdo]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example : ∃ n, n = 2 := by existsi 2; refl',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example : ∃ n, n = 2 := by existsi 2; refl')
   end))
 
   it('replaces a try this with even more unicode', helpers.clean_buffer('lean3', [[
@@ -49,10 +40,7 @@ example : ∃ n : nat, ∀ m : nat, m = m := by whatshouldIdo]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example : ∃ n : nat, ∀ m : nat, m = m := by existsi 0; intro m; refl',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example : ∃ n : nat, ∀ m : nat, m = m := by existsi 0; intro m; refl')
   end))
 
   -- Emitted by e.g. hint
@@ -64,10 +52,7 @@ example : ∃ n, n = 2 := by whatshouldIdo]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example : ∃ n, n = 2 := by finish',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example : ∃ n, n = 2 := by finish')
   end))
 
   -- Emitted by e.g. pretty_cases
@@ -96,10 +81,7 @@ example {n : nat} : n = n := by whatshouldIdo]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example {n : nat} : n = n := rfl',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example {n : nat} : n = n := rfl')
   end))
 
   -- Also emitted by e.g. library_search
@@ -112,10 +94,7 @@ example : foo := ⟨by whatshouldIdo⟩]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example : foo := ⟨rfl⟩',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example : foo := ⟨rfl⟩')
   end))
 
   -- A line containing `squeeze_simp at bar` will re-suggest `at bar`, so
@@ -127,10 +106,7 @@ example {n : nat} : n = n := by whatshouldIdo at bar]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example {n : nat} : n = n := by simp [foo] at bar',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example {n : nat} : n = n := by simp [foo] at bar')
   end))
 
   -- Handle `squeeze_simp [foo]` similarly.
@@ -142,10 +118,7 @@ example {n : nat} : n = n := by whatshouldIdo [`nat]
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example {n : nat} : n = n := by simp [foo, baz]',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example {n : nat} : n = n := by simp [foo, baz]')
   end))
 
   -- Handle `squeeze_simp [foo] at bar` similarly.
@@ -156,10 +129,7 @@ example {n : nat} : n = n := by whatshouldIdo [`nat] at bar]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example {n : nat} : n = n := by simp [foo, baz] at bar',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example {n : nat} : n = n := by simp [foo, baz] at bar')
   end))
 
   -- Handle `squeeze_simp [foo] at *` similarly.
@@ -170,10 +140,7 @@ example {n : nat} : n = n := by whatshouldIdo [`nat] at *]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example {n : nat} : n = n := by simp [foo, baz] at *',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example {n : nat} : n = n := by simp [foo, baz] at *')
   end))
 
   it('replaces squashed suggestions from earlier in the line', helpers.clean_buffer('lean3', [[
@@ -183,10 +150,7 @@ example {n : nat} : n = n := by whatshouldIdo]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example {n : nat} : n = n := rfl',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example {n : nat} : n = n := rfl')
   end))
 
   -- Emitted by e.g. show_term
@@ -226,9 +190,6 @@ example : true := by whatshouldIdo]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example : true := by "hi',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example : true := by "hi')
   end))
 end)

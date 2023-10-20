@@ -25,7 +25,7 @@ describe('infoview open/close', function()
     assert.windows.are(lean_window, current_infoview.window)
 
     -- Cursor did not move
-    assert.is.equal(vim.api.nvim_get_current_win(), lean_window)
+    assert.current_window.is(lean_window)
     assert.are.same(vim.api.nvim_win_get_cursor(0), cursor)
 
     -- Infoview is positioned at the top
@@ -217,7 +217,7 @@ describe('infoview open/close', function()
     assert.windows.are(transient_window, initial_infoview_window)
 
     vim.cmd(':quit')
-    assert.is.equal(initial_infoview_window, vim.api.nvim_get_current_win())
+    assert.current_window.is(initial_infoview_window)
     vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
     assert.windows.are(initial_infoview_window)
 

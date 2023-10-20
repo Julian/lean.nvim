@@ -10,9 +10,6 @@ example : 2 = 2 := by whatshouldIdo?]], function()
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
-    assert.is.same(
-      'example : 2 = 2 := by rfl',
-      vim.api.nvim_get_current_line()
-    )
+    assert.current_line.is('example : 2 = 2 := by rfl')
   end))
 end)

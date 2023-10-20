@@ -94,7 +94,7 @@ describe('unicode abbreviation expansion', function()
   -- Really this needs to place the cursor too, but for now we just strip
   it('handles placing the $CURSOR', helpers.clean_buffer('lean', '', function()
     helpers.insert[[foo \<><Tab>bar, baz]]
-    assert.is.equal('foo ⟨bar, baz⟩', vim.api.nvim_get_current_line())
+    assert.current_line.is('foo ⟨bar, baz⟩')
   end))
 
   it('expands mid-word', helpers.clean_buffer('lean', '', function()
@@ -106,6 +106,6 @@ describe('unicode abbreviation expansion', function()
     helpers.insert[[foo ε bar]]
     vim.cmd('normal $')
     helpers.feed[[q/a\e<Space><CR>ibaz]]
-    assert.is.equal('foo bazε bar', vim.api.nvim_get_current_line())
+    assert.current_line.is('foo bazε bar')
   end))
 end)
