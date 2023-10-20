@@ -16,7 +16,9 @@ else
   function helpers.if_has_lean3(description, _)
     return describe(description, function()
       it('lean 3 missing', function()
-        print('Lean 3 missing. Skipping.')
+        -- These typically run in separate processes, so we actually don't
+        -- know enough to skip only once, but it doesn't hurt anyhow I suppose.
+        vim.notify_once('Skipping Lean 3 tests as it is not installed.')
       end)
     end)
   end
