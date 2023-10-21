@@ -7,13 +7,13 @@ local helpers = require('tests.helpers')
 
 require('lean').setup{}
 
-describe('commenting', function()
-  it('comments out single lines', helpers.clean_buffer('lean', 'def best := 37', function()
+helpers.if_has_lean3('commenting', function()
+  it('comments out single lines', helpers.clean_buffer('lean3', 'def best := 37', function()
     vim.cmd.TComment()
     assert.contents.are('-- def best := 37')
   end))
 
-  it('comments out multiple lines inline by default', helpers.clean_buffer('lean', [[
+  it('comments out multiple lines inline by default', helpers.clean_buffer('lean3', [[
 def foo := 12
 def bar := 37]], function()
     vim.cmd(':% TComment')
@@ -23,7 +23,7 @@ def bar := 37]], function()
     ]])
   end))
 
-  it('can comment out block comments', helpers.clean_buffer('lean', [[
+  it('can comment out block comments', helpers.clean_buffer('lean3', [[
 def foo := 12
 def bar := 37]], function()
     vim.cmd(':% TCommentBlock')
