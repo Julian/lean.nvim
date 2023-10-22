@@ -22,7 +22,7 @@ helpers.if_has_lean3('infoview widgets', clean_buffer('example : 2 = 2 := by ref
     ]]
 
     vim.api.nvim_set_current_win(current_infoview.window)
-    helpers.move_cursor{ to = {2, 4} }  -- `ℕ`
+    -- We are already at the ℕ.
 
     local known_windows = { lean_window, current_infoview.window }
     assert.windows.are(known_windows)
