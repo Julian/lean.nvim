@@ -46,8 +46,6 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('updates when the cursor moves', function()
-    assert.are_not.same(vim.api.nvim_win_get_cursor(0), {3, 0})
-
     helpers.move_cursor{ to = {3, 0} }
     -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
@@ -101,7 +99,6 @@ describe('infoview content (auto-)update', function()
 
   it('does not error while closed and continues updating when reopened', function()
     assert.windows.are(lean_window, infoview.get_current_infoview().window)
-    assert.are_not.same(vim.api.nvim_win_get_cursor(0), {1, 0})
 
     infoview.close()
 

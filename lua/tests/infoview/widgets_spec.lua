@@ -23,7 +23,7 @@ describe('infoview widgets', helpers.clean_buffer('#check Nat', function()
     ]]
 
     vim.api.nvim_set_current_win(current_infoview.window)
-    helpers.move_cursor{ to = {2, 4} }  -- `Type`
+    helpers.move_cursor{ to = {2, 5} }  -- `Type`
 
     local known_windows = { lean_window, current_infoview.window }
     assert.windows.are(known_windows)
@@ -47,7 +47,7 @@ describe('infoview widgets', helpers.clean_buffer('#check Nat', function()
     helpers.move_cursor{ to = {1, 8} }
     helpers.wait_for_loading_pins()
     vim.api.nvim_set_current_win(tab2_infoview.window)
-    helpers.move_cursor{ to = {2, 4} }  -- `Type`
+    helpers.move_cursor{ to = {2, 5} }  -- `Type`
     helpers.feed('<CR>')
 
     helpers.wait_for_new_window({ tab2_window, tab2_infoview.window })

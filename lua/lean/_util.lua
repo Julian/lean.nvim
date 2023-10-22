@@ -120,6 +120,11 @@ function M.load_mappings(mappings, buffer)
   end
 end
 
+--- Build a single-line string out a multiline one, replacing \n with spaces.
+function M.s(str)
+  return M.dedent(str):gsub('\n', ' ')
+end
+
 -- from mfussenegger/nvim-lsp-compl@29a81f3
 function M.mk_handler(fn)
   return function(...)

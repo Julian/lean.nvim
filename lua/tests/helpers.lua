@@ -59,7 +59,18 @@ end
 ---
 ---@param opts MoveCursorOpts
 function helpers.move_cursor(opts)
-  vim.api.nvim_win_set_cursor(opts.window or 0, opts.to)
+  local window = opts.window or 0
+
+  if not vim.deep_equal(opts.to, vim.api.nvim_win_get_cursor(window)) then
+    local message = util.s[[
+      Cursor is already at %s.
+      If you just want to ensure the cursor is at this location,
+      use nvim_win_set_cursor directly.
+    ]]
+    error(message:format(vim.inspect(opts.to)))
+  end
+
+  vim.api.nvim_win_set_cursor(window, opts.to)
   vim.cmd.doautocmd('CursorMoved')
 end
 
