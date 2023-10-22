@@ -8,10 +8,10 @@ helpers.if_has_lean3('sorry', function()
 def foo (n : nat) : n = n := begin
   induction n with d hd,
 end]], function()
-    vim.api.nvim_command('normal! 3gg$')
+    vim.cmd('normal! 3gg$')
     helpers.wait_for_line_diagnostics()
 
-    vim.api.nvim_command('normal! 2gg$')
+    vim.cmd('normal! 2gg$')
     require('lean.sorry').fill()
     assert.contents.are[[
 def foo (n : nat) : n = n := begin
@@ -25,12 +25,12 @@ end]]
 def foo (n : nat) : n = n := begin
   induction n with d hd,
 end]], function()
-    vim.api.nvim_command('normal! 3gg$')
+    vim.cmd('normal! 3gg$')
     helpers.wait_for_line_diagnostics()
 
-    vim.api.nvim_command('normal! 2gg$')
+    vim.cmd('normal! 2gg$')
     require('lean.sorry').fill()
-    vim.api.nvim_command('normal! cefoo')
+    vim.cmd('normal! cefoo')
     assert.contents.are[[
 def foo (n : nat) : n = n := begin
   induction n with d hd,
@@ -44,10 +44,10 @@ def foo (n : nat) : n = n := begin
   induction n with d hd,
 
 end]], function()
-    vim.api.nvim_command('normal! 4gg$')
+    vim.cmd('normal! 4gg$')
     helpers.wait_for_line_diagnostics()
 
-    vim.api.nvim_command('normal! 3gg0')
+    vim.cmd('normal! 3gg0')
     require('lean.sorry').fill()
     assert.contents.are[[
 def foo (n : nat) : n = n := begin
@@ -62,7 +62,7 @@ end]]
 def foo (n : nat) : n = n := begin
   refl,
 end]], function()
-    vim.api.nvim_command('normal! 2gg$')
+    vim.cmd('normal! 2gg$')
     require('lean.sorry').fill()
     assert.contents.are[[
 def foo (n : nat) : n = n := begin

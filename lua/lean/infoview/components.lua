@@ -161,7 +161,7 @@ local function code_with_infos(t, sess)
           title = 'LSP locations',
           items = vim.lsp.util.locations_to_items(links, 'utf-16'),
         })
-        vim.api.nvim_command('botright copen')
+        vim.cmd('botright copen')
       end
     end
     local go_to_def = function(ctx) go_to(ctx, 'definition') end

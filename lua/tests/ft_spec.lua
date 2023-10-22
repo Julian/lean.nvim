@@ -16,7 +16,7 @@ describe('ft.detect', function()
     assert.are_equal('lean', vim.opt.filetype:get())
     local initial_path = vim.api.nvim_buf_get_name(0)
 
-    vim.api.nvim_command('normal G$')
+    vim.cmd.normal('G$')
     helpers.wait_for_loading_pins()
 
     vim.lsp.buf.definition()

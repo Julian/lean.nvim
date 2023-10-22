@@ -9,7 +9,7 @@ example (p q : Prop) : p ∧ q ↔ q ∧ p := by
   constructor]], function()
     helpers.wait_for_line_diagnostics()
 
-    vim.api.nvim_command('normal! 2gg$')
+    vim.cmd('normal! 2gg$')
     require('lean.sorry').fill()
     assert.contents.are[[
 example (p q : Prop) : p ∧ q ↔ q ∧ p := by
@@ -22,7 +22,7 @@ example (p q : Prop) : p ∧ q ↔ q ∧ p := by
 example (p : Prop) : p → p := by]], function()
     helpers.wait_for_line_diagnostics()
 
-    vim.api.nvim_command('normal! gg$')
+    vim.cmd('normal! gg$')
     require('lean.sorry').fill()
     assert.contents.are[[
 example (p : Prop) : p → p := by
@@ -34,9 +34,9 @@ def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
   constructor]], function()
     helpers.wait_for_line_diagnostics()
 
-    vim.api.nvim_command('normal! 2gg$')
+    vim.cmd('normal! 2gg$')
     require('lean.sorry').fill()
-    vim.api.nvim_command('normal! cebar')
+    vim.cmd('normal! cebar')
     assert.contents.are[[
 def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
   constructor
@@ -49,9 +49,9 @@ def foo (p q : Prop) : p ∧ q →  q ∧ p := by
   intro h]], function()
     helpers.wait_for_line_diagnostics()
 
-    vim.api.nvim_command('normal! 2gg$')
+    vim.cmd('normal! 2gg$')
     require('lean.sorry').fill()
-    vim.api.nvim_command('normal! cebar')
+    vim.cmd('normal! cebar')
     assert.contents.are[[
 def foo (p q : Prop) : p ∧ q →  q ∧ p := by
   intro h
@@ -63,10 +63,10 @@ def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
   constructor
 
 ]], function()
-    vim.api.nvim_command('normal! gg$')
+    vim.cmd('normal! gg$')
     helpers.wait_for_line_diagnostics()
 
-    vim.api.nvim_command('normal! 3gg0')
+    vim.cmd('normal! 3gg0')
     require('lean.sorry').fill()
     assert.contents.are[[
 def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
@@ -83,7 +83,7 @@ def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
   · intro h
   · sorry
 ]], function()
-    vim.api.nvim_command('normal! 3gg$')
+    vim.cmd('normal! 3gg$')
     helpers.wait_for_line_diagnostics()
 
     require('lean.sorry').fill()
@@ -100,7 +100,7 @@ def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
   it('does nothing if there are no goals', clean_buffer([[
 def foo (n : Nat) : n = n := by
   rfl]], function()
-    vim.api.nvim_command('normal! 2gg$')
+    vim.cmd('normal! 2gg$')
     require('lean.sorry').fill()
     assert.contents.are[[
 def foo (n : Nat) : n = n := by

@@ -6,7 +6,7 @@ require('lean').setup { lsp = { enable = true } }
 describe('lean.current_search_paths', function()
   for kind, path in fixtures.project_files() do
     it(string.format('returns the paths for %s files', kind), function()
-      vim.api.nvim_command('edit ' .. path)
+      vim.cmd.edit(path)
       helpers.wait_for_ready_lsp()
 
       local paths = require('lean').current_search_paths()

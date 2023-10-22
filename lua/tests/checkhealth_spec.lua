@@ -2,7 +2,7 @@ require('tests.helpers')
 
 describe('checkhealth', function()
   it('passes the health check', function()
-    vim.api.nvim_command('silent checkhealth lean')
+    vim.cmd('silent checkhealth lean')
     assert.has_match([[
 .*lean.nvim.*
 .*- .*OK.* `lean ----version`

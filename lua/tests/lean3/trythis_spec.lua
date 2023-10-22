@@ -7,7 +7,7 @@ helpers.if_has_lean3('trythis', function()
   it('replaces a single try this', clean_buffer([[
 meta def whatshouldIdo := (do tactic.trace "Try this: existsi 2; refl\n")
 example : ∃ n, n = 2 := by whatshouldIdo]], function()
-    vim.api.nvim_command('normal G$')
+    vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -17,7 +17,7 @@ example : ∃ n, n = 2 := by whatshouldIdo]], function()
   it('replaces a single try this from by', clean_buffer([[
 meta def whatshouldIdo := (do tactic.trace "Try this: existsi 2; refl\n")
 example : ∃ n, n = 2 := by whatshouldIdo]], function()
-    vim.api.nvim_command('normal G$bb')
+    vim.cmd.normal('G$bb')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -27,7 +27,7 @@ example : ∃ n, n = 2 := by whatshouldIdo]], function()
   it('replaces a single try this from earlier in the line', clean_buffer([[
 meta def whatshouldIdo := (do tactic.trace "Try this: existsi 2; refl\n")
 example : ∃ n, n = 2 := by whatshouldIdo]], function()
-    vim.api.nvim_command('normal G0')
+    vim.cmd.normal('G0')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -37,7 +37,7 @@ example : ∃ n, n = 2 := by whatshouldIdo]], function()
   it('replaces a try this with even more unicode', clean_buffer([[
 meta def whatshouldIdo := (do tactic.trace "Try this: existsi 0; intro m; refl")
 example : ∃ n : nat, ∀ m : nat, m = m := by whatshouldIdo]], function()
-    vim.api.nvim_command('normal G$')
+    vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -49,7 +49,7 @@ example : ∃ n : nat, ∀ m : nat, m = m := by whatshouldIdo]], function()
   it('replaces squashed together try this messages', clean_buffer([[
 meta def whatshouldIdo := (do tactic.trace "the following tactics solve the goal\n---\nTry this: finish\nTry this: tauto\n")
 example : ∃ n, n = 2 := by whatshouldIdo]], function()
-    vim.api.nvim_command('normal G$')
+    vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -62,7 +62,7 @@ meta def whatshouldIdo := (do tactic.trace "Try this: existsi 2,\n  refl,\n")
 example : ∃ n, n = 2 := by {
   whatshouldIdo
 }]], function()
-    vim.api.nvim_command('normal 3gg$')
+    vim.cmd.normal('3gg$')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -78,7 +78,7 @@ example : ∃ n, n = 2 := by {
   it('trims by exact foo to just foo', clean_buffer([[
 meta def whatshouldIdo := (do tactic.trace "Try this: exact rfl")
 example {n : nat} : n = n := by whatshouldIdo]], function()
-    vim.api.nvim_command('normal G$')
+    vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -91,7 +91,7 @@ meta def whatshouldIdo := (do tactic.trace "Try this: exact rfl")
 structure foo :=
 (bar (n : nat) : n = n)
 example : foo := ⟨by whatshouldIdo⟩]], function()
-    vim.api.nvim_command('normal G$h')
+    vim.cmd.normal('G$h')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -103,7 +103,7 @@ example : foo := ⟨by whatshouldIdo⟩]], function()
   it('trims simp at foo when it will be duplicated', clean_buffer([[
 meta def whatshouldIdo := (do tactic.trace "Try this: simp [foo] at bar")
 example {n : nat} : n = n := by whatshouldIdo at bar]], function()
-    vim.api.nvim_command('normal G$')
+    vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -115,7 +115,7 @@ example {n : nat} : n = n := by whatshouldIdo at bar]], function()
 meta def whatshouldIdo (L : list name) := (do tactic.trace "Try this: simp [foo, baz]")
 example {n : nat} : n = n := by whatshouldIdo [`nat]
 ]], function()
-    vim.api.nvim_command('normal G$k')
+    vim.cmd.normal('G$k')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -126,7 +126,7 @@ example {n : nat} : n = n := by whatshouldIdo [`nat]
   it('trims simp [foo] at bar when it will be duplicated', clean_buffer([[
 meta def whatshouldIdo (L : list name) := (do tactic.trace "Try this: simp [foo, baz] at bar")
 example {n : nat} : n = n := by whatshouldIdo [`nat] at bar]], function()
-    vim.api.nvim_command('normal G$')
+    vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -137,7 +137,7 @@ example {n : nat} : n = n := by whatshouldIdo [`nat] at bar]], function()
   it('trims simp [foo] at * when it will be duplicated', clean_buffer([[
 meta def whatshouldIdo (L : list name) := (do tactic.trace "Try this: simp [foo, baz] at *")
 example {n : nat} : n = n := by whatshouldIdo [`nat] at *]], function()
-    vim.api.nvim_command('normal G$')
+    vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -147,7 +147,7 @@ example {n : nat} : n = n := by whatshouldIdo [`nat] at *]], function()
   it('replaces squashed suggestions from earlier in the line', clean_buffer([[
 meta def whatshouldIdo := (do tactic.trace "Try this: exact rfl")
 example {n : nat} : n = n := by whatshouldIdo]], function()
-    vim.api.nvim_command('normal G0')
+    vim.cmd.normal('G0')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -168,7 +168,7 @@ begin
     apply hxy,
   }
 end]], function()
-    vim.api.nvim_command('normal 6gg3|')
+    vim.cmd.normal('6gg3|')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()
@@ -187,7 +187,7 @@ end]]
   it('handles suggestions with quotes', clean_buffer([[
 meta def whatshouldIdo := (do tactic.trace "Try this: \"hi")
 example : true := by whatshouldIdo]], function()
-    vim.api.nvim_command('normal G$')
+    vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()

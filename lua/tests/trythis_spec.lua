@@ -6,7 +6,7 @@ describe('trythis', function()
   it('replaces a single try this', helpers.clean_buffer([[
 macro "whatshouldIdo?" : tactic => `(tactic| trace "Try this: rfl")
 example : 2 = 2 := by whatshouldIdo?]], function()
-    vim.api.nvim_command('normal G$')
+    vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()

@@ -99,7 +99,7 @@ describe('infoview autoopen', function()
     infoview.set_autoopen(false)
     infoview.set_autoopen(true)
 
-    vim.api.nvim_command('tabnew')
+    vim.cmd.tabnew()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     local current_window = vim.api.nvim_get_current_win()

@@ -16,7 +16,7 @@ helpers.if_has_lean3('ft.detect', function()
     assert.are_equal('lean3', vim.opt.filetype:get())
     local initial_path = vim.api.nvim_buf_get_name(0)
 
-    vim.api.nvim_command('normal G$')
+    vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
     vim.lsp.buf.definition()

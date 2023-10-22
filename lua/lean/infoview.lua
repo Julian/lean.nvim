@@ -269,7 +269,7 @@ function Infoview:__refresh()
 
   for _, win in pairs(valid_windows) do
     vim.api.nvim_win_call(win, function()
-      vim.api.nvim_command('set winfixwidth')
+      vim.cmd('set winfixwidth')
     end)
   end
 
@@ -310,9 +310,9 @@ function Infoview:__refresh_diff()
 
   for _, win in pairs({self.__diff_win, self.window}) do
     vim.api.nvim_win_call(win, function()
-      vim.api.nvim_command"diffthis"
-      vim.api.nvim_command("set foldmethod=manual")
-      vim.api.nvim_command("setlocal wrap")
+      vim.cmd.diffthis()
+      vim.cmd("set foldmethod=manual")
+      vim.cmd("setlocal wrap")
     end)
   end
 
@@ -324,10 +324,10 @@ function Infoview:__close_diff()
   if not self.window or not self.__diff_win then return end
 
   self.info.__win_event_disable = true
-  vim.api.nvim_win_call(self.window, function() vim.api.nvim_command"diffoff" end)
+  vim.api.nvim_win_call(self.window, function() vim.cmd.diffoff() end)
 
   if vim.api.nvim_win_is_valid(self.__diff_win) then
-    vim.api.nvim_win_call(self.__diff_win, function() vim.api.nvim_command"diffoff" end)
+    vim.api.nvim_win_call(self.__diff_win, function() vim.cmd.diffoff() end)
     vim.api.nvim_win_close(self.__diff_win, true)
   end
   self.info.__win_event_disable = false

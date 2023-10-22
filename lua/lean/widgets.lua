@@ -611,11 +611,11 @@ function BufRenderer:hover(force_update_highlight)
       self.tooltip.last_win = vim.api.nvim_open_win(self.tooltip.buf, false, win_options)
       self.tooltip.disable_update = false
       -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
-      vim.api.nvim_command("redraw")
+      vim.cmd.redraw()
       self.tooltip.last_win_options = vim.deepcopy(win_options)
     elseif not vim.deep_equal(win_options, self.tooltip.last_win_options) then
       vim.api.nvim_win_set_config(self.tooltip.last_win, win_options)
-      vim.api.nvim_command("redraw")
+      vim.cmd.redraw()
       self.tooltip.last_win_options = vim.deepcopy(win_options)
     end
 
