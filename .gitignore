@@ -5,9 +5,9 @@ leanpkg.path
 /packpath
 /pack
 
-/lua/tests/fixtures/example-lean4-project/build
-/lua/tests/fixtures/example-lean4-project/foo/build
-/lua/tests/fixtures/example-lean3-project/_target
+/lua/tests/fixtures/example-project/build
+/lua/tests/fixtures/example-project/foo/build
+/lua/tests/lean3/fixtures/example-project/_target
 
 doc/tags
 luacov.*.out

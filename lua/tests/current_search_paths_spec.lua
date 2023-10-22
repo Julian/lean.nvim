@@ -4,7 +4,7 @@ local fixtures = require('tests.fixtures')
 require('lean').setup { lsp = { enable = true } }
 
 describe('lean.current_search_paths', function()
-  for kind, path in unpack(fixtures.lean_project.files_it) do
+  for kind, path in fixtures.project_files() do
     it(string.format('returns the paths for %s files', kind), function()
       vim.api.nvim_command('edit ' .. path)
       helpers.wait_for_ready_lsp()
@@ -15,8 +15,8 @@ describe('lean.current_search_paths', function()
       assert.has_all(
         table.concat(paths, '\n') .. '\n',
         { "/lib/lean\n",                            -- standard library
-          fixtures.lean_project.path .. '\n',       -- the project itself
-          fixtures.lean_project.path .. '/foo\n' }  -- its dependency
+          fixtures.project.path .. '\n',       -- the project itself
+          fixtures.project.path .. '/foo\n' }  -- its dependency
       )
     end)
   end

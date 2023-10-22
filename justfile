@@ -3,7 +3,6 @@ has_lean3 := if `leanpkg help 2>&1 >/dev/null; echo $?` == "0" { "true" } else {
 packpath := justfile_directory() + "/packpath"
 scripts := justfile_directory() + "/scripts"
 tests := justfile_directory() + "/lua/tests"
-fixtures := tests + "/fixtures"
 
 init_lua := scripts + "/minimal_init.lua"
 
@@ -32,8 +31,8 @@ lint:
 
 # Update the versions of test fixtures used in CI.
 bump-test-fixtures:
-    cd {{ fixtures }}/example-lean3-project/; {{ if `leanpkg help 2>&1 >/dev/null; echo $?` != "0" { "" } else { `leanproject up` } }}
-    cd {{ fixtures }}/example-lean4-project/; gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' >lean-toolchain
+    cd {{ tests }}/fixtures/example-project/; gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' >lean-toolchain
+    cd {{ tests }}/lean3/fixtures/example-project/; {{ if `leanpkg help 2>&1 >/dev/null; echo $?` != "0" { "" } else { `leanproject up` } }}
     git add --all
     git commit -m "Bump the Lean versions in CI."
 
@@ -52,7 +51,7 @@ _clone-test-dependencies: _clean-test-dependencies
 _rebuild-test-fixtures:
     #!/usr/bin/env sh
     set -eux
-    cd "{{ fixtures }}/example-lean3-project/"
+    cd "{{ tests }}/lean3/fixtures/example-project/"
     leanpkg help 2>&1 >/dev/null && leanpkg build || echo "Lean 3 not found."
-    cd "{{ fixtures }}/example-lean4-project/"
+    cd "{{ tests }}/fixtures/example-project/"
     lake build

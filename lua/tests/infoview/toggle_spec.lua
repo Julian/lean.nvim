@@ -10,7 +10,7 @@ describe('Infoview.toggle', function()
 
   it('closes an open infoview', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
-    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     lean_window = vim.api.nvim_get_current_win()
     local current_infoview = infoview.get_current_infoview()
 

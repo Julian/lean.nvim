@@ -17,7 +17,7 @@ describe('infoview open/close', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     lean_window = vim.api.nvim_get_current_win()
 
-    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     local cursor = vim.api.nvim_win_get_cursor(0)
     local current_infoview = infoview.get_current_infoview()
 
@@ -41,7 +41,7 @@ describe('infoview open/close', function()
     assert.is.truthy(
       vim.tbl_contains(windows, infoview.get_current_infoview().window)
     )
-    vim.cmd('edit ' .. fixtures.lean_project.some_existing_file)
+    vim.cmd('edit ' .. fixtures.project.some_existing_file)
     assert.windows.are(windows)
   end)
 
@@ -56,7 +56,7 @@ describe('infoview open/close', function()
     table.insert(windows, vim.api.nvim_get_current_win())
     assert.windows.are(windows)
 
-    vim.cmd('edit! ' .. fixtures.lean_project.some_nested_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_nested_existing_file)
     assert.windows.are(windows)
 
     vim.cmd.quit()
@@ -68,7 +68,7 @@ describe('infoview open/close', function()
     infoview.get_current_infoview():close()
     assert.windows.are(lean_window)
 
-    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     assert.windows.are(lean_window)
 
     vim.cmd.split()
@@ -84,7 +84,7 @@ describe('infoview open/close', function()
     current_infoview:close()
     assert.windows.are(lean_window)
 
-    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     assert.windows.are(lean_window)
 
     current_infoview:open()
@@ -101,14 +101,14 @@ describe('infoview open/close', function()
     assert.windows.are(lean_window)
 
     -- Does not reopen when editing or splitting new Lean windows
-    vim.cmd('edit! ' .. fixtures.lean_project.some_nested_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_nested_existing_file)
     assert.windows.are(lean_window)
 
     vim.cmd.split()
     local split = vim.api.nvim_get_current_win()
     assert.windows.are(lean_window, split)
 
-    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     assert.windows.are(lean_window, split)
 
     vim.cmd.close()
@@ -122,7 +122,7 @@ describe('infoview open/close', function()
     vim.cmd.close()
     assert.windows.are(lean_window)
 
-    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     assert.windows.are(lean_window)
   end)
 
@@ -137,7 +137,7 @@ describe('infoview open/close', function()
       local tab2_window = vim.api.nvim_get_current_win()
       assert.windows.are(tab2_window)
 
-      vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+      vim.cmd('edit! ' .. fixtures.project.some_existing_file)
 
       local tab2_infoview = infoview.get_current_infoview()
       assert.are_not.same(tab1_infoview, tab2_infoview)
@@ -164,11 +164,11 @@ describe('infoview open/close', function()
     end)
 
     it('closes independently via :quit', function(_)
-      vim.cmd.tabedit(fixtures.lean_project.some_existing_file)
+      vim.cmd.tabedit(fixtures.project.some_existing_file)
       local tab2_windows = vim.api.nvim_tabpage_list_wins(0)
       assert.is.equal(2, #tab2_windows)
 
-      vim.cmd.tabedit(fixtures.lean_project.some_existing_file)
+      vim.cmd.tabedit(fixtures.project.some_existing_file)
       assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
 
       -- Close the two tab 3 windows
@@ -203,7 +203,7 @@ describe('infoview open/close', function()
     -- Cleanup by now opening a Lean file in the window we opened, so future
     -- tests can use it (grr, global state...).
     vim.api.nvim_set_current_win(non_lean_window)
-    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     lean_window = non_lean_window
   end)
 
@@ -211,14 +211,14 @@ describe('infoview open/close', function()
     vim.cmd.tabnew()
     local transient_window = vim.api.nvim_get_current_win()
 
-    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     local initial_infoview = infoview.get_current_infoview()
     local initial_infoview_window = initial_infoview.window
     assert.windows.are(transient_window, initial_infoview_window)
 
     vim.cmd.quit()
     assert.current_window.is(initial_infoview_window)
-    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     assert.windows.are(initial_infoview_window)
 
     local second_infoview = infoview.get_current_infoview()
@@ -235,7 +235,7 @@ describe('infoview open/close', function()
     local initial_infoview_window = initial_infoview.window
     assert.windows.are(lean_window, initial_infoview_window)
     vim.api.nvim_win_close(lean_window, false)
-    vim.cmd('edit! ' .. fixtures.lean_project.some_existing_file)
+    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     assert.windows.are(initial_infoview_window)
 
     local second_infoview = infoview.get_current_infoview()

@@ -1,13 +1,13 @@
 local clean_buffer = require('tests.lean3.helpers').clean_buffer
 local infoview = require('lean.infoview')
-local fixtures = require('tests.fixtures')
+local fixtures = require('tests.lean3.fixtures')
 local helpers = require('tests.helpers')
 
 require('lean').setup{ infoview = { use_widgets = false } }
 
 helpers.if_has_lean3('components', function()
 
-  vim.cmd('edit! ' .. fixtures.lean3_project.path .. '/src/bar/baz.lean')
+  vim.cmd('edit! ' .. fixtures.project.path .. '/src/bar/baz.lean')
 
   it('shows a term goal', function()
     helpers.move_cursor{ to = {3, 27} }
