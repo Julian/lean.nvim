@@ -17,7 +17,7 @@ function M.lean_lsp_diagnostics(opts, bufnr)
   bufnr = bufnr or 0
   opts = opts or {}
   local diagnostics = {}
-  for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
+  for _, client in pairs(vim.lsp.get_active_clients{ bufnr = bufnr }) do
     if client.name:match('^lean') then
       opts.namespace = vim.lsp.diagnostic.get_namespace(client.id)
       vim.list_extend(diagnostics, vim.diagnostic.get(bufnr, opts))
@@ -285,7 +285,7 @@ M.wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) 
 ---@returns string encoding first client if there is one, nil otherwise
 function M._get_offset_encoding(bufnr)
   -- TODO: Can this be removed (or removed once 0.6 support is dropped)?
-  for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
+  for _, client in pairs(vim.lsp.get_active_clients{ bufnr = bufnr }) do
     return client.offset_encoding or "utf-16"
   end
 end
