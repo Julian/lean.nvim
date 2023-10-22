@@ -6,7 +6,6 @@ tests := justfile_directory() + "/lua/tests"
 fixtures := tests + "/fixtures"
 
 init_lua := scripts + "/minimal_init.lua"
-runner := scripts + "/run_tests.lua"
 
 # Run the lean.nvim test suite.
 test: _rebuild-test-fixtures _clone-test-dependencies
@@ -14,7 +13,7 @@ test: _rebuild-test-fixtures _clone-test-dependencies
 
 # Run the test suite without rebuilding or recloning any dependencies.
 retest *test_files=tests:
-    nvim --headless -u {{ init_lua }} -l {{ runner }} {{ test_files }}
+    nvim --headless -u {{ init_lua }} -c 'lua require("inanis").run{ "lua/tests/", minimal_init = "{{ init_lua }}", sequential = vim.env.TEST_SEQUENTIAL ~= nil }'
 
 # Run an instance of neovim with the same minimal init used to run tests.
 nvim setup_table='{}' *ARGS='':
