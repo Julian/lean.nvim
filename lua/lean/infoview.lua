@@ -261,16 +261,14 @@ function Infoview:__refresh()
   local valid_windows = {}
 
   self.info.__win_event_disable = true
-  for _, win in pairs({self.window, self.__diff_win}) do
+  for _, win in pairs{ self.window, self.__diff_win } do
     if win and vim.api.nvim_win_is_valid(win) then
       table.insert(valid_windows, win)
     end
   end
 
   for _, win in pairs(valid_windows) do
-    vim.api.nvim_win_call(win, function()
-      vim.cmd('set winfixwidth')
-    end)
+    vim.wo[win].winfixwidth = true
   end
 
   for _, win in pairs(valid_windows) do
@@ -311,8 +309,8 @@ function Infoview:__refresh_diff()
   for _, win in pairs({self.__diff_win, self.window}) do
     vim.api.nvim_win_call(win, function()
       vim.cmd.diffthis()
-      vim.cmd("set foldmethod=manual")
-      vim.cmd("setlocal wrap")
+      vim.wo.foldmethod = 'manual'
+      vim.wo.wrap = true
     end)
   end
 

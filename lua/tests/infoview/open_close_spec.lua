@@ -47,7 +47,7 @@ describe('infoview open/close', function()
 
   it('remains open on splitting the current window', function(_)
     local windows = vim.api.nvim_tabpage_list_wins(0)
-    assert.is.equal(2, #windows)  -- +1 above
+    assert.is.equal(2, #windows)
     assert.is.truthy(
       vim.tbl_contains(windows, infoview.get_current_infoview().window)
     )
@@ -62,6 +62,13 @@ describe('infoview open/close', function()
     vim.cmd.quit()
     table.remove(windows, #windows)  -- the second Lean source window
     assert.windows.are(windows)
+  end)
+
+  it('is fixed width', function(_)
+    local windows = vim.api.nvim_tabpage_list_wins(0)
+    assert.is.equal(#windows, 2)
+    assert.is.truthy(vim.wo[infoview.get_current_infoview().window].winfixwidth)
+    assert.is.falsy(vim.wo[lean_window].winfixwidth)
   end)
 
   it('closes via its Lua API and stays closed', function(_)
