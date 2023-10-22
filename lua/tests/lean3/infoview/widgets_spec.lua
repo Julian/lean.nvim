@@ -1,9 +1,10 @@
+local clean_buffer = require('tests.lean3.helpers').clean_buffer
 local helpers = require('tests.helpers')
 local infoview = require('lean.infoview')
 
 require('lean').setup {}
 
-helpers.if_has_lean3('infoview widgets', helpers.clean_buffer('lean3', 'example : 2 = 2 := by refl', function()
+helpers.if_has_lean3('infoview widgets', clean_buffer('example : 2 = 2 := by refl', function()
 
   local lean_window = vim.api.nvim_get_current_win()
   local current_infoview = infoview.get_current_infoview()

@@ -281,7 +281,7 @@ describe('infoview content (auto-)update', function()
     end)
   end)
 
-  describe('cursor position', helpers.clean_buffer('lean', '', function()
+  describe('cursor position', helpers.clean_buffer(function()
     it('is set to the goal line', function()
       local lines = { 'example ' }
       for i=1, 100 do
@@ -301,7 +301,7 @@ describe('infoview content (auto-)update', function()
     end)
   end))
 
-  describe('processing message', helpers.clean_buffer('lean', '#eval IO.sleep 5000', function()
+  describe('processing message', helpers.clean_buffer('#eval IO.sleep 5000', function()
     it('is shown while a file is processing', function()
       local uri = vim.uri_from_fname(vim.api.nvim_buf_get_name(0))
       local result = vim.wait(15000, function() return require('lean.progress').is_processing(uri) end)

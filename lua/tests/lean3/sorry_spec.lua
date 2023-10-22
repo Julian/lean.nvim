@@ -1,11 +1,10 @@
 local helpers = require('tests.helpers')
-local clean_buffer = helpers.clean_buffer
-local if_has_lean3 = require('tests.helpers').if_has_lean3
+local clean_buffer = require('tests.lean3.helpers').clean_buffer
 
 require('lean').setup {}
 
-if_has_lean3('sorry', function()
-  it('inserts sorries for each remaining goal', clean_buffer('lean3', [[
+helpers.if_has_lean3('sorry', function()
+  it('inserts sorries for each remaining goal', clean_buffer([[
 def foo (n : nat) : n = n := begin
   induction n with d hd,
 end]], function()
@@ -22,7 +21,7 @@ def foo (n : nat) : n = n := begin
 end]]
   end))
 
-  it('leaves the cursor in the first sorry', clean_buffer('lean3', [[
+  it('leaves the cursor in the first sorry', clean_buffer([[
 def foo (n : nat) : n = n := begin
   induction n with d hd,
 end]], function()
@@ -40,7 +39,7 @@ def foo (n : nat) : n = n := begin
 end]]
   end))
 
-  it('indents sorry blocks when needed', clean_buffer('lean3', [[
+  it('indents sorry blocks when needed', clean_buffer([[
 def foo (n : nat) : n = n := begin
   induction n with d hd,
 
@@ -59,7 +58,7 @@ def foo (n : nat) : n = n := begin
 end]]
   end))
 
-  it('does nothing if there are no goals', clean_buffer('lean3', [[
+  it('does nothing if there are no goals', clean_buffer([[
 def foo (n : nat) : n = n := begin
   refl,
 end]], function()

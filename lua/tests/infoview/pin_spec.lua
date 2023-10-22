@@ -7,7 +7,7 @@ local helpers = require('tests.helpers')
 
 require('lean').setup{ lsp = { enable = true } }
 
-describe('infoview pins', helpers.clean_buffer('lean', dedent[[
+describe('infoview pins', helpers.clean_buffer(dedent[[
   theorem has_tactic_goal : p ∨ q → q ∨ p := by
     intro h
     cases h with

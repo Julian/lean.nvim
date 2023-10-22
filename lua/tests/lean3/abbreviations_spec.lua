@@ -1,4 +1,5 @@
 local helpers = require('tests.helpers')
+local clean_buffer = require('tests.lean3.helpers').clean_buffer
 
 -- Wait some time for the abbreviation to have been expanded.
 -- This is very naive, it just ensures the line contains no `\`.
@@ -12,44 +13,44 @@ end
 require('lean').setup {}
 
 helpers.if_has_lean3('unicode abbreviation expansion', function()
-  it('autoexpands abbreviations', helpers.clean_buffer('lean3', '', function()
+  it('autoexpands abbreviations', clean_buffer(function()
     helpers.insert[[\a]]
     assert.contents.are[[α]]
   end))
 
   describe('explicit triggers', function()
-    it('inserts a space on <Space>', helpers.clean_buffer('lean3', '', function()
+    it('inserts a space on <Space>', clean_buffer(function()
       helpers.insert[[\e<Space>]]
       wait_for_expansion()
       assert.contents.are[[ε ]]
     end))
 
-    it('inserts a newline on <CR>', helpers.clean_buffer('lean3', '', function()
+    it('inserts a newline on <CR>', clean_buffer(function()
       helpers.insert[[\e<CR>]]
       wait_for_expansion()
       assert.contents.are('ε\n')
     end))
 
-    it('inserts nothing on <Tab>', helpers.clean_buffer('lean3', '', function()
+    it('inserts nothing on <Tab>', clean_buffer(function()
       helpers.insert[[\e<Tab>]]
       wait_for_expansion()
       assert.contents.are[[ε]]
     end))
 
-    it('leaves the cursor in the right spot on <Tab>', helpers.clean_buffer('lean3', '', function()
+    it('leaves the cursor in the right spot on <Tab>', clean_buffer(function()
       helpers.insert[[\<<Tab>abc]]
       wait_for_expansion()
       assert.contents.are[[⟨abc]]
     end))
 
-    it('inserts nothing on <Tab> mid-line', helpers.clean_buffer('lean3', 'foo bar baz quux,', function()
+    it('inserts nothing on <Tab> mid-line', clean_buffer('foo bar baz quux,', function()
       vim.cmd.normal('$')
       helpers.insert[[ \comp<Tab> spam]]
       wait_for_expansion()
       assert.contents.are[[foo bar baz quux ∘ spam,]]
     end))
 
-    it('does not interfere with existing mappings', helpers.clean_buffer('lean3', '', function()
+    it('does not interfere with existing mappings', clean_buffer(function()
       vim.api.nvim_buf_set_keymap(
           0,
           'i',
@@ -68,7 +69,7 @@ helpers.if_has_lean3('unicode abbreviation expansion', function()
       vim.api.nvim_buf_del_keymap(0, 'i', '<Tab>')
     end))
 
-    it('does not interfere with existing lua mappings', helpers.clean_buffer('lean3', '', function()
+    it('does not interfere with existing lua mappings', clean_buffer(function()
       vim.b.foo = 0
       local inc = function() vim.b.foo = vim.b.foo + 1 end
 
@@ -92,17 +93,17 @@ helpers.if_has_lean3('unicode abbreviation expansion', function()
   end)
 
   -- Really this needs to place the cursor too, but for now we just strip
-  it('handles placing the $CURSOR', helpers.clean_buffer('lean3', '', function()
+  it('handles placing the $CURSOR', clean_buffer(function()
     helpers.insert[[foo \<><Tab>bar, baz]]
     assert.current_line.is('foo ⟨bar, baz⟩')
   end))
 
-  it('expands mid-word', helpers.clean_buffer('lean3', '', function()
+  it('expands mid-word', clean_buffer(function()
     helpers.insert[[(\a]]
     assert.contents.are[[(α]]
   end))
 
-  it('expands abbreviations in command mode', helpers.clean_buffer('lean3', '', function()
+  it('expands abbreviations in command mode', clean_buffer(function()
     helpers.insert[[foo ε bar]]
     vim.cmd.normal('$')
     helpers.feed[[q/a\e<Space><CR>ibaz]]

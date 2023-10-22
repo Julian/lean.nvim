@@ -1,10 +1,11 @@
 local lean = require('lean')
-local helpers = require('tests.helpers')
+local if_has_lean3 = require('tests.helpers').if_has_lean3
+local clean_buffer = require('tests.lean3.helpers').clean_buffer
 
 require('lean').setup {}
 
-helpers.if_has_lean3('mappings', function()
-  it('are bound the current buffer and not others', helpers.clean_buffer('lean3', '', function()
+if_has_lean3('mappings', function()
+  it('are bound the current buffer and not others', clean_buffer(function()
     lean.use_suggested_mappings(true)
     assert.is.same(
       lean.mappings.n['<LocalLeader>i'],

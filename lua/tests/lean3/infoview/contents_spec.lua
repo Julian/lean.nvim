@@ -1,3 +1,4 @@
+local clean_buffer = require('tests.lean3.helpers').clean_buffer
 local infoview = require('lean.infoview')
 local fixtures = require('tests.fixtures')
 local helpers = require('tests.helpers')
@@ -63,7 +64,7 @@ helpers.if_has_lean3('components', function()
     end)
   end
 
-  describe('cursor position', helpers.clean_buffer('lean3', '', function()
+  describe('cursor position', clean_buffer(function()
     it('is set to the goal line', function()
       local lines = { 'example ' }
       for i=1, 100 do

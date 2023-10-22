@@ -4,10 +4,9 @@ local clean_buffer = helpers.clean_buffer
 require('lean').setup {}
 
 describe('sorry', function()
-  it('inserts sorries for each of multiple remaining goals', clean_buffer('lean', [[
+  it('inserts sorries for each of multiple remaining goals', clean_buffer([[
 example (p q : Prop) : p ∧ q ↔ q ∧ p := by
-  constructor]],
-  function()
+  constructor]], function()
     helpers.wait_for_line_diagnostics()
 
     vim.api.nvim_command('normal! 2gg$')
@@ -19,9 +18,8 @@ example (p q : Prop) : p ∧ q ↔ q ∧ p := by
   · sorry]]
   end))
 
-  it('inserts a sorry for the remaining goal', clean_buffer('lean', [[
-example (p : Prop) : p → p := by]],
-  function()
+  it('inserts a sorry for the remaining goal', clean_buffer([[
+example (p : Prop) : p → p := by]], function()
     helpers.wait_for_line_diagnostics()
 
     vim.api.nvim_command('normal! gg$')
@@ -31,7 +29,7 @@ example (p : Prop) : p → p := by
 sorry]]
   end))
 
-  it('leaves the cursor in the first sorry', clean_buffer('lean', [[
+  it('leaves the cursor in the first sorry', clean_buffer([[
 def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
   constructor]], function()
     helpers.wait_for_line_diagnostics()
@@ -46,7 +44,7 @@ def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
   · sorry]]
   end))
 
-  it('leaves the cursor in the only sorry', clean_buffer('lean', [[
+  it('leaves the cursor in the only sorry', clean_buffer([[
 def foo (p q : Prop) : p ∧ q →  q ∧ p := by
   intro h]], function()
     helpers.wait_for_line_diagnostics()
@@ -60,7 +58,7 @@ def foo (p q : Prop) : p ∧ q →  q ∧ p := by
   bar]]
   end))
 
-  it('indents sorry blocks when needed', clean_buffer('lean', [[
+  it('indents sorry blocks when needed', clean_buffer([[
 def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
   constructor
 
@@ -79,7 +77,7 @@ def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
 ]]
   end))
 
-  it('single goal within multiple goal block', clean_buffer('lean', [[
+  it('single goal within multiple goal block', clean_buffer([[
 def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
   constructor
   · intro h
@@ -99,7 +97,7 @@ def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
   end))
 
 
-  it('does nothing if there are no goals', clean_buffer('lean', [[
+  it('does nothing if there are no goals', clean_buffer([[
 def foo (n : Nat) : n = n := by
   rfl]], function()
     vim.api.nvim_command('normal! 2gg$')

@@ -7,7 +7,7 @@ local helpers = require('tests.helpers')
 
 require('lean').setup{}
 
-describe('infoview widgets', helpers.clean_buffer('lean', '#check Nat', function()
+describe('infoview widgets', helpers.clean_buffer('#check Nat', function()
 
   local lean_window = vim.api.nvim_get_current_win()
   local current_infoview = infoview.get_current_infoview()
