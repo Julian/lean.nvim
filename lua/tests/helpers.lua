@@ -187,21 +187,21 @@ end
 
 --- Assert about the current line.
 local function has_current_line(_, arguments)
-  assert.equal(arguments[1], vim.api.nvim_get_current_line())
+  assert.is.equal(arguments[1], vim.api.nvim_get_current_line())
   return true
 end
 assert:register('assertion', 'current_line', has_current_line)
 
 --- Assert about the current tabpage.
 local function has_current_tabpage(_, arguments)
-  assert.equal(arguments[1], vim.api.nvim_get_current_tabpage())
+  assert.is.equal(arguments[1], vim.api.nvim_get_current_tabpage())
   return true
 end
 assert:register('assertion', 'current_tabpage', has_current_tabpage)
 
 --- Assert about the current window.
 local function has_current_window(_, arguments)
-  assert.equal(arguments[1], vim.api.nvim_get_current_win())
+  assert.is.equal(arguments[1], vim.api.nvim_get_current_win())
   return true
 end
 assert:register('assertion', 'current_window', has_current_window)
@@ -211,7 +211,7 @@ local function has_buf_contents(_, arguments)
   local expected = arguments[1][1] or arguments[1]
   local bufnr = arguments[1].bufnr or 0
   local got = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
-  assert.equal(expected, got)
+  assert.is.equal(expected, got)
   return true
 end
 
