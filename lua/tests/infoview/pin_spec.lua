@@ -1,13 +1,12 @@
 ---@brief [[
 --- Tests for the placing of infoview pins.
 ---@brief ]]
-local dedent = require('lean._util').dedent
 local infoview = require('lean.infoview')
 local helpers = require('tests.helpers')
 
 require('lean').setup{ lsp = { enable = true } }
 
-describe('infoview pins', helpers.clean_buffer(dedent[[
+describe('infoview pins', helpers.clean_buffer([[
   theorem has_tactic_goal : p ∨ q → q ∨ p := by
     intro h
     cases h with

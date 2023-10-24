@@ -37,21 +37,17 @@ describe('infoview content (auto-)update', function()
     -- In theory we don't care where we are, but the right answer changes
     assert.are.same(vim.api.nvim_win_get_cursor(0), {1, 0})
 
-    -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
       1
-
     ]]
   end)
 
   it('updates when the cursor moves', function()
     helpers.move_cursor{ to = {3, 0} }
-    -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
-
     ]]
   end)
 
@@ -64,14 +60,12 @@ describe('infoview content (auto-)update', function()
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
-
     ]]
 
     helpers.move_cursor{ to = {1, 0} }
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
       1
-
     ]]
 
     -- Now switch back to the other window and we see the original location...
@@ -80,7 +74,6 @@ describe('infoview content (auto-)update', function()
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
-
     ]]
 
     vim.api.nvim_win_close(second_window, false)
@@ -111,14 +104,12 @@ describe('infoview content (auto-)update', function()
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
       1
-
     ]]
 
     helpers.move_cursor{ to = {3, 0} }
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
-
     ]]
   end)
 
@@ -144,7 +135,6 @@ describe('infoview content (auto-)update', function()
       assert.infoview_contents.are[[
         ▶ 1:1-1:6: information:
         1
-
       ]]
 
       vim.cmd.tabnew(fixtures.project.path .. '/Test/Squares.lean')
@@ -152,7 +142,6 @@ describe('infoview content (auto-)update', function()
       assert.infoview_contents.are[[
         ▶ 3:1-3:6: information:
         9.000000
-
       ]]
 
       -- But the first tab's contents are unchanged even without re-entering.
@@ -160,7 +149,6 @@ describe('infoview content (auto-)update', function()
         [[
           ▶ 1:1-1:6: information:
           1
-
         ]],
         infoview = tab1_infoview
       }
@@ -177,14 +165,12 @@ describe('infoview content (auto-)update', function()
       assert.infoview_contents.are[[
         ▶ 3:1-3:6: information:
         9.000000
-
       ]]
 
       helpers.move_cursor{ to = {1, 0} }
       assert.infoview_contents.are[[
         ▶ 1:1-1:6: information:
         1
-
       ]]
 
       vim.cmd(tab2 .. 'tabclose')

@@ -140,9 +140,14 @@ end
 --
 --  Yes c(lean) may be a double entendre, and no I don't feel bad.
 function helpers.clean_buffer(contents, callback)
+  local lines
+
+  -- Support a 1-arg version where we assume the contents is an empty buffer.
   if callback == nil then
     callback = contents
-    contents = ''
+    lines = {}
+  else
+    lines = vim.split(util.dedent(contents:gsub('^\n', '')):gsub('\n$', ''), '\n')
   end
 
   return function()
@@ -154,7 +159,7 @@ function helpers.clean_buffer(contents, callback)
     vim.opt_local.swapfile = false
     vim.opt.filetype = 'lean'
 
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
     vim.api.nvim_buf_call(bufnr, function() callback{ source_file = { bufnr = bufnr } } end)
   end
 end
@@ -206,20 +211,28 @@ local function has_current_window(_, arguments)
 end
 assert:register('assertion', 'current_window', has_current_window)
 
---- Assert about the entire buffer contents.
-local function has_buf_contents(_, arguments)
+local function _expected(arguments)
   local expected = arguments[1][1] or arguments[1]
-  local bufnr = arguments[1].bufnr or 0
-  local got = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
-  assert.is.equal(expected, got)
-  return true
+  -- Handle cases where we're indeed checking for a real trailing newline.
+  local dedented = util.dedent(expected)
+  if dedented ~= expected then
+    expected = dedented:gsub('\n$', '')
+  end
+  return expected
 end
 
+--- Assert about the entire buffer contents.
+local function has_buf_contents(_, arguments)
+  local bufnr = arguments[1].bufnr or 0
+  local got = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
+  assert.is.equal(_expected(arguments), got)
+  return true
+end
 assert:register('assertion', 'contents', has_buf_contents)
 
 --- Assert about the current infoview contents.
 local function has_infoview_contents(_, arguments)
-  local expected = util.dedent(arguments[1][1] or arguments[1])
+  local expected = _expected(arguments)
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
   -- In Lean 3, the fileProgress notification is unreliable,
   -- so we may think we're done processing when we're actually not.
@@ -227,8 +240,8 @@ local function has_infoview_contents(_, arguments)
   -- To address this, we assume that we'll only assert
   -- nonempty contents in the Lean 3 tests, and retry updating the current pin
   -- until we get something.
-  if vim.opt.filetype:get() == "lean3" then
-    assert.are_not.same(expected, "")
+  if vim.opt.filetype:get() == 'lean3' then
+    assert.are_not.same(expected, '')
     local succeeded, _ = pcall(helpers.wait_for_loading_pins, target_infoview)
     local curr_pin = target_infoview.info.pin
 
@@ -243,30 +256,28 @@ local function has_infoview_contents(_, arguments)
       end
     end
 
-    assert.message("never got Lean 3 data").is_true(succeeded and #got ~= 0)
+    assert.message('never got Lean 3 data').is_true(succeeded and #got ~= 0)
   else
     helpers.wait_for_loading_pins(target_infoview)
   end
-  local got = table.concat(target_infoview:get_lines(), '\n')
-  assert.are.same(expected, got)
+  local got = table.concat(target_infoview:get_lines(), '\n'):gsub('\n$', '')
+  assert.is.equal(expected, got)
   return true
 end
 
 
 --- Assert about the current infoview contents without waiting for the pins to load.
 local function has_infoview_contents_nowait(_, arguments)
-  local expected = util.dedent(arguments[1][1] or arguments[1])
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
   local got = table.concat(target_infoview:get_lines(), '\n')
-  assert.are.same(expected, got)
+  assert.are.same(_expected(arguments), got)
   return true
 end
 
 local function has_diff_contents(_, arguments)
-  local expected = util.dedent(arguments[1][1] or arguments[1])
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
   local got = table.concat(target_infoview:get_diff_lines(), '\n')
-  assert.are.same(expected, got)
+  assert.are.same(_expected(arguments), got)
   return true
 end
 

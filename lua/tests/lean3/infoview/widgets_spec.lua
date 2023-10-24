@@ -57,7 +57,6 @@ helpers.if_has_lean3('infoview widgets', clean_buffer('example : 2 = 2 := by ref
     infoview.enable_widgets()
     helpers.move_cursor{ to = {1, 22} }
     -- we're looking for `filter` as our widget
-    -- FIXME: Extra newline only with widgets enabled
     assert.infoview_contents.are[[
       filter: no filter
       ▶ 1 goal

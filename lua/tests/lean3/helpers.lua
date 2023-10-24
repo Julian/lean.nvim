@@ -1,3 +1,4 @@
+local dedent = require('lean._util').dedent
 local helpers = { _clean_buffer_counter = 1 }
 
 -- Even though we can delete a buffer, so should be able to reuse names,
@@ -15,9 +16,14 @@ end
 --
 --  Yes c(lean) may be a double entendre, and no I don't feel bad.
 function helpers.clean_buffer(contents, callback)
+  local lines
+
+  -- Support a 1-arg version where we assume the contents is an empty buffer.
   if callback == nil then
     callback = contents
-    contents = ''
+    lines = {}
+  else
+    lines = vim.split(dedent(contents:gsub('^\n', '')):gsub('\n$', ''), '\n')
   end
 
   return function()
@@ -29,7 +35,7 @@ function helpers.clean_buffer(contents, callback)
     vim.opt_local.swapfile = false
     vim.opt.filetype = 'lean3'
 
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(contents, '\n'))
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
     vim.api.nvim_buf_call(bufnr, function() callback{ source_file = { bufnr = bufnr } } end)
   end
 end
