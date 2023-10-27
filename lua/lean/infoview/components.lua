@@ -70,7 +70,7 @@ function components.term_goal(term_goal)
 
   return {
     Element:new{
-      text = H(string.format('expected type (%s)', range_to_string(term_goal.range)) .. "\n" .. term_goal.goal),
+      text = H(('expected type (%s)'):format(range_to_string(term_goal.range)) .. '\n' .. term_goal.goal),
       name = 'term-goal'
     }
   }
@@ -308,7 +308,7 @@ local function tagged_text_msg_embed(t, sess, parent_cls)
   local element = Element:new{ name = 'code-with-infos' }
 
   if t.text ~= nil then
-    element.text = t.text
+    element.text = t.text:gsub('\n$', '')
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
       element:add_child(tagged_text_msg_embed(s, sess))
@@ -441,9 +441,9 @@ function components.interactive_diagnostics(diags, line, sess)
           text = H(string.format('%s: %s:\n',
             range_to_string(diag.range),
             util.DIAGNOSTIC_SEVERITY[diag.severity])),
-          name = 'diagnostic'
+          name = 'diagnostic',
+          children = { tagged_text_msg_embed(diag.message, sess) }
       }
-      element:add_child(tagged_text_msg_embed(diag.message, sess))
       table.insert(elements, element)
     end
   end

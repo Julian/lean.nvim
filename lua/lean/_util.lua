@@ -102,9 +102,9 @@ end
 ---
 --- REPLACEME: plenary.nvim has a version of this but it has odd behavior.
 function M.dedent(str)
-  str = str:gsub(" +$", ""):gsub("^ +", "") -- remove spaces at start and end
+  str = str:gsub('^ +', ''):gsub('\n *$', '\n') -- trim leading/trailing space
   local prefix = max_common_indent(str)
-  return (str:gsub("\n" .. prefix, "\n"):gsub("\n$", ""))
+  return str:gsub('\n' .. prefix, '\n')
 end
 
 function M.load_mappings(mappings, buffer)

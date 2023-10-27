@@ -16,19 +16,15 @@ describe('infoview pause/unpause', function()
   it("can pause and unpause updates", function(_)
     vim.cmd('edit! ' .. fixtures.project.path .. '/Test/Squares.lean')
     helpers.move_cursor{ to = {3, 0} }
-    -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
-
     ]]
 
     helpers.move_cursor{ to = {1, 0} }
-    -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
       1
-
     ]]
 
     -- FIXME: Demeter is angry.
@@ -45,25 +41,20 @@ describe('infoview pause/unpause', function()
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
       1
-
     ]]
 
     -- Unpausing triggers an update.
     pin:unpause()
-    -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 3:1-3:6: information:
       9.000000
-
     ]]
 
     -- And continued movement continues updating.
     helpers.move_cursor{ to = {1, 0} }
-    -- FIXME: Trailing extra newline.
     assert.infoview_contents.are[[
       ▶ 1:1-1:6: information:
       1
-
     ]]
   end)
 
