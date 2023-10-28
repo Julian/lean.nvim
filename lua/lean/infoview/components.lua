@@ -15,18 +15,6 @@ local function H(contents)
   return string.format('▶ %s', contents)
 end
 
----@param text string?
-local function mk_tooltip_element(text)
-  local element = Element:new{ text = text }
-  local stop_bubbling = function() end
-  element.events = {
-    click = stop_bubbling,
-    mouse_enter = stop_bubbling,
-    mouse_leave = stop_bubbling,
-  }
-  return element
-end
-
 --- Convert an LSP range to a human-readable, (1,1)-indexed string.
 ---
 --- The (1, 1) indexing is to match the interface used interactively for
@@ -44,22 +32,22 @@ end
 ---@return Element[]
 function components.goal(goal)
   if type(goal) ~= "table" or not goal.goals then return {} end
-
-  local element = Element:new{ name = "plain-goals" }
-
-  local goals_list = Element:new{
-    text = #goal.goals == 0 and H('goals accomplished 🎉')
-      or #goal.goals == 1 and H('1 goal')
-      or H(string.format('%d goals', #goal.goals)),
-    name = "plain-goals-list"
+  return {
+    Element:new{
+      name = "plain-goals",
+      children = {
+        Element:new{
+          name = "plain-goals-list",
+          text = #goal.goals == 0 and H('goals accomplished 🎉')
+            or #goal.goals == 1 and H('1 goal')
+            or H(string.format('%d goals', #goal.goals)),
+          children = vim.tbl_map(function(this_goal)
+            return Element:new{ text = '\n' .. this_goal, name = 'plain-goal' }
+          end, goal.goals),
+        }
+      }
+    }
   }
-  element:add_child(goals_list)
-
-  for _, this_goal in pairs(goal.goals) do
-    goals_list:add_child(Element:new{ text = '\n' .. this_goal, name = 'plain-goal' })
-  end
-
-  return { element }
 end
 
 --- The current (term) goal state.
@@ -100,7 +88,7 @@ local function code_with_infos(t, sess)
 
     ---@param info_popup InfoPopup
     local mk_tooltip = function(info_popup)
-      local tooltip_element = mk_tooltip_element()
+      local tooltip_element = Element.noop()
 
       if info_popup.exprExplicit ~= nil then
         tooltip_element:add_child(code_with_infos(info_popup.exprExplicit, sess))
@@ -126,7 +114,7 @@ local function code_with_infos(t, sess)
 
       local tooltip
       if err then
-        tooltip = mk_tooltip_element(vim.inspect(err))
+        tooltip = Element.noop(vim.inspect(err))
       else
         tooltip = mk_tooltip(info_popup)
         info_open = true
