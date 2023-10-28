@@ -135,7 +135,7 @@ syn region leanEncl matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP
 " FIXME(gabriel): distinguish backquotes in notations from names
 " syn region      leanNotation        start=+`+    end=+`+
 
-syn keyword	leanTodo 	containedin=leanComment TODO FIXME BUG FIX
+syn keyword	leanTodo 	containedin=leanComment TODO FIXME BUG FIX XXX
 
 syn match leanStringEscape '\\.' contained
 syn region leanString start='"' end='"' contains=leanStringEscape
