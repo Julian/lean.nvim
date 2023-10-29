@@ -20,6 +20,7 @@ helpers.if_has_lean3('trythis', function()
     example : ∃ n, n = 2 := by whatshouldIdo
   ]], function()
     vim.cmd.normal('G$bb')
+    assert.current_word.is('by')
     helpers.wait_for_line_diagnostics()
 
     require('lean.trythis').swap()

@@ -190,6 +190,13 @@ function helpers.wait_for_filetype()
   assert.message("filetype was never set").is_truthy(result)
 end
 
+--- Assert about the current word.
+local function has_current_word(_, arguments)
+  assert.is.equal(arguments[1], vim.fn.expand('<cword>'))
+  return true
+end
+assert:register('assertion', 'current_word', has_current_word)
+
 --- Assert about the current line.
 local function has_current_line(_, arguments)
   assert.is.equal(arguments[1], vim.api.nvim_get_current_line())
