@@ -264,6 +264,17 @@ describe('infoview content (auto-)update', function()
     end)
   end)
 
+  describe('diagnostics', helpers.clean_buffer('example : 37 = 37 := by', function()
+    it('are shown in the infoview', function()
+      helpers.move_cursor{ to = {1, 19} }
+      assert.infoview_contents.are[[
+        ▶ 1:22-1:24: error:
+        unsolved goals
+        ⊢ 37 = 37
+      ]]
+    end)
+  end))
+
   describe('cursor position', helpers.clean_buffer(function()
     it('is set to the goal line', function()
       local lines = { 'example ' }

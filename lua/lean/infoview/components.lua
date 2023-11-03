@@ -290,7 +290,7 @@ local function tagged_text_msg_embed(t, sess, parent_cls)
   local element = Element:new{ name = 'code-with-infos' }
 
   if t.text ~= nil then
-    element.text = t.text:gsub('\n$', '')
+    element.text = t.text
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
       element:add_child(tagged_text_msg_embed(s, sess))

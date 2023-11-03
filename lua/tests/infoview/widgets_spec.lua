@@ -62,3 +62,14 @@ describe('infoview widgets', helpers.clean_buffer('#check Nat', function()
     assert.is.equal(1, #vim.api.nvim_list_tabpages())
   end)
 end))
+
+describe('contents', helpers.clean_buffer('#check Nat', function()
+  it('shows diagnostics', helpers.clean_buffer('example : 37 = 37 := by', function()
+    helpers.move_cursor{ to = {1, 19} }
+    assert.infoview_contents.are[[
+      ▶ 1:22-1:24: error:
+      unsolved goals
+      ⊢ 37 = 37
+    ]]
+  end))
+end))
