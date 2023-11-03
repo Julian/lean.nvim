@@ -27,6 +27,12 @@ local function range_to_string(range)
     range["end"].character + 1)
 end
 
+local function goal_header(goals)
+  return #goals == 0 and H('goals accomplished 🎉')
+    or #goals == 1 and H('1 goal')
+    or H(('%d goals'):format(#goals))
+end
+
 --- The current (tactic) goal state.
 ---@param goal table: a Lean4 `plainGoal` LSP response
 ---@return Element[]
@@ -38,9 +44,7 @@ function components.goal(goal)
       children = {
         Element:new{
           name = "plain-goals-list",
-          text = #goal.goals == 0 and H('goals accomplished 🎉')
-            or #goal.goals == 1 and H('1 goal')
-            or H(string.format('%d goals', #goal.goals)),
+          text = goal_header(goal.goals),
           children = vim.tbl_map(function(this_goal)
             return Element:new{ text = '\n' .. this_goal, name = 'plain-goal' }
           end, goal.goals),
@@ -198,7 +202,7 @@ local function interactive_goal(goal, sess)
         }
       )
     end
-    hyp_element:add_child(Element:new{ text = "\n", name = 'hypothesis-separator' })
+    hyp_element:add_child(Element:new{ text = '\n', name = 'hypothesis-separator' })
   end
 
   element:add_child(
@@ -217,23 +221,13 @@ end
 function components.interactive_goals(goal, sess)
   if goal == nil then return {} end
 
-  local element = Element:new{
-    name = 'interactive-goals',
-    children = {
-      Element:new{
-        text = #goal.goals == 0 and H('goals accomplished 🎉')
-          or #goal.goals == 1 and H('1 goal\n')
-          or H(string.format('%d goals\n', #goal.goals))
-      }
-    }
-  }
-
-  for i, this_goal in ipairs(goal.goals) do
-    if i ~= 1 then element:add_child(Element:new{ text = '\n\n' }) end
-    element:add_child(interactive_goal(this_goal, sess))
+  local children = { Element:new{ text = goal_header(goal.goals) } }
+  for i, each in ipairs(goal.goals) do
+    table.insert(children, Element:new{ text = i == 1 and '\n' or '\n\n' })
+    table.insert(children, interactive_goal(each, sess))
   end
 
-  return { element }
+  return { Element:new{ name = 'interactive-goals', children = children } }
 end
 
 --- The current (term) goal state.
