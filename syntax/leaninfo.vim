@@ -19,7 +19,7 @@ hi def link leanInfoGoalVDash Operator
 hi def link leanInfoExpectedType Special
 
 hi def link leanInfoError DiagnosticError
-hi def link leanInfoWarning DiagnosticWarning
+hi def link leanInfoWarning DiagnosticWarn
 hi def link leanInfoInfo DiagnosticInfo
 hi def link leanInfoComment Comment
 hi def link leanInfoBlockComment Comment
