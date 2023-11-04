@@ -1,3 +1,10 @@
+---@brief [[
+--- RPC with the Lean server.
+---
+--- See Lean/Server/FileWorker/WidgetRequests.lean for the Lean side of many of
+--- the below data structures.
+---@brief ]]
+
 local rpc = {}
 local a = require'plenary.async'
 local util = require'lean._util'
