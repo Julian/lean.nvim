@@ -19,7 +19,7 @@ local control = require'plenary.async.control'
 ---@field uri string
 ---@field connected boolean
 ---@field session_id string?
----@field connect_err any?
+---@field connect_err string?
 ---@field on_connected function
 ---@field keepalive_timer any
 ---@field to_release RpcRef[]
@@ -125,7 +125,7 @@ end
 ---@param pos TextDocumentPositionParams
 ---@param method string
 ---@return any result
----@return any error
+---@return LspError|string error
 function Session:call(pos, method, params)
   while not self.connected do
     ---@diagnostic disable-next-line: undefined-field
@@ -166,7 +166,7 @@ end
 local sessions = {}
 
 ---@param bufnr number
----@result any error
+---@result string error
 local function connect(bufnr)
   local client = lsp.get_lean4_server(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
@@ -207,7 +207,7 @@ end
 
 ---@param method string
 ---@return any result
----@return any error
+---@return LspError error
 function Subsession:call(method, params)
   return self.sess:call(self.pos, method, params)
 end
@@ -239,28 +239,34 @@ end
 ---@field val CodeWithInfos?
 
 ---@class InteractiveGoal
----@field hyps      InteractiveHypothesis[]
----@field type      CodeWithInfos
+---@field hyps InteractiveHypothesis[]
+---@field type CodeWithInfos
 ---@field userName  string?
 
 ---@class InteractiveGoals
 ---@field goals InteractiveGoal[]
 
+---@class LspErrorCodeMessage
+---@field code integer
+---@field message string?
+
+---@alias LspError LspErrorCodeMessage|string
+
 ---@param pos PlainGoalParams
 ---@return InteractiveGoals goals
----@return any error
+---@return LspError error
 function Subsession:getInteractiveGoals(pos)
   return self:call('Lean.Widget.getInteractiveGoals', pos)
 end
 
 ---@class InteractiveTermGoal
----@field hyps      InteractiveHypothesis[]
----@field type      CodeWithInfos
----@field range     LspRange
+---@field hyps InteractiveHypothesis[]
+---@field type CodeWithInfos
+---@field range LspRange
 
 ---@param pos PlainTermGoalParams
 ---@return InteractiveTermGoal
----@return any error
+---@return LspError error
 function Subsession:getInteractiveTermGoal(pos)
   return self:call('Lean.Widget.getInteractiveTermGoal', pos)
 end
@@ -303,7 +309,7 @@ end
 
 ---@param lineRange LineRange?
 ---@return InteractiveDiagnostic[]
----@return any error
+---@return LspError error
 function Subsession:getInteractiveDiagnostics(lineRange)
   return self:call('Lean.Widget.getInteractiveDiagnostics', {lineRange = lineRange})
 end
@@ -315,7 +321,7 @@ end
 
 ---@param i InfoWithCtx
 ---@return InfoPopup
----@return any error
+---@return LspError error
 function Subsession:infoToInteractive(i)
   return self:call('Lean.Widget.InteractiveDiagnostics.infoToInteractive', i)
 end
@@ -323,7 +329,7 @@ end
 ---@param msg MessageData
 ---@param indent number
 ---@return TaggedTextMsgEmbed
----@return any error
+---@return LspError error
 function Subsession:msgToInteractive(msg, indent)
   return self:call('Lean.Widget.InteractiveDiagnostics.msgToInteractive',
     { msg = msg, indent = indent })
@@ -331,7 +337,7 @@ end
 
 ---@param children LazyTraceChildren
 ---@return TaggedTextMsgEmbed[]
----@return any error
+---@return LspError error
 function Subsession:lazyTraceChildrenToInteractive(children)
   return self:call('Lean.Widget.lazyTraceChildrenToInteractive', children)
 end
@@ -349,7 +355,7 @@ end
 ---@param kind GoToKind
 ---@param info InfoWithCtx
 ---@return LspLocationLink[]
----@return any error
+---@return LspError error
 function Subsession:getGoToLocation(kind, info)
   return self:call('Lean.Widget.getGoToLocation', { kind = kind, info = info })
 end

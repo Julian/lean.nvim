@@ -30,7 +30,7 @@ local function show_popup(element)
 end
 
 ---@param elements Element[]?
----@param err any?
+---@param err LspError?
 local function show_popup_or_error(elements, err)
   if elements then
     show_popup(Element:concat(elements, '\n\n'))
