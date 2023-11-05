@@ -81,8 +81,6 @@ Features
   live grepping.
   See the wiki for `a sample configuration <https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#live-grep>`_.
 
-* Simple implementations of some editing helpers, such as ``try this`` suggestion replacement
-
 Configuration & Usage
 ---------------------
 
@@ -142,8 +140,6 @@ This can be configured by putting a line at the top of your ``~/.config/nvim/ini
 | ``<LocalLeader>dt``    | toggle auto diff pin mode without clearing diff pin|
 +------------------------+----------------------------------------------------+
 | ``<LocalLeader>s``     | insert a ``sorry`` for each open goal              |
-+------------------------+----------------------------------------------------+
-| ``<LocalLeader>t``     | replace a "try this:" suggestion under the cursor  |
 +------------------------+----------------------------------------------------+
 | ``<LocalLeader><Tab>`` | jump into the infoview window associated with the  |
 |                        | current lean file                                  |
