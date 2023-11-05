@@ -164,12 +164,12 @@ end
 ---@class PathNode
 ---@field idx number @the index in the current element's children to follow
 ---@field name string @the name that the indexed child should have
----@field offset number|nil @if provided, a byte offset from the beginning of this element
+---@field offset number? @if provided, a byte offset from the beginning of this element
 
 ---Get the raw byte position of the element arrived at by following the given path.
 ---@param path PathNode[] @the path to follow
----@return number|nil @the position if the path was valid, nil otherwise
----@return number|nil @the additional byte offset from the position if the path was valid, nil otherwise
+---@return number? @the position if the path was valid, nil otherwise
+---@return number? @the additional byte offset from the position if the path was valid, nil otherwise
 function Element:pos_from_path(path)
   local pos = 1
   for i, p in ipairs(path) do
@@ -191,8 +191,8 @@ end
 
 ---Get the element stack and element arrived at by following the given path.
 ---@param path PathNode[] @the path to follow
----@return Element[]|nil @the stack of elements at this path, or nil if the path is invalid
----@return Element|nil @the element at this path, or nil if the path is invalid
+---@return Element[]? @the stack of elements at this path, or nil if the path is invalid
+---@return Element? @the element at this path, or nil if the path is invalid
 function Element:div_from_path(path)
   local stack = { self }
   for i, p in ipairs(path) do
@@ -266,8 +266,8 @@ end
 ---Get the path at the given raw byte position.
 ---(requires previous call to Element:to_string)
 ---@param pos integer byte position
----@return PathNode[]|nil the path at this position
----@return Element[]|nil the stack of elements along this path
+---@return PathNode[]? the path at this position
+---@return Element[]? the stack of elements along this path
 function Element:path_from_pos(pos)
   local path = { { idx = 0, name = self.name } }
   local stack = { self }

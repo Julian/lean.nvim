@@ -215,7 +215,7 @@ local function interactive_goal(goal, sess)
   return element
 end
 
----@param goal InteractiveGoals | nil
+---@param goal InteractiveGoals?
 ---@param sess Subsession
 ---@return Element[]
 function components.interactive_goals(goal, sess)

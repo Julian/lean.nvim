@@ -19,7 +19,7 @@ local control = require'plenary.async.control'
 ---@field uri string
 ---@field connected boolean
 ---@field session_id string?
----@field connect_err any | nil
+---@field connect_err any?
 ---@field on_connected function
 ---@field keepalive_timer any
 ---@field to_release RpcRef[]
@@ -236,12 +236,12 @@ end
 ---@class InteractiveHypothesis
 ---@field names string[]
 ---@field type CodeWithInfos
----@field val CodeWithInfos | nil
+---@field val CodeWithInfos?
 
 ---@class InteractiveGoal
 ---@field hyps      InteractiveHypothesis[]
 ---@field type      CodeWithInfos
----@field userName  string | nil
+---@field userName  string?
 
 ---@class InteractiveGoals
 ---@field goals InteractiveGoal[]
@@ -309,9 +309,9 @@ function Subsession:getInteractiveDiagnostics(lineRange)
 end
 
 ---@class InfoPopup
----@field type CodeWithInfos|nil
----@field exprExplicit CodeWithInfos|nil
----@field doc string|nil
+---@field type CodeWithInfos?
+---@field exprExplicit CodeWithInfos?
+---@field doc string?
 
 ---@param i InfoWithCtx
 ---@return InfoPopup
