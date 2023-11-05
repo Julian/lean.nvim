@@ -1,6 +1,9 @@
 leanpkg.path
 *.olean
 
+demo.gif
+demo.mp4
+
 /luapath
 /packpath
 /pack
