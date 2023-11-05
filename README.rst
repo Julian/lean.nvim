@@ -4,7 +4,7 @@ lean.nvim
 
 ``neovim`` support for the `Lean Theorem Prover <https://leanprover.github.io/lean4/doc/>`_.
 
-https://user-images.githubusercontent.com/329822/161458848-815be138-58cd-45ed-bd94-bfc03e9f97a0.mov
+https://github.com/Julian/lean.nvim/assets/329822/81c24ae7-11a3-45a7-b5f2-0f7b0c6d2b9a
 
 Prerequisites
 -------------
