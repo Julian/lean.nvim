@@ -20,8 +20,7 @@ Type "nvim" Sleep 1s Enter
 Hide Type ";luafile demos/basic.lua" Enter Show
 
 Hide Type ";lua DEMO.popup()" Enter Show
-Type "lean.nvim brings support for the Lean theorem prover to Neovim." Sleep 500ms
-Enter
+Type "lean.nvim brings support for the Lean theorem prover to Neovim." Sleep 500ms Enter
 Enter
 Type "Have a look, watching our proof on the left and the infoview on the right!" Sleep 1s
 Escape Hide Type ";q!" Enter Show
@@ -35,16 +34,16 @@ Enter
 Sleep 8s
 Show
 
-Type@25ms "open Real in" Enter
-Type@25ms "-- There exist two irrational numbers `x` and `y`" Enter
-Type@25ms "-- such that `x ^ y` is rational." Enter
+Type@20ms "open Real in" Enter
+Type@40ms "-- There exist two irrational numbers `x` and `y`" Enter
+Type@40ms "-- such that `x ^ y` is rational." Enter
 Type "lemma exists_pow_not_irrational :" Enter
-Type "  ∃ (x y : "
+Type "  ∃ (x y : " Sleep 500ms
 Escape
 
 Hide
 Type ";lua DEMO.popup()" Enter Show
-Type "Abbreviations work just like in VSCode." Sleep 1s
+Type "Typing out unicode abbreviations works just like in VSCode..." Sleep 1s
 Escape Hide Type ";q!" Enter Show
 
 Type "i \R),"
@@ -52,9 +51,9 @@ Sleep 1s Escape
 
 Hide
 Type ";lua DEMO.popup()" Enter
-Type "Abbreviations work just like in VSCode." Enter
+Type "Typing out unicode abbreviations works just like in VSCode..." Enter
 Enter Show
-Type "Including showing you how to type what you need." Enter Sleep 1s
+Type "including showing you how to type what you need." Sleep 1s
 Escape Hide Type ";q!" Enter Show
 
 Type "hh"
@@ -168,13 +167,15 @@ Escape
 Sleep 5s
 
 Hide Type ";lua DEMO.popup()" Enter Show
-Type "Goals accomplished 🎉!" Enter
-Enter
 Type "This was just a taste of lean.nvim." Enter
+Enter
 Type "Give it a try!" Enter
 Enter
-Type "And feel free to ask questions or send suggestions" Enter
-Type "either on the Zulip or on lean.nvim's issue tracker." Enter
+Type "Even more information and functionality can be found in the README." Enter
+Type "Also feel free to ask questions, or to send suggestions." Enter
+Type "You can do so on the Zulip or on lean.nvim's issue tracker."
+Enter
+Type "Goals accomplished 🎉!" Enter
 Sleep 5s Escape
 Type ";qa!" Enter
 Sleep 500ms
