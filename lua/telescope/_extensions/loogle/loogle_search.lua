@@ -9,6 +9,9 @@ local curl = require 'plenary.curl'
 
 local M = {}
 
+
+--- Ask for a type pattern in the UI
+--- @return string?, string? type The first value is a type. The second a potential error.
 M.ask_for_type = function()
   local type = ''
   local on_confirm = function(input) type = input end
@@ -16,9 +19,12 @@ M.ask_for_type = function()
   if type == nil or type == '' then
     return nil, 'Type was empty'
   end
-  return type
+  return type, nil
 end
 
+--- Ask for a type pattern in the UI
+--- @param type string The type pattern to look for.
+--- @return table?, string? hits The first value is the hits in the Loogle JSON API format. The second a potential error
 M.look_for_type = function(type)
   local res = curl.get {
     url = 'https://loogle.lean-lang.org/json',
@@ -45,6 +51,8 @@ M.look_for_type = function(type)
   return body.hits, nil
 end
 
+--- Use telescope to provide a Loogle API based type search
+--- @param telescope_opts table Options for the telescope framework
 M.find = function(telescope_opts)
   telescope_opts = vim.tbl_extend('keep', telescope_opts or {}, {})
 
