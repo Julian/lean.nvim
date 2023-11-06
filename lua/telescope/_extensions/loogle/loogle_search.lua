@@ -60,13 +60,13 @@ M.find = function(telescope_opts)
 
   type, err = M.ask_for_type()
   if err then
-    print(err)
+    vim.api.nvim_notify(err, vim.log.levels.ERROR, {})
     return
   end
 
   results, err = M.look_for_type(type)
   if err then
-    print(err)
+    vim.api.nvim_notify(err, vim.log.levels.ERROR, {})
     return
   end
 
