@@ -12,7 +12,7 @@ local components = {}
 
 --- Format a heading.
 local function H(contents)
-  return string.format('▶ %s', contents)
+  return ('▶ %s'):format(contents)
 end
 
 --- Convert an LSP range to a human-readable, (1,1)-indexed string.

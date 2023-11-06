@@ -4,8 +4,6 @@
 
 ---@tag lean.abbreviations
 
-local set_augroup = require('lean._util').set_augroup
-
 local abbreviations = {}
 
 local cleanup_imaps = function() end
@@ -83,7 +81,7 @@ local function _clear_abbr_mark()
   cleanup_imaps()
 end
 
-function abbreviations._insert_char_pre()
+local function insert_char_pre()
   local char = vim.api.nvim_get_vvar('char')
 
   if abbreviations.abbr_mark then
@@ -156,22 +154,25 @@ function abbreviations._insert_char_pre()
   end
 end
 
-function abbreviations._cmdwin_enter()
+local function cmdwin_enter()
   local came_from = vim.fn.winbufnr(vim.fn.win_getid(vim.fn.winnr('#')))
-  local ft = vim.api.nvim_buf_get_option(came_from, 'filetype')
-  if not ft:match('^lean*') then
-    set_augroup('LeanAbbreviationCmdwin', '')
-    return
-  end
-  set_augroup('LeanAbbreviationCmdwin', [[
-    autocmd InsertCharPre <buffer> lua require'lean.abbreviations'._insert_char_pre()
-    autocmd InsertLeave <buffer> lua require'lean.abbreviations'.convert()
-    autocmd BufLeave <buffer> lua require'lean.abbreviations'.convert()
-  ]])
+  if not vim.bo[came_from].filetype:match('^lean*') then return end
+
+  local augroup = vim.api.nvim_create_augroup('LeanAbbreviationCmdwin', {})
+  vim.api.nvim_create_autocmd('InsertCharPre', {
+    group = augroup,
+    buffer = 0,
+    callback = insert_char_pre,
+  })
+  vim.api.nvim_create_autocmd({ 'InsertLeave', 'BufLeave' }, {
+    group = augroup,
+    buffer = 0,
+    callback = abbreviations.convert,
+  })
 end
 
-function abbreviations._cmdwin_leave()
-  set_augroup('LeanAbbreviationCmdwin', '')
+local function cmdwin_leave()
+  vim.api.nvim_create_augroup('LeanAbbreviationCmdwin', {})
 end
 
 local function convert_abbrev(abbrev)
@@ -234,13 +235,20 @@ function abbreviations.enable(opts)
     abbreviations.abbreviations[from] = to
   end
 
-  set_augroup("LeanAbbreviations", [[
-    autocmd InsertCharPre *.lean lua require'lean.abbreviations'._insert_char_pre()
-    autocmd InsertLeave *.lean lua require'lean.abbreviations'.convert()
-    autocmd CmdwinEnter * lua require'lean.abbreviations'._cmdwin_enter()
-    autocmd CmdwinLeave * lua require'lean.abbreviations'._cmdwin_leave()
-    autocmd BufLeave *.lean lua require'lean.abbreviations'.convert()
-  ]])
+  local augroup = vim.api.nvim_create_augroup('LeanAbbreviations', {})
+  for event, callback in pairs{
+    InsertCharPre = insert_char_pre,
+    InsertLeave = abbreviations.convert,
+    BufLeave = abbreviations.convert,
+  } do
+    vim.api.nvim_create_autocmd(event, {
+      group = augroup,
+      pattern = { '*.lean' },
+      callback = callback,
+    })
+  end
+  vim.api.nvim_create_autocmd('CmdwinEnter', { group = augroup, callback = cmdwin_enter })
+  vim.api.nvim_create_autocmd('CmdwinLeave', { group = augroup, callback = cmdwin_leave })
   vim.cmd[[hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray]]
 end
 
