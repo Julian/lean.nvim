@@ -84,6 +84,7 @@ M.find = function(telescope_opts)
 
         table.insert(output, d.name .. ' : ' .. d.type)
 
+        require('telescope.previewers.utils').highlighter(self.state.bufnr, 'lean')
         vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, output)
       end
     }),
