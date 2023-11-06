@@ -24,7 +24,7 @@ M.look_for_type = function(type)
     url = 'https://loogle.lean-lang.org/json',
     query = { q = type },
     headers = {
-      User_Agent = 'lean.nvim'
+     ['User-Agent'] = 'lean.nvim'
     },
     accept = 'application/json',
   }
