@@ -59,8 +59,10 @@ function lean.setup(opts)
   opts.stderr = opts.stderr or {}
   if opts.stderr.enable ~= false then require'lean.stderr'.enable(opts.stderr or {}) end
 
-  opts.loogle = opts.loogle or {}
-  if opts.loogle.enable ~= false then require("telescope").load_extension("loogle") end
+  local ok, telescope = pcall(require, 'telescope')
+  if ok then
+    telescope.load_extension("loogle")
+  end
 
   vim.cmd[[
     command! LeanRestartFile :lua require'lean.lsp'.restart_file()
