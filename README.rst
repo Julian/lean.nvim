@@ -57,6 +57,7 @@ or with `vim-plug <https://github.com/junegunn/vim-plug>`_:
     Plug 'hrsh7th/vim-vsnip'       " For snippets
     Plug 'andrewradev/switch.vim'  " For Lean switch support
     Plug 'tomtom/tcomment_vim'     " For commenting motions
+    Plug 'nvim-telescope/telescope.nvim' " For Loogle search
 
 ``lean.nvim`` already includes syntax highlighting and Lean filetype support, so installing the ``lean.vim`` (i.e. non-neovim) plugin is not required or recommended.
 
@@ -80,6 +81,8 @@ Features
 * Lean library search path access via ``lean.current_search_path()``, suitable for use with e.g. `telescope.nvim <https://github.com/nvim-telescope/telescope.nvim/>`_ for
   live grepping.
   See the wiki for `a sample configuration <https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#live-grep>`_.
+
+* If `telescope.nvim <https://github.com/nvim-telescope/telescope.nvim>`__ is present a `:Telescope loogle` command is available as a frontend for the `Loogle <https://loogle.lean-lang.org>`_ JSON API.
 
 Configuration & Usage
 ---------------------
