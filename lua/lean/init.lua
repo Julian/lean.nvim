@@ -25,7 +25,6 @@ local lean = {
       ['<LocalLeader>W'] = '<Cmd>LeanInfoviewDisableWidgets<CR>';
       ['<LocalLeader><Tab>'] = '<Cmd>LeanGotoInfoview<CR>';
       ['<LocalLeader>s'] = '<Cmd>LeanSorryFill<CR>';
-      ['<LocalLeader>t'] = '<Cmd>LeanTryThis<CR>';
       ['<LocalLeader>\\'] = '<Cmd>LeanAbbreviationsReverseLookup<CR>';
     };
     i = {
@@ -83,7 +82,7 @@ function lean.setup(opts)
     command! LeanAbbreviationsReverseLookup :lua require'lean.abbreviations'.show_reverse_lookup()
 
     command! LeanSorryFill :lua require'lean.sorry'.fill()
-    command! LeanTryThis :lua require'lean.trythis'.swap()
+    command! LeanTryThis :lua require'lean.lean3.trythis'.swap()
   ]]
 
   if opts.mappings == true then
@@ -103,17 +102,24 @@ end
 function lean.use_suggested_mappings(buffer_local)
   local buffer = buffer_local and 0
   util.load_mappings(lean.mappings, buffer)
+
+  if lean.is_lean3_buffer() then
+    util.load_mappings(
+      { n = { ['<LocalLeader>t'] = '<Cmd>LeanTryThis<CR>' } },
+      buffer
+    )
+  end
 end
 
 --- Is the current buffer a lean buffer?
 function lean.is_lean_buffer()
   local filetype = vim.opt.filetype:get()
-  return filetype == "lean" or filetype == "lean3"
+  return filetype == 'lean' or filetype == 'lean3'
 end
 
 --- Is the current buffer a lean 3 buffer?
 function lean.is_lean3_buffer()
-  return vim.opt.filetype:get() == "lean3"
+  return vim.opt.filetype:get() == 'lean3'
 end
 
 --- Return the current Lean search path.

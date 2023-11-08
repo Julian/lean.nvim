@@ -1,3 +1,5 @@
+local trythis = require('lean.lean3.trythis')
+
 local helpers = require('tests.helpers')
 local clean_buffer = require('tests.lean3.helpers').clean_buffer
 
@@ -11,7 +13,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example : ∃ n, n = 2 := by existsi 2; refl')
   end))
 
@@ -23,7 +25,7 @@ helpers.if_has_lean3('trythis', function()
     assert.current_word.is('by')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example : ∃ n, n = 2 := by existsi 2; refl')
   end))
 
@@ -34,7 +36,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G0')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example : ∃ n, n = 2 := by existsi 2; refl')
   end))
 
@@ -45,7 +47,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example : ∃ n : nat, ∀ m : nat, m = m := by existsi 0; intro m; refl')
   end))
 
@@ -58,7 +60,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example : ∃ n, n = 2 := by finish')
   end))
 
@@ -72,7 +74,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('3gg$')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.contents.are[[
       meta def whatshouldIdo := (do tactic.trace "Try this: existsi 2,\n  refl,\n")
       example : ∃ n, n = 2 := by {
@@ -89,7 +91,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example {n : nat} : n = n := rfl')
   end))
 
@@ -103,7 +105,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G$h')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example : foo := ⟨rfl⟩')
   end))
 
@@ -116,7 +118,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example {n : nat} : n = n := by simp [foo] at bar')
   end))
 
@@ -128,7 +130,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example {n : nat} : n = n := by simp [foo, baz]')
   end))
 
@@ -140,7 +142,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example {n : nat} : n = n := by simp [foo, baz] at bar')
   end))
 
@@ -152,7 +154,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example {n : nat} : n = n := by simp [foo, baz] at *')
   end))
 
@@ -163,7 +165,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G0')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example {n : nat} : n = n := rfl')
   end))
 
@@ -185,7 +187,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('6gg3|')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
 
   -- FIXME: With a bit more tweaking this should really trim the begin/exact/end
     assert.contents.are[[
@@ -206,7 +208,7 @@ helpers.if_has_lean3('trythis', function()
     vim.cmd.normal('G$')
     helpers.wait_for_line_diagnostics()
 
-    require('lean.trythis').swap()
+    trythis.swap()
     assert.current_line.is('example : true := by "hi')
   end))
 end)

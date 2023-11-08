@@ -89,6 +89,8 @@ Configuration & Usage
 
 The short version -- if you followed the instructions above for ``lazy.nvim``, simply ensure your ``opts`` table contains at least an ``lsp`` table defining ``on_attach`` to be your preferred LSP attach handler, and ``mappings = true`` to enable key mappings, as shown in the example above.
 
+Note that in particular your ``on_attach`` handler should likely bind things like ``vim.lsp.buf.code_action`` (AKA "the lightbulb") to ensure that you have easy access to code actions in Lean buffers.
+In particular, Lean (or really ``Std``) uses code actions for replacing "Try this:" suggestions, which you will almost certainly want to be able to perform.
 If you do not already have a preferred setup which includes LSP key mappings and (auto)completion, you may find the `fuller example here in the wiki <https://github.com/Julian/lean.nvim/wiki/Getting-Started-From-the-Ground-Up>`_ helpful.
 
 If you are using another plugin manager such as ``vim-plug``, after following the installation instructions, add the below to ``~/.config/nvim/plugin/lean.lua`` or an equivalent:

@@ -180,19 +180,6 @@ sorry.fill()                                                        *sorry.fill*
           { sorry },
 
 
-trythis.swap()                                                    *trythis.swap*
-     Swap the first suggestion from Lean with the word under the cursor.
-
-
-                                       *trythis.trim_unnecessary_mode_switching*
-trythis.trim_unnecessary_mode_switching()
-     Trim unnecessary switching between tactic and term modes.
-
-
-trythis.trim_doubled_ats()                            *trythis.trim_doubled_ats*
-     Trim `at foo at foo` to just `at foo` once.
-
-
  Support for `:checkhealth` for lean.nvim.
 
 health.check()                                                    *health.check*
