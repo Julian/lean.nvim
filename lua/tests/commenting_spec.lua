@@ -1,5 +1,5 @@
 ---@brief [[
---- Tests for basic Lean language support.
+--- Tests for commenting, currently (only) via TComment.
 ---@brief ]]
 
 local helpers = require('tests.helpers')

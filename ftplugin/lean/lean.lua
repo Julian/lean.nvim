@@ -21,6 +21,7 @@ if vim.g.loaded_matchit and not vim.b.match_words then
   vim.b.match_words = table.concat(
     {
         [[\<\%(namespace\|section\)\s\+\(.\{-}\)\>:\<end\s\+\1\>]],
+        [[^\s*section\s*$:^end\s*$]],
     },
     ','
   )

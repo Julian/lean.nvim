@@ -48,7 +48,7 @@ _clean-test-dependencies:
 
 # Clone any neovim dependencies required for the plugin + test suite.
 _clone-test-dependencies: _clean-test-dependencies
-    for dependency in AndrewRadev/switch.vim Julian/inanis.nvim neovim/nvim-lspconfig nvim-lua/plenary.nvim tomtom/tcomment_vim; do \
+    for dependency in AndrewRadev/switch.vim andymass/vim-matchup Julian/inanis.nvim neovim/nvim-lspconfig nvim-lua/plenary.nvim tomtom/tcomment_vim; do \
         git clone --quiet --filter=blob:none "https://github.com/$dependency" "{{ packpath }}/$(basename $dependency)"; \
     done
 
