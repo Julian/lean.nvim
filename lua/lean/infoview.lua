@@ -8,7 +8,6 @@ local lean3 = require('lean.lean3')
 local leanlsp = require('lean.lsp')
 local is_lean_buffer = require('lean').is_lean_buffer
 local util = require('lean._util')
-local set_augroup = util.set_augroup
 local rpc = require('lean.rpc')
 
 local infoview = {
@@ -393,16 +392,44 @@ function Infoview:toggle()
   if self.window then self:close() else self:open() end
 end
 
+--- Update the info contents appropriately for Lean 4 or 3.
+local function update_current_infoview()
+  if not is_lean_buffer() then return end
+  local current_infoview = infoview.get_current_infoview()
+  if not current_infoview then return end
+  return current_infoview:__update()
+end
+
 --- Set the currently active Lean buffer to update the infoview.
 function Infoview:focus_on_current_buffer()
+  local augroup = vim.api.nvim_create_augroup('LeanInfoviewUpdate', {})
   if self.window then
-    set_augroup("LeanInfoviewUpdate", [[
-      autocmd CursorMoved <buffer> lua require'lean.infoview'.__update()
-      autocmd CursorMovedI <buffer> lua require'lean.infoview'.__update()
-    ]], 0)
-  else
-    set_augroup("LeanInfoviewUpdate", "", 0)
+    vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+      group = augroup,
+      buffer = 0,
+      callback = update_current_infoview,
+    })
   end
+end
+
+--- An infoview was entered, show the extmark for the current pin.
+--- Will be triggered via a `WinEnter` autocmd.
+local function show_current_pin()
+  local current_infoview = infoview.get_current_infoview()
+  if not current_infoview then return end
+  local info = current_infoview.info
+  if info.__win_event_disable then return end
+  current_infoview.info:__maybe_show_pin_extmark("current")
+end
+
+--- An infoview was left, hide the extmark for the current pin.
+--- Will be triggered via a `WinLeave` autocmd.
+local function hide_current_pin()
+  local current_infoview = infoview.get_current_infoview()
+  if not current_infoview then return end
+  local info = current_infoview.info
+  if info.__win_event_disable then return end
+  info.pin:__hide_extmark()
 end
 
 ---@return Info
@@ -442,10 +469,17 @@ function Info:new(opts)
     keymaps = options.mappings,
   }
   -- Show/hide current pin extmark when entering/leaving infoview.
-  set_augroup("LeanInfoviewShowPin", string.format([[
-    autocmd WinEnter <buffer=%d> lua require'lean.infoview'.__show_curr_pin()
-    autocmd WinLeave <buffer=%d> lua require'lean.infoview'.__hide_curr_pin()
-  ]], pin_bufnr, pin_bufnr), pin_bufnr)
+  local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })
+  vim.api.nvim_create_autocmd('WinEnter', {
+    group = pin_augroup,
+    buffer = pin_bufnr,
+    callback = show_current_pin,
+  })
+  vim.api.nvim_create_autocmd('WinLeave', {
+    group = pin_augroup,
+    buffer = pin_bufnr,
+    callback = hide_current_pin,
+  })
 
   local diff_bufnr = util.create_buf{
     name = 'lean://info/' .. count .. '/diff',
@@ -457,10 +491,19 @@ function Info:new(opts)
     buf = diff_bufnr,
     keymaps = options.mappings,
   }
+
   -- Make sure we notice even if someone manually :q's the diff window.
-  set_augroup("LeanInfoviewClose", string.format([[
-    autocmd BufHidden <buffer=%d> lua require'lean.infoview'.__diff_was_closed()
-  ]], diff_bufnr), diff_bufnr)
+  local close_augroup = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false })
+  vim.api.nvim_create_autocmd('BufHidden', {
+    group = close_augroup,
+    buffer = diff_bufnr,
+    callback = function ()
+      local current_infoview = infoview.get_current_infoview()
+      local info = current_infoview.info
+      if info.__win_event_disable then return end
+      info:__clear_diff_pin()
+    end
+  })
 
   new_info:render()
 
@@ -981,43 +1024,6 @@ function infoview.close_all()
   end
 end
 
---- An infoview diff window was closed.
---- Will be triggered via a `WinClosed` autocmd.
-function infoview.__diff_was_closed()
-  local current_infoview = infoview.get_current_infoview()
-  local info = current_infoview.info
-  if info.__win_event_disable then return end
-  info:__clear_diff_pin()
-end
-
---- An infoview was entered, show the extmark for the current pin.
---- Will be triggered via a `WinEnter` autocmd.
-function infoview.__show_curr_pin()
-  local current_infoview = infoview.get_current_infoview()
-  if not current_infoview then return end
-  local info = current_infoview.info
-  if info.__win_event_disable then return end
-  current_infoview.info:__maybe_show_pin_extmark("current")
-end
-
---- An infoview was left, hide the extmark for the current pin.
---- Will be triggered via a `WinLeave` autocmd.
-function infoview.__hide_curr_pin()
-  local current_infoview = infoview.get_current_infoview()
-  if not current_infoview then return end
-  local info = current_infoview.info
-  if info.__win_event_disable then return end
-  info.pin:__hide_extmark()
-end
-
---- Update the info contents appropriately for Lean 4 or 3.
-function infoview.__update()
-  if not is_lean_buffer() then return end
-  local current_infoview = infoview.get_current_infoview()
-  if not current_infoview then return end
-  return current_infoview:__update()
-end
-
 --- Update pins corresponding to the given URI.
 function infoview.__update_pin_by_uri(uri)
   if not infoview.enabled then return end
@@ -1050,39 +1056,67 @@ function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
   end
 end
 
+local attached_buffers = {}
+
+--- Callback when entering a Lean buffer.
+local function infoview_bufenter()
+  infoview.__maybe_autoopen()
+  local bufnr = vim.api.nvim_get_current_buf()
+  if not attached_buffers[bufnr] then
+    vim.api.nvim_buf_attach(bufnr, false, {on_lines = infoview.__update_pin_positions;})
+    attached_buffers[bufnr] = true
+  end
+  update_current_infoview()
+end
+
+--- Configure the infoview to update when this buffer is active.
+local function make_buffer_focusable(name)
+  local bufnr = vim.fn.bufnr(name)
+  if bufnr == -1 then return end
+  if bufnr == vim.api.nvim_get_current_buf() then
+    -- because FileType can happen after BufEnter
+    infoview_bufenter()
+    local current_infoview = infoview.get_current_infoview()
+    if not current_infoview then return end
+    current_infoview:focus_on_current_buffer()
+  end
+
+  local augroup = vim.api.nvim_create_augroup('LeanInfoviewSetFocus', { clear = false })
+  -- WinEnter is necessary for the edge case where you have
+  -- a file open in a tab with an infoview and move to a
+  -- new window in a new tab with that same file but no infoview
+  vim.api.nvim_create_autocmd('BufEnter', {
+    group = augroup,
+    buffer = bufnr,
+    callback = infoview_bufenter,
+  })
+
+  vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter' }, {
+    group = augroup,
+    buffer = bufnr,
+    callback = function()
+      local current_infoview = infoview.get_current_infoview()
+      if not current_infoview then return end
+      current_infoview:focus_on_current_buffer()
+    end,
+  })
+end
+
 --- Enable and open the infoview across all Lean buffers.
 function infoview.enable(opts)
   options = vim.tbl_extend("force", options, opts)
   infoview.mappings = options.mappings
   infoview.enabled = true
   infoview.set_autoopen(options.autoopen)
-  set_augroup("LeanInfoviewInit", [[
-    autocmd! FileType lean3 lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
-    autocmd! FileType lean lua require'lean.infoview'.make_buffer_focusable(vim.fn.expand('<afile>'))
-  ]])
+
+  local augroup = vim.api.nvim_create_augroup('LeanInfoviewInit', {})
+  vim.api.nvim_create_autocmd('Filetype', {
+    group = augroup,
+    pattern = { 'lean', 'lean3' },
+    callback = function(event) make_buffer_focusable(event.file) end,
+  })
 end
 
---- Configure the infoview to update when this buffer is active.
-function infoview.make_buffer_focusable(name)
-  local bufnr = vim.fn.bufnr(name)
-  if bufnr == -1 then return end
-  if bufnr == vim.api.nvim_get_current_buf() then
-    -- because FileType can happen after BufEnter
-    infoview.__bufenter()
-    local current_infoview = infoview.get_current_infoview()
-    if not current_infoview then return end
-    current_infoview:focus_on_current_buffer()
-  end
-
-  -- WinEnter is necessary for the edge case where you have
-  -- a file open in a tab with an infoview and move to a
-  -- new window in a new tab with that same file but no infoview
-  set_augroup("LeanInfoviewSetFocus", string.format([[
-    autocmd BufEnter <buffer=%d> lua require'lean.infoview'.__bufenter()
-    autocmd BufEnter,WinEnter <buffer=%d> lua if require'lean.infoview'.get_current_infoview()]] ..
-    [[ then require'lean.infoview'.get_current_infoview():focus_on_current_buffer() end
-  ]], bufnr, bufnr), 0)
-end
 
 --- Set whether a new infoview is automatically opened when entering Lean buffers.
 function infoview.set_autoopen(autoopen)
@@ -1097,19 +1131,6 @@ end
 --- Set whether a new pin is automatically paused.
 function infoview.set_autopause(autopause)
   options.autopause = autopause
-end
-
-local attached_buffers = {}
-
---- Callback when entering a Lean buffer.
-function infoview.__bufenter()
-  infoview.__maybe_autoopen()
-  local bufnr = vim.api.nvim_get_current_buf()
-  if not attached_buffers[bufnr] then
-    vim.api.nvim_buf_attach(bufnr, false, {on_lines = infoview.__update_pin_positions;})
-    attached_buffers[bufnr] = true
-  end
-  infoview.__update()
 end
 
 --- Get the infoview corresponding to the current window.

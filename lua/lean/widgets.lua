@@ -384,6 +384,7 @@ end
 
 -- Maps BufRenderer.buf to BufRenderer
 --- @type table<number, BufRenderer>
+-- FIXME: Remove this, though there are some dependencies...
 local _by_buf = {}
 
 -- Clean up references to closed buffers in the `_by_buf` table.
@@ -403,14 +404,17 @@ function BufRenderer:new(obj)
 
   obj = obj or {}
   local new_renderer = setmetatable(obj, self)
-  vim.api.nvim_buf_set_option(obj.buf, "modifiable", false)
+  vim.api.nvim_buf_set_option(obj.buf, 'modifiable', false)
   _by_buf[obj.buf] = new_renderer
 
-  util.set_augroup("WidgetPosition", string.format([[
-    autocmd CursorMoved <buffer=%d> lua require'lean.widgets'._by_buf[%d]:update_cursor()
-    autocmd BufEnter <buffer=%d> lua require'lean.widgets'._by_buf[%d]:update_cursor()
-  ]], obj.buf, obj.buf, obj.buf, obj.buf), obj.buf)
+  local augroup = vim.api.nvim_create_augroup('WidgetPosition', { clear = false })
+  vim.api.nvim_create_autocmd({ 'BufEnter', 'CursorMoved' }, {
+    group = augroup,
+    buffer = obj.buf,
+    callback = function() new_renderer:update_cursor() end
+  })
 
+  -- FIXME: Convert to vim.keymap, though this seems possibly user facing...
   local mappings = {
     n = {
       ['<Tab>'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(obj.buf),
