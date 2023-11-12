@@ -8,5 +8,10 @@ globals = {
   "lean_nvim_default_filetype",
   "describe",
   "it",
-  assert = {fields = {"message"}},
+  assert = {
+    fields = {
+      "contents",
+      "message",
+    }
+  },
 }
