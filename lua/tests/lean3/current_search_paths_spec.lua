@@ -10,7 +10,7 @@ helpers.if_has_lean3('lean.current_search_paths', function()
       helpers.wait_for_ready_lsp()
 
       local paths = require('lean').current_search_paths()
-      assert.are_equal(3, #paths)
+      assert.are.equal(3, #paths)
       -- via its leanpkg.path:
       assert.has_all(table.concat(paths, '\n') .. '\n', {
         '/lib/lean/library\n', -- Lean 3 standard library

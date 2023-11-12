@@ -7,7 +7,7 @@ helpers.if_has_lean3('ft.detect', function()
   for kind, path in fixtures.project_files() do
     it('detects ' .. kind .. ' files', function()
       vim.cmd('edit! ' .. path)
-      assert.are_equal('lean3', vim.opt.filetype:get())
+      assert.are.equal('lean3', vim.opt.filetype:get())
     end)
   end
 
@@ -25,7 +25,7 @@ helpers.if_has_lean3('ft.detect', function()
     end))
 
     helpers.wait_for_filetype()
-    assert.are_equal('lean3', vim.opt.filetype:get())
+    assert.are.equal('lean3', vim.opt.filetype:get())
   end)
 
   it('marks standard library files nomodifiable by default', function()
