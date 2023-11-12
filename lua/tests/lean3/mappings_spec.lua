@@ -13,7 +13,7 @@ if_has_lean3('mappings', function()
     )
 
     vim.cmd.new()
-    assert.is.same('', vim.fn.maparg("<LocalLeader>i", 'n'))
+    assert.is.empty(vim.fn.maparg('<LocalLeader>i', 'n'))
     vim.cmd.bwipeout()
   end))
 end)
