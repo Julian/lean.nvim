@@ -1,5 +1,5 @@
-local helpers = require('tests.helpers')
-local fixtures = require('tests.fixtures')
+local fixtures = require 'tests.fixtures'
+local helpers = require 'tests.helpers'
 
 require('lean').setup { lsp = { enable = true } }
 
@@ -10,13 +10,15 @@ describe('lean.current_search_paths', function()
       helpers.wait_for_ready_lsp()
 
       local paths = require('lean').current_search_paths()
-      assert.are_equal(3, #paths)
+      assert.are.equal(3, #paths)
       -- via its leanpkg.path:
       assert.has_all(
         table.concat(paths, '\n') .. '\n',
-        { "/lib/lean\n",                            -- standard library
-          fixtures.project.path .. '\n',       -- the project itself
-          fixtures.project.path .. '/foo\n' }  -- its dependency
+        {
+          '/lib/lean\n', -- standard library
+          fixtures.project.path .. '\n', -- the project itself
+          fixtures.project.path .. '/foo\n',
+        } -- its dependency
       )
     end)
   end
