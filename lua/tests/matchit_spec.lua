@@ -2,51 +2,69 @@
 --- Tests for matchit support.
 ---@brief ]]
 
-local helpers = require('tests.helpers')
+local helpers = require 'tests.helpers'
 
-require('lean').setup{}
+require('lean').setup {}
 
 describe('matchit', function()
-  it('jumps between section start and end', helpers.clean_buffer([[
-    section foo
+  it(
+    'jumps between section start and end',
+    helpers.clean_buffer(
+      [[
+        section foo
 
-    def f := 37
+        def f := 37
 
-    end foo
-  ]], function()
-    vim.cmd.normal('gg')
-    assert.current_line.is('section foo')
-    vim.cmd.normal('%')
-    assert.current_line.is('end foo')
-  end))
+        end foo
+      ]],
+      function()
+        vim.cmd.normal 'gg'
+        assert.current_line.is 'section foo'
+        vim.cmd.normal '%'
+        assert.current_line.is 'end foo'
+      end
+    )
+  )
 
-  it('jumps between anonymous sections', helpers.clean_buffer([[
-    section
+  it(
+    'jumps between anonymous sections',
+    helpers.clean_buffer(
+      [[
+        section
 
-    def f := 37
+        def f := 37
 
-    end
-  ]], function()
-    vim.cmd.normal('gg')
-    assert.current_line.is('section')
-    vim.cmd.normal('%')
-    assert.current_line.is('end')
-  end))
+        end
+      ]],
+      function()
+        vim.cmd.normal 'gg'
+        assert.current_line.is 'section'
+        vim.cmd.normal '%'
+        assert.current_line.is 'end'
+      end
+    )
+  )
 
-  it('jumps between namespace start and end', helpers.clean_buffer([[
-    namespace foo
+  it(
+    'jumps between namespace start and end',
+    helpers.clean_buffer(
+      [[
+        namespace foo
 
-    section bar
+        section bar
 
-    def f := 37
+        def f := 37
 
-    end bar
+        end bar
 
-    end foo
-  ]], function()
-    vim.cmd.normal('gg')
-    assert.current_line.is('namespace foo')
-    vim.cmd.normal('%')
-    assert.current_line.is('end foo')
-  end))
+        end foo
+      ]],
+      function()
+        vim.cmd.normal 'gg'
+        assert.current_line.is 'namespace foo'
+        vim.cmd.normal '%'
+        assert.current_line.is 'end foo'
+      end
+    )
+  )
 end)
