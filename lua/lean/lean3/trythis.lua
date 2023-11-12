@@ -2,8 +2,8 @@ local lean_lsp_diagnostics = require('lean._util').lean_lsp_diagnostics
 
 local trythis = {}
 
-local DOUBLE_AT = vim.regex[[ at .*\ze at .*]]
-local BY_EXACT = vim.regex[[\<\(by exact \)\|\(begin\_s*exact.*\_s*end\)]]
+local DOUBLE_AT = vim.regex [[ at .*\ze at .*]]
+local BY_EXACT = vim.regex [[\<\(by exact \)\|\(begin\_s*exact.*\_s*end\)]]
 
 local function suggestions_from(diagnostic)
   local suggestions = {}
@@ -11,9 +11,7 @@ local function suggestions_from(diagnostic)
   for suggestion in vim.gsplit(trimmed, 'Try this:') do
     table.insert(
       suggestions,
-      { replacement = vim.trim(suggestion, '\r\n'),
-        lnum = diagnostic.lnum,
-        col = diagnostic.col }
+      { replacement = vim.trim(suggestion, '\r\n'), lnum = diagnostic.lnum, col = diagnostic.col }
     )
   end
   return suggestions
@@ -28,7 +26,7 @@ end
 --  See https://github.com/leanprover/vscode-lean/blob/8ad0609f560f279512ff792589f06d18aa92fb3f/src/tacticsuggestions.ts#L76
 --  for the VSCode implementation.
 function trythis.swap()
-  local diagnostics = lean_lsp_diagnostics{
+  local diagnostics = lean_lsp_diagnostics {
     lnum = vim.api.nvim_win_get_cursor(0)[1] - 1,
     severity = vim.diagnostic.severity.INFO,
   }
@@ -40,12 +38,13 @@ function trythis.swap()
       local start_row = suggestion.lnum
       local start_col = suggestion.col
 
-      vim.api.nvim_win_set_cursor(0, {start_row + 1, start_col})
+      vim.api.nvim_win_set_cursor(0, { start_row + 1, start_col })
       local end_row, end_col = unpack(vim.fn.searchpos('\\>', 'cW'))
 
       local rest = vim.api.nvim_buf_get_text(0, end_row - 1, end_col - 1, end_row - 1, -1, {})[1]
-      if rest:match('%s*[[{]') then
-        local bracket_row, bracket_col = unpack(vim.fn.searchpairpos('\\s\\*[[{]', '', '[\\]}]', 'cW'))
+      if rest:match '%s*[[{]' then
+        local bracket_row, bracket_col =
+          unpack(vim.fn.searchpairpos('\\s\\*[[{]', '', '[\\]}]', 'cW'))
         if bracket_row ~= 0 or bracket_col ~= 0 then
           end_row, end_col = bracket_row, bracket_col + 1
         end
@@ -81,16 +80,11 @@ end
 --- Trim `at foo at foo` to just `at foo` once.
 function trythis.trim_doubled_ats()
   local start_col, end_col = DOUBLE_AT:match_str(vim.api.nvim_get_current_line())
-  if not start_col then return end
+  if not start_col then
+    return
+  end
   local start_row, _ = unpack(vim.api.nvim_win_get_cursor(0))
-  vim.api.nvim_buf_set_text(
-    0,
-    start_row - 1,
-    start_col,
-    start_row - 1,
-    end_col,
-    {}
-  )
+  vim.api.nvim_buf_set_text(0, start_row - 1, start_col, start_row - 1, end_col, {})
 end
 
 return trythis
