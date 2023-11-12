@@ -1,6 +1,6 @@
-local dedent = require('lean._util').dedent
-
 require 'tests.helpers'
+
+local dedent = require('lean._util').dedent
 
 describe('checkhealth', function()
   it('passes the health check', function()

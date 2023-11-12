@@ -2,10 +2,10 @@
 --- Tests for infoview layout using a new tab.
 ---@brief ]]
 
-require('tests.helpers')
-local infoview = require('lean.infoview')
+require 'tests.helpers'
+local infoview = require 'lean.infoview'
 
-require('lean').setup{ infoview = { autoopen = false, separate_tab = true } }
+require('lean').setup { infoview = { autoopen = false, separate_tab = true } }
 
 describe('infoview window', function()
   it('opens in a new tab with the cursor in the Lean window', function(_)

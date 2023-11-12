@@ -1,7 +1,7 @@
 local lean = require 'lean'
 local clean_buffer = require('tests.helpers').clean_buffer
 
-require('lean').setup {}
+lean.setup {}
 
 describe('mappings', function()
   it(

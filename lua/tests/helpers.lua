@@ -1,9 +1,9 @@
-local assert = require('luassert')
+local assert = require 'luassert'
 
-local fixtures = require('tests.fixtures')
-local infoview = require('lean.infoview')
-local progress = require('lean.progress')
-local util = require('lean._util')
+local fixtures = require 'tests.fixtures'
+local infoview = require 'lean.infoview'
+local progress = require 'lean.progress'
+local util = require 'lean._util'
 
 local helpers = { _clean_buffer_counter = 1 }
 
@@ -18,7 +18,7 @@ else
       it('lean 3 missing', function()
         -- These typically run in separate processes, so we actually don't
         -- know enough to skip only once, but it doesn't hurt anyhow I suppose.
-        vim.notify_once('Skipping Lean 3 tests as it is not installed.')
+        vim.notify_once 'Skipping Lean 3 tests as it is not installed.'
       end)
     end)
   end
@@ -40,7 +40,7 @@ end
 function helpers.all_lean_extmarks(buffer, start, end_)
   local extmarks = {}
   for namespace, ns_id in pairs(vim.api.nvim_get_namespaces()) do
-    if namespace:match('^lean.') then
+    if namespace:match '^lean.' then
       vim.list_extend(
         extmarks,
         vim.api.nvim_buf_get_extmarks(buffer, ns_id, start, end_, { details = true })
@@ -61,14 +61,16 @@ end
 function helpers.move_cursor(opts)
   local window = opts.window or 0
 
-  assert.message(util.s[[
+  assert
+    .message(util.s [[
     Cursor is already at %s.
     If you just want to ensure the cursor is at this location,
     use nvim_win_set_cursor directly.
-  ]]).are_not.same(opts.to, vim.api.nvim_win_get_cursor(window))
+  ]]).are_not
+    .same(opts.to, vim.api.nvim_win_get_cursor(window))
 
   vim.api.nvim_win_set_cursor(window, opts.to)
-  vim.cmd.doautocmd('CursorMoved')
+  vim.cmd.doautocmd 'CursorMoved'
 end
 
 ---@class MoveCursorOpts
@@ -79,13 +81,15 @@ end
 ---@param iv? Infoview
 function helpers.wait_for_loading_pins(iv)
   iv = iv or infoview.get_current_infoview()
-  if not iv then error("Infoview is not open!") end
+  if not iv then
+    error 'Infoview is not open!'
+  end
   local info = iv.info
   local last, last_loading, last_processing
   local succeeded, _ = vim.wait(7000, function()
-    for _, pin in pairs(vim.list_extend({info.pin, info.__diff_pin}, info.pins)) do
-      local processing = pin.__position_params and
-        require"lean.progress".test_is_processing_at(pin.__position_params)
+    for _, pin in pairs(vim.list_extend({ info.pin, info.__diff_pin }, info.pins)) do
+      local processing = pin.__position_params
+        and require('lean.progress').test_is_processing_at(pin.__position_params)
       if pin.loading or processing then
         last = pin.id
         last_loading = pin.loading
@@ -95,11 +99,14 @@ function helpers.wait_for_loading_pins(iv)
     end
     return true
   end)
-  local msg = last_loading and "loading" or ""
-  if last_loading and last_processing then msg = msg .. "/" end
-  msg = msg .. (last_processing and "processing" or "")
-  assert.message(string.format('Pin %s never finished %s.',
-    tostring(last) or "", msg)).True(succeeded)
+  local msg = last_loading and 'loading' or ''
+  if last_loading and last_processing then
+    msg = msg .. '/'
+  end
+  msg = msg .. (last_processing and 'processing' or '')
+  assert
+    .message(string.format('Pin %s never finished %s.', tostring(last) or '', msg))
+    .True(succeeded)
 end
 
 function helpers.wait_for_ready_lsp()
@@ -155,55 +162,71 @@ function helpers.clean_buffer(contents, callback)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
     -- apparently necessary to trigger BufWinEnter
     vim.api.nvim_set_current_buf(bufnr)
-    vim.opt_local.bufhidden = "hide"
+    vim.opt_local.bufhidden = 'hide'
     vim.opt_local.swapfile = false
     vim.opt.filetype = 'lean'
 
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-    vim.api.nvim_buf_call(bufnr, function() callback{ source_file = { bufnr = bufnr } } end)
+    vim.api.nvim_buf_call(bufnr, function()
+      callback { source_file = { bufnr = bufnr } }
+    end)
   end
 end
 
 --- Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
   local succeeded, _ = vim.wait(15000, function()
-    if progress.is_processing(vim.uri_from_bufnr(0)) then return false end
-    local diagnostics = util.lean_lsp_diagnostics{
-      lnum = vim.api.nvim_win_get_cursor(0)[1] - 1
+    if progress.is_processing(vim.uri_from_bufnr(0)) then
+      return false
+    end
+    local diagnostics = util.lean_lsp_diagnostics {
+      lnum = vim.api.nvim_win_get_cursor(0)[1] - 1,
     }
 
     -- Lean 4 sends file progress notification too late :-(
     if #diagnostics == 1 then
       local msg = diagnostics[1].message
-      if msg:match("^configuring ") then return false end
-      if msg:match("^Foo: ") then return false end
-      if msg:match("^> ") then return false end
+      if msg:match '^configuring ' then
+        return false
+      end
+      if msg:match '^Foo: ' then
+        return false
+      end
+      if msg:match '^> ' then
+        return false
+      end
     end
 
     return #diagnostics > 0
   end)
-  assert.message("Waited for line diagnostics but none came.").True(succeeded)
+  assert.message('Waited for line diagnostics but none came.').True(succeeded)
 end
 
 function helpers.wait_for_filetype()
-  local result, _ = vim.wait(15000, require"lean".is_lean_buffer)
-  assert.message("filetype was never set").is_truthy(result)
+  local result, _ = vim.wait(15000, require('lean').is_lean_buffer)
+  assert.message('filetype was never set').is_truthy(result)
 end
 
 --- Assert a string or table is empty.
 local function is_empty(_, arguments)
   local got = arguments[1]
-  if type(got) == "string" then
+  if type(got) == 'string' then
     return got == ''
   else
     return vim.tbl_isempty(got)
   end
 end
-assert:register('assertion', 'empty', is_empty, 'assertion.same.positive', 'assertion.same.negative')
+assert:register(
+  'assertion',
+  'empty',
+  is_empty,
+  'assertion.same.positive',
+  'assertion.same.negative'
+)
 
 --- Assert about the current word.
 local function has_current_word(_, arguments)
-  assert.is.equal(arguments[1], vim.fn.expand('<cword>'))
+  assert.is.equal(arguments[1], vim.fn.expand '<cword>')
   return true
 end
 assert:register('assertion', 'current_word', has_current_word)
@@ -264,7 +287,7 @@ local function has_infoview_contents(_, arguments)
     local curr_pin = target_infoview.info.pin
 
     local got
-    for _ = 1,10 do
+    for _ = 1, 10 do
       got = curr_pin.__element:to_string()
       if not succeeded or #got == 0 then
         curr_pin:update()
@@ -282,7 +305,6 @@ local function has_infoview_contents(_, arguments)
   assert.is.equal(expected, got)
   return true
 end
-
 
 --- Assert about the current infoview contents without waiting for the pins to load.
 local function has_infoview_contents_nowait(_, arguments)
@@ -306,7 +328,9 @@ assert:register('assertion', 'diff_contents', has_diff_contents)
 local function has_all(_, arguments)
   local text = arguments[1]
 
-  if type(text) == "table" then text = table.concat(text, "\n") end
+  if type(text) == 'table' then
+    text = table.concat(text, '\n')
+  end
   local expected = arguments[2]
   for _, string in pairs(expected) do
     assert.has_match(string, text, nil, true)

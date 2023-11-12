@@ -2,18 +2,17 @@
 --- Tests for repositioning infoviews (when e.g. screen dimensions change).
 ---@brief ]]
 
-require('tests.helpers')
-local infoview = require('lean.infoview')
+require 'tests.helpers'
+local infoview = require 'lean.infoview'
 
 local WIDTH = 20
 local HEIGHT = 10
 
-require('lean').setup{
+require('lean').setup {
   infoview = { autoopen = false, width = WIDTH, height = HEIGHT },
 }
 
 describe('infoview window', function()
-
   local lean_window = vim.api.nvim_get_current_win()
 
   it('moves to vertical when the screen dimensions become landscape', function(_)
@@ -24,10 +23,7 @@ describe('infoview window', function()
       { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
       vim.fn.winlayout()
     )
-    assert.are.same(
-      vim.api.nvim_win_get_height(infoview.get_current_infoview().window),
-      HEIGHT
-    )
+    assert.are.same(vim.api.nvim_win_get_height(infoview.get_current_infoview().window), HEIGHT)
     vim.o.columns = 80
     vim.o.lines = 24
 
@@ -37,10 +33,7 @@ describe('infoview window', function()
       { 'row', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
       vim.fn.winlayout()
     )
-    assert.are.same(
-      vim.api.nvim_win_get_width(infoview.get_current_infoview().window),
-      WIDTH
-    )
+    assert.are.same(vim.api.nvim_win_get_width(infoview.get_current_infoview().window), WIDTH)
 
     infoview.close()
   end)
@@ -49,7 +42,7 @@ describe('infoview window', function()
     vim.o.columns = 24
     vim.o.lines = 80
     local current_infoview = infoview.open()
-    vim.cmd.wincmd('L')
+    vim.cmd.wincmd 'L'
     assert.are.same(
       { 'row', { { 'leaf', current_infoview.window }, { 'leaf', lean_window } } },
       vim.fn.winlayout()
@@ -75,10 +68,7 @@ describe('infoview window', function()
       { 'row', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
       vim.fn.winlayout()
     )
-    assert.are.same(
-      vim.api.nvim_win_get_width(infoview.get_current_infoview().window),
-      WIDTH
-    )
+    assert.are.same(vim.api.nvim_win_get_width(infoview.get_current_infoview().window), WIDTH)
     vim.o.columns = 24
     vim.o.lines = 80
 
@@ -88,10 +78,7 @@ describe('infoview window', function()
       { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
       vim.fn.winlayout()
     )
-    assert.are.same(
-      vim.api.nvim_win_get_height(infoview.get_current_infoview().window),
-      HEIGHT
-    )
+    assert.are.same(vim.api.nvim_win_get_height(infoview.get_current_infoview().window), HEIGHT)
 
     infoview.close()
   end)
@@ -100,7 +87,7 @@ describe('infoview window', function()
     vim.o.columns = 80
     vim.o.lines = 24
     local current_infoview = infoview.open()
-    vim.cmd.wincmd('K')
+    vim.cmd.wincmd 'K'
     assert.are.same(
       { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
       vim.fn.winlayout()
@@ -142,16 +129,13 @@ describe('infoview window', function()
     infoview.reposition()
     assert.are.same(layout, vim.fn.winlayout())
 
-    assert.are.same(
-      vim.api.nvim_win_get_width(infoview.get_current_infoview().window),
-      WIDTH
-    )
+    assert.are.same(vim.api.nvim_win_get_width(infoview.get_current_infoview().window), WIDTH)
 
     infoview.close()
   end)
 
   it('does not touch leaf windows', function(_)
-    vim.cmd.wincmd('o')
+    vim.cmd.wincmd 'o'
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     local layout = vim.fn.winlayout()
     infoview.reposition()

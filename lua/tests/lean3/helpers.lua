@@ -36,7 +36,9 @@ function helpers.clean_buffer(contents, callback)
     vim.opt.filetype = 'lean3'
 
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-    vim.api.nvim_buf_call(bufnr, function() callback{ source_file = { bufnr = bufnr } } end)
+    vim.api.nvim_buf_call(bufnr, function()
+      callback { source_file = { bufnr = bufnr } }
+    end)
   end
 end
 

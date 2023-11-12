@@ -1,8 +1,8 @@
-require('tests.helpers')
-local infoview = require('lean.infoview')
-local fixtures = require('tests.fixtures')
+require 'tests.helpers'
+local fixtures = require 'tests.fixtures'
+local infoview = require 'lean.infoview'
 
-require('lean').setup{ infoview = { autoopen = true } }
+require('lean').setup { infoview = { autoopen = true } }
 
 describe('infoview autoopen', function()
   -- Somewhat follows open_close_spec.lua but here infoviews open automatically
@@ -18,10 +18,8 @@ describe('infoview autoopen', function()
 
   it('reuses the same infoview for new Lean files in the same tab', function(_)
     local windows = vim.api.nvim_tabpage_list_wins(0)
-    assert.is.equal(#windows, 2)  -- +1 above
-    assert.is.truthy(
-      vim.tbl_contains(windows, infoview.get_current_infoview().window)
-    )
+    assert.is.equal(#windows, 2) -- +1 above
+    assert.is.truthy(vim.tbl_contains(windows, infoview.get_current_infoview().window))
 
     vim.cmd.split(fixtures.project.some_nested_existing_file)
     table.insert(windows, vim.api.nvim_get_current_win())
@@ -50,7 +48,7 @@ describe('infoview autoopen', function()
     vim.cmd.tabnew()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
 
-    vim.cmd.edit('some_other_file.foo')
+    vim.cmd.edit 'some_other_file.foo'
     local non_lean_window = vim.api.nvim_get_current_win()
 
     assert.windows.are(non_lean_window)
@@ -60,7 +58,7 @@ describe('infoview autoopen', function()
 
   it('does not auto-reopen an infoview that has been closed', function(_)
     local windows = vim.api.nvim_tabpage_list_wins(0)
-    assert.is.equal(#windows, 2)  -- +1 above
+    assert.is.equal(#windows, 2) -- +1 above
     assert.is.truthy(vim.tbl_contains(windows, infoview.get_current_infoview().window))
 
     infoview.close()

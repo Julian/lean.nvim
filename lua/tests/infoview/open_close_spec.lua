@@ -3,14 +3,13 @@
 --- API, or combinations of the two.
 ---@brief ]]
 
-require('tests.helpers')
-local infoview = require('lean.infoview')
-local fixtures = require('tests.fixtures')
+require 'tests.helpers'
+local fixtures = require 'tests.fixtures'
+local infoview = require 'lean.infoview'
 
-require('lean').setup{}
+require('lean').setup {}
 
 describe('infoview open/close', function()
-
   local lean_window
 
   it('opens', function(_)
@@ -29,18 +28,13 @@ describe('infoview open/close', function()
     assert.are.same(vim.api.nvim_win_get_cursor(0), cursor)
 
     -- Infoview is positioned at the top
-    assert.are.same(
-      {1, 0},
-      vim.api.nvim_win_get_cursor(current_infoview.window)
-    )
+    assert.are.same({ 1, 0 }, vim.api.nvim_win_get_cursor(current_infoview.window))
   end)
 
   it('remains open on editing a new Lean file', function(_)
     local windows = vim.api.nvim_tabpage_list_wins(0)
-    assert.is.equal(#windows, 2)  -- +1 above
-    assert.is.truthy(
-      vim.tbl_contains(windows, infoview.get_current_infoview().window)
-    )
+    assert.is.equal(#windows, 2) -- +1 above
+    assert.is.truthy(vim.tbl_contains(windows, infoview.get_current_infoview().window))
     vim.cmd('edit ' .. fixtures.project.some_existing_file)
     assert.windows.are(windows)
   end)
@@ -48,9 +42,7 @@ describe('infoview open/close', function()
   it('remains open on splitting the current window', function(_)
     local windows = vim.api.nvim_tabpage_list_wins(0)
     assert.is.equal(2, #windows)
-    assert.is.truthy(
-      vim.tbl_contains(windows, infoview.get_current_infoview().window)
-    )
+    assert.is.truthy(vim.tbl_contains(windows, infoview.get_current_infoview().window))
 
     vim.cmd.split()
     table.insert(windows, vim.api.nvim_get_current_win())
@@ -60,7 +52,7 @@ describe('infoview open/close', function()
     assert.windows.are(windows)
 
     vim.cmd.quit()
-    table.remove(windows, #windows)  -- the second Lean source window
+    table.remove(windows, #windows) -- the second Lean source window
     assert.windows.are(windows)
   end)
 
@@ -193,7 +185,7 @@ describe('infoview open/close', function()
     current_infoview:open()
     assert.windows.are(lean_window, current_infoview.window)
 
-    vim.cmd.split('third_non_lean_window')
+    vim.cmd.split 'third_non_lean_window'
     local non_lean_window = vim.api.nvim_get_current_win()
 
     -- Close the Lean source window via :bd
@@ -236,18 +228,21 @@ describe('infoview open/close', function()
     vim.cmd.tabclose()
   end)
 
-  it('can be reopened when the last remaining infoview buffer was reused for editing a file', function()
-    assert.is.equal(1, #vim.api.nvim_list_tabpages())
-    local initial_infoview = infoview.get_current_infoview()
-    local initial_infoview_window = initial_infoview.window
-    assert.windows.are(lean_window, initial_infoview_window)
-    vim.api.nvim_win_close(lean_window, false)
-    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
-    assert.windows.are(initial_infoview_window)
+  it(
+    'can be reopened when the last remaining infoview buffer was reused for editing a file',
+    function()
+      assert.is.equal(1, #vim.api.nvim_list_tabpages())
+      local initial_infoview = infoview.get_current_infoview()
+      local initial_infoview_window = initial_infoview.window
+      assert.windows.are(lean_window, initial_infoview_window)
+      vim.api.nvim_win_close(lean_window, false)
+      vim.cmd('edit! ' .. fixtures.project.some_existing_file)
+      assert.windows.are(initial_infoview_window)
 
-    local second_infoview = infoview.get_current_infoview()
-    assert.is_not.equal(second_infoview.window, initial_infoview_window)
-    second_infoview:open()
-    assert.windows.are(initial_infoview_window, second_infoview.window)
-  end)
+      local second_infoview = infoview.get_current_infoview()
+      assert.is_not.equal(second_infoview.window, initial_infoview_window)
+      second_infoview:open()
+      assert.windows.are(initial_infoview_window, second_infoview.window)
+    end
+  )
 end)

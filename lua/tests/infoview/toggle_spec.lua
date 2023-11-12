@@ -1,11 +1,10 @@
-require('tests.helpers')
-local infoview = require('lean.infoview')
-local fixtures = require('tests.fixtures')
+require 'tests.helpers'
+local fixtures = require 'tests.fixtures'
+local infoview = require 'lean.infoview'
 
-require('lean').setup{}
+require('lean').setup {}
 
 describe('Infoview.toggle', function()
-
   local lean_window
 
   it('closes an open infoview', function()

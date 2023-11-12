@@ -28,19 +28,16 @@ describe('sorry', function()
 
   it(
     'inserts a sorry for the remaining goal',
-    clean_buffer(
-      'example (p : Prop) : p → p := by',
-      function()
-        helpers.wait_for_line_diagnostics()
+    clean_buffer('example (p : Prop) : p → p := by', function()
+      helpers.wait_for_line_diagnostics()
 
-        vim.cmd 'normal! gg$'
-        require('lean.sorry').fill()
-        assert.contents.are [[
+      vim.cmd 'normal! gg$'
+      require('lean.sorry').fill()
+      assert.contents.are [[
           example (p : Prop) : p → p := by
             sorry
         ]]
-      end
-    )
+    end)
   )
 
   it(

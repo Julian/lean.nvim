@@ -1,5 +1,5 @@
-local helpers = require('tests.helpers')
-local fixtures = require('tests.lean3.fixtures')
+local fixtures = require 'tests.lean3.fixtures'
+local helpers = require 'tests.helpers'
 
 require('lean').setup { lsp3 = { enable = true } }
 
@@ -12,14 +12,11 @@ helpers.if_has_lean3('lean.current_search_paths', function()
       local paths = require('lean').current_search_paths()
       assert.are_equal(3, #paths)
       -- via its leanpkg.path:
-      assert.has_all(
-        table.concat(paths, '\n') .. '\n',
-        {
-          '/lib/lean/library\n',                     -- Lean 3 standard library
-          fixtures.project.path .. '/src\n',   -- the project itself
-          fixtures.project.path .. '/_target/deps/mathlib/src\n'    -- the project itself
-        }
-      )
+      assert.has_all(table.concat(paths, '\n') .. '\n', {
+        '/lib/lean/library\n', -- Lean 3 standard library
+        fixtures.project.path .. '/src\n', -- the project itself
+        fixtures.project.path .. '/_target/deps/mathlib/src\n', -- the project itself
+      })
     end)
   end
 end)

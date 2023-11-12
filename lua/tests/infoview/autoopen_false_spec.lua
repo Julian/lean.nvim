@@ -1,11 +1,10 @@
-local infoview = require('lean.infoview')
-local fixtures = require('tests.fixtures')
-local helpers = require('tests.helpers')
+local fixtures = require 'tests.fixtures'
+local helpers = require 'tests.helpers'
+local infoview = require 'lean.infoview'
 
-require('lean').setup{ infoview = { autoopen = false, use_widgets = false } }
+require('lean').setup { infoview = { autoopen = false, use_widgets = false } }
 
 describe('infoview', function()
-
   local lean_window
 
   it('does not automatically open infoviews', function(_)
@@ -28,10 +27,10 @@ describe('infoview', function()
 
   it('allows infoviews to be manually opened', function(_)
     assert.windows.are(lean_window)
-    helpers.move_cursor{ to = {3, 27} }
+    helpers.move_cursor { to = { 3, 27 } }
     infoview.open()
     assert.windows.are(lean_window, infoview.get_current_infoview().window)
-    assert.infoview_contents.are[[
+    assert.infoview_contents.are [[
       ▶ expected type (3:28-3:36)
       ⊢ Nat
     ]]

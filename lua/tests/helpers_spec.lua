@@ -41,15 +41,15 @@ end)
 
 describe('is_empty', function()
   it('considers the empty string empty', function()
-    assert.is.empty('')
+    assert.is.empty ''
   end)
 
   it('considers other strings non-empty', function()
-    assert.is_not.empty('foo')
+    assert.is_not.empty 'foo'
   end)
 
   it('considers empty tables empty', function()
-    assert.is.empty({})
+    assert.is.empty {}
   end)
 
   it('considers other map-like tables non-empty', function()

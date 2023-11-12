@@ -2,14 +2,18 @@
 --- Tests for infoview autoopen as a function (where its return value decides
 --- whether to open the new infoview or not).
 ---@brief ]]
-require('tests.helpers')
-local infoview = require('lean.infoview')
-local fixtures = require('tests.fixtures')
+require 'tests.helpers'
+local fixtures = require 'tests.fixtures'
+local infoview = require 'lean.infoview'
 
 local should_autoopen = false
 
-require('lean').setup{
-  infoview = { autoopen = function() return should_autoopen end }
+require('lean').setup {
+  infoview = {
+    autoopen = function()
+      return should_autoopen
+    end,
+  },
 }
 
 describe('infoview custom autoopen', function()
