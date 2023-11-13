@@ -1,4 +1,4 @@
-local Popup = require('nui.popup')
+local Popup = require 'nui.popup'
 
 -- In case recording crashes.
 vim.opt.directory = ''
@@ -22,7 +22,7 @@ DEMO = {
       winblend = 10,
       winhighlight = 'Normal:Normal,FloatBorder:FloatBorder',
     },
-  }
+  },
 }
 
 ---Show an overlay ready for a popup message.

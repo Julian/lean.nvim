@@ -1,4 +1,6 @@
-if not vim.g.loaded_switch then return end
+if not vim.g.loaded_switch then
+  return
+end
 
 local function segment(word)
   return [[\(\<\|[_.']\)\zs]] .. word .. [[\ze\(\>\|[_.']\)]]
@@ -21,7 +23,7 @@ vim.b.switch_definitions = {
   { 'exact ⟨', 'refine ⟨' },
   { 'cases', 'rcases', 'obtain' },
   { 'norm_cast', 'push_cast' },
-  vim.fn['switch#Words']{ 'tt', 'ff' },
+  vim.fn['switch#Words'] { 'tt', 'ff' },
   { '=', '≠' },
   { '∈', '∉' },
   { '∪', '∩' },
@@ -52,9 +54,9 @@ vim.b.switch_definitions = {
     [ [=[\<squeeze_simp\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = _G.switch_lean3_simp,
   },
 
-  { [ segment('bot') ] = 'top', [ segment('top') ] = 'bot' },
-  { [ segment('inl') ] = 'inr', [ segment('inr') ] = 'inl' },
-  { [ segment('left') ] = 'right', [ segment('right') ] = 'left' },
-  { [ segment('mul') ] = 'add', [ segment('add') ] = 'mul' },
-  { [ segment('zero') ] = 'one', [ segment('one') ] = 'zero' },
+  { [segment 'bot'] = 'top', [segment 'top'] = 'bot' },
+  { [segment 'inl'] = 'inr', [segment 'inr'] = 'inl' },
+  { [segment 'left'] = 'right', [segment 'right'] = 'left' },
+  { [segment 'mul'] = 'add', [segment 'add'] = 'mul' },
+  { [segment 'zero'] = 'one', [segment 'one'] = 'zero' },
 }
