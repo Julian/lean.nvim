@@ -6,10 +6,10 @@
 ---@brief ]]
 
 local rpc = {}
-local a = require'plenary.async'
-local util = require'lean._util'
-local lsp = require'lean.lsp'
-local control = require'plenary.async.control'
+local a = require 'plenary.async'
+local control = require 'plenary.async.control'
+local lsp = require 'lean.lsp'
+local util = require 'lean._util'
 
 ---@class RpcRef
 
@@ -44,19 +44,27 @@ function Session:new(client, bufnr, uri)
     release_timer = nil,
   }, self)
   self.keepalive_timer = vim.loop.new_timer()
-  self.keepalive_timer:start(20000, 20000, vim.schedule_wrap(function()
-    if not self:is_closed() and self.session_id ~= nil then
-      ---@diagnostic disable-next-line: undefined-field
-      self.client.notify('$/lean/rpc/keepAlive', {
-        uri = self.uri,
-        sessionId = self.session_id,
-      })
-    end
-  end))
+  self.keepalive_timer:start(
+    20000,
+    20000,
+    vim.schedule_wrap(function()
+      if not self:is_closed() and self.session_id ~= nil then
+        ---@diagnostic disable-next-line: undefined-field
+        self.client.notify('$/lean/rpc/keepAlive', {
+          uri = self.uri,
+          sessionId = self.session_id,
+        })
+      end
+    end)
+  )
   -- Terminate RPC session when document is closed.
   vim.api.nvim_buf_attach(bufnr, false, {
-    on_reload = function() self:close_without_releasing() end,
-    on_detach = function() self:close_without_releasing() end,
+    on_reload = function()
+      self:close_without_releasing()
+    end,
+    on_detach = function()
+      self:close_without_releasing()
+    end,
   })
   return self
 end
@@ -78,14 +86,18 @@ function Session:close_without_releasing()
 end
 
 function Session:close()
-  self:release_now{}
+  self:release_now {}
   self:close_without_releasing()
 end
 
 ---@param refs RpcRef[]
 function Session:release_now(refs)
-  for _, ptr in ipairs(refs) do table.insert(self.to_release, ptr) end
-  if #self.to_release == 0 or self:is_closed() then return end
+  for _, ptr in ipairs(refs) do
+    table.insert(self.to_release, ptr)
+  end
+  if #self.to_release == 0 or self:is_closed() then
+    return
+  end
   ---@diagnostic disable-next-line: undefined-field
   self.client.notify('$/lean/rpc/release', {
     uri = self.uri,
@@ -97,11 +109,13 @@ end
 
 ---@param refs RpcRef[]
 function Session:release_deferred(refs)
-  for _, ptr in ipairs(refs) do table.insert(self.to_release, ptr) end
+  for _, ptr in ipairs(refs) do
+    table.insert(self.to_release, ptr)
+  end
   if self.release_timer == nil then
-    self.release_timer = vim.defer_fn(function ()
+    self.release_timer = vim.defer_fn(function()
       self.release_timer = nil
-      self:release_now{}
+      self:release_now {}
     end, 100)
   end
 end
@@ -137,8 +151,11 @@ function Session:call(pos, method, params)
   if self:is_closed() then
     return nil, { code = -32900, message = 'LSP server disconnected' }
   end
-  local err, result = util.client_a_request(self.client, '$/lean/rpc/call',
-    vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params }))
+  local err, result = util.client_a_request(
+    self.client,
+    '$/lean/rpc/call',
+    vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params })
+  )
   if err ~= nil and err.code == -32900 then
     self:close_without_releasing()
   end
@@ -149,8 +166,10 @@ function Session:call(pos, method, params)
           -- Lua 5.1 workaround for unsupported __gc on tables
           -- luacheck: ignore
           local prox = newproxy(true)
-          getmetatable(prox).__gc = function() self:release_deferred{{ p = v }} end
-          setmetatable(obj, {[prox] = true})
+          getmetatable(prox).__gc = function()
+            self:release_deferred { { p = v } }
+          end
+          setmetatable(obj, { [prox] = true })
         else
           register(v)
         end
@@ -179,7 +198,7 @@ local function connect(bufnr)
     return err
   end
   a.void(function()
-    local err, result = util.client_a_request(client, '$/lean/rpc/connect', {uri = uri})
+    local err, result = util.client_a_request(client, '$/lean/rpc/connect', { uri = uri })
     sess.connected = true
     if err ~= nil then
       sess.connect_err = err
@@ -311,7 +330,7 @@ end
 ---@return InteractiveDiagnostic[]
 ---@return LspError error
 function Subsession:getInteractiveDiagnostics(lineRange)
-  return self:call('Lean.Widget.getInteractiveDiagnostics', {lineRange = lineRange})
+  return self:call('Lean.Widget.getInteractiveDiagnostics', { lineRange = lineRange })
 end
 
 ---@class InfoPopup
@@ -331,8 +350,10 @@ end
 ---@return TaggedTextMsgEmbed
 ---@return LspError error
 function Subsession:msgToInteractive(msg, indent)
-  return self:call('Lean.Widget.InteractiveDiagnostics.msgToInteractive',
-    { msg = msg, indent = indent })
+  return self:call(
+    'Lean.Widget.InteractiveDiagnostics.msgToInteractive',
+    { msg = msg, indent = indent }
+  )
 end
 
 ---@param children LazyTraceChildren

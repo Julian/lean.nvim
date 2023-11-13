@@ -6,30 +6,29 @@
 ---@brief ]]
 
 ---@tag lean.nvim
-local util = require('lean._util')
+local util = require 'lean._util'
 
 local subprocess_check_output = util.subprocess_check_output
 
 local lean = {
   mappings = {
     n = {
-      ['<LocalLeader>i'] = '<Cmd>LeanInfoviewToggle<CR>';
-      ['<LocalLeader>p'] = '<Cmd>LeanInfoviewPinTogglePause<CR>';
-      ['<LocalLeader>x'] = '<Cmd>LeanInfoviewAddPin<CR>';
-      ['<LocalLeader>c'] = '<Cmd>LeanInfoviewClearPins<CR>';
-      ['<LocalLeader>dx'] = '<Cmd>LeanInfoviewSetDiffPin<CR>';
-      ['<LocalLeader>dc'] = '<Cmd>LeanInfoviewClearDiffPin<CR>';
-      ['<LocalLeader>dd'] = '<Cmd>LeanInfoviewToggleAutoDiffPin<CR>';
-      ['<LocalLeader>dt'] = '<Cmd>LeanInfoviewToggleNoClearAutoDiffPin<CR>';
-      ['<LocalLeader>w'] = '<Cmd>LeanInfoviewEnableWidgets<CR>';
-      ['<LocalLeader>W'] = '<Cmd>LeanInfoviewDisableWidgets<CR>';
-      ['<LocalLeader><Tab>'] = '<Cmd>LeanGotoInfoview<CR>';
-      ['<LocalLeader>s'] = '<Cmd>LeanSorryFill<CR>';
-      ['<LocalLeader>\\'] = '<Cmd>LeanAbbreviationsReverseLookup<CR>';
-    };
-    i = {
-    };
-  };
+      ['<LocalLeader>i'] = '<Cmd>LeanInfoviewToggle<CR>',
+      ['<LocalLeader>p'] = '<Cmd>LeanInfoviewPinTogglePause<CR>',
+      ['<LocalLeader>x'] = '<Cmd>LeanInfoviewAddPin<CR>',
+      ['<LocalLeader>c'] = '<Cmd>LeanInfoviewClearPins<CR>',
+      ['<LocalLeader>dx'] = '<Cmd>LeanInfoviewSetDiffPin<CR>',
+      ['<LocalLeader>dc'] = '<Cmd>LeanInfoviewClearDiffPin<CR>',
+      ['<LocalLeader>dd'] = '<Cmd>LeanInfoviewToggleAutoDiffPin<CR>',
+      ['<LocalLeader>dt'] = '<Cmd>LeanInfoviewToggleNoClearAutoDiffPin<CR>',
+      ['<LocalLeader>w'] = '<Cmd>LeanInfoviewEnableWidgets<CR>',
+      ['<LocalLeader>W'] = '<Cmd>LeanInfoviewDisableWidgets<CR>',
+      ['<LocalLeader><Tab>'] = '<Cmd>LeanGotoInfoview<CR>',
+      ['<LocalLeader>s'] = '<Cmd>LeanSorryFill<CR>',
+      ['<LocalLeader>\\'] = '<Cmd>LeanAbbreviationsReverseLookup<CR>',
+    },
+    i = {},
+  },
 }
 
 --- Setup function to be run in your init.lua (or init.vim).
@@ -38,32 +37,42 @@ function lean.setup(opts)
   opts = opts or {}
 
   opts.abbreviations = opts.abbreviations or {}
-  if opts.abbreviations.enable ~= false then require'lean.abbreviations'.enable(opts.abbreviations) end
+  if opts.abbreviations.enable ~= false then
+    require('lean.abbreviations').enable(opts.abbreviations)
+  end
 
   opts.infoview = opts.infoview or {}
-  require'lean.infoview'.enable(opts.infoview)
-  require'lean.commands'.enable()
+  require('lean.infoview').enable(opts.infoview)
+  require('lean.commands').enable()
 
   opts.lsp3 = opts.lsp3 or {}
-  if opts.lsp3.enable ~= false then require'lean.lean3'.lsp_enable(opts.lsp3) end
+  if opts.lsp3.enable ~= false then
+    require('lean.lean3').lsp_enable(opts.lsp3)
+  end
 
   opts.lsp = opts.lsp or {}
-  if opts.lsp.enable ~= false then require'lean.lsp'.enable(opts.lsp) end
+  if opts.lsp.enable ~= false then
+    require('lean.lsp').enable(opts.lsp)
+  end
 
   opts.progress_bars = opts.progress_bars or {}
-  if opts.progress_bars.enable ~= false then require'lean.progress_bars'.enable(opts.progress_bars) end
+  if opts.progress_bars.enable ~= false then
+    require('lean.progress_bars').enable(opts.progress_bars)
+  end
 
-  require'lean.ft'.enable(opts.ft or {})
+  require('lean.ft').enable(opts.ft or {})
 
   opts.stderr = opts.stderr or {}
-  if opts.stderr.enable ~= false then require'lean.stderr'.enable(opts.stderr or {}) end
+  if opts.stderr.enable ~= false then
+    require('lean.stderr').enable(opts.stderr or {})
+  end
 
   local ok, telescope = pcall(require, 'telescope')
   if ok then
-    telescope.load_extension("loogle")
+    telescope.load_extension 'loogle'
   end
 
-  vim.cmd[[
+  vim.cmd [[
     command! LeanRestartFile :lua require'lean.lsp'.restart_file()
     command! LeanRefreshFileDependencies :lua require'lean.lsp'.restart_file()
 
@@ -86,7 +95,7 @@ function lean.setup(opts)
   ]]
 
   if opts.mappings == true then
-    vim.cmd[[
+    vim.cmd [[
       augroup lean_nvim_mappings
         autocmd!
         autocmd FileType lean3 lua require'lean'.use_suggested_mappings(true)
@@ -104,10 +113,7 @@ function lean.use_suggested_mappings(buffer_local)
   util.load_mappings(lean.mappings, buffer)
 
   if lean.is_lean3_buffer() then
-    util.load_mappings(
-      { n = { ['<LocalLeader>t'] = '<Cmd>LeanTryThis<CR>' } },
-      buffer
-    )
+    util.load_mappings({ n = { ['<LocalLeader>t'] = '<Cmd>LeanTryThis<CR>' } }, buffer)
   end
 end
 
@@ -130,30 +136,39 @@ function lean.current_search_paths()
   local paths
 
   if lean.is_lean3_buffer() then
-    paths = require'lean.lean3'.__current_search_paths()
+    paths = require('lean.lean3').__current_search_paths()
   else
     local root = vim.lsp.buf.list_workspace_folders()[1]
-    if not root then root = vim.fn.getcwd() end
+    if not root then
+      root = vim.fn.getcwd()
+    end
 
     local executable = (
-        vim.loop.fs_stat(root .. '/' .. 'lakefile.lean')
-         or not vim.loop.fs_stat(root .. '/' .. 'leanpkg.toml')
-    ) and "lake" or "leanpkg"
+      vim.loop.fs_stat(root .. '/' .. 'lakefile.lean')
+      or not vim.loop.fs_stat(root .. '/' .. 'leanpkg.toml')
+    )
+        and 'lake'
+      or 'leanpkg'
 
-    local all_paths = vim.fn.json_decode(
-      subprocess_check_output{
-        command = executable, args = {"print-paths"}, cwd = root
+    local all_paths = vim.fn.json_decode(subprocess_check_output {
+      command = executable,
+      args = { 'print-paths' },
+      cwd = root,
     })
-    paths = vim.tbl_map(function(path) return root .. '/' .. path end, all_paths.srcPath)
+    paths = vim.tbl_map(function(path)
+      return root .. '/' .. path
+    end, all_paths.srcPath)
     vim.list_extend(
       paths,
-      subprocess_check_output{ command = "lean", args = {"--print-libdir"}, cwd = root }
+      subprocess_check_output { command = 'lean', args = { '--print-libdir' }, cwd = root }
     )
   end
 
   return vim.tbl_map(
     vim.fn.simplify,
-    vim.tbl_filter(function(path) return path ~= "" and require("lspconfig.util").path.is_dir(path) end, paths)
+    vim.tbl_filter(function(path)
+      return path ~= '' and require('lspconfig.util').path.is_dir(path)
+    end, paths)
   )
 end
 

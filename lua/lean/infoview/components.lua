@@ -442,10 +442,7 @@ function components.interactive_diagnostics(diags, line, sess)
     if diag.range.start.line == line then
       local element = Element:new {
         text = H(
-          ('%s: %s:\n'):format(
-            range_to_string(diag.range),
-            util.DIAGNOSTIC_SEVERITY[diag.severity]
-          )
+          ('%s: %s:\n'):format(range_to_string(diag.range), util.DIAGNOSTIC_SEVERITY[diag.severity])
         ),
         name = 'diagnostic',
         children = { tagged_text_msg_embed(diag.message, sess) },

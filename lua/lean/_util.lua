@@ -1,6 +1,6 @@
 -- Stuff that should live in some standard library.
-local Job = require('plenary.job')
-local a = require('plenary.async')
+local Job = require 'plenary.job'
+local a = require 'plenary.async'
 -- local control = require'plenary.async.control'
 
 local M = { DIAGNOSTIC_SEVERITY = { 'error', 'warning', 'information', 'hint' } }
@@ -8,7 +8,9 @@ local M = { DIAGNOSTIC_SEVERITY = { 'error', 'warning', 'information', 'hint' } 
 --- Return an array-like table with a value repeated the given number of times.
 function M.tbl_repeat(value, times)
   local result = {}
-  for _ = 1, times do table.insert(result, value) end
+  for _ = 1, times do
+    table.insert(result, value)
+  end
   return result
 end
 
@@ -17,8 +19,8 @@ function M.lean_lsp_diagnostics(opts, bufnr)
   bufnr = bufnr or 0
   opts = opts or {}
   local diagnostics = {}
-  for _, client in pairs(vim.lsp.get_active_clients{ bufnr = bufnr }) do
-    if client.name:match('^lean') then
+  for _, client in pairs(vim.lsp.get_active_clients { bufnr = bufnr }) do
+    if client.name:match '^lean' then
       opts.namespace = vim.lsp.diagnostic.get_namespace(client.id)
       vim.list_extend(diagnostics, vim.diagnostic.get(bufnr, opts))
     end
@@ -36,13 +38,19 @@ end
 ---@param params CreateBufParams @new buffer options
 ---@return integer: the new `bufnr`
 function M.create_buf(params)
-  if params.listed == nil then params.listed = true end
-  if params.scratch == nil then params.scratch = false end
+  if params.listed == nil then
+    params.listed = true
+  end
+  if params.scratch == nil then
+    params.scratch = false
+  end
   local bufnr = vim.api.nvim_create_buf(params.listed, params.scratch)
   for option, value in pairs(params.options or {}) do
     vim.api.nvim_buf_set_option(bufnr, option, value)
   end
-  if params.name ~= nil then vim.api.nvim_buf_set_name(bufnr, params.name) end
+  if params.name ~= nil then
+    vim.api.nvim_buf_set_name(bufnr, params.name)
+  end
   return bufnr
 end
 
@@ -63,19 +71,21 @@ function M.subprocess_check_output(opts, timeout)
     return job:result()
   end
 
-  error(string.format(
-    "%s exited with non-zero exit status %d.\nstderr contained:\n%s",
-    vim.inspect(job.command),
-    job.code,
-    table.concat(job:stderr_result(), '\n')
-  ))
+  error(
+    string.format(
+      '%s exited with non-zero exit status %d.\nstderr contained:\n%s',
+      vim.inspect(job.command),
+      job.code,
+      table.concat(job:stderr_result(), '\n')
+    )
+  )
 end
 
 local function max_common_indent(str)
   local level = math.huge
-  local common_indent = ""
+  local common_indent = ''
   local len
-  for indent in str:gmatch("\n( +)") do
+  for indent in str:gmatch '\n( +)' do
     len = #indent
     if len < level then
       level = len
@@ -126,7 +136,7 @@ function M.mk_handler(fn)
       local client_id = select(4, ...)
       local bufnr = select(5, ...)
       local config = select(6, ...)
-      fn(err, result, {method = method, client_id = client_id, bufnr = bufnr}, config)
+      fn(err, result, { method = method, client_id = client_id, bufnr = bufnr }, config)
     end
   end
 end
@@ -137,7 +147,9 @@ end
 ---@return any error
 ---@return any result
 function M.client_a_request(client, request, params)
-  return a.wrap(function(handler) return client.request(request, params, M.mk_handler(handler)) end, 1)()
+  return a.wrap(function(handler)
+    return client.request(request, params, M.mk_handler(handler))
+  end, 1)()
 end
 
 -- FIXME: tick locking is disabled for now
@@ -153,7 +165,7 @@ Tick.__index = Tick
 ---@param tick integer
 ---@param ticker Ticker
 function Tick:new(tick, ticker)
-  return setmetatable({tick = tick, ticker = ticker}, self)
+  return setmetatable({ tick = tick, ticker = ticker }, self)
 end
 
 function Tick:check()
@@ -182,7 +194,8 @@ local Ticker = {}
 Ticker.__index = Ticker
 
 function Ticker:new()
-  return setmetatable({tick = 0,
+  return setmetatable({
+    tick = 0,
     --_lock = false,
     -- lock_var = control.Condvar.new()
   }, self)
@@ -243,16 +256,22 @@ M.Ticker = Ticker
 ---@return boolean
 function M.position_params_valid(params)
   local bufnr = vim.fn.bufnr(params.filename)
-  if bufnr == -1 then return false end
+  if bufnr == -1 then
+    return false
+  end
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
 
   local line = params.row + 1
   local col = params.col + 1
 
-  if line > #lines then return false end
+  if line > #lines then
+    return false
+  end
 
-  if col > #lines[line] then return false end
+  if col > #lines[line] then
+    return false
+  end
 
   return true
 end
@@ -265,15 +284,17 @@ function M.make_position_params()
   return { filename = vim.api.nvim_buf_get_name(buf), row = row, col = col }
 end
 
-M.wait_timer = a.wrap(function(timeout, handler) vim.defer_fn(handler, timeout) end, 2)
+M.wait_timer = a.wrap(function(timeout, handler)
+  vim.defer_fn(handler, timeout)
+end, 2)
 
 --- Utility function for getting the encoding of the first LSP client on the given buffer.
 ---@param bufnr number buffer handle or 0 for current, defaults to current
 ---@returns string encoding first client if there is one, nil otherwise
 function M._get_offset_encoding(bufnr)
   -- TODO: Can this be removed (or removed once 0.6 support is dropped)?
-  for _, client in pairs(vim.lsp.get_active_clients{ bufnr = bufnr }) do
-    return client.offset_encoding or "utf-16"
+  for _, client in pairs(vim.lsp.get_active_clients { bufnr = bufnr }) do
+    return client.offset_encoding or 'utf-16'
   end
 end
 

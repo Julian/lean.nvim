@@ -1,19 +1,19 @@
-local a = require('plenary.async')
+local a = require 'plenary.async'
 
-local components = require('lean.infoview.components')
+local components = require 'lean.infoview.components'
 local Element = require('lean.widgets').Element
-local infoview = require('lean.infoview')
-local lean = require('lean')
-local leanlsp = require('lean.lsp')
-local progress = require('lean.progress')
-local rpc = require('lean.rpc')
+local infoview = require 'lean.infoview'
+local lean = require 'lean'
+local leanlsp = require 'lean.lsp'
+local progress = require 'lean.progress'
+local rpc = require 'lean.rpc'
 
 local commands = {}
 
 ---@param element Element
 local function show_popup(element)
   local str = element:to_string()
-  if str:match('^%s*$') then
+  if str:match '^%s*$' then
     -- do not show the popup if it's the empty string
     return
   end
@@ -24,7 +24,7 @@ local function show_popup(element)
     { focus_id = 'lean_goal', border = 'rounded' }
   )
 
-  local renderer = element:renderer{ buf = bufnr, keymaps = infoview.mappings }
+  local renderer = element:renderer { buf = bufnr, keymaps = infoview.mappings }
   renderer.last_win = winnr
   renderer:render()
 end
@@ -35,12 +35,14 @@ local function show_popup_or_error(elements, err)
   if elements then
     show_popup(Element:concat(elements, '\n\n'))
   elseif err then
-    show_popup(Element:new{ text = vim.inspect(err) })
+    show_popup(Element:new { text = vim.inspect(err) })
   end
 end
 
 function commands.show_goal(use_widgets)
-  if use_widgets == nil then use_widgets = true end
+  if use_widgets == nil then
+    use_widgets = true
+  end
 
   local params = vim.lsp.util.make_position_params()
   local bufnr = vim.api.nvim_get_current_buf()
@@ -69,7 +71,9 @@ function commands.show_term_goal(use_widgets)
     return
   end
 
-  if use_widgets == nil then use_widgets = true end
+  if use_widgets == nil then
+    use_widgets = true
+  end
 
   local params = vim.lsp.util.make_position_params()
   local bufnr = vim.api.nvim_get_current_buf()
@@ -102,7 +106,7 @@ function commands.show_line_diagnostics()
 
     if not is_lean3 and not progress.is_processing_at(params) then
       local sess = rpc.open(bufnr, params)
-      diags, err = sess:getInteractiveDiagnostics{ start = line, ['end'] = line + 1 }
+      diags, err = sess:getInteractiveDiagnostics { start = line, ['end'] = line + 1 }
       diags = not err and components.interactive_diagnostics(diags, line, sess)
     end
 
@@ -115,7 +119,7 @@ function commands.show_line_diagnostics()
 end
 
 function commands.enable()
-  vim.cmd[[
+  vim.cmd [[
     command! LeanPlainGoal :lua require'lean.commands'.show_goal(false)
     command! LeanPlainTermGoal :lua require'lean.commands'.show_term_goal(false)
     command! LeanGoal :lua require'lean.commands'.show_goal()

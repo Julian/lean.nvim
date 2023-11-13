@@ -2,14 +2,14 @@ local ft = {}
 local _LEAN3_STANDARD_LIBRARY = '.*/[^/]*lean[%-]+3.+/lib/'
 
 local options = {
-  default = "lean",
+  default = 'lean',
   nomodifiable = {
-    '.*/src/lean/.*',       -- Lean 4 standard library
-    '.*/lib/lean/src/.*',   -- Lean 4 legacy standard library
-    '.*/lean_packages/.*',  -- Lean 4 dependencies
+    '.*/src/lean/.*', -- Lean 4 standard library
+    '.*/lib/lean/src/.*', -- Lean 4 legacy standard library
+    '.*/lean_packages/.*', -- Lean 4 dependencies
     _LEAN3_STANDARD_LIBRARY .. '.*',
-    '/_target/.*/.*.lean'   -- Lean 3 dependencies
-  }
+    '/_target/.*/.*.lean', -- Lean 3 dependencies
+  },
 }
 
 options._DEFAULTS = vim.deepcopy(options)
@@ -21,7 +21,7 @@ function ft.enable(opts)
     -- this means we have to manage it
     global_default_managed = true
   end
-  options= vim.tbl_extend("force", options, opts)
+  options = vim.tbl_extend('force', options, opts)
   if global_default_managed then
     lean_nvim_default_filetype = options.default
   end

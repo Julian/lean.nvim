@@ -1,7 +1,7 @@
-local log = require('vim.lsp.log')
+local log = require 'vim.lsp.log'
 
-local infoview = require('lean.infoview')
-local util = require('lean._util')
+local infoview = require 'lean.infoview'
+local util = require 'lean._util'
 
 local stderr = {}
 local current = {}
@@ -32,7 +32,7 @@ end
 function stderr.show(message)
   vim.schedule(function()
     if not current.bufnr or not vim.api.nvim_buf_is_valid(current.bufnr) then
-      current.bufnr = util.create_buf{ name = 'lean://stderr', listed = false, scratch = true }
+      current.bufnr = util.create_buf { name = 'lean://stderr', listed = false, scratch = true }
       current.winnr = nil
     end
     if not current.winnr or not vim.api.nvim_win_is_valid(current.winnr) then
@@ -40,11 +40,13 @@ function stderr.show(message)
     end
     local lines = vim.split(message, '\n')
     local num_lines = vim.api.nvim_buf_line_count(current.bufnr)
-    if lines[#lines] == '' then table.remove(lines) end
+    if lines[#lines] == '' then
+      table.remove(lines)
+    end
     num_lines = num_lines + #lines
     vim.api.nvim_buf_set_lines(current.bufnr, num_lines, num_lines, false, lines)
     if vim.api.nvim_get_current_win() ~= current.winnr then
-      vim.api.nvim_win_set_cursor(current.winnr, {num_lines, 0})
+      vim.api.nvim_win_set_cursor(current.winnr, { num_lines, 0 })
     end
   end)
 end
@@ -57,9 +59,15 @@ function stderr.enable(config)
   -- TODO: add upstream neovim API
   log.error = function(...)
     local argc = select('#', ...)
-    if argc == 0 then return true end -- always enable error messages
-    if argc == 4 and select(1, ...) == 'rpc' and select(3, ...) == 'stderr'
-        and string.match(select(2, ...), 'lean') then
+    if argc == 0 then
+      return true
+    end -- always enable error messages
+    if
+      argc == 4
+      and select(1, ...) == 'rpc'
+      and select(3, ...) == 'stderr'
+      and string.match(select(2, ...), 'lean')
+    then
       local chunk = select(4, ...)
       on_lines(chunk)
     end

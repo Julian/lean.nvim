@@ -1,4 +1,4 @@
-local curl = require('plenary.curl')
+local curl = require 'plenary.curl'
 
 local loogle = {}
 
@@ -13,7 +13,7 @@ local loogle = {}
 ---@return LoogleResult[]? results Loogle hits in the JSON API format
 ---@return string? err An error message from Loogle, in which case no results are returned
 function loogle.search(type)
-  local res = curl.get{
+  local res = curl.get {
     url = 'https://loogle.lean-lang.org/json',
     query = { q = type },
     headers = { ['User-Agent'] = 'lean.nvim' },
