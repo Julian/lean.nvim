@@ -6,7 +6,7 @@
 ---@tag lean.infoview.components
 
 local Element = require('lean.widgets').Element
-local util = require('lean._util')
+local util = require 'lean._util'
 
 local components = {}
 
@@ -20,16 +20,17 @@ end
 --- The (1, 1) indexing is to match the interface used interactively for
 --- `gg` and `|`.
 local function range_to_string(range)
-  return string.format('%d:%d-%d:%d',
-    range["start"].line + 1,
-    range["start"].character + 1,
-    range["end"].line + 1,
-    range["end"].character + 1)
+  return ('%d:%d-%d:%d'):format(
+    range['start'].line + 1,
+    range['start'].character + 1,
+    range['end'].line + 1,
+    range['end'].character + 1
+  )
 end
 
 local function goal_header(goals)
-  return #goals == 0 and H('goals accomplished 🎉')
-    or #goals == 1 and H('1 goal')
+  return #goals == 0 and H 'goals accomplished 🎉'
+    or #goals == 1 and H '1 goal'
     or H(('%d goals'):format(#goals))
 end
 
@@ -37,20 +38,22 @@ end
 ---@param goal table: a Lean4 `plainGoal` LSP response
 ---@return Element[]
 function components.goal(goal)
-  if type(goal) ~= "table" or not goal.goals then return {} end
+  if type(goal) ~= 'table' or not goal.goals then
+    return {}
+  end
   return {
-    Element:new{
-      name = "plain-goals",
+    Element:new {
+      name = 'plain-goals',
       children = {
-        Element:new{
-          name = "plain-goals-list",
+        Element:new {
+          name = 'plain-goals-list',
           text = goal_header(goal.goals),
           children = vim.tbl_map(function(this_goal)
-            return Element:new{ text = '\n' .. this_goal, name = 'plain-goal' }
+            return Element:new { text = '\n' .. this_goal, name = 'plain-goal' }
           end, goal.goals),
-        }
-      }
-    }
+        },
+      },
+    },
   }
 end
 
@@ -58,23 +61,27 @@ end
 ---@param term_goal table: a Lean4 `plainTermGoal` LSP response
 ---@return Element[]
 function components.term_goal(term_goal)
-  if type(term_goal) ~= "table" or not term_goal.goal then return {} end
+  if type(term_goal) ~= 'table' or not term_goal.goal then
+    return {}
+  end
 
   return {
-    Element:new{
-      text = H(('expected type (%s)'):format(range_to_string(term_goal.range)) .. '\n' .. term_goal.goal),
-      name = 'term-goal'
-    }
+    Element:new {
+      text = H(
+        ('expected type (%s)'):format(range_to_string(term_goal.range)) .. '\n' .. term_goal.goal
+      ),
+      name = 'term-goal',
+    },
   }
 end
 
 ---@param t CodeWithInfos
 ---@param sess Subsession
 local function code_with_infos(t, sess)
-  local element = Element:new{ name = 'code-with-infos' }
+  local element = Element:new { name = 'code-with-infos' }
 
   if t.text ~= nil then
-    element:add_child(Element:new{ text = t.text, name = "text" })
+    element:add_child(Element:new { text = t.text, name = 'text' })
   elseif t.append ~= nil then
     for _, s in ipairs(t.append) do
       element:add_child(code_with_infos(s, sess))
@@ -97,7 +104,7 @@ local function code_with_infos(t, sess)
       if info_popup.exprExplicit ~= nil then
         tooltip_element:add_child(code_with_infos(info_popup.exprExplicit, sess))
         if info_popup.type ~= nil then
-          tooltip_element:add_child(Element:new{ text = ' :\n' })
+          tooltip_element:add_child(Element:new { text = ' :\n' })
         end
       end
 
@@ -106,8 +113,8 @@ local function code_with_infos(t, sess)
       end
 
       if info_popup.doc ~= nil then
-        tooltip_element:add_child(Element:new{ text = '\n\n' })
-        tooltip_element:add_child(Element:new{ text = info_popup.doc }) -- TODO: markdown
+        tooltip_element:add_child(Element:new { text = '\n\n' })
+        tooltip_element:add_child(Element:new { text = info_popup.doc }) -- TODO: markdown
       end
 
       return tooltip_element
@@ -139,13 +146,17 @@ local function code_with_infos(t, sess)
     ---@param kind GoToKind
     local go_to = function(_, kind)
       local links, err = sess:getGoToLocation(kind, info_with_ctx)
-      if err or #links == 0 then return end
+      if err or #links == 0 then
+        return
+      end
 
       -- Switch to window of current Lean file
-      local this_infoview = require"lean.infoview".get_current_infoview()
+      local this_infoview = require('lean.infoview').get_current_infoview()
       local this_info = this_infoview and this_infoview.info
       local this_window = this_info and this_info.last_window
-      if this_window then vim.api.nvim_set_current_win(this_window) end
+      if this_window then
+        vim.api.nvim_set_current_win(this_window)
+      end
 
       vim.lsp.util.jump_to_location(links[1], 'utf-16')
       if #links > 1 then
@@ -153,16 +164,26 @@ local function code_with_infos(t, sess)
           title = 'LSP locations',
           items = vim.lsp.util.locations_to_items(links, 'utf-16'),
         })
-        vim.cmd('botright copen')
+        vim.cmd 'botright copen'
       end
     end
-    local go_to_def = function(ctx) go_to(ctx, 'definition') end
-    local go_to_decl = function(ctx) go_to(ctx, 'declaration') end
-    local go_to_type = function(ctx) go_to(ctx, 'type') end
+    local go_to_def = function(ctx)
+      go_to(ctx, 'definition')
+    end
+    local go_to_decl = function(ctx)
+      go_to(ctx, 'declaration')
+    end
+    local go_to_type = function(ctx)
+      go_to(ctx, 'type')
+    end
 
     element.events = {
       click = click,
-      clear = function(ctx) if info_open then do_reset(ctx) end end,
+      clear = function(ctx)
+        if info_open then
+          do_reset(ctx)
+        end
+      end,
       go_to = go_to,
       go_to_def = go_to_def,
       go_to_decl = go_to_decl,
@@ -179,39 +200,35 @@ end
 ---@param goal InteractiveGoal | InteractiveTermGoal
 ---@param sess Subsession
 local function interactive_goal(goal, sess)
-  local element = Element:new{ name = 'interactive-goal' }
+  local element = Element:new { name = 'interactive-goal' }
 
   if goal.userName ~= nil then
-    element:add_child(Element:new{ text = string.format('case %s\n', goal.userName) })
+    element:add_child(Element:new { text = string.format('case %s\n', goal.userName) })
   end
 
   for _, hyp in ipairs(goal.hyps) do
-    local hyp_element = Element:new{
+    local hyp_element = Element:new {
       text = table.concat(hyp.names, ' ') .. ' : ',
-      name = "hyp",
-      children = { code_with_infos(hyp.type, sess) }
+      name = 'hyp',
+      children = { code_with_infos(hyp.type, sess) },
     }
     element:add_child(hyp_element)
 
     if hyp.val ~= nil then
-      hyp_element:add_child(
-        Element:new{
-          text = " := ",
-          name = 'hyp_val',
-          children = { code_with_infos(hyp.val, sess) }
-        }
-      )
+      hyp_element:add_child(Element:new {
+        text = ' := ',
+        name = 'hyp_val',
+        children = { code_with_infos(hyp.val, sess) },
+      })
     end
-    hyp_element:add_child(Element:new{ text = '\n', name = 'hypothesis-separator' })
+    hyp_element:add_child(Element:new { text = '\n', name = 'hypothesis-separator' })
   end
 
-  element:add_child(
-    Element:new{
-      text = '⊢ ',
-      name = 'goal',
-      children = { code_with_infos(goal.type, sess) }
-    }
-  )
+  element:add_child(Element:new {
+    text = '⊢ ',
+    name = 'goal',
+    children = { code_with_infos(goal.type, sess) },
+  })
   return element
 end
 
@@ -219,15 +236,17 @@ end
 ---@param sess Subsession
 ---@return Element[]
 function components.interactive_goals(goal, sess)
-  if goal == nil then return {} end
+  if goal == nil then
+    return {}
+  end
 
-  local children = { Element:new{ text = goal_header(goal.goals) } }
+  local children = { Element:new { text = goal_header(goal.goals) } }
   for i, each in ipairs(goal.goals) do
-    table.insert(children, Element:new{ text = i == 1 and '\n' or '\n\n' })
+    table.insert(children, Element:new { text = i == 1 and '\n' or '\n\n' })
     table.insert(children, interactive_goal(each, sess))
   end
 
-  return { Element:new{ name = 'interactive-goals', children = children } }
+  return { Element:new { name = 'interactive-goals', children = children } }
 end
 
 --- The current (term) goal state.
@@ -235,13 +254,15 @@ end
 ---@param sess Subsession
 ---@return Element[]
 function components.interactive_term_goal(goal, sess)
-  if not goal then return {} end
+  if not goal then
+    return {}
+  end
 
-  local element = Element:new{ name = 'interactive-term-goal' }
+  local element = Element:new { name = 'interactive-term-goal' }
 
-  local term_state_element = Element:new{
+  local term_state_element = Element:new {
     text = H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
-    name = 'term-state'
+    name = 'term-state',
   }
   term_state_element:add_child(interactive_goal(goal, sess))
   element:add_child(term_state_element)
@@ -253,11 +274,11 @@ end
 ---@return Element[]
 function components.diagnostics(bufnr, line)
   return vim.tbl_map(function(diagnostic)
-    return Element:new{
+    return Element:new {
       name = 'diagnostic',
       text = H(string.format(
         '%s: %s:\n%s',
-        range_to_string{
+        range_to_string {
           start = { line = diagnostic.lnum, character = diagnostic.col },
           ['end'] = { line = diagnostic.end_lnum, character = diagnostic.end_col },
         },
@@ -265,17 +286,16 @@ function components.diagnostics(bufnr, line)
         diagnostic.message
       )),
     }
-    end, util.lean_lsp_diagnostics({ lnum = line }, bufnr)
-  )
+  end, util.lean_lsp_diagnostics({ lnum = line }, bufnr))
 end
 
 local function abbreviate_common_prefix(a, b)
-  local i = a:find'[.]'
-  local j = b:find'[.]'
-  if i and j and i == j and a:sub(1,i) == b:sub(1,i) then
-    return abbreviate_common_prefix(a:sub(i+1), b:sub(i+1))
-  elseif not i and j and b:sub(1,j-1) == a then
-    return b:sub(j+1)
+  local i = a:find '[.]'
+  local j = b:find '[.]'
+  if i and j and i == j and a:sub(1, i) == b:sub(1, i) then
+    return abbreviate_common_prefix(a:sub(i + 1), b:sub(i + 1))
+  elseif not i and j and b:sub(1, j - 1) == a then
+    return b:sub(j + 1)
   elseif a == b then
     return ''
   else
@@ -287,7 +307,7 @@ end
 ---@param sess Subsession
 ---@param parent_cls? string
 local function tagged_text_msg_embed(t, sess, parent_cls)
-  local element = Element:new{ name = 'code-with-infos' }
+  local element = Element:new { name = 'code-with-infos' }
 
   if t.text ~= nil then
     element.text = t.text
@@ -311,17 +331,18 @@ local function tagged_text_msg_embed(t, sess, parent_cls)
 
       local click
       local function render()
-        local header = Element:new{ text = string.format(is_open and '[%s] ▼' or '[%s] ▶', category) }
+        local header =
+          Element:new { text = string.format(is_open and '[%s] ▼' or '[%s] ▶', category) }
         header.highlightable = true
         header.events = { click = click }
 
-        element:set_children{ header }
+        element:set_children { header }
 
         if is_open then
           if expanded then
             element:add_child(tagged_text_msg_embed(expanded, sess))
           elseif expanded_err then
-            element:add_child(Element:new{ text = vim.inspect(expanded_err) })
+            element:add_child(Element:new { text = vim.inspect(expanded_err) })
           end
         end
         return true
@@ -359,21 +380,21 @@ local function tagged_text_msg_embed(t, sess, parent_cls)
 
       local click
       local function render()
-        local header = Element:new{ text = string.format('%s[%s] ', (' '):rep(indent), abbr_cls) }
+        local header = Element:new { text = string.format('%s[%s] ', (' '):rep(indent), abbr_cls) }
         header:add_child(tagged_text_msg_embed(msg, sess))
         if children.lazy or #children.strict > 0 then
           header.highlightable = true
           header.events = { click = click }
-          header:add_child(Element:new{ text = (is_open and ' ▼' or ' ▶') .. '\n' })
+          header:add_child(Element:new { text = (is_open and ' ▼' or ' ▶') .. '\n' })
         else
-          header:add_child(Element:new{ text = '\n' })
+          header:add_child(Element:new { text = '\n' })
         end
 
-        element:set_children{ header }
+        element:set_children { header }
 
         if is_open then
           if children_err then
-            element:add_child(Element:new{ text = vim.inspect(children_err) })
+            element:add_child(Element:new { text = vim.inspect(children_err) })
           elseif children.strict ~= nil then
             for _, child in ipairs(children.strict) do
               element:add_child(tagged_text_msg_embed(child, sess, cls))
@@ -401,8 +422,8 @@ local function tagged_text_msg_embed(t, sess, parent_cls)
 
       render()
     else
-      element:add_child(Element:new{
-        text = 'unknown tag:\n' .. vim.inspect(embed) .. '\n' .. vim.inspect(t.tag[2]) .. '\n'
+      element:add_child(Element:new {
+        text = 'unknown tag:\n' .. vim.inspect(embed) .. '\n' .. vim.inspect(t.tag[2]) .. '\n',
       })
     end
   end
@@ -419,12 +440,15 @@ function components.interactive_diagnostics(diags, line, sess)
   local elements = {}
   for _, diag in pairs(diags) do
     if diag.range.start.line == line then
-      local element = Element:new{
-          text = H(string.format('%s: %s:\n',
+      local element = Element:new {
+        text = H(
+          ('%s: %s:\n'):format(
             range_to_string(diag.range),
-            util.DIAGNOSTIC_SEVERITY[diag.severity])),
-          name = 'diagnostic',
-          children = { tagged_text_msg_embed(diag.message, sess) }
+            util.DIAGNOSTIC_SEVERITY[diag.severity]
+          )
+        ),
+        name = 'diagnostic',
+        children = { tagged_text_msg_embed(diag.message, sess) },
       }
       table.insert(elements, element)
     end
