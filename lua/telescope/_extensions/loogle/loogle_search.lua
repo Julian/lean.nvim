@@ -16,38 +16,36 @@ local M = {}
 --- @param telescope_opts table Options for the telescope framework
 M.find = function(telescope_opts)
   telescope_opts = vim.tbl_extend('keep', telescope_opts or {}, {})
+  telescope_opts.debounce = telescope_opts.debounce or 5000
 
-  local type
-  vim.ui.input({ prompt = 'Enter a type pattern to search on Loogle: ' }, function(choice)
-    type = choice
-  end)
-  if not type or type == '' then
-    return
-  end
+  local live_searcher = finders.new_job(
+    function(type)
+      if not type or type == "" then
+        return nil
+      end
 
-  local results, err = loogle.search(type)
-  if err then
-    vim.notify(('Loogle error: %s'):format(err), vim.log.levels.ERROR, {})
-    return
-  elseif vim.tbl_isempty(results or {}) then
-    vim.notify(('No Loogle results for %q'):format(type), vim.log.levels.ERROR, {})
-    return
-  end
+      local results, err = loogle.search(type)
+      if err then
+        vim.notify(('Loogle error: %s'):format(err), vim.log.levels.ERROR, {})
+        return
+      elseif vim.tbl_isempty(results or {}) then
+        vim.notify(('No Loogle results for %q'):format(type), vim.log.levels.ERROR, {})
+        return
+      end
+      return results
+    end,
+    function(entry)
+      return {
+        value = entry,
+        display = entry.name,
+        ordinal = entry.name,
+      }
+    end, nil, vim.loop.cwd())
 
   pickers
     .new(telescope_opts, {
       prompt_title = 'Loogle Search Filter',
-      finder = finders.new_table {
-        results = results,
-        ---@param entry LoogleResult
-        entry_maker = function(entry)
-          return {
-            value = entry,
-            display = entry.name,
-            ordinal = entry.name,
-          }
-        end,
-      },
+      finder = live_searcher,
       sorter = config.values.generic_sorter(telescope_opts),
 
       previewer = previewers.new_buffer_previewer {
