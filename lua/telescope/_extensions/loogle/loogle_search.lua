@@ -62,7 +62,9 @@ M.find = function(telescope_opts)
           actions.close(prompt_bufnr)
           ---@type LoogleTelescopeEntry
           local selection = actions_state.get_selected_entry()
-          vim.api.nvim_put({ selection.value.name }, 'c', true, true)
+          if selection then
+            vim.api.nvim_put({ selection.value.name }, 'c', true, true)
+          end
         end)
         return true
       end,
