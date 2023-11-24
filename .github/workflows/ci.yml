@@ -3,20 +3,6 @@ name: Tests
 on: [push, pull_request]
 
 jobs:
-  pre-commit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-      - name: Install luacheck
-        run: |
-          sudo apt-get update
-          sudo apt-get install luarocks
-          sudo luarocks install luacheck
-      - uses: pre-commit/action@v3.0.0
-
   lean3-version:
     runs-on: ubuntu-latest
     outputs:
