@@ -1,5 +1,6 @@
 leanpkg.path
 *.olean
+.lake/
 
 demo.gif
 demo.mp4
