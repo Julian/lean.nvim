@@ -1,4 +1,11 @@
-{"version": 5,
- "packagesDir": "lake-packages",
+{"version": 7,
+ "packagesDir": ".lake/packages",
  "packages":
- [{"path": {"opts": {}, "name": "foo", "inherited": false, "dir": "./foo"}}]}
+ [{"type": "path",
+   "name": "foo",
+   "manifestFile": "lake-manifest.json",
+   "inherited": false,
+   "dir": "./foo",
+   "configFile": "lakefile.lean"}],
+ "name": "test",
+ "lakeDir": ".lake"}

@@ -36,7 +36,7 @@ demo:
 
 # Update the versions of test fixtures used in CI.
 bump-test-fixtures:
-    cd {{ tests }}/fixtures/example-project/; gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' >lean-toolchain
+    cd {{ tests }}/fixtures/example-project/; gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' >lean-toolchain && lake update
     cd {{ tests }}/lean3/fixtures/example-project/; {{ if `leanpkg help 2>&1 >/dev/null; echo $?` != "0" { "" } else { `leanproject up` } }}
     git add --all
     git commit -m "Bump the Lean versions in CI."
