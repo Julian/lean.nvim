@@ -107,7 +107,10 @@ describe(
         assert.is_not.equal(0, #infoview.get_current_infoview().info.pins)
         local before_pin = { first_pin_position[1] - 1, 0 }
         local after_pin = { first_pin_position[1] + 1, 0 }
-        local extmarks = helpers.all_lean_extmarks(0, before_pin, after_pin)
+        -- Something here is changing in nvim 0.10 apparently, who knows if intentionally -- hence the filter.
+        local extmarks = vim.tbl_filter(function(mark)
+          return mark[4].virt_text ~= nil
+        end, helpers.all_lean_extmarks(0, before_pin, after_pin))
         assert.is.equal(1, #extmarks)
         local details = extmarks[1][4]
         assert.is.equal('← 1', details.virt_text[1][1])
