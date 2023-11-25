@@ -45,7 +45,7 @@ jobs:
           version: stable
       - uses: Julian/setup-lean@v1
         with:
-          default_toolchain_file: lua/tests/lean3/fixtures/example-project/leanpkg.toml
+          default-toolchain-file: lua/tests/lean3/fixtures/example-project/leanpkg.toml
       - uses: extractions/setup-just@v1
       - name: Run tests
         run: just test
