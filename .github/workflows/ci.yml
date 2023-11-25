@@ -1,66 +1,51 @@
 name: Tests
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 
 jobs:
-  lean3-version:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.get-version.outputs.lean_version }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-      - id: get-version
-        name: Get the Lean 3 version used by fixtures
-        shell: python
-        run: |
-          from pathlib import Path
-          import os
-          import json
-          import tomllib
-
-          leanpkg, = Path(".").rglob("leanpkg.toml")
-          metadata = tomllib.loads(leanpkg.read_text())["package"]
-          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-            out.write(f"lean_version={json.dumps([metadata['lean_version']])}")
-
   ci:
-    needs: lean3-version
     runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os:
+          - macos-latest
+          - ubuntu-latest
         nvim-version:
           - stable
           - nightly
-        lean-version: ${{ fromJson(needs.lean3-version.outputs.version) }}
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Give leanpkg (fake) greadlink on macOS
-        run: cp scripts/fake_greadlink /usr/local/bin/greadlink
-        if: runner.os == 'macOS'
-
-      - name: Install elan
-        run: |
-          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain "${{ matrix.lean-version }}" -y
-          echo "$HOME/.elan/bin/" >> $GITHUB_PATH
-
       - name: Install Neovim
         uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
           version: ${{ matrix.nvim-version }}
 
-      - name: Install the Lean LSP
-        run: sudo npm install -g lean-language-server
-        if: contains(matrix.lean-version, 'lean:3')
+      - uses: Julian/setup-lean@v1
+      - uses: extractions/setup-just@v1
+      - name: Run tests
+        run: just test
+        env:
+          TEST_SEQUENTIAL: 1
 
+  lean3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+      - uses: Julian/setup-lean@v1
+        with:
+          default_toolchain_file: lua/tests/lean3/fixtures/example-project/leanpkg.toml
       - uses: extractions/setup-just@v1
       - name: Run tests
         run: just test
