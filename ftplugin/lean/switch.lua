@@ -20,6 +20,7 @@ vim.b.switch_definitions = {
   { 'sorry', 'exact?', 'apply?' },
   { 'exact ⟨', 'refine ⟨' },
   { 'aesop', 'aesop?' },
+  { 'norm_cast', 'push_cast' },
   vim.fn['switch#Words'] { 'tt', 'ff' },
   { '=', '≠' },
   { '∈', '∉' },
