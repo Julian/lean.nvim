@@ -21,7 +21,7 @@ repos:
             .*/lake-manifest.json
           )
   - repo: https://github.com/lunarmodules/luacheck
-    rev: v1.1.1
+    rev: v1.1.2
     hooks:
       - id: luacheck
   - repo: https://github.com/rstcheck/rstcheck
