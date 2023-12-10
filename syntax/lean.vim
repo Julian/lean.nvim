@@ -33,10 +33,16 @@ syn keyword leanKeyword forall fun from have show assume suffices let if else th
 syn keyword leanKeyword try catch finally for unless return mut continue break
 syn keyword leanSort Sort Prop Type
 syn keyword leanCommand set_option run_cmd
-syn match leanCommand "#eval"
+
+" Lean.Parser.Command
 syn match leanCommand "#check"
-syn match leanCommand "#print"
+syn match leanCommand "#check_failure"
 syn match leanCommand "#reduce"
+syn match leanCommand "#eval"
+syn match leanCommand "#synth"
+syn match leanCommand "#exit"
+syn match leanCommand "#print"
+syn match leanCommand "#print axioms"
 
 syn keyword leanSorry sorry
 syn keyword leanSorry admit
