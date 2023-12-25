@@ -82,7 +82,7 @@ Features
   live grepping.
   See the wiki for `a sample configuration <https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#live-grep>`_.
 
-* If `telescope.nvim <https://github.com/nvim-telescope/telescope.nvim>`__ is present a `:Telescope loogle` command is available as a frontend for the `Loogle <https://loogle.lean-lang.org>`_ JSON API.
+* If `telescope.nvim <https://github.com/nvim-telescope/telescope.nvim>`__ is present a ``:Telescope loogle`` command is available as a frontend for the `Loogle <https://loogle.lean-lang.org>`_ JSON API.
 
 Configuration & Usage
 ---------------------
