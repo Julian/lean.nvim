@@ -152,12 +152,12 @@ function lean.current_search_paths()
 
     local all_paths = vim.fn.json_decode(subprocess_check_output {
       command = executable,
-      args = { 'print-paths' },
+      args = { 'setup-file', vim.api.nvim_buf_get_name(0) },
       cwd = root,
     })
     paths = vim.tbl_map(function(path)
       return root .. '/' .. path
-    end, all_paths.srcPath)
+    end, all_paths.paths.srcPath)
     vim.list_extend(
       paths,
       subprocess_check_output { command = 'lean', args = { '--print-libdir' }, cwd = root }
