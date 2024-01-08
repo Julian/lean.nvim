@@ -15,20 +15,24 @@ syn keyword leanCommandPrefix local private protected scoped partial noncomputab
 syn keyword leanModifier renaming hiding where extends using with at rec deriving
 syn keyword leanCommand syntax elab elab_rules macro_rules macro
 
-syn keyword leanCommand namespace section
+syn keyword leanCommand namespace section end
 
 syn match leanFrenchQuote '«[^»]*»'
 
 syn match leanDeclarationName ' *[^:({\[[:space:]]*' contained
 syn match leanDeclarationName ' *«[^»]*»' contained
-syn keyword leanDeclaration theorem lemma def axiom constant abbrev opaque
+syn keyword leanDeclaration theorem lemma def definition axiom constant abbreviation abbrev opaque
         \ inductive structure class instance skipwhite nextgroup=leanDeclarationName
 
 syn keyword leanCommand universe example
 syn keyword leanCommand variable
 syn keyword leanCommand precedence postfix prefix notation infix infixl infixr
 
-syn keyword leanKeyword by end
+syn keyword leanCommand alias
+syn keyword leanCommand inline
+syn keyword leanCommand unif_hint
+
+syn keyword leanKeyword by
 syn keyword leanKeyword forall fun from have show assume suffices let if else then in with calc match do this
 syn keyword leanKeyword try catch finally for unless return mut continue break
 syn keyword leanSort Sort Prop Type
