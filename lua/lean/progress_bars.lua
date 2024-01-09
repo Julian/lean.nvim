@@ -1,7 +1,7 @@
 local progress = require 'lean.progress'
 
 local progress_bars = {}
-local options = { priority = 10, character = '⋯' }
+local options = { priority = 10, character = '│' }
 options._DEFAULTS = vim.deepcopy(options)
 
 local sign_group_name = 'leanSignProgress'

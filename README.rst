@@ -298,6 +298,8 @@ Full Configuration & Settings Information
       progress_bars = {
         -- Enable the progress bars?
         enable = true,
+        -- What character should be used for the bars?
+        character = '│',
         -- Use a different priority for the signs
         priority = 10,
       },
