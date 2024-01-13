@@ -730,7 +730,7 @@ function Info:render()
   end
 
   self.__infoview:__refresh_diff()
-  collectgarbage()
+  collectgarbage()  -- FIXME: Why??
 end
 
 --- Update the diff pin to use the current pin's positon params if they are valid,
