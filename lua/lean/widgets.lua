@@ -420,7 +420,6 @@ function BufRenderer:new(obj)
       ['<Tab>'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(obj.buf),
       ['<S-Tab>'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:goto_parent_tooltip()<CR>]]):format(obj.buf),
       ['J'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(obj.buf),
-      ['S'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:hop_to()<CR>]]):format(obj.buf),
       ['<LocalLeader>\\'] = '<Cmd>LeanAbbreviationsReverseLookup<CR>',
     }
   }
@@ -710,70 +709,6 @@ function BufRenderer:get_root_ancestor()
   end
   ---@diagnostic disable-next-line: return-type-mismatch
   return self
-end
-
-function BufRenderer:hop_to()
-  self:get_root_ancestor()
-      :hop(function(element) return element.highlightable end, require"hop.hint_util".callbacks.win_goto)
-end
-
-function BufRenderer:hop(filter_fn, callback_fn)
-  local winpos = vim.api.nvim_win_get_position(0)
-  local strategy = {
-    get_hint_list = function()
-      local hints = {}
-      local windows = {}
-
-      ---@param root BufRenderer
-      local function get_hints(root)
-        local this_buf = root.buf
-        local this_win = root.last_win
-        if not this_win then return end
-        table.insert(windows, this_win)
-        local lines = root.lines
-        local window_dist = require"hop.hint_util".manh_dist(winpos, vim.api.nvim_win_get_position(this_win))
-
-        root.element:filter(function(element, _, raw_pos)
-          if not filter_fn(element) then return end
-          local pos = raw_pos_to_pos(raw_pos, lines)
-          local hint =
-          {
-            line = pos[1] + 1,
-            col = pos[2] + 1,
-            buf = this_buf,
-          }
-
-          -- extra metadata
-          hint.dist = require"hop.hint_util".manh_dist(vim.api.nvim_win_get_cursor(this_win),
-            {hint.line, hint.col - 1})
-          hint.wdist = window_dist
-          hint.win = this_win
-
-          -- prevent duplicate hints; this works because we are pre-order traversing the element tree
-          if not vim.deep_equal(hint, hints[#hints]) then
-            table.insert(hints, hint)
-          end
-        end)
-
-        if root.tooltip then
-          get_hints(root.tooltip)
-        end
-      end
-
-      get_hints(self)
-
-      -- just for greying out
-      self.disable_update = true
-      local views_data = require"hop.hint_util".create_views_data(windows)
-      self.disable_update = false
-
-      return hints, {grey_out = require"hop.hint_util".get_grey_out(views_data)}
-    end,
-    callback = callback_fn,
-    comparator = require"hop.hint_util".comparators.win_cursor_dist_comparator
-  }
-
-  require"hop".hint(strategy)
 end
 
 return { BufRenderer = BufRenderer, Element = Element, _by_buf = _by_buf }
