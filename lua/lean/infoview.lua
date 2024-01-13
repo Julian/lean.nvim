@@ -1185,6 +1185,7 @@ function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
   end
 end
 
+-- FIXME: We never seem to call nvim_buf_detach, nor use this for anything.
 local attached_buffers = {}
 
 --- Callback when entering a Lean buffer.
