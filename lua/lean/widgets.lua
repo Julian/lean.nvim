@@ -379,19 +379,6 @@ function Element:filter(fn)
   self:__filter(path, pos, fn)
 end
 
--- Creates an impotent deep copy of this element (both tag-stripped and event-disabled).
-function Element:dummy_copy()
-  local dummy = Element:new { text = self.text, name = self.name, hlgroup = self.hlgroup }
-  dummy.highlightable = self.highlightable
-  for _, child in ipairs(self.__children) do
-    table.insert(dummy.__children, child:dummy_copy())
-  end
-  if self.tooltip then
-    dummy.tooltip = self.tooltip:dummy_copy()
-  end
-  return dummy
-end
-
 ---Create an element which joins a list-like table of elements with the provided separator.
 ---@param elements Element[]
 ---@param sep string
