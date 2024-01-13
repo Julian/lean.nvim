@@ -11,7 +11,6 @@ local util = require 'lean._util'
 ---@field tooltip? Element? tooltip
 ---@field highlightable boolean @(for buffer rendering) whether to highlight this element when hovering over it
 ---@field _size? integer Computed size of this element, updated by `Element:to_string`
----@field disable_update? boolean
 ---@field private __children Element[] @this element's children
 local Element = {}
 Element.__index = Element
@@ -553,9 +552,6 @@ function BufRenderer:last_win_valid()
 end
 
 function BufRenderer:update_cursor(win)
-  if self.disable_update then
-    return
-  end
   win = win or vim.api.nvim_get_current_win()
   if vim.api.nvim_win_get_buf(win) == self.buf then
     self.last_win = win
@@ -692,9 +688,11 @@ function BufRenderer:hover(force_update_highlight)
 
     if not self.tooltip:last_win_valid() then
       -- fresh non-reused tooltip, open window
-      self.tooltip.disable_update = true
-      self.tooltip.last_win = vim.api.nvim_open_win(self.tooltip.buf, false, win_options)
-      self.tooltip.disable_update = false
+      self.tooltip.last_win = vim.api.nvim_open_win(
+        self.tooltip.buf,
+        false,  -- avoid firing update_cursor by disabling the autocmds
+        vim.tbl_extend('error', win_options, { noautocmd = true } )
+      )
       -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
       vim.cmd.redraw()
       self.tooltip.last_win_options = vim.deepcopy(win_options)
