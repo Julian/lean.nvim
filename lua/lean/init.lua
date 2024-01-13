@@ -117,13 +117,15 @@ function lean.use_suggested_mappings(buffer_local)
   end
 end
 
---- Is the current buffer a lean buffer?
+--- Is the current buffer a Lean buffer?
+---@return boolean
 function lean.is_lean_buffer()
   local filetype = vim.opt.filetype:get()
   return filetype == 'lean' or filetype == 'lean3'
 end
 
---- Is the current buffer a lean 3 buffer?
+--- Is the current buffer a Lean 3 buffer?
+---@return boolean
 function lean.is_lean3_buffer()
   return vim.opt.filetype:get() == 'lean3'
 end
