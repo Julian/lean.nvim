@@ -317,7 +317,7 @@ function Infoview:__refresh()
   self.info.__win_event_disable = false
 end
 
---REMOVEME: We shouldn't need both __refresh and __update
+--FIXME: We shouldn't have both __refresh and __update
 function Infoview:__update()
   local info = self.info
   if info.__win_event_disable then
@@ -500,7 +500,7 @@ function Info:new(opts)
     __infoview = opts.infoview,
     __pins_element = pins_element,
     __diff_pin_element = Element:new { name = 'diff' },
-    __win_event_disable = false,
+    __win_event_disable = false,  -- FIXME: This too is really confusing
   }, self)
   new_info.pin = Pin:new {
     id = '1',
