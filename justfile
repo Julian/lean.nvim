@@ -1,5 +1,3 @@
-has_lean3 := if `leanpkg help 2>&1 >/dev/null; echo $?` == "0" { "true" } else { "false" }
-
 packpath := justfile_directory() + "/packpath"
 scripts := justfile_directory() + "/scripts"
 tests := justfile_directory() + "/lua/tests"

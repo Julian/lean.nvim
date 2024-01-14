@@ -207,23 +207,6 @@ function helpers.wait_for_filetype()
   assert.message('filetype was never set').is_truthy(result)
 end
 
---- Assert a string or table is empty.
-local function is_empty(_, arguments)
-  local got = arguments[1]
-  if type(got) == 'string' then
-    return got == ''
-  else
-    return vim.tbl_isempty(got)
-  end
-end
-assert:register(
-  'assertion',
-  'empty',
-  is_empty,
-  'assertion.same.positive',
-  'assertion.same.negative'
-)
-
 --- Assert about the current word.
 local function has_current_word(_, arguments)
   assert.is.equal(arguments[1], vim.fn.expand '<cword>')
