@@ -41,6 +41,28 @@ describe(
       assert.windows.are(known_windows)
     end)
 
+    it('does not abandon tooltips when the infoview is closed', function()
+      vim.cmd.tabnew '#'
+      local tab2_window = vim.api.nvim_get_current_win()
+      local tab2_infoview = infoview.get_current_infoview()
+      helpers.move_cursor { to = { 1, 9 } }
+      helpers.wait_for_loading_pins()
+      vim.api.nvim_set_current_win(tab2_infoview.window)
+      helpers.move_cursor { to = { 2, 5 } } -- `Type`
+      helpers.feed '<CR>'
+
+      helpers.wait_for_new_window { tab2_window, tab2_infoview.window }
+      assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+
+      -- Now close the infoview entirely, and the tooltip should close too.
+      tab2_infoview:close()
+
+      assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+      vim.api.nvim_win_close(tab2_window, false)
+
+      assert.is.equal(1, #vim.api.nvim_list_tabpages())
+    end)
+
     it('does not abandon tooltips when windows are closed', function()
       vim.cmd.tabnew '#'
       local tab2_window = vim.api.nvim_get_current_win()
