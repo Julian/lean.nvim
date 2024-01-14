@@ -1,5 +1,3 @@
-require 'tests.helpers'
-
 local abbreviations = require 'lean.abbreviations'
 
 require('lean').setup {}
