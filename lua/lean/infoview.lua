@@ -392,7 +392,7 @@ end
 
 function Infoview:__was_closed()
   self.window = nil
-  self.info:__was_closed()
+  self.info.__renderer:event 'clear_all'  -- Ensure tooltips close.
 end
 
 --- Retrieve the contents of the infoview as a table.
@@ -594,11 +594,6 @@ function Info:__set_diff_pin(params)
   self.__diff_pin:move(params)
 
   self:render()
-end
-
--- Ensure tooltips close.
-function Info:__was_closed()
-  self.__renderer:event 'clear_all'
 end
 
 function Info:clear_pins()
@@ -978,18 +973,18 @@ function Pin:__started_loading()
   return true
 end
 
-function Pin:async_update(force)
+function Pin:async_update()
   -- FIXME: For one, we're guarding here against the infoview being updated
   --        while it's closed, which if we continued, would end up calling
   --        render. That doesn't seem right, somewhere that should happen
   --        higher up than here.
-  if not force and self.paused or not self.__info.__infoview.window then
+  if self.paused or not self.__info.__infoview.window then
     return
   end
 
   local tick = self.__ticker:lock()
 
-  if self.__position_params and (force or not self.paused) then
+  if self.__position_params and not self.paused then
     self:__update(tick)
   end
   if not tick:check() then
@@ -1178,7 +1173,7 @@ function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
         end
         vim.schedule(function()
           pin:update_position()
-          pin:update(false)
+          pin:update()
         end)
       end
     end
