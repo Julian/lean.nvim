@@ -454,34 +454,6 @@ function Infoview:focus_on_current_buffer()
   end
 end
 
---- An infoview was entered, show the extmark for the current pin.
---- Will be triggered via a `WinEnter` autocmd.
-local function show_current_pin()
-  local current_infoview = infoview.get_current_infoview()
-  if not current_infoview then
-    return
-  end
-  local info = current_infoview.info
-  if info.__win_event_disable then
-    return
-  end
-  current_infoview.info:__maybe_show_pin_extmark 'current'
-end
-
---- An infoview was left, hide the extmark for the current pin.
---- Will be triggered via a `WinLeave` autocmd.
-local function hide_current_pin()
-  local current_infoview = infoview.get_current_infoview()
-  if not current_infoview then
-    return
-  end
-  local info = current_infoview.info
-  if info.__win_event_disable then
-    return
-  end
-  info.pin:__hide_extmark()
-end
-
 ---@return Info
 function Info:new(opts)
   local pins_element = Element:new {
@@ -525,12 +497,20 @@ function Info:new(opts)
   vim.api.nvim_create_autocmd('WinEnter', {
     group = pin_augroup,
     buffer = pin_bufnr,
-    callback = show_current_pin,
+    callback = function()
+      if not new_info.__win_event_disable then
+        new_info:__maybe_show_pin_extmark 'current'
+      end
+    end
   })
   vim.api.nvim_create_autocmd('WinLeave', {
     group = pin_augroup,
     buffer = pin_bufnr,
-    callback = hide_current_pin,
+    callback = function()
+      if not new_info.__win_event_disable then
+        new_info.pin:__hide_extmark()
+      end
+    end
   })
 
   local diff_bufnr = util.create_buf {
