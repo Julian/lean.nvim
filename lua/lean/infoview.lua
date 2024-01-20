@@ -173,21 +173,8 @@ function Infoview:open()
     group = augroup,
     buffer = self.info.__renderer.buf,
     callback = function()
-      -- FIXME: Why is infoview._by_tabpage[tabpage] here the wrong infoview!?
-      --        Try using it and it will fail the `closes independently via quit`
-      --        test.
-      -- local tabpage, _ = unpack(vim.fn.win_id2tabwin(self.window))
-      -- local closed_infoview = infoview._by_tabpage[tabpage]
-      -- if closed_infoview.info.__win_event_disable then return end
-      -- closed_infoview:__was_closed()
-
-      for _, each in pairs(infoview._by_tabpage) do
-        if each.window == self.window then
-          if each.info.__win_event_disable then
-            return
-          end
-          each:__was_closed()
-        end
+      if not self.info.__win_event_disable then
+        self:__was_closed()
       end
     end,
   })
@@ -530,12 +517,9 @@ function Info:new(opts)
     group = close_augroup,
     buffer = diff_bufnr,
     callback = function()
-      local current_infoview = infoview.get_current_infoview()
-      local info = current_infoview.info
-      if info.__win_event_disable then
-        return
+      if not self.__win_event_disable then
+        self:__clear_diff_pin()
       end
-      info:__clear_diff_pin()
     end,
   })
 
