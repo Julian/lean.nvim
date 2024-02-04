@@ -16,7 +16,7 @@ function loogle.search(type)
   local res = curl.get {
     url = 'https://loogle.lean-lang.org/json',
     query = { q = type },
-    headers = { ['User-Agent'] = 'lean.nvim' },
+    headers = { ['User-Agent'] = 'lean+nvim' },
     accept = 'application/json',
   }
 
