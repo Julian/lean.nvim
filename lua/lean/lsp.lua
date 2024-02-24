@@ -10,6 +10,7 @@ function lsp.enable(opts)
     end,
   })
   opts.init_options = vim.tbl_extend('keep', opts.init_options or {}, {
+    editDelay = 0, -- see #289
     hasWidgets = true,
   })
   require('lspconfig').leanls.setup(opts)

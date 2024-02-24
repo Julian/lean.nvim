@@ -222,7 +222,8 @@ Full Configuration & Settings Information
 
           -- Time (in milliseconds) which must pass since latest edit until elaboration begins.
           -- Lower values may make editing feel faster at the cost of higher CPU usage.
-          editDelay = 200,
+          -- Note that lean.nvim changes the Lean default for this value!
+          editDelay = 0,
 
           -- Whether to signal that widgets are supported.
           -- Enabled by default, as support for most widgets is implemented in lean.nvim.
