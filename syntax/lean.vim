@@ -48,6 +48,10 @@ syn match leanCommand "#exit"
 syn match leanCommand "#print"
 syn match leanCommand "#print axioms"
 
+" Mathlib commands
+syn match leanCommand "#help"
+syn match leanCommand "#run"
+
 syn keyword leanSorry sorry
 syn keyword leanSorry admit
 syn match leanSorry "#exit"
