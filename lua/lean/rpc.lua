@@ -290,6 +290,37 @@ function Subsession:getInteractiveTermGoal(pos)
   return self:call('Lean.Widget.getInteractiveTermGoal', pos)
 end
 
+---@class UserWidgetInstance
+---@field id string
+---@field name string?
+---@field javascriptHash string
+---@field props any
+---@field range LspRange
+
+---@class UserWidgets
+---@field widgets UserWidgetInstance[]
+
+---@param pos LspPosition
+---@return UserWidgets
+---@return LspError error
+function Subsession:getWidgets(pos)
+  return self:call('Lean.Widget.getWidgets', pos)
+end
+
+---@class GetWidgetSourceParams
+---@field pos LspPosition
+---@field hash string
+
+---@class WidgetSource
+---@field sourcetext string
+
+---@param pos GetWidgetSourceParams
+---@return WidgetSource
+---@return LspError error
+function Subsession:getWidgetSource(pos)
+  return self:call('Lean.Widget.getWidgetSource', pos)
+end
+
 ---@class TaggedTextMsgEmbed
 ---@field text? string
 ---@field append? TaggedTextMsgEmbed[]
