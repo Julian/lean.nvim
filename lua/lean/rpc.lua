@@ -14,8 +14,7 @@ local util = require 'lean._util'
 ---@class RpcRef
 
 ---@class Session
----@diagnostic disable-next-line: undefined-doc-name
----@field client lsp.Client
+---@field client vim.lsp.Client
 ---@field uri string
 ---@field connected boolean
 ---@field session_id string?
@@ -27,8 +26,7 @@ local util = require 'lean._util'
 local Session = {}
 Session.__index = Session
 
----@diagnostic disable-next-line: undefined-doc-name
----@param client lsp.Client
+---@param client vim.lsp.Client
 ---@param bufnr number
 ---@param uri string
 ---@return Session
@@ -49,7 +47,6 @@ function Session:new(client, bufnr, uri)
     20000,
     vim.schedule_wrap(function()
       if not self:is_closed() and self.session_id ~= nil then
-        ---@diagnostic disable-next-line: undefined-field
         self.client.notify('$/lean/rpc/keepAlive', {
           uri = self.uri,
           sessionId = self.session_id,
@@ -70,7 +67,6 @@ function Session:new(client, bufnr, uri)
 end
 
 function Session:is_closed()
-  ---@diagnostic disable-next-line: undefined-field
   if self.client and self.client.is_stopped() then
     self:close_without_releasing()
   end
@@ -425,6 +421,45 @@ return rpc
 ---@field message? string
 
 ---@alias LspError LspErrorCodeMessage|string
+
+-- TODO: Figure out how to load these from vim.lsp._meta
+
+---@alias lsp.Handler fun(err: lsp.ResponseError?, result: any, context: lsp.HandlerContext, config?: table): ...any
+
+---@class lsp.HandlerContext
+---@field method string
+---@field client_id integer
+---@field bufnr? integer
+---@field params? any
+---@field version? integer
+
+---@class lsp.ResponseError
+---@field code integer
+---@field message string
+---@field data string|number|boolean|table[]|table|nil
+
+-- TODO: Figure out how to load these from vim.lsp.client
+
+---@class vim.lsp.Client
+--- Sends a notification to an LSP server.
+--- Returns: a boolean to indicate if the notification was successful. If
+--- it is false, then it will always be false (the client has shutdown).
+--- @field notify fun(method: string, params: table?): boolean
+---
+--- Sends a request to the server.
+--- This is a thin wrapper around {client.rpc.request} with some additional
+--- checking.
+--- If {handler} is not specified,  If one is not found there, then an error
+--- will occur. Returns: {status}, {[client_id]}. {status} is a boolean
+--- indicating if the notification was successful. If it is `false`, then it
+--- will always be `false` (the client has shutdown).
+--- If {status} is `true`, the function returns {request_id} as the second
+--- result. You can use this with `client.cancel_request(request_id)` to cancel
+--- the request.
+--- @field request fun(method: string, params: table?, handler: lsp.Handler?, bufnr: integer): boolean, integer?
+--- Checks whether a client is stopped.
+--- Returns: true if the client is fully stopped.
+--- @field is_stopped fun(): boolean
 
 -- TODO: Figure out how to load these from vim.lsp._meta.protocol
 

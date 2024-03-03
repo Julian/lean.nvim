@@ -141,7 +141,7 @@ function M.mk_handler(fn)
   end
 end
 
----@param client any vim.lsp.client
+---@param client vim.lsp.Client
 ---@param request string LSP request name
 ---@param params table LSP request parameters
 ---@return any error
