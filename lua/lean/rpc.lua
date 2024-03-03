@@ -120,22 +120,6 @@ function Session:release_deferred(refs)
   end
 end
 
----@class TextDocumentIdentifier
-
----@class LspPosition
----@field line integer
----@field character integer
-
----@class LspRange
----@field start LspPosition
----@field end LspPosition
-
----@alias LspSeverity number
-
----@class TextDocumentPositionParams
----@field textDocument TextDocumentIdentifier
----@field position LspPosition
-
 ---@param pos TextDocumentPositionParams
 ---@param method string
 ---@return any result
@@ -238,56 +222,151 @@ function rpc.open(bufnr, params)
   return Subsession:new(sessions[bufnr], params)
 end
 
----@alias PlainGoalParams TextDocumentPositionParams
-
----@alias PlainTermGoalParams TextDocumentPositionParams
-
 ---@class InfoWithCtx
 
----@class CodeToken
+---@alias DiffTag 'wasChanged' | 'willChange' | 'wasDeleted' | 'willDelete' | 'wasInserted' | 'willInsert'
+---@alias SubexprPos string
+
+---@class SubexprInfo
 ---@field info InfoWithCtx
+---@field subexprPos? SubexprPos
+---@field diffStatus? DiffTag
 
 ---@class CodeWithInfos
 ---@field text? string
 ---@field append? CodeWithInfos[]
----@field tag? {[1]: CodeToken, [2]: CodeWithInfos}
+---@field tag? {[1]: SubexprInfo, [2]: CodeWithInfos}
 
----@class InteractiveHypothesis
+---@class InfoPopup
+---@field type CodeWithInfos?
+---@field exprExplicit CodeWithInfos?
+---@field doc string?
+
+---@alias FVarId string
+---@alias MVarId string
+
+---@class InteractiveHypothesisBundle
 ---@field names string[]
+---@field fvarIds? FVarId[]
 ---@field type CodeWithInfos
----@field val CodeWithInfos?
+---@field val? CodeWithInfos
+---@field isInstance? boolean
+---@field isType? boolean
+---@field isInserted? boolean
+---@field isRemoved? boolean
 
----@class InteractiveGoal
----@field hyps InteractiveHypothesis[]
+---@class ContextInfo
+---@class TermInfo
+
+---@class InteractiveGoalCore
+---@field hyps InteractiveHypothesisBundle[]
 ---@field type CodeWithInfos
----@field userName  string?
+---@field ctx ContextInfo
+
+---@class InteractiveGoal: InteractiveGoalCore
+---@field userName? string
+---@field goalPrefix? string
+---@field mvarId MVarId
+---@field isInserted? boolean
+---@field isRemoved? boolean
+
+---@class InteractiveTermGoal
+---@field range? LspRange
+---@field term TermInfo
 
 ---@class InteractiveGoals
 ---@field goals InteractiveGoal[]
 
----@class LspErrorCodeMessage
----@field code integer
----@field message string?
-
----@alias LspError LspErrorCodeMessage|string
-
----@param pos PlainGoalParams
+---@param pos TextDocumentPositionParams
 ---@return InteractiveGoals goals
 ---@return LspError error
 function Subsession:getInteractiveGoals(pos)
   return self:call('Lean.Widget.getInteractiveGoals', pos)
 end
 
----@class InteractiveTermGoal
----@field hyps InteractiveHypothesis[]
----@field type CodeWithInfos
----@field range LspRange
-
----@param pos PlainTermGoalParams
+---@param pos TextDocumentPositionParams
 ---@return InteractiveTermGoal
 ---@return LspError error
 function Subsession:getInteractiveTermGoal(pos)
   return self:call('Lean.Widget.getInteractiveTermGoal', pos)
+end
+
+---@class TaggedTextMsgEmbed
+---@field text? string
+---@field append? TaggedTextMsgEmbed[]
+---@field tag? {[1]: MsgEmbed} -- the second field is always the empty string
+
+---@class LazyTraceChildren
+
+---@class StrictOrLazyTraceChildren
+---@field strict? TaggedTextMsgEmbed[]
+---@field lazy? LazyTraceChildren
+
+---@class TraceEmbed
+---@field indent integer
+---@field cls string
+---@field msg TaggedTextMsgEmbed
+---@field collapsed boolean
+---@field children StrictOrLazyTraceChildren
+
+---@class MessageData
+
+---@class MsgEmbed
+---@field expr? CodeWithInfos
+---@field goal? InteractiveGoal
+---@field trace? TraceEmbed
+---@field lazyTrace? {[1]: number, [2]: string, [3]: MessageData}
+
+---@class InteractiveDiagnostic
+---@field range LspRange
+---@field fullRange? LspRange
+---@field severity? LspSeverity
+---@field message TaggedTextMsgEmbed
+
+---@class LineRange
+---@field start integer
+---@field end integer
+
+---@param lineRange? LineRange
+---@return InteractiveDiagnostic[]
+---@return LspError error
+function Subsession:getInteractiveDiagnostics(lineRange)
+  return self:call('Lean.Widget.getInteractiveDiagnostics', { lineRange = lineRange })
+end
+
+---@param msg MessageData
+---@param indent number
+---@return TaggedTextMsgEmbed
+---@return LspError error
+function Subsession:msgToInteractive(msg, indent)
+  return self:call(
+    'Lean.Widget.InteractiveDiagnostics.msgToInteractive',
+    { msg = msg, indent = indent }
+  )
+end
+
+---@param children LazyTraceChildren
+---@return TaggedTextMsgEmbed[]
+---@return LspError error
+function Subsession:lazyTraceChildrenToInteractive(children)
+  return self:call('Lean.Widget.lazyTraceChildrenToInteractive', children)
+end
+
+---@param info InfoWithCtx
+---@return InfoPopup
+---@return LspError error
+function Subsession:infoToInteractive(info)
+  return self:call('Lean.Widget.InteractiveDiagnostics.infoToInteractive', info)
+end
+
+---@alias GoToKind 'declaration' | 'definition' | 'type'
+
+---@param kind GoToKind
+---@param info InfoWithCtx
+---@return LspLocationLink[]
+---@return LspError error
+function Subsession:getGoToLocation(kind, info)
+  return self:call('Lean.Widget.getGoToLocation', { kind = kind, info = info })
 end
 
 ---@class UserWidgetInstance
@@ -321,78 +400,27 @@ function Subsession:getWidgetSource(pos)
   return self:call('Lean.Widget.getWidgetSource', pos)
 end
 
----@class TaggedTextMsgEmbed
----@field text? string
----@field append? TaggedTextMsgEmbed[]
----@field tag? {[1]: MsgEmbed} -- the second field is always the empty string
+return rpc
 
----@class LazyTraceChildren
+-- TODO: Figure out how to load these from vim.lsp._meta.protocol
 
----@class StrictOrLazyTraceChildren
----@field strict? TaggedTextMsgEmbed[]
----@field lazy? LazyTraceChildren
+---@class TextDocumentIdentifier
 
----@class TraceEmbed
----@field indent integer
----@field cls string
----@field msg TaggedTextMsgEmbed
----@field collapsed boolean
----@field children StrictOrLazyTraceChildren
+---@alias LspError LspErrorCodeMessage|string
 
----@class MsgEmbed
----@field expr? CodeWithInfos
----@field goal? InteractiveGoal
----@field lazyTrace? {[1]: number, [2]: string, [3]: MessageData}
----@field trace? TraceEmbed
+---@class LspErrorCodeMessage
+---@field code integer
+---@field message? string
 
----@class MessageData
+---@class LspPosition
+---@field line integer
+---@field character integer
 
----@class InteractiveDiagnostic
----@field range LspRange
----@field fullRange LspRange?
----@field severity LspSeverity?
----@field message TaggedTextMsgEmbed
+---@class LspRange
+---@field start LspPosition
+---@field end LspPosition
 
----@class LineRange
----@field start integer
----@field end integer
-
----@param lineRange LineRange?
----@return InteractiveDiagnostic[]
----@return LspError error
-function Subsession:getInteractiveDiagnostics(lineRange)
-  return self:call('Lean.Widget.getInteractiveDiagnostics', { lineRange = lineRange })
-end
-
----@class InfoPopup
----@field type CodeWithInfos?
----@field exprExplicit CodeWithInfos?
----@field doc string?
-
----@param i InfoWithCtx
----@return InfoPopup
----@return LspError error
-function Subsession:infoToInteractive(i)
-  return self:call('Lean.Widget.InteractiveDiagnostics.infoToInteractive', i)
-end
-
----@param msg MessageData
----@param indent number
----@return TaggedTextMsgEmbed
----@return LspError error
-function Subsession:msgToInteractive(msg, indent)
-  return self:call(
-    'Lean.Widget.InteractiveDiagnostics.msgToInteractive',
-    { msg = msg, indent = indent }
-  )
-end
-
----@param children LazyTraceChildren
----@return TaggedTextMsgEmbed[]
----@return LspError error
-function Subsession:lazyTraceChildrenToInteractive(children)
-  return self:call('Lean.Widget.lazyTraceChildrenToInteractive', children)
-end
+---@alias LspSeverity number
 
 ---@alias LspDocumentUri string
 
@@ -402,14 +430,6 @@ end
 ---@field targetRange LspRange
 ---@field targetSelectionRange LspRange
 
----@alias GoToKind 'declaration'|'definition'|'type'
-
----@param kind GoToKind
----@param info InfoWithCtx
----@return LspLocationLink[]
----@return LspError error
-function Subsession:getGoToLocation(kind, info)
-  return self:call('Lean.Widget.getGoToLocation', { kind = kind, info = info })
-end
-
-return rpc
+---@class TextDocumentPositionParams
+---@field textDocument TextDocumentIdentifier
+---@field position LspPosition

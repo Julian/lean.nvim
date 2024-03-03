@@ -42,7 +42,7 @@ function lsp.get_lean3_server(bufnr)
 end
 
 -- Fetch goal state information from the server (async).
----@param params PlainGoalParams
+---@param params TextDocumentPositionParams
 ---@param bufnr number
 ---@return any error
 ---@return any plain_goal
@@ -60,7 +60,7 @@ function lsp.plain_goal(params, bufnr)
 end
 
 -- Fetch term goal state information from the server (async).
----@param params PlainTermGoalParams
+---@param params TextDocumentPositionParams
 ---@param bufnr number
 ---@return any error
 ---@return any plain_term_goal
