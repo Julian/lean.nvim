@@ -42,7 +42,7 @@ function lsp.get_lean3_server(bufnr)
 end
 
 -- Fetch goal state information from the server (async).
----@param params TextDocumentPositionParams
+---@param params lsp.TextDocumentPositionParams
 ---@param bufnr number
 ---@return any error
 ---@return any plain_goal
@@ -60,7 +60,7 @@ function lsp.plain_goal(params, bufnr)
 end
 
 -- Fetch term goal state information from the server (async).
----@param params TextDocumentPositionParams
+---@param params lsp.TextDocumentPositionParams
 ---@param bufnr number
 ---@return any error
 ---@return any plain_term_goal
@@ -87,7 +87,7 @@ end
 function lsp.handlers.diagnostics_handler(_, params)
   -- Make sure there are no zero-length diagnostics.
   for _, diag in pairs(params.diagnostics) do
-    ---@type LspRange
+    ---@type lsp.Range
     local range = diag.range
     if
       range.start.line == range['end'].line and range.start.character == range['end'].character

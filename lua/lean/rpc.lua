@@ -120,10 +120,10 @@ function Session:release_deferred(refs)
   end
 end
 
----@param pos TextDocumentPositionParams
+---@param pos lsp.TextDocumentPositionParams
 ---@param method string
 ---@return any result
----@return LspError|string error
+---@return LspError error
 function Session:call(pos, method, params)
   while not self.connected do
     ---@diagnostic disable-next-line: undefined-field
@@ -197,13 +197,13 @@ local function connect(bufnr)
 end
 
 ---@class Subsession
----@field pos TextDocumentPositionParams
+---@field pos lsp.TextDocumentPositionParams
 ---@field sess Session
 local Subsession = {}
 Subsession.__index = Subsession
 
 ---@param sess Session
----@param pos TextDocumentPositionParams
+---@param pos lsp.TextDocumentPositionParams
 function Subsession:new(sess, pos)
   return setmetatable({ sess = sess, pos = pos, refs = {} }, self)
 end
@@ -271,20 +271,20 @@ end
 ---@field isRemoved? boolean
 
 ---@class InteractiveTermGoal
----@field range? LspRange
+---@field range? lsp.Range
 ---@field term TermInfo
 
 ---@class InteractiveGoals
 ---@field goals InteractiveGoal[]
 
----@param pos TextDocumentPositionParams
+---@param pos lsp.TextDocumentPositionParams
 ---@return InteractiveGoals goals
 ---@return LspError error
 function Subsession:getInteractiveGoals(pos)
   return self:call('Lean.Widget.getInteractiveGoals', pos)
 end
 
----@param pos TextDocumentPositionParams
+---@param pos lsp.TextDocumentPositionParams
 ---@return InteractiveTermGoal
 ---@return LspError error
 function Subsession:getInteractiveTermGoal(pos)
@@ -318,9 +318,9 @@ end
 ---@field lazyTrace? {[1]: number, [2]: string, [3]: MessageData}
 
 ---@class InteractiveDiagnostic
----@field range LspRange
----@field fullRange? LspRange
----@field severity? LspSeverity
+---@field range lsp.Range
+---@field fullRange? lsp.Range
+---@field severity? lsp.DiagnosticSeverity
 ---@field message TaggedTextMsgEmbed
 
 ---@class LineRange
@@ -363,7 +363,7 @@ end
 
 ---@param kind GoToKind
 ---@param info InfoWithCtx
----@return LspLocationLink[]
+---@return lsp.LocationLink[]
 ---@return LspError error
 function Subsession:getGoToLocation(kind, info)
   return self:call('Lean.Widget.getGoToLocation', { kind = kind, info = info })
@@ -374,12 +374,12 @@ end
 ---@field name string?
 ---@field javascriptHash string
 ---@field props any
----@field range LspRange
+---@field range lsp.Range
 
 ---@class UserWidgets
 ---@field widgets UserWidgetInstance[]
 
----@param pos LspPosition
+---@param pos lsp.Position
 ---@return UserWidgets
 ---@return LspError error
 function Subsession:getWidgets(pos)
@@ -387,7 +387,7 @@ function Subsession:getWidgets(pos)
 end
 
 ---@class GetWidgetSourceParams
----@field pos LspPosition
+---@field pos lsp.Position
 ---@field hash string
 
 ---@class WidgetSource
@@ -420,34 +420,111 @@ end
 
 return rpc
 
--- TODO: Figure out how to load these from vim.lsp._meta.protocol
-
----@class TextDocumentIdentifier
+---@class LspErrorCodeMessage
+---@field code lsp.ErrorCodes
+---@field message? string
 
 ---@alias LspError LspErrorCodeMessage|string
 
----@class LspErrorCodeMessage
----@field code integer
----@field message? string
+-- TODO: Figure out how to load these from vim.lsp._meta.protocol
 
----@class LspPosition
----@field line integer
----@field character integer
+---@alias uinteger integer
+---@alias lsp.DocumentUri string
 
----@class LspRange
----@field start LspPosition
----@field end LspPosition
+---A literal to identify a text document in the client.
+---@class lsp.TextDocumentIdentifier
+---
+---The text document's uri.
+---@field uri lsp.DocumentUri
 
----@alias LspSeverity number
+---Predefined error codes.
+---@alias lsp.ErrorCodes
+---| -32700 # ParseError
+---| -32600 # InvalidRequest
+---| -32601 # MethodNotFound
+---| -32602 # InvalidParams
+---| -32603 # InternalError
+---| -32002 # ServerNotInitialized
+---| -32001 # UnknownErrorCode
 
----@alias LspDocumentUri string
+---@alias lsp.LSPErrorCodes
+---| -32803 # RequestFailed
+---| -32802 # ServerCancelled
+---| -32801 # ContentModified
+---| -32800 # RequestCancelled
 
----@class LspLocationLink
----@field originSelectionRange? LspRange
----@field targetUri LspDocumentUri
----@field targetRange LspRange
----@field targetSelectionRange LspRange
+---@class lsp.Position
+---
+---Line position in a document (zero-based).
+---
+---If a line number is greater than the number of lines in a document,
+---it defaults back to the number of lines in the document.
+---If a line number is negative, it defaults to 0.
+---@field line uinteger
+---
+---Character offset on a line in a document (zero-based).
+---
+---The meaning of this offset is determined by the negotiated
+---`PositionEncodingKind`.
+---
+---If the character value is greater than the line length it defaults back to the
+---line length.
+---@field character uinteger
 
----@class TextDocumentPositionParams
----@field textDocument TextDocumentIdentifier
----@field position LspPosition
+---A range in a text document expressed as (zero-based) start and end positions.
+---
+---If you want to specify a range that contains a line including the line ending
+---character(s) then use an end position denoting the start of the next line.
+---For example:
+---```ts
+---{
+---    start: { line: 5, character: 23 }
+---    end : { line 6, character : 0 }
+---}
+---```
+---@class lsp.Range
+---
+---The range's start position.
+---@field start lsp.Position
+---
+---The range's end position.
+---@field end lsp.Position
+
+---The diagnostic's severity.
+---@alias lsp.DiagnosticSeverity
+---| 1 # Error
+---| 2 # Warning
+---| 3 # Information
+---| 4 # Hint
+
+---Represents the connection of two locations. Provides additional metadata over normal {@link Location locations},
+---including an origin range.
+---@class lsp.LocationLink
+---
+---Span of the origin of this link.
+---
+---Used as the underlined span for mouse interaction. Defaults to the word range at
+---the definition position.
+---@field originSelectionRange? lsp.Range
+---
+---The target resource identifier of this link.
+---@field targetUri lsp.DocumentUri
+---
+---The full target range of this link. If the target for example is a symbol then target range is the
+---range enclosing this symbol not including leading/trailing whitespace but everything else
+---like comments. This information is typically used to highlight the range in the editor.
+---@field targetRange lsp.Range
+---
+---The range that should be selected and revealed when this link is being followed, e.g the name of a function.
+---Must be contained by the `targetRange`. See also `DocumentSymbol#range`
+---@field targetSelectionRange lsp.Range
+
+---A parameter literal used in requests to pass a text document and a position inside that
+---document.
+---@class lsp.TextDocumentPositionParams
+---
+---The text document.
+---@field textDocument lsp.TextDocumentIdentifier
+---
+---The position inside the text document.
+---@field position lsp.Position
