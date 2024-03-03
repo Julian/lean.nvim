@@ -400,6 +400,24 @@ function Subsession:getWidgetSource(pos)
   return self:call('Lean.Widget.getWidgetSource', pos)
 end
 
+---@class GoalLocationHyp
+---@field hyp FVarId
+
+---@class GoalLocationHypType
+---@field hypType {[1]: FVarId, [2]: SubexprPos}
+
+---@class GoalLocationHypValue
+---@field hypValue {[1]: FVarId, [2]: SubexprPos}
+
+---@class GoalLocationTarget
+---@field target SubexprPos
+
+---@alias GoalLocation GoalLocationHyp | GoalLocationHypType | GoalLocationHypValue |  GoalLocationTarget
+
+---@class GoalsLocation
+---@field mvarId MVarId
+---@field loc GoalLocation
+
 return rpc
 
 -- TODO: Figure out how to load these from vim.lsp._meta.protocol
