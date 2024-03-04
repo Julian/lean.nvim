@@ -61,6 +61,7 @@ helpers.if_has_lean3(
       -- we're looking for `filter` as our widget
       assert.infoview_contents.are [[
         filter: no filter
+        ▶ 1 goal
         ⊢ 2 = 2
       ]]
     end)
