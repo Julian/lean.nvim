@@ -28,7 +28,7 @@ jobs:
           version: ${{ matrix.nvim-version }}
 
       - uses: Julian/setup-lean@v1
-      - uses: extractions/setup-just@v1
+      - uses: extractions/setup-just@v2
       - name: Run tests
         run: just test
         env:
@@ -46,7 +46,7 @@ jobs:
       - uses: Julian/setup-lean@v1
         with:
           default-toolchain-file: lua/tests/lean3/fixtures/example-project/leanpkg.toml
-      - uses: extractions/setup-just@v1
+      - uses: extractions/setup-just@v2
       - name: Run tests
         run: just test
         env:
