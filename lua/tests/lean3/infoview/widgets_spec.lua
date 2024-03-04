@@ -51,7 +51,6 @@ helpers.if_has_lean3(
       helpers.wait_for_loading_pins()
       -- we're looking for `filter` to not be shown as our widget
       assert.infoview_contents.are [[
-        ▶ 1 goal
         ⊢ 2 = 2
       ]]
     end)
@@ -62,7 +61,6 @@ helpers.if_has_lean3(
       -- we're looking for `filter` as our widget
       assert.infoview_contents.are [[
         filter: no filter
-        ▶ 1 goal
         ⊢ 2 = 2
       ]]
     end)

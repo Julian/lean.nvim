@@ -12,7 +12,6 @@ helpers.if_has_lean3('components', function()
     helpers.move_cursor { to = { 3, 27 } }
 
     assert.infoview_contents.are [[
-      ▶ 1 goal
       ⊢ ℕ
     ]]
   end)
@@ -20,7 +19,6 @@ helpers.if_has_lean3('components', function()
   it('shows a tactic goal', function()
     helpers.move_cursor { to = { 6, 0 } }
     assert.infoview_contents.are [[
-      ▶ 1 goal
       p q : Prop
       ⊢ p ∨ q → q ∨ p
     ]]
@@ -42,7 +40,6 @@ helpers.if_has_lean3('components', function()
     it('properly handles multibyte characters', function()
       helpers.move_cursor { to = { 24, 61 } }
       assert.infoview_contents.are [[
-        ▶ 1 goal
         𝔽 : Type
         ⊢ 𝔽 = 𝔽
       ]]
@@ -56,7 +53,6 @@ helpers.if_has_lean3('components', function()
 
       helpers.move_cursor { to = { 24, 60 } }
       assert.infoview_contents.are [[
-        ▶ 1 goal
         𝔽 : Type
         ⊢ 𝔽 = 𝔽
       ]]

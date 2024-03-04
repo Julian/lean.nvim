@@ -29,9 +29,9 @@ local function range_to_string(range)
 end
 
 local function goal_header(goals)
-  return #goals == 0 and H 'goals accomplished 🎉'
-    or #goals == 1 and H '1 goal'
-    or H(('%d goals'):format(#goals))
+  return #goals == 0 and H 'goals accomplished 🎉\n'
+    or #goals == 1 and ''
+    or H(('%d goals\n'):format(#goals))
 end
 
 --- The current (tactic) goal state.
@@ -48,9 +48,9 @@ function components.goal(goal)
         Element:new {
           name = 'plain-goals-list',
           text = goal_header(goal.goals),
-          children = vim.tbl_map(function(this_goal)
-            return Element:new { text = '\n' .. this_goal, name = 'plain-goal' }
-          end, goal.goals),
+          children = vim.iter(ipairs(goal.goals)):map(function(i, this_goal)
+            return Element:new { text = (i == 1 and '' or '\n') .. this_goal, name = 'plain-goal' }
+          end):totable(),
         },
       },
     },
@@ -242,7 +242,7 @@ function components.interactive_goals(goal, sess)
 
   local children = { Element:new { text = goal_header(goal.goals) } }
   for i, each in ipairs(goal.goals) do
-    table.insert(children, Element:new { text = i == 1 and '\n' or '\n\n' })
+    table.insert(children, Element:new { text = i == 1 and '' or '\n\n' })
     table.insert(children, interactive_goal(each, sess))
   end
 
