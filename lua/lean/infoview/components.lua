@@ -41,6 +41,15 @@ function components.goal(goal)
   if type(goal) ~= 'table' or not goal.goals then
     return {}
   end
+
+  local children = {}
+  for i, this_goal in ipairs(goal.goals) do
+    table.insert(children, Element:new {
+      text = (i == 1 and '' or '\n') .. this_goal,
+      name = 'plain-goal',
+    })
+  end
+
   return {
     Element:new {
       name = 'plain-goals',
@@ -48,9 +57,7 @@ function components.goal(goal)
         Element:new {
           name = 'plain-goals-list',
           text = goal_header(goal.goals),
-          children = vim.iter(ipairs(goal.goals)):map(function(i, this_goal)
-            return Element:new { text = (i == 1 and '' or '\n') .. this_goal, name = 'plain-goal' }
-          end):totable(),
+          children = children,
         },
       },
     },
