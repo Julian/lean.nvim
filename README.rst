@@ -104,6 +104,8 @@ If you are using another plugin manager such as ``vim-plug``, after following th
 
 More detail on the full list of supported configuration options can be found below.
 
+(If you find you can't modify your source files due to the nvim ``E21`` error, this might be due to lean.nvim's effort prevent users from accidentally shooting themselves in the foot by modifying the Lean standard library.  See the definition of ``nomodifiable`` below.)
+
 Semantic Highlighting
 ---------------------
 
