@@ -31,9 +31,9 @@ function helpers.clean_buffer(contents, callback)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
     -- apparently necessary to trigger BufWinEnter
     vim.api.nvim_set_current_buf(bufnr)
-    vim.opt_local.bufhidden = 'hide'
-    vim.opt_local.swapfile = false
-    vim.opt.filetype = 'lean3'
+    vim.bo.bufhidden = 'hide'
+    vim.bo.swapfile = false
+    vim.bo.filetype = 'lean3'
 
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
     vim.api.nvim_buf_call(bufnr, function()

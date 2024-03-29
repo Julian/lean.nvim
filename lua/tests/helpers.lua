@@ -162,9 +162,9 @@ function helpers.clean_buffer(contents, callback)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
     -- apparently necessary to trigger BufWinEnter
     vim.api.nvim_set_current_buf(bufnr)
-    vim.opt_local.bufhidden = 'hide'
-    vim.opt_local.swapfile = false
-    vim.opt.filetype = 'lean'
+    vim.bo.bufhidden = 'hide'
+    vim.bo.swapfile = false
+    vim.bo.filetype = 'lean'
 
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
     vim.api.nvim_buf_call(bufnr, function()
@@ -264,7 +264,7 @@ local function has_infoview_contents(_, arguments)
   -- To address this, we assume that we'll only assert
   -- nonempty contents in the Lean 3 tests, and retry updating the current pin
   -- until we get something.
-  if vim.opt.filetype:get() == 'lean3' then
+  if vim.bo.filetype == 'lean3' then
     assert.is_not.empty(expected)
     local succeeded, _ = pcall(helpers.wait_for_loading_pins, target_infoview)
     local curr_pin = target_infoview.info.pin

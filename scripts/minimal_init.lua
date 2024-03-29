@@ -1,6 +1,6 @@
-vim.opt.display = 'lastline' -- Avoid neovim/neovim#11362
-vim.opt.directory = ''
-vim.opt.shada = ''
+vim.o.display = 'lastline' -- Avoid neovim/neovim#11362
+vim.o.directory = ''
+vim.o.shada = ''
 
 local __file__ = debug.getinfo(1).source:match '@(.*)$'
 local lean_nvim_dir = vim.fn.fnamemodify(__file__, ':p:h:h')

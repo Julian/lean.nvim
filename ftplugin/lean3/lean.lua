@@ -5,15 +5,15 @@ vim.b.did_ftplugin = 1
 
 vim.opt.wildignore:append [[*.olean]]
 
-vim.opt_local.iskeyword = [[a-z,A-Z,_,48-57,192-255,!,']]
-vim.opt_local.comments = [[s0:/-,mb:\ ,ex:-/,:--]]
-vim.opt_local.commentstring = [[/- %s -/]]
+vim.bo.iskeyword = [[a-z,A-Z,_,48-57,192-255,!,']]
+vim.bo.comments = [[s0:/-,mb:\ ,ex:-/,:--]]
+vim.bo.commentstring = [[/- %s -/]]
 
-vim.opt_local.includeexpr = [[substitute(v:fname, '\.', '/', 'g') . '.lean']]
+vim.bo.includeexpr = [[substitute(v:fname, '\.', '/', 'g') . '.lean']]
 
-vim.opt_local.expandtab = true
-vim.opt_local.shiftwidth = 2
-vim.opt_local.softtabstop = 2
+vim.bo.expandtab = true
+vim.bo.shiftwidth = 2
+vim.bo.softtabstop = 2
 
 vim.opt_local.matchpairs:append [[⟨:⟩]]
 

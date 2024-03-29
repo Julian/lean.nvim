@@ -1,8 +1,8 @@
 local Popup = require 'nui.popup'
 
 -- In case recording crashes.
-vim.opt.directory = ''
-vim.opt.shada = ''
+vim.o.directory = ''
+vim.o.shada = ''
 
 DEMO = {
   overlay_opts = {

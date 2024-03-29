@@ -45,7 +45,7 @@ local function detect(filename)
       end
     end
   end
-  vim.opt.filetype = filetype
+  vim.bo.filetype = filetype
 end
 
 vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {

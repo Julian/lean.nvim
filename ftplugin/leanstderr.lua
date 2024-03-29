@@ -1,6 +1,6 @@
-vim.opt_local.bufhidden = 'hide'
-vim.opt_local.cursorline = false
-vim.opt_local.number = true
-vim.opt_local.signcolumn = 'no'
-vim.opt_local.spell = false
-vim.opt_local.undolevels = -1
+vim.bo.bufhidden = 'hide'
+vim.bo.undolevels = -1
+vim.wo.cursorline = false
+vim.wo.number = true
+vim.wo.signcolumn = 'no'
+vim.wo.spell = false

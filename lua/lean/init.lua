@@ -120,14 +120,14 @@ end
 --- Is the current buffer a Lean buffer?
 ---@return boolean
 function lean.is_lean_buffer()
-  local filetype = vim.opt.filetype:get()
+  local filetype = vim.bo.filetype
   return filetype == 'lean' or filetype == 'lean3'
 end
 
 --- Is the current buffer a Lean 3 buffer?
 ---@return boolean
 function lean.is_lean3_buffer()
-  return vim.opt.filetype:get() == 'lean3'
+  return vim.bo.filetype == 'lean3'
 end
 
 --- Return the current Lean search path.
