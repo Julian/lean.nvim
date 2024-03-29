@@ -401,9 +401,9 @@ end
 
 function lean3.lsp_enable(opts)
   opts.handlers = vim.tbl_extend("keep", opts.handlers or {}, {
-    ['$/lean/fileProgress'] = util.mk_handler(lsp.handlers.file_progress_handler);
+    ['$/lean/fileProgress'] = lsp.handlers.file_progress_handler;
     ['textDocument/publishDiagnostics'] = function(...)
-      util.mk_handler(lsp.handlers.diagnostics_handler)(...)
+      lsp.handlers.diagnostics_handler(...)
       vim.lsp.handlers['textDocument/publishDiagnostics'](...)
     end;
   })

@@ -122,25 +122,6 @@ function M.s(str)
   return M.dedent(str):gsub('\n', ' ')
 end
 
--- from mfussenegger/nvim-lsp-compl@29a81f3
-function M.mk_handler(fn)
-  return function(...)
-    local config_or_client_id = select(4, ...)
-    local is_new = type(config_or_client_id) ~= 'number'
-    if is_new then
-      fn(...)
-    else
-      local err = select(1, ...)
-      local method = select(2, ...)
-      local result = select(3, ...)
-      local client_id = select(4, ...)
-      local bufnr = select(5, ...)
-      local config = select(6, ...)
-      fn(err, result, { method = method, client_id = client_id, bufnr = bufnr }, config)
-    end
-  end
-end
-
 ---@param client vim.lsp.Client
 ---@param request string LSP request name
 ---@param params table LSP request parameters
@@ -151,7 +132,7 @@ function M.client_a_request(client, request, params)
     -- XXX: According to the type definition, this should take a fourth
     --      argument, the bufnr. We clearly don't pass it, and stuff still
     --      works? We should double check that.
-    return client.request(request, params, M.mk_handler(handler))
+    return client.request(request, params, handler)
   end, 1)()
 end
 
