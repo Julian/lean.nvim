@@ -1,4 +1,4 @@
-local a = require 'plenary.async'
+local nio = require 'nio'
 
 local components = require 'lean.infoview.components'
 local Element = require('lean.widgets').Element

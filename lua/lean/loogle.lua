@@ -1,4 +1,4 @@
-local curl = require 'plenary.curl'
+local curl = require 'curl'
 
 local loogle = {}
 

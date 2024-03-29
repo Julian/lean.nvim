@@ -1,6 +1,6 @@
 local protocol = require 'vim.lsp.protocol'
 
-local a = require 'plenary.async'
+local nio = require 'nio'
 
 local Element = require('lean.widgets').Element
 local components = require 'lean.infoview.components'

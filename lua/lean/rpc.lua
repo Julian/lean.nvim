@@ -6,8 +6,7 @@
 ---@brief ]]
 
 local rpc = {}
-local a = require 'plenary.async'
-local control = require 'plenary.async.control'
+local nio = require 'nio'
 local lsp = require 'lean.lsp'
 local util = require 'lean._util'
 

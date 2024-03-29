@@ -1,5 +1,4 @@
-local Job = require('plenary.job')
-local a = require('plenary.async.util')
+local nio = require('nio')
 
 local Element = require('lean.widgets').Element
 local components = require('lean.infoview.components')

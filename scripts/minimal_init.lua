@@ -11,12 +11,10 @@ vim.opt.runtimepath:append(lean_nvim_dir)
 vim.cmd [[
   runtime! plugin/lspconfig.vim
   runtime! plugin/matchit.vim
-  runtime! plugin/plenary.vim
   runtime! plugin/switch.vim
   runtime! plugin/tcomment.vim
 ]]
 
--- plenary forks subprocesses, so enable coverage here when appropriate
 if vim.env.LEAN_NVIM_COVERAGE then
   local luapath = lean_nvim_dir .. '/luapath'
   package.path = package.path

@@ -1,4 +1,4 @@
-local async = require 'plenary.async'
+local nio = require 'nio'
 
 local util = require 'lean._util'
 

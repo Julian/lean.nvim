@@ -28,7 +28,7 @@ For example with `lazy.nvim <https://github.com/folke/lazy.nvim>`_:
 
       dependencies = {
         'neovim/nvim-lspconfig',
-        'nvim-lua/plenary.nvim',
+        'nvim-neotest/nvim-nio',
         -- you also will likely want nvim-cmp or some completion engine
       },
 
@@ -47,7 +47,7 @@ or with `vim-plug <https://github.com/junegunn/vim-plug>`_:
 
     Plug 'Julian/lean.nvim'
     Plug 'neovim/nvim-lspconfig'
-    Plug 'nvim-lua/plenary.nvim'
+    Plug 'nvim-neotest/nvim-nio'
 
     " Optional Dependencies:
 
