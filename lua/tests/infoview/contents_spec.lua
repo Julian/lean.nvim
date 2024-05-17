@@ -217,10 +217,10 @@ describe('infoview content (auto-)update', function()
       assert.infoview_contents.are [[
         ▶ 2 goals
         case zero
-        ⊢ Nat.zero = Nat.zero
+        ⊢ 0 = 0
         case succ
         n✝ : Nat
-        ⊢ Nat.succ n✝ = Nat.succ n✝
+        ⊢ n✝ + 1 = n✝ + 1
       ]]
     end)
 
