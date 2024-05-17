@@ -17,7 +17,7 @@ local function detect(filename)
     filetype = 'lean3'
   else
     local find_project_root =
-      require('lspconfig.util').root_pattern('leanpkg.toml', 'lakefile.lean', 'lean-toolchain')
+      require('lspconfig.util').root_pattern('leanpkg.toml', 'lakefile.lean', 'lakefile.toml', 'lean-toolchain')
     local project_root = find_project_root(abspath)
     local succeeded, result
     if project_root then

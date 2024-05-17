@@ -147,6 +147,7 @@ function lean.current_search_paths()
 
     local executable = (
       vim.loop.fs_stat(root .. '/' .. 'lakefile.lean')
+      or vim.loop.fs_stat(root .. '/' .. 'lakefile.toml')
       or not vim.loop.fs_stat(root .. '/' .. 'leanpkg.toml')
     )
         and 'lake'
