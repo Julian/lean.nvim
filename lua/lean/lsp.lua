@@ -112,7 +112,7 @@ function lsp.restart_file(bufnr)
     textDocument = {
       version = 0,
       uri = uri,
-      languageId = client.config.get_language_id(bufnr, vim.bo.filetype),
+      languageId = client.get_language_id(bufnr, vim.bo.filetype),
       text = util.buf_get_full_text(bufnr),
     },
   })
