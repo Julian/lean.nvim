@@ -68,7 +68,7 @@ function abbreviations.show_reverse_lookup()
       end
     end
   end
-  vim.lsp.util.open_floating_preview(lines)
+  vim.lsp.util.open_floating_preview(lines, 'markdown')
 end
 
 local abbr_mark_ns = vim.api.nvim_create_namespace 'lean.abbreviations'
@@ -89,8 +89,9 @@ local function insert_char_pre()
   local char = vim.api.nvim_get_vvar 'char'
 
   if abbreviations.abbr_mark then
-    if vim.tbl_contains({ '{', '}', '(', ')', ' ' }, char) then
-      return vim.schedule(abbreviations.convert)
+    if char == ' ' then
+      vim.schedule(abbreviations.convert)
+      return
     end
   end
 
@@ -108,7 +109,7 @@ local function insert_char_pre()
           col1,
           { end_line = row2, end_col = col2 }
         )
-        return vim.schedule(function()
+        vim.schedule(function()
           row1, col1, row2, col2 = get_extmark_range(abbr_mark_ns, tmp_extmark)
           if not row1 then
             return
@@ -116,6 +117,7 @@ local function insert_char_pre()
           vim.api.nvim_buf_del_extmark(0, abbr_mark_ns, tmp_extmark)
           vim.api.nvim_buf_set_text(0, row1, col1, row2, col2, {})
         end)
+        return
       end
     end
   end
