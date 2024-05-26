@@ -159,156 +159,169 @@ describe(
         ))
       end)
 
-      describe('edits around pin', function()
-        infoview.clear_pins()
-        helpers.move_cursor { to = { 4, 12 } }
-        infoview.add_pin()
+      describe('edits around pin',
+        helpers.clean_buffer(
+          [[
+            theorem has_tactic_goal : p ∨ q → q ∨ p := by
+              intro h
+              cases h with
+              | inl h1 =>
+                apply Or.inr
+                exact h1
+              | inr h2 =>
+                apply Or.inl
+                assumption
+          ]],
+          function()
+            infoview.clear_pins()
+            helpers.move_cursor { to = { 4, 12 } }
+            infoview.add_pin()
 
-        it('moves pin when lines are added above it', function()
-          vim.api.nvim_buf_set_lines(0, 0, 0, true, { 'theorem foo : 2 = 2 := rfl', '' })
-          helpers.move_cursor { to = { 1, 24 } }
-          assert.infoview_contents.are(string.format(
-            [[
-              ▶ expected type (1:24-1:27)
-              ⊢ 2 = 2
+            it('moves pin when lines are added above it', function()
+              vim.api.nvim_buf_set_lines(0, 0, 0, true, { 'theorem foo : 2 = 2 := rfl', '' })
+              helpers.move_cursor { to = { 1, 24 } }
+              assert.infoview_contents.are(string.format(
+                [[
+                  ▶ expected type (1:24-1:27)
+                  ⊢ 2 = 2
 
-              -- %s at 6:11
-              case inl
-              p q : Prop
-              h1 : p
-              ⊢ q ∨ p
-            ]],
-            vim.api.nvim_buf_get_name(0)
-          ))
-        end)
+                  -- %s at 6:11
+                  case inl
+                  p q : Prop
+                  h1 : p
+                  ⊢ q ∨ p
+                ]],
+                vim.api.nvim_buf_get_name(0)
+              ))
+            end)
 
-        it('moves pin when lines are removed above it', function()
-          assert.infoview_contents.are(string.format(
-            [[
-              ▶ expected type (1:24-1:27)
-              ⊢ 2 = 2
+            it('moves pin when lines are removed above it', function()
+              assert.infoview_contents.are(string.format(
+                [[
+                  ▶ expected type (1:24-1:27)
+                  ⊢ 2 = 2
 
-              -- %s at 6:11
-              case inl
-              p q : Prop
-              h1 : p
-              ⊢ q ∨ p
-            ]],
-            vim.api.nvim_buf_get_name(0)
-          ))
+                  -- %s at 6:11
+                  case inl
+                  p q : Prop
+                  h1 : p
+                  ⊢ q ∨ p
+                ]],
+                vim.api.nvim_buf_get_name(0)
+              ))
 
-          helpers.move_cursor { to = { 3, 50 } }
-          vim.api.nvim_buf_set_lines(0, 0, 2, true, {})
+              helpers.move_cursor { to = { 3, 50 } }
+              vim.api.nvim_buf_set_lines(0, 0, 2, true, {})
 
-          assert.infoview_contents.are(string.format(
-            [[
-              p q : Prop
-              ⊢ p ∨ q → q ∨ p
+              assert.infoview_contents.are(string.format(
+                [[
+                  p q : Prop
+                  ⊢ p ∨ q → q ∨ p
 
-              -- %s at 4:11
-              case inl
-              p q : Prop
-              h1 : p
-              ⊢ q ∨ p
-            ]],
-            vim.api.nvim_buf_get_name(0)
-          ))
-        end)
+                  -- %s at 4:11
+                  case inl
+                  p q : Prop
+                  h1 : p
+                  ⊢ q ∨ p
+                ]],
+                vim.api.nvim_buf_get_name(0)
+              ))
+            end)
 
-        it('does not move pin when lines are added or removed below it', function()
-          assert.infoview_contents.are(string.format(
-            [[
-              p q : Prop
-              ⊢ p ∨ q → q ∨ p
+            it('does not move pin when lines are added or removed below it', function()
+              assert.infoview_contents.are(string.format(
+                [[
+                  p q : Prop
+                  ⊢ p ∨ q → q ∨ p
 
-              -- %s at 4:11
-              case inl
-              p q : Prop
-              h1 : p
-              ⊢ q ∨ p
-            ]],
-            vim.api.nvim_buf_get_name(0)
-          ))
+                  -- %s at 4:11
+                  case inl
+                  p q : Prop
+                  h1 : p
+                  ⊢ q ∨ p
+                ]],
+                vim.api.nvim_buf_get_name(0)
+              ))
 
-          vim.api.nvim_buf_set_lines(0, -1, -1, true, { '', 'theorem foo : 2 = 2 := rfl' })
+              vim.api.nvim_buf_set_lines(0, -1, -1, true, { '', 'theorem foo : 2 = 2 := rfl' })
 
-          helpers.move_cursor { to = { 11, 24 } }
-          assert.infoview_contents.are(string.format(
-            [[
-              ▶ expected type (11:24-11:27)
-              ⊢ 2 = 2
+              helpers.move_cursor { to = { 11, 24 } }
+              assert.infoview_contents.are(string.format(
+                [[
+                  ▶ expected type (11:24-11:27)
+                  ⊢ 2 = 2
 
-              -- %s at 4:11
-              case inl
-              p q : Prop
-              h1 : p
-              ⊢ q ∨ p
-            ]],
-            vim.api.nvim_buf_get_name(0)
-          ))
+                  -- %s at 4:11
+                  case inl
+                  p q : Prop
+                  h1 : p
+                  ⊢ q ∨ p
+                ]],
+                vim.api.nvim_buf_get_name(0)
+              ))
 
-          vim.api.nvim_buf_set_lines(0, 9, 11, true, {})
+              vim.api.nvim_buf_set_lines(0, 9, 11, true, {})
 
-          helpers.move_cursor { to = { 1, 50 } }
-          assert.infoview_contents.are(string.format(
-            [[
-              p q : Prop
-              ⊢ p ∨ q → q ∨ p
+              helpers.move_cursor { to = { 1, 50 } }
+              assert.infoview_contents.are(string.format(
+                [[
+                  p q : Prop
+                  ⊢ p ∨ q → q ∨ p
 
-              -- %s at 4:11
-              case inl
-              p q : Prop
-              h1 : p
-              ⊢ q ∨ p
-            ]],
-            vim.api.nvim_buf_get_name(0)
-          ))
-        end)
+                  -- %s at 4:11
+                  case inl
+                  p q : Prop
+                  h1 : p
+                  ⊢ q ∨ p
+                ]],
+                vim.api.nvim_buf_get_name(0)
+              ))
+            end)
 
-        it('moves pin when changes are made on its line before its column', function()
-          helpers.move_cursor { to = { 4, 7 } }
-          vim.cmd.normal 'cl37' -- h1 -> h37
-          helpers.move_cursor { to = { 1, 50 } }
-          assert.infoview_contents.are(string.format(
-            [[
-              p q : Prop
-              ⊢ p ∨ q → q ∨ p
+            it('moves pin when changes are made on its line before its column', function()
+              helpers.move_cursor { to = { 4, 7 } }
+              vim.cmd.normal 'cl37' -- h1 -> h37
+              helpers.move_cursor { to = { 1, 50 } }
+              assert.infoview_contents.are(string.format(
+                [[
+                  p q : Prop
+                  ⊢ p ∨ q → q ∨ p
 
-              -- %s at 4:12
-              case inl
-              p q : Prop
-              h37 : p
-              ⊢ q ∨ p
-            ]],
-            vim.api.nvim_buf_get_name(0)
-          ))
-        end)
+                  -- %s at 4:12
+                  case inl
+                  p q : Prop
+                  h37 : p
+                  ⊢ q ∨ p
+                ]],
+                vim.api.nvim_buf_get_name(0)
+              ))
+            end)
 
-        it('does not move pin when changes are made on its line after its column', function()
-          helpers.move_cursor { to = { 4, 13 } }
-          vim.cmd.normal 'a    '
-          helpers.move_cursor { to = { 1, 50 } }
-          assert.infoview_contents.are(string.format(
-            [[
-              p q : Prop
-              ⊢ p ∨ q → q ∨ p
+            it('does not move pin when changes are made on its line after its column', function()
+              helpers.move_cursor { to = { 4, 13 } }
+              vim.cmd.normal 'a    '
+              helpers.move_cursor { to = { 1, 50 } }
+              assert.infoview_contents.are(string.format(
+                [[
+                  p q : Prop
+                  ⊢ p ∨ q → q ∨ p
 
-              -- %s at 4:12
-              case inl
-              p q : Prop
-              h37 : p
-              ⊢ q ∨ p
-            ]],
-            vim.api.nvim_buf_get_name(0)
-          ))
+                  -- %s at 4:12
+                  case inl
+                  p q : Prop
+                  h37 : p
+                  ⊢ q ∨ p
+                ]],
+                vim.api.nvim_buf_get_name(0)
+              ))
 
-          infoview.clear_pins()
-          assert.infoview_contents.are [[
-            p q : Prop
-            ⊢ p ∨ q → q ∨ p
-          ]]
-        end)
-      end)
+              infoview.clear_pins()
+              assert.infoview_contents.are [[
+                p q : Prop
+                ⊢ p ∨ q → q ∨ p
+              ]]
+            end)
+        end))
 
       describe('diff pins', function()
         local lean_window
