@@ -288,21 +288,24 @@ local format_line_ending = {
   ['mac'] = '\r',
 }
 
+-- vim.lsp._private_functions we still need...
+
 ---@private
 ---@param bufnr (number)
----@returns (string)
+---@return string
 local function buf_get_line_ending(bufnr)
-  return format_line_ending[vim.api.nvim_buf_get_option(bufnr, 'fileformat')] or '\n'
+  return format_line_ending[vim.bo[bufnr].fileformat] or '\n'
 end
 
+---@private
 --- Returns full text of buffer {bufnr} as a string.
 ---
 ---@param bufnr (number) Buffer handle, or 0 for current.
----@returns Buffer text as string.
+---@return string # Buffer text as string.
 function M.buf_get_full_text(bufnr)
   local line_ending = buf_get_line_ending(bufnr)
   local text = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, true), line_ending)
-  if vim.api.nvim_buf_get_option(bufnr, 'eol') then
+  if vim.bo[bufnr].eol then
     text = text .. line_ending
   end
   return text
