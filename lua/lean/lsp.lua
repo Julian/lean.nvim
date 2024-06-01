@@ -1,3 +1,5 @@
+local ms = vim.lsp.protocol.Methods
+
 local lsp = { handlers = {} }
 local util = require 'lean._util'
 
@@ -105,14 +107,14 @@ end
 function lsp.restart_file(bufnr)
   bufnr = bufnr or 0
   local client = lsp.get_lean4_server(bufnr)
-
   local uri = vim.uri_from_bufnr(bufnr)
-  client.notify('textDocument/didClose', { textDocument = { uri = uri } })
-  client.notify('textDocument/didOpen', {
+
+  client.notify(ms.textDocument_didClose, { textDocument = { uri = uri } })
+  client.notify(ms.textDocument_didOpen, {
     textDocument = {
       version = 0,
       uri = uri,
-      languageId = client.get_language_id(bufnr, vim.bo.filetype),
+      languageId = client.get_language_id(bufnr, vim.bo[bufnr].filetype),
       text = util.buf_get_full_text(bufnr),
     },
   })
