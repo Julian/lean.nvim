@@ -57,7 +57,7 @@ end
 --- Run a subprocess, blocking on exit, and returning its stdout.
 ---
 --- Unlike `system()`, we don't mix stdout and stderr, and unlike
---- `vim.loop.spawn`, we wait for process exit and collect the output.
+--- `vim.uv.spawn`, we wait for process exit and collect the output.
 --- @return table: the lines of stdout of the exited process
 function M.subprocess_check_output(opts, timeout)
   timeout = timeout or 10000

@@ -5,6 +5,8 @@
 --- To find out more, see https://github.com/Julian/lean.nvim.
 ---@brief ]]
 
+local uv = vim.uv or vim.loop
+
 ---@tag lean.nvim
 local util = require 'lean._util'
 
@@ -146,9 +148,9 @@ function lean.current_search_paths()
     end
 
     local executable = (
-      vim.loop.fs_stat(root .. '/' .. 'lakefile.lean')
-      or vim.loop.fs_stat(root .. '/' .. 'lakefile.toml')
-      or not vim.loop.fs_stat(root .. '/' .. 'leanpkg.toml')
+      uv.fs_stat(root .. '/' .. 'lakefile.lean')
+      or uv.fs_stat(root .. '/' .. 'lakefile.toml')
+      or not uv.fs_stat(root .. '/' .. 'leanpkg.toml')
     )
         and 'lake'
       or 'leanpkg'

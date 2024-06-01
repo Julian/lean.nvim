@@ -5,11 +5,14 @@
 --- the below data structures.
 ---@brief ]]
 
-local rpc = {}
 local a = require 'plenary.async'
 local control = require 'plenary.async.control'
 local lsp = require 'lean.lsp'
 local util = require 'lean._util'
+
+local uv = vim.uv or vim.loop
+
+local rpc = {}
 
 ---@class RpcRef
 
@@ -41,7 +44,7 @@ function Session:new(client, bufnr, uri)
     to_release = {},
     release_timer = nil,
   }, self)
-  self.keepalive_timer = vim.loop.new_timer()
+  self.keepalive_timer = uv.new_timer()
   self.keepalive_timer:start(
     20000,
     20000,
