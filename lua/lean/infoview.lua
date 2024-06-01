@@ -987,7 +987,7 @@ function Pin:__mk_data_elem(tick)
     return Element:new()
   end
 
-  if vim.api.nvim_buf_get_option(buf, 'ft') == 'lean3' then
+  if vim.bo[buf].filetype == 'lean3' then
     return lean3.render_pin(self, buf, params, self.__use_widgets, options.lean3)
   end
 
