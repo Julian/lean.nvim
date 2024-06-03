@@ -26,7 +26,6 @@ local lean = {
       ['<LocalLeader>w'] = '<Cmd>LeanInfoviewEnableWidgets<CR>',
       ['<LocalLeader>W'] = '<Cmd>LeanInfoviewDisableWidgets<CR>',
       ['<LocalLeader><Tab>'] = '<Cmd>LeanGotoInfoview<CR>',
-      ['<LocalLeader>s'] = '<Cmd>LeanSorryFill<CR>',
       ['<LocalLeader>\\'] = '<Cmd>LeanAbbreviationsReverseLookup<CR>',
     },
     i = {},

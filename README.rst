@@ -146,8 +146,6 @@ This can be configured by putting a line at the top of your ``~/.config/nvim/ini
 +------------------------+----------------------------------------------------+
 | ``<LocalLeader>dt``    | toggle auto diff pin mode without clearing diff pin|
 +------------------------+----------------------------------------------------+
-| ``<LocalLeader>s``     | insert a ``sorry`` for each open goal              |
-+------------------------+----------------------------------------------------+
 | ``<LocalLeader><Tab>`` | jump into the infoview window associated with the  |
 |                        | current lean file                                  |
 +------------------------+----------------------------------------------------+
