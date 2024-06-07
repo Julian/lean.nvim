@@ -17,6 +17,11 @@ retest *test_files=tests:
 nvim setup_table='{}' *ARGS='':
     nvim -u {{ init_lua }} -c "lua require('lean').setup{{ setup_table }}" {{ ARGS }}
 
+# Run an instance of neovim with a scratch buffer for interactive testing.
+scratch *ARGS='':
+    # still no idea why the extra :edit is required to get the LSP alive
+    @just nvim '{ lsp = { enable = true }, mappings = true }' +edit {{ ARGS }} JustScratch.lean
+
 # Coarsely profile how long the whole test suite takes to run.
 profile-test *ARGS: _rebuild-test-fixtures _clone-test-dependencies
     hyperfine --warmup 2 {{ ARGS }} "just retest"
