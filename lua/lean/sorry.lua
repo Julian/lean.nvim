@@ -9,7 +9,7 @@ local function calculate_indent(line)
     indent = vim.fn.indent(vim.fn.prevnonblank(line))
   end
 
-  if vim.bo.filetype ~= 'lean3' then
+  if vim.bo.filetype == 'lean' then
     local line_text = vim.fn.getline(line):gsub('^%s*', '')
     if line_text:sub(1, 2) == '\194\183' then
       indent = indent + 2
@@ -41,10 +41,7 @@ function sorry.fill()
       local index = vim.api.nvim_win_get_cursor(0)[1]
       local indent = calculate_indent(index)
 
-      if vim.bo.filetype == 'lean3' then
-        sorrytext = '{ sorry },'
-        offset = 2
-      elseif goals == 1 then
+      if goals == 1 then
         sorrytext = 'sorry'
         offset = 0
       else

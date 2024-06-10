@@ -35,7 +35,7 @@ local function goal_header(goals)
 end
 
 --- The current (tactic) goal state.
----@param goal table: a Lean4 `plainGoal` LSP response
+---@param goal table: a Lean `plainGoal` LSP response
 ---@return Element[]
 function components.goal(goal)
   if type(goal) ~= 'table' or not goal.goals then
@@ -65,7 +65,7 @@ function components.goal(goal)
 end
 
 --- The current (term) goal state.
----@param term_goal table: a Lean4 `plainTermGoal` LSP response
+---@param term_goal table: a Lean `plainTermGoal` LSP response
 ---@return Element[]
 function components.term_goal(term_goal)
   if type(term_goal) ~= 'table' or not term_goal.goal then

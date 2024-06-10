@@ -194,17 +194,6 @@ In Infoview Windows
 +------------------------+----------------------------------------------------+
 
 
-Lean 3
-------
-
-Support for the (end of life-d) Lean 3 is also available.
-In addition to the instructions above, and in addition to installing Lean 3 itself, you will need to install the separate Lean 3 ``lean-language-server``, which can be done via e.g.:
-
-.. code:: sh
-
-    $ npm install -g lean-language-server
-
-
 Full Configuration & Settings Information
 -----------------------------------------
 
@@ -318,13 +307,6 @@ Full Configuration & Settings Information
         -- window.
         on_lines = nil,
       },
-
-      -- Legacy Lean 3 support (on_attach is as above, your LSP handler)
-      lsp3 = { on_attach = on_attach },
-
-      -- mouse_events = true will simulate mouse events in the Lean 3 infoview, this is buggy at the moment
-      -- so you can use the I/i keybindings to manually trigger these
-      lean3 = { mouse_events = false },
     }
 
 Other Plugins

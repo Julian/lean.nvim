@@ -4,9 +4,7 @@ local a = require 'plenary.async'
 
 local Element = require('lean.widgets').Element
 local components = require 'lean.infoview.components'
-local lean3 = require 'lean.lean3'
 local leanlsp = require 'lean.lsp'
-local is_lean_buffer = require('lean').is_lean_buffer
 local rpc = require 'lean.rpc'
 local util = require 'lean._util'
 
@@ -27,7 +25,6 @@ local options = {
   autoopen = true,
   autopause = false,
   indicators = 'auto',
-  lean3 = { show_filter = true, mouse_events = false },
   show_processing = true,
   show_no_info_message = false,
   use_widgets = true,
@@ -419,7 +416,7 @@ end
 
 --- Update the info contents appropriately for Lean 4 or 3.
 local function update_current_infoview()
-  if not is_lean_buffer() then
+  if vim.bo.filetype ~= 'lean' then
     return
   end
   local current_infoview = infoview.get_current_infoview()
@@ -987,10 +984,6 @@ function Pin:__mk_data_elem(tick)
     return Element:new()
   end
 
-  if vim.bo[buf].filetype == 'lean3' then
-    return lean3.render_pin(self, buf, params, self.__use_widgets, options.lean3)
-  end
-
   local sess = rpc.open(buf, params)
   if not tick:check() then
     return
@@ -1207,7 +1200,7 @@ function infoview.enable(opts)
   local augroup = vim.api.nvim_create_augroup('LeanInfoviewInit', {})
   vim.api.nvim_create_autocmd('Filetype', {
     group = augroup,
-    pattern = { 'lean', 'lean3' },
+    pattern = { 'lean' },
     callback = function(event)
       make_buffer_focusable(event.file)
     end,
@@ -1290,7 +1283,7 @@ end
 
 --- Add a pin to the current cursor location.
 function infoview.add_pin()
-  if not is_lean_buffer() then
+  if vim.bo.filetype ~= 'lean' then
     return
   end
   local current_infoview = infoview.open()
@@ -1300,7 +1293,7 @@ end
 
 --- Set the location for a diff pin to the current cursor location.
 function infoview.set_diff_pin()
-  if not is_lean_buffer() then
+  if vim.bo.filetype ~= 'lean' then
     return
   end
   local current_infoview = infoview.open()
@@ -1326,7 +1319,7 @@ end
 
 --- Toggle whether "auto-diff" mode is active for the current infoview.
 function infoview.toggle_auto_diff_pin(clear)
-  if not is_lean_buffer() then
+  if vim.bo.filetype ~= 'lean' then
     return
   end
   local current_infoview = infoview.open()

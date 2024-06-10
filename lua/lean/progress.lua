@@ -31,7 +31,7 @@ end
 function M.is_processing_at(params)
   local this_proc_info = M.proc_infos[params.textDocument.uri]
   -- returning false rather than true for backwards compatibility with
-  -- older Lean 3/4 server versions
+  -- older Lean server versions
   if not this_proc_info then
     return false
   end

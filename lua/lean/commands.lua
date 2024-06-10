@@ -3,7 +3,6 @@ local a = require 'plenary.async'
 local components = require 'lean.infoview.components'
 local Element = require('lean.widgets').Element
 local infoview = require 'lean.infoview'
-local lean = require 'lean'
 local leanlsp = require 'lean.lsp'
 local progress = require 'lean.progress'
 local rpc = require 'lean.rpc'
@@ -46,11 +45,10 @@ function commands.show_goal(use_widgets)
 
   local params = vim.lsp.util.make_position_params()
   local bufnr = vim.api.nvim_get_current_buf()
-  local is_lean3 = lean.is_lean3_buffer()
 
   a.void(function()
     local goal, err
-    if not is_lean3 and use_widgets then
+    if use_widgets then
       local sess = rpc.open(bufnr, params)
       goal, err = sess:getInteractiveGoals(params)
       goal = goal and components.interactive_goals(goal, sess)
@@ -66,11 +64,6 @@ function commands.show_goal(use_widgets)
 end
 
 function commands.show_term_goal(use_widgets)
-  if lean.is_lean3_buffer() then
-    -- Lean 3 does not support term goals.
-    return
-  end
-
   if use_widgets == nil then
     use_widgets = true
   end
@@ -96,7 +89,6 @@ function commands.show_term_goal(use_widgets)
 end
 
 function commands.show_line_diagnostics()
-  local is_lean3 = lean.is_lean3_buffer()
   local params = vim.lsp.util.make_position_params()
   local bufnr = vim.api.nvim_get_current_buf()
   local line = params.position.line
@@ -104,7 +96,7 @@ function commands.show_line_diagnostics()
   a.void(function()
     local diags, err
 
-    if not is_lean3 and not progress.is_processing_at(params) then
+    if not progress.is_processing_at(params) then
       local sess = rpc.open(bufnr, params)
       diags, err = sess:getInteractiveDiagnostics { start = line, ['end'] = line + 1 }
       diags = not err and components.interactive_diagnostics(diags, line, sess)

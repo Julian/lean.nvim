@@ -18,6 +18,8 @@ local function _update(bufnr)
     local start_line = proc_info.range.start.line + 1
     local end_line = proc_info.range['end'].line + 1
 
+    -- FIXME: Is this still relevant now that we have no Lean 3 support?
+    --
     -- Don't show multiple diagnostics if there are overlapping ranges (which
     -- seems to happen in Lean 3 at least), and here we don't shift by 1.
     if not diagnostics[start_line] then

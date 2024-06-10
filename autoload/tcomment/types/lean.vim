@@ -1,4 +1,2 @@
-for ft in ['lean', 'lean3']
-    call tcomment#type#Define(ft, '-- %s')
-    call tcomment#type#Define(ft .. '_block', '/-%s-/')
-endfor
+call tcomment#type#Define('lean', '-- %s')
+call tcomment#type#Define('lean_block', '/-%s-/')

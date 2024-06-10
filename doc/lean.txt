@@ -15,14 +15,6 @@ lean.use_suggested_mappings()                      *lean.use_suggested_mappings*
 
 
 
-lean.is_lean_buffer()                                      *lean.is_lean_buffer*
-     Is the current buffer a lean buffer?
-
-
-lean.is_lean3_buffer()                                    *lean.is_lean3_buffer*
-     Is the current buffer a lean 3 buffer?
-
-
 lean.current_search_paths()                          *lean.current_search_paths*
      Return the current Lean search path.
 

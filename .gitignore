@@ -13,7 +13,6 @@ demo.mp4
 
 /lua/tests/fixtures/example-project/build
 /lua/tests/fixtures/example-project/foo/build
-/lua/tests/lean3/fixtures/example-project/_target
 
 doc/tags
 luacov.*.out

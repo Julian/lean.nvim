@@ -40,8 +40,7 @@ demo:
 # Update the versions of test fixtures used in CI.
 bump-test-fixtures:
     cd {{ tests }}/fixtures/example-project/; gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' >lean-toolchain && lake update
-    cd {{ tests }}/lean3/fixtures/example-project/; {{ if `leanpkg help 2>&1 >/dev/null; echo $?` != "0" { "" } else { `leanproject up` } }}
-    git add {{ tests }}/fixtures/example-project/ {{ tests }}/lean3/fixtures/example-project/
+    git add {{ tests }}/fixtures/example-project/
     git commit -m "Bump the Lean versions in CI."
 
 # Delete any previously cloned test dependencies.
@@ -57,9 +56,4 @@ _clone-test-dependencies: _clean-test-dependencies
 
 # Rebuild some test fixtures used in the test suite.
 _rebuild-test-fixtures:
-    #!/usr/bin/env sh
-    set -eux
-    cd "{{ tests }}/lean3/fixtures/example-project/"
-    leanpkg help 2>&1 >/dev/null && leanpkg build || echo "Lean 3 not found."
-    cd "{{ tests }}/fixtures/example-project/"
-    lake build
+    cd "{{ tests }}/fixtures/example-project/"; lake build

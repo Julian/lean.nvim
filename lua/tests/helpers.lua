@@ -7,23 +7,6 @@ local util = require 'lean._util'
 
 local helpers = { _clean_buffer_counter = 1 }
 
---- Run the given tests if Lean 3 is available, otherwise skip.
-if require('lean.lean3').works() then
-  function helpers.if_has_lean3(description, fn)
-    return describe(description, fn)
-  end
-else
-  function helpers.if_has_lean3(description, _)
-    return describe(description, function()
-      it('lean 3 missing', function()
-        -- These typically run in separate processes, so we actually don't
-        -- know enough to skip only once, but it doesn't hurt anyhow I suppose.
-        vim.notify_once 'Skipping Lean 3 tests as it is not installed.'
-      end)
-    end)
-  end
-end
-
 --- Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(text, feed_opts)
   feed_opts = feed_opts or 'mtx'
@@ -203,7 +186,7 @@ function helpers.wait_for_line_diagnostics()
 end
 
 function helpers.wait_for_filetype()
-  local result, _ = vim.wait(15000, require('lean').is_lean_buffer)
+  local result, _ = vim.wait(15000, function() return vim.bo.filetype == 'lean' end)
   assert.message('filetype was never set').is_truthy(result)
 end
 
@@ -258,32 +241,7 @@ assert:register('assertion', 'contents', has_buf_contents)
 local function has_infoview_contents(_, arguments)
   local expected = _expected(arguments)
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
-  -- In Lean 3, the fileProgress notification is unreliable,
-  -- so we may think we're done processing when we're actually not.
-  -- This means that we'll sometimes get an empty response and then call it a day.
-  -- To address this, we assume that we'll only assert
-  -- nonempty contents in the Lean 3 tests, and retry updating the current pin
-  -- until we get something.
-  if vim.bo.filetype == 'lean3' then
-    assert.is_not.empty(expected)
-    local succeeded, _ = pcall(helpers.wait_for_loading_pins, target_infoview)
-    local curr_pin = target_infoview.info.pin
-
-    local got
-    for _ = 1, 10 do
-      got = curr_pin.__element:to_string()
-      if not succeeded or #got == 0 then
-        curr_pin:update()
-        succeeded = pcall(helpers.wait_for_loading_pins, target_infoview)
-      else
-        break
-      end
-    end
-
-    assert.message('never got Lean 3 data').is_true(succeeded and #got ~= 0)
-  else
-    helpers.wait_for_loading_pins(target_infoview)
-  end
+  helpers.wait_for_loading_pins(target_infoview)
   local got = table.concat(target_infoview:get_lines(), '\n'):gsub('\n$', '')
   assert.is.equal(expected, got)
   return true

@@ -46,11 +46,6 @@ function lean.setup(opts)
   require('lean.infoview').enable(opts.infoview)
   require('lean.commands').enable()
 
-  opts.lsp3 = opts.lsp3 or {}
-  if opts.lsp3.enable ~= false then
-    require('lean.lean3').lsp_enable(opts.lsp3)
-  end
-
   opts.lsp = opts.lsp or {}
   if opts.lsp.enable ~= false then
     require('lean.lsp').enable(opts.lsp)
@@ -92,14 +87,12 @@ function lean.setup(opts)
     command! LeanAbbreviationsReverseLookup :lua require'lean.abbreviations'.show_reverse_lookup()
 
     command! LeanSorryFill :lua require'lean.sorry'.fill()
-    command! LeanTryThis :lua require'lean.lean3.trythis'.swap()
   ]]
 
   if opts.mappings == true then
     vim.cmd [[
       augroup lean_nvim_mappings
         autocmd!
-        autocmd FileType lean3 lua require'lean'.use_suggested_mappings(true)
         autocmd FileType lean lua require'lean'.use_suggested_mappings(true)
       augroup END
     ]]
@@ -112,23 +105,6 @@ end
 function lean.use_suggested_mappings(buffer_local)
   local buffer = buffer_local and 0
   util.load_mappings(lean.mappings, buffer)
-
-  if lean.is_lean3_buffer() then
-    util.load_mappings({ n = { ['<LocalLeader>t'] = '<Cmd>LeanTryThis<CR>' } }, buffer)
-  end
-end
-
---- Is the current buffer a Lean buffer?
----@return boolean
-function lean.is_lean_buffer()
-  local filetype = vim.bo.filetype
-  return filetype == 'lean' or filetype == 'lean3'
-end
-
---- Is the current buffer a Lean 3 buffer?
----@return boolean
-function lean.is_lean3_buffer()
-  return vim.bo.filetype == 'lean3'
 end
 
 --- Return the current Lean search path.
@@ -138,35 +114,31 @@ end
 function lean.current_search_paths()
   local paths
 
-  if lean.is_lean3_buffer() then
-    paths = require('lean.lean3').__current_search_paths()
-  else
-    local root = vim.lsp.buf.list_workspace_folders()[1]
-    if not root then
-      root = vim.fn.getcwd()
-    end
-
-    local executable = (
-      uv.fs_stat(root .. '/' .. 'lakefile.lean')
-      or uv.fs_stat(root .. '/' .. 'lakefile.toml')
-      or not uv.fs_stat(root .. '/' .. 'leanpkg.toml')
-    )
-        and 'lake'
-      or 'leanpkg'
-
-    local all_paths = vim.fn.json_decode(subprocess_check_output {
-      command = executable,
-      args = { 'setup-file', vim.api.nvim_buf_get_name(0) },
-      cwd = root,
-    })
-    paths = vim.tbl_map(function(path)
-      return root .. '/' .. path
-    end, all_paths.paths.srcPath)
-    vim.list_extend(
-      paths,
-      subprocess_check_output { command = 'lean', args = { '--print-libdir' }, cwd = root }
-    )
+  local root = vim.lsp.buf.list_workspace_folders()[1]
+  if not root then
+    root = vim.fn.getcwd()
   end
+
+  local executable = (
+    uv.fs_stat(root .. '/' .. 'lakefile.lean')
+    or uv.fs_stat(root .. '/' .. 'lakefile.toml')
+    or not uv.fs_stat(root .. '/' .. 'leanpkg.toml')
+  )
+      and 'lake'
+    or 'leanpkg'
+
+  local all_paths = vim.fn.json_decode(subprocess_check_output {
+    command = executable,
+    args = { 'setup-file', vim.api.nvim_buf_get_name(0) },
+    cwd = root,
+  })
+  paths = vim.tbl_map(function(path)
+    return root .. '/' .. path
+  end, all_paths.paths.srcPath)
+  vim.list_extend(
+    paths,
+    subprocess_check_output { command = 'lean', args = { '--print-libdir' }, cwd = root }
+  )
 
   return vim.tbl_map(
     vim.fn.simplify,

@@ -170,7 +170,7 @@ local sessions = {}
 ---@param bufnr number
 ---@result string error
 local function connect(bufnr)
-  local client = lsp.get_lean4_server(bufnr)
+  local client = lsp.get_lean_server(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local sess = Session:new(client, bufnr, uri)
   sessions[bufnr] = sess
