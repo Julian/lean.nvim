@@ -9,7 +9,7 @@ https://github.com/Julian/lean.nvim/assets/329822/87f773a1-17b9-4938-b933-4f260f
 Prerequisites
 -------------
 
-``lean.nvim`` supports the latest stable neovim release (currently 0.9.x) as well as the latest nightly.
+``lean.nvim`` supports the latest stable neovim release (currently 0.10.x) as well as the latest nightly.
 
 (This matches what neovim itself supports upstream, which often guides what plugins end up working with).
 
