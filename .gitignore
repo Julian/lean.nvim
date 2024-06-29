@@ -11,6 +11,7 @@ demo.mp4
 /packpath
 /pack
 
+/.tests
 /lua/tests/fixtures/example-project/build
 /lua/tests/fixtures/example-project/foo/build
 
