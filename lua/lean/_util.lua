@@ -268,10 +268,6 @@ function M.make_position_params()
   return { filename = vim.api.nvim_buf_get_name(buf), row = row, col = col }
 end
 
-M.wait_timer = a.wrap(function(timeout, handler)
-  vim.defer_fn(handler, timeout)
-end, 2)
-
 --- Utility function for getting the encoding of the first LSP client on the given buffer.
 ---@param bufnr number buffer handle or 0 for current, defaults to current
 ---@returns string encoding first client if there is one, nil otherwise
