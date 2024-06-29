@@ -170,7 +170,7 @@ local sessions = {}
 ---@param bufnr number
 ---@result string error
 local function connect(bufnr)
-  local client = lsp.get_lean_server(bufnr)
+  local client = lsp.client_for(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local sess = Session:new(client, bufnr, uri)
   sessions[bufnr] = sess
@@ -441,7 +441,7 @@ return rpc
 ---@field message string
 ---@field data string|number|boolean|table[]|table|nil
 
--- TODO: Figure out how to load these from vim.lsp.client
+-- TODO: Figure out how to load these from vim.lsp.Client
 
 ---@class vim.lsp.Client
 --- Sends a notification to an LSP server.

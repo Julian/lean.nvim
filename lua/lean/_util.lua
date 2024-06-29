@@ -15,17 +15,17 @@ function M.tbl_repeat(value, times)
 end
 
 --- Fetch the diagnostics for all Lean LSP clients from the current buffer.
+---@param opts? table
+---@param bufnr? number buffer handle or 0 for current, defaults to current
 function M.lean_lsp_diagnostics(opts, bufnr)
   bufnr = bufnr or 0
-  opts = opts or {}
-  local diagnostics = {}
-  for _, client in pairs(vim.lsp.get_active_clients { bufnr = bufnr }) do
-    if client.name:match '^lean' then
-      opts.namespace = vim.lsp.diagnostic.get_namespace(client.id)
-      vim.list_extend(diagnostics, vim.diagnostic.get(bufnr, opts))
-    end
-  end
-  return diagnostics
+  local clients = vim.iter(vim.lsp.get_clients{ bufnr = bufnr, name = 'leanls' })
+  local namespaces = clients:map(function(client)
+    return vim.lsp.diagnostic.get_namespace(client.id)
+  end)
+  return vim.diagnostic.get(bufnr, vim.tbl_extend('keep', opts or {}, {
+    namespace = namespaces:totable(),
+  }))
 end
 
 ---@class CreateBufParams
@@ -36,7 +36,7 @@ end
 
 ---Create a new buffer.
 ---@param params CreateBufParams @new buffer options
----@return integer: the new `bufnr`
+---@return integer: the new bufnr`
 function M.create_buf(params)
   if params.listed == nil then
     params.listed = true

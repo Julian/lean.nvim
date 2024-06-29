@@ -18,17 +18,12 @@ function lsp.enable(opts)
   require('lspconfig').leanls.setup(opts)
 end
 
---- Finds the vim.lsp.client object for the Lean server associated to the
---- given bufnr.
-function lsp.get_lean_server(bufnr)
-  local lean_client
-  -- local clients = vim.lsp.get_clients{ name = 'leanls' }
-  vim.lsp.for_each_buffer_client(bufnr, function(client)
-    if client.name == 'leanls' then
-      lean_client = client
-    end
-  end)
-  return lean_client
+--- Find the vim.lsp.Client attached to the given buffer.
+---@param bufnr number
+---@return vim.lsp.Client
+function lsp.client_for(bufnr)
+  local clients = vim.lsp.get_clients{ name = 'leanls', bufnr = bufnr }
+  return clients[1]
 end
 
 -- Fetch goal state information from the server (async).
@@ -37,7 +32,7 @@ end
 ---@return any error
 ---@return any plain_goal
 function lsp.plain_goal(params, bufnr)
-  local client = lsp.get_lean_server(bufnr)
+  local client = lsp.client_for(bufnr)
   if not client then
     return 'LSP server not connected', nil
   end
@@ -55,7 +50,7 @@ end
 ---@return any error
 ---@return any plain_term_goal
 function lsp.plain_term_goal(params, bufnr)
-  local client = lsp.get_lean_server(bufnr)
+  local client = lsp.client_for(bufnr)
   if not client then
     return 'LSP server not connected', nil
   end
@@ -94,7 +89,7 @@ end
 ---@param bufnr? number
 function lsp.restart_file(bufnr)
   bufnr = bufnr or 0
-  local client = lsp.get_lean_server(bufnr)
+  local client = lsp.client_for(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
 
   client.notify(ms.textDocument_didClose, { textDocument = { uri = uri } })
