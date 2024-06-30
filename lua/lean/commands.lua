@@ -56,7 +56,7 @@ function commands.show_goal(use_widgets)
 
     if not goal then
       err, goal = leanlsp.plain_goal(params, bufnr)
-      goal = goal and components.goal(goal)
+      goal = goal and components.plain_goal(goal)
     end
 
     show_popup_or_error(goal, err)

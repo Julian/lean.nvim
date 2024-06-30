@@ -37,7 +37,7 @@ end
 --- The current (tactic) goal state.
 ---@param goal table: a Lean `plainGoal` LSP response
 ---@return Element[]
-function components.goal(goal)
+function components.plain_goal(goal)
   if type(goal) ~= 'table' or not goal.goals then
     return {}
   end

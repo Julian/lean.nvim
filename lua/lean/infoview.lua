@@ -1011,7 +1011,7 @@ function Pin:__mk_data_elem(tick)
     if err and err.code == protocol.ErrorCodes.ContentModified then
       goto retry
     end
-    goal_element = components.goal(goal)
+    goal_element = components.plain_goal(goal)
   end
 
   local term_goal_element
