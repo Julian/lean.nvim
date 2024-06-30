@@ -34,9 +34,7 @@ For example with `lazy.nvim <https://github.com/folke/lazy.nvim>`_:
 
       -- see details below for full configuration options
       opts = {
-        lsp = {
-          on_attach = on_attach,
-        },
+        lsp = {},
         mappings = true,
       }
     }
@@ -97,10 +95,7 @@ If you are using another plugin manager such as ``vim-plug``, after following th
 
 .. code:: lua
 
-    require('lean').setup{
-      lsp = { on_attach = on_attach },
-      mappings = true,
-    }
+    require('lean').setup{ mappings = true }
 
 More detail on the full list of supported configuration options can be found below.
 
@@ -203,9 +198,11 @@ Full Configuration & Settings Information
       -- Enable the Lean language server(s)?
       --
       -- false to disable, otherwise should be a table of options to pass to `leanls`
+      --
       -- See https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#leanls for details.
+      -- In particular ensure you have followed instructions setting up a callback
+      -- for `LspAttach` which sets your key bindings!
       lsp = {
-        on_attach = on_attach,
         init_options = {
           -- See Lean.Lsp.InitializationOptions for details and further options.
 
@@ -215,7 +212,6 @@ Full Configuration & Settings Information
           editDelay = 0,
 
           -- Whether to signal that widgets are supported.
-          -- Enabled by default, as support for most widgets is implemented in lean.nvim.
           hasWidgets = true,
         }
       },
