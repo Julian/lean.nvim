@@ -9,7 +9,7 @@ vim.wo.spell = false
 vim.wo.winfixheight = true
 vim.wo.winfixwidth = true
 vim.wo.wrap = true
-if vim.fn.exists('&winfixbuf') > 0 then
+if vim.fn.exists('&winfixbuf') ~= 0 then
   local wo = vim.wo[vim.api.nvim_get_current_win()]
   -- FIXME: This is obviously ridiculous, but there's seemingly some neovim bug
   --        here which needs minimizing.

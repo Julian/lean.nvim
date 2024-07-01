@@ -1073,52 +1073,20 @@ local attached_buffers = {}
 
 --- Callback when entering a Lean buffer.
 local function infoview_bufenter()
-  infoview.__maybe_autoopen()
+  -- Open an infoview for the current buffer if it isn't already open.
+  local tabpage = vim.api.nvim_get_current_tabpage()
+  if not infoview._by_tabpage[tabpage] and options.autoopen() then
+    local new_infoview = Infoview:new{}
+    infoview._by_tabpage[tabpage] = new_infoview
+    new_infoview:open()
+  end
+
   local bufnr = vim.api.nvim_get_current_buf()
   if not attached_buffers[bufnr] then
     vim.api.nvim_buf_attach(bufnr, false, { on_lines = infoview.__update_pin_positions })
     attached_buffers[bufnr] = true
   end
   update_current_infoview()
-end
-
---- Configure the infoview to update when this buffer is active.
-local function make_buffer_focusable(name)
-  local bufnr = vim.fn.bufnr(name)
-  if bufnr == -1 then
-    return
-  end
-  if bufnr == vim.api.nvim_get_current_buf() then
-    -- because FileType can happen after BufEnter
-    infoview_bufenter()
-    local current_infoview = infoview.get_current_infoview()
-    if not current_infoview then
-      return
-    end
-    current_infoview:focus_on_current_buffer()
-  end
-
-  local augroup = vim.api.nvim_create_augroup('LeanInfoviewSetFocus', { clear = false })
-  -- WinEnter is necessary for the edge case where you have
-  -- a file open in a tab with an infoview and move to a
-  -- new window in a new tab with that same file but no infoview
-  vim.api.nvim_create_autocmd('BufEnter', {
-    group = augroup,
-    buffer = bufnr,
-    callback = infoview_bufenter,
-  })
-
-  vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter' }, {
-    group = augroup,
-    buffer = bufnr,
-    callback = function()
-      local current_infoview = infoview.get_current_infoview()
-      if not current_infoview then
-        return
-      end
-      current_infoview:focus_on_current_buffer()
-    end,
-  })
 end
 
 --- Enable and open the infoview across all Lean buffers.
@@ -1133,7 +1101,38 @@ function infoview.enable(opts)
     group = augroup,
     pattern = { 'lean' },
     callback = function(event)
-      make_buffer_focusable(event.file)
+      local bufnr = event.buf
+      if bufnr == vim.api.nvim_get_current_buf() then
+        -- because FileType can happen after BufEnter
+        infoview_bufenter()
+        local current_infoview = infoview.get_current_infoview()
+        if not current_infoview then
+          return
+        end
+        current_infoview:focus_on_current_buffer()
+      end
+
+      local focus_augroup = vim.api.nvim_create_augroup('LeanInfoviewSetFocus', { clear = false })
+      vim.api.nvim_create_autocmd('BufEnter', {
+        group = focus_augroup,
+        buffer = bufnr,
+        callback = infoview_bufenter,
+      })
+
+      -- WinEnter is necessary for the edge case where you have
+      -- a file open in a tab with an infoview and move to a
+      -- new window in a new tab with that same file but no infoview
+      vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter' }, {
+        group = focus_augroup,
+        buffer = bufnr,
+        callback = function()
+          local current_infoview = infoview.get_current_infoview()
+          if not current_infoview then
+            return
+          end
+          current_infoview:focus_on_current_buffer()
+        end,
+      })
     end,
   })
 end
@@ -1161,17 +1160,6 @@ end
 ---@return Infoview
 function infoview.get_current_infoview()
   return infoview._by_tabpage[vim.api.nvim_get_current_tabpage()]
-end
-
---- Open an infoview for the current buffer if it isn't already open.
-function infoview.__maybe_autoopen()
-  local tabpage = vim.api.nvim_get_current_tabpage()
-  if infoview._by_tabpage[tabpage] or not options.autoopen() then
-    return
-  end
-  local new_infoview = Infoview:new {}
-  infoview._by_tabpage[tabpage] = new_infoview
-  new_infoview:open()
 end
 
 --- Open the current infoview (or ensure it is already open).
