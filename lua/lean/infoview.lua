@@ -1,10 +1,7 @@
-local protocol = require 'vim.lsp.protocol'
-
 local a = require 'plenary.async'
 
 local Element = require('lean.widgets').Element
 local components = require 'lean.infoview.components'
-local leanlsp = require 'lean.lsp'
 local rpc = require 'lean.rpc'
 local util = require 'lean._util'
 
@@ -965,9 +962,6 @@ Pin.update = a.void(Pin.async_update)
 ---@return Element?
 function Pin:__mk_data_elem(tick)
   local params = self.__position_params
-  local line = params.position.line
-
-  ::retry::
 
   local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   if buf == -1 then
@@ -984,83 +978,20 @@ function Pin:__mk_data_elem(tick)
     return Element:new()
   end
 
-  local sess = rpc.open(buf, params)
   if not tick:check() then
     return
   end
 
-  local goal_element
-  if self.__use_widgets then
-    local goal, err = sess:getInteractiveGoals(params)
-    if not tick:check() then
-      return
-    end
-    if err and err.code == protocol.ErrorCodes.ContentModified then
-      goto retry
-    end
-    if not err then
-      goal_element = components.interactive_goals(goal, sess)
-    end
-  end
+  local sess = rpc.open(buf, params)
+  local blocks = vim.iter({
+    components.goal_at(buf, params, sess, self.__use_widgets) or {},
+    components.term_goal_at(buf, params, sess, self.__use_widgets) or {},
+    components.diagnostics_at(buf, params, sess, self.__use_widgets) or {},
+  }):flatten():totable()
 
-  if not goal_element then
-    local err, goal = leanlsp.plain_goal(params, buf)
-    if not tick:check() then
-      return
-    end
-    if err and err.code == protocol.ErrorCodes.ContentModified then
-      goto retry
-    end
-    goal_element = components.plain_goal(goal)
+  if options.show_no_info_message and vim.tbl_isempty(blocks) then
+    return Element:new { text = 'No info.', name = 'no-tactic-term' }
   end
-
-  local term_goal_element
-  if self.__use_widgets then
-    local term_goal, err = sess:getInteractiveTermGoal(params)
-    if not tick:check() then
-      return
-    end
-    if err and err.code == protocol.ErrorCodes.ContentModified then
-      goto retry
-    end
-    if not err then
-      term_goal_element = components.interactive_term_goal(term_goal, sess)
-    end
-  end
-
-  if not term_goal_element then
-    local err, term_goal = leanlsp.plain_term_goal(params, buf)
-    if not tick:check() then
-      return
-    end
-    if err and err.code == protocol.ErrorCodes.ContentModified then
-      goto retry
-    end
-    term_goal_element = components.term_goal(term_goal)
-  end
-
-  local blocks = {}
-  vim.list_extend(blocks, goal_element)
-  vim.list_extend(blocks, term_goal_element)
-  if options.show_no_info_message and #goal_element + #term_goal_element == 0 then
-    table.insert(blocks, Element:new { text = 'No info.', name = 'no-tactic-term' })
-  end
-
-  local diagnostics_element
-  if self.__use_widgets then
-    local diags, err = sess:getInteractiveDiagnostics { start = line, ['end'] = line + 1 }
-    if not tick:check() then
-      return
-    end
-    if err and err.code == protocol.ErrorCodes.ContentModified then
-      goto retry
-    end
-    if not err then
-      diagnostics_element = components.interactive_diagnostics(diags, line, sess)
-    end
-  end
-
-  vim.list_extend(blocks, diagnostics_element or components.diagnostics(buf, line))
 
   return Element:concat(blocks, '\n\n')
 end

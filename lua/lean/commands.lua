@@ -3,9 +3,7 @@ local a = require 'plenary.async'
 local components = require 'lean.infoview.components'
 local Element = require('lean.widgets').Element
 local infoview = require 'lean.infoview'
-local leanlsp = require 'lean.lsp'
 local progress = require 'lean.progress'
-local rpc = require 'lean.rpc'
 
 local commands = {}
 
@@ -39,74 +37,37 @@ local function show_popup_or_error(elements, err)
 end
 
 function commands.show_goal(use_widgets)
-  if use_widgets == nil then
-    use_widgets = true
-  end
-
-  local params = vim.lsp.util.make_position_params()
   local bufnr = vim.api.nvim_get_current_buf()
+  local params = vim.lsp.util.make_position_params()
 
   a.void(function()
-    local goal, err
-    if use_widgets then
-      local sess = rpc.open(bufnr, params)
-      goal, err = sess:getInteractiveGoals(params)
-      goal = goal and components.interactive_goals(goal, sess)
-    end
-
-    if not goal then
-      err, goal = leanlsp.plain_goal(params, bufnr)
-      goal = goal and components.plain_goal(goal)
-    end
-
+    local goal, err = components.goal_at(bufnr, params, nil, use_widgets)
     show_popup_or_error(goal, err)
   end)()
 end
 
 function commands.show_term_goal(use_widgets)
-  if use_widgets == nil then
-    use_widgets = true
-  end
-
-  local params = vim.lsp.util.make_position_params()
   local bufnr = vim.api.nvim_get_current_buf()
+  local params = vim.lsp.util.make_position_params()
 
   a.void(function()
-    local term_goal, err
-    if use_widgets then
-      local sess = rpc.open(bufnr, params)
-      term_goal, err = sess:getInteractiveTermGoal(params)
-      term_goal = term_goal and components.interactive_term_goal(term_goal, sess)
-    end
-
-    if not term_goal then
-      err, term_goal = leanlsp.plain_term_goal(params, bufnr)
-      term_goal = term_goal and components.term_goal(term_goal)
-    end
-
-    show_popup_or_error(term_goal, err)
+    local goal, err = components.term_goal_at(bufnr, params, nil, use_widgets)
+    show_popup_or_error(goal, err)
   end)()
 end
 
 function commands.show_line_diagnostics()
   local params = vim.lsp.util.make_position_params()
   local bufnr = vim.api.nvim_get_current_buf()
-  local line = params.position.line
 
   a.void(function()
-    local diags, err
-
-    if not progress.is_processing_at(params) then
-      local sess = rpc.open(bufnr, params)
-      diags, err = sess:getInteractiveDiagnostics { start = line, ['end'] = line + 1 }
-      diags = not err and components.interactive_diagnostics(diags, line, sess)
+    local diagnostics, err
+    if progress.is_processing_at(params) then
+      err = 'Processing...'
+    else
+      diagnostics, err = components.diagnostics_at(bufnr, params, nil, false)
     end
-
-    if not diags then
-      diags = components.diagnostics(bufnr, line)
-    end
-
-    show_popup_or_error(diags, err)
+    show_popup_or_error(diagnostics, err)
   end)()
 end
 

@@ -460,4 +460,82 @@ function components.interactive_diagnostics(diags, line, sess)
   return elements
 end
 
+---@param bufnr integer
+---@param params lsp.TextDocumentPositionParams
+---@param sess? Subsession
+---@param use_widgets? boolean
+---@return Element[] goal
+---@return LspError? error
+function components.goal_at(bufnr, params, sess, use_widgets)
+  local goal, err
+  if use_widgets ~= false then
+    if sess == nil then
+      sess = require('lean.rpc').open(bufnr, params)
+    end
+
+    goal = sess:getInteractiveGoals(params)
+    goal = goal and components.interactive_goals(goal, sess)
+  end
+
+  if not goal then
+    err, goal = require('lean.lsp').plain_goal(params, bufnr)
+    goal = goal and components.plain_goal(goal)
+  end
+
+  return goal, err
+end
+
+---@param bufnr integer
+---@param params lsp.TextDocumentPositionParams
+---@param sess? Subsession
+---@param use_widgets? boolean
+---@return Element[]
+---@return LspError?
+function components.term_goal_at(bufnr, params, sess, use_widgets)
+  local term_goal, err
+  if use_widgets ~= false then
+    if sess == nil then
+      sess = require('lean.rpc').open(bufnr, params)
+    end
+
+    term_goal = sess:getInteractiveTermGoal(params)
+    term_goal = term_goal and components.interactive_term_goal(term_goal, sess)
+  end
+
+  if not term_goal then
+    err, term_goal = require('lean.lsp').plain_term_goal(params, bufnr)
+    term_goal = term_goal and components.term_goal(term_goal)
+  end
+
+  return term_goal, err
+end
+
+---@param bufnr integer
+---@param params lsp.TextDocumentPositionParams
+---@param sess? Subsession
+---@param use_widgets? boolean
+---@return Element[]
+---@return LspError?
+function components.diagnostics_at(bufnr, params, sess, use_widgets)
+  local line = params.position.line
+
+  if use_widgets == false then
+    return components.diagnostics(bufnr, line)
+  end
+
+  if sess == nil then
+    sess = require('lean.rpc').open(bufnr, params)
+  end
+
+  local diagnostics, err = sess:getInteractiveDiagnostics{
+    start = line,
+    ['end'] = line + 1
+  }
+  if err then
+    return components.diagnostics(bufnr, line), err
+  end
+
+  return components.interactive_diagnostics(diagnostics, line, sess), err
+end
+
 return components
