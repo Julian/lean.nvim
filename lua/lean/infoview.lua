@@ -411,7 +411,7 @@ function Infoview:toggle()
   end
 end
 
---- Update the info contents appropriately for Lean 4 or 3.
+--- Update the info contents.
 local function update_current_infoview()
   if vim.bo.filetype ~= 'lean' then
     return
