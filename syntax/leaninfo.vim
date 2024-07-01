@@ -1,6 +1,6 @@
 syn match leanInfoGoals "^▶.*goal.*"
 syn match leanInfoGoalCase "^case .*"
-syn match leanInfoGoalHyp "^[^:\n< ][^:\n⊢{[(⦃]*\( :\@=\)"
+syn match leanInfoGoalHyp "^[^:\n< ][^:\n⊢{[(⦃]*\( :\@=\)" contains=leanInfoInaccessibleHyp
 syn match leanInfoGoalVDash "^⊢"
 
 syn match leanInfoExpectedType "^▶ expected type.*"
@@ -10,7 +10,7 @@ syn match leanInfoWarning "^▶.*: warning:$"
 syn match leanInfoInfo "^▶.*: information:$"
 syn match leanInfoComment "--.*"
 
-syn match leanInfoInaccessibleHyp "^.*✝.*\ze : "
+syn match leanInfoInaccessibleHyp "\i\+✝" contained
 
 hi def link leanInfoGoals Title
 hi def link leanInfoGoalCase Statement
