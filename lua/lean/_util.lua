@@ -273,7 +273,7 @@ end
 ---@returns string encoding first client if there is one, nil otherwise
 function M._get_offset_encoding(bufnr)
   -- TODO: Can this be removed (or removed once 0.6 support is dropped)?
-  for _, client in pairs(vim.lsp.get_active_clients { bufnr = bufnr }) do
+  for _, client in pairs(vim.lsp.get_clients { bufnr = bufnr }) do
     return client.offset_encoding or 'utf-16'
   end
 end
