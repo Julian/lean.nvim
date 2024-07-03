@@ -1,6 +1,7 @@
 packpath := justfile_directory() + "/packpath"
 scripts := justfile_directory() + "/scripts"
-tests := justfile_directory() + "/lua/tests"
+src := justfile_directory() + "/lua"
+tests := src + "/tests"
 demos := justfile_directory() + "/demos"
 
 init_lua := scripts + "/minimal_init.lua"
@@ -32,6 +33,8 @@ lint:
     @echo
     {{ if `lua-language-server --version 2>&1 >/dev/null; echo $?` != "0" { error('lua-language-server not found') } else { "" } }}
     lua-language-server --check lua/lean --checklevel=Warning --configpath "{{ justfile_directory() }}/.luarc.json"
+    {{ if `selene --version 2>&1 >/dev/null; echo $?` != "0" { error('selene not found') } else { "" } }}
+    selene {{ src }}
 
 # Rebuild a demo from our VHS script.
 demo:
