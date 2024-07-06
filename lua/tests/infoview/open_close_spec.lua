@@ -95,7 +95,7 @@ describe('infoview open/close', function()
     assert.windows.are(lean_window, current_infoview.window)
 
     -- Close via :quit
-    vim.api.nvim_set_current_win(current_infoview.window)
+    current_infoview:enter()
     vim.cmd.quit()
     assert.windows.are(lean_window)
 
@@ -117,7 +117,7 @@ describe('infoview open/close', function()
     current_infoview:open()
     assert.windows.are(lean_window, current_infoview.window)
 
-    vim.api.nvim_set_current_win(current_infoview.window)
+    current_infoview:enter()
     vim.cmd.close()
     assert.windows.are(lean_window)
 
@@ -153,7 +153,7 @@ describe('infoview open/close', function()
       -- And assert the same via command mode just in case
       vim.cmd.tabnext()
       tab2_infoview:open()
-      vim.api.nvim_set_current_win(tab2_infoview.window)
+      tab2_infoview:enter()
       vim.cmd.quit()
 
       vim.cmd.tabprevious()

@@ -23,7 +23,7 @@ describe(
         Nat : Type
       ]]
 
-      vim.api.nvim_set_current_win(current_infoview.window)
+      current_infoview:enter()
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
 
       local known_windows = { lean_window, current_infoview.window }
@@ -47,7 +47,7 @@ describe(
       local tab2_infoview = infoview.get_current_infoview()
       helpers.move_cursor { to = { 1, 9 } }
       helpers.wait_for_loading_pins()
-      vim.api.nvim_set_current_win(tab2_infoview.window)
+      tab2_infoview:enter()
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
       helpers.feed '<CR>'
 
@@ -69,7 +69,7 @@ describe(
       local tab2_infoview = infoview.get_current_infoview()
       helpers.move_cursor { to = { 1, 8 } }
       helpers.wait_for_loading_pins()
-      vim.api.nvim_set_current_win(tab2_infoview.window)
+      tab2_infoview:enter()
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
       helpers.feed '<CR>'
 

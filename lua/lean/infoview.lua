@@ -256,6 +256,13 @@ function Infoview:move_cursor_to_goal(goal_number)
   end
 end
 
+--- Enter the given infoview (i.e. set the current window to it).
+function Infoview:enter()
+  if self.window and vim.api.nvim_win_is_valid(self.window) then
+    vim.api.nvim_set_current_win(self.window)
+  end
+end
+
 --- API for opening an auxilliary window relative to the current infoview window.
 --- @param buf number @buffer to put in the new window
 --- @return number? @new window handle or nil if the infoview is closed
@@ -266,7 +273,7 @@ function Infoview:__open_win(buf)
 
   self.info.__win_event_disable = true
   local window_before_split = vim.api.nvim_get_current_win()
-  vim.api.nvim_set_current_win(self.window)
+  self:enter()
 
   if self.__orientation == 'vertical' then
     vim.cmd('leftabove ' .. self.__width .. 'vsplit')
@@ -1283,7 +1290,7 @@ function infoview.go_to()
   local curr_info = infoview.open().info
   -- if there is no last win, just go straight to the window itself
   if not curr_info.__renderer:last_win_valid() then
-    vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
+    infoview.get_current_infoview():enter()
   else
     curr_info.__renderer:enter_win()
   end

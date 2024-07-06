@@ -31,7 +31,7 @@ describe('move_cursor_to_goal', helpers.clean_buffer([[
 
     current_infoview:move_cursor_to_goal(1)
 
-    vim.api.nvim_set_current_win(current_infoview.window)
+    current_infoview:enter()
     assert.current_line.is '⊢ n = n'
     vim.api.nvim_set_current_win(lean_window)
   end)
@@ -39,13 +39,13 @@ describe('move_cursor_to_goal', helpers.clean_buffer([[
   it('moves the cursor to a specific goal number', function()
     local current_infoview = infoview.get_current_infoview()
 
-    vim.api.nvim_set_current_win(current_infoview.window)
+    current_infoview:enter()
     assert.current_line.is '⊢ n = n'
     vim.api.nvim_set_current_win(lean_window)
 
     current_infoview:move_cursor_to_goal(2)
 
-    vim.api.nvim_set_current_win(current_infoview.window)
+    current_infoview:enter()
     assert.current_line.is '⊢ n = n ∨ n = 0 ∨ n = n✝ + 1'
     vim.api.nvim_set_current_win(lean_window)
   end)

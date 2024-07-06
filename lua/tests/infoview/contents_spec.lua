@@ -289,7 +289,7 @@ describe('infoview content (auto-)update', function()
         helpers.move_cursor { to = { #lines, 1 } }
         helpers.wait_for_loading_pins()
 
-        vim.api.nvim_set_current_win(infoview.get_current_infoview().window)
+        infoview.get_current_infoview():enter()
 
         assert.current_line.is '⊢ true = true'
         assert.are.equal(vim.api.nvim_win_get_cursor(0)[2], #'⊢ ')

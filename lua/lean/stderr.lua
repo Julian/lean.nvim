@@ -13,8 +13,8 @@ local function open_window(stderr_bufnr)
 
   -- split the infoview window if open
   local iv = infoview.get_current_infoview()
-  if iv and iv.window and vim.api.nvim_win_is_valid(iv.window) then
-    vim.api.nvim_set_current_win(iv.window)
+  if iv then
+    iv:enter()
     vim.cmd(('rightbelow sbuffer %d'):format(stderr_bufnr))
   else
     vim.cmd(('botright sbuffer %d'):format(stderr_bufnr))
