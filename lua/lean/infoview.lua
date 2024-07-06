@@ -156,7 +156,7 @@ function Infoview:open()
   -- Set the filetype now. Any earlier, and only buffer-local options will be
   -- properly set in the infoview, since the buffer isn't actually shown in a
   -- window until we run nvim_win_set_buf.
-  vim.api.nvim_buf_set_option(self.info.__renderer.buf, 'filetype', 'leaninfo')
+  vim.bo[self.info.__renderer.buf].filetype = 'leaninfo'
   self.window = vim.api.nvim_get_current_win()
 
   vim.api.nvim_set_current_win(window_before_split)
@@ -262,7 +262,7 @@ function Infoview:__open_win(buf)
   local new_win = vim.api.nvim_get_current_win()
 
   vim.api.nvim_win_set_buf(new_win, buf)
-  vim.api.nvim_buf_set_option(buf, 'filetype', 'leaninfo')
+  vim.bo[buf].filetype = 'leaninfo'
 
   vim.api.nvim_set_current_win(window_before_split)
   self.info.__win_event_disable = false
