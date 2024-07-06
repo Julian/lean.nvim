@@ -237,18 +237,17 @@ function Infoview:reposition()
   end
 end
 
---- Move the cursor to the goal line.
---- @param goal_number? integer @goal number to move to, defaulting to the first
-function Infoview:move_cursor_to_goal(goal_number)
-  if not goal_number then
-    goal_number = 1
-  end
-  for i, line in ipairs(vim.api.nvim_buf_get_lines(self.info.__renderer.buf, 0, -1, false)) do
+--- Move the cursor to the given (1-indexed) goal.
+--- @param n? integer the goal number to move to, defaulting to the first
+function Infoview:move_cursor_to_goal(n)
+  n = n or 1
+  local lines = vim.api.nvim_buf_get_lines(self.info.__renderer.buf, 0, -1, false)
+  for i, line in ipairs(lines) do
     if line:find '^⊢ ' then
-      goal_number = goal_number - 1
-      if goal_number == 0 then
+      n = n - 1
+      if n == 0 then
         vim.api.nvim_win_call(self.window, function()
-          vim.cmd('normal! ' .. i .. 'z-2l')
+          vim.cmd.normal { i .. 'z-2l', bang = true }
         end)
         break
       end
