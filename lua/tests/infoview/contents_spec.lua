@@ -275,7 +275,7 @@ describe('infoview content (auto-)update', function()
   )
 
   describe(
-    'cursor position',
+    'initial cursor position',
     helpers.clean_buffer(function()
       it('is set to the goal line', function()
         local lines = { 'example ' }

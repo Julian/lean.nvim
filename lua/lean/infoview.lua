@@ -109,6 +109,7 @@ function Infoview:new(obj)
     __separate_tab = obj.separate_tab or options.separate_tab,
   }, self)
   new_infoview.info = Info:new { infoview = new_infoview }
+  new_infoview.info:render()
   return new_infoview
 end
 
@@ -232,6 +233,25 @@ function Infoview:reposition()
       self:move_to_bottom()
     else
       self:move_to_top()
+    end
+  end
+end
+
+--- Move the cursor to the goal line.
+--- @param goal_number? integer @goal number to move to, defaulting to the first
+function Infoview:move_cursor_to_goal(goal_number)
+  if not goal_number then
+    goal_number = 1
+  end
+  for i, line in ipairs(vim.api.nvim_buf_get_lines(self.info.__renderer.buf, 0, -1, false)) do
+    if line:find '^⊢ ' then
+      goal_number = goal_number - 1
+      if goal_number == 0 then
+        vim.api.nvim_win_call(self.window, function()
+          vim.cmd('normal! ' .. i .. 'z-2l')
+        end)
+        break
+      end
     end
   end
 end
@@ -389,6 +409,12 @@ function Infoview:get_lines(start_line, end_line)
   return vim.api.nvim_buf_get_lines(self.info.__renderer.buf, start_line, end_line, true)
 end
 
+--- Retrieve a specific line from the infoview window.
+---@param line number
+function Infoview:get_line(line)
+  return self:get_lines(line, line + 1)[1]
+end
+
 --- Retrieve the contents of the diff window as a table.
 ---@param start_line? number
 ---@param end_line? number
@@ -516,8 +542,6 @@ function Info:new(opts)
       end
     end,
   })
-
-  new_info:render()
 
   return new_info
 end
@@ -672,14 +696,7 @@ function Info:render()
 
   -- Set the cursor to the line with first goal (just after the marker).
   if vim.api.nvim_get_current_win() ~= self.__infoview.window then
-    for i, line in ipairs(vim.api.nvim_buf_get_lines(self.__renderer.buf, 0, -1, false)) do
-      if line:find '^⊢ ' then
-        vim.api.nvim_win_call(self.__infoview.window, function()
-          vim.cmd('normal! ' .. i .. 'z-2l')
-        end)
-        break
-      end
-    end
+    self.__infoview:move_cursor_to_goal()
   end
 
   self.__infoview:__refresh_diff()
