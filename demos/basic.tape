@@ -14,7 +14,7 @@ Set FontFamily Inconsolata
 Set Padding 20
 Set Width 800
 Set Height 500
-Set FontSize 11
+Set FontSize 12
 
 Type "nvim" Sleep 1s Enter
 Hide Type ";luafile demos/basic.lua" Enter Show
@@ -22,16 +22,16 @@ Hide Type ";luafile demos/basic.lua" Enter Show
 Hide Type ";lua DEMO.popup()" Enter Show
 Type "lean.nvim brings support for the Lean theorem prover to Neovim." Sleep 500ms Enter
 Enter
-Type "Have a look, watching our proof on the left and the infoview on the right!" Sleep 1s
+Type "Have a look at our proof on the left and the infoview on the right." Sleep 1s
 Escape Hide Type ";q!" Enter Show
 
-Type@5ms ";e /Users/Julian/Development/Mathlib4/Scratch/NeovimLoves.lean" Enter Sleep 500ms
+Type@5ms ";e demos/project/NeovimLoves.lean" Enter Sleep 500ms
 
 Hide
 Type "iimport Mathlib.Data.Real.Irrational" Enter
 Type "import Mathlib.Analysis.SpecialFunctions.Pow.Real" Enter
 Enter
-Sleep 8s
+Sleep 20s
 Show
 
 Type@20ms "open Real in" Enter
@@ -56,7 +56,7 @@ Enter Show
 Type "including showing you how to type what you need." Sleep 1s
 Escape Hide Type ";q!" Enter Show
 
-Type "hh"
+Type "hhh"
 Space Space Type "\\"
 Sleep 2s
 Escape
@@ -69,7 +69,7 @@ Type "  sorry"
 Sleep 2s Escape
 
 Hide Type ";lua DEMO.popup()" Enter Show
-Type "Diagnostics appear whenever sent by Lean." Sleep 1s
+Type "Diagnostics appear whenever Lean sends them." Sleep 1s
 Escape Hide Type ";q!" Enter Show
 
 Type@20ms ";lua vim.diagnostic.goto_next{ float = { header = false } }" Enter Sleep 2s

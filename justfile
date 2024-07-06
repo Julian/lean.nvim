@@ -38,12 +38,15 @@ lint:
 
 # Rebuild a demo from our VHS script.
 demo:
-    vhs {{ demos }}/basic.tape
+    cd {{ demos }}/project/ && lake build Mathlib.Analysis.SpecialFunctions.Pow.Real Mathlib.Data.Real.Irrational
+    cd {{ justfile_directory() }}; vhs {{ demos }}/basic.tape
 
 # Update the versions of test fixtures used in CI.
 bump-test-fixtures:
-    cd {{ tests }}/fixtures/example-project/; gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' >lean-toolchain && lake update
-    git add {{ tests }}/fixtures/example-project/
+    gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' | tee "{{ tests }}/fixtures/example-project/lean-toolchain" "{{ demos }}/project/lean-toolchain"
+    cd {{ tests }}/fixtures/example-project/ && lake update
+    cd {{ demos }}/project/ && MATHLIB_NO_CACHE_ON_UPDATE=1 lake update
+    git add {{ justfile_directory() }}/**/lean-toolchain {{ justfile_directory() }}/**/lake-manifest.json
     git commit -m "Bump the Lean versions in CI."
 
 # Delete any previously cloned test dependencies.
