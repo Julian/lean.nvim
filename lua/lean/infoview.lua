@@ -986,7 +986,7 @@ Pin.update = a.void(Pin.async_update)
 function Pin:__mk_data_elem(tick)
   local params = self.__position_params
 
-  local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
+  local buf = vim.uri_to_bufnr(params.textDocument.uri)
   if buf == -1 then
     error 'No corresponding buffer found for update.'
   end
