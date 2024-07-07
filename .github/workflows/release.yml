@@ -1,4 +1,4 @@
-name: "release"
+name: "LuaRocks Release"
 on:
   push:
     tags:
@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: luarocks Upload
+      - name: LuaRocks Upload
         uses: nvim-neorocks/luarocks-tag-release@v7
         env:
           LUAROCKS_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
