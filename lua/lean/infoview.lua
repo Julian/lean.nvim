@@ -620,8 +620,10 @@ function Info:set_last_window()
   self.last_window = vim.api.nvim_get_current_win()
 end
 
---- Update this info's pins element.
+---Update this info's pins element.
 function Info:__render_pins()
+  ---@param pin Pin
+  ---@param current boolean
   local function render_pin(pin, current)
     local header_element = Element:new { name = 'pin-header' }
     if infoview.debug then
