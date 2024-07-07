@@ -86,7 +86,7 @@ describe('infoview content (auto-)update', function()
     helpers.insert 'some stuff'
     assert.are.same(original_lines, infoview.get_current_infoview():get_lines())
 
-    vim.cmd 'close!'
+    vim.cmd.close { bang = true }
   end)
 
   it('does not error while closed and continues updating when reopened', function()

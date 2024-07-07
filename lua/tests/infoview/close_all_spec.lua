@@ -8,7 +8,7 @@ describe('infoview.close_all', function()
     assert.is.equal(#vim.api.nvim_tabpage_list_wins(0), 1)
     local lean_window = vim.api.nvim_get_current_win()
 
-    vim.cmd 'edit! temp.lean'
+    vim.cmd.edit { 'temp.lean', bang = true }
     local current_infoview = infoview.open()
     assert.windows.are(lean_window, current_infoview.window)
 

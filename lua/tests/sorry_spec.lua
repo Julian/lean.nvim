@@ -14,7 +14,7 @@ describe('sorry', function()
       function()
         helpers.wait_for_line_diagnostics()
 
-        vim.cmd 'normal! 2gg$'
+        vim.cmd.normal { '2gg$', bang = true }
         require('lean.sorry').fill()
         assert.contents.are [[
           example (p q : Prop) : p ∧ q ↔ q ∧ p := by
@@ -31,7 +31,7 @@ describe('sorry', function()
     clean_buffer('example (p : Prop) : p → p := by', function()
       helpers.wait_for_line_diagnostics()
 
-      vim.cmd 'normal! gg$'
+      vim.cmd.normal { 'gg$', bang = true }
       require('lean.sorry').fill()
       assert.contents.are [[
           example (p : Prop) : p → p := by
@@ -50,9 +50,9 @@ describe('sorry', function()
       function()
         helpers.wait_for_line_diagnostics()
 
-        vim.cmd 'normal! 2gg$'
+        vim.cmd.normal { '2gg$', bang = true }
         require('lean.sorry').fill()
-        vim.cmd 'normal! cebar'
+        vim.cmd.normal { 'cebar', bang = true }
         assert.contents.are [[
           def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
             constructor
@@ -73,9 +73,9 @@ describe('sorry', function()
       function()
         helpers.wait_for_line_diagnostics()
 
-        vim.cmd 'normal! 2gg$'
+        vim.cmd.normal { '2gg$', bang = true }
         require('lean.sorry').fill()
-        vim.cmd 'normal! cebar'
+        vim.cmd.normal { 'cebar', bang = true }
         assert.contents.are [[
           def foo (p q : Prop) : p ∧ q →  q ∧ p := by
             intro h
@@ -94,10 +94,10 @@ describe('sorry', function()
 
       ]],
       function()
-        vim.cmd 'normal! gg$'
+        vim.cmd.normal { 'gg$', bang = true }
         helpers.wait_for_line_diagnostics()
 
-        vim.cmd 'normal! 3gg0'
+        vim.cmd.normal { '3gg0', bang = true }
         require('lean.sorry').fill()
         assert.contents.are [[
           def foo (p q : Prop) : p ∧ q ↔ q ∧ p := by
@@ -120,7 +120,7 @@ describe('sorry', function()
           · sorry
       ]],
       function()
-        vim.cmd 'normal! 3gg$'
+        vim.cmd.normal { '3gg$', bang = true }
         helpers.wait_for_line_diagnostics()
 
         require('lean.sorry').fill()
@@ -143,7 +143,7 @@ describe('sorry', function()
           rfl
       ]],
       function()
-        vim.cmd 'normal! 2gg$'
+        vim.cmd.normal { '2gg$', bang = true }
         require('lean.sorry').fill()
         assert.contents.are [[
           def foo (n : Nat) : n = n := by
