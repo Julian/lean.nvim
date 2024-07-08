@@ -11,7 +11,8 @@ Prerequisites
 
 ``lean.nvim`` supports the latest stable neovim release (currently 0.10.x) as well as the latest nightly.
 
-(This matches what neovim itself supports upstream, which often guides what plugins end up working with).
+This matches what neovim itself supports upstream, which often guides what plugins end up working with.
+If you are on an earlier version of neovim, e.g. ``0.9.5``, you can have your plugin manager install the `nvim-0.9 <https://github.com/Julian/lean.nvim/releases/tag/nvim-0.9>`_ tag until you upgrade.
 
 Installation
 ------------
