@@ -358,8 +358,8 @@ describe(
 
           assert.windows.are(lean_window, current_infoview.window, diff_window)
 
-          assert.is_true(vim.api.nvim_win_get_option(current_infoview.window, 'diff'))
-          assert.is_true(vim.api.nvim_win_get_option(diff_window, 'diff'))
+          assert.is_true(vim.wo[current_infoview.window].diff)
+          assert.is_true(vim.wo[diff_window].diff)
         end)
 
         it('maintains separate text', function()
@@ -397,8 +397,8 @@ describe(
 
           assert.windows.are(lean_window, current_infoview.window, diff_window)
 
-          assert.is_true(vim.api.nvim_win_get_option(current_infoview.window, 'diff'))
-          assert.is_true(vim.api.nvim_win_get_option(diff_window, 'diff'))
+          assert.is_true(vim.wo[current_infoview.window].diff)
+          assert.is_true(vim.wo[diff_window].diff)
         end)
 
         it('closes when cleared', function()
