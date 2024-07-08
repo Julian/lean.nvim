@@ -1,7 +1,8 @@
 packpath := justfile_directory() + "/packpath"
 scripts := justfile_directory() + "/scripts"
 src := justfile_directory() + "/lua"
-tests := src + "/tests"
+spec := justfile_directory() + "/spec"
+fixtures := spec + "/fixtures"
 demos := justfile_directory() + "/demos"
 
 init_lua := scripts + "/minimal_init.lua"
@@ -11,7 +12,7 @@ test: _rebuild-test-fixtures _clone-test-dependencies
     @just retest
 
 # Run the test suite without rebuilding or recloning any dependencies.
-retest *test_files=tests:
+retest *test_files=spec:
     nvim --headless -u {{ init_lua }} -c 'lua require("inanis").run{ specs = vim.split("{{ test_files }}", " "), minimal_init = "{{ init_lua }}", sequential = vim.env.TEST_SEQUENTIAL ~= nil }'
 
 # Run an instance of neovim with the same minimal init used to run tests.
@@ -43,8 +44,8 @@ demo:
 
 # Update the versions of test fixtures used in CI.
 bump-test-fixtures:
-    gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' | tee "{{ tests }}/fixtures/example-project/lean-toolchain" "{{ demos }}/project/lean-toolchain"
-    cd {{ tests }}/fixtures/example-project/ && lake update
+    gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' | tee "{{ fixtures }}/example-project/lean-toolchain" "{{ demos }}/project/lean-toolchain"
+    cd {{ fixtures }}/example-project/ && lake update
     cd {{ demos }}/project/ && MATHLIB_NO_CACHE_ON_UPDATE=1 lake update
     git add {{ justfile_directory() }}/**/lean-toolchain {{ justfile_directory() }}/**/lake-manifest.json
     git commit -m "Bump the Lean versions in CI."
@@ -62,4 +63,4 @@ _clone-test-dependencies: _clean-test-dependencies
 
 # Rebuild some test fixtures used in the test suite.
 _rebuild-test-fixtures:
-    cd "{{ tests }}/fixtures/example-project/"; lake build
+    cd "{{ fixtures }}/example-project/"; lake build
