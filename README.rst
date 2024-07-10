@@ -312,6 +312,8 @@ Other Plugins
 Particularly if you're also a VSCode user, there may be other plugins you're interested in.
 Below is a (hopelessly incomplete) list of a few:
 
+* `actions-preview.nvim <https://github.com/aznhe21/actions-preview.nvim>`_ for showing a preview of what a code action would change
+
 * `nvim-lightbulb <https://github.com/kosayoda/nvim-lightbulb>`_ for signalling when code actions are available
 
 * `goto-preview <https://github.com/rmagatti/goto-preview>`_ for peeking definitions (instead of jumping to them)
