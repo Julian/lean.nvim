@@ -21,6 +21,7 @@ vim.b.switch_definitions = {
   { 'exact ⟨', 'refine ⟨' },
   { 'aesop', 'aesop?' },
   { 'norm_cast', 'push_cast' },
+  vim.fn['switch#Words'] { 'by', 'by?' },
   vim.fn['switch#Words'] { 'tt', 'ff' },
   { '=', '≠' },
   { '∈', '∉' },

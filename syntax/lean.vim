@@ -32,7 +32,7 @@ syn keyword leanCommand alias
 syn keyword leanCommand inline
 syn keyword leanCommand unif_hint
 
-syn keyword leanKeyword by
+syn keyword leanKeyword by by?
 syn keyword leanKeyword forall fun from have show assume suffices let if else then in with calc match do this
 syn keyword leanKeyword try catch finally for unless return mut continue break
 syn keyword leanSort Sort Prop Type
