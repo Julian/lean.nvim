@@ -112,6 +112,36 @@ describe('infoview content (auto-)update', function()
     ]]
   end)
 
+  it('does not error while closed manually and continues updating when reopened', function()
+    assert.windows.are(lean_window, infoview.get_current_infoview().window)
+
+    infoview.go_to()
+    vim.cmd.quit{ bang = true }
+
+    -- Move around a bit.
+    helpers.move_cursor { to = { 1, 0 } }
+    helpers.move_cursor { to = { 2, 0 } }
+
+    -- Insert + delete a line, which should trigger our buf_attach callback...
+    -- FIXME: But it doesn't...
+    vim.cmd.normal 'o'
+    vim.cmd.normal 'dd'
+
+    helpers.move_cursor { to = { 1, 0 } }
+
+    infoview.open()
+    assert.infoview_contents.are [[
+      ▶ 1:1-1:6: information:
+      1
+    ]]
+
+    helpers.move_cursor { to = { 3, 0 } }
+    assert.infoview_contents.are [[
+      ▶ 3:1-3:6: information:
+      9.000000
+    ]]
+  end)
+
   it('does not have line contents while closed', function()
     assert.windows.are(lean_window, infoview.get_current_infoview().window)
     infoview.close()

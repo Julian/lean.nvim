@@ -162,10 +162,8 @@ function Infoview:open()
 
   vim.api.nvim_set_current_win(window_before_split)
 
-  -- Make sure we notice even if someone manually :q's the infoview window.
-  local augroup = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false })
-  vim.api.nvim_create_autocmd('BufHidden', {
-    group = augroup,
+  vim.api.nvim_create_autocmd( { 'BufHidden', 'QuitPre' }, {
+    group = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false }),
     buffer = self.info.__renderer.buf,
     callback = function()
       if not self.info.__win_event_disable then
@@ -322,6 +320,24 @@ function Infoview:__refresh()
     end)
   end
   self.info.__win_event_disable = false
+end
+
+--- Filter the pins from this infoview which are relevant to a given buffer.
+--- @param buf number @the bufnr which filters the pins
+--- @return Pin[]
+function Infoview:pins_for(buf)
+  if not self.window then
+    return {}
+  end
+
+  local possible = { self.info.pin }
+  vim.list_extend(possible, self.info.pins)
+
+  local uri = vim.uri_from_bufnr(buf)
+  return vim.iter(possible):filter(function(pin)
+    return pin.__position_params
+       and pin.__position_params.textDocument.uri == uri
+  end):totable()
 end
 
 --FIXME: We shouldn't have both __refresh and __update
@@ -1071,26 +1087,20 @@ end
 
 --- on_lines callback to update pins position according to the given textDocument/didChange parameters.
 function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
-  for _, each in pairs(infoview._by_tabpage) do
-    local pins = { each.info.pin }
-    vim.list_extend(pins, each.info.pins)
-    for _, pin in ipairs(pins) do
-      if
-        pin.__position_params
-        and pin.__position_params.textDocument.uri == vim.uri_from_bufnr(bufnr)
-      then
-        -- immediately mark the pin as loading (useful for tests)
-        if pin:__started_loading() then
-          vim.schedule(function()
-            pin:__render_parents()
-          end)
-        end
-        vim.schedule(function()
-          pin:update_position()
-          pin:update()
-        end)
-      end
+  local pins = vim.iter(infoview._by_tabpage):map(function(each)
+    return each:pins_for(bufnr)
+  end)
+  for pin in pins:flatten(1) do
+    -- immediately mark the pin as loading (useful for tests)
+    if pin:__started_loading() then
+      vim.schedule(function()
+        pin:__render_parents()
+      end)
     end
+    vim.schedule(function()
+      pin:update_position()
+      pin:update()
+    end)
   end
 end
 
