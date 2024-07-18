@@ -1105,6 +1105,11 @@ function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
 end
 
 -- FIXME: We never seem to call nvim_buf_detach, nor use this for anything.
+--        This seems related to #346 (as a potential further fix improvement)
+--        as part of what was happening there is that we still are attached
+--        to buffers whose infoviews are already closed, and likely should
+--        be detaching from them so we don't pointlessly call into
+--        __update_pin_positions
 local attached_buffers = {}
 
 --- Callback when entering a Lean buffer.
