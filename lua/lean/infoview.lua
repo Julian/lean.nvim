@@ -999,9 +999,10 @@ end
 
 Pin.update = a.void(Pin.async_update)
 
+---@param opts table?
 ---@param tick Tick
 ---@return Element?
-function Pin:__mk_data_elem(tick)
+function Pin:__mk_data_elem(tick, opts)
   local params = self.__position_params
 
   local buf = vim.uri_to_bufnr(params.textDocument.uri)
@@ -1028,7 +1029,7 @@ function Pin:__mk_data_elem(tick)
     return components.NO_INFO
   end
 
-  return Element:concat(blocks, '\n\n')
+  return Element:concat(blocks, '\n\n', opts)
 end
 
 --- async function to update this pin's contents given the current position.
@@ -1037,21 +1038,24 @@ function Pin:__update(tick)
     self:__render_parents()
   end
 
-  local new_data_element = self:__mk_data_elem(tick)
-  if not new_data_element or not tick:check() then
-    return
-  end
-
-  new_data_element.events.clear_all = function(ctx) ---@param ctx ElementEventContext
-    new_data_element:find(function(element) ---@param element Element
-      if element.events.clear then
-        element.events.clear(ctx)
+  local new_data_element
+  local opts = {
+    events = {
+      clear_all = function(ctx) ---@param ctx ElementEventContext
+        ---@diagnostic disable-next-line: need-check-nil
+        new_data_element:find(function(element) ---@param element Element
+          if element.events.clear then
+            element.events.clear(ctx)
+          end
+        end)
+        pcall(vim.api.nvim_set_current_win, ctx.self.last_win)
       end
-    end)
-    pcall(vim.api.nvim_set_current_win, ctx.self.last_win)
+    },
+  }
+  new_data_element = self:__mk_data_elem(tick, opts)
+  if new_data_element then
+    self.__data_element = new_data_element
   end
-
-  self.__data_element = new_data_element
 end
 
 --- Close all open infoviews (across all tabs).

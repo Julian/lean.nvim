@@ -382,16 +382,22 @@ end
 ---Create an element which joins a list-like table of elements with the provided separator.
 ---@param elements Element[]
 ---@param sep string
+---@param opts table?
 ---@return Element
-function Element:concat(elements, sep)
-  local children = {}
+function Element:concat(elements, sep, opts)
+  opts = opts or {}
+  opts.children = {}
+
+  local separator = Element:new{ text = sep }
+
   for index, child in ipairs(elements) do
     if index > 1 then
-      table.insert(children, Element:new { text = sep })
+      table.insert(opts.children, separator)
     end
-    table.insert(children, child)
+    table.insert(opts.children, child)
   end
-  return self:new { children = children }
+
+  return self:new(opts)
 end
 
 ---Create a BufRenderer that renders this Element.
