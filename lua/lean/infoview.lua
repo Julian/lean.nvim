@@ -2,6 +2,7 @@ local a = require 'plenary.async'
 
 local Element = require('lean.widgets').Element
 local components = require 'lean.infoview.components'
+local progress = require 'lean.progress'
 local rpc = require 'lean.rpc'
 local util = require 'lean._util'
 
@@ -1008,7 +1009,7 @@ function Pin:__mk_data_elem(tick)
     error 'No corresponding buffer found for update.'
   end
 
-  if require('lean.progress').is_processing_at(params) then
+  if progress.is_processing_at(params) then
     if not options.show_processing then
       return
     end
