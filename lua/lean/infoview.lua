@@ -1009,13 +1009,14 @@ function Pin:__mk_data_elem(tick)
   end
 
   if require('lean.progress').is_processing_at(params) then
-    if options.show_processing then
-      return Element:new {
-        text = 'Processing file...',
-        name = 'processing-msg',
-      }
+    if not options.show_processing then
+      return
     end
-    return Element:new()
+
+    return Element:new{
+      text = 'Processing file...',
+      name = 'processing-msg',
+    }
   end
 
   if not tick:check() then
