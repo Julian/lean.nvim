@@ -473,10 +473,9 @@ end
 
 --- Set the currently active Lean buffer to update the infoview.
 function Infoview:focus_on_current_buffer()
-  local augroup = vim.api.nvim_create_augroup('LeanInfoviewUpdate', {})
   if self.window then
     vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-      group = augroup,
+      group = vim.api.nvim_create_augroup('LeanInfoviewUpdate', {}),
       buffer = 0,
       callback = update_current_infoview,
     })
@@ -1137,9 +1136,8 @@ function infoview.enable(opts)
   infoview.enabled = true
   infoview.set_autoopen(options.autoopen)
 
-  local augroup = vim.api.nvim_create_augroup('LeanInfoviewInit', {})
   vim.api.nvim_create_autocmd('Filetype', {
-    group = augroup,
+    group = vim.api.nvim_create_augroup('LeanInfoviewInit', {}),
     pattern = { 'lean' },
     callback = function(event)
       local bufnr = event.buf
