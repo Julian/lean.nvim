@@ -1010,14 +1010,7 @@ function Pin:__mk_data_elem(tick)
   end
 
   if progress.is_processing_at(params) then
-    if not options.show_processing then
-      return
-    end
-
-    return Element:new{
-      text = 'Processing file...',
-      name = 'processing-msg',
-    }
+    return options.show_processing and components.PROCESSING or nil
   end
 
   if not tick:check() then
@@ -1032,7 +1025,7 @@ function Pin:__mk_data_elem(tick)
   }):flatten():totable()
 
   if options.show_no_info_message and vim.tbl_isempty(blocks) then
-    return Element:new { text = 'No info.', name = 'no-tactic-term' }
+    return components.NO_INFO
   end
 
   return Element:concat(blocks, '\n\n')
@@ -1050,13 +1043,12 @@ function Pin:__update(tick)
   end
 
   new_data_element.events.clear_all = function(ctx) ---@param ctx ElementEventContext
-    local last_window = ctx.self.last_win
     new_data_element:find(function(element) ---@param element Element
       if element.events.clear then
         element.events.clear(ctx)
       end
     end)
-    pcall(vim.api.nvim_set_current_win, last_window)
+    pcall(vim.api.nvim_set_current_win, ctx.self.last_win)
   end
 
   self.__data_element = new_data_element

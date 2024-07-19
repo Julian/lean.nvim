@@ -8,7 +8,10 @@
 local Element = require('lean.widgets').Element
 local util = require 'lean._util'
 
-local components = {}
+local components = {
+  NO_INFO = Element:new{ text = 'No info.', name = 'no-info' },
+  PROCESSING = Element:new{ text = 'Processing file...', name = 'processing' },
+}
 
 --- Format a heading.
 local function H(contents)
