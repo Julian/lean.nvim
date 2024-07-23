@@ -428,7 +428,7 @@ function BufRenderer:new(obj)
 
   obj = obj or {}
   local new_renderer = setmetatable(obj, self)
-  vim.api.nvim_buf_set_option(obj.buf, 'modifiable', false)
+  vim.bo[obj.buf].modifiable = false
   _by_buf[obj.buf] = new_renderer
 
   local augroup = vim.api.nvim_create_augroup('WidgetPosition', { clear = false })
@@ -495,14 +495,14 @@ function BufRenderer:render()
 
   local hls = self.element:_get_highlights()
 
-  vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+  vim.bo[buf].modifiable = true
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   -- HACK: This shouldn't really do anything, but I think there's a neovim
   --       display bug. See #27 and neovim/neovim#14663. Specifically,
   --       as of NVIM v0.5.0-dev+e0a01bdf7, without this, updating a long
   --       infoview with shorter contents doesn't properly redraw.
   vim.api.nvim_buf_call(buf, vim.fn.winline)
-  vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+  vim.bo[buf].modifiable = false
 
   for _, hl in ipairs(hls) do
     local start_pos = raw_pos_to_pos(hl.start, lines)

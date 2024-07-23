@@ -18,7 +18,7 @@ function ft.__maybe_make_nomodifiable(bufnr)
   local name = vim.api.nvim_buf_get_name(bufnr)
   for _, pattern in ipairs(options.nomodifiable) do
     if name:match(pattern) then
-      vim.api.nvim_buf_set_option(bufnr, 'modifiable', false)
+      vim.bo[bufnr].modifiable = false
       return
     end
   end

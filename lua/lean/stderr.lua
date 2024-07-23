@@ -22,7 +22,7 @@ local function open_window(stderr_bufnr)
 
   vim.cmd(('resize %d'):format(stderr_height))
   local stderr_winnr = vim.api.nvim_get_current_win()
-  vim.api.nvim_buf_set_option(stderr_bufnr, 'filetype', 'leanstderr')
+  vim.bo[stderr_bufnr].filetype = 'leanstderr'
   vim.api.nvim_set_current_win(old_win)
   return stderr_winnr
 end

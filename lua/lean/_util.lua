@@ -30,7 +30,7 @@ end
 
 ---@class CreateBufParams
 ---@field name? string @the name of the new buffer
----@field options? table<string, any> @a table of options each suitable for nvim_buf_set_option
+---@field options? table<string, any> @a table of buffer options
 ---@field listed? boolean @see :h nvim_create_buf (default true)
 ---@field scratch? boolean @see :h nvim_create_buf (default false)
 
@@ -46,7 +46,7 @@ function M.create_buf(params)
   end
   local bufnr = vim.api.nvim_create_buf(params.listed, params.scratch)
   for option, value in pairs(params.options or {}) do
-    vim.api.nvim_buf_set_option(bufnr, option, value)
+    vim.bo[bufnr][option] = value
   end
   if params.name ~= nil then
     vim.api.nvim_buf_set_name(bufnr, params.name)
