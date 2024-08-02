@@ -431,9 +431,8 @@ function BufRenderer:new(obj)
   vim.bo[obj.buf].modifiable = false
   _by_buf[obj.buf] = new_renderer
 
-  local augroup = vim.api.nvim_create_augroup('WidgetPosition', { clear = false })
   vim.api.nvim_create_autocmd({ 'BufEnter', 'CursorMoved' }, {
-    group = augroup,
+    group = vim.api.nvim_create_augroup('WidgetPosition', { clear = false }),
     buffer = obj.buf,
     callback = function()
       new_renderer:update_cursor()
