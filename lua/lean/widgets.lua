@@ -406,30 +406,11 @@ function Element:renderer(obj)
   return BufRenderer:new(vim.tbl_extend('error', obj, { element = self }))
 end
 
--- Maps BufRenderer.buf to BufRenderer
---- @type table<number, BufRenderer>
--- FIXME: Remove this, though there are some dependencies...
-local _by_buf = {}
-
--- Clean up references to closed buffers in the `_by_buf` table.
--- It doesn't seem to possibly to reliably detect the deletion of buffers in
--- neovim, so we just call this function regularly.
-local function gc()
-  for bufnr, _ in pairs(_by_buf) do
-    if not vim.api.nvim_buf_is_valid(bufnr) then
-      _by_buf[bufnr] = nil
-    end
-  end
-end
-
 ---Create a new BufRenderer.
 function BufRenderer:new(obj)
-  gc()
-
   obj = obj or {}
   local new_renderer = setmetatable(obj, self)
   vim.bo[obj.buf].modifiable = false
-  _by_buf[obj.buf] = new_renderer
 
   vim.api.nvim_create_autocmd({ 'BufEnter', 'CursorMoved' }, {
     group = vim.api.nvim_create_augroup('WidgetPosition', { clear = false }),
@@ -439,26 +420,32 @@ function BufRenderer:new(obj)
     end,
   })
 
-  -- FIXME: Convert to vim.keymap, though this seems possibly user facing...
-  local mappings = {
-    n = {
-      ['<Tab>'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(
-        obj.buf
-      ),
-      ['<S-Tab>'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:goto_parent_tooltip()<CR>]]):format(
-        obj.buf
-      ),
-      ['J'] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:enter_tooltip()<CR>]]):format(obj.buf),
-      ['<LocalLeader>\\'] = '<Cmd>LeanAbbreviationsReverseLookup<CR>',
-    },
-  }
+  local opts = { buffer = obj.buf }
+  -- Note that only closures work here, we can't go storing this on vim.b due
+  -- to neovim/neovim#12544 wherein the metatable would be lost on retrieval.
+  -- In other words, if we do vim.b[..].foo = new_renderer, when we come back
+  -- to look at it, it's not a BufRenderer anymore. Surprise!
+  vim.keymap.set('n', '<Tab>', function()
+    new_renderer:enter_tooltip()
+  end, opts)
+  vim.keymap.set('n', 'J', function()
+    new_renderer:enter_tooltip()
+  end, opts)
+  vim.keymap.set('n', '<S-Tab>', function()
+    new_renderer:goto_parent_tooltip()
+  end, opts)
+  vim.keymap.set(
+    'n',
+    '<LocalLeader>\\',
+    require'lean.abbreviations'.show_reverse_lookup,
+    opts
+  )
+
   for key, event in pairs(obj.keymaps or {}) do
-    mappings.n[key] = ([[<Cmd>lua require'lean.widgets'._by_buf[%d]:event("%s")<CR>]]):format(
-      obj.buf,
-      event
-    )
+    vim.keymap.set('n', key, function()
+      new_renderer:event(event)
+    end, opts)
   end
-  util.load_mappings(mappings, obj.buf)
 
   return new_renderer
 end
@@ -467,7 +454,6 @@ end
 function BufRenderer:close(keep_tooltips_open)
   if vim.api.nvim_buf_is_valid(self.buf) then
     vim.api.nvim_buf_delete(self.buf, { force = true })
-    gc()
   end
   if self.tooltip then
     self.tooltip.parent = nil
@@ -776,4 +762,4 @@ function BufRenderer:get_root_ancestor()
   return self
 end
 
-return { BufRenderer = BufRenderer, Element = Element, _by_buf = _by_buf }
+return { BufRenderer = BufRenderer, Element = Element }
