@@ -104,19 +104,6 @@ function M.dedent(str)
   return str:gsub('\n' .. prefix, '\n')
 end
 
-function M.load_mappings(mappings, buffer)
-  local opts = { noremap = true }
-  for mode, mode_mappings in pairs(mappings) do
-    for lhs, rhs in pairs(mode_mappings) do
-      if buffer then
-        vim.api.nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts)
-      else
-        vim.api.nvim_set_keymap(mode, lhs, rhs, opts)
-      end
-    end
-  end
-end
-
 --- Build a single-line string out a multiline one, replacing \n with spaces.
 function M.s(str)
   return M.dedent(str):gsub('\n', ' ')

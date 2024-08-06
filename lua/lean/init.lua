@@ -101,9 +101,15 @@ function lean.setup(opts)
   lean.config = opts
 end
 
-function lean.use_suggested_mappings(buffer_local)
-  local buffer = buffer_local and 0
-  util.load_mappings(lean.mappings, buffer)
+---Enable mappings for a given buffer
+---@param bufnr? number the bufnr to enable mappings in, defaulting to 0
+function lean.use_suggested_mappings(bufnr)
+  local opts = { noremap = true, buffer = bufnr or 0 }
+  for mode, mode_mappings in pairs(lean.mappings) do
+    for lhs, rhs in pairs(mode_mappings) do
+      vim.keymap.set(mode, lhs, rhs, opts)
+    end
+  end
 end
 
 --- Return the current Lean search path.
