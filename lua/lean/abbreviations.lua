@@ -256,7 +256,7 @@ function abbreviations.convert()
   vim.api.nvim_win_set_cursor(0, { row1 + 1, col1 + new_cursor_col_shift })
 end
 
-function abbreviations.enable(opts)
+function abbreviations.enable(pattern, opts)
   abbreviations.leader = opts.leader or '\\'
 
   abbreviations.abbreviations = abbreviations.load()
@@ -264,7 +264,7 @@ function abbreviations.enable(opts)
     abbreviations.abbreviations[from] = to
   end
 
-  local augroup = vim.api.nvim_create_augroup('LeanAbbreviations', {})
+  local augroup = vim.api.nvim_create_augroup('LeanAbbreviations' .. pattern, {})
   for event, callback in pairs {
     InsertCharPre = insert_char_pre,
     InsertLeave = abbreviations.convert,
@@ -272,10 +272,11 @@ function abbreviations.enable(opts)
   } do
     vim.api.nvim_create_autocmd(event, {
       group = augroup,
-      pattern = { '*.lean' },
+      pattern = pattern,
       callback = callback,
     })
   end
+
   vim.api.nvim_create_autocmd('CmdwinEnter', { group = augroup, callback = cmdwin_enter })
   vim.api.nvim_create_autocmd('CmdwinLeave', { group = augroup, callback = cmdwin_leave })
   vim.cmd [[hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray]]
