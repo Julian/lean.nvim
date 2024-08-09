@@ -257,10 +257,12 @@ function abbreviations.convert()
 end
 
 function abbreviations.enable(pattern, opts)
-  abbreviations.leader = opts.leader or '\\'
+  opts = vim.tbl_extend('keep', opts or {}, { leader = '\\', extra = {} })
+
+  abbreviations.leader = opts.leader
 
   abbreviations.abbreviations = abbreviations.load()
-  for from, to in pairs(opts.extra or {}) do
+  for from, to in pairs(opts.extra) do
     abbreviations.abbreviations[from] = to
   end
 

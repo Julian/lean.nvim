@@ -28,7 +28,7 @@ describe('unicode abbreviation expansion', function()
       assert.contents.are [[\a]]
       vim.cmd.normal 'dd'
 
-      require('lean.abbreviations').enable('*.txt', {})
+      require('lean.abbreviations').enable('*.txt')
 
       helpers.insert [[\a]]
       assert.contents.are [[α]]
