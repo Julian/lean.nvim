@@ -10,7 +10,6 @@ local function wait_for_expansion()
 end
 
 require('lean').setup {}
-require('lean.abbreviations').enable('*.txt', {})
 
 describe('unicode abbreviation expansion', function()
   it(
@@ -22,11 +21,19 @@ describe('unicode abbreviation expansion', function()
   )
 
   it(
-    'autoexpands abbreviations',
+    'can be enabled for other filetypes',
     helpers.clean_buffer(function()
+      vim.cmd.edit{'abbreviation-unittest.txt', bang = true }
+      helpers.insert [[\a]]
+      assert.contents.are [[\a]]
+      vim.cmd.normal 'dd'
+
+      require('lean.abbreviations').enable('*.txt', {})
+
       helpers.insert [[\a]]
       assert.contents.are [[α]]
-    end, nil, 'txt')
+      vim.cmd.bwipeout{ bang = true }
+    end)
   )
 
   describe('explicit triggers', function()
