@@ -54,7 +54,7 @@ function M.percentage(bufnr)
   bufnr = bufnr or 0
   local proc_info = M.proc_infos[vim.uri_from_bufnr(bufnr)]
   if not proc_info then
-    return 1
+    return 100
   end
 
   local finished = vim.iter(proc_info):fold(0, function(acc, range)
