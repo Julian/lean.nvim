@@ -368,11 +368,12 @@ function Subsession:getGoToLocation(kind, info)
   return self:call('Lean.Widget.getGoToLocation', { kind = kind, info = info })
 end
 
----@class UserWidgetInstance
----@field id string
----@field name string?
----@field javascriptHash string
----@field props any
+---@class UserWidget
+---@field id string Name of the `@[widget_module]`
+---@field javascriptHash string Hash of the JS source of the widget module.
+
+---@class UserWidgetInstance: UserWidget
+---@field props any SON object to be passed as props to the component
 ---@field range lsp.Range
 
 ---@class UserWidgets
@@ -385,12 +386,15 @@ function Subsession:getWidgets(pos)
   return self:call('Lean.Widget.getWidgets', pos)
 end
 
+
+---@class WidgetSource
+---@field sourcetext string JavaScript sourcecode.
+---                         Should be a plain JavaScript ESModule whose default
+---                         export is the component to render.
+
 ---@class GetWidgetSourceParams
 ---@field pos lsp.Position
 ---@field hash string
-
----@class WidgetSource
----@field sourcetext string
 
 ---@param pos GetWidgetSourceParams
 ---@return WidgetSource
