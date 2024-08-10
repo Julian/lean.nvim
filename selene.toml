@@ -1,7 +1,7 @@
 std = "selene-vim"
 
 # Parse error until LuaJIT goto labels are supported...
-exclude = ["*/lua/lean/widgets.lua"]
+exclude = ["*/lua/lean/tui.lua"]
 
 [lints]
 mixed_table = "allow"

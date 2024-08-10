@@ -29,7 +29,7 @@ Element.__index = Element
 ---@field parent? BufRenderer Parent renderer
 ---@field parent_path? PathNode[] Path in parent element, events bubble up to the parent there
 local BufRenderer = {
-  __widgets_ns = vim.api.nvim_create_namespace 'lean.widgets',
+  __tui_ns = vim.api.nvim_create_namespace 'lean.tui',
   __hl_ns = vim.api.nvim_create_namespace 'lean.highlights',
 }
 BufRenderer.__index = BufRenderer
@@ -472,7 +472,7 @@ function BufRenderer:render()
     return
   end
 
-  vim.api.nvim_buf_clear_namespace(buf, self.__widgets_ns, 0, -1)
+  vim.api.nvim_buf_clear_namespace(buf, self.__tui_ns, 0, -1)
 
   local text = self.element:to_string()
   local lines = vim.split(text, '\n')
@@ -492,7 +492,7 @@ function BufRenderer:render()
   for _, hl in ipairs(hls) do
     local start_pos = raw_pos_to_pos(hl.start, lines)
     local end_pos = raw_pos_to_pos(hl['end'], lines)
-    vim.highlight.range(buf, self.__widgets_ns, hl.hlgroup, start_pos, end_pos)
+    vim.highlight.range(buf, self.__tui_ns, hl.hlgroup, start_pos, end_pos)
   end
 
   if self.path then

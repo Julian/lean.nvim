@@ -1,6 +1,6 @@
 local a = require 'plenary.async'
 
-local Element = require('lean.widgets').Element
+local Element = require('lean.tui').Element
 local components = require 'lean.infoview.components'
 local progress = require 'lean.progress'
 local rpc = require 'lean.rpc'

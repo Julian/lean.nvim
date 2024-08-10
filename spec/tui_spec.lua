@@ -1,9 +1,9 @@
 ---@brief [[
----Tests for the console UI framework in isolation (from a Lean file or Lean widgets).
+---Tests for the console UI framework in isolation from Lean-specific widgets.
 ---@brief ]]
 
-local widgets = require 'lean.widgets'
-local Element = widgets.Element
+local tui = require 'lean.tui'
+local Element = tui.Element
 
 describe('Element:concat', function()
   it('creates an Element concatenated by a separator', function()
@@ -32,7 +32,7 @@ describe('Element:renderer', function()
   it('creates a BufRenderer rendering the element', function()
     local element = Element:new { text = 'foo', name = 'foo-name' }
     assert.is.same(
-      widgets.BufRenderer:new { buf = 1, element = element },
+      tui.BufRenderer:new { buf = 1, element = element },
       element:renderer { buf = 1 }
     )
   end)

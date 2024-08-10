@@ -5,7 +5,7 @@
 
 ---@tag lean.infoview.components
 
-local Element = require('lean.widgets').Element
+local Element = require('lean.tui').Element
 local util = require 'lean._util'
 
 local components = {
