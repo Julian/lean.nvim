@@ -4,8 +4,8 @@ local progress_bars = {}
 local options = { priority = 10, character = '│' }
 options._DEFAULTS = vim.deepcopy(options)
 
-local sign_group_name = 'leanSignProgress'
-local sign_name = 'leanSignProgress'
+local sign_group_name = 'leanProgressBar'
+local sign_name = 'leanProgressBar'
 
 local sign_ns = vim.api.nvim_create_namespace 'lean.progress'
 vim.diagnostic.config({ virtual_text = false }, sign_ns)
@@ -64,9 +64,8 @@ function progress_bars.enable(opts)
 
   vim.fn.sign_define(sign_name, {
     text = options.character,
-    texthl = 'leanSignProgress',
+    texthl = 'leanProgressBar',
   })
-  vim.cmd.hi 'def leanSignProgress guifg=orange ctermfg=215'
   progress_bars.enabled = true
 end
 

@@ -1,4 +1,4 @@
-local M = {}
+local M = { AUTOCMD = 'LeanProgressUpdate' }
 
 ---@alias LeanFileProgressKind 'Processing' | 'FatalError'
 
@@ -9,7 +9,10 @@ local M = {}
 ---@type table<lsp.URI, LeanFileProgressProcessingInfo>
 M.proc_infos = {}
 
+vim.cmd.hi 'def leanProgressBar guifg=orange ctermfg=215'
+
 function M.update(params)
+  vim.api.nvim_exec_autocmds('User', { pattern = M.AUTOCMD })
   M.proc_infos[params.textDocument.uri] = params.processing
 end
 

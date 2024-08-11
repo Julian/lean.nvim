@@ -50,8 +50,14 @@ function lean.setup(opts)
     require('lean.lsp').enable(opts.lsp)
   end
 
+  local has_satellite, satellite = pcall(require, 'satellite.handlers')
+  if has_satellite then
+    satellite.register(require('lean.satellite'))
+  end
+
   opts.progress_bars = opts.progress_bars or {}
-  if opts.progress_bars.enable ~= false then
+  -- FIXME: Maybe someone eventually cares about enabling both.
+  if not has_satellite and opts.progress_bars.enable ~= false then
     require('lean.progress_bars').enable(opts.progress_bars)
   end
 

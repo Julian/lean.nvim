@@ -83,6 +83,9 @@ Features
 
 * If `telescope.nvim <https://github.com/nvim-telescope/telescope.nvim>`__ is present a ``:Telescope loogle`` command is available as a frontend for the `Loogle <https://loogle.lean-lang.org>`_ JSON API.
 
+* If `satellite.nvim <https://github.com/lewis6991/satellite.nvim>`__ is present an extension is registered for showing progress information for the whole document.
+  Otherwise, we show progress information in the sign column.
+
 Configuration & Usage
 ---------------------
 
@@ -284,7 +287,10 @@ Full Configuration & Settings Information
       -- Progress bar support
       progress_bars = {
         -- Enable the progress bars?
-        enable = true,
+        -- By default, this is `true` if satellite.nvim is not installed, otherwise
+        -- it is turned off, as when satellite.nvim is present this information would
+        -- be duplicated.
+        enable = true,  -- see above for default
         -- What character should be used for the bars?
         character = '│',
         -- Use a different priority for the signs
