@@ -12,6 +12,9 @@ syn match leanInfoComment "--.*"
 
 syn match leanInfoInaccessibleHyp "\i\+✝" contained
 
+syn match widgetSuggestions "^▶ suggestions.*"
+syn match widgetSuggestionsSubgoals "^\s*.emaining subgoals:$"
+
 hi def link leanInfoGoals Title
 hi def link leanInfoGoalCase Statement
 hi def link leanInfoGoalHyp Type
@@ -26,6 +29,9 @@ hi def link leanInfoBlockComment Comment
 
 hi def link widgetElementHighlight DiffChange
 hi def link widgetElementLoading Comment
+
+hi def link widgetSuggestions Title
+hi def link widgetSuggestionsSubgoals Statement
 
 hi def link leanInfoExternalHighlight widgetElementHighlight
 hi def link leanInfoButton Pmenu

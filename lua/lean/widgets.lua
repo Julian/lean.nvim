@@ -32,7 +32,7 @@ local SUPPORTED = {
       return Element:new {text = text }
     end)
     return Element:new{
-      text = '▶ Suggestions\n',
+      text = '▶ suggestions:\n',
       children = blocks:totable(),
     }
   end
