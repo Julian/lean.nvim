@@ -1,5 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
   "runtime.version": "LuaJIT",
-  "diagnostics.disable": ["invisible"]
+  "diagnostics.disable": ["invisible"],
+  "diagnostics.globals": ["describe", "it", "vim"]
 }
