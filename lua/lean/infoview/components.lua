@@ -7,6 +7,7 @@
 
 local Element = require('lean.tui').Element
 local util = require 'lean._util'
+local widget_to_element = require 'lean.widgets'
 
 local components = {
   NO_INFO = Element:new{ text = 'No info.', name = 'no-info' },
@@ -539,6 +540,22 @@ function components.diagnostics_at(bufnr, params, sess, use_widgets)
   end
 
   return components.interactive_diagnostics(diagnostics, line, sess), err
+end
+
+---@param bufnr integer
+---@param params lsp.TextDocumentPositionParams
+---@param sess? Subsession
+---@param use_widgets? boolean
+---@return Element[] goal
+---@return LspError? error
+function components.user_widgets_at(bufnr, params, sess, use_widgets)
+  if not use_widgets then
+    return {}
+  elseif sess == nil then
+    sess = require('lean.rpc').open(bufnr, params)
+  end
+  local response = sess:getWidgets(params.position)
+  return vim.iter(response.widgets):map(widget_to_element):totable()
 end
 
 return components

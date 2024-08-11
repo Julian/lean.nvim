@@ -81,7 +81,15 @@ function lsp.handlers.diagnostics_handler(_, params)
     end
   end
 
-  require('lean.infoview').__update_pin_by_uri(params.uri)
+  -- XXX: Why does this now sometimes fail?!
+  --      The pcall was introduced as part of user widgets; removing it
+  --      should make some tests fail, but tests relating to infoview widgets
+  --      (i.e. not user widgets), and fail with cryptic errors, either about
+  --      nvim_buf_set_lines emitting a E1510: Value too large with no info
+  --      or (on nightly neovim) some other equally cryptic nested failure.
+  --      Putting the pcall here rather than on the nvim_buf_set_lines line
+  --      since it's during diagnostic updates that it seems to blow up?
+  pcall(require('lean.infoview').__update_pin_by_uri, params.uri)
 end
 
 ---Restart the Lean server for an open Lean 4 file.

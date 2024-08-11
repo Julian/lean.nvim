@@ -1023,6 +1023,7 @@ function Pin:__mk_data_elem(tick, opts)
     components.goal_at(buf, params, sess, self.__use_widgets) or {},
     components.term_goal_at(buf, params, sess, self.__use_widgets) or {},
     components.diagnostics_at(buf, params, sess, self.__use_widgets) or {},
+    components.user_widgets_at(buf, params, sess, self.__use_widgets) or {},
   }):flatten():totable()
 
   if options.show_no_info_message and vim.tbl_isempty(blocks) then
