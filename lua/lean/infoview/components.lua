@@ -546,7 +546,7 @@ end
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
----@return Element[] goal
+---@return Element[]? widgets
 ---@return LspError? error
 function components.user_widgets_at(bufnr, params, sess, use_widgets)
   if not use_widgets then
@@ -555,7 +555,9 @@ function components.user_widgets_at(bufnr, params, sess, use_widgets)
     sess = require('lean.rpc').open(bufnr, params)
   end
   local response = sess:getWidgets(params.position)
-  return vim.iter(response.widgets):map(widget_to_element):totable()
+  if response then
+    return vim.tbl_map(widget_to_element, response.widgets)
+  end
 end
 
 return components
