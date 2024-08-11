@@ -1,5 +1,5 @@
 ---@brief [[
---- Custom support for Lean widgets.
+--- Custom support for Lean (user) widgets.
 ---
 --- We aren't a web browser (yet?) so we don't have generic support for widgets
 --- which execute via Javascipt.
@@ -38,6 +38,9 @@ local SUPPORTED = {
   end
 }
 
+---Render a supported widget to one or more TUI `Element`s.
+---
+---Unsupported widgets are ignored after logging a notice.
 ---@param widget UserWidgetInstance
 ---@return Element[]?
 local function to_element(widget)
