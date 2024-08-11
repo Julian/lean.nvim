@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Download VSCode abbreviations
         run: |
-          gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover/vscode-lean/contents/src/abbreviation/abbreviations.json' >vscode-lean/abbreviations.json
+          gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover/vscode-lean4/contents/lean4-unicode-input/src/abbreviations.json' >vscode-lean/abbreviations.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: stefanzweifel/git-auto-commit-action@v5
