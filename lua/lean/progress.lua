@@ -1,6 +1,12 @@
 local M = {}
 
--- Table from bufnr to current processing info.
+---@alias LeanFileProgressKind 'Processing' | 'FatalError'
+
+---@class LeanFileProgressProcessingInfo
+---@field range lsp.Range Range for which the processing info was reported.
+---@field kind? LeanFileProgressKind Kind of progress that was reported.
+
+---@type table<lsp.URI, LeanFileProgressProcessingInfo>
 M.proc_infos = {}
 
 function M.update(params)
