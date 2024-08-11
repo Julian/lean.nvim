@@ -482,11 +482,6 @@ function BufRenderer:render()
 
   vim.bo[buf].modifiable = true
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  -- HACK: This shouldn't really do anything, but I think there's a neovim
-  --       display bug. See #27 and neovim/neovim#14663. Specifically,
-  --       as of NVIM v0.5.0-dev+e0a01bdf7, without this, updating a long
-  --       infoview with shorter contents doesn't properly redraw.
-  vim.api.nvim_buf_call(buf, vim.fn.winline)
   vim.bo[buf].modifiable = false
 
   for _, hl in ipairs(hls) do
