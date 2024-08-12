@@ -5,7 +5,7 @@
 --- To find out more, see https://github.com/Julian/lean.nvim.
 ---@brief ]]
 
-local util = require 'lean._util'
+local subprocess_check_output = require('lean._util').subprocess_check_output
 
 ---@tag lean.nvim
 
@@ -130,7 +130,7 @@ function lean.current_search_paths()
     root = vim.fn.getcwd()
   end
 
-  local all_paths = vim.fn.json_decode(util.subprocess_check_output {
+  local all_paths = vim.fn.json_decode(subprocess_check_output {
     command = 'lake',
     args = { 'setup-file', vim.api.nvim_buf_get_name(0) },
     cwd = root,
@@ -140,7 +140,7 @@ function lean.current_search_paths()
   end, all_paths.paths.srcPath)
   vim.list_extend(
     paths,
-    util.subprocess_check_output { command = 'lean', args = { '--print-libdir' }, cwd = root }
+    subprocess_check_output { command = 'lean', args = { '--print-libdir' }, cwd = root }
   )
 
   return vim.tbl_map(
