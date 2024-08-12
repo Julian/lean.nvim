@@ -6,8 +6,8 @@
 ---@tag lean.infoview.components
 
 local Element = require('lean.tui').Element
+local widgets = require 'lean.widgets'
 local util = require 'lean._util'
-local widget_to_element = require 'lean.widgets'
 
 local components = {
   NO_INFO = Element:new{ text = 'No info.', name = 'no-info' },
@@ -554,10 +554,7 @@ function components.user_widgets_at(bufnr, params, sess, use_widgets)
   elseif sess == nil then
     sess = require('lean.rpc').open(bufnr, params)
   end
-  local response = sess:getWidgets(params.position)
-  if response then
-    return vim.tbl_map(widget_to_element, response.widgets)
-  end
+  return widgets.render_response(sess:getWidgets(params.position))
 end
 
 return components
