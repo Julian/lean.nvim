@@ -116,9 +116,6 @@ end
 ---@return any result
 function M.client_a_request(client, request, params)
   return a.wrap(function(handler)
-    -- XXX: According to the type definition, this should take a fourth
-    --      argument, the bufnr. We clearly don't pass it, and stuff still
-    --      works? We should double check that.
     return client.request(request, params, handler)
   end, 1)()
 end

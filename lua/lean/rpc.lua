@@ -463,8 +463,6 @@ return rpc
 --- If {status} is `true`, the function returns {request_id} as the second
 --- result. You can use this with `client.cancel_request(request_id)` to cancel
 --- the request.
---- XXX (Julian): There's a single char modification here, making bufnr
----               optional. We seem not to pass it. TBD on how wrong that is.
 --- @field request fun(method: string, params: table?, handler: lsp.Handler?, bufnr: integer?): boolean, integer?
 --- Checks whether a client is stopped.
 --- Returns: true if the client is fully stopped.
