@@ -15,7 +15,7 @@ local loogle = require 'lean.loogle'
 --- Use telescope to provide a Loogle API based type search
 --- @param opts table Options for the telescope framework
 local function telescope_loogle(opts)
-  opts = vim.tbl_extend('keep', opts or {}, { debounce = 1000 })
+  opts = vim.tbl_extend('keep', opts or {}, { debounce = 200 })
 
   pickers
     .new(opts, {
@@ -29,12 +29,13 @@ local function telescope_loogle(opts)
           end
 
           local results, err = loogle.search(prompt)
-          if err then
+          local should_fail_loudly = #prompt > 4
+          if err and should_fail_loudly then
             vim.notify(('Loogle error: %s'):format(err), vim.log.levels.ERROR, {})
-            return
-          elseif vim.tbl_isempty(results or {}) then
+            return {}
+          elseif vim.tbl_isempty(results or {}) and should_fail_loudly then
             vim.notify(('No Loogle results for %q'):format(prompt), vim.log.levels.ERROR, {})
-            return
+            return {}
           end
           return results
         end,
