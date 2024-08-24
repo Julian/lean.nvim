@@ -386,7 +386,6 @@ function Subsession:getWidgets(pos)
   return self:call('Lean.Widget.getWidgets', pos)
 end
 
-
 ---@class WidgetSource
 ---@field sourcetext string JavaScript sourcecode.
 ---                         Should be a plain JavaScript ESModule whose default
@@ -420,6 +419,14 @@ end
 ---@class GoalsLocation
 ---@field mvarId MVarId
 ---@field loc GoalLocation
+
+---@param pos lsp.TextDocumentPositionParams
+---@return InteractiveGoals goals
+---@return LspError error
+function Subsession:declarationRangeAt(pos)
+  return self:call('rpcDeclarationRangeAt', pos)
+end
+
 
 return rpc
 

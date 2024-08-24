@@ -27,4 +27,15 @@ if vim.g.loaded_matchit and not vim.b.match_words then
   }, ',')
 end
 
+local edit = require('lean.edit')
+
+vim.keymap.set('n', '[m', edit.declaration.goto_start, {
+  buffer = true,
+  desc = 'Move to the previous declaration start.',
+})
+vim.keymap.set('n', ']m', edit.declaration.goto_end, {
+  buffer = true,
+  desc = 'Move to the next declaration end.',
+})
+
 require('lean.ft').__maybe_make_nomodifiable(vim.api.nvim_get_current_buf())
