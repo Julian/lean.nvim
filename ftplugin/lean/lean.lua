@@ -33,8 +33,19 @@ end
 
 local config = require 'lean.config'()
 
+vim.bo.modifiable = config.ft:should_modify()
+
 if config.mappings == true then
   require('lean').use_suggested_mappings(0)
-end
 
-vim.bo.modifiable = config.ft:should_modify()
+  local edit = require('lean.edit')
+
+  vim.keymap.set('n', '[m', edit.declaration.goto_start, {
+    buffer = true,
+    desc = 'Move to the previous declaration start.',
+  })
+  vim.keymap.set('n', ']m', edit.declaration.goto_end, {
+    buffer = true,
+    desc = 'Move to the next declaration end.',
+  })
+end

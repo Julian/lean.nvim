@@ -453,6 +453,14 @@ end
 ---@field mvarId MVarId
 ---@field loc GoalLocation
 
+---@param pos lsp.TextDocumentPositionParams
+---@return InteractiveGoals goals
+---@return LspError error
+function Subsession:declarationRangeAt(pos)
+  return self:call('rpcDeclarationRangeAt', pos)
+end
+
+
 return rpc
 
 ---@class LspErrorCodeMessage
