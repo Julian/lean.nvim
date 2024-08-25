@@ -31,10 +31,10 @@ local function telescope_loogle(opts)
           local results, err = loogle.search(prompt)
           local should_fail_loudly = #prompt > 4
           if err and should_fail_loudly then
-            vim.notify(('Loogle error: %s'):format(err), vim.log.levels.ERROR, {})
+            vim.notify(err, vim.log.levels.ERROR, { title = 'Loogle Error' })
             return {}
           elseif vim.tbl_isempty(results or {}) and should_fail_loudly then
-            vim.notify(('No Loogle results for %q'):format(prompt), vim.log.levels.ERROR, {})
+            vim.notify('No Loogle results.', vim.log.levels.INFO)
             return {}
           end
           return results
