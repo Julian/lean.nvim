@@ -101,9 +101,9 @@ return {
   render_response = function(response)
     if response then
       ---@param each UserWidgetInstance
-      return vim.tbl_map(function(each)
+      return vim.iter(response.widgets):map(function(each)
         return Widget.from_user_widget(each):element(each.props)
-      end, response.widgets)
+      end):totable()
     end
   end,
 }
