@@ -25,10 +25,10 @@ describe('infoview open/close', function()
 
     -- Cursor did not move
     assert.current_window.is(lean_window)
-    assert.are.same(vim.api.nvim_win_get_cursor(0), cursor)
+    assert.current_cursor.is(cursor)
 
     -- Infoview is positioned at the top
-    assert.are.same({ 1, 0 }, vim.api.nvim_win_get_cursor(current_infoview.window))
+    assert.current_cursor.is{ 1, 0, window = current_infoview.window }
   end)
 
   it('remains open on editing a new Lean file', function(_)

@@ -206,6 +206,19 @@ local function has_current_line(_, arguments)
 end
 assert:register('assertion', 'current_line', has_current_line)
 
+--- Assert about the current cursor location.
+local function has_current_cursor(_, arguments)
+  local window = arguments[1].window or 0
+  local got = vim.api.nvim_win_get_cursor(window)
+
+  local column = arguments[1][2] or arguments[1].column or 0
+  local expected = { arguments[1][1] or got[1], column }
+
+  assert.are.same(expected, got)
+  return true
+end
+assert:register('assertion', 'current_cursor', has_current_cursor)
+
 --- Assert about the current tabpage.
 local function has_current_tabpage(_, arguments)
   assert.is.equal(arguments[1], vim.api.nvim_get_current_tabpage())

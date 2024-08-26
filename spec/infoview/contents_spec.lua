@@ -34,7 +34,7 @@ describe('infoview content (auto-)update', function()
     vim.cmd('edit! ' .. fixtures.project.path .. '/Test/Squares.lean')
     lean_window = vim.api.nvim_get_current_win()
     -- In theory we don't care where we are, but the right answer changes
-    assert.are.same(vim.api.nvim_win_get_cursor(0), { 1, 0 })
+    assert.current_cursor.is{ 1, 0 }
 
     assert.infoview_contents.are [[
       ▶ 1:1-1:6: information:
@@ -55,7 +55,7 @@ describe('infoview content (auto-)update', function()
 
     vim.cmd.split()
     local second_window = vim.api.nvim_get_current_win()
-    assert.are.same(vim.api.nvim_win_get_cursor(0), { 3, 0 })
+    assert.current_cursor.is{ 3, 0 }
     assert.infoview_contents.are [[
       ▶ 3:1-3:6: information:
       9.000000
@@ -322,7 +322,7 @@ describe('infoview content (auto-)update', function()
         infoview.get_current_infoview():enter()
 
         assert.current_line.is '⊢ true = true'
-        assert.are.equal(vim.api.nvim_win_get_cursor(0)[2], #'⊢ ')
+        assert.current_cursor.is{ column = #'⊢ ' }
       end)
     end)
   )
