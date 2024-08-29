@@ -12,8 +12,8 @@ M.proc_infos = {}
 vim.cmd.hi 'def leanProgressBar guifg=orange ctermfg=215'
 
 function M.update(params)
-  vim.api.nvim_exec_autocmds('User', { pattern = M.AUTOCMD })
   M.proc_infos[params.textDocument.uri] = params.processing
+  vim.api.nvim_exec_autocmds('User', { pattern = M.AUTOCMD })
 end
 
 function M.is_processing(uri)
