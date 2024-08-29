@@ -6,12 +6,12 @@
 ---@tag lean.infoview.components
 
 local Element = require('lean.tui').Element
-local widgets = require 'lean.widgets'
 local util = require 'lean._util'
+local widgets = require 'lean.widgets'
 
 local components = {
-  NO_INFO = Element:new{ text = 'No info.', name = 'no-info' },
-  PROCESSING = Element:new{ text = 'Processing file...', name = 'processing' },
+  NO_INFO = Element:new { text = 'No info.', name = 'no-info' },
+  PROCESSING = Element:new { text = 'Processing file...', name = 'processing' },
 }
 
 --- Format a heading.
@@ -48,10 +48,13 @@ function components.plain_goal(goal)
 
   local children = {}
   for i, this_goal in ipairs(goal.goals) do
-    table.insert(children, Element:new {
-      text = (i == 1 and '' or '\n') .. this_goal,
-      name = 'plain-goal',
-    })
+    table.insert(
+      children,
+      Element:new {
+        text = (i == 1 and '' or '\n') .. this_goal,
+        name = 'plain-goal',
+      }
+    )
   end
 
   return {
@@ -531,9 +534,9 @@ function components.diagnostics_at(bufnr, params, sess, use_widgets)
     sess = require('lean.rpc').open(bufnr, params)
   end
 
-  local diagnostics, err = sess:getInteractiveDiagnostics{
+  local diagnostics, err = sess:getInteractiveDiagnostics {
     start = line,
-    ['end'] = line + 1
+    ['end'] = line + 1,
   }
   if err then
     return components.diagnostics(bufnr, line), err

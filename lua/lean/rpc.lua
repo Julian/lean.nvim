@@ -386,7 +386,6 @@ function Subsession:getWidgets(pos)
   return self:call('Lean.Widget.getWidgets', pos)
 end
 
-
 ---@class WidgetSource
 ---@field sourcetext string JavaScript sourcecode.
 ---                         Should be a plain JavaScript ESModule whose default

@@ -23,16 +23,16 @@ describe('unicode abbreviation expansion', function()
   it(
     'can be enabled for other filetypes',
     helpers.clean_buffer(function()
-      vim.cmd.edit{'abbreviation-unittest.txt', bang = true }
+      vim.cmd.edit { 'abbreviation-unittest.txt', bang = true }
       helpers.insert [[\a]]
       assert.contents.are [[\a]]
       vim.cmd.normal 'dd'
 
-      require('lean.abbreviations').enable('*.txt')
+      require('lean.abbreviations').enable '*.txt'
 
       helpers.insert [[\a]]
       assert.contents.are [[α]]
-      vim.cmd.bwipeout{ bang = true }
+      vim.cmd.bwipeout { bang = true }
     end)
   )
 

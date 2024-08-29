@@ -31,9 +31,6 @@ end)
 describe('Element:renderer', function()
   it('creates a BufRenderer rendering the element', function()
     local element = Element:new { text = 'foo', name = 'foo-name' }
-    assert.is.same(
-      tui.BufRenderer:new { buf = 1, element = element },
-      element:renderer { buf = 1 }
-    )
+    assert.is.same(tui.BufRenderer:new { buf = 1, element = element }, element:renderer { buf = 1 })
   end)
 end)

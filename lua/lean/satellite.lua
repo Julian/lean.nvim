@@ -7,7 +7,7 @@
 local async = require 'satellite.async'
 local row_to_barpos = require('satellite.util').row_to_barpos
 
-local progress = require('lean.progress')
+local progress = require 'lean.progress'
 
 local SYMBOL = '│'
 local HIGHLIGHT = 'leanProgressBar'
@@ -21,7 +21,7 @@ local handler = {
 local config = {
   enable = true,
   overlap = true,
-  priority = 20,  -- cursor looks like 100
+  priority = 20, -- cursor looks like 100
 }
 
 local function setup_hl()
@@ -67,7 +67,7 @@ function handler.update(bufnr, winid)
     local max_pos = row_to_barpos(winid, max_lnum - 1)
 
     for pos = min_pos, max_pos do
-      marks[#marks+1] = {
+      marks[#marks + 1] = {
         pos = pos,
         symbol = SYMBOL,
         highlight = HIGHLIGHT,

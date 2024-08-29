@@ -29,7 +29,7 @@ local lean = {
   },
 }
 
-vim.filetype.add{ extension = { lean = 'lean' } }
+vim.filetype.add { extension = { lean = 'lean' } }
 
 --- Setup function to be run in your init.lua (or init.vim).
 ---@param opts table: Configuration options
@@ -52,7 +52,7 @@ function lean.setup(opts)
 
   local has_satellite, satellite = pcall(require, 'satellite.handlers')
   if has_satellite then
-    satellite.register(require('lean.satellite'))
+    satellite.register(require 'lean.satellite')
   end
 
   opts.progress_bars = opts.progress_bars or {}

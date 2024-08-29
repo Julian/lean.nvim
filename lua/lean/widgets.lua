@@ -34,14 +34,14 @@ end
 --- @param id string the ID of the user widget we are not implementing
 --- @return Widget
 function Widget.unsupported(id)
-  return Widget:new{
+  return Widget:new {
     element = function()
       local message = dedent [[
         %q is not a supported Lean widget type.
         If you think it could be, please file an issue with lean.nvim!
       ]]
       vim.notify_once(message:format(id), vim.log.levels.DEBUG)
-    end
+    end,
   }
 end
 
@@ -55,7 +55,7 @@ local BYPASSED_WIDGETS = vim.defaulttable(Widget.unsupported)
 ---@param element WidgetRenderer
 ---@return nil
 local function implement(id, element)
-  BYPASSED_WIDGETS[id] = Widget:new{ element = element }
+  BYPASSED_WIDGETS[id] = Widget:new { element = element }
 end
 
 ---Render a supported widget to one or more TUI `Element`s.
@@ -82,10 +82,10 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props)
   local blocks = vim.iter(props.suggestions):map(function(each)
     local pre = (each.preInfo or ''):gsub('\n', '\n  ')
     local post = (each.postInfo or ''):gsub('\n', '\n  ')
-    local text = vim.iter({ pre, each.suggestion, post }):join('\n')
+    local text = vim.iter({ pre, each.suggestion, post }):join '\n'
     return Element:new { text = text }
   end)
-  return Element:new{
+  return Element:new {
     text = '▶ suggestions:',
     children = blocks:totable(),
   }
@@ -101,9 +101,12 @@ return {
   render_response = function(response)
     if response then
       ---@param each UserWidgetInstance
-      return vim.iter(response.widgets):map(function(each)
-        return Widget.from_user_widget(each):element(each.props)
-      end):totable()
+      return vim
+        .iter(response.widgets)
+        :map(function(each)
+          return Widget.from_user_widget(each):element(each.props)
+        end)
+        :totable()
     end
   end,
 }

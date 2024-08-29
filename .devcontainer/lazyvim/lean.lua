@@ -10,7 +10,7 @@ return {
         horizontal_position = 'top',
         show_processing = false,
       },
-      mappings = true
+      mappings = true,
     },
-  }
+  },
 }

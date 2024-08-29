@@ -159,7 +159,8 @@ describe(
         ))
       end)
 
-      describe('edits around pin',
+      describe(
+        'edits around pin',
         helpers.clean_buffer(
           [[
             theorem has_tactic_goal : p ∨ q → q ∨ p := by
@@ -321,7 +322,9 @@ describe(
                 ⊢ p ∨ q → q ∨ p
               ]]
             end)
-        end))
+          end
+        )
+      )
 
       describe('diff pins', function()
         local lean_window

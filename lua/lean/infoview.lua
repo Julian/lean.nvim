@@ -163,7 +163,7 @@ function Infoview:open()
 
   vim.api.nvim_set_current_win(window_before_split)
 
-  vim.api.nvim_create_autocmd( { 'BufHidden', 'QuitPre' }, {
+  vim.api.nvim_create_autocmd({ 'BufHidden', 'QuitPre' }, {
     group = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false }),
     buffer = self.info.__renderer.buf,
     callback = function()
@@ -335,10 +335,12 @@ function Infoview:pins_for(buf)
   vim.list_extend(possible, self.info.pins)
 
   local uri = vim.uri_from_bufnr(buf)
-  return vim.iter(possible):filter(function(pin)
-    return pin.__position_params
-       and pin.__position_params.textDocument.uri == uri
-  end):totable()
+  return vim
+    .iter(possible)
+    :filter(function(pin)
+      return pin.__position_params and pin.__position_params.textDocument.uri == uri
+    end)
+    :totable()
 end
 
 --FIXME: We shouldn't have both __refresh and __update
@@ -416,7 +418,7 @@ end
 
 function Infoview:__was_closed()
   self.window = nil
-  self.info.__renderer:event 'clear_all'  -- Ensure tooltips close.
+  self.info.__renderer:event 'clear_all' -- Ensure tooltips close.
 end
 
 --- Retrieve the contents of the infoview as a table.
@@ -501,7 +503,7 @@ function Info:new(opts)
     __infoview = opts.infoview,
     __pins_element = pins_element,
     __diff_pin_element = Element:new { name = 'diff' },
-    __win_event_disable = false,  -- FIXME: This too is really confusing
+    __win_event_disable = false, -- FIXME: This too is really confusing
   }, self)
   new_info.pin = Pin:new {
     id = '1',
@@ -530,7 +532,7 @@ function Info:new(opts)
       if not new_info.__win_event_disable then
         new_info:__maybe_show_pin_extmark 'current'
       end
-    end
+    end,
   })
   vim.api.nvim_create_autocmd('WinLeave', {
     group = pin_augroup,
@@ -539,7 +541,7 @@ function Info:new(opts)
       if not new_info.__win_event_disable then
         new_info.pin:__hide_extmark()
       end
-    end
+    end,
   })
 
   local diff_bufnr = util.create_buf {
@@ -724,7 +726,7 @@ function Info:render()
   end
 
   self.__infoview:__refresh_diff()
-  collectgarbage()  -- FIXME: Why??
+  collectgarbage() -- FIXME: Why??
 end
 
 --- Update the diff pin to use the current pin's positon params if they are valid,
@@ -1019,12 +1021,15 @@ function Pin:__mk_data_elem(tick, opts)
   end
 
   local sess = rpc.open(buf, params)
-  local blocks = vim.iter({
-    components.goal_at(buf, params, sess, self.__use_widgets) or {},
-    components.term_goal_at(buf, params, sess, self.__use_widgets) or {},
-    components.diagnostics_at(buf, params, sess, self.__use_widgets) or {},
-    components.user_widgets_at(buf, params, sess, self.__use_widgets) or {},
-  }):flatten():totable()
+  local blocks = vim
+    .iter({
+      components.goal_at(buf, params, sess, self.__use_widgets) or {},
+      components.term_goal_at(buf, params, sess, self.__use_widgets) or {},
+      components.diagnostics_at(buf, params, sess, self.__use_widgets) or {},
+      components.user_widgets_at(buf, params, sess, self.__use_widgets) or {},
+    })
+    :flatten()
+    :totable()
 
   if options.show_no_info_message and vim.tbl_isempty(blocks) then
     return components.NO_INFO
@@ -1050,7 +1055,7 @@ function Pin:__update(tick)
           end
         end)
         pcall(vim.api.nvim_set_current_win, ctx.self.last_win)
-      end
+      end,
     },
   }
   new_data_element = self:__mk_data_elem(tick, opts)
@@ -1115,7 +1120,7 @@ local function infoview_bufenter()
   -- Open an infoview for the current buffer if it isn't already open.
   local tabpage = vim.api.nvim_get_current_tabpage()
   if not infoview._by_tabpage[tabpage] and options.autoopen() then
-    local new_infoview = Infoview:new{}
+    local new_infoview = Infoview:new {}
     infoview._by_tabpage[tabpage] = new_infoview
     new_infoview:open()
   end

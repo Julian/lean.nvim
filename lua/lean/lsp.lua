@@ -22,7 +22,7 @@ end
 ---@param bufnr number
 ---@return vim.lsp.Client
 function lsp.client_for(bufnr)
-  local clients = vim.lsp.get_clients{ name = 'leanls', bufnr = bufnr }
+  local clients = vim.lsp.get_clients { name = 'leanls', bufnr = bufnr }
   return clients[1]
 end
 

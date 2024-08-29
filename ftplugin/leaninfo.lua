@@ -2,14 +2,14 @@ vim.bo.modifiable = false
 vim.bo.undolevels = -1
 vim.wo.cursorline = false
 vim.wo.cursorcolumn = false
-vim.wo.colorcolumn = ""
+vim.wo.colorcolumn = ''
 vim.wo.number = false
 vim.wo.relativenumber = false
 vim.wo.spell = false
 vim.wo.winfixheight = true
 vim.wo.winfixwidth = true
 vim.wo.wrap = true
-if vim.fn.exists('&winfixbuf') ~= 0 then
+if vim.fn.exists '&winfixbuf' ~= 0 then
   local wo = vim.wo[vim.api.nvim_get_current_win()]
   -- FIXME: This is obviously ridiculous, but there's seemingly some neovim bug
   --        here which needs minimizing.
@@ -25,5 +25,7 @@ if vim.fn.exists('&winfixbuf') ~= 0 then
   --        Somehow vim.schedule delays things long enough that they work
   --        correctly, including winfixbuf getting set.
   --        We'll minimize. Some day.
-  vim.schedule(function() wo.winfixbuf = true end)
+  vim.schedule(function()
+    wo.winfixbuf = true
+  end)
 end

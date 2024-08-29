@@ -267,7 +267,7 @@ function abbreviations.enable(pattern, opts)
   end
 
   local augroup = vim.api.nvim_create_augroup('LeanAbbreviations', { clear = false })
-  for event, callback in pairs{
+  for event, callback in pairs {
     InsertCharPre = insert_char_pre,
     InsertLeave = abbreviations.convert,
     BufLeave = abbreviations.convert,

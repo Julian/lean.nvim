@@ -28,7 +28,7 @@ describe('infoview open/close', function()
     assert.current_cursor.is(cursor)
 
     -- Infoview is positioned at the top
-    assert.current_cursor.is{ 1, 0, window = current_infoview.window }
+    assert.current_cursor.is { 1, 0, window = current_infoview.window }
   end)
 
   it('remains open on editing a new Lean file', function(_)
