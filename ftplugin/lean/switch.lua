@@ -6,14 +6,6 @@ local function segment(word)
   return [[\(\<\|[_.']\)\zs]] .. word .. [[\ze\(\>\|[_.']\)]]
 end
 
-function _G.switch_lean_simp(original)
-  if original[2] == '' and original[3] == '' then
-    return 'simp?'
-  else
-    return 'simp'
-  end
-end
-
 vim.b.switch_definitions = {
   vim.g.switch_builtins.true_false,
   { '#check', '#eval', '#reduce' },
@@ -49,7 +41,13 @@ vim.b.switch_definitions = {
   { 'ℕ', 'ℚ', 'ℝ', 'ℂ' },
 
   {
-    [ [=[\<simp\(?\?\)\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = _G.switch_lean_simp,
+    [ [=[\<simp\(?\?\)\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = function(original)
+      if original[2] == '' and original[3] == '' then
+        return 'simp?'
+      else
+        return 'simp'
+      end
+    end,
   },
 
   { [segment 'bot'] = 'top', [segment 'top'] = 'bot' },
