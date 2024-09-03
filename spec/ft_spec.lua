@@ -1,10 +1,10 @@
-local fixtures = require 'spec.fixtures'
+local project = require('spec.fixtures').project
 local helpers = require 'spec.helpers'
 
 require('lean').setup { lsp = { enable = true } }
 
 describe('ft.detect', function()
-  for kind, path in fixtures.project_files() do
+  for kind, path in project:files() do
     it('detects ' .. kind .. ' lean files', function()
       vim.cmd('edit! ' .. path)
       assert.are.equal('lean', vim.bo.filetype)
@@ -12,7 +12,7 @@ describe('ft.detect', function()
   end
 
   it('detects standard library files', function()
-    vim.cmd('edit! ' .. fixtures.project.path .. '/Test/JumpToStdlib.lean')
+    vim.cmd('edit! ' .. project.path .. '/Test/JumpToStdlib.lean')
     assert.are.equal('lean', vim.bo.filetype)
     local initial_path = vim.api.nvim_buf_get_name(0)
 
@@ -36,7 +36,7 @@ describe('ft.detect', function()
   end)
 
   it('does not mark other lean files nomodifiable', function()
-    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
+    vim.cmd('edit! ' .. project.some_existing_file)
     assert.is_truthy(vim.bo.modifiable)
   end)
 end)
