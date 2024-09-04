@@ -98,4 +98,65 @@ describe('tactics', function()
       assert.contents.are [[simpa]]
     end)
   )
+
+  it(
+    'switch between rw [foo] and rw [← foo]',
+    clean_buffer([=[rw [foo]]=], function()
+      vim.cmd.normal { '1gg5|', bang = true }
+      vim.cmd.Switch()
+      assert.contents.are [=[rw [← foo]]=]
+    end)
+  )
+
+  it(
+    'switch between rw [← foo] and rw [foo]',
+    clean_buffer([=[rw [← foo]]=], function()
+      vim.cmd.normal { '1gg5|', bang = true }
+      vim.cmd.Switch()
+      assert.contents.are [=[rw [foo]]=]
+    end)
+  )
+
+  it(
+    'switch between rw [foo, bar] and rw [← foo, bar]',
+    clean_buffer([=[rw [foo, bar]]=], function()
+      vim.cmd.normal { '1gg5|', bang = true }
+      vim.cmd.Switch()
+      assert.contents.are [=[rw [← foo, bar]]=]
+    end)
+  )
+
+  it(
+    'switch between rw [foo, bar, baz] and rw [foo, ← bar, baz]',
+    clean_buffer([=[rw [foo, bar, baz]]=], function()
+      vim.cmd.normal { '1gg11|', bang = true }
+
+      vim.cmd.Switch()
+      assert.contents.are [=[rw [foo, ← bar, baz]]=]
+
+      vim.cmd.Switch()
+      assert.contents.are [=[rw [foo, bar, baz]]=]
+
+      vim.cmd.normal { '1gg16|', bang = true }
+      assert.contents.are [=[rw [foo, bar, ← baz]]=]
+    end)
+  )
+
+  it(
+    'switch between rw [foo, bar] and rw [foo, ← bar]',
+    clean_buffer([=[rw [foo, bar]]=], function()
+      vim.cmd.normal { '1gg11|', bang = true }
+      vim.cmd.Switch()
+      assert.contents.are [=[rw [foo, ← bar]]=]
+    end)
+  )
+
+  it(
+    'switch between rw [foo _ bar, baz] and rw [← foo _ bar, baz]',
+    clean_buffer([=[rw [foo _ bar, baz]]=], function()
+      vim.cmd.normal { '1gg5|', bang = true }
+      vim.cmd.Switch()
+      assert.contents.are [=[rw [← foo _ bar, baz]]=]
+    end)
+  )
 end)

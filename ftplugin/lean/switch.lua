@@ -49,6 +49,13 @@ vim.b.switch_definitions = {
       end
     end,
   },
+  {
+    [ [=[\<rw \[\%(\s*←\?\s*\i\+\s*,\s*\)*\zs\s*\(←\?\s*\)\(\i\+\)]=] ] = function (original)
+      local arrow = original[2]
+      local lemma = original[3]
+      return (arrow == '' and '← ' or '') .. lemma
+    end
+  },
 
   { [segment 'bot'] = 'top', [segment 'top'] = 'bot' },
   { [segment 'inl'] = 'inr', [segment 'inr'] = 'inl' },
