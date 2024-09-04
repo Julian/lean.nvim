@@ -41,15 +41,22 @@ vim.b.switch_definitions = {
   { 'ℕ', 'ℚ', 'ℝ', 'ℂ' },
 
   {
-    [ [=[\<simp\(?\?\)\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = function(original)
+    [ [=[\<rw \[\%(\s*←\?\s*\i\+\s*,\s*\)*\zs\s*\(←\?\s*\)\(\i\+\)]=] ] = function (original)
+      local arrow = original[2]
+      local lemma = original[3]
+      return (arrow == '' and '← ' or '') .. lemma
+    end
+  },
+
+  {
+    [ [=[\<simp\(?\?\)\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = function (original)
       if original[2] == '' and original[3] == '' then
         return 'simp?'
       else
         return 'simp'
       end
-    end,
+    end
   },
-
   { [segment 'bot'] = 'top', [segment 'top'] = 'bot' },
   { [segment 'inl'] = 'inr', [segment 'inr'] = 'inl' },
   { [segment 'left'] = 'right', [segment 'right'] = 'left' },
