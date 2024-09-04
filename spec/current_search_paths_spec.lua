@@ -11,14 +11,11 @@ describe('lean.current_search_paths', function()
 
       local paths = require('lean').current_search_paths()
       assert.are.equal(3, #paths)
-      assert.has_all(
-        table.concat(paths, '\n') .. '\n',
-        {
-          '/lib/lean\n',                      -- standard library
-          project.path .. '\n',      -- the project itself
-          project.path .. '/foo\n',  -- its dependency
-        }
-      )
+      assert.has_all(table.concat(paths, '\n') .. '\n', {
+        '/lib/lean\n', -- standard library
+        project.path .. '\n', -- the project itself
+        project.path .. '/foo\n', -- its dependency
+      })
     end)
   end
 end)
