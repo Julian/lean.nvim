@@ -98,7 +98,7 @@ function lean.setup(opts)
 
   opts.abbreviations = opts.abbreviations or {}
   if opts.abbreviations.enable ~= false then
-    require('lean.abbreviations').enable('*.lean', opts.abbreviations)
+    require('lean.abbreviations').enable(opts.abbreviations)
   end
 
   opts.infoview = opts.infoview or {}

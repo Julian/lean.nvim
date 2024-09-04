@@ -268,17 +268,11 @@ function abbreviations.convert()
   vim.api.nvim_win_set_cursor(0, { row1 + 1, col1 + new_cursor_col_shift })
 end
 
-function abbreviations.enable(pattern, opts)
-  opts = vim.tbl_extend('keep', opts or {}, { leader = '\\', extra = {} })
+---Enable abbreviation expansion in the current buffer.
+---@param bufnr? number the buffer to attach to, defaulting to the current one
+function abbreviations.attach(bufnr)
+  local augroup = vim.api.nvim_create_augroup('LeanExpandAbbreviations', { clear = false })
 
-  abbreviations.leader = opts.leader
-
-  abbreviations.abbreviations = abbreviations.load()
-  for from, to in pairs(opts.extra) do
-    abbreviations.abbreviations[from] = to
-  end
-
-  local augroup = vim.api.nvim_create_augroup('LeanAbbreviations', { clear = false })
   for event, callback in pairs {
     InsertCharPre = insert_char_pre,
     InsertLeave = abbreviations.convert,
@@ -286,14 +280,34 @@ function abbreviations.enable(pattern, opts)
   } do
     vim.api.nvim_create_autocmd(event, {
       group = augroup,
-      pattern = pattern,
+      buffer = bufnr or 0,
       callback = callback,
     })
   end
+end
+
+function abbreviations.enable(opts)
+  opts = vim.tbl_extend('keep', opts or {}, { leader = '\\', extra = {} })
+
+  abbreviations.leader = opts.leader
+  abbreviations.abbreviations = abbreviations.load()
+  for from, to in pairs(opts.extra) do
+    abbreviations.abbreviations[from] = to
+  end
+
+  vim.cmd [[hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray]]
+
+  local augroup = vim.api.nvim_create_augroup('LeanAbbreviations', {})
+  vim.api.nvim_create_autocmd('Filetype', {
+    group = augroup,
+    pattern = { 'lean' },
+    callback = function(_)
+      abbreviations.attach()
+    end,
+  })
 
   vim.api.nvim_create_autocmd('CmdwinEnter', { group = augroup, callback = cmdwin_enter })
   vim.api.nvim_create_autocmd('CmdwinLeave', { group = augroup, callback = cmdwin_leave })
-  vim.cmd [[hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray]]
 end
 
 return abbreviations
