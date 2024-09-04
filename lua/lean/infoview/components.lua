@@ -622,7 +622,16 @@ function components.user_widgets_at(bufnr, params, sess, use_widgets)
   elseif sess == nil then
     sess = require('lean.rpc').open(bufnr, params)
   end
-  return widgets.render_response(sess:getWidgets(params.position))
+  return widgets.render_response(
+    ---@param widget UserWidget
+    sess:getWidgets(params.position),
+    function(widget)
+      return sess:getWidgetSource({
+        pos = params.position,
+        hash = widget.javascriptHash,
+      }).sourcetext
+    end
+  )
 end
 
 return components

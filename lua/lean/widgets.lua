@@ -37,12 +37,15 @@ end
 --- @return Widget
 function Widget.unsupported(id)
   return Widget:new {
-    element = function()
+    element = function(_, props)
       local message = dedent [[
         %q is not a supported Lean widget type.
+
         If you think it could be, please file an issue with lean.nvim!
+
+        Props: %s
       ]]
-      vim.notify_once(message:format(id), vim.log.levels.DEBUG)
+      vim.notify_once(message:format(id, vim.inspect(props)), vim.log.levels.DEBUG)
     end,
   }
 end
@@ -99,8 +102,10 @@ return {
 
   ---Render the given response to one or more TUI elements.
   ---@param response? UserWidgets
+  ---@param source_of function(widget: UserWidget): string
   ---@return Element[]? elements
-  render_response = function(response)
+  ---@diagnostic disable-next-line: unused-local
+  render_response = function(response, source_of)
     if response then
       return vim
         .iter(response.widgets)
