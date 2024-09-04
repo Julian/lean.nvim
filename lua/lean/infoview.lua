@@ -84,6 +84,7 @@ Info.__index = Info
 ---@field private __horizontal_position "top"|"bottom"
 ---@field private __separate_tab? boolean
 ---@field private __diff_win integer
+---@field private __maybe_fixed_size fun(number):nil
 local Infoview = {}
 Infoview.__index = Infoview
 
@@ -103,10 +104,23 @@ end
 ---@return Infoview
 function Infoview:new(obj)
   obj = obj or {}
+
+  local maybe_fixed_size
+  if obj.fixed_size then
+    maybe_fixed_size = function(window)
+      local wo = vim.wo[window]
+      wo.winfixwidth = true
+      wo.winfixheight = true
+    end
+  else
+    maybe_fixed_size = function() end
+  end
+
   local new_infoview = setmetatable({
     __width = obj.width or options.width,
     __height = obj.height or options.height,
     __horizontal_position = obj.horizontal_position or options.horizontal_position,
+    __maybe_fixed_size = maybe_fixed_size,
     __separate_tab = obj.separate_tab or options.separate_tab,
   }, self)
   new_infoview.info = Info:new { infoview = new_infoview }
@@ -154,12 +168,13 @@ function Infoview:open()
       end)
     end
   end
+  self.window = vim.api.nvim_get_current_win()
+  self.__maybe_fixed_size(self.window)
   vim.api.nvim_win_set_buf(0, self.info.__renderer.buf)
   -- Set the filetype now. Any earlier, and only buffer-local options will be
   -- properly set in the infoview, since the buffer isn't actually shown in a
   -- window until we run nvim_win_set_buf.
   vim.bo[self.info.__renderer.buf].filetype = 'leaninfo'
-  self.window = vim.api.nvim_get_current_win()
 
   vim.api.nvim_set_current_win(window_before_split)
 
@@ -306,7 +321,7 @@ function Infoview:__refresh()
   end
 
   for _, win in pairs(valid_windows) do
-    vim.wo[win].winfixwidth = true
+    self.__maybe_fixed_size(win)
   end
 
   for _, win in pairs(valid_windows) do
