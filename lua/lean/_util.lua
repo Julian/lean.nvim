@@ -217,24 +217,19 @@ end
 M.Tick = Tick
 M.Ticker = Ticker
 
----@class UIParams
----@field filename string
----@field row number
----@field col number
-
 --- Check that the given position parameters are valid given the buffer they correspond to.
----@param params UIParams @parameters to verify
+---@param params lsp.TextDocumentPositionParams @parameters to verify
 ---@return boolean
 function M.position_params_valid(params)
-  local bufnr = vim.fn.bufnr(params.filename)
+  local bufnr = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   if bufnr == -1 then
     return false
   end
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
 
-  local line = params.row + 1
-  local col = params.col + 1
+  local line = params.position.line + 1
+  local col = params.position.character + 1
 
   if line > #lines then
     return false
@@ -245,14 +240,6 @@ function M.position_params_valid(params)
   end
 
   return true
-end
-
-function M.make_position_params()
-  local buf = vim.api.nvim_win_get_buf(0)
-  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-  row = row - 1
-
-  return { filename = vim.api.nvim_buf_get_name(buf), row = row, col = col }
 end
 
 --- Utility function for getting the encoding of the first LSP client on the given buffer.

@@ -54,7 +54,7 @@ options._DEFAULTS = vim.deepcopy(options)
 ---@field private __extmark_virt_text table
 ---@field private __ticker Ticker
 ---@field private __info Info
----@field private __ui_position_params UIParams
+---@field private __ui_position_params lsp.TextDocumentPositionParams
 ---@field private __use_widgets boolean
 local Pin = { __extmark_ns = vim.api.nvim_create_namespace 'lean.pins' }
 Pin.__index = Pin
@@ -350,7 +350,7 @@ function Infoview:__update()
     return
   end
   info:set_last_window()
-  pcall(info.move_pin, info, util.make_position_params())
+  pcall(info.move_pin, info, vim.lsp.util.make_position_params())
 end
 
 --- Either open or close a diff window for this infoview depending on whether its info has a diff pin.
@@ -584,7 +584,7 @@ function Info:add_pin()
   self:render()
 end
 
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Info:__set_diff_pin(params)
   if not self.__diff_pin then
     self.__diff_pin = Pin:new {
@@ -670,7 +670,7 @@ function Info:__render_pins()
       if bufnr ~= -1 then
         filename = vim.api.nvim_buf_get_name(bufnr)
       else
-        filename = params.filename
+        filename = vim.uri_to_fname(params.textDocument.uri)
       end
       if not infoview.debug then
         header_element:add_child(Element:new { text = '-- ', name = 'pin-id-header' })
@@ -731,7 +731,7 @@ end
 
 --- Update the diff pin to use the current pin's positon params if they are valid,
 --- and the provided params if they are not.
----@param params? UIParams
+---@param params? lsp.TextDocumentPositionParams
 function Info:__update_auto_diff_pin(params)
   if
     self.pin.__ui_position_params and util.position_params_valid(self.pin.__ui_position_params)
@@ -745,7 +745,7 @@ function Info:__update_auto_diff_pin(params)
 end
 
 --- Move the current pin to the specified location.
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Info:move_pin(params)
   if self.__auto_diff_pin then
     self:__update_auto_diff_pin(params)
@@ -815,17 +815,17 @@ function Pin:__teardown()
 end
 
 --- Update pin extmark based on position, used when resetting pin position.
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Pin:__update_extmark(params)
   if not params then
     return
   end
-  local buf = vim.fn.bufnr(params.filename)
+  local buf = vim.fn.bufnr(vim.uri_to_fname(params.textDocument.uri))
   if buf == -1 then
     return
   end
-  local line = params.row
-  local col = params.col
+  local line = params.position.line
+  local col = params.position.character
 
   self:__update_extmark_style(buf, line, col)
 
@@ -899,13 +899,8 @@ function Pin:update_position()
   end
 
   local new_params = { textDocument = { uri = vim.uri_from_bufnr(buf) }, position = new_pos }
-  local new_ui_params = {
-    filename = vim.uri_to_fname(vim.uri_from_bufnr(buf)),
-    row = extmark_pos[1],
-    col = extmark_pos[2],
-  }
   self.__position_params = new_params
-  self.__ui_position_params = new_ui_params
+  self.__ui_position_params = new_params
 end
 
 function Pin:__show_extmark(name, hlgroup)
@@ -954,7 +949,7 @@ function Pin:toggle_pause()
 end
 
 --- Triggered when manually moving a pin.
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Pin:move(params)
   self:__update_extmark(params)
   self:update()
@@ -1260,7 +1255,7 @@ function infoview.set_diff_pin()
   end
   local current_infoview = infoview.open()
   current_infoview.info:set_last_window()
-  current_infoview.info:__set_diff_pin(util.make_position_params())
+  current_infoview.info:__set_diff_pin(vim.lsp.util.make_position_params())
 end
 
 --- Clear any pins in the current infoview.
