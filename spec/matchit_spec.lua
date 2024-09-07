@@ -4,8 +4,6 @@
 
 local helpers = require 'spec.helpers'
 
-require('lean').setup {}
-
 describe('matchit', function()
   it(
     'jumps between section start and end',

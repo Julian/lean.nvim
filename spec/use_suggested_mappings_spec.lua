@@ -1,8 +1,6 @@
 local lean = require 'lean'
 local clean_buffer = require('spec.helpers').clean_buffer
 
-lean.setup {}
-
 describe('mappings', function()
   it(
     'are bound in the current buffer and not others',

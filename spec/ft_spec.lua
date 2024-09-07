@@ -1,7 +1,7 @@
 local project = require('spec.fixtures').project
 local helpers = require 'spec.helpers'
 
-require('lean').setup { lsp = { enable = true } }
+require('lean').setup {}
 
 describe('ft.detect', function()
   for kind, path in project:files() do

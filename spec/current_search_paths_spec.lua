@@ -1,7 +1,7 @@
 local helpers = require 'spec.helpers'
 local project = require('spec.fixtures').project
 
-require('lean').setup { lsp = { enable = true } }
+require('lean').setup {}
 
 describe('lean.current_search_paths', function()
   for kind, path in project:files() do

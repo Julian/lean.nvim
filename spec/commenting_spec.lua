@@ -4,8 +4,6 @@
 
 local helpers = require 'spec.helpers'
 
-require('lean').setup {}
-
 describe('commenting', function()
   it(
     'comments out single lines',

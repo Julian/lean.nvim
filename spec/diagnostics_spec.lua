@@ -1,7 +1,7 @@
 local helpers = require 'spec.helpers'
 local lean_lsp_diagnostics = require('lean._util').lean_lsp_diagnostics
 
-require('lean').setup { lsp = { enable = true } }
+require('lean').setup {}
 
 describe('diagnostics', function()
   it(

@@ -4,7 +4,7 @@
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup { lsp = { enable = true } }
+require('lean').setup {}
 
 describe(
   'infoview pins',

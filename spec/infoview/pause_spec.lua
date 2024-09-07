@@ -6,10 +6,7 @@ local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {
-  lsp = { enable = true },
-  lsp3 = { enable = true },
-}
+require('lean').setup {}
 
 describe('infoview pause/unpause', function()
   it('can pause and unpause updates', function(_)
