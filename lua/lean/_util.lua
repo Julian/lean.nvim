@@ -17,17 +17,16 @@ end
 --- Fetch the diagnostics for all Lean LSP clients from the current buffer.
 ---@param opts? table
 ---@param bufnr? number buffer handle or 0 for current, defaults to current
+---@return vim.Diagnostic[] diagnostics the relevant Lean diagnostics
 function M.lean_lsp_diagnostics(opts, bufnr)
   bufnr = bufnr or 0
-  local clients = vim.iter(vim.lsp.get_clients { bufnr = bufnr, name = 'leanls' })
-  local namespaces = clients:map(function(client)
+  local clients = vim.lsp.get_clients { bufnr = bufnr, name = 'leanls' }
+  local namespaces = vim.iter(clients):map(function(client)
     return vim.lsp.diagnostic.get_namespace(client.id)
   end)
   return vim.diagnostic.get(
     bufnr,
-    vim.tbl_extend('keep', opts or {}, {
-      namespace = namespaces:totable(),
-    })
+    vim.tbl_extend('keep', opts or {}, { namespace = namespaces:totable() })
   )
 end
 
