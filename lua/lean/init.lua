@@ -103,8 +103,7 @@ function lean.setup(opts)
     ]]
   end
 
-  -- needed for testing
-  lean.config = opts
+  vim.g.lean_config = opts
 end
 
 ---Enable mappings for a given buffer
