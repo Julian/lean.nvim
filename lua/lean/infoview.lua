@@ -665,19 +665,17 @@ function Info:__render_pins()
 
     local params = pin.__ui_position_params
     if not current and params then
-      local bufnr = vim.fn.bufnr(params.filename)
-      local filename
-      if bufnr ~= -1 then
-        filename = vim.api.nvim_buf_get_name(bufnr)
-      else
-        filename = params.filename
-      end
+      local filename = vim.uri_to_fname(params.textDocument.uri)
       if not infoview.debug then
         header_element:add_child(Element:new { text = '-- ', name = 'pin-id-header' })
       else
         header_element:add_child(Element:new { text = ': ', name = 'pin-header-separator' })
       end
-      local location_text = ('%s at %d:%d'):format(filename, params.row + 1, params.col + 1)
+      local location_text = ('%s at %d:%d'):format(
+        filename,
+        params.position.line + 1,
+        params.position.character + 1
+      )
       header_element:add_child(Element:new { text = location_text, name = 'pin-location' })
 
       header_element.highlightable = true
@@ -685,9 +683,9 @@ function Info:__render_pins()
         click = function()
           if self.last_window then
             vim.api.nvim_set_current_win(self.last_window)
-            local uri_bufnr = vim.fn.bufnr(params.filename)
+            local uri_bufnr = vim.uri_to_bufnr(params.textDocument.uri)
             vim.api.nvim_set_current_buf(uri_bufnr)
-            vim.api.nvim_win_set_cursor(0, { params.row + 1, params.col })
+            vim.api.nvim_win_set_cursor(0, { params.position.line + 1, params.position.character })
           end
         end,
       }
@@ -820,14 +818,12 @@ function Pin:__update_extmark(params)
   if not params then
     return
   end
-  local buf = vim.fn.bufnr(params.filename)
-  if buf == -1 then
+  local buf = vim.uri_to_bufnr(params.textDocument.uri)
+  if not vim.api.nvim_buf_is_loaded(buf) then
     return
   end
-  local line = params.row
-  local col = params.col
 
-  self:__update_extmark_style(buf, line, col)
+  self:__update_extmark_style(buf, params.position.line, params.position.character)
 
   self:update_position()
 end
@@ -886,26 +882,22 @@ function Pin:update_position()
   local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, self.__extmark_ns, extmark, {})
 
   local encoding = util._get_offset_encoding(buf) or 'utf-32'
-  local use_utf16 = encoding == 'utf-16'
-  local new_pos = {}
+  local new_pos = { line = extmark_pos[1] }
 
-  new_pos.line = extmark_pos[1]
   local buf_line = vim.api.nvim_buf_get_lines(buf, new_pos.line, new_pos.line + 1, false)[1]
   if buf_line then
     local utf32, utf16 = vim.str_utfindex(buf_line, extmark_pos[2])
-    new_pos.character = use_utf16 and utf16 or utf32
+    new_pos.character = encoding == 'utf-16' and utf16 or utf32
   else
     new_pos.character = 0
   end
 
   local new_params = { textDocument = { uri = vim.uri_from_bufnr(buf) }, position = new_pos }
-  local new_ui_params = {
-    filename = vim.uri_to_fname(vim.uri_from_bufnr(buf)),
-    row = extmark_pos[1],
-    col = extmark_pos[2],
-  }
   self.__position_params = new_params
-  self.__ui_position_params = new_ui_params
+  self.__ui_position_params = {
+    textDocument = { uri = vim.uri_from_bufnr(buf) },
+    position = { line = extmark_pos[1], character = extmark_pos[2] },
+  }
 end
 
 function Pin:__show_extmark(name, hlgroup)
