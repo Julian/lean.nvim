@@ -100,9 +100,9 @@ return {
   ---@return Element[]? elements
   render_response = function(response)
     if response then
-      ---@param each UserWidgetInstance
       return vim
         .iter(response.widgets)
+        ---@param each UserWidgetInstance
         :map(function(each)
           return Widget.from_user_widget(each):element(each.props)
         end)
