@@ -1,7 +1,6 @@
 local ft = {}
 
 local options = {
-  default = 'lean',
   nomodifiable = {
     '.*/src/lean/.*', -- Lean core
   },
