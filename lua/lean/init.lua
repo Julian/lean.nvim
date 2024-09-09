@@ -32,7 +32,7 @@ local lean = {
 vim.filetype.add { extension = { lean = 'lean' } }
 
 --- Setup function to be run in your init.lua (or init.vim).
----@param opts table: Configuration options
+---@param opts lean.Config: Configuration options
 function lean.setup(opts)
   opts = opts or {}
 
@@ -60,8 +60,6 @@ function lean.setup(opts)
   if not has_satellite and opts.progress_bars.enable ~= false then
     require('lean.progress_bars').enable(opts.progress_bars)
   end
-
-  require('lean.ft').enable(opts.ft or {})
 
   opts.stderr = opts.stderr or {}
   if opts.stderr.enable ~= false then
