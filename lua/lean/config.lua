@@ -1,6 +1,11 @@
 ---@class lean.Config
----@field mappings boolean whether to automatically enable key mappings
+---@field mappings? boolean whether to automatically enable key mappings
 ---@field ft? lean.ft.Config filetype configuration
+---@field abbreviations? table abbreviaton configuration
+---@field infoview? table infoview configuration
+---@field lsp? table language server configuration
+---@field progress_bars? table progress bar configuration
+---@field stderr? table stderr window configuration
 
 ---@class lean.MergedConfig: lean.Config
 
