@@ -331,9 +331,8 @@ describe('infoview content (auto-)update', function()
     'processing message',
     helpers.clean_buffer('#eval IO.sleep 5000', function()
       it('is shown while a file is processing', function()
-        local uri = vim.uri_from_bufnr(0)
-        local result = vim.wait(15000, function()
-          return require('lean.progress').is_processing(uri)
+        local result = vim.wait(10000, function()
+          return require('lean.progress').percentage() < 100
         end)
         assert.message('file was never processing').is_true(result)
         assert.infoview_contents_nowait.are 'Processing file...'
