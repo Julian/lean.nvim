@@ -73,7 +73,7 @@ function helpers.wait_for_loading_pins(iv)
   local succeeded, _ = vim.wait(7000, function()
     for _, pin in pairs(vim.list_extend({ info.pin, info.__diff_pin }, info.pins)) do
       local processing = pin.__position_params
-        and require('lean.progress').test_is_processing_at(pin.__position_params)
+        and require('lean.progress').is_processing_at(pin.__position_params)
       if pin.loading or processing then
         last = pin.id
         last_loading = pin.loading

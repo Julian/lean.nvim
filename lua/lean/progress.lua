@@ -20,16 +20,10 @@ function M.is_processing(uri)
   return M.proc_infos[uri] and not vim.tbl_isempty(M.proc_infos[uri])
 end
 
-function M.test_is_processing_at(params)
-  return M.proc_infos[params.textDocument.uri] == nil or M.is_processing_at(params)
-end
-
 function M.is_processing_at(params)
   local this_proc_info = M.proc_infos[params.textDocument.uri]
-  -- returning false rather than true for backwards compatibility with
-  -- older Lean server versions
   if not this_proc_info then
-    return false
+    return true
   end
   for _, range in pairs(this_proc_info) do
     -- ignoring character for now (seems to always be 0)
