@@ -21,10 +21,13 @@ vim.opt_local.matchpairs:append [[‹:›]]
 -- Matchit support
 if vim.g.loaded_matchit and not vim.b.match_words then
   vim.b.match_ignorecase = 0
-  vim.b.match_words = table.concat({
-    [[\<\%(namespace\|section\)\s\+\(.\{-}\)\>:\<end\s\+\1\>]],
-    [[^\s*section\s*$:^end\s*$]],
-  }, ',')
+  vim.b.match_words = vim
+    .iter({
+      [[\<\%(namespace\|section\)\s\+\(.\{-}\)\>:\<end\s\+\1\>]],
+      [[^\s*section\s*$:^end\s*$]],
+      [[\<if\>:\<then\>:\<else\>]],
+    })
+    :join ','
 end
 
 vim.bo.modifiable = require 'lean.config'().ft:should_modify()

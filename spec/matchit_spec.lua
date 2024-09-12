@@ -65,4 +65,21 @@ describe('matchit', function()
       end
     )
   )
+
+  it(
+    'jumps between if/then/else',
+    helpers.clean_buffer(
+      [[#eval String.append "it is " (if 1 > 2 then "yes" else "no")]],
+      function()
+        vim.cmd.normal '31|'
+        assert.current_word.is 'if'
+
+        vim.cmd.normal '%'
+        assert.current_word.is 'then'
+
+        vim.cmd.normal '%'
+        assert.current_word.is 'else'
+      end
+    )
+  )
 end)
