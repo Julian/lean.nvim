@@ -6,13 +6,13 @@ require('lean').setup {}
 describe('ft.detect', function()
   for kind, path in project:files() do
     it('detects ' .. kind .. ' lean files', function()
-      vim.cmd('edit! ' .. path)
+      vim.cmd.edit { path, bang = true }
       assert.are.equal('lean', vim.bo.filetype)
     end)
   end
 
   it('detects standard library files', function()
-    vim.cmd('edit! ' .. project.path .. '/Test/JumpToStdlib.lean')
+    vim.cmd.edit { project.child 'Test/JumpToStdlib.lean', bang = true }
     assert.are.equal('lean', vim.bo.filetype)
     local initial_path = vim.api.nvim_buf_get_name(0)
 

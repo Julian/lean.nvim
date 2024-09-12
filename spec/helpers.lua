@@ -119,7 +119,7 @@ end
 local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
   local counter = helpers._clean_buffer_counter
   helpers._clean_buffer_counter = helpers._clean_buffer_counter + 1
-  local unique_name = string.format('%s/unittest-%d.lean', fixtures.project.path, counter)
+  local unique_name = fixtures.project.child(('unittest-%d.lean'):format(counter))
   vim.api.nvim_buf_set_name(bufnr, unique_name)
 end
 

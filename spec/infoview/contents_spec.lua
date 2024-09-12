@@ -31,7 +31,7 @@ describe('infoview content (auto-)update', function()
   it("shows the initial cursor location's infoview", function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
 
-    vim.cmd('edit! ' .. fixtures.project.path .. '/Test/Squares.lean')
+    vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
     lean_window = vim.api.nvim_get_current_win()
     -- In theory we don't care where we are, but the right answer changes
     assert.current_cursor.is { 1, 0 }
@@ -167,7 +167,7 @@ describe('infoview content (auto-)update', function()
         1
       ]]
 
-      vim.cmd.tabnew(fixtures.project.path .. '/Test/Squares.lean')
+      vim.cmd.tabnew(fixtures.project.child 'Test/Squares.lean')
       helpers.move_cursor { to = { 3, 0 } }
       assert.infoview_contents.are [[
         ▶ 3:1-3:6: information:
@@ -209,7 +209,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   describe('components', function()
-    vim.cmd('edit! ' .. fixtures.project.path .. '/Test.lean')
+    vim.cmd.edit { fixtures.project.child 'Test.lean', bang = true }
 
     it('shows a term goal', function()
       helpers.move_cursor { to = { 3, 27 } }

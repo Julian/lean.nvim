@@ -13,8 +13,8 @@ describe('lean.current_search_paths', function()
       assert.are.equal(3, #paths)
       assert.has_all(table.concat(paths, '\n') .. '\n', {
         '/lib/lean\n', -- standard library
-        project.path .. '\n', -- the project itself
-        project.path .. '/foo\n', -- its dependency
+        project.root .. '\n', -- the project itself
+        project.child 'foo\n', -- its dependency
       })
     end)
   end
