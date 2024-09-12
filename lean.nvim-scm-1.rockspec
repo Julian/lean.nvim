@@ -13,7 +13,6 @@ description = {
 }
 
 dependencies = {
-  'lua == 5.1',
   'nvim-lspconfig',
   'plenary.nvim',
 }
