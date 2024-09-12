@@ -21,20 +21,7 @@ function M.is_processing(uri)
 end
 
 function M.test_is_processing_at(params)
-  local this_proc_info = M.proc_infos[params.textDocument.uri]
-  if not this_proc_info then
-    return true
-  end
-  for _, range in pairs(this_proc_info) do
-    -- ignoring character for now (seems to always be 0)
-    if
-      (params.position.line <= range.range['end'].line)
-      and (params.position.line >= range.range.start.line)
-    then
-      return true
-    end
-  end
-  return false
+  return M.proc_infos[params.textDocument.uri] == nil or M.is_processing_at(params)
 end
 
 function M.is_processing_at(params)
