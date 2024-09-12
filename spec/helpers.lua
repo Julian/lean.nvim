@@ -2,6 +2,7 @@ local assert = require 'luassert'
 
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
+local lsp = require 'lean.lsp'
 local progress = require 'lean.progress'
 local util = require 'lean._util'
 
@@ -93,9 +94,7 @@ function helpers.wait_for_loading_pins(iv)
 end
 
 function helpers.wait_for_ready_lsp()
-  local succeeded, _ = vim.wait(15000, function()
-    return not not vim.lsp.buf_notify(0, '$/progress', {})
-  end)
+  local succeeded, _ = vim.wait(15000, lsp.client_for)
   assert.message('LSP server was never ready.').True(succeeded)
 end
 
