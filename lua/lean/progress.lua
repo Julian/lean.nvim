@@ -25,16 +25,12 @@ function M.is_processing_at(params)
   if not this_proc_info then
     return true
   end
-  for _, range in pairs(this_proc_info) do
-    -- ignoring character for now (seems to always be 0)
-    if
-      (params.position.line <= range.range['end'].line)
-      and (params.position.line >= range.range.start.line)
-    then
-      return true
-    end
-  end
-  return false
+
+  -- ignoring character for now (seems to always be 0)
+  local line = params.position.line
+  return vim.iter(this_proc_info):any(function(each)
+    return (line >= each.range.start.line) and (line <= each.range['end'].line)
+  end)
 end
 
 ---Calculate the percentage of a buffer which finished processing.
