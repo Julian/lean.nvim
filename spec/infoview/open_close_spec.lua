@@ -35,7 +35,7 @@ describe('infoview open/close', function()
     local windows = vim.api.nvim_tabpage_list_wins(0)
     assert.is.equal(#windows, 2) -- +1 above
     assert.is.truthy(vim.tbl_contains(windows, infoview.get_current_infoview().window))
-    vim.cmd('edit ' .. fixtures.project.some_existing_file)
+    vim.cmd.edit(fixtures.project.some_existing_file)
     assert.windows.are(windows)
   end)
 
