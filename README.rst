@@ -89,13 +89,15 @@ Features
 Configuration & Usage
 ---------------------
 
-The short version -- if you followed the instructions above for ``lazy.nvim``, simply ensure your ``opts`` table contains at least an ``lsp`` table defining ``on_attach`` to be your preferred LSP attach handler, and ``mappings = true`` to enable key mappings, as shown in the example above.
+The short version -- if you followed the instructions above for ``lazy.nvim``, you likely simply want ``opts = { mappings = true }`` to call ``lean.setup`` and enable its default key mappings.
 
-Note that in particular your ``on_attach`` handler should likely bind things like ``vim.lsp.buf.code_action`` (AKA "the lightbulb") to ensure that you have easy access to code actions in Lean buffers.
-In particular, Lean (or really ``Std``) uses code actions for replacing "Try this:" suggestions, which you will almost certainly want to be able to perform.
+This is all you need if you already have something registered to run on the ``LspAttach`` ``autocmd`` which defines any language server key mappings you like, e.g. if you use Neovim with any other language.
+In particular your ``LspAttach`` handler should likely bind things like ``vim.lsp.buf.code_action`` (AKA "the lightbulb") to ensure that you have easy access to code actions in Lean buffers.
+Lean (or really ``Std``) uses code actions for replacing "Try this:" suggestions, which you will almost certainly want to be able to perform.
+
 If you do not already have a preferred setup which includes LSP key mappings and (auto)completion, you may find the `fuller example here in the wiki <https://github.com/Julian/lean.nvim/wiki/Getting-Started-From-the-Ground-Up>`_ helpful.
 
-If you are using another plugin manager such as ``vim-plug``, after following the installation instructions, add the below to ``~/.config/nvim/plugin/lean.lua`` or an equivalent:
+If you are using another plugin manager (such as ``vim-plug``), after following the installation instructions, add the below to ``~/.config/nvim/plugin/lean.lua`` or an equivalent:
 
 .. code:: lua
 
@@ -108,7 +110,7 @@ More detail on the full list of supported configuration options can be found bel
 Semantic Highlighting
 ---------------------
 
-Lean 4 supports `semantic highlighting <https://leanprover.github.io/lean4/doc/semantic_highlighting.html>`_, in which the Lean server itself will signal how to highlight terms and symbols within the editor using information available to it.
+Lean supports `semantic highlighting <https://leanprover.github.io/lean4/doc/semantic_highlighting.html>`_, in which the Lean server itself will signal how to highlight terms and symbols within the editor using information available to it.
 
 Note that even though neovim supports this highlighting, you still will want to map the semantic highlighting groups to your color scheme appropriately.
 For a sample setup, see `the wiki <https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#semantic-highlighting>`_.
