@@ -58,6 +58,19 @@ function helpers.move_cursor(opts)
   vim.api.nvim_exec_autocmds('CursorMoved', {})
 end
 
+--- Jump to an arbitrary file in Lean core.
+function helpers.jump_to_core()
+  vim.cmd.edit(fixtures.project.child 'Test/JumpToStdlib.lean')
+  vim.cmd.normal '$'
+
+  helpers.wait_for_ready_lsp()
+  vim.lsp.buf.definition()
+
+  assert.is_truthy(vim.wait(15000, function()
+    return vim.api.nvim_buf_get_name(0):match '.*/src/lean/.*'
+  end))
+end
+
 ---@class MoveCursorOpts
 ---@field window? integer the window handle. Defaults to the current window.
 ---@field to table the new cursor position (1-row indexed, as per nvim_win_set_cursor)

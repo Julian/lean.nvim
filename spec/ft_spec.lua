@@ -12,7 +12,7 @@ describe('ft.detect', function()
   end
 
   it('detects standard library files', function()
-    vim.cmd.edit { project.child 'Test/JumpToStdlib.lean', bang = true }
+    helpers.jump_to_core()
     assert.are.equal('lean', vim.bo.filetype)
     local initial_path = vim.api.nvim_buf_get_name(0)
 

@@ -84,3 +84,12 @@ describe(
     end
   )
 )
+
+describe('jump_to_core', function()
+  it('jumps to a file in core Lean', function()
+    helpers.jump_to_core()
+    local name = vim.api.nvim_buf_get_name(0)
+    local is_core = name:match '.*/src/lean/.*'
+    assert.message("Didn't jump to core Lean!").is_truthy(is_core)
+  end)
+end)
