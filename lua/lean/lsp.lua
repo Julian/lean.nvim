@@ -3,6 +3,8 @@ local ms = vim.lsp.protocol.Methods
 local lsp = { handlers = {} }
 local util = require 'lean._util'
 
+---Enable auto-starting the Lean LSP.
+---@param opts lean.lsp.Config
 function lsp.enable(opts)
   opts.handlers = vim.tbl_extend('keep', opts.handlers or {}, {
     ['$/lean/fileProgress'] = lsp.handlers.file_progress_handler,
@@ -15,7 +17,39 @@ function lsp.enable(opts)
     editDelay = 0, -- see #289
     hasWidgets = true,
   })
-  require('lspconfig').leanls.setup(opts)
+
+  vim.g.lean_config.lsp = opts
+end
+
+---Attach an LSP client if auto-start is enabled.
+---@param bufnr? integer
+function lsp.maybe_start(bufnr)
+  local config = require 'lean.config'().lsp
+  if config == false then
+    return
+  end
+  lsp.start(bufnr, config)
+end
+
+---@class lean.lsp.StartConfig: vim.lsp.ClientConfig
+
+---Create a new Lean LSP client and start a language server.
+---@param bufnr? integer
+---@param client_config? lean.lsp.Config
+function lsp.start(bufnr, client_config)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  local bufname = vim.api.nvim_buf_get_name(bufnr)
+
+  local root_dir =
+    vim.fs.root(bufname, { 'lakefile.toml', 'lakefile.lean', 'lean-toolchain', '.git' })
+
+  ---@type lean.lsp.StartConfig
+  local start_config = vim.tbl_deep_extend('keep', { name = 'leanls' }, client_config)
+  start_config.cmd = { 'lake', 'serve', '--', root_dir }
+  start_config.root_dir = root_dir
+
+  -- FIXME: ps aux help, elan stdlib
+  return vim.lsp.start(start_config)
 end
 
 --- Find the vim.lsp.Client attached to the given buffer.

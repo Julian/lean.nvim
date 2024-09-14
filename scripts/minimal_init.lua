@@ -9,7 +9,6 @@ vim.opt.runtimepath:append(packpath)
 vim.opt.runtimepath:append(lean_nvim_dir)
 
 vim.cmd [[
-  runtime! plugin/lspconfig.vim
   runtime! plugin/matchit.vim
   runtime! plugin/plenary.vim
   runtime! plugin/switch.vim

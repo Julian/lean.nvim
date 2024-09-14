@@ -36,6 +36,8 @@ vim.filetype.add { extension = { lean = 'lean' } }
 function lean.setup(opts)
   opts = opts or {}
 
+  vim.g.lean_config = opts
+
   opts.abbreviations = opts.abbreviations or {}
   if opts.abbreviations.enable ~= false then
     require('lean.abbreviations').enable('*.lean', opts.abbreviations)
@@ -100,8 +102,6 @@ function lean.setup(opts)
       augroup END
     ]]
   end
-
-  vim.g.lean_config = opts
 end
 
 ---Enable mappings for a given buffer

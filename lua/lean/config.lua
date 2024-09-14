@@ -16,6 +16,9 @@
 local DEFAULTS = {
   mappings = false,
 
+  ---@type lean.lsp.Config
+  lsp = {},
+
   ---@type lean.ft.Config
   ft = {
     nomodifiable = {

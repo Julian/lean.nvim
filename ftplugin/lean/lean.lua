@@ -31,3 +31,5 @@ if vim.g.loaded_matchit and not vim.b.match_words then
 end
 
 vim.bo.modifiable = require 'lean.config'().ft:should_modify()
+
+require('lean.lsp').maybe_start()

@@ -28,7 +28,6 @@ For example with `lazy.nvim <https://github.com/folke/lazy.nvim>`_:
       event = { 'BufReadPre *.lean', 'BufNewFile *.lean' },
 
       dependencies = {
-        'neovim/nvim-lspconfig',
         'nvim-lua/plenary.nvim',
         -- you also will likely want nvim-cmp or some completion engine
       },
@@ -45,7 +44,6 @@ or with `vim-plug <https://github.com/junegunn/vim-plug>`_:
 .. code:: vim
 
     Plug 'Julian/lean.nvim'
-    Plug 'neovim/nvim-lspconfig'
     Plug 'nvim-lua/plenary.nvim'
 
     " Optional Dependencies:
@@ -205,9 +203,9 @@ Full Configuration & Settings Information
       --
       -- false to disable, otherwise should be a table of options to pass to `leanls`
       --
-      -- See https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#leanls for details.
+      -- See `:help lsp-config` for details.
       -- In particular ensure you have followed instructions setting up a callback
-      -- for `LspAttach` which sets your key bindings!
+      -- for `LspAttach` which sets any non-default key bindings you want!
       lsp = {
         init_options = {
           -- See Lean.Lsp.InitializationOptions for details and further options.
