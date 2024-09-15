@@ -24,7 +24,7 @@ if vim.g.loaded_matchit and not vim.b.match_words then
   vim.b.match_ignorecase = 0
   vim.b.match_words = vim
     .iter({
-      [[\<\%(namespace\|section\)\s\+\(.\{-}\)\>:\<end\s\+\1\>]],
+      [[\<\%(namespace\|section\)\s\+\([^«»]\{-}\>\|«.\{-}»\):\<end\s\+\1]],
       [[^\s*section\s*$:^end\s*$]],
       [[\<if\>:\<then\>:\<else\>]],
     })

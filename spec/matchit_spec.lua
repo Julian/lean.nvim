@@ -67,6 +67,29 @@ describe('matchit', function()
   )
 
   it(
+    'jumps between namespaces named with french quote names',
+    helpers.clean_buffer(
+      [[
+        namespace «1.2»
+
+        section bar
+
+        def f := 37
+
+        end bar
+
+        end «1.2»
+      ]],
+      function()
+        vim.cmd.normal 'gg'
+        assert.current_line.is 'namespace «1.2»'
+        vim.cmd.normal '%'
+        assert.current_line.is 'end «1.2»'
+      end
+    )
+  )
+
+  it(
     'jumps between if/then/else',
     helpers.clean_buffer(
       [[#eval String.append "it is " (if 1 > 2 then "yes" else "no")]],
