@@ -17,6 +17,7 @@ vim.bo.softtabstop = 2
 
 vim.opt_local.matchpairs:append [[⟨:⟩]]
 vim.opt_local.matchpairs:append [[‹:›]]
+vim.opt_local.matchpairs:append [[«:»]]
 
 -- Matchit support
 if vim.g.loaded_matchit and not vim.b.match_words then
