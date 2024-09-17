@@ -1,18 +1,17 @@
  lean.nvim is a plugin providing Neovim support for the Lean interactive
- theorem prover, developed by Leonardo de Moura at Microsoft Research.
+ theorem prover, developed by Leonardo de Moura and the Lean FRO.
 
  To find out more, see https://github.com/Julian/lean.nvim.
 
                                                                      *lean.nvim*
-lean.setup({opts})                                                  *lean.setup*
-     Setup function to be run in your init.lua (or init.vim).
+lean.setup()                                                        *lean.setup*
+
+
+lean.use_suggested_mappings({bufnr?})              *lean.use_suggested_mappings*
+    Enable mappings for a given buffer
 
     Parameters: ~
-        {opts}  (table:)  Configuration options
-
-
-lean.use_suggested_mappings()                      *lean.use_suggested_mappings*
-
+        {bufnr?}  (number)  the bufnr to enable mappings in, defaulting to 0
 
 
 lean.current_search_paths()                          *lean.current_search_paths*
@@ -23,14 +22,14 @@ lean.current_search_paths()                          *lean.current_search_paths*
 
 
 Pin                                                                        *Pin*
-
+     An individual pin.
 
     Fields: ~
         {id}  (string)  @a label to identify the pin
 
 
 Info                                                                      *Info*
-
+     An individual info.
 
     Fields: ~
         {pin}   (Pin)
@@ -38,7 +37,7 @@ Info                                                                      *Info*
 
 
 Infoview                                                              *Infoview*
-
+     A "view" on an info (i.e. window).
 
     Fields: ~
         {info}    (Info)
@@ -51,16 +50,25 @@ infoview.enable_debug()                                  *infoview.enable_debug*
 
 InfoviewNewArgs                                                *InfoviewNewArgs*
 
-
     Fields: ~
-        {width}                (?)  integer
-        {height}               (?)  integer
-        {horizontal_position}  (?)  "top"|"bottom"
-        {separate_tab}         (?)  bool
+        {width?}                (integer)
+        {height?}               (integer)
+        {horizontal_position?}  ()
 
 
 infoview.close_all()                                        *infoview.close_all*
      Close all open infoviews (across all tabs).
+
+
+infoview.__update_pin_by_uri({uri})               *infoview.__update_pin_by_uri*
+     Update pins corresponding to the given URI.
+
+    Parameters: ~
+        {uri}  (string)
+
+
+infoview.__update_pin_positions()              *infoview.__update_pin_positions*
+     on_lines callback to update pins position according to the given textDocument/didChange parameters.
 
 
 infoview.enable()                                              *infoview.enable*
@@ -79,7 +87,7 @@ infoview.get_current_infoview()                  *infoview.get_current_infoview*
      Get the infoview corresponding to the current window.
 
     Returns: ~
-        {Infoview}
+        (Infoview)
 
 
 infoview.open()                                                  *infoview.open*
@@ -144,7 +152,6 @@ abbreviations.load()                                        *abbreviations.load*
 
 
 abbreviations.reverse_lookup()                    *abbreviations.reverse_lookup*
-     Retrieve the table of abbreviations that would produce the given symbol.
 
 
 abbreviations.show_reverse_lookup()          *abbreviations.show_reverse_lookup*
@@ -154,26 +161,11 @@ abbreviations.show_reverse_lookup()          *abbreviations.show_reverse_lookup*
 abbreviations.convert()                                  *abbreviations.convert*
 
 
-
 abbreviations.enable()                                    *abbreviations.enable*
-
 
 
 sorry.fill()                                                        *sorry.fill*
      Fill the current cursor position with `sorry`s to discharge all goals.
-
-     I.e., given 3 current goals, with 2 in front of the cursor, will insert:
-          { foo },<cursor>
-          { sorry },
-          { sorry },
-
-
- Support for `:checkhealth` for lean.nvim.
-
-health.check()                                                    *health.check*
-     Check whether lean.nvim is healthy.
-
-     Call me via `:checkhealth lean`.
 
 
 vim:tw=78:ts=8:noet:ft=help:norl:
