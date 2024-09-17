@@ -278,16 +278,17 @@ function components.interactive_term_goal(goal, sess)
     return {}
   end
 
-  local element = Element:new { name = 'interactive-term-goal' }
-
   local term_state_element = Element:new {
     text = H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
     name = 'term-state',
+    children = { interactive_goal(goal, sess) },
   }
-  term_state_element:add_child(interactive_goal(goal, sess))
-  element:add_child(term_state_element)
-
-  return { element }
+  return {
+    Element:new {
+      name = 'interactive-term-goal',
+      children = { term_state_element },
+    },
+  }
 end
 
 --- Diagnostic information for the current line from the Lean server.
