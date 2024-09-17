@@ -4,6 +4,11 @@
 --- See https://github.com/lewis6991/satellite.nvim/blob/main/HANDLERS.md
 ---@brief ]]
 
+local has_satellite, satellite = pcall(require, 'satellite.handlers')
+if not has_satellite then
+  return
+end
+
 local async = require 'satellite.async'
 local row_to_barpos = require('satellite.util').row_to_barpos
 
@@ -78,4 +83,6 @@ function handler.update(bufnr, winid)
   return marks
 end
 
-return handler
+satellite.register(handler)
+
+return true

@@ -5,6 +5,7 @@
 --- To find out more, see https://github.com/Julian/lean.nvim.
 ---@brief ]]
 
+local has_satellite = require 'lean.satellite'
 local subprocess_check_output = require('lean._util').subprocess_check_output
 
 ---@tag lean.nvim
@@ -48,11 +49,6 @@ function lean.setup(opts)
   opts.lsp = opts.lsp or {}
   if opts.lsp.enable ~= false then
     require('lean.lsp').enable(opts.lsp)
-  end
-
-  local has_satellite, satellite = pcall(require, 'satellite.handlers')
-  if has_satellite then
-    satellite.register(require 'lean.satellite')
   end
 
   opts.progress_bars = opts.progress_bars or {}
