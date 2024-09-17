@@ -91,9 +91,7 @@ end
 
 ---@param refs RpcRef[]
 function Session:release_now(refs)
-  for _, ptr in ipairs(refs) do
-    table.insert(self.to_release, ptr)
-  end
+  vim.list_extend(self.to_release, refs)
   if #self.to_release == 0 or self:is_closed() then
     return
   end
@@ -108,9 +106,7 @@ end
 
 ---@param refs RpcRef[]
 function Session:release_deferred(refs)
-  for _, ptr in ipairs(refs) do
-    table.insert(self.to_release, ptr)
-  end
+  vim.list_extend(self.to_release, refs)
   if self.release_timer == nil then
     self.release_timer = vim.defer_fn(function()
       self.release_timer = nil
