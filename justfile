@@ -48,11 +48,17 @@ demo:
 docs:
     vimcats \
         {{ lean }}/init.lua \
+        {{ lean }}/commands.lua \
         {{ lean }}/config.lua \
         {{ lean }}/infoview.lua \
         {{ lean }}/abbreviations.lua \
-        {{ lean }}/sorry.lua \
+        {{ lean }}/loogle.lua \
+        {{ lean }}/satellite.lua \
+        {{ lean }}/lsp.lua \
+        {{ lean }}/widgets.lua \
         {{ lean }}/health.lua \
+        {{ lean }}/stderr.lua \
+        {{ lean }}/sorry.lua \
         >{{ doc }}
 
 # Update the versions of test fixtures used in CI.
