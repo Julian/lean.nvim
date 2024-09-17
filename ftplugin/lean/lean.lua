@@ -37,4 +37,8 @@ if config.mappings == true then
   require('lean').use_suggested_mappings(0)
 end
 
+if config.abbreviations ~= false then
+  require('lean.abbreviations').attach(0)
+end
+
 vim.bo.modifiable = config.ft:should_modify()
