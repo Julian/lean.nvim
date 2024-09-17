@@ -2,6 +2,7 @@ packpath := justfile_directory() + "/packpath"
 scripts := justfile_directory() + "/scripts"
 doc := justfile_directory() + "/doc/lean.txt"
 src := justfile_directory() + "/lua"
+lean := src + "/lean"
 spec := justfile_directory() + "/spec"
 fixtures := spec + "/fixtures"
 demos := justfile_directory() + "/demos"
@@ -34,7 +35,7 @@ lint:
     pre-commit run --all-files
     @echo
     {{ if `lua-language-server --version 2>&1 >/dev/null; echo $?` != "0" { error('lua-language-server not found') } else { "" } }}
-    lua-language-server --check lua/lean --checklevel=Warning --configpath "{{ justfile_directory() }}/.luarc.json"
+    lua-language-server --check {{ lean }} --checklevel=Warning --configpath "{{ justfile_directory() }}/.luarc.json"
     {{ if `selene --version 2>&1 >/dev/null; echo $?` != "0" { error('selene not found') } else { "" } }}
     selene {{ src }}
 
@@ -45,7 +46,14 @@ demo:
 
 # Regenerate the vimdoc help text. Assumes you have already installed https://github.com/mrcjkb/vimcats.
 docs:
-    vimcats lua/lean/{init,config,infoview,abbreviations,sorry,health}.lua >{{ doc }}
+    vimcats \
+        {{ lean }}/init.lua \
+        {{ lean }}/config.lua \
+        {{ lean }}/infoview.lua \
+        {{ lean }}/abbreviations.lua \
+        {{ lean }}/sorry.lua \
+        {{ lean }}/health.lua \
+        >{{ doc }}
 
 # Update the versions of test fixtures used in CI.
 bump-test-fixtures:
