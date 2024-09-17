@@ -1,5 +1,6 @@
 packpath := justfile_directory() + "/packpath"
 scripts := justfile_directory() + "/scripts"
+doc := justfile_directory() + "/doc/lean.txt"
 src := justfile_directory() + "/lua"
 spec := justfile_directory() + "/spec"
 fixtures := spec + "/fixtures"
@@ -41,6 +42,10 @@ lint:
 demo:
     cd {{ demos }}/project/ && lake build Mathlib.Analysis.SpecialFunctions.Pow.Real Mathlib.Data.Real.Irrational
     cd {{ justfile_directory() }}; vhs {{ demos }}/basic.tape
+
+# Regenerate the vimdoc help text. Assumes you have already installed https://github.com/mrcjkb/vimcats.
+docs:
+    vimcats lua/lean/{init,config,infoview,abbreviations,sorry,health}.lua >{{ doc }}
 
 # Update the versions of test fixtures used in CI.
 bump-test-fixtures:

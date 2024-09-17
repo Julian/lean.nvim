@@ -1,0 +1,25 @@
+name: Regenerate Documentation
+
+on: [push]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: extractions/setup-just@v2
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Install vimcats
+        run: cargo install vimcats --features=cli
+
+      - name: Generate docs
+        run: just docs
+
+      - name: Commit
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          branch: ${{ github.head_ref }}
+          commit_message: "Regenerate vimdocs"
+          file_pattern: doc/*.txt
