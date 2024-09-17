@@ -1,3 +1,9 @@
+---@mod lean.commands Commands
+
+---@brief [[
+--- (Neovim) commands added by lean.nvim for interacting with Lean.
+---@brief ]]
+
 local a = require 'plenary.async'
 
 local Element = require('lean.tui').Element

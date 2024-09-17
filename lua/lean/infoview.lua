@@ -1,3 +1,10 @@
+---@mod lean.infoview The Infoview
+
+---@brief [[
+--- Infoview-specific interaction for customizing or controlling the display of
+--- Lean's interactive goal state.
+---@brief ]]
+
 local a = require 'plenary.async'
 
 local Element = require('lean.tui').Element

@@ -1,5 +1,7 @@
+---@mod lean.rpc RPC
+
 ---@brief [[
---- RPC with the Lean server.
+--- Low-level RPC with the Lean server.
 ---
 --- See Lean/Server/FileWorker/WidgetRequests.lean for the Lean side of many of
 --- the below data structures.

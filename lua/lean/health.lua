@@ -1,3 +1,5 @@
+---@mod lean.health Health checks
+
 ---@brief [[
 --- Support for `:checkhealth` for lean.nvim.
 ---@brief ]]

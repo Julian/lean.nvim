@@ -1,3 +1,11 @@
+---@mod lean.config Configuration
+
+---@brief [[
+--- Configuration of lean.nvim.
+---
+--- Many of the types provided here are still being documented & typed.
+---@brief ]]
+
 ---@class lean.Config
 ---@field mappings? boolean whether to automatically enable key mappings
 ---@field ft? lean.ft.Config filetype configuration

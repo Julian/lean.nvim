@@ -1,3 +1,9 @@
+---@mod lean.lsp LSP
+
+---@brief [[
+--- Low-level interaction with the Lean language server.
+---@brief ]]
+
 local ms = vim.lsp.protocol.Methods
 
 local lsp = { handlers = {} }

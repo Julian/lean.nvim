@@ -1,3 +1,5 @@
+---@mod lean.satellite satellite.nvim integration
+
 ---@brief [[
 --- A satellite.nvim progress handler.
 ---

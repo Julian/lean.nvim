@@ -1,3 +1,13 @@
+---@mod lean.sorry Client-side sorrying
+
+---@brief [[
+--- Support for sorrying multiple goals.
+---
+--- You should generally prefer to use code actions for this functionality, but this module
+--- is maintained for a subset of users who prefer its behavior over the current code action
+--- behavior.
+---@brief ]]
+
 local tbl_repeat = require('lean._util').tbl_repeat
 
 local sorry = {}

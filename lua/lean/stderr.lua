@@ -1,3 +1,9 @@
+---@mod lean.stderr Standard error buffers
+
+---@brief [[
+--- Support for propagating low-level LSP messages emitted on standard error.
+---@brief ]]
+
 local log = require 'vim.lsp.log'
 
 local infoview = require 'lean.infoview'

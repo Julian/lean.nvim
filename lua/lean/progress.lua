@@ -1,3 +1,9 @@
+---@mod lean.progress Progress
+
+---@brief [[
+--- Indications of Lean's file processing progress.
+---@brief ]]
+
 local M = { AUTOCMD = 'LeanProgressUpdate' }
 
 ---@alias LeanFileProgressKind 'Processing' | 'FatalError'

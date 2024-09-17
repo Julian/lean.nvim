@@ -1,5 +1,9 @@
+---@toc lean.contents
+
+---@mod lean.intro Introduction
+
 ---@brief [[
---- lean.nvim is a plugin providing Neovim support for the Lean interactive
+--- lean.nvim provides first-class Neovim support for the Lean interactive
 --- theorem prover, developed by Leonardo de Moura and the Lean FRO.
 ---
 --- To find out more, see https://github.com/Julian/lean.nvim.

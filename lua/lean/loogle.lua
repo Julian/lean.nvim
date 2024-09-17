@@ -1,3 +1,9 @@
+---@mod lean.loogle Loogle
+
+---@brief [[
+--- Support for interacting with the Loogle search engine.
+---@brief ]]
+
 local curl = require 'plenary.curl'
 
 local loogle = {}

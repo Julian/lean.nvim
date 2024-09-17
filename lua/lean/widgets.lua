@@ -1,3 +1,5 @@
+---@mod lean.widgets Introduction
+
 ---@brief [[
 --- Custom support for Lean (user) widgets.
 ---
