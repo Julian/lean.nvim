@@ -46,16 +46,20 @@ function components.plain_goal(goal)
     return {}
   end
 
-  local children = {}
-  for i, this_goal in ipairs(goal.goals) do
-    table.insert(
-      children,
-      Element:new {
-        text = (i == 1 and '' or '\n') .. this_goal,
-        name = 'plain-goal',
-      }
-    )
-  end
+  local children = vim.iter(goal.goals):fold(nil, function(acc, k)
+    if acc then
+      table.insert(
+        acc,
+        Element:new {
+          text = '\n' .. k,
+          name = 'plain-goal',
+        }
+      )
+    else
+      acc = { Element:new { text = k, name = 'plain-goal' } }
+    end
+    return acc
+  end)
 
   return {
     Element:new {
@@ -254,11 +258,13 @@ function components.interactive_goals(goal, sess)
     return {}
   end
 
-  local children = { Element:new { text = goal_header(goal.goals) } }
-  for i, each in ipairs(goal.goals) do
-    table.insert(children, Element:new { text = i == 1 and '' or '\n\n' })
-    table.insert(children, interactive_goal(each, sess))
-  end
+  local children = vim
+    .iter(goal.goals)
+    :fold({ Element:new { text = goal_header(goal.goals) } }, function(acc, k)
+      table.insert(acc, Element:new { text = #acc == 1 and '' or '\n\n' })
+      table.insert(acc, interactive_goal(k, sess))
+      return acc
+    end)
 
   return { Element:new { name = 'interactive-goals', children = children } }
 end

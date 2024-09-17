@@ -199,18 +199,13 @@ end
 
 -- simple alternative to vim.lsp.util._make_floating_popup_size
 function M.make_floating_popup_size(contents)
-  local line_widths = {}
-
-  local width = 0
-  for i, line in ipairs(contents) do
-    -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
-    line_widths[i] = vim.fn.strdisplaywidth(line)
-    width = math.max(line_widths[i], width)
-  end
-
-  local height = #contents
-
-  return width, height
+  return unpack(vim.iter(contents):fold({ 0, 0 }, function(acc, line)
+    local width, height = unpack(acc)
+    return {
+      math.max(width, vim.fn.strdisplaywidth(line)),
+      height + 1,
+    }
+  end))
 end
 
 M.Tick = Tick

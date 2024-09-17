@@ -385,19 +385,17 @@ end
 ---@param opts table?
 ---@return Element
 function Element:concat(elements, sep, opts)
-  opts = opts or {}
-  opts.children = {}
-
   local separator = Element:new{ text = sep }
-
-  for index, child in ipairs(elements) do
-    if index > 1 then
-      table.insert(opts.children, separator)
-    end
-    table.insert(opts.children, child)
-  end
-
-  return self:new(opts)
+  return self:new(
+    vim.tbl_extend('error', opts or {}, {
+      children = vim.iter(elements):fold(nil, function(acc, k)
+        if not acc then return { k } end
+        table.insert(acc, separator)
+        table.insert(acc, k)
+        return acc
+      end)
+    })
+  )
 end
 
 ---Create a BufRenderer that renders this Element.

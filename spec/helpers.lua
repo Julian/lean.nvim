@@ -103,12 +103,10 @@ end
 function helpers.wait_for_new_window(known)
   local new_window
   local succeeded = vim.wait(1000, function()
-    for _, window in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-      if not vim.tbl_contains(known, window) then
-        new_window = window
-        return true
-      end
-    end
+    new_window = vim.iter(vim.api.nvim_tabpage_list_wins(0)):find(function(window)
+      return not vim.tbl_contains(known, window)
+    end)
+    return new_window
   end)
   assert.message('Never found a new window').is_true(succeeded)
   return new_window
