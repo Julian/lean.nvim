@@ -298,14 +298,6 @@ function abbreviations.enable(opts)
   vim.cmd [[hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray]]
 
   local augroup = vim.api.nvim_create_augroup('LeanAbbreviations', {})
-  vim.api.nvim_create_autocmd('Filetype', {
-    group = augroup,
-    pattern = { 'lean' },
-    callback = function(_)
-      abbreviations.attach()
-    end,
-  })
-
   vim.api.nvim_create_autocmd('CmdwinEnter', { group = augroup, callback = cmdwin_enter })
   vim.api.nvim_create_autocmd('CmdwinLeave', { group = augroup, callback = cmdwin_leave })
 end
