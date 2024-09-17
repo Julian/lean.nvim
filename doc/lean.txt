@@ -21,6 +21,18 @@ lean.current_search_paths()                          *lean.current_search_paths*
      directories.
 
 
+commands.show_goal()                                        *commands.show_goal*
+
+
+commands.show_term_goal()                              *commands.show_term_goal*
+
+
+commands.show_line_diagnostics()                *commands.show_line_diagnostics*
+
+
+commands.enable()                                              *commands.enable*
+
+
 Pin                                                                        *Pin*
      An individual pin.
 
@@ -162,6 +174,98 @@ abbreviations.convert()                                  *abbreviations.convert*
 
 
 abbreviations.enable()                                    *abbreviations.enable*
+
+
+LoogleResult                                                      *LoogleResult*
+
+    Fields: ~
+        {name}    (string)
+        {type}    (string)
+        {module}  (string)
+        {doc}     (string)
+
+
+loogle.search({type})                                            *loogle.search*
+    Search Loogle for the given type.
+
+    Parameters: ~
+        {type}  (string)  The type pattern to look for.
+                          @return LoogleResult[]? results Loogle hits in the JSON API format
+                          @return string? err An error message from Loogle, in which case no results are returned
+
+
+loogle.template({result})                                      *loogle.template*
+    Create a minimal Lean file out of the given result.
+
+    Parameters: ~
+        {result}  (LoogleResult)  the result to template out
+
+    Returns: ~
+        (string[])  a list-like table containing a Lean file template
+
+
+ A satellite.nvim progress handler.
+
+ See https://github.com/lewis6991/satellite.nvim/blob/main/HANDLERS.md
+
+lsp.enable()                                                        *lsp.enable*
+
+
+lsp.client_for({bufnr})                                         *lsp.client_for*
+     Find the vim.lsp.Client attached to the given buffer.
+
+    Parameters: ~
+        {bufnr}  (number)
+
+    Returns: ~
+        (vim.lsp.Client)
+
+
+lsp.plain_goal({params}, {bufnr})                               *lsp.plain_goal*
+
+    Parameters: ~
+        {params}  (lsp.TextDocumentPositionParams)
+        {bufnr}   (number)
+
+    Returns: ~
+        (any)  error
+        (any)  plain_goal
+
+
+lsp.plain_term_goal({params}, {bufnr})                     *lsp.plain_term_goal*
+
+    Parameters: ~
+        {params}  (lsp.TextDocumentPositionParams)
+        {bufnr}   (number)
+
+    Returns: ~
+        (any)  error
+        (any)  plain_term_goal
+
+
+lsp.handlers.file_progress_handler()        *lsp.handlers.file_progress_handler*
+
+
+lsp.handlers.diagnostics_handler()            *lsp.handlers.diagnostics_handler*
+
+
+lsp.restart_file({bufnr?})                                    *lsp.restart_file*
+    Restart the Lean server for an open Lean 4 file.
+    See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
+
+    Parameters: ~
+        {bufnr?}  (number)
+
+
+stderr.show({message})                                             *stderr.show*
+    Show stderr output in a separate stderr buffer.
+
+    Parameters: ~
+        {message}  (string)  @a (possibly multi-line) string from stderr
+
+
+stderr.enable()                                                  *stderr.enable*
+     Enable teeing stderr output somewhere (to a second visible buffer by default).
 
 
 sorry.fill()                                                        *sorry.fill*
