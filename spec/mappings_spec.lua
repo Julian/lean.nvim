@@ -1,7 +1,7 @@
 local lean = require 'lean'
 local clean_buffer = require('spec.helpers').clean_buffer
 
-lean.setup { mappings = true }
+vim.g.lean_config = { mappings = true }
 
 describe('mappings', function()
   it(
