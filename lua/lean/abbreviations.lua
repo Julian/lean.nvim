@@ -6,12 +6,14 @@
 
 local abbreviations = {}
 
-local _MEMOIZED = nil
+local MEMOIZED = nil
+local HL_GROUP = 'leanAbbreviationMark'
+vim.cmd.highlight('def ' .. HL_GROUP .. ' cterm=underline gui=underline guisp=Gray')
 
 ---Load the Lean abbreviations as a Lua table.
 function abbreviations.load()
-  if _MEMOIZED ~= nil then
-    return _MEMOIZED
+  if MEMOIZED ~= nil then
+    return MEMOIZED
   end
   local this_dir = vim.fs.dirname(debug.getinfo(2, 'S').source:sub(2))
   local path = vim.fs.joinpath(this_dir, '../../vscode-lean/abbreviations.json')
@@ -133,7 +135,7 @@ local function insert_char_pre()
     local row, col = unpack(vim.api.nvim_win_get_cursor(0))
     row = row - 1
     abbreviations.abbr_mark = vim.api.nvim_buf_set_extmark(0, abbr_mark_ns, row, col, {
-      hl_group = 'leanAbbreviationMark',
+      hl_group = HL_GROUP,
       end_line = row,
       end_col = col,
       right_gravity = false,
@@ -294,8 +296,6 @@ function abbreviations.enable(opts)
   for from, to in pairs(opts.extra) do
     abbreviations.abbreviations[from] = to
   end
-
-  vim.cmd [[hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray]]
 
   local augroup = vim.api.nvim_create_augroup('LeanAbbreviations', {})
   vim.api.nvim_create_autocmd('CmdwinEnter', { group = augroup, callback = cmdwin_enter })
