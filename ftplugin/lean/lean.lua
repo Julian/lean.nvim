@@ -31,4 +31,10 @@ if vim.g.loaded_matchit and not vim.b.match_words then
     :join ','
 end
 
-vim.bo.modifiable = require 'lean.config'().ft:should_modify()
+local config = require 'lean.config'()
+
+if config.mappings == true then
+  require('lean').use_suggested_mappings(0)
+end
+
+vim.bo.modifiable = config.ft:should_modify()

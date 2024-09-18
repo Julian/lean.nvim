@@ -92,15 +92,6 @@ function lean.setup(opts)
     command! LeanSorryFill :lua require'lean.sorry'.fill()
   ]]
 
-  if opts.mappings == true then
-    vim.cmd [[
-      augroup lean_nvim_mappings
-        autocmd!
-        autocmd FileType lean lua require'lean'.use_suggested_mappings(true)
-      augroup END
-    ]]
-  end
-
   vim.g.lean_config = opts
 end
 
