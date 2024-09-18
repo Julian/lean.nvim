@@ -1007,7 +1007,7 @@ function Pin:__mk_data_elem(tick, opts)
   local params = self.__position_params
 
   local buf = vim.uri_to_bufnr(params.textDocument.uri)
-  if buf == -1 then
+  if not vim.api.nvim_buf_is_loaded(buf) then
     error 'No corresponding buffer found for update.'
   end
 
