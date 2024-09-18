@@ -48,7 +48,6 @@ function lean.setup(opts)
 
   opts.infoview = opts.infoview or {}
   require('lean.infoview').enable(opts.infoview)
-  require('lean.commands').enable()
 
   opts.lsp = opts.lsp or {}
   if opts.lsp.enable ~= false then
@@ -74,6 +73,12 @@ function lean.setup(opts)
   vim.cmd [[
     command! LeanRestartFile :lua require'lean.lsp'.restart_file()
     command! LeanRefreshFileDependencies :lua require'lean.lsp'.restart_file()
+
+    command! LeanPlainGoal :lua require'lean.commands'.show_goal(false)
+    command! LeanPlainTermGoal :lua require'lean.commands'.show_term_goal(false)
+    command! LeanGoal :lua require'lean.commands'.show_goal()
+    command! LeanTermGoal :lua require'lean.commands'.show_term_goal()
+    command! LeanLineDiagnostics :lua require'lean.commands'.show_line_diagnostics()
 
     command! LeanInfoviewToggle :lua require'lean.infoview'.toggle()
     command! LeanInfoviewPinTogglePause :lua require'lean.infoview'.pin_toggle_pause()
