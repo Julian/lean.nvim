@@ -51,9 +51,6 @@ commands.show_term_goal()                              *commands.show_term_goal*
 commands.show_line_diagnostics()                *commands.show_line_diagnostics*
 
 
-commands.enable()                                              *commands.enable*
-
-
 ==============================================================================
 The Infoview                                                     *lean.infoview*
 
