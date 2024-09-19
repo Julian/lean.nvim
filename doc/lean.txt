@@ -1,5 +1,5 @@
 ==============================================================================
-Table of Contents                                                    *lean.nvim*
+Table of Contents                                                         *lean*
 
 Introduction ······················································· |lean.init|
 Commands ······················································· |lean.commands|
@@ -19,6 +19,7 @@ Introduction                                                         *lean.init*
 
  To find out more, see https://github.com/Julian/lean.nvim.
 
+                                                                     *lean.nvim*
 lean.setup()                                                        *lean.setup*
 
 

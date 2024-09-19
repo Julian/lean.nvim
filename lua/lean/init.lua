@@ -1,4 +1,4 @@
----@toc lean.nvim
+---@toc lean
 
 ---@mod lean.init Introduction
 
@@ -8,6 +8,8 @@
 ---
 --- To find out more, see https://github.com/Julian/lean.nvim.
 ---@brief ]]
+
+---@tag lean.nvim
 
 local has_satellite = require 'lean.satellite'
 local subprocess_check_output = require('lean._util').subprocess_check_output
