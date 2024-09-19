@@ -1,4 +1,4 @@
----@toc lean.contents
+---@toc lean.nvim
 
 ---@mod lean.intro Introduction
 

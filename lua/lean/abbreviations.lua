@@ -1,5 +1,3 @@
----@toc lean.abbreviations
-
 ---@mod lean.intro (Unicode) Abbreviation Expansion
 
 ---@brief [[

@@ -1,5 +1,5 @@
 ==============================================================================
-Table of Contents                                                *lean.contents*
+Table of Contents                                                    *lean.nvim*
 
 Introduction ······················································ |lean.intro|
 Commands ······················································· |lean.commands|
@@ -179,19 +179,6 @@ infoview.reposition()                                      *infoview.reposition*
      current screen dimensions.
      Does nothing if there are more than 2 open windows.
 
-
-==============================================================================
-Table of Contents                                           *lean.abbreviations*
-
-Introduction ······················································ |lean.intro|
-Commands ······················································· |lean.commands|
-The Infoview ··················································· |lean.infoview|
-(Unicode) Abbreviation Expansion ·································· |lean.intro|
-Loogle ··························································· |lean.loogle|
-satellite.nvim integration ···································· |lean.satellite|
-LSP ································································· |lean.lsp|
-Standard error buffers ··········································· |lean.stderr|
-Client-side sorrying ·············································· |lean.sorry|
 
 ==============================================================================
 (Unicode) Abbreviation Expansion                                    *lean.intro*
