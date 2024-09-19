@@ -4,7 +4,7 @@ Table of Contents                                                    *lean.nvim*
 Introduction ······················································ |lean.intro|
 Commands ······················································· |lean.commands|
 The Infoview ··················································· |lean.infoview|
-(Unicode) Abbreviation Expansion ·································· |lean.intro|
+(Unicode) Abbreviation Expansion ·························· |lean.abbreviations|
 Loogle ··························································· |lean.loogle|
 satellite.nvim integration ···································· |lean.satellite|
 LSP ································································· |lean.lsp|
@@ -19,7 +19,6 @@ Introduction                                                        *lean.intro*
 
  To find out more, see https://github.com/Julian/lean.nvim.
 
-                                                                     *lean.nvim*
 lean.setup()                                                        *lean.setup*
 
 
@@ -181,11 +180,10 @@ infoview.reposition()                                      *infoview.reposition*
 
 
 ==============================================================================
-(Unicode) Abbreviation Expansion                                    *lean.intro*
+(Unicode) Abbreviation Expansion                            *lean.abbreviations*
 
  Support for abbreviations (unicode character replacement).
 
-                                                            *lean.abbreviations*
 abbreviations.load()                                        *abbreviations.load*
      Load the Lean abbreviations as a Lua table.
 

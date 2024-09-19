@@ -8,7 +8,6 @@ abbreviations.enable	lean.txt	/*abbreviations.enable*
 abbreviations.load	lean.txt	/*abbreviations.load*
 abbreviations.reverse_lookup	lean.txt	/*abbreviations.reverse_lookup*
 abbreviations.show_reverse_lookup	lean.txt	/*abbreviations.show_reverse_lookup*
-commands.enable	lean.txt	/*commands.enable*
 commands.show_goal	lean.txt	/*commands.show_goal*
 commands.show_line_diagnostics	lean.txt	/*commands.show_line_diagnostics*
 commands.show_term_goal	lean.txt	/*commands.show_term_goal*
@@ -34,9 +33,17 @@ infoview.set_diff_pin	lean.txt	/*infoview.set_diff_pin*
 infoview.toggle	lean.txt	/*infoview.toggle*
 infoview.toggle_auto_diff_pin	lean.txt	/*infoview.toggle_auto_diff_pin*
 lean.abbreviations	lean.txt	/*lean.abbreviations*
+lean.commands	lean.txt	/*lean.commands*
 lean.current_search_paths	lean.txt	/*lean.current_search_paths*
+lean.infoview	lean.txt	/*lean.infoview*
+lean.intro	lean.txt	/*lean.intro*
+lean.loogle	lean.txt	/*lean.loogle*
+lean.lsp	lean.txt	/*lean.lsp*
 lean.nvim	lean.txt	/*lean.nvim*
+lean.satellite	lean.txt	/*lean.satellite*
 lean.setup	lean.txt	/*lean.setup*
+lean.sorry	lean.txt	/*lean.sorry*
+lean.stderr	lean.txt	/*lean.stderr*
 lean.use_suggested_mappings	lean.txt	/*lean.use_suggested_mappings*
 loogle.search	lean.txt	/*loogle.search*
 loogle.template	lean.txt	/*loogle.template*

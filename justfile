@@ -1,6 +1,6 @@
 packpath := justfile_directory() + "/packpath"
 scripts := justfile_directory() + "/scripts"
-doc := justfile_directory() + "/doc/lean.txt"
+doc := justfile_directory() + "/doc"
 src := justfile_directory() + "/lua"
 lean := src + "/lean"
 spec := justfile_directory() + "/spec"
@@ -59,7 +59,8 @@ docs:
         {{ lean }}/health.lua \
         {{ lean }}/stderr.lua \
         {{ lean }}/sorry.lua \
-        >{{ doc }}
+        >{{ doc }}/lean.txt
+    nvim --headless -u {{ init_lua }} -c 'helptags {{ doc }}' -c 'quit'
 
 # Update the versions of test fixtures used in CI.
 bump-test-fixtures:

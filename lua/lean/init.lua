@@ -12,8 +12,6 @@
 local has_satellite = require 'lean.satellite'
 local subprocess_check_output = require('lean._util').subprocess_check_output
 
----@tag lean.nvim
-
 local lean = {
   mappings = {
     n = {

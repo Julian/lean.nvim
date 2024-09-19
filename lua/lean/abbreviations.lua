@@ -1,10 +1,8 @@
----@mod lean.intro (Unicode) Abbreviation Expansion
+---@mod lean.abbreviations (Unicode) Abbreviation Expansion
 
 ---@brief [[
 --- Support for abbreviations (unicode character replacement).
 ---@brief ]]
-
----@tag lean.abbreviations
 
 local abbreviations = {}
 
