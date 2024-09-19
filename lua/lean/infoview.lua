@@ -1007,16 +1007,12 @@ function Pin:__mk_data_elem(tick, opts)
   local params = self.__position_params
 
   local buf = vim.uri_to_bufnr(params.textDocument.uri)
-  if not vim.api.nvim_buf_is_loaded(buf) then
-    error 'No corresponding buffer found for update.'
+  if not vim.api.nvim_buf_is_loaded(buf) or not tick:check() then
+    return
   end
 
   if progress.is_processing_at(params) then
     return options.show_processing and components.PROCESSING or nil
-  end
-
-  if not tick:check() then
-    return
   end
 
   local sess = rpc.open(buf, params)
