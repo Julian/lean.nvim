@@ -9,7 +9,7 @@
 ---@class lean.Config
 ---@field mappings? boolean whether to automatically enable key mappings
 ---@field ft? lean.ft.Config filetype configuration
----@field abbreviations? table abbreviaton configuration
+---@field abbreviations? lean.abbreviations.Config abbreviaton configuration
 ---@field infoview? table infoview configuration
 ---@field lsp? table language server configuration
 ---@field progress_bars? table progress bar configuration
@@ -17,12 +17,22 @@
 
 ---@class lean.MergedConfig: lean.Config
 
+---@class lean.abbreviations.Config
+---@field enable? boolean whether to automatically enable expansion
+---@field leader? string which key to use to trigger abbreviation expansion
+---@field extra table<string, string> a table of extra abbreviations to enable
+
 ---@class lean.ft.Config
 ---@field nomodifiable string[] globs to prevent accidental modification
 
 ---@type lean.MergedConfig
 local DEFAULTS = {
   mappings = false,
+
+  abbreviations = {
+    leader = '\\',
+    extra = {},
+  },
 
   ---@type lean.ft.Config
   ft = {
