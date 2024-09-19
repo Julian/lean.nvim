@@ -1,6 +1,6 @@
 ---@toc lean.nvim
 
----@mod lean.intro Introduction
+---@mod lean.init Introduction
 
 ---@brief [[
 --- lean.nvim provides first-class Neovim support for the Lean interactive

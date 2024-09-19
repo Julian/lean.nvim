@@ -36,7 +36,7 @@ lean.abbreviations	lean.txt	/*lean.abbreviations*
 lean.commands	lean.txt	/*lean.commands*
 lean.current_search_paths	lean.txt	/*lean.current_search_paths*
 lean.infoview	lean.txt	/*lean.infoview*
-lean.intro	lean.txt	/*lean.intro*
+lean.init	lean.txt	/*lean.init*
 lean.loogle	lean.txt	/*lean.loogle*
 lean.lsp	lean.txt	/*lean.lsp*
 lean.nvim	lean.txt	/*lean.nvim*
