@@ -86,4 +86,16 @@ describe('tactics', function()
       assert.contents.are [=[simp? [foo, bar, baz]]=]
     end)
   )
+
+  it(
+    'switch between simpa and simpa?',
+    clean_buffer([[simpa]], function()
+      vim.cmd.normal { '1gg0', bang = true }
+      vim.cmd.Switch()
+      assert.contents.are [[simpa?]]
+
+      vim.cmd.Switch()
+      assert.contents.are [[simpa]]
+    end)
+  )
 end)
