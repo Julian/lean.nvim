@@ -2,12 +2,11 @@
 lean.nvim
 =========
 
-.. image:: https://github.com/user-attachments/assets/727b689d-56f6-48e8-8fe5-a7a5d82b91c5
+.. figure:: https://github.com/user-attachments/assets/727b689d-56f6-48e8-8fe5-a7a5d82b91c5
   :alt: lean.nvim
-  :width: 300px
   :align: center
 
-``neovim`` support for the `Lean Theorem Prover <https://leanprover.github.io/lean4/doc/>`_.
+  ``neovim`` support for the `Lean Theorem Prover <https://leanprover.github.io/lean4/doc/>`_
 
 https://github.com/Julian/lean.nvim/assets/329822/87f773a1-17b9-4938-b933-4f260f4228cd
 
