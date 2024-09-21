@@ -1,11 +1,11 @@
+=========
+lean.nvim
+=========
+
 .. image:: https://github.com/user-attachments/assets/727b689d-56f6-48e8-8fe5-a7a5d82b91c5
   :alt: lean.nvim
   :width: 300px
   :align: center
-
-=========
-lean.nvim
-=========
 
 ``neovim`` support for the `Lean Theorem Prover <https://leanprover.github.io/lean4/doc/>`_.
 
