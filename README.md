@@ -6,7 +6,7 @@
   <table>
     <tr>
       <td>
-        <strong><a href="https://neovim.io">Neovim</a> support for the<a href="https://lean-lang.org/">Lean Theorem Prover</a>.</strong>
+        <strong><a href="https://neovim.io">Neovim</a> support for the <a href="https://lean-lang.org/">Lean Theorem Prover</a>.</strong>
       </td>
     </tr>
   </table>
@@ -20,7 +20,7 @@
 
 </div>
 
-![preview](https://github.com/Julian/lean.nvim/assets/329822/87f773a1-17b9-4938-b933-4f260f4228cd)
+https://github.com/Julian/lean.nvim/assets/329822/87f773a1-17b9-4938-b933-4f260f4228cd
 
 ## Installation
 

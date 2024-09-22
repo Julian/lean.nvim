@@ -5,5 +5,6 @@
   "MD004": false, // unordered list style, but it seems impossible to configure right
   "MD013": false, // disable line length checking, use one sentence per line
   "MD033": false, // yes inline HTML
+  "MD034": false, // yes bare URLs, that's GitHub-speak for "show a video" :/
   "MD041": false, // our first line is an HTML block
 }
