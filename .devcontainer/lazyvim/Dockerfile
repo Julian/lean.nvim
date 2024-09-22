@@ -34,4 +34,8 @@ RUN git clone --filter=blob:none https://github.com/LazyVim/starter ~/.config/nv
 COPY lean.lua .config/nvim/lua/plugins/lean.lua
 
 ARG LEAN_PROJECT=https://github.com/leanprover-community/mathlib4
+
 RUN git clone --filter=blob:none $LEAN_PROJECT && cd $(basename "$LEAN_PROJECT") && lake exe cache get
+
+# SHELL isn't supported by OCI images
+CMD ["zsh", "-l"]
