@@ -1,6 +1,6 @@
 <div align="center">
   <div>
-    <div><img alt="lean.nvim" src="https://github.com/NeogitOrg/neogit/assets/7228095/7684545f-47b5-40e2-aedd-ccf56e0553f4" width="400px"/></div>
+    <div><img alt="lean.nvim" src="https://github.com/user-attachments/assets/727b689d-56f6-48e8-8fe5-a7a5d82b91c5" width="400px"/></div>
     <div><h1>lean.nvim</h1></div>
   </div>
   <table>
