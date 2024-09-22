@@ -34,8 +34,8 @@ local DEFAULTS = {
     ---@return boolean
     should_modify = function(self, path)
       path = path or vim.api.nvim_buf_get_name(0)
-      return vim.iter(self.nomodifiable):any(function(pattern)
-        return not path:match(pattern)
+      return not vim.iter(self.nomodifiable):any(function(pattern)
+        return path:match(pattern)
       end)
     end,
   },
@@ -45,5 +45,5 @@ local DEFAULTS = {
 return function()
   ---@type lean.Config
   vim.g.lean_config = vim.g.lean_config or {}
-  return vim.tbl_extend('keep', vim.g.lean_config, DEFAULTS)
+  return vim.tbl_deep_extend('keep', vim.g.lean_config, DEFAULTS)
 end
