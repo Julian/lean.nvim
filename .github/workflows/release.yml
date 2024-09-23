@@ -1,11 +1,12 @@
-name: "LuaRocks Release"
+name: "Release"
 on:
   push:
     tags:
-      - "v*"
+      - "v*.*"
 
 jobs:
   luarocks-release:
+    name: "LuaRocks Release"
     runs-on: ubuntu-latest
 
     steps:
