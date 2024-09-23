@@ -30,6 +30,6 @@ repos:
       - id: stylua
         exclude: lua/lean/tui.lua
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.13.0
+    rev: v0.14.0
     hooks:
       - id: markdownlint-cli2
