@@ -84,28 +84,6 @@ describe('unicode abbreviation expansion', function()
     )
 
     it(
-      'does not interfere with existing mappings',
-      helpers.clean_buffer(function()
-        vim.api.nvim_buf_set_keymap(
-          0,
-          'i',
-          '<Tab>',
-          '<C-o>:lua vim.b.foo = 12<CR>',
-          { noremap = true }
-        )
-        helpers.insert [[\e<Tab>]]
-        wait_for_expansion()
-        assert.contents.are [[ε]]
-        assert.falsy(vim.b.foo)
-        helpers.insert [[<Tab>]]
-        assert.contents.are [[ε]]
-        assert.are.same(vim.b.foo, 12)
-
-        vim.api.nvim_buf_del_keymap(0, 'i', '<Tab>')
-      end)
-    )
-
-    it(
       'does not interfere with existing lua mappings',
       helpers.clean_buffer(function()
         vim.b.foo = 0
@@ -128,7 +106,29 @@ describe('unicode abbreviation expansion', function()
         helpers.insert [[<Tab>]]
         assert.contents.are [[ε]]
         assert.are.same(vim.b.foo, 2)
-        vim.api.nvim_buf_del_keymap(0, 'i', '<Tab>')
+
+        vim.keymap.del('i', '<Tab>', { buffer = 0 })
+      end)
+    )
+
+    it(
+      'does not interfere with existing string/vimscript mappings',
+      helpers.clean_buffer(function()
+        vim.keymap.set(
+          'i',
+          '<Tab>',
+          '<C-o>:lua vim.b.foo = 12<CR>',
+          { buffer = true, noremap = true }
+        )
+        helpers.insert [[\e<Tab>]]
+        wait_for_expansion()
+        assert.contents.are [[ε]]
+        assert.falsy(vim.b.foo)
+        helpers.insert [[<Tab>]]
+        assert.contents.are [[ε]]
+        assert.are.same(vim.b.foo, 12)
+
+        vim.keymap.del('i', '<Tab>', { buffer = 0 })
       end)
     )
   end)
