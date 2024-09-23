@@ -131,6 +131,15 @@ describe('unicode abbreviation expansion', function()
         vim.keymap.del('i', '<Tab>', { buffer = 0 })
       end)
     )
+
+    it(
+      'does not create orphan mappings',
+      helpers.clean_buffer(function()
+        assert.is.empty(vim.fn.mapcheck('<Tab>', 'i'))
+        helpers.insert [[\e<Tab>]]
+        assert.is.empty(vim.fn.mapcheck('<Tab>', 'i'))
+      end)
+    )
   end)
 
   -- Really this needs to place the cursor too, but for now we just strip

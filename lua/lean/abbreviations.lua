@@ -156,10 +156,10 @@ local function insert_char_pre()
     for key, to in pairs(mappings) do
       if not _cleanup[key] then
         _cleanup[key] = function()
-          vim.api.nvim_buf_del_keymap(0, 'i', key)
+          vim.keymap.del('i', key, { buffer = 0 })
         end
       end
-      vim.api.nvim_buf_set_keymap(0, 'i', key, to, { noremap = true })
+      vim.keymap.set('i', key, to, { buffer = 0, noremap = true })
     end
 
     cleanup_imaps = function()
