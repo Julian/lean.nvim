@@ -6,7 +6,6 @@
 
 local abbreviations = {}
 
-local cleanup_imaps = function() end
 local _MEMOIZED = nil
 
 --- Load the Lean abbreviations as a Lua table.
@@ -82,7 +81,7 @@ end
 local function _clear_abbr_mark()
   vim.api.nvim_buf_del_extmark(0, abbr_mark_ns, abbreviations.abbr_mark)
   abbreviations.abbr_mark = nil
-  cleanup_imaps()
+  vim.b.cleanup_imaps()
 end
 
 local function insert_char_pre()
@@ -137,11 +136,20 @@ local function insert_char_pre()
       ['<CR>'] = [[<C-o>:lua require'lean.abbreviations'.convert()<CR><CR>]],
       ['<Tab>'] = [[<Cmd>lua require'lean.abbreviations'.convert()<CR>]],
     }
-    local _cleanup = {}
-    for _, imap in ipairs(vim.api.nvim_buf_get_keymap(0, 'i')) do
-      if mappings[imap.lhs] then
-        _cleanup[imap.lhs] = function()
-          vim.api.nvim_buf_set_keymap(0, 'i', imap.lhs, imap.rhs or '', {
+
+    local opts = { buffer = 0 }
+    local cleanups = vim.defaulttable(function(key)
+      return function()
+        vim.keymap.del('i', key, opts)
+      end
+    end)
+
+    for imap in vim.iter(vim.api.nvim_buf_get_keymap(0, 'i')) do
+      local lhs = imap.lhs
+      local rhs = imap.rhs or ''
+      if mappings[lhs] then
+        cleanups[lhs] = function()
+          vim.api.nvim_buf_set_keymap(0, 'i', lhs, rhs, {
             nowait = imap.nowait,
             silent = imap.silent,
             script = imap.script,
@@ -153,20 +161,15 @@ local function insert_char_pre()
       end
     end
 
-    for key, to in pairs(mappings) do
-      if not _cleanup[key] then
-        _cleanup[key] = function()
-          vim.keymap.del('i', key, { buffer = 0 })
-        end
-      end
-      vim.keymap.set('i', key, to, { buffer = 0, noremap = true })
+    for key, to in vim.iter(mappings) do
+      vim.keymap.set('i', key, to, opts)
     end
 
-    cleanup_imaps = function()
-      for _, cleanup in pairs(_cleanup) do
-        cleanup()
-      end
-      cleanup_imaps = function() end
+    vim.b.cleanup_imaps = function()
+      vim.iter(mappings):each(function(key)
+        cleanups[key]()
+      end)
+      vim.b.cleanup_imaps = function() end
     end
   end
 end
