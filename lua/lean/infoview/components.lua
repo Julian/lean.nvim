@@ -6,6 +6,7 @@
 ---@tag lean.infoview.components
 
 local Element = require('lean.tui').Element
+local config = require 'lean.config'
 local util = require 'lean._util'
 local widgets = require 'lean.widgets'
 
@@ -218,20 +219,19 @@ end
 ---@param goal InteractiveGoal | InteractiveTermGoal
 ---@param sess Subsession
 local function interactive_goal(goal, sess)
-  local element = Element:new { name = 'interactive-goal' }
+  local children = {}
 
   if goal.userName ~= nil then
-    element:add_child(Element:new { text = string.format('case %s\n', goal.userName) })
+    local case = Element:new { text = string.format('case %s\n', goal.userName) }
+    table.insert(children, case)
   end
 
-  for _, hyp in ipairs(goal.hyps) do
+  vim.iter(goal.hyps):filter(config().infoview.filter_hypothesis):each(function(hyp)
     local hyp_element = Element:new {
       text = table.concat(hyp.names, ' ') .. ' : ',
       name = 'hyp',
       children = { code_with_infos(hyp.type, sess) },
     }
-    element:add_child(hyp_element)
-
     if hyp.val ~= nil then
       hyp_element:add_child(Element:new {
         text = ' := ',
@@ -240,14 +240,18 @@ local function interactive_goal(goal, sess)
       })
     end
     hyp_element:add_child(Element:new { text = '\n', name = 'hypothesis-separator' })
-  end
+    table.insert(children, hyp_element)
+  end)
 
-  element:add_child(Element:new {
-    text = '⊢ ',
-    name = 'goal',
-    children = { code_with_infos(goal.type, sess) },
-  })
-  return element
+  table.insert(
+    children,
+    Element:new {
+      text = '⊢ ',
+      name = 'goal',
+      children = { code_with_infos(goal.type, sess) },
+    }
+  )
+  return Element:new { name = 'interactive-goal', children = children }
 end
 
 ---@param goal InteractiveGoals?

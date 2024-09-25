@@ -17,6 +17,7 @@ local infoview = {
   -- mapping from infoview IDs to infoviews
   ---@type table<number, Infoview>
   _by_tabpage = {},
+
   --- Whether to print additional debug information in the infoview.
   ---@type boolean
   debug = false,

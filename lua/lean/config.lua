@@ -10,7 +10,7 @@
 ---@field mappings? boolean whether to automatically enable key mappings
 ---@field ft? lean.ft.Config filetype configuration
 ---@field abbreviations? lean.abbreviations.Config abbreviaton configuration
----@field infoview? table infoview configuration
+---@field infoview? lean.infoview.Config infoview configuration
 ---@field lsp? table language server configuration
 ---@field progress_bars? table progress bar configuration
 ---@field stderr? table stderr window configuration
@@ -22,13 +22,19 @@
 ---@field leader? string which key to use to trigger abbreviation expansion
 ---@field extra table<string, string> a table of extra abbreviations to enable
 
+---@alias FilterHypothesis fun(hyp: InteractiveHypothesisBundle): boolean?
+
 ---@class lean.ft.Config
 ---@field nomodifiable string[] globs to prevent accidental modification
+
+---@class lean.infoview.Config
+---@field filter_hypothesis? FilterHypothesis return false or nil to hide a hypothesis
 
 ---@type lean.MergedConfig
 local DEFAULTS = {
   mappings = false,
 
+  ---@type lean.abbreviations.Config
   abbreviations = {
     leader = '\\',
     extra = {},
@@ -47,6 +53,16 @@ local DEFAULTS = {
       return not vim.iter(self.nomodifiable):any(function(pattern)
         return path:match(pattern)
       end)
+    end,
+  },
+
+  ---@type lean.infoview.Config
+  infoview = {
+
+    ---Filter nothing by default.
+    ---@return boolean
+    filter_hypothesis = function(_)
+      return true
     end,
   },
 }
