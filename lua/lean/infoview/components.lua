@@ -246,7 +246,7 @@ local function interactive_goal(goal, sess)
   table.insert(
     children,
     Element:new {
-      text = '⊢ ',
+      text = goal.goalPrefix or '⊢ ',
       name = 'goal',
       children = { code_with_infos(goal.type, sess) },
     }
