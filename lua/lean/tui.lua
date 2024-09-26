@@ -765,7 +765,7 @@ end
 ---@generic C : any
 ---@param choices C[] the set of choices to pick from
 ---@param opts? SelectionOpts<C>
----@param on_choices fun(choices: C[]): nil a callback called with selected choices
+---@param on_choices fun(chosen: C[], unchosen: C[]): nil a callback called with selected choices
 ---@return nil
 local function select_many(choices, opts, on_choices)
   -- This doesn't exist on `vim.ui` yet. See e.g. neovim/neovim#18161
@@ -793,7 +793,7 @@ local function select_many(choices, opts, on_choices)
   local window = vim.api.nvim_open_win(bufnr, true, win_options)
   vim.wo[window].winfixbuf = true
 
-  local selected = choices
+  local unselected = {}
 
   ---@enum icon
   local icons = { yes = '✅', no = '❌' }
@@ -815,12 +815,12 @@ local function select_many(choices, opts, on_choices)
         events = {
           toggle = function(ctx)
             local icon
-            if selected[i] then
-              selected[i] = nil
-              icon = icons.no
-            else
-              selected[i] = choice
+            if unselected[i] then
+              unselected[i] = nil
               icon = icons.yes
+            else
+              unselected[i] = true
+              icon = icons.no
             end
 
             self.text = totext(icon, choice)
@@ -837,9 +837,13 @@ local function select_many(choices, opts, on_choices)
     events = {
       make_selection = function(_)
         vim.api.nvim_win_close(window, true)
-        if on_choices then
-          on_choices(vim.tbl_values(selected))
-        end
+        local chosen = {}
+        local unchosen = {}
+        vim.iter(ipairs(choices)):each(function(i, choice)
+          local into = unselected[i] and unchosen or chosen
+          table.insert(into, choice)
+        end)
+        on_choices(chosen, unchosen)
       end,
       clear = function(_)
         vim.api.nvim_win_close(window, true)

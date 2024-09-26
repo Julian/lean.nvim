@@ -119,5 +119,34 @@ describe(
 
       assert.are.same({ { description = 'bar' } }, selected)
     end)
+
+    it('returns the unselected choices second', function()
+      local selected, unselected
+
+      tui.select_many({ 1, 2, 3 }, nil, function(chosen, unchosen)
+        selected = chosen
+        unselected = unchosen
+      end)
+
+      helpers.wait_for_new_window { initial_window }
+      -- Sigh, force a BufEnter to make sure BufRenderer:update_position is
+      -- called, which doesn't happen automatically here but does interactively.
+      vim.cmd.doautocmd 'BufEnter'
+
+      helpers.feed '<Tab>jj'
+      vim.cmd.doautocmd 'CursorMoved'
+      helpers.feed '<Tab>'
+
+      local FRIGGING_WHITESPACE = '      '
+      assert.contents.are(FRIGGING_WHITESPACE .. '\n' .. [[
+       ❌ 1
+       ✅ 2
+       ❌ 3
+      ]] .. '\n' .. FRIGGING_WHITESPACE)
+
+      helpers.feed '<CR>'
+
+      assert.are.same({ { 2 }, { 1, 3 } }, { selected, unselected })
+    end)
   end)
 )
