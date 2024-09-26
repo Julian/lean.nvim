@@ -755,4 +755,115 @@ function BufRenderer:get_root_ancestor()
   return self
 end
 
-return { BufRenderer = BufRenderer, Element = Element }
+---@class SelectionOpts<C>
+---@field format_item? fun(c: any): string format an item as a string, defaults to tostring
+---@field title? string an optional title, typically used for the prompt
+---@field footer? string an optional footer, typically used for instructions
+---@field relative_win? number a window ID to open the popup relative to
+
+---Interactively select from a set of choices.
+---@generic C : any
+---@param choices C[] the set of choices to pick from
+---@param opts? SelectionOpts<C>
+---@param on_choices fun(choices: C[]): nil a callback called with selected choices
+---@return nil
+local function select_many(choices, opts, on_choices)
+  -- This doesn't exist on `vim.ui` yet. See e.g. neovim/neovim#18161
+  -- though the PR is essentially stale/abandoned.
+  opts = vim.tbl_extend('keep', opts or {}, {
+    format_item = tostring,
+    title = 'Select one or more of:',
+  })
+
+  local bufnr = vim.api.nvim_create_buf(false, true)
+  local win_options = {
+    style = 'minimal',
+    relative = 'win',
+    win = opts.relative_win,
+    border = 'rounded',
+    title = opts.title,
+    footer =  '<Tab>: toggle, <CR>: confirm, <Esc>: cancel',
+    footer_pos = 'center',
+    bufpos = {100, 10},
+    width = 50,
+    height = #choices + 2,
+    zindex = 150,  -- insertion completion is 100, so go higher
+  }
+
+  local window = vim.api.nvim_open_win(bufnr, true, win_options)
+  vim.wo[window].winfixbuf = true
+
+  local selected = choices
+
+  ---@enum icon
+  local icons = { yes = '✅', no = '❌' }
+
+  ---Format a choice as text.
+  ---@param icon icon
+  ---@param choice any
+  ---@return string
+  local function totext(icon, choice)
+    return (' %s %s\n'):format(icon, opts.format_item(choice))
+  end
+
+  local element = Element:new {
+    text = '\n',
+    children = vim.iter(ipairs(choices)):map(function(i, choice)
+      local self
+      self = Element:new {
+        text = totext(icons.yes, choice),
+        events = {
+          toggle = function(ctx)
+            local icon
+            if selected[i] then
+              selected[i] = nil
+              icon = icons.no
+            else
+              selected[i] = choice
+              icon = icons.yes
+            end
+
+            self.text = totext(icon, choice)
+            ctx.rerender()
+          end,
+        },
+        keymaps = {
+          ['<Tab>'] = 'toggle',
+        }
+      }
+      return self
+    end):totable(),
+
+    events = {
+      make_selection = function(_)
+        vim.api.nvim_win_close(window, true)
+        if on_choices then
+          on_choices(vim.tbl_values(selected))
+        end
+      end,
+      clear = function(_)
+        vim.api.nvim_win_close(window, true)
+      end,
+    },
+  }
+
+  local renderer = element:renderer {
+    buf = bufnr,
+    keymaps = {
+      ['K'] = 'toggle',
+      ['<Tab>'] = 'toggle',
+      ['<CR>'] = 'make_selection',
+      ['<Esc>'] = 'clear',
+    }
+  }
+  renderer:render()
+
+  -- Set the cursor to the first entry
+  vim.api.nvim_win_set_cursor(window, { 2, 5 })
+end
+
+return {
+  BufRenderer = BufRenderer,
+  Element = Element,
+  select_many = select_many,
+}
