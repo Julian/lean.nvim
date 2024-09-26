@@ -758,7 +758,7 @@ end
 ---@class SelectionOpts<C>
 ---@field format_item? fun(c: any): string format an item as a string, defaults to tostring
 ---@field tooltip_for? fun(c: any): string an optional tooltip to show when hovered
----@field select? integer[] the *indices* of choices to preselect, defaulting to *all*
+---@field start_selected? fun(c: any): boolean whether the item should start initially selected
 ---@field title? string an optional title, typically used for the prompt
 ---@field footer? string an optional footer, typically used for instructions
 ---@field relative_win? number a window ID to open the popup relative to
@@ -774,6 +774,7 @@ local function select_many(choices, opts, on_choices)
   -- though the PR is essentially stale/abandoned.
   opts = vim.tbl_extend('keep', opts or {}, {
     format_item = tostring,
+    start_selected = function(_) return true end,
     title = 'Select one or more of:',
   })
 
@@ -795,15 +796,7 @@ local function select_many(choices, opts, on_choices)
   local window = vim.api.nvim_open_win(bufnr, true, win_options)
   vim.wo[window].winfixbuf = true
 
-  local selected
-  if opts.select then
-    selected = vim.defaulttable(function(_) return false end)
-    for each in vim.iter(opts.select) do
-      selected[each] = true
-    end
-  else
-    selected = vim.defaulttable(function(_) return true end)
-  end
+  local selected = vim.iter(choices):map(opts.start_selected):totable()
 
   ---Format a choice as text.
   ---@param select boolean whether the choice is selected or not

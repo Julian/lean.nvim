@@ -152,14 +152,14 @@ describe(
     it('can preselect only a subset of choices', function()
       local selected, unselected
 
-      tui.select_many(
-        { 'foo', 'bar', 'baz', 'quux' },
-        { select = { 2, 4 } },
-        function(chosen, unchosen)
-          selected = chosen
-          unselected = unchosen
-        end
-      )
+      tui.select_many({ 'foo', 'bar', 'baz', 'quux' }, {
+        start_selected = function(choice)
+          return choice == 'bar' or choice == 'quux'
+        end,
+      }, function(chosen, unchosen)
+        selected = chosen
+        unselected = unchosen
+      end)
 
       helpers.wait_for_new_window { initial_window }
       -- Sigh, force a BufEnter to make sure BufRenderer:update_position is
