@@ -757,6 +757,7 @@ end
 
 ---@class SelectionOpts<C>
 ---@field format_item? fun(c: any): string format an item as a string, defaults to tostring
+---@field tooltip_for? fun(c: any): string an optional tooltip to show when hovered
 ---@field select? integer[] the *indices* of choices to preselect, defaulting to *all*
 ---@field title? string an optional title, typically used for the prompt
 ---@field footer? string an optional footer, typically used for instructions
@@ -788,7 +789,7 @@ local function select_many(choices, opts, on_choices)
     bufpos = {100, 10},
     width = 50,
     height = #choices + 2,
-    zindex = 150,  -- insertion completion is 100, so go higher
+    zindex = 50,
   }
 
   local window = vim.api.nvim_open_win(bufnr, true, win_options)
@@ -820,6 +821,17 @@ local function select_many(choices, opts, on_choices)
       self = Element:new {
         text = totext(selected[i], choice),
         events = {
+          click = function(ctx)
+            -- TODO: This seems like maybe it could/should be a default handler
+            --       in our TUI framework for when we have tooltips to show?
+            if self.tooltip then
+              self:remove_tooltip()
+            elseif opts.tooltip_for then
+              local tooltip_text = opts.tooltip_for(choice)
+              self:add_tooltip(Element.noop(tooltip_text))
+            end
+            ctx.rehover()
+          end,
           toggle = function(ctx)
             selected[i] = not selected[i]
             self.text = totext(selected[i], choice)
@@ -827,6 +839,7 @@ local function select_many(choices, opts, on_choices)
           end,
         },
         keymaps = {
+          ['K'] = 'click',
           ['<Tab>'] = 'toggle',
         }
       }
@@ -853,7 +866,7 @@ local function select_many(choices, opts, on_choices)
   local renderer = element:renderer {
     buf = bufnr,
     keymaps = {
-      ['K'] = 'toggle',
+      ['K'] = 'click',
       ['<Tab>'] = 'toggle',
       ['<CR>'] = 'make_selection',
       ['<Esc>'] = 'clear',

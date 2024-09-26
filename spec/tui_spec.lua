@@ -189,5 +189,32 @@ describe(
 
       assert.are.same({ { 'quux' }, { 'foo', 'bar', 'baz' } }, { selected, unselected })
     end)
+
+    it('shows tooltips when available', function()
+      tui.select_many({ 'foo', 'bar', 'baz', 'quux' }, {
+        tooltip_for = function(choice)
+          return choice .. "'s tooltip"
+        end,
+      }, function() end)
+
+      local selection_window = helpers.wait_for_new_window { initial_window }
+      -- Sigh, force a BufEnter to make sure BufRenderer:update_position is
+      -- called, which doesn't happen automatically here but does interactively.
+      vim.cmd.doautocmd 'BufEnter'
+
+      helpers.feed 'K'
+      local tooltip = helpers.wait_for_new_window { initial_window, selection_window }
+
+      assert.contents.are {
+        "foo's tooltip",
+        bufnr = vim.api.nvim_win_get_buf(tooltip),
+      }
+
+      helpers.feed '<Esc>'
+
+      -- FIXME: Are we abandoning tooltip windows?
+      -- Why is clear_all so hard to define?
+      -- assert.windows.are{ initial_window }
+    end)
   end)
 )
