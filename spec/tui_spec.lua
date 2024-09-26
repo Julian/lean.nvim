@@ -148,5 +148,46 @@ describe(
 
       assert.are.same({ { 2 }, { 1, 3 } }, { selected, unselected })
     end)
+
+    it('can preselect only a subset of choices', function()
+      local selected, unselected
+
+      tui.select_many(
+        { 'foo', 'bar', 'baz', 'quux' },
+        { select = { 2, 4 } },
+        function(chosen, unchosen)
+          selected = chosen
+          unselected = unchosen
+        end
+      )
+
+      helpers.wait_for_new_window { initial_window }
+      -- Sigh, force a BufEnter to make sure BufRenderer:update_position is
+      -- called, which doesn't happen automatically here but does interactively.
+      vim.cmd.doautocmd 'BufEnter'
+
+      local FRIGGING_WHITESPACE = '      '
+      assert.contents.are(FRIGGING_WHITESPACE .. '\n' .. [[
+       ❌ foo
+       ✅ bar
+       ❌ baz
+       ✅ quux
+      ]] .. '\n' .. FRIGGING_WHITESPACE)
+
+      helpers.feed 'j'
+      vim.cmd.doautocmd 'CursorMoved'
+      helpers.feed '<Tab>'
+
+      assert.contents.are(FRIGGING_WHITESPACE .. '\n' .. [[
+       ❌ foo
+       ❌ bar
+       ❌ baz
+       ✅ quux
+      ]] .. '\n' .. FRIGGING_WHITESPACE)
+
+      helpers.feed '<CR>'
+
+      assert.are.same({ { 'quux' }, { 'foo', 'bar', 'baz' } }, { selected, unselected })
+    end)
   end)
 )

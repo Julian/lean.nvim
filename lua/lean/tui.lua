@@ -757,6 +757,7 @@ end
 
 ---@class SelectionOpts<C>
 ---@field format_item? fun(c: any): string format an item as a string, defaults to tostring
+---@field select? integer[] the *indices* of choices to preselect, defaulting to *all*
 ---@field title? string an optional title, typically used for the prompt
 ---@field footer? string an optional footer, typically used for instructions
 ---@field relative_win? number a window ID to open the popup relative to
@@ -793,16 +794,22 @@ local function select_many(choices, opts, on_choices)
   local window = vim.api.nvim_open_win(bufnr, true, win_options)
   vim.wo[window].winfixbuf = true
 
-  local unselected = {}
-
-  ---@enum icon
-  local icons = { yes = '✅', no = '❌' }
+  local selected
+  if opts.select then
+    selected = vim.defaulttable(function(_) return false end)
+    for each in vim.iter(opts.select) do
+      selected[each] = true
+    end
+  else
+    selected = vim.defaulttable(function(_) return true end)
+  end
 
   ---Format a choice as text.
-  ---@param icon icon
+  ---@param select boolean whether the choice is selected or not
   ---@param choice any
   ---@return string
-  local function totext(icon, choice)
+  local function totext(select, choice)
+    local icon = select and '✅' or '❌'
     return (' %s %s\n'):format(icon, opts.format_item(choice))
   end
 
@@ -811,19 +818,11 @@ local function select_many(choices, opts, on_choices)
     children = vim.iter(ipairs(choices)):map(function(i, choice)
       local self
       self = Element:new {
-        text = totext(icons.yes, choice),
+        text = totext(selected[i], choice),
         events = {
           toggle = function(ctx)
-            local icon
-            if unselected[i] then
-              unselected[i] = nil
-              icon = icons.yes
-            else
-              unselected[i] = true
-              icon = icons.no
-            end
-
-            self.text = totext(icon, choice)
+            selected[i] = not selected[i]
+            self.text = totext(selected[i], choice)
             ctx.rerender()
           end,
         },
@@ -840,7 +839,7 @@ local function select_many(choices, opts, on_choices)
         local chosen = {}
         local unchosen = {}
         vim.iter(ipairs(choices)):each(function(i, choice)
-          local into = unselected[i] and unchosen or chosen
+          local into = selected[i] and chosen or unchosen
           table.insert(into, choice)
         end)
         on_choices(chosen, unchosen)
