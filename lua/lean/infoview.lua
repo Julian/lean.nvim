@@ -51,6 +51,14 @@ local options = {
 
 options._DEFAULTS = vim.deepcopy(options)
 
+--TODO: Move use_widgets here, if not delete it.
+---@class InfoviewViewOptions
+---@field show_types boolean show type hypotheses
+---@field show_instances boolean show instance hypotheses
+---@field show_hidden_assumptions boolean show hypothesis names which are inaccessible
+---@field show_let_values boolean show let-value bodies
+---@field reverse boolean order hypotheses bottom-to-top
+
 --- An individual pin.
 ---@class Pin
 ---@field id string @a label to identify the pin
@@ -267,6 +275,70 @@ function Infoview:enter()
   if self.window and vim.api.nvim_win_is_valid(self.window) then
     vim.api.nvim_set_current_win(self.window)
   end
+end
+
+---@class FilterSelection
+---@field description string
+---@field option string
+
+--- Interactively set view options for this infoview.
+function Infoview:select_view_options()
+  ---@type FilterSelection[]
+  local choices = {
+    {
+      name = 'show instances',
+      description = 'Show hypotheses which are instances of Lean type classes?',
+      option = 'show_instances',
+    },
+    {
+      name = 'show types',
+      description = 'Show hypotheses which are types (rather than terms)?',
+      option = 'show_types',
+    },
+    {
+      name = 'show inaccessible names',
+      description = 'Show inaccessible names (those ending in ✝)?',
+      option = 'show_hidden_assumptions',
+    },
+    {
+      name = 'show let bodies',
+      description = 'Show the bodies of let-values?',
+      option = 'show_let_values',
+    },
+    {
+      name = 'reverse order',
+      description = 'Show hypotheses from bottom-to-top rather than top-to-bottom?',
+      option = 'reverse',
+    },
+  }
+
+  local previous = require 'lean.config'().infoview.view_options or {}
+  require('lean.tui').select_many(choices, {
+    format_item = function(item)
+      return item.name
+    end,
+    tooltip_for = function(item)
+      return item.description
+    end,
+    start_selected = function(choice)
+      return previous[choice.option]
+    end,
+    title = 'View Options',
+    relative_win = self.window,
+  }, function(selected, unselected)
+    -- XXX: This needs fixing when there are multiple infoviews.
+    local view_options = {}
+    for each in vim.iter(selected) do
+      view_options[each.option] = true
+    end
+    for each in vim.iter(unselected) do
+      view_options[each.option] = false
+    end
+
+    local config = vim.g.lean_config
+    config.infoview.view_options = view_options
+    vim.g.lean_config = config
+  end)
 end
 
 --- API for opening an auxilliary window relative to the current infoview window.
@@ -1319,6 +1391,14 @@ function infoview.reposition()
   if iv then
     iv:reposition()
   end
+end
+
+--- Interactively set some view options for the infoview.
+---
+--- Does not persist the selected options; if you wish to permanently affect
+--- which hypotheses are shown, set them in your lean.nvim configuration.
+function infoview.select_view_options()
+  infoview.open():select_view_options()
 end
 
 return infoview

@@ -27,6 +27,7 @@ local lean = {
       ['<LocalLeader>dt'] = '<Cmd>LeanInfoviewToggleNoClearAutoDiffPin<CR>',
       ['<LocalLeader>w'] = '<Cmd>LeanInfoviewEnableWidgets<CR>',
       ['<LocalLeader>W'] = '<Cmd>LeanInfoviewDisableWidgets<CR>',
+      ['<LocalLeader>v'] = '<Cmd>LeanInfoviewViewOptions<CR>',
       ['<LocalLeader><Tab>'] = '<Cmd>LeanGotoInfoview<CR>',
       ['<LocalLeader>\\'] = '<Cmd>LeanAbbreviationsReverseLookup<CR>',
     },
@@ -80,17 +81,22 @@ function lean.setup(opts)
     command! LeanTermGoal :lua require'lean.commands'.show_term_goal()
     command! LeanLineDiagnostics :lua require'lean.commands'.show_line_diagnostics()
 
+    command! LeanGotoInfoview :lua require'lean.infoview'.go_to()
     command! LeanInfoviewToggle :lua require'lean.infoview'.toggle()
+
+    command! LeanInfoviewViewOptions :lua require'lean.infoview'.select_view_options()
+
     command! LeanInfoviewPinTogglePause :lua require'lean.infoview'.pin_toggle_pause()
     command! LeanInfoviewAddPin :lua require'lean.infoview'.add_pin()
     command! LeanInfoviewClearPins :lua require'lean.infoview'.clear_pins()
+
     command! LeanInfoviewSetDiffPin :lua require'lean.infoview'.set_diff_pin()
     command! LeanInfoviewClearDiffPin :lua require'lean.infoview'.clear_diff_pin()
     command! LeanInfoviewToggleAutoDiffPin :lua require'lean.infoview'.toggle_auto_diff_pin(true)
     command! LeanInfoviewToggleNoClearAutoDiffPin :lua require'lean.infoview'.toggle_auto_diff_pin(false)
+
     command! LeanInfoviewEnableWidgets :lua require'lean.infoview'.enable_widgets()
     command! LeanInfoviewDisableWidgets :lua require'lean.infoview'.disable_widgets()
-    command! LeanGotoInfoview :lua require'lean.infoview'.go_to()
 
     command! LeanAbbreviationsReverseLookup :lua require'lean.abbreviations'.show_reverse_lookup()
 

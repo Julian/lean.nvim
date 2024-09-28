@@ -5,9 +5,10 @@ require('lean').setup {}
 ---@type lean.Config
 vim.g.lean_config = {
   infoview = {
-    filter_hypothesis = function(hyp)
-      return not hyp.isType and not vim.deep_equal(hyp.names, { 'b' })
-    end,
+    view_options = {
+      show_types = false,
+      reverse = true,
+    },
   },
 }
 
@@ -25,9 +26,10 @@ describe(
 
         assert.infoview_contents.are [[
       case h
-      n : Nat
-      c : 4 = 4
       ⊢ n = n
+      c : 4 = 4
+      b : 3 = 3
+      n : Nat
     ]]
       end)
     end

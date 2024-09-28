@@ -216,23 +216,68 @@ local function code_with_infos(t, sess)
   return element
 end
 
+--- A hypothesis name which is accessible according to Lean's naming conventions.
+---@param name string
+local function is_accessible(name)
+  return name:sub(-#'✝') ~= '✝'
+end
+
+--- Filter the given goal hypotheses according to configured view options.
+--- @param hyps InteractiveHypothesisBundle[]
+--- @param opts InfoviewViewOptions
+--- @return InteractiveHypothesisBundle[]
+local function get_filtered_hypotheses(hyps, opts)
+  ---@param hyp InteractiveHypothesisBundle
+  return vim.iter(hyps):fold({}, function(acc, hyp)
+    if (not opts.show_instances and hyp.isInstance) or (not opts.show_types and hyp.isType) then
+      return acc
+    end
+
+    local names = opts.show_hidden_assumptions and hyp.names
+      or vim.iter(hyp.names):filter(is_accessible):totable()
+    ---@type InteractiveHypothesisBundle
+    local h_new = vim.tbl_extend('force', hyp, {
+      names = names,
+      val = opts.show_let_values and hyp.val or nil,
+    })
+
+    if #names ~= 0 then
+      table.insert(acc, h_new)
+    end
+    return acc
+  end)
+end
+
 ---@param goal InteractiveGoal | InteractiveTermGoal
 ---@param sess Subsession
 local function interactive_goal(goal, sess)
-  local children = {}
+  local view_options = config().infoview.view_options or {}
 
-  if goal.userName ~= nil then
-    local case = Element:new { text = string.format('case %s\n', goal.userName) }
-    table.insert(children, case)
+  local goal_element = Element:new {
+    text = goal.goalPrefix or '⊢ ',
+    name = 'goal',
+    children = { code_with_infos(goal.type, sess) },
+  }
+
+  local children = {
+    goal.userName and Element:new { text = ('case %s\n'):format(goal.userName) } or nil,
+  }
+
+  local hyps = vim.iter(get_filtered_hypotheses(goal.hyps, view_options))
+  if view_options.reverse then
+    table.insert(children, goal_element)
+    table.insert(children, Element:new { text = '\n' })
+    hyps = hyps:rev()
   end
 
-  vim.iter(goal.hyps):filter(config().infoview.filter_hypothesis):each(function(hyp)
+  ---@param hyp InteractiveHypothesisBundle
+  hyps:each(function(hyp)
     local hyp_element = Element:new {
       text = table.concat(hyp.names, ' ') .. ' : ',
       name = 'hyp',
       children = { code_with_infos(hyp.type, sess) },
     }
-    if hyp.val ~= nil then
+    if view_options.show_let_values and hyp.val ~= nil then
       hyp_element:add_child(Element:new {
         text = ' := ',
         name = 'hyp_val',
@@ -243,14 +288,10 @@ local function interactive_goal(goal, sess)
     table.insert(children, hyp_element)
   end)
 
-  table.insert(
-    children,
-    Element:new {
-      text = goal.goalPrefix or '⊢ ',
-      name = 'goal',
-      children = { code_with_infos(goal.type, sess) },
-    }
-  )
+  if view_options.reverse ~= true then
+    table.insert(children, goal_element)
+  end
+
   return Element:new { name = 'interactive-goal', children = children }
 end
 

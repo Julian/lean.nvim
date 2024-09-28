@@ -28,7 +28,7 @@
 ---@field nomodifiable string[] globs to prevent accidental modification
 
 ---@class lean.infoview.Config
----@field filter_hypothesis? FilterHypothesis return false or nil to hide a hypothesis
+---@field view_options? InfoviewViewOptions
 
 ---@type lean.MergedConfig
 local DEFAULTS = {
@@ -58,12 +58,14 @@ local DEFAULTS = {
 
   ---@type lean.infoview.Config
   infoview = {
-
-    ---Filter nothing by default.
-    ---@return boolean
-    filter_hypothesis = function(_)
-      return true
-    end,
+    ---@type InfoviewViewOptions
+    view_options = {
+      show_types = true,
+      show_instances = true,
+      show_hidden_assumptions = true,
+      show_let_values = true,
+      reverse = false,
+    },
   },
 }
 

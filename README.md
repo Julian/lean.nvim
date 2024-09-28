@@ -136,6 +136,7 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 | `<LocalLeader>dc`    | clear current infoview diff pin                                     |
 | `<LocalLeader>dd`    | toggle auto diff pin mode                                           |
 | `<LocalLeader>dt`    | toggle auto diff pin mode without clearing diff pin                 |
+| `<LocalLeader>v`     | interactively configure infoview view options                       |
 | `<LocalLeader><Tab>` | jump into the infoview window associated with the current lean file |
 | `<LocalLeader>\\`    | show what abbreviation produces the symbol under the cursor         |
 
