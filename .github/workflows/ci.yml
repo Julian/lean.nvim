@@ -50,3 +50,7 @@ jobs:
         uses: nvim-neorocks/luarocks-tag-release@v7
         env:
           LUAROCKS_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
+      - name: Create a GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
