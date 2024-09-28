@@ -867,8 +867,23 @@ local function select_many(choices, opts, on_choices)
   }
   renderer:render()
 
-  -- Set the cursor to the first entry
-  vim.api.nvim_win_set_cursor(window, { 2, 5 })
+  -- the 'real' editable region where entries are
+  local start_line = 2
+  local end_line = #choices + 1
+  local first_column = 5
+
+  vim.api.nvim_win_set_cursor(window, { start_line, first_column })
+
+  vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+    group = vim.api.nvim_create_augroup('LeanSelectManyWindow', { clear = false }),
+    buffer = bufnr,
+    callback = function()  -- clip the cursor to the real editable region
+      local row, column = unpack(vim.api.nvim_win_get_cursor(window))
+      row = math.max(math.min(row, end_line), start_line)
+      column = math.max(column, first_column)
+      vim.api.nvim_win_set_cursor(window, { row, column })
+    end,
+  })
 end
 
 return {

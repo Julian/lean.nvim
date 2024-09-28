@@ -216,5 +216,25 @@ describe(
       -- Why is clear_all so hard to define?
       -- assert.windows.are{ initial_window }
     end)
+
+    it('restricts the cursor to the entry lines', function()
+      tui.select_many({ 'foo', 'bar', 'baz', 'quux' }, nil, function() end)
+
+      helpers.wait_for_new_window { initial_window }
+
+      -- Sigh, force a CursorMoved to make our autocmd fire
+      -- which doesn't happen automatically here but does interactively.
+      helpers.feed 'G'
+      vim.cmd.doautocmd 'CursorMoved'
+
+      -- we end up on the last entry, not the blank line below it
+      assert.current_line.is ' ✅ quux'
+
+      helpers.feed 'gg'
+      vim.cmd.doautocmd 'CursorMoved'
+
+      -- we end up on the first entry, not the blank line before it
+      assert.current_line.is ' ✅ foo'
+    end)
   end)
 )
