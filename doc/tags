@@ -1,6 +1,8 @@
+FilterSelection	lean.txt	/*FilterSelection*
 Info	lean.txt	/*Info*
 Infoview	lean.txt	/*Infoview*
 InfoviewNewArgs	lean.txt	/*InfoviewNewArgs*
+InfoviewViewOptions	lean.txt	/*InfoviewViewOptions*
 LoogleResult	lean.txt	/*LoogleResult*
 Pin	lean.txt	/*Pin*
 abbreviations.convert	lean.txt	/*abbreviations.convert*
@@ -27,6 +29,7 @@ infoview.go_to	lean.txt	/*infoview.go_to*
 infoview.open	lean.txt	/*infoview.open*
 infoview.pin_toggle_pause	lean.txt	/*infoview.pin_toggle_pause*
 infoview.reposition	lean.txt	/*infoview.reposition*
+infoview.select_view_options	lean.txt	/*infoview.select_view_options*
 infoview.set_autoopen	lean.txt	/*infoview.set_autoopen*
 infoview.set_autopause	lean.txt	/*infoview.set_autopause*
 infoview.set_diff_pin	lean.txt	/*infoview.set_diff_pin*
