@@ -33,3 +33,20 @@ jobs:
         run: just test
         env:
           TEST_SEQUENTIAL: 1
+
+  release:
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+
+    needs: ci
+    runs-on: ubuntu-latest
+
+    permissions:
+      attestations: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload to LuaRocks
+        uses: nvim-neorocks/luarocks-tag-release@v7
+        env:
+          LUAROCKS_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
