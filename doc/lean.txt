@@ -57,6 +57,16 @@ The Infoview                                                     *lean.infoview*
  Infoview-specific interaction for customizing or controlling the display of
  Lean's interactive goal state.
 
+InfoviewViewOptions                                        *InfoviewViewOptions*
+
+    Fields: ~
+        {show_types}               (boolean)  show type hypotheses
+        {show_instances}           (boolean)  show instance hypotheses
+        {show_hidden_assumptions}  (boolean)  show hypothesis names which are inaccessible
+        {show_let_values}          (boolean)  show let-value bodies
+        {reverse}                  (boolean)  order hypotheses bottom-to-top
+
+
 Pin                                                                        *Pin*
      An individual pin.
 
@@ -90,6 +100,13 @@ InfoviewNewArgs                                                *InfoviewNewArgs*
         {width?}                (integer)
         {height?}               (integer)
         {horizontal_position?}  ()
+
+
+FilterSelection                                                *FilterSelection*
+
+    Fields: ~
+        {description}  (string)
+        {option}       (string)
 
 
 infoview.close_all()                                        *infoview.close_all*
@@ -178,6 +195,13 @@ infoview.reposition()                                      *infoview.reposition*
      Move the current infoview to the appropriate spot based on the
      current screen dimensions.
      Does nothing if there are more than 2 open windows.
+
+
+infoview.select_view_options()                    *infoview.select_view_options*
+     Interactively set some view options for the infoview.
+
+     Does not persist the selected options; if you wish to permanently affect
+     which hypotheses are shown, set them in your lean.nvim configuration.
 
 
 ==============================================================================
