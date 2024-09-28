@@ -874,8 +874,14 @@ local function select_many(choices, opts, on_choices)
 
   vim.api.nvim_win_set_cursor(window, { start_line, first_column })
 
+  local group = vim.api.nvim_create_augroup('LeanSelectManyWindow', { clear = false })
+  vim.api.nvim_create_autocmd('WinLeave', {
+    group = group,
+    buffer = bufnr,
+    callback = function() renderer:event 'clear' end
+  })
   vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-    group = vim.api.nvim_create_augroup('LeanSelectManyWindow', { clear = false }),
+    group = group,
     buffer = bufnr,
     callback = function()  -- clip the cursor to the real editable region
       local row, column = unpack(vim.api.nvim_win_get_cursor(window))

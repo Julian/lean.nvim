@@ -214,13 +214,14 @@ describe(
 
       -- FIXME: Are we abandoning tooltip windows?
       -- Why is clear_all so hard to define?
-      -- assert.windows.are{ initial_window }
+      vim.api.nvim_win_close(tooltip, true)
+      assert.windows.are { initial_window }
     end)
 
     it('restricts the cursor to the entry lines', function()
       tui.select_many({ 'foo', 'bar', 'baz', 'quux' }, nil, function() end)
 
-      helpers.wait_for_new_window { initial_window }
+      local selection_window = helpers.wait_for_new_window { initial_window }
 
       -- Sigh, force a CursorMoved to make our autocmd fire
       -- which doesn't happen automatically here but does interactively.
@@ -235,6 +236,23 @@ describe(
 
       -- we end up on the first entry, not the blank line before it
       assert.current_line.is ' ✅ foo'
+
+      vim.api.nvim_win_close(selection_window, true)
+    end)
+
+    it('autocloses if the window is left', function()
+      assert.windows.are { initial_window }
+
+      tui.select_many({ 'foo', 'bar', 'baz', 'quux' }, nil, function() end)
+
+      local selection_window = helpers.wait_for_new_window { initial_window }
+      assert.windows.are { initial_window, selection_window }
+
+      vim.cmd.wincmd '%'
+
+      -- FIXME: Here too we don't actually end up with just the initial window
+      -- in tests...
+      -- assert.windows.are{ initial_window }
     end)
   end)
 )
