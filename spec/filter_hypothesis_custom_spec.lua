@@ -25,12 +25,12 @@ describe(
         helpers.move_cursor { to = { 2, 2 } }
 
         assert.infoview_contents.are [[
-      case h
-      ⊢ n = n
-      c : 4 = 4
-      b : 3 = 3
-      n : Nat
-    ]]
+          case h
+          ⊢ n = n
+          c : 4 = 4
+          b : 3 = 3
+          n : Nat
+        ]]
       end)
     end
   )
