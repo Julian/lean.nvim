@@ -27,6 +27,15 @@ describe('Element:concat', function()
       element
     )
   end)
+
+  it('returns nil when given no elements', function()
+    assert.is_nil(Element:concat({}, '\n'))
+  end)
+
+  it("doesn't introduce extra nesting when given one element", function()
+    local foo = Element:new { text = 'foo', name = 'foo-name' }
+    assert.is.same(Element:concat({ foo }, '\n'), foo)
+  end)
 end)
 
 describe('Element:renderer', function()

@@ -1103,7 +1103,7 @@ function Pin:__mk_data_elem(tick, opts)
     return components.NO_INFO
   end
 
-  return Element:concat(blocks, '\n\n', opts)
+  return Element:concat(blocks, '\n\n', opts) or Element:new {}
 end
 
 --- async function to update this pin's contents given the current position.
