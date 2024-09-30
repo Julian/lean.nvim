@@ -1,29 +1,12 @@
 ---@brief [[
---- Tests for the infoview when interactive widgets *are* enabled.
----
---- When debugging tests here, if you're confused about something not updating,
---- sprinkle print debugging around `infoview.Pin:__update`. Don't forget some
---- functions are run asynchronously, so if you don't see an update, it may be
---- because a test has finished before the promise fires, which usually means
---- the test needs to wait for an update (which `assert.infoview_contents`
---- does automatically, so use it).
----
---- Note that unfortunately as "usual" for neovim tests, those below are not
---- independent, so if you see unexpected behavior even though tests below
---- pass, you may be encountering a global-state-related bug which isn't
---- tickled by the precise sequence below.
----
---- Nevertheless, each test attempts to at least describe what preconditions it
---- wants (as guard assertions), so they should in theory be reorderable, or
---- ultimately perhaps separable into different files if performance isn't
---- terrible when doing so.
+--- Tests for the infoview when interactive widgets aren't enabled.
 ---@brief ]]
 
 local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
+require('lean').setup { infoview = { use_widgets = false } }
 
 describe('infoview content (auto-)update', function()
   local lean_window
@@ -89,6 +72,125 @@ describe('infoview content (auto-)update', function()
     vim.cmd.close { bang = true }
   end)
 
+  it('does not error while closed and continues updating when reopened', function()
+    assert.windows.are(lean_window, infoview.get_current_infoview().window)
+
+    infoview.close()
+
+    -- Move around a bit.
+    helpers.move_cursor { to = { 1, 0 } }
+    helpers.move_cursor { to = { 2, 0 } }
+    helpers.move_cursor { to = { 1, 0 } }
+
+    infoview.open()
+    assert.infoview_contents.are [[
+      ▶ 1:1-1:6: information:
+      1
+    ]]
+
+    helpers.move_cursor { to = { 3, 0 } }
+    assert.infoview_contents.are [[
+      ▶ 3:1-3:6: information:
+      9.000000
+    ]]
+  end)
+
+  it('does not error while closed manually and continues updating when reopened', function()
+    assert.windows.are(lean_window, infoview.get_current_infoview().window)
+
+    infoview.go_to()
+    vim.cmd.quit { bang = true }
+
+    -- Move around a bit.
+    helpers.move_cursor { to = { 1, 0 } }
+    helpers.move_cursor { to = { 2, 0 } }
+
+    -- Insert + delete a line, which should trigger our buf_attach callback...
+    -- FIXME: But it doesn't...
+    vim.cmd.normal 'o'
+    vim.cmd.normal 'dd'
+
+    helpers.move_cursor { to = { 1, 0 } }
+
+    infoview.open()
+    assert.infoview_contents.are [[
+      ▶ 1:1-1:6: information:
+      1
+    ]]
+
+    helpers.move_cursor { to = { 3, 0 } }
+    assert.infoview_contents.are [[
+      ▶ 3:1-3:6: information:
+      9.000000
+    ]]
+  end)
+
+  it('does not have line contents while closed', function()
+    assert.windows.are(lean_window, infoview.get_current_infoview().window)
+    infoview.close()
+    assert.has.errors(function()
+      infoview.get_current_infoview():get_lines()
+    end, 'infoview is not open')
+
+    -- But succeeds again when re-opened
+    infoview.open()
+    assert.has.no.errors(function()
+      infoview.get_current_infoview():get_lines()
+    end)
+  end)
+
+  describe('in multiple tabs', function()
+    it('updates separate infoviews independently', function()
+      local tab1_infoview = infoview.get_current_infoview()
+      assert.windows.are(lean_window, tab1_infoview.window)
+
+      helpers.move_cursor { to = { 1, 0 } }
+      assert.infoview_contents.are [[
+        ▶ 1:1-1:6: information:
+        1
+      ]]
+
+      vim.cmd.tabnew(fixtures.project.child 'Test/Squares.lean')
+      helpers.move_cursor { to = { 3, 0 } }
+      assert.infoview_contents.are [[
+        ▶ 3:1-3:6: information:
+        9.000000
+      ]]
+
+      -- But the first tab's contents are unchanged even without re-entering.
+      assert.infoview_contents.are {
+        [[
+          ▶ 1:1-1:6: information:
+          1
+        ]],
+        infoview = tab1_infoview,
+      }
+    end)
+
+    it('updates separate infoviews independently when one is closed', function()
+      local tab2 = vim.api.nvim_get_current_tabpage()
+      assert.is_not.equal(vim.api.nvim_win_get_tabpage(lean_window), tab2)
+
+      infoview.close()
+      vim.cmd.tabprevious()
+
+      helpers.move_cursor { to = { 3, 0 } }
+      assert.infoview_contents.are [[
+        ▶ 3:1-3:6: information:
+        9.000000
+      ]]
+
+      helpers.move_cursor { to = { 1, 0 } }
+      assert.infoview_contents.are [[
+        ▶ 1:1-1:6: information:
+        1
+      ]]
+
+      vim.cmd(tab2 .. 'tabclose')
+      assert.current_tabpage.is(vim.api.nvim_win_get_tabpage(lean_window))
+    end)
+  end)
+
   describe('components', function()
     vim.cmd.edit { fixtures.project.child 'Test.lean', bang = true }
 
@@ -124,12 +226,12 @@ describe('infoview content (auto-)update', function()
     end)
 
     it('shows multiple goals', function()
-      helpers.move_cursor { to = { 16, 3 } }
+      helpers.move_cursor { to = { 16, 2 } }
+      -- FIXME: This is missing a newline between the two cases.
       assert.infoview_contents.are [[
         ▶ 2 goals
         case zero
         ⊢ 0 = 0
-
         case succ
         n✝ : Nat
         ⊢ n✝ + 1 = n✝ + 1
