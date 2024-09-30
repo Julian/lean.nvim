@@ -52,7 +52,7 @@ function components.plain_goal(goal)
       table.insert(
         acc,
         Element:new {
-          text = '\n' .. k,
+          text = '\n\n' .. k,
           name = 'plain-goal',
         }
       )

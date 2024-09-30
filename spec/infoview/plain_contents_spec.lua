@@ -227,11 +227,11 @@ describe('infoview content (auto-)update', function()
 
     it('shows multiple goals', function()
       helpers.move_cursor { to = { 16, 2 } }
-      -- FIXME: This is missing a newline between the two cases.
       assert.infoview_contents.are [[
         ▶ 2 goals
         case zero
         ⊢ 0 = 0
+
         case succ
         n✝ : Nat
         ⊢ n✝ + 1 = n✝ + 1
