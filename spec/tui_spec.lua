@@ -61,7 +61,7 @@ describe(
       assert.are.equal(popup, vim.api.nvim_get_current_win())
       -- Sigh, force a BufEnter to make sure BufRenderer:update_position is
       -- called, which doesn't happen automatically here but does interactively.
-      vim.cmd.doautocmd 'BufEnter'
+      vim.api.nvim_exec_autocmds('BufEnter', {})
 
       local FRIGGING_WHITESPACE = '      '
       assert.contents.are(FRIGGING_WHITESPACE .. '\n' .. [[
@@ -105,7 +105,7 @@ describe(
       helpers.wait_for_new_window { initial_window }
       -- Sigh, force a BufEnter to make sure BufRenderer:update_position is
       -- called, which doesn't happen automatically here but does interactively.
-      vim.cmd.doautocmd 'BufEnter'
+      vim.api.nvim_exec_autocmds('BufEnter', {})
 
       local FRIGGING_WHITESPACE = '      '
       assert.contents.are(FRIGGING_WHITESPACE .. '\n' .. [[
@@ -115,7 +115,7 @@ describe(
       ]] .. '\n' .. FRIGGING_WHITESPACE)
 
       helpers.feed '<Tab>jj'
-      vim.cmd.doautocmd 'CursorMoved'
+      vim.api.nvim_exec_autocmds('CursorMoved', {})
       helpers.feed '<Tab>'
 
       assert.contents.are(FRIGGING_WHITESPACE .. '\n' .. [[
@@ -140,10 +140,10 @@ describe(
       helpers.wait_for_new_window { initial_window }
       -- Sigh, force a BufEnter to make sure BufRenderer:update_position is
       -- called, which doesn't happen automatically here but does interactively.
-      vim.cmd.doautocmd 'BufEnter'
+      vim.api.nvim_exec_autocmds('BufEnter', {})
 
       helpers.feed '<Tab>jj'
-      vim.cmd.doautocmd 'CursorMoved'
+      vim.api.nvim_exec_autocmds('CursorMoved', {})
       helpers.feed '<Tab>'
 
       local FRIGGING_WHITESPACE = '      '
@@ -173,7 +173,7 @@ describe(
       helpers.wait_for_new_window { initial_window }
       -- Sigh, force a BufEnter to make sure BufRenderer:update_position is
       -- called, which doesn't happen automatically here but does interactively.
-      vim.cmd.doautocmd 'BufEnter'
+      vim.api.nvim_exec_autocmds('BufEnter', {})
 
       local FRIGGING_WHITESPACE = '      '
       assert.contents.are(FRIGGING_WHITESPACE .. '\n' .. [[
@@ -184,7 +184,7 @@ describe(
       ]] .. '\n' .. FRIGGING_WHITESPACE)
 
       helpers.feed 'j'
-      vim.cmd.doautocmd 'CursorMoved'
+      vim.api.nvim_exec_autocmds('CursorMoved', {})
       helpers.feed '<Tab>'
 
       assert.contents.are(FRIGGING_WHITESPACE .. '\n' .. [[
@@ -209,7 +209,7 @@ describe(
       local selection_window = helpers.wait_for_new_window { initial_window }
       -- Sigh, force a BufEnter to make sure BufRenderer:update_position is
       -- called, which doesn't happen automatically here but does interactively.
-      vim.cmd.doautocmd 'BufEnter'
+      vim.api.nvim_exec_autocmds('BufEnter', {})
 
       helpers.feed 'K'
       local tooltip = helpers.wait_for_new_window { initial_window, selection_window }
@@ -235,13 +235,13 @@ describe(
       -- Sigh, force a CursorMoved to make our autocmd fire
       -- which doesn't happen automatically here but does interactively.
       helpers.feed 'G'
-      vim.cmd.doautocmd 'CursorMoved'
+      vim.api.nvim_exec_autocmds('CursorMoved', {})
 
       -- we end up on the last entry, not the blank line below it
       assert.current_line.is ' ✅ quux'
 
       helpers.feed 'gg'
-      vim.cmd.doautocmd 'CursorMoved'
+      vim.api.nvim_exec_autocmds('CursorMoved', {})
 
       -- we end up on the first entry, not the blank line before it
       assert.current_line.is ' ✅ foo'

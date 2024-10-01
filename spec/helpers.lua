@@ -54,7 +54,7 @@ function helpers.move_cursor(opts)
     .same(opts.to, vim.api.nvim_win_get_cursor(window))
 
   vim.api.nvim_win_set_cursor(window, opts.to)
-  vim.cmd.doautocmd 'CursorMoved'
+  vim.api.nvim_exec_autocmds('CursorMoved', {})
 end
 
 ---@class MoveCursorOpts
