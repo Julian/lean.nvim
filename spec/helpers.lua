@@ -140,15 +140,17 @@ function helpers.clean_buffer(contents, callback)
   return function()
     local bufnr = vim.api.nvim_create_buf(false, false)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
-    -- apparently necessary to trigger BufWinEnter
+
+    -- apparently necessary to trigger BufWinEnter, and below we BufEnter...
     vim.api.nvim_set_current_buf(bufnr)
-    vim.bo.bufhidden = 'hide'
+
     vim.bo.swapfile = false
     vim.bo.filetype = 'lean'
 
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
     vim.api.nvim_buf_call(bufnr, function()
-      callback { source_file = { bufnr = bufnr } }
+      vim.api.nvim_exec_autocmds('BufEnter', { buffer = bufnr })
+      callback()
     end)
   end
 end
