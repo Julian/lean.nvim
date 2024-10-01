@@ -76,19 +76,88 @@ describe('interactive infoviews', function()
     end)
   end)
 
-  describe(
-    'diagnostics',
-    helpers.clean_buffer('example : 37 = 37 := by', function()
-      it('are shown in the infoview', function()
-        helpers.move_cursor { to = { 1, 19 } }
-        assert.infoview_contents.are [[
-          ▶ 1:22-1:24: error:
-          unsolved goals
-          ⊢ 37 = 37
+  describe('diagnostics', function()
+    it(
+      'shows info messages',
+      helpers.clean_buffer(
+        [[
+        import Lean
+        elab "#testing123" : command => Lean.logInfo "Hello"
+        #testing123
+      ]],
+        function()
+          helpers.move_cursor { to = { 3, 2 } }
+          assert.infoview_contents.are [[
+            ▶ 3:1-3:12: information:
+            Hello
         ]]
-      end)
-    end)
-  )
+        end
+      )
+    )
+
+    it(
+      'shows warning messages',
+      helpers.clean_buffer(
+        [[
+        import Lean
+        elab "#testing123" : command => Lean.logWarning "Hmm..."
+        #testing123
+      ]],
+        function()
+          helpers.move_cursor { to = { 3, 2 } }
+          assert.infoview_contents.are [[
+            ▶ 3:1-3:12: warning:
+            Hmm...
+        ]]
+        end
+      )
+    )
+
+    it(
+      'shows error messages',
+      helpers.clean_buffer(
+        [[
+        import Lean
+        elab "#testing123" : command => Lean.logError "Uh oh!"
+        #testing123
+      ]],
+        function()
+          helpers.move_cursor { to = { 3, 2 } }
+          assert.infoview_contents.are [[
+            ▶ 3:1-3:12: error:
+            Uh oh!
+        ]]
+        end
+      )
+    )
+
+    it(
+      'shows multiple messages',
+      helpers.clean_buffer(
+        [[
+        import Lean
+        elab "#testing123" : command => do
+          Lean.logInfo "So"
+          Lean.logWarning "Many..."
+          Lean.logError "Messages!"
+        #testing123
+      ]],
+        function()
+          helpers.move_cursor { to = { 6, 1 } }
+          assert.infoview_contents.are [[
+            ▶ 6:1-6:12: information:
+            So
+
+            ▶ 6:1-6:12: warning:
+            Many...
+
+            ▶ 6:1-6:12: error:
+            Messages!
+        ]]
+        end
+      )
+    )
+  end)
 
   describe(
     'processing message',
