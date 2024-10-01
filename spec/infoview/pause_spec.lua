@@ -12,6 +12,7 @@ describe('infoview pause/unpause', function()
   it('can pause and unpause updates', function(_)
     vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
     helpers.move_cursor { to = { 3, 0 } }
+    vim.b.lean_test_ignore_whitespace = true
     assert.infoview_contents.are [[
       ▶ 3:1-3:6: information:
       9.000000

@@ -53,6 +53,7 @@ describe('widgets', function()
   ]],
       function()
         helpers.move_cursor { to = { 2, 0 } }
+        vim.b.lean_test_ignore_whitespace = true
         assert.infoview_contents.are [[
       ⊢ 2 = 2
 

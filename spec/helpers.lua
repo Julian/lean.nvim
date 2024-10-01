@@ -254,7 +254,21 @@ local function has_infoview_contents(_, arguments)
   local expected = _expected(arguments)
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
   helpers.wait_for_loading_pins(target_infoview)
-  local got = table.concat(target_infoview:get_lines(), '\n'):gsub('\n$', '')
+  local lines = target_infoview:get_lines()
+
+  -- FIXME: Remove the `.wo` check once all existing tests pass without it.
+  --        We also should tweak `dedent` so that this mistake doesn't happen,
+  --        probably by making it remove a fixed number of leading and trailing
+  --        newlines, not trimming all of them.
+  local nonempty = #lines > 0 and not vim.deep_equal(lines, { '' })
+  if nonempty and not vim.b.lean_test_ignore_whitespace then
+    for word, line in vim.iter { leading = lines[1], trailing = lines[#lines] } do
+      local msg = ('The infoview contains %s whitespace: %s\n'):format(word, vim.inspect(lines))
+      assert.message(msg).is_falsy(line:match '^%s*$')
+    end
+  end
+
+  local got = table.concat(lines, '\n'):gsub('\n$', '')
   assert.is.equal(expected, got)
   return true
 end

@@ -19,6 +19,7 @@ describe('infoview content (auto-)update', function()
     -- In theory we don't care where we are, but the right answer changes
     assert.current_cursor.is { 1, 0 }
 
+    vim.b.lean_test_ignore_whitespace = true
     assert.infoview_contents.are [[
       ▶ 1:1-1:6: information:
       1
@@ -39,6 +40,7 @@ describe('infoview content (auto-)update', function()
     vim.cmd.split()
     local second_window = vim.api.nvim_get_current_win()
     assert.current_cursor.is { 3, 0 }
+    vim.b.lean_test_ignore_whitespace = true
     assert.infoview_contents.are [[
       ▶ 3:1-3:6: information:
       9.000000
@@ -152,6 +154,7 @@ describe('infoview content (auto-)update', function()
 
       vim.cmd.tabnew(fixtures.project.child 'Test/Squares.lean')
       helpers.move_cursor { to = { 3, 0 } }
+      vim.b.lean_test_ignore_whitespace = true
       assert.infoview_contents.are [[
         ▶ 3:1-3:6: information:
         9.000000
