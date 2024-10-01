@@ -132,6 +132,56 @@ describe('interactive infoviews', function()
     )
 
     it(
+      'shows multiline messages which do not terminate in newlines',
+      helpers.clean_buffer(
+        [[
+        import Lean
+        elab "#testing123" : command => do
+          Lean.logInfo "Multiple\nLine\nMessage"
+          Lean.logInfo "Another"
+        #testing123
+      ]],
+        function()
+          helpers.move_cursor { to = { 5, 2 } }
+          assert.infoview_contents.are [[
+            ▶ 5:1-5:12: information:
+            Multiple
+            Line
+            Message
+
+            ▶ 5:1-5:12: information:
+            Another
+        ]]
+        end
+      )
+    )
+
+    it(
+      'shows multiline messages which do terminate in newlines',
+      helpers.clean_buffer(
+        [[
+        import Lean
+        elab "#testing123" : command => do
+          Lean.logInfo "Multiple\nLines\n"
+          Lean.logInfo "Another"
+        #testing123
+      ]],
+        function()
+          helpers.move_cursor { to = { 5, 2 } }
+          assert.infoview_contents.are [[
+            ▶ 5:1-5:12: information:
+            Multiple
+            Lines
+
+
+            ▶ 5:1-5:12: information:
+            Another
+        ]]
+        end
+      )
+    )
+
+    it(
       'shows multiple messages',
       helpers.clean_buffer(
         [[
