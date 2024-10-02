@@ -24,7 +24,6 @@ describe(
       it('filters hypotheses', function()
         helpers.move_cursor { to = { 2, 2 } }
 
-        vim.b.lean_test_ignore_whitespace = true
         assert.infoview_contents.are [[
           case h
           ⊢ n = n

@@ -222,30 +222,51 @@ local function is_accessible(name)
   return name:sub(-#'✝') ~= '✝'
 end
 
---- Filter the given goal hypotheses according to configured view options.
+--- Filter the hypotheses according to view options, then convert them to elements.
 --- @param hyps InteractiveHypothesisBundle[]
 --- @param opts InfoviewViewOptions
---- @return InteractiveHypothesisBundle[]
-local function get_filtered_hypotheses(hyps, opts)
+--- @param sess Subsession
+--- @return Element?
+local function to_hypotheses_element(hyps, opts, sess)
   ---@param hyp InteractiveHypothesisBundle
-  return vim.iter(hyps):fold({}, function(acc, hyp)
+  local children = vim.iter(hyps):map(function(hyp)
     if (not opts.show_instances and hyp.isInstance) or (not opts.show_types and hyp.isType) then
-      return acc
+      return
     end
 
-    local names = opts.show_hidden_assumptions and hyp.names
-      or vim.iter(hyp.names):filter(is_accessible):totable()
-    ---@type InteractiveHypothesisBundle
-    local h_new = vim.tbl_extend('force', hyp, {
-      names = names,
-      val = opts.show_let_values and hyp.val or nil,
-    })
-
-    if #names ~= 0 then
-      table.insert(acc, h_new)
+    local names = vim.iter(hyp.names)
+    if not opts.show_hidden_assumptions then
+      names = names:filter(is_accessible)
     end
-    return acc
+    if not names:peek() then
+      return
+    end
+
+    local element = Element:new {
+      text = names:join ' ' .. ' : ',
+      name = 'hyp',
+      children = { code_with_infos(hyp.type, sess) },
+    }
+
+    if opts.show_let_values and hyp.val then
+      element:add_child(Element:new {
+        text = ' := ',
+        name = 'hyp_val',
+        children = { code_with_infos(hyp.val, sess) },
+      })
+    end
+
+    return element
   end)
+
+  if not children:peek() then
+    return
+  end
+  if opts.reverse then
+    children = children:rev()
+  end
+
+  return Element:concat(children:totable(), '\n')
 end
 
 ---@param goal InteractiveGoal | InteractiveTermGoal
@@ -253,42 +274,29 @@ end
 local function interactive_goal(goal, sess)
   local view_options = config().infoview.view_options or {}
 
+  local children = {
+    goal.userName and Element:new { text = ('case %s\n'):format(goal.userName) } or nil,
+  }
+
   local goal_element = Element:new {
     text = goal.goalPrefix or '⊢ ',
     name = 'goal',
     children = { code_with_infos(goal.type, sess) },
   }
+  local separator = Element:new { text = '\n' }
+  local hyps = to_hypotheses_element(goal.hyps, view_options, sess)
 
-  local children = {
-    goal.userName and Element:new { text = ('case %s\n'):format(goal.userName) } or nil,
-  }
-
-  local hyps = vim.iter(get_filtered_hypotheses(goal.hyps, view_options))
   if view_options.reverse then
     table.insert(children, goal_element)
-    table.insert(children, Element:new { text = '\n' })
-    hyps = hyps:rev()
-  end
-
-  ---@param hyp InteractiveHypothesisBundle
-  hyps:each(function(hyp)
-    local hyp_element = Element:new {
-      text = table.concat(hyp.names, ' ') .. ' : ',
-      name = 'hyp',
-      children = { code_with_infos(hyp.type, sess) },
-    }
-    if view_options.show_let_values and hyp.val ~= nil then
-      hyp_element:add_child(Element:new {
-        text = ' := ',
-        name = 'hyp_val',
-        children = { code_with_infos(hyp.val, sess) },
-      })
+    if hyps then
+      table.insert(children, separator)
+      table.insert(children, hyps)
     end
-    hyp_element:add_child(Element:new { text = '\n', name = 'hypothesis-separator' })
-    table.insert(children, hyp_element)
-  end)
-
-  if view_options.reverse ~= true then
+  else
+    if hyps then
+      table.insert(children, hyps)
+      table.insert(children, separator)
+    end
     table.insert(children, goal_element)
   end
 
@@ -324,7 +332,7 @@ function components.interactive_term_goal(goal, sess)
   end
 
   local term_state_element = Element:new {
-    text = H(string.format('expected type (%s)', range_to_string(goal.range))) .. '\n',
+    text = H(string.format('expected type (%s)\n', range_to_string(goal.range))),
     name = 'term-state',
     children = { interactive_goal(goal, sess) },
   }
