@@ -85,7 +85,7 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props)
     local pre = (each.preInfo or ''):gsub('\n', '\n  ')
     local post = (each.postInfo or ''):gsub('\n', '\n  ')
     local text = vim.iter({ pre, each.suggestion, post }):join '\n'
-    return Element:new { text = text }
+    return Element:new { text = text:gsub('\n$', '') }
   end)
   return Element:new {
     text = '▶ suggestions:',

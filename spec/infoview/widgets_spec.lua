@@ -35,34 +35,33 @@ describe('widgets', function()
         helpers.move_cursor { to = { 5, 9 } }
 
         assert.infoview_contents.are [[
-      ▶ expected type (5:9-5:20)
-      ⊢ Lean.Widget.Module
+          ▶ expected type (5:9-5:20)
+          ⊢ Lean.Widget.Module
 
-      HELLO FROM WIDGET WORLD
-    ]]
+          HELLO FROM WIDGET WORLD
+        ]]
       end
     )
   )
 
   it(
-    'supports try this widgets',
+    'supports try this widgets with one suggestion',
     helpers.clean_buffer(
       [[
-  example : 2 = 2 := by
-    apply?
-  ]],
+        example : 2 = 2 := by
+          apply?
+      ]],
       function()
         helpers.move_cursor { to = { 2, 0 } }
-        vim.b.lean_test_ignore_whitespace = true
         assert.infoview_contents.are [[
-      ⊢ 2 = 2
+          ⊢ 2 = 2
 
-      ▶ 2:1-2:7: information:
-      Try this: exact rfl
+          ▶ 2:1-2:7: information:
+          Try this: exact rfl
 
-      ▶ suggestions:
-      exact rfl
-    ]]
+          ▶ suggestions:
+          exact rfl
+        ]]
       end
     )
   )
