@@ -244,7 +244,6 @@ describe('plain infoviews', function()
             Multiple
             Lines
 
-
             ▶ 5:1-5:12: information:
             Another
         ]]

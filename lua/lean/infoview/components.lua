@@ -349,7 +349,12 @@ function components.diagnostics(bufnr, line)
           ['end'] = { line = diagnostic.end_lnum, character = diagnostic.end_col },
         },
         util.DIAGNOSTIC_SEVERITY[diagnostic.severity],
-        diagnostic.message
+        -- So. #check foo gives back a diagnostic with *no* trailing newline
+        -- but #eval foo gives back one *with* a trailing newline.
+        -- VSCode displays both of them the same, so let's do that as well by
+        -- essentially stripping off one trailing newline if present in a
+        -- diagnostic message.
+        diagnostic.message:gsub('\n$', '')
       )),
     }
   end, util.lean_lsp_diagnostics({ lnum = line }, bufnr))
