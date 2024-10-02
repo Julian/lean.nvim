@@ -15,7 +15,7 @@ require('lean').setup {
 describe('infoview window', function()
   local lean_window = vim.api.nvim_get_current_win()
 
-  it('moves to vertical when the screen dimensions become landscape', function(_)
+  it('moves to vertical when the screen dimensions become landscape', function()
     vim.o.columns = 24
     vim.o.lines = 80
     local current_infoview = infoview.open()
@@ -38,7 +38,7 @@ describe('infoview window', function()
     infoview.close()
   end)
 
-  it('does not touch a landscape layout if it is already oriented correctly', function(_)
+  it('does not touch a landscape layout if it is already oriented correctly', function()
     vim.o.columns = 24
     vim.o.lines = 80
     local current_infoview = infoview.open()
@@ -60,7 +60,7 @@ describe('infoview window', function()
     infoview.close()
   end)
 
-  it('moves to horizontal when the screen dimensions become portrait', function(_)
+  it('moves to horizontal when the screen dimensions become portrait', function()
     vim.o.columns = 80
     vim.o.lines = 24
     local current_infoview = infoview.open()
@@ -83,7 +83,7 @@ describe('infoview window', function()
     infoview.close()
   end)
 
-  it('does not touch a portrait layout if it is already oriented correctly', function(_)
+  it('does not touch a portrait layout if it is already oriented correctly', function()
     vim.o.columns = 80
     vim.o.lines = 24
     local current_infoview = infoview.open()
@@ -105,7 +105,7 @@ describe('infoview window', function()
     infoview.close()
   end)
 
-  it('resizes windows without moving them when there are more than 2', function(_)
+  it('resizes windows without moving them when there are more than 2', function()
     vim.o.columns = 80
     vim.o.lines = 24
 
@@ -134,7 +134,7 @@ describe('infoview window', function()
     infoview.close()
   end)
 
-  it('does not touch leaf windows', function(_)
+  it('does not touch leaf windows', function()
     vim.cmd.wincmd 'o'
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     local layout = vim.fn.winlayout()

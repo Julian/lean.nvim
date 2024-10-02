@@ -4,7 +4,7 @@ local infoview = require 'lean.infoview'
 require('lean').setup {}
 
 describe('infoview.close_all', function()
-  it('closes one infoview', function(_)
+  it('closes one infoview', function()
     assert.is.equal(#vim.api.nvim_tabpage_list_wins(0), 1)
     local lean_window = vim.api.nvim_get_current_win()
 
@@ -16,7 +16,7 @@ describe('infoview.close_all', function()
     assert.windows.are(lean_window)
   end)
 
-  it('closes many infoviews, some already closed', function(_)
+  it('closes many infoviews, some already closed', function()
     local tabpages = {}
 
     vim.cmd.tabnew 'temp1.lean'

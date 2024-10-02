@@ -158,7 +158,7 @@ describe('infoview content (auto-)update', function()
     end)
   end)
 
-  it('can pause and unpause updates', function(_)
+  it('can pause and unpause updates', function()
     vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
     helpers.move_cursor { to = { 2, 0 } }
     assert.infoview_contents.are [[

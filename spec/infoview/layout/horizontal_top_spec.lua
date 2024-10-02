@@ -16,7 +16,7 @@ describe('infoview window', function()
   assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
   local lean_window = vim.api.nvim_get_current_win()
 
-  it('is on top with the cursor in the Lean window', function(_)
+  it('is on top with the cursor in the Lean window', function()
     vim.cmd('edit! ' .. fixtures.project.some_existing_file)
 
     assert.are.same({
@@ -29,7 +29,7 @@ describe('infoview window', function()
     assert.current_window.is(lean_window)
   end)
 
-  it('puts the infoview on top after repositioning', function(_)
+  it('puts the infoview on top after repositioning', function()
     assert.are.same({
       'col',
       { -- see :h winlayout

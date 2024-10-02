@@ -12,7 +12,7 @@ vim.o.lines = 80
 require('lean').setup { infoview = { autoopen = false } }
 
 describe('infoview window', function()
-  it('opens on the bottom with the cursor in the Lean window', function(_)
+  it('opens on the bottom with the cursor in the Lean window', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     local lean_window = vim.api.nvim_get_current_win()
 
@@ -30,7 +30,7 @@ describe('infoview window', function()
     infoview.close()
   end)
 
-  it('opens on the bottom of stacked splits at full height', function(_)
+  it('opens on the bottom of stacked splits at full height', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     local top_window = vim.api.nvim_get_current_win()
     vim.cmd 'botright split'

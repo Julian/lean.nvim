@@ -8,7 +8,7 @@ local infoview = require 'lean.infoview'
 require('lean').setup { infoview = { autoopen = false, separate_tab = true } }
 
 describe('infoview window', function()
-  it('opens in a new tab with the cursor in the Lean window', function(_)
+  it('opens in a new tab with the cursor in the Lean window', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     assert.is.equal(1, #vim.api.nvim_list_tabpages())
     local lean_window = vim.api.nvim_get_current_win()
@@ -27,7 +27,7 @@ describe('infoview window', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     assert.is.equal(1, #vim.api.nvim_list_tabpages())
   end)
-  it('repositioning has no effect', function(_)
+  it('repositioning has no effect', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     assert.is.equal(1, #vim.api.nvim_list_tabpages())
     local lean_window = vim.api.nvim_get_current_win()

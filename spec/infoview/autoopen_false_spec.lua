@@ -7,7 +7,7 @@ require('lean').setup { infoview = { autoopen = false, use_widgets = false } }
 describe('infoview', function()
   local lean_window
 
-  it('does not automatically open infoviews', function(_)
+  it('does not automatically open infoviews', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     vim.cmd.edit { fixtures.project.child 'Test.lean', bang = true }
     -- FIXME: This obviously shouldn't require running twice, but without
@@ -25,7 +25,7 @@ describe('infoview', function()
     assert.windows.are(lean_window)
   end)
 
-  it('allows infoviews to be manually opened', function(_)
+  it('allows infoviews to be manually opened', function()
     assert.windows.are(lean_window)
     helpers.move_cursor { to = { 3, 27 } }
     infoview.open()

@@ -12,7 +12,7 @@ require('lean').setup {}
 describe('infoview open/close', function()
   local lean_window
 
-  it('opens', function(_)
+  it('opens', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     lean_window = vim.api.nvim_get_current_win()
 
@@ -31,7 +31,7 @@ describe('infoview open/close', function()
     assert.current_cursor.is { 1, 0, window = current_infoview.window }
   end)
 
-  it('remains open on editing a new Lean file', function(_)
+  it('remains open on editing a new Lean file', function()
     local windows = vim.api.nvim_tabpage_list_wins(0)
     assert.is.equal(#windows, 2) -- +1 above
     assert.is.truthy(vim.tbl_contains(windows, infoview.get_current_infoview().window))
@@ -39,7 +39,7 @@ describe('infoview open/close', function()
     assert.windows.are(windows)
   end)
 
-  it('remains open on splitting the current window', function(_)
+  it('remains open on splitting the current window', function()
     local windows = vim.api.nvim_tabpage_list_wins(0)
     assert.is.equal(2, #windows)
     assert.is.truthy(vim.tbl_contains(windows, infoview.get_current_infoview().window))
@@ -56,14 +56,14 @@ describe('infoview open/close', function()
     assert.windows.are(windows)
   end)
 
-  it('is fixed width', function(_)
+  it('is fixed width', function()
     local windows = vim.api.nvim_tabpage_list_wins(0)
     assert.is.equal(#windows, 2)
     assert.is.truthy(vim.wo[infoview.get_current_infoview().window].winfixwidth)
     assert.is.falsy(vim.wo[lean_window].winfixwidth)
   end)
 
-  it('closes via its Lua API and stays closed', function(_)
+  it('closes via its Lua API and stays closed', function()
     infoview.get_current_infoview():close()
     assert.windows.are(lean_window)
 
@@ -77,7 +77,7 @@ describe('infoview open/close', function()
     assert.windows.are(lean_window)
   end)
 
-  it('reopens via its Lua API', function(_)
+  it('reopens via its Lua API', function()
     local current_infoview = infoview.get_current_infoview()
 
     current_infoview:close()
@@ -90,7 +90,7 @@ describe('infoview open/close', function()
     assert.windows.are(lean_window, current_infoview.window)
   end)
 
-  it('quits via command mode and stays closed until reopened', function(_)
+  it('quits via command mode and stays closed until reopened', function()
     local current_infoview = infoview.get_current_infoview()
     assert.windows.are(lean_window, current_infoview.window)
 
@@ -126,7 +126,7 @@ describe('infoview open/close', function()
   end)
 
   describe('in multiple tabs', function()
-    it('closes independently', function(_)
+    it('closes independently', function()
       local tab1_infoview = infoview.get_current_infoview()
       tab1_infoview:open()
       assert.windows.are(lean_window, tab1_infoview.window)
@@ -162,7 +162,7 @@ describe('infoview open/close', function()
       vim.cmd.tabclose(tab2)
     end)
 
-    it('closes independently via :quit', function(_)
+    it('closes independently via :quit', function()
       vim.cmd.tabedit(fixtures.project.some_existing_file)
       local tab2_windows = vim.api.nvim_tabpage_list_wins(0)
       assert.is.equal(2, #tab2_windows)
@@ -180,7 +180,7 @@ describe('infoview open/close', function()
     end)
   end)
 
-  it('closes when its buffer is deleted and stays closed until reopened', function(_)
+  it('closes when its buffer is deleted and stays closed until reopened', function()
     local current_infoview = infoview.get_current_infoview()
     current_infoview:open()
     assert.windows.are(lean_window, current_infoview.window)

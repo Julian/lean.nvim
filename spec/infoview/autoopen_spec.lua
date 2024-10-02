@@ -9,14 +9,14 @@ describe('infoview autoopen', function()
 
   local lean_window
 
-  it('automatically opens infoviews when editing new Lean files', function(_)
+  it('automatically opens infoviews when editing new Lean files', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     vim.cmd('edit! ' .. fixtures.project.some_existing_file)
     lean_window = vim.api.nvim_get_current_win()
     assert.windows.are(lean_window, infoview.get_current_infoview().window)
   end)
 
-  it('reuses the same infoview for new Lean files in the same tab', function(_)
+  it('reuses the same infoview for new Lean files in the same tab', function()
     local windows = vim.api.nvim_tabpage_list_wins(0)
     assert.is.equal(#windows, 2) -- +1 above
     assert.is.truthy(vim.tbl_contains(windows, infoview.get_current_infoview().window))
@@ -28,7 +28,7 @@ describe('infoview autoopen', function()
     vim.cmd.quit()
   end)
 
-  it('automatically opens additional infoviews for new tabs', function(_)
+  it('automatically opens additional infoviews for new tabs', function()
     local tab1_infoview = infoview.get_current_infoview()
 
     vim.cmd.tabnew()
@@ -44,7 +44,7 @@ describe('infoview autoopen', function()
     vim.cmd.tabclose()
   end)
 
-  it('does not (auto-)open infoviews for non-Lean files', function(_)
+  it('does not (auto-)open infoviews for non-Lean files', function()
     vim.cmd.tabnew()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
 
@@ -56,7 +56,7 @@ describe('infoview autoopen', function()
     vim.cmd.tabclose()
   end)
 
-  it('does not auto-reopen an infoview that has been closed', function(_)
+  it('does not auto-reopen an infoview that has been closed', function()
     local windows = vim.api.nvim_tabpage_list_wins(0)
     assert.is.equal(#windows, 2) -- +1 above
     assert.is.truthy(vim.tbl_contains(windows, infoview.get_current_infoview().window))
@@ -70,13 +70,13 @@ describe('infoview autoopen', function()
     vim.cmd.quit()
   end)
 
-  it('allows infoviews to reopen manually after closing', function(_)
+  it('allows infoviews to reopen manually after closing', function()
     assert.windows.are(lean_window)
     local reopened_infoview = infoview.open()
     assert.windows.are(lean_window, reopened_infoview.window)
   end)
 
-  it('can be disabled', function(_)
+  it('can be disabled', function()
     vim.cmd.tabnew()
     infoview.set_autoopen(false)
     local tab2_window = vim.api.nvim_get_current_win()
@@ -93,7 +93,7 @@ describe('infoview autoopen', function()
     vim.cmd.tabclose()
   end)
 
-  it('can be re-enabled after being disabled', function(_)
+  it('can be re-enabled after being disabled', function()
     infoview.set_autoopen(false)
     infoview.set_autoopen(true)
 

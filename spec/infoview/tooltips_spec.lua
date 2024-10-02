@@ -15,7 +15,7 @@ describe(
     local lean_window = vim.api.nvim_get_current_win()
     local current_infoview = infoview.get_current_infoview()
 
-    it('shows widget tooltips', function(_)
+    it('shows widget tooltips', function()
       helpers.move_cursor { to = { 1, 8 } }
       assert.infoview_contents.are [[
         ▶ expected type (1:8-1:11)

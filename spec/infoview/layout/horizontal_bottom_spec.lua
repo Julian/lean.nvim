@@ -16,7 +16,7 @@ describe('infoview window', function()
   assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
   local lean_window = vim.api.nvim_get_current_win()
 
-  it('is on bottom with the cursor in the Lean window', function(_)
+  it('is on bottom with the cursor in the Lean window', function()
     vim.cmd('edit! ' .. fixtures.project.some_existing_file)
 
     assert.are.same({

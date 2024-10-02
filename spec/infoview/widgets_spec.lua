@@ -26,7 +26,7 @@ describe('widgets', function()
       ⊢ Lean.Widget.Module
     ]]
 
-        widgets.implement('helloWidget', function(_)
+        widgets.implement('helloWidget', function()
           return Element:new { text = 'HELLO FROM WIDGET WORLD' }
         end)
 
