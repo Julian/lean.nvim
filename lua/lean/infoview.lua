@@ -1158,20 +1158,19 @@ end
 
 --- on_lines callback to update pins position according to the given textDocument/didChange parameters.
 function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
-  local pins = vim.iter(infoview._by_tabpage):map(function(each)
-    return each:pins_for(bufnr)
-  end)
-  for pin in pins:flatten(1) do
-    -- immediately mark the pin as loading (useful for tests)
-    if pin:__started_loading() then
+  for _, each in pairs(infoview._by_tabpage) do
+    for _, pin in pairs(each:pins_for(bufnr)) do
+      -- immediately mark the pin as loading (useful for tests)
+      if pin:__started_loading() then
+        vim.schedule(function()
+          pin:__render_parents()
+        end)
+      end
       vim.schedule(function()
-        pin:__render_parents()
+        pin:update_position()
+        pin:update()
       end)
     end
-    vim.schedule(function()
-      pin:update_position()
-      pin:update()
-    end)
   end
 end
 
