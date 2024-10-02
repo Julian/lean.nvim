@@ -34,7 +34,7 @@ local function range_to_string(range)
 end
 
 local function goal_header(goals)
-  return #goals == 0 and H 'goals accomplished 🎉\n'
+  return #goals == 0 and H 'goals accomplished 🎉'
     or #goals == 1 and ''
     or H(('%d goals\n'):format(#goals))
 end
