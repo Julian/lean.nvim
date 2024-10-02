@@ -2,79 +2,220 @@
 --- Tests for the infoview when interactive widgets are enabled.
 ---@brief ]]
 
-local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 
 require('lean').setup {}
 
-describe('interactive infoviews', function()
-  describe('goals', function()
-    vim.cmd.edit { fixtures.project.child 'Test.lean', bang = true }
-
-    it('shows a term goal', function()
-      helpers.move_cursor { to = { 3, 27 } }
-      assert.infoview_contents.are [[
-        ▶ expected type (3:28-3:36)
-        ⊢ Nat
-      ]]
+describe('interactive infoview', function()
+  it(
+    'shows no goals',
+    helpers.clean_buffer([[example : 37 = 37 := by rfl]], function()
+      helpers.move_cursor { to = { 1, 26 } }
+      vim.b.lean_test_ignore_whitespace = true
+      assert.infoview_contents.are '▶ goals accomplished 🎉'
     end)
+  )
 
-    it('shows a tactic goal', function()
-      helpers.move_cursor { to = { 6, 0 } }
+  it(
+    'shows a tactic goal with no hypotheses',
+    helpers.clean_buffer(
+      [[
+      example : 37 = 37 := by
+        sorry
+    ]],
+      function()
+        helpers.move_cursor { to = { 2, 0 } }
+        assert.infoview_contents.are '⊢ 37 = 37'
+      end
+    )
+  )
+
+  it(
+    'shows a tactic goal with one hypothesis',
+    helpers.clean_buffer(
+      [[
+      example (h: 73 = 73) : 37 = 37 := by
+        sorry
+    ]],
+      function()
+        helpers.move_cursor { to = { 2, 0 } }
+        assert.infoview_contents.are [[
+      h : 73 = 73
+      ⊢ 37 = 37
+    ]]
+      end
+    )
+  )
+
+  it(
+    'shows a tactic goal with multiple hypotheses',
+    helpers.clean_buffer(
+      [[
+      example {A: Type} (a : A) (h: a = a) : 37 = 37 := by
+        sorry
+    ]],
+      function()
+        helpers.move_cursor { to = { 2, 0 } }
+        assert.infoview_contents.are [[
+      A : Type
+      a : A
+      h : a = a
+      ⊢ 37 = 37
+    ]]
+      end
+    )
+  )
+
+  it(
+    'shows a named tactic goal',
+    helpers.clean_buffer(
+      [[
+      example (n : Nat) : n = n := by
+        cases n
+        · rfl
+        · rfl
+    ]],
+      function()
+        helpers.move_cursor { to = { 3, 3 } }
+        assert.infoview_contents.are [[
+      case zero
+      ⊢ 0 = 0
+    ]]
+      end
+    )
+  )
+
+  it(
+    'shows multiple named tactic goals',
+    helpers.clean_buffer(
+      [[
+      example (n : Nat) : n = n := by
+        cases n
+        · rfl
+        · rfl
+    ]],
+      function()
+        helpers.move_cursor { to = { 2, 3 } }
+        assert.infoview_contents.are [[
+      ▶ 2 goals
+      case zero
+      ⊢ 0 = 0
+
+      case succ
+      n✝ : Nat
+      ⊢ n✝ + 1 = n✝ + 1
+    ]]
+      end
+    )
+  )
+
+  it(
+    'shows a term goal with no hypotheses',
+    helpers.clean_buffer([[def n : Nat := 37]], function()
+      helpers.move_cursor { to = { 1, 17 } }
       assert.infoview_contents.are [[
-        p q : Prop
-        ⊢ p ∨ q → q ∨ p
-      ]]
+      ▶ expected type (1:16-1:18)
+      ⊢ Nat
+    ]]
     end)
+  )
 
-    it('shows mixed goals', function()
-      helpers.move_cursor { to = { 9, 11 } }
+  it(
+    'shows a term goal with one hypothesis',
+    helpers.clean_buffer([[def n (x : Nat) : Nat := x]], function()
+      helpers.move_cursor { to = { 1, 26 } }
       assert.infoview_contents.are [[
-        case inl.h
-        p q : Prop
-        h1 : p
-        ⊢ p
-
-        ▶ expected type (9:11-9:17)
-        p q : Prop
-        h1 : p
-        ⊢ ∀ {a b : Prop}, b → a ∨ b
-      ]]
+      ▶ expected type (1:26-1:27)
+      x : Nat
+      ⊢ Nat
+    ]]
     end)
+  )
 
-    it('shows multiple goals', function()
-      helpers.move_cursor { to = { 16, 3 } }
+  it(
+    'shows a term goal with multiple hypotheses',
+    helpers.clean_buffer([[def n (A : Type) (a : A) : A := a]], function()
+      helpers.move_cursor { to = { 1, 34 } }
       assert.infoview_contents.are [[
-        ▶ 2 goals
-        case zero
-        ⊢ 0 = 0
-
-        case succ
-        n✝ : Nat
-        ⊢ n✝ + 1 = n✝ + 1
-      ]]
+      ▶ expected type (1:33-1:34)
+      A : Type
+      a : A
+      ⊢ A
+    ]]
     end)
+  )
 
-    it('properly handles multibyte characters', function()
-      helpers.move_cursor { to = { 20, 62 } }
-      assert.infoview_contents.are [[
-        ▶ expected type (20:54-20:57)
-        𝔽 : Type
-        ⊢ 𝔽 = 𝔽
-      ]]
+  it(
+    'shows mixed tactic and term goals',
+    helpers.clean_buffer(
+      [[
+      example : 37 = 37 := by
+        have : Nat := 37
+        rfl
+    ]],
+      function()
+        helpers.move_cursor { to = { 2, 18 } }
+        assert.infoview_contents.are [[
+      this : Nat
+      ⊢ 37 = 37
 
-      helpers.move_cursor { to = { 20, 58 } }
-      assert.infoview_contents.are [[
-      ]]
+      ▶ expected type (2:15-2:17)
+      ⊢ Nat
+    ]]
+      end
+    )
+  )
 
-      helpers.move_cursor { to = { 20, 60 } }
+  it(
+    'shows mixed tactic and term goals with names',
+    helpers.clean_buffer(
+      [[
+      example (n : Nat) : n = n := by
+        cases n
+        · rfl
+        · rfl
+    ]],
+      function()
+        helpers.move_cursor { to = { 2, 6 } }
+        assert.infoview_contents.are [[
+      ▶ 2 goals
+      case zero
+      ⊢ 0 = 0
+
+      case succ
+      n✝ : Nat
+      ⊢ n✝ + 1 = n✝ + 1
+
+      ▶ expected type (2:7-2:8)
+      n : Nat
+      ⊢ Nat
+    ]]
+      end
+    )
+  )
+
+  it(
+    'shows goals with multibyte characters',
+    helpers.clean_buffer([[def multibyte {𝔽 : Type} : 𝔽 = 𝔽 := rfl]], function()
+      helpers.move_cursor { to = { 1, 48 } }
       assert.infoview_contents.are [[
-        ▶ expected type (20:54-20:57)
-        𝔽 : Type
-        ⊢ 𝔽 = 𝔽
-      ]]
+      ▶ expected type (1:40-1:43)
+      𝔽 : Type
+      ⊢ 𝔽 = 𝔽
+    ]]
+
+      helpers.move_cursor { to = { 1, 44 } }
+      assert.infoview_contents.are [[
+    ]]
+
+      helpers.move_cursor { to = { 1, 46 } }
+      assert.infoview_contents.are [[
+      ▶ expected type (1:40-1:43)
+      𝔽 : Type
+      ⊢ 𝔽 = 𝔽
+    ]]
     end)
-  end)
+  )
 
   describe('diagnostics', function()
     it(
