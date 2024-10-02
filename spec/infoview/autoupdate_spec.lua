@@ -43,14 +43,17 @@ describe('infoview content (auto-)update', function()
       ▶ 1:1-1:6: information:
       1
     ]]
+    vim.b.lean_test_ignore_whitespace = false
   end)
 
   it('updates when the cursor moves', function()
     helpers.move_cursor { to = { 3, 0 } }
+    vim.b.lean_test_ignore_whitespace = true
     assert.infoview_contents.are [[
       ▶ 3:1-3:6: information:
       9.000000
     ]]
+    vim.b.lean_test_ignore_whitespace = false
   end)
 
   it('is shared between separate windows', function()

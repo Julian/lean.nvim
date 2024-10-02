@@ -258,15 +258,24 @@ local function has_infoview_contents(_, arguments)
   helpers.wait_for_loading_pins(target_infoview)
   local lines = target_infoview:get_lines()
 
-  -- FIXME: Remove the `.wo` check once all existing tests pass without it.
-  --        We also should tweak `dedent` so that this mistake doesn't happen,
-  --        probably by making it remove a fixed number of leading and trailing
-  --        newlines, not trimming all of them.
+  -- FIXME: We should probably tweak things so that this mistake doesn't
+  --        happen and this separate check isn't needed, where you can
+  --        assert about contents and dedent hides trailing whitespace.
+  --        It should likely just trim a fixed amount of whitespace.
   local nonempty = #lines > 0 and not vim.deep_equal(lines, { '' })
-  if nonempty and not vim.b.lean_test_ignore_whitespace then
-    for word, line in vim.iter { leading = lines[1], trailing = lines[#lines] } do
-      local msg = ('The infoview contains %s whitespace: %s\n'):format(word, vim.inspect(lines))
-      assert.message(msg).is_falsy(line:match '^%s*$')
+  if nonempty then
+    local msg
+    local ws = '^%s*$'
+    if lines[1]:match(ws) or lines[#lines]:match(ws) then
+      if not vim.b.lean_test_ignore_whitespace then
+        msg = 'The infoview contains extra whitespace'
+      end
+    elseif vim.b.lean_test_ignore_whitespace then
+      msg = "The infoview has no extra whitespace, don't ignore it unnecessarily"
+    end
+
+    if msg then
+      assert.message(('%s: %s\n'):format(msg, vim.inspect(lines))).False(true)
     end
   end
 
