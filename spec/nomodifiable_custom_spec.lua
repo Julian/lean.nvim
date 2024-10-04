@@ -1,10 +1,7 @@
 local project = require('spec.fixtures').project
 
-require('lean').setup {
-  ft = {
-    nomodifiable = { 'foo.lean' },
-  },
-}
+---@type lean.Config
+vim.g.lean_config = { ft = { nomodifiable = { 'foo.lean' } } }
 
 describe('nomodifable', function()
   it('marks a nomodifiable file not modifiable', function()
