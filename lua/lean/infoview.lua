@@ -592,10 +592,10 @@ function Info:new(opts)
     parent = new_info,
   }
 
-  local count = vim.tbl_count(infoview._by_tabpage)
+  local id = vim.api.nvim_get_current_tabpage()
 
   local pin_bufnr = util.create_buf {
-    name = 'lean://info/' .. count .. '/curr',
+    name = 'lean://info/' .. id .. '/curr',
     options = { bufhidden = 'hide' },
     scratch = true,
   }
@@ -625,7 +625,7 @@ function Info:new(opts)
   })
 
   local diff_bufnr = util.create_buf {
-    name = 'lean://info/' .. count .. '/diff',
+    name = 'lean://info/' .. id .. '/diff',
     options = { bufhidden = 'hide' },
     listed = false,
     scratch = true,
