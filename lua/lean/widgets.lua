@@ -60,13 +60,22 @@ local function implement(id, element)
   BYPASSED_WIDGETS[id] = Widget:new { element = element }
 end
 
----Render a supported widget to one or more TUI `Element`s.
+---Parse a supported user widget by bypassing it if it is supported.
 ---
 ---Unsupported widgets are ignored after logging a notice.
 ---@param user_widget UserWidget
 ---@return Widget
 function Widget.from_user_widget(user_widget)
   return BYPASSED_WIDGETS[user_widget.id]
+end
+
+---Render a user widget instance into a TUI element.
+---
+---Unsupported widgets are ignored after logging a notice.
+---@param instance UserWidgetInstance
+---@return Element?
+local function render(instance)
+  return Widget.from_user_widget(instance):element(instance.props)
 end
 
 --- @alias SuggestionText string
@@ -96,19 +105,14 @@ end)
 return {
   Widget = Widget,
   implement = implement,
+  render = render,
 
   ---Render the given response to one or more TUI elements.
   ---@param response? UserWidgets
   ---@return Element[]? elements
   render_response = function(response)
     if response then
-      return vim
-        .iter(response.widgets)
-        ---@param each UserWidgetInstance
-        :map(function(each)
-          return Widget.from_user_widget(each):element(each.props)
-        end)
-        :totable()
+      return vim.iter(response.widgets):map(render):totable()
     end
   end,
 }
