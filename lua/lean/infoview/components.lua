@@ -516,20 +516,28 @@ end
 ---@param sess Subsession
 ---@return Element[]
 function components.interactive_diagnostics(diags, line, sess)
-  local elements = {}
-  for _, diag in pairs(diags) do
-    if diag.range.start.line == line then
-      local element = Element:new {
+  return vim
+    .iter(diags)
+    :map(function(diagnostic)
+      -- TOOD: why do we pass these here? Or even, do we actually ever hit this?
+      if diagnostic.range.start.line ~= line then
+        local message = 'Got a diagnostic from some other line number: %q'
+        vim.notify(message:format(diagnostic), vim.log.levels.DEBUG)
+        return
+      end
+
+      return Element:new {
         text = H(
-          ('%s: %s:\n'):format(range_to_string(diag.range), util.DIAGNOSTIC_SEVERITY[diag.severity])
+          ('%s: %s:\n'):format(
+            range_to_string(diagnostic.range),
+            util.DIAGNOSTIC_SEVERITY[diagnostic.severity]
+          )
         ),
         name = 'diagnostic',
-        children = { tagged_text_msg_embed(diag.message, sess) },
+        children = { tagged_text_msg_embed(diagnostic.message, sess) },
       }
-      table.insert(elements, element)
-    end
-  end
-  return elements
+    end)
+    :totable()
 end
 
 ---@param bufnr integer
