@@ -19,22 +19,22 @@ describe('plain infoviews', function()
     'shows multiple named tactic goals',
     helpers.clean_buffer(
       [[
-      example (n : Nat) : n = n := by
-        cases n
-        · rfl
-        · rfl
-    ]],
+        example (n : Nat) : n = n := by
+          cases n
+          · rfl
+          · rfl
+      ]],
       function()
         helpers.move_cursor { to = { 2, 3 } }
         assert.infoview_contents.are [[
-      ▶ 2 goals
-      case zero
-      ⊢ 0 = 0
+          ▶ 2 goals
+          case zero
+          ⊢ 0 = 0
 
-      case succ
-      n✝ : Nat
-      ⊢ n✝ + 1 = n✝ + 1
-    ]]
+          case succ
+          n✝ : Nat
+          ⊢ n✝ + 1 = n✝ + 1
+        ]]
       end
     )
   )
@@ -44,9 +44,9 @@ describe('plain infoviews', function()
     helpers.clean_buffer([[def n : Nat := 37]], function()
       helpers.move_cursor { to = { 1, 17 } }
       assert.infoview_contents.are [[
-      ▶ expected type (1:16-1:18)
-      ⊢ Nat
-    ]]
+        ▶ expected type (1:16-1:18)
+        ⊢ Nat
+      ]]
     end)
   )
 
@@ -55,10 +55,10 @@ describe('plain infoviews', function()
     helpers.clean_buffer([[def n (x : Nat) : Nat := x]], function()
       helpers.move_cursor { to = { 1, 26 } }
       assert.infoview_contents.are [[
-      ▶ expected type (1:26-1:27)
-      x : Nat
-      ⊢ Nat
-    ]]
+        ▶ expected type (1:26-1:27)
+        x : Nat
+        ⊢ Nat
+      ]]
     end)
   )
 
@@ -67,11 +67,11 @@ describe('plain infoviews', function()
     helpers.clean_buffer([[def n (A : Type) (a : A) : A := a]], function()
       helpers.move_cursor { to = { 1, 34 } }
       assert.infoview_contents.are [[
-      ▶ expected type (1:33-1:34)
-      A : Type
-      a : A
-      ⊢ A
-    ]]
+          ▶ expected type (1:33-1:34)
+          A : Type
+          a : A
+          ⊢ A
+        ]]
     end)
   )
 
@@ -79,19 +79,19 @@ describe('plain infoviews', function()
     'shows mixed tactic and term goals',
     helpers.clean_buffer(
       [[
-      example : 37 = 37 := by
-        have : Nat := 37
-        rfl
-    ]],
+        example : 37 = 37 := by
+          have : Nat := 37
+          rfl
+      ]],
       function()
         helpers.move_cursor { to = { 2, 18 } }
         assert.infoview_contents.are [[
-      this : Nat
-      ⊢ 37 = 37
+          this : Nat
+          ⊢ 37 = 37
 
-      ▶ expected type (2:15-2:17)
-      ⊢ Nat
-    ]]
+          ▶ expected type (2:15-2:17)
+          ⊢ Nat
+        ]]
       end
     )
   )
@@ -100,26 +100,26 @@ describe('plain infoviews', function()
     'shows mixed tactic and term goals with names',
     helpers.clean_buffer(
       [[
-      example (n : Nat) : n = n := by
-        cases n
-        · rfl
-        · rfl
-    ]],
+        example (n : Nat) : n = n := by
+          cases n
+          · rfl
+          · rfl
+      ]],
       function()
         helpers.move_cursor { to = { 2, 6 } }
         assert.infoview_contents.are [[
-      ▶ 2 goals
-      case zero
-      ⊢ 0 = 0
+          ▶ 2 goals
+          case zero
+          ⊢ 0 = 0
 
-      case succ
-      n✝ : Nat
-      ⊢ n✝ + 1 = n✝ + 1
+          case succ
+          n✝ : Nat
+          ⊢ n✝ + 1 = n✝ + 1
 
-      ▶ expected type (2:7-2:8)
-      n : Nat
-      ⊢ Nat
-    ]]
+          ▶ expected type (2:7-2:8)
+          n : Nat
+          ⊢ Nat
+        ]]
       end
     )
   )
@@ -129,21 +129,21 @@ describe('plain infoviews', function()
     helpers.clean_buffer([[def multibyte {𝔽 : Type} : 𝔽 = 𝔽 := rfl]], function()
       helpers.move_cursor { to = { 1, 48 } }
       assert.infoview_contents.are [[
-      ▶ expected type (1:40-1:43)
-      𝔽 : Type
-      ⊢ 𝔽 = 𝔽
-    ]]
+          ▶ expected type (1:40-1:43)
+          𝔽 : Type
+          ⊢ 𝔽 = 𝔽
+        ]]
 
       helpers.move_cursor { to = { 1, 44 } }
       assert.infoview_contents.are [[
-    ]]
+      ]]
 
       helpers.move_cursor { to = { 1, 46 } }
       assert.infoview_contents.are [[
-      ▶ expected type (1:40-1:43)
-      𝔽 : Type
-      ⊢ 𝔽 = 𝔽
-    ]]
+        ▶ expected type (1:40-1:43)
+        𝔽 : Type
+        ⊢ 𝔽 = 𝔽
+      ]]
     end)
   )
 
@@ -152,16 +152,16 @@ describe('plain infoviews', function()
       'shows info messages',
       helpers.clean_buffer(
         [[
-        import Lean
-        elab "#testing123" : command => Lean.logInfo "Hello"
-        #testing123
-      ]],
+          import Lean
+          elab "#testing123" : command => Lean.logInfo "Hello"
+          #testing123
+        ]],
         function()
           helpers.move_cursor { to = { 3, 2 } }
           assert.infoview_contents.are [[
             ▶ 3:1-3:12: information:
             Hello
-        ]]
+          ]]
         end
       )
     )
@@ -170,16 +170,16 @@ describe('plain infoviews', function()
       'shows warning messages',
       helpers.clean_buffer(
         [[
-        import Lean
-        elab "#testing123" : command => Lean.logWarning "Hmm..."
-        #testing123
-      ]],
+          import Lean
+          elab "#testing123" : command => Lean.logWarning "Hmm..."
+          #testing123
+        ]],
         function()
           helpers.move_cursor { to = { 3, 2 } }
           assert.infoview_contents.are [[
             ▶ 3:1-3:12: warning:
             Hmm...
-        ]]
+          ]]
         end
       )
     )
@@ -188,16 +188,16 @@ describe('plain infoviews', function()
       'shows error messages',
       helpers.clean_buffer(
         [[
-        import Lean
-        elab "#testing123" : command => Lean.logError "Uh oh!"
-        #testing123
-      ]],
+          import Lean
+          elab "#testing123" : command => Lean.logError "Uh oh!"
+          #testing123
+        ]],
         function()
           helpers.move_cursor { to = { 3, 2 } }
           assert.infoview_contents.are [[
             ▶ 3:1-3:12: error:
             Uh oh!
-        ]]
+          ]]
         end
       )
     )
@@ -206,12 +206,12 @@ describe('plain infoviews', function()
       'shows multiline messages which do not terminate in newlines',
       helpers.clean_buffer(
         [[
-        import Lean
-        elab "#testing123" : command => do
-          Lean.logInfo "Multiple\nLine\nMessage"
-          Lean.logInfo "Another"
-        #testing123
-      ]],
+          import Lean
+          elab "#testing123" : command => do
+            Lean.logInfo "Multiple\nLine\nMessage"
+            Lean.logInfo "Another"
+          #testing123
+        ]],
         function()
           helpers.move_cursor { to = { 5, 2 } }
           assert.infoview_contents.are [[
@@ -222,7 +222,7 @@ describe('plain infoviews', function()
 
             ▶ 5:1-5:12: information:
             Another
-        ]]
+          ]]
         end
       )
     )
@@ -231,12 +231,12 @@ describe('plain infoviews', function()
       'shows multiline messages which do terminate in newlines',
       helpers.clean_buffer(
         [[
-        import Lean
-        elab "#testing123" : command => do
-          Lean.logInfo "Multiple\nLines\n"
-          Lean.logInfo "Another"
-        #testing123
-      ]],
+          import Lean
+          elab "#testing123" : command => do
+            Lean.logInfo "Multiple\nLines\n"
+            Lean.logInfo "Another"
+          #testing123
+        ]],
         function()
           helpers.move_cursor { to = { 5, 2 } }
           assert.infoview_contents.are [[
@@ -246,7 +246,7 @@ describe('plain infoviews', function()
 
             ▶ 5:1-5:12: information:
             Another
-        ]]
+          ]]
         end
       )
     )
@@ -255,13 +255,13 @@ describe('plain infoviews', function()
       'shows multiple messages',
       helpers.clean_buffer(
         [[
-        import Lean
-        elab "#testing123" : command => do
-          Lean.logInfo "So"
-          Lean.logWarning "Many..."
-          Lean.logError "Messages!"
-        #testing123
-      ]],
+          import Lean
+          elab "#testing123" : command => do
+            Lean.logInfo "So"
+            Lean.logWarning "Many..."
+            Lean.logError "Messages!"
+          #testing123
+        ]],
         function()
           helpers.move_cursor { to = { 6, 1 } }
           assert.infoview_contents.are [[
@@ -273,7 +273,7 @@ describe('plain infoviews', function()
 
             ▶ 6:1-6:12: error:
             Messages!
-        ]]
+          ]]
         end
       )
     )

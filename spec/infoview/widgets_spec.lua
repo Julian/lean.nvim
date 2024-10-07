@@ -13,18 +13,18 @@ describe('widgets', function()
     'can be registered for rendering',
     helpers.clean_buffer(
       [[
-  import Lean
-  @[widget_module]
-  def helloWidget : Lean.Widget.Module where
-    javascript := ""
-  #widget helloWidget
-  ]],
+        import Lean
+        @[widget_module]
+        def helloWidget : Lean.Widget.Module where
+          javascript := ""
+        #widget helloWidget
+      ]],
       function()
         helpers.move_cursor { to = { 5, 9 } }
         assert.infoview_contents.are [[
-      ▶ expected type (5:9-5:20)
-      ⊢ Lean.Widget.Module
-    ]]
+          ▶ expected type (5:9-5:20)
+          ⊢ Lean.Widget.Module
+        ]]
 
         widgets.implement('helloWidget', function()
           return Element:new { text = 'HELLO FROM WIDGET WORLD' }
