@@ -404,9 +404,9 @@ function Infoview:__refresh()
 end
 
 --- Filter the pins from this infoview which are relevant to a given buffer.
---- @param buf number @the bufnr which filters the pins
+--- @param uri string @the URI which filters the pins
 --- @return Pin[]
-function Infoview:pins_for(buf)
+function Infoview:pins_for(uri)
   if not self.window then
     return {}
   end
@@ -414,7 +414,6 @@ function Infoview:pins_for(buf)
   local possible = { self.info.pin }
   vim.list_extend(possible, self.info.pins)
 
-  local uri = vim.uri_from_bufnr(buf)
   return vim
     .iter(possible)
     :filter(function(pin)
@@ -1146,20 +1145,17 @@ function infoview.__update_pin_by_uri(uri)
     return
   end
   for _, each in pairs(infoview._by_tabpage) do
-    local pins = { each.info.pin }
-    vim.list_extend(pins, each.info.pins)
-    for _, pin in ipairs(pins) do
-      if pin.__position_params and pin.__position_params.textDocument.uri == uri then
-        pin:update()
-      end
+    for _, pin in pairs(each:pins_for(uri)) do
+      pin:update()
     end
   end
 end
 
 --- on_lines callback to update pins position according to the given textDocument/didChange parameters.
 function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
+  local uri = vim.uri_from_bufnr(bufnr)
   for _, each in pairs(infoview._by_tabpage) do
-    for _, pin in pairs(each:pins_for(bufnr)) do
+    for _, pin in pairs(each:pins_for(uri)) do
       -- immediately mark the pin as loading (useful for tests)
       if pin:__started_loading() then
         vim.schedule(function()
