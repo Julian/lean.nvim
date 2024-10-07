@@ -164,21 +164,6 @@ function helpers.wait_for_line_diagnostics()
     local diagnostics = util.lean_lsp_diagnostics {
       lnum = vim.api.nvim_win_get_cursor(0)[1] - 1,
     }
-
-    -- Lean 4 sends file progress notification too late :-(
-    if #diagnostics == 1 then
-      local msg = diagnostics[1].message
-      if msg:match '^configuring ' then
-        return false
-      end
-      if msg:match '^Foo: ' then
-        return false
-      end
-      if msg:match '^> ' then
-        return false
-      end
-    end
-
     return #diagnostics > 0
   end)
   assert.message('Waited for line diagnostics but none came.').True(succeeded)
