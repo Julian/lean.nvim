@@ -48,8 +48,8 @@ function Session:new(client, bufnr, uri)
   }, self)
   self.keepalive_timer = uv.new_timer()
   self.keepalive_timer:start(
-    20000,
-    20000,
+    20000, -- Lean.Server.FileWorker.Utils defines this to be 30000(ms)
+    20000, -- so we use a value to stay under that.
     vim.schedule_wrap(function()
       if not self:is_closed() and self.session_id ~= nil then
         self.client.notify('$/lean/rpc/keepAlive', {
