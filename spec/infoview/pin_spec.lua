@@ -89,7 +89,7 @@ describe(
             -- %s at 1:50
             p q : Prop
             ⊢ p ∨ q → q ∨ p
-          ]],
+        ]],
           filename,
           filename
         ))
@@ -326,106 +326,137 @@ describe(
         )
       )
 
-      describe('diff pins', function()
-        local lean_window
+      describe(
+        'diff pins',
+        helpers.clean_buffer(
+          [[
+            theorem has_tactic_goal : p ∨ q → q ∨ p := by
+              intro h
+              cases h with
+              | inl h37 =>
+                apply Or.inr
+                exact h37
+              | inr h2 =>
+                apply Or.inl
+                assumption
+          ]],
 
-        it('opens a diff window when placed', function()
-          lean_window = vim.api.nvim_get_current_win()
-          local current_infoview = infoview.get_current_infoview()
-          assert.windows.are { lean_window, current_infoview.window }
+          function()
+            local lean_window
 
-          helpers.move_cursor { to = { 4, 5 } }
-          infoview.set_diff_pin()
+            it('opens a diff window when placed', function()
+              lean_window = vim.api.nvim_get_current_win()
+              local current_infoview = infoview.get_current_infoview()
+              assert.windows.are { lean_window, current_infoview.window }
 
-          assert.infoview_contents.are [[
-            case inl
-            p q : Prop
-            h37 : p
-            ⊢ q ∨ p
+              helpers.move_cursor { to = { 4, 5 } }
 
-            ▶ expected type (4:3-4:6)
-            ⊢ ∀ {a b : Prop}, a → a ∨ b
-          ]]
+              assert.infoview_contents.are [[
+                case inl
+                p q : Prop
+                h37 : p
+                ⊢ q ∨ p
 
-          assert.diff_contents.are [[
-            case inl
-            p q : Prop
-            h37 : p
-            ⊢ q ∨ p
+                ▶ expected type (4:3-4:6)
+                ⊢ ∀ {a b : Prop}, a → a ∨ b
+              ]]
 
-            ▶ expected type (4:3-4:6)
-            ⊢ ∀ {a b : Prop}, a → a ∨ b
-          ]]
+              infoview.set_diff_pin()
 
-          local diff_window = helpers.wait_for_new_window { lean_window, current_infoview.window }
+              assert.infoview_contents.are [[
+                case inl
+                p q : Prop
+                h37 : p
+                ⊢ q ∨ p
 
-          assert.windows.are { lean_window, current_infoview.window, diff_window }
+                ▶ expected type (4:3-4:6)
+                ⊢ ∀ {a b : Prop}, a → a ∨ b
+              ]]
 
-          assert.is_true(vim.wo[current_infoview.window].diff)
-          assert.is_true(vim.wo[diff_window].diff)
-        end)
+              assert.diff_contents.are [[
+                case inl
+                p q : Prop
+                h37 : p
+                ⊢ q ∨ p
 
-        it('maintains separate text', function()
-          helpers.move_cursor { to = { 5, 5 } }
+                ▶ expected type (4:3-4:6)
+                ⊢ ∀ {a b : Prop}, a → a ∨ b
+              ]]
 
-          assert.infoview_contents.are [[
-            case inl.h
-            p q : Prop
-            h37 : p
-            ⊢ p
-          ]]
+              local diff_window =
+                helpers.wait_for_new_window { lean_window, current_infoview.window }
 
-          assert.diff_contents.are [[
-            case inl
-            p q : Prop
-            h37 : p
-            ⊢ q ∨ p
+              assert.windows.are { lean_window, current_infoview.window, diff_window }
 
-            ▶ expected type (4:3-4:6)
-            ⊢ ∀ {a b : Prop}, a → a ∨ b
-          ]]
-        end)
+              assert.is_true(vim.wo[current_infoview.window].diff)
+              assert.is_true(vim.wo[diff_window].diff)
+            end)
 
-        it('closes the diff window if the infoview is closed', function()
-          assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
-          infoview.close()
-          assert.windows.are { lean_window }
-        end)
+            it('maintains separate text', function()
+              helpers.move_cursor { to = { 5, 5 } }
 
-        it('reopens a diff window when the infoview is reopened', function()
-          assert.windows.are { lean_window }
+              assert.infoview_contents.are [[
+                case inl.h
+                p q : Prop
+                h37 : p
+                ⊢ p
+              ]]
 
-          local current_infoview = infoview.open()
-          local diff_window = helpers.wait_for_new_window { lean_window, current_infoview.window }
+              assert.diff_contents.are [[
+                case inl
+                p q : Prop
+                h37 : p
+                ⊢ q ∨ p
 
-          assert.windows.are { lean_window, current_infoview.window, diff_window }
+                ▶ expected type (4:3-4:6)
+                ⊢ ∀ {a b : Prop}, a → a ∨ b
+              ]]
+            end)
 
-          assert.is_true(vim.wo[current_infoview.window].diff)
-          assert.is_true(vim.wo[diff_window].diff)
-        end)
+            it('closes the diff window if the infoview is closed', function()
+              assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+              infoview.close()
+              assert.windows.are { lean_window }
+            end)
 
-        it('closes when cleared', function()
-          assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
-          infoview.clear_diff_pin()
-          assert.windows.are { lean_window, infoview.get_current_infoview().window }
-        end)
+            it('reopens a diff window when the infoview is reopened', function()
+              assert.windows.are { lean_window }
 
-        it('can be re-placed', function()
-          assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
-          helpers.move_cursor { to = { 3, 2 } }
-          infoview.set_diff_pin()
-          assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
-        end)
+              local current_infoview = infoview.open()
+              local diff_window =
+                helpers.wait_for_new_window { lean_window, current_infoview.window }
 
-        it('can be :quit', function()
-          assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
-          local current_infoview = infoview.get_current_infoview()
-          local diff_window = helpers.wait_for_new_window { lean_window, current_infoview.window }
-          vim.api.nvim_set_current_win(diff_window)
-          vim.cmd.quit()
-          assert.windows.are { lean_window, infoview.get_current_infoview().window }
-        end)
-      end)
+              assert.windows.are { lean_window, current_infoview.window, diff_window }
+
+              assert.is_true(vim.wo[current_infoview.window].diff)
+              assert.is_true(vim.wo[diff_window].diff)
+            end)
+
+            it('closes when cleared', function()
+              assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+              infoview.clear_diff_pin()
+              assert.windows.are { lean_window, infoview.get_current_infoview().window }
+            end)
+
+            it('can be re-placed', function()
+              assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
+              helpers.move_cursor { to = { 3, 2 } }
+              infoview.set_diff_pin()
+              assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+            end)
+
+            it('can be :quit', function()
+              assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+              local current_infoview = infoview.get_current_infoview()
+              local diff_window =
+                helpers.wait_for_new_window { lean_window, current_infoview.window }
+              vim.api.nvim_set_current_win(diff_window)
+              vim.cmd.quit()
+              assert.windows.are { lean_window, infoview.get_current_infoview().window }
+            end)
+          end
+        )
+      )
     end
   )
 )

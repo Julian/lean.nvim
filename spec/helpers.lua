@@ -152,6 +152,9 @@ function helpers.clean_buffer(contents, callback)
       vim.api.nvim_exec_autocmds('BufEnter', { buffer = bufnr })
       callback()
     end)
+    vim.schedule(function()
+      vim.api.nvim_buf_delete(bufnr, { force = true })
+    end)
   end
 end
 

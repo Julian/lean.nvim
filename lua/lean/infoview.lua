@@ -1144,6 +1144,7 @@ function infoview.__update_pin_by_uri(uri)
   if not infoview.enabled then
     return
   end
+
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
       pin:update()
