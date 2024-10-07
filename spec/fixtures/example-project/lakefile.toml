@@ -1,0 +1,9 @@
+name = "test"
+defaultTargets = ["Test"]
+
+[[require]]
+name = "foo"
+path = "foo"
+
+[[lean_lib]]
+name = "Test"

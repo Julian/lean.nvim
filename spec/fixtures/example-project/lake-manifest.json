@@ -7,6 +7,6 @@
    "manifestFile": "lake-manifest.json",
    "inherited": false,
    "dir": "./foo",
-   "configFile": "lakefile.lean"}],
+   "configFile": "lakefile.toml"}],
  "name": "test",
  "lakeDir": ".lake"}
