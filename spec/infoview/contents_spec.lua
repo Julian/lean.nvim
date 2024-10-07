@@ -222,13 +222,13 @@ describe('interactive infoview', function()
       helpers.clean_buffer(
         [[
           import Lean
-          elab "#testing123" : command => Lean.logInfo "Hello"
-          #testing123
+          elab "#infoMessage" : command => Lean.logInfo "Hello"
+          #infoMessage
         ]],
         function()
           helpers.move_cursor { to = { 3, 2 } }
           assert.infoview_contents.are [[
-            ▶ 3:1-3:12: information:
+            ▶ 3:1-3:13: information:
             Hello
           ]]
         end
@@ -240,13 +240,13 @@ describe('interactive infoview', function()
       helpers.clean_buffer(
         [[
           import Lean
-          elab "#testing123" : command => Lean.logWarning "Hmm..."
-          #testing123
+          elab "#warningMessage" : command => Lean.logWarning "Hmm..."
+          #warningMessage
         ]],
         function()
           helpers.move_cursor { to = { 3, 2 } }
           assert.infoview_contents.are [[
-            ▶ 3:1-3:12: warning:
+            ▶ 3:1-3:16: warning:
             Hmm...
           ]]
         end
@@ -258,13 +258,13 @@ describe('interactive infoview', function()
       helpers.clean_buffer(
         [[
           import Lean
-          elab "#testing123" : command => Lean.logError "Uh oh!"
-          #testing123
+          elab "#errorMessage" : command => Lean.logError "Uh oh!"
+          #errorMessage
         ]],
         function()
           helpers.move_cursor { to = { 3, 2 } }
           assert.infoview_contents.are [[
-            ▶ 3:1-3:12: error:
+            ▶ 3:1-3:14: error:
             Uh oh!
           ]]
         end
@@ -276,20 +276,20 @@ describe('interactive infoview', function()
       helpers.clean_buffer(
         [[
           import Lean
-          elab "#testing123" : command => do
+          elab "#multilineNoNewline" : command => do
             Lean.logInfo "Multiple\nLine\nMessage"
             Lean.logInfo "Another"
-          #testing123
+          #multilineNoNewline
         ]],
         function()
           helpers.move_cursor { to = { 5, 2 } }
           assert.infoview_contents.are [[
-            ▶ 5:1-5:12: information:
+            ▶ 5:1-5:20: information:
             Multiple
             Line
             Message
 
-            ▶ 5:1-5:12: information:
+            ▶ 5:1-5:20: information:
             Another
           ]]
         end
@@ -301,19 +301,19 @@ describe('interactive infoview', function()
       helpers.clean_buffer(
         [[
           import Lean
-          elab "#testing123" : command => do
+          elab "#multilineWithNewline" : command => do
             Lean.logInfo "Multiple\nLines\n"
             Lean.logInfo "Another"
-          #testing123
+          #multilineWithNewline
         ]],
         function()
           helpers.move_cursor { to = { 5, 2 } }
           assert.infoview_contents.are [[
-            ▶ 5:1-5:12: information:
+            ▶ 5:1-5:22: information:
             Multiple
             Lines
 
-            ▶ 5:1-5:12: information:
+            ▶ 5:1-5:22: information:
             Another
           ]]
         end
@@ -325,22 +325,22 @@ describe('interactive infoview', function()
       helpers.clean_buffer(
         [[
           import Lean
-          elab "#testing123" : command => do
+          elab "#multipleMessages" : command => do
             Lean.logInfo "So"
             Lean.logWarning "Many..."
             Lean.logError "Messages!"
-          #testing123
+          #multipleMessages
         ]],
         function()
           helpers.move_cursor { to = { 6, 1 } }
           assert.infoview_contents.are [[
-            ▶ 6:1-6:12: information:
+            ▶ 6:1-6:18: information:
             So
 
-            ▶ 6:1-6:12: warning:
+            ▶ 6:1-6:18: warning:
             Many...
 
-            ▶ 6:1-6:12: error:
+            ▶ 6:1-6:18: error:
             Messages!
           ]]
         end
