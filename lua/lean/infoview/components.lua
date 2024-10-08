@@ -7,6 +7,7 @@
 
 local Element = require('lean.tui').Element
 local config = require 'lean.config'
+local rpc = require 'lean.rpc'
 local util = require 'lean._util'
 local widgets = require 'lean.widgets'
 
@@ -550,7 +551,7 @@ function components.goal_at(bufnr, params, sess, use_widgets)
   local goal, err
   if use_widgets ~= false then
     if sess == nil then
-      sess = require('lean.rpc').open(bufnr, params)
+      sess = rpc.open(bufnr, params)
     end
 
     goal = sess:getInteractiveGoals(params)
@@ -575,7 +576,7 @@ function components.term_goal_at(bufnr, params, sess, use_widgets)
   local term_goal, err
   if use_widgets ~= false then
     if sess == nil then
-      sess = require('lean.rpc').open(bufnr, params)
+      sess = rpc.open(bufnr, params)
     end
 
     term_goal = sess:getInteractiveTermGoal(params)
@@ -604,7 +605,7 @@ function components.diagnostics_at(bufnr, params, sess, use_widgets)
   end
 
   if sess == nil then
-    sess = require('lean.rpc').open(bufnr, params)
+    sess = rpc.open(bufnr, params)
   end
 
   local diagnostics, err = sess:getInteractiveDiagnostics {
@@ -628,7 +629,7 @@ function components.user_widgets_at(bufnr, params, sess, use_widgets)
   if not use_widgets then
     return {}
   elseif sess == nil then
-    sess = require('lean.rpc').open(bufnr, params)
+    sess = rpc.open(bufnr, params)
   end
   local response, err = sess:getWidgets(params.position)
   -- luacheck: max_comment_line_length 200
@@ -637,7 +638,7 @@ function components.user_widgets_at(bufnr, params, sess, use_widgets)
   --               https://github.com/leanprover/vscode-lean4/blob/33e54067d5fefcdf7f28e4993324fd486a53421c/lean4-infoview/src/infoview/info.tsx#L465-L470
   --               and/or generically retries RPC calls
   if not response then
-    sess = require('lean.rpc').open(bufnr, params)
+    sess = rpc.open(bufnr, params)
     response, err = sess:getWidgets(params.position)
   end
   return widgets.render_response(response), err
