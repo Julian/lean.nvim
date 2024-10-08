@@ -212,6 +212,10 @@ function Subsession:call(method, params)
   return self.sess:call(self.pos, method, params)
 end
 
+--- Open an RPC session.
+---@param bufnr number
+---@param params lsp.TextDocumentPositionParams
+---@return Subsession
 function rpc.open(bufnr, params)
   if sessions[bufnr] == nil or sessions[bufnr].connect_err or sessions[bufnr]:is_closed() then
     connect(bufnr)
