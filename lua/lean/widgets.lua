@@ -102,6 +102,42 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props)
   }
 end)
 
+--- @class GoToModuleLinkParams
+--- @field modName string the module to jump to
+
+---A "jump to a module" which comes from `import-graph`.
+---@param props GoToModuleLinkParams
+implement('GoToModuleLink', function(_, props)
+  return Element:new {
+    text = props.modName,
+    events = {
+      go_to_def = function(_)
+        local this_infoview = require('lean.infoview').get_current_infoview()
+        local this_info = this_infoview and this_infoview.info
+        local this_window = this_info and this_info.last_window
+        if not this_window then
+          return
+        end
+
+        vim.api.nvim_set_current_win(this_window)
+        -- FIXME: Clearly we need to be able to get a session without touching
+        --        internals... Probably this should be a method on ctx.
+        local sess = require('lean.rpc').open(0, this_info.pin.__position_params)
+        local uri, err = sess:call('getModuleUri', props.modName)
+        if err then
+          return -- FIXME: Yeah, this should go somewhere clearly.
+        end
+        ---@type lsp.Position
+        local start = { line = 0, character = 0 }
+        vim.lsp.util.jump_to_location(
+          { uri = uri, range = { start = start, ['end'] = start } },
+          'utf-16'
+        )
+      end,
+    },
+  }
+end)
+
 return {
   Widget = Widget,
   implement = implement,
