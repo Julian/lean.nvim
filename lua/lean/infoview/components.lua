@@ -630,7 +630,17 @@ function components.user_widgets_at(bufnr, params, sess, use_widgets)
   elseif sess == nil then
     sess = require('lean.rpc').open(bufnr, params)
   end
-  return widgets.render_response(sess:getWidgets(params.position))
+  local response, err = sess:getWidgets(params.position)
+  -- luacheck: max_comment_line_length 200
+  -- GENERALIZEME: This retry logic helps us pass a test, but belongs higher up
+  --               in a way which parallels this VSCode retrying logic:
+  --               https://github.com/leanprover/vscode-lean4/blob/33e54067d5fefcdf7f28e4993324fd486a53421c/lean4-infoview/src/infoview/info.tsx#L465-L470
+  --               and/or generically retries RPC calls
+  if not response then
+    sess = require('lean.rpc').open(bufnr, params)
+    response, err = sess:getWidgets(params.position)
+  end
+  return widgets.render_response(response), err
 end
 
 return components

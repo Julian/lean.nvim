@@ -65,4 +65,46 @@ describe('widgets', function()
       end
     )
   )
+
+  it(
+    'supports try this widgets with multiple suggestions',
+    helpers.clean_buffer(
+      [[
+        import Lean.Meta.Tactic.TryThis
+
+        namespace Lean.Meta.Tactic.TryThis
+        open Lean Elab Tactic
+
+        elab "twoSuggestions" : tactic => do
+          addSuggestion (← getRef) (← `(tactic| trivial))
+          addSuggestion (← getRef) (← `(tactic| rfl))
+
+        example : 37 = 37 := by twoSuggestions
+
+        end Lean.Meta.Tactic.TryThis
+      ]],
+      function()
+        helpers.move_cursor { to = { 10, 28 } }
+        assert.infoview_contents.are [[
+          ⊢ 37 = 37
+
+          ▶ 10:25-10:39: information:
+          Try this: trivial
+
+          ▶ 10:25-10:39: information:
+          Try this: rfl
+
+          ▶ 10:22-10:39: error:
+          unsolved goals
+          ⊢ 37 = 37
+
+          ▶ suggestions:
+          trivial
+
+          ▶ suggestions:
+          rfl
+        ]]
+      end
+    )
+  )
 end)
