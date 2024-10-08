@@ -581,6 +581,14 @@ end
 ---@return Element[]
 ---@return LspError?
 function components.term_goal_at(bufnr, params, sess, use_widgets)
+  -- REMOVEME: This validity check in a bunch of places is us seemingly
+  --           calculating components for a buffer that is gone.
+  --           We need to figure out where we're doing that and not doing it.
+  --           Possibly it's all related to us not detaching "pin" updating.
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return {}, { code = 99999, message = "We're updating a buffer we shouldn't." }
+  end
+
   local term_goal, err
   if use_widgets ~= false then
     if sess == nil then
@@ -607,6 +615,14 @@ end
 ---@return LspError?
 function components.diagnostics_at(bufnr, params, sess, use_widgets)
   local line = params.position.line
+
+  -- REMOVEME: This validity check in a bunch of places is us seemingly
+  --           calculating components for a buffer that is gone.
+  --           We need to figure out where we're doing that and not doing it.
+  --           Possibly it's all related to us not detaching "pin" updating.
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return {}, { code = 99999, message = "We're updating a buffer we shouldn't." }
+  end
 
   if use_widgets == false then
     return components.diagnostics(bufnr, line)
@@ -647,7 +663,11 @@ end
 ---@return Element[]? widgets
 ---@return LspError? error
 function components.user_widgets_at(bufnr, params, sess, use_widgets)
-  if not use_widgets then
+  -- REMOVEME: This validity check in a bunch of places is us seemingly
+  --           calculating components for a buffer that is gone.
+  --           We need to figure out where we're doing that and not doing it.
+  --           Possibly it's all related to us not detaching "pin" updating.
+  if not use_widgets or not vim.api.nvim_buf_is_valid(bufnr) then
     return {}
   elseif sess == nil then
     sess = rpc.open(bufnr, params)
