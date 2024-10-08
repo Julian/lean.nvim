@@ -165,13 +165,13 @@ end
 ---@type table<number, Session>
 local sessions = {}
 
----@param bufnr number
+---@param uri string
 ---@result string error
-local function connect(bufnr)
+local function connect(uri)
+  local bufnr = vim.uri_to_bufnr(uri)
   local client = lsp.client_for(bufnr)
-  local uri = vim.uri_from_bufnr(bufnr)
   local sess = Session:new(client, bufnr, uri)
-  sessions[bufnr] = sess
+  sessions[uri] = sess
   if client == nil then
     sess.connected = true
     local err = 'Lean 4 LSP server not found'
@@ -213,14 +213,14 @@ function Subsession:call(method, params)
 end
 
 --- Open an RPC session.
----@param bufnr number
+---@param uri string
 ---@param params lsp.TextDocumentPositionParams
 ---@return Subsession
-function rpc.open(bufnr, params)
-  if sessions[bufnr] == nil or sessions[bufnr].connect_err or sessions[bufnr]:is_closed() then
-    connect(bufnr)
+function rpc.open(uri, params)
+  if sessions[uri] == nil or sessions[uri].connect_err or sessions[uri]:is_closed() then
+    connect(uri)
   end
-  return Subsession:new(sessions[bufnr], params)
+  return Subsession:new(sessions[uri], params)
 end
 
 ---@class InfoWithCtx

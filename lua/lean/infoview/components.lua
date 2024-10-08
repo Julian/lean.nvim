@@ -346,8 +346,10 @@ function components.interactive_term_goal(goal, sess)
 end
 
 --- Diagnostic information for the current line from the Lean server.
----@return Element[]
-function components.diagnostics(bufnr, line)
+--- @param uri string
+--- @param line number
+--- @return Element[]
+function components.diagnostics(uri, line)
   return vim.tbl_map(function(diagnostic)
     return Element:new {
       name = 'diagnostic',
@@ -366,7 +368,7 @@ function components.diagnostics(bufnr, line)
         diagnostic.message:gsub('\n$', '')
       )),
     }
-  end, util.lean_lsp_diagnostics({ lnum = line }, bufnr))
+  end, util.lean_lsp_diagnostics({ lnum = line }, vim.uri_to_bufnr(uri)))
 end
 
 local function abbreviate_common_prefix(a, b)
@@ -549,17 +551,17 @@ function components.interactive_diagnostics(diags, line, sess)
     :totable()
 end
 
----@param bufnr integer
+---@param uri string
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
 ---@return Element[] goal
 ---@return LspError? error
-function components.goal_at(bufnr, params, sess, use_widgets)
+function components.goal_at(uri, params, sess, use_widgets)
   local goal, err
   if use_widgets ~= false then
     if sess == nil then
-      sess = rpc.open(bufnr, params)
+      sess = rpc.open(uri, params)
     end
 
     goal = sess:getInteractiveGoals(params)
@@ -567,32 +569,24 @@ function components.goal_at(bufnr, params, sess, use_widgets)
   end
 
   if not goal then
-    err, goal = require('lean.lsp').plain_goal(params, bufnr)
+    err, goal = require('lean.lsp').plain_goal(params, vim.uri_to_bufnr(uri))
     goal = goal and components.plain_goal(goal)
   end
 
   return goal, err
 end
 
----@param bufnr integer
+---@param uri string
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
 ---@return Element[]
 ---@return LspError?
-function components.term_goal_at(bufnr, params, sess, use_widgets)
-  -- REMOVEME: This validity check in a bunch of places is us seemingly
-  --           calculating components for a buffer that is gone.
-  --           We need to figure out where we're doing that and not doing it.
-  --           Possibly it's all related to us not detaching "pin" updating.
-  if not vim.api.nvim_buf_is_valid(bufnr) then
-    return {}, { code = 99999, message = "We're updating a buffer we shouldn't." }
-  end
-
+function components.term_goal_at(uri, params, sess, use_widgets)
   local term_goal, err
   if use_widgets ~= false then
     if sess == nil then
-      sess = rpc.open(bufnr, params)
+      sess = rpc.open(uri, params)
     end
 
     term_goal = sess:getInteractiveTermGoal(params)
@@ -600,36 +594,28 @@ function components.term_goal_at(bufnr, params, sess, use_widgets)
   end
 
   if not term_goal then
-    err, term_goal = require('lean.lsp').plain_term_goal(params, bufnr)
+    err, term_goal = require('lean.lsp').plain_term_goal(params, vim.uri_to_bufnr(uri))
     term_goal = term_goal and components.term_goal(term_goal)
   end
 
   return term_goal, err
 end
 
----@param bufnr integer
+---@param uri string
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
 ---@return Element[]
 ---@return LspError?
-function components.diagnostics_at(bufnr, params, sess, use_widgets)
+function components.diagnostics_at(uri, params, sess, use_widgets)
   local line = params.position.line
 
-  -- REMOVEME: This validity check in a bunch of places is us seemingly
-  --           calculating components for a buffer that is gone.
-  --           We need to figure out where we're doing that and not doing it.
-  --           Possibly it's all related to us not detaching "pin" updating.
-  if not vim.api.nvim_buf_is_valid(bufnr) then
-    return {}, { code = 99999, message = "We're updating a buffer we shouldn't." }
-  end
-
   if use_widgets == false then
-    return components.diagnostics(bufnr, line)
+    return components.diagnostics(uri, line)
   end
 
   if sess == nil then
-    sess = rpc.open(bufnr, params)
+    sess = rpc.open(uri, params)
   end
 
   local diagnostics, err = sess:getInteractiveDiagnostics {
@@ -643,34 +629,34 @@ function components.diagnostics_at(bufnr, params, sess, use_widgets)
     --               point fallback to non-interactive diagnostics if we see
     --               repeated failure I think, though maybe that should happen
     --               at the caller.
-    sess = rpc.open(bufnr, params)
+    sess = rpc.open(uri, params)
     diagnostics, err = sess:getInteractiveDiagnostics {
       start = line,
       ['end'] = line + 1,
     }
     if err then
-      return components.diagnostics(bufnr, line), err
+      return components.diagnostics(uri, line), err
     end
   end
 
   return components.interactive_diagnostics(diagnostics, line, sess), err
 end
 
----@param bufnr integer
+---@param uri string
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
 ---@return Element[]? widgets
 ---@return LspError? error
-function components.user_widgets_at(bufnr, params, sess, use_widgets)
+function components.user_widgets_at(uri, params, sess, use_widgets)
   -- REMOVEME: This validity check in a bunch of places is us seemingly
   --           calculating components for a buffer that is gone.
   --           We need to figure out where we're doing that and not doing it.
   --           Possibly it's all related to us not detaching "pin" updating.
-  if not use_widgets or not vim.api.nvim_buf_is_valid(bufnr) then
+  if not use_widgets then
     return {}
   elseif sess == nil then
-    sess = rpc.open(bufnr, params)
+    sess = rpc.open(uri, params)
   end
   local response, err = sess:getWidgets(params.position)
   -- luacheck: max_comment_line_length 200
@@ -679,7 +665,7 @@ function components.user_widgets_at(bufnr, params, sess, use_widgets)
   --               https://github.com/leanprover/vscode-lean4/blob/33e54067d5fefcdf7f28e4993324fd486a53421c/lean4-infoview/src/infoview/info.tsx#L465-L470
   --               and/or generically retries RPC calls
   if not response then
-    sess = rpc.open(bufnr, params)
+    sess = rpc.open(uri, params)
     response, err = sess:getWidgets(params.position)
   end
   return widgets.render_response(response), err

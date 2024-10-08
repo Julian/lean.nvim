@@ -1078,8 +1078,8 @@ Pin.update = a.void(Pin.async_update)
 function Pin:__mk_data_elem(tick, opts)
   local params = self.__position_params
 
-  local buf = vim.uri_to_bufnr(params.textDocument.uri)
-  if not vim.api.nvim_buf_is_loaded(buf) or not tick:check() then
+  local uri = params.textDocument.uri
+  if not vim.api.nvim_buf_is_loaded(vim.uri_to_bufnr(uri)) or not tick:check() then
     return
   end
 
@@ -1087,13 +1087,13 @@ function Pin:__mk_data_elem(tick, opts)
     return options.show_processing and components.PROCESSING or nil
   end
 
-  local sess = rpc.open(buf, params)
+  local sess = rpc.open(uri, params)
   local blocks = vim
     .iter({
-      components.goal_at(buf, params, sess, self.__use_widgets) or {},
-      components.term_goal_at(buf, params, sess, self.__use_widgets) or {},
-      components.diagnostics_at(buf, params, sess, self.__use_widgets) or {},
-      components.user_widgets_at(buf, params, sess, self.__use_widgets) or {},
+      components.goal_at(uri, params, sess, self.__use_widgets) or {},
+      components.term_goal_at(uri, params, sess, self.__use_widgets) or {},
+      components.diagnostics_at(uri, params, sess, self.__use_widgets) or {},
+      components.user_widgets_at(uri, params, sess, self.__use_widgets) or {},
     })
     :flatten()
     :totable()

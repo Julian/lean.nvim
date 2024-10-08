@@ -122,7 +122,8 @@ implement('GoToModuleLink', function(_, props)
         vim.api.nvim_set_current_win(this_window)
         -- FIXME: Clearly we need to be able to get a session without touching
         --        internals... Probably this should be a method on ctx.
-        local sess = require('lean.rpc').open(0, this_info.pin.__position_params)
+        local params = this_info.pin.__position_params
+        local sess = require('lean.rpc').open(params.textDocument.uri, params)
         local uri, err = sess:call('getModuleUri', props.modName)
         if err then
           return -- FIXME: Yeah, this should go somewhere clearly.
