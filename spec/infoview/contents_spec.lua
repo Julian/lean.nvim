@@ -1,5 +1,11 @@
 ---@brief [[
 --- Tests for the infoview when interactive widgets are enabled.
+---
+--- A tip for debugging failures is that until we have generic retrying for
+--- making RPC calls, a test can fail here somewhere but *succeed* if you make
+--- it be the only test in some scratch file (where then it likely becomes the
+--- only RPC request we make). If you find this happens, it signals we're
+--- missing some retry logic for the RPC call being made.
 ---@brief ]]
 
 local helpers = require 'spec.helpers'
@@ -313,6 +319,7 @@ describe('interactive infoview', function()
             Multiple
             Lines
 
+
             ▶ 5:1-5:22: information:
             Another
           ]]
@@ -342,6 +349,73 @@ describe('interactive infoview', function()
 
             ▶ 6:1-6:18: error:
             Messages!
+          ]]
+        end
+      )
+    )
+
+    it(
+      'shows known widget instance diagnostics',
+      helpers.clean_buffer(
+        [[
+          import Lean
+
+          open Lean
+
+          @[widget_module]
+          def TestingModule : Widget.Module where
+            javascript := "
+              import * as React from 'react'
+              export default function(props) { return React.createElement('h1', {}, props[0]) }
+            "
+
+          elab "#knownWidget" : command => do
+            let widget : MessageData := .ofWidget {
+              id := `leanNvimTestWidget
+              javascriptHash := TestingModule.javascriptHash
+              props := Server.RpcEncodable.rpcEncode ["veryImportantStuff"]
+            } "This will be in the hover."
+            logInfo widget
+
+          #knownWidget
+        ]],
+        function()
+          require('lean.widgets').implement('leanNvimTestWidget', function(_, props)
+            return require('lean.tui').Element:new { text = props[1] }
+          end)
+
+          helpers.move_cursor { to = { 20, 2 } }
+          assert.infoview_contents.are [[
+            ▶ 20:1-20:13: information:
+            veryImportantStuff
+          ]]
+        end
+      )
+    )
+
+    it(
+      'shows alternate text for unknown widget instance diagnostics',
+      helpers.clean_buffer(
+        [[
+          import Lean
+
+          open Lean
+
+          elab "#unknownWidget" : command => do
+            let widget : MessageData := .ofWidget {
+              id := `someUnknownWidget
+              javascriptHash := 0
+              props := Server.RpcEncodable.rpcEncode "veryImportantProp"
+            } "You're gonna see this alternate text."
+            logInfo widget
+
+          #unknownWidget
+        ]],
+        function()
+          helpers.move_cursor { to = { 13, 2 } }
+          assert.infoview_contents.are [[
+            ▶ 13:1-13:15: information:
+            You're gonna see this alternate text.
           ]]
         end
       )

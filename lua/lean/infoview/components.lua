@@ -501,6 +501,14 @@ local function tagged_text_msg_embed(t, sess, parent_cls)
       end
 
       render()
+    elseif embed.widget ~= nil then
+      local widget = widgets.render(embed.widget.wi)
+      if not widget then
+        local message = 'Unable to render:\n%s\nFalling back to its `alt` widget.'
+        vim.notify_once(message:format(vim.inspect(embed.widget.wi)), vim.log.levels.DEBUG)
+        widget = tagged_text_msg_embed(embed.widget.alt, sess)
+      end
+      element:add_child(widget)
     else
       element:add_child(Element:new {
         text = 'unknown tag:\n' .. vim.inspect(embed) .. '\n' .. vim.inspect(t.tag[2]) .. '\n',
@@ -613,7 +621,20 @@ function components.diagnostics_at(bufnr, params, sess, use_widgets)
     ['end'] = line + 1,
   }
   if err then
-    return components.diagnostics(bufnr, line), err
+    -- GENERALIZEME: This is the same kind of code as below for widgets, where
+    --               we seem to need some higher-level retry logic.
+    --               The difference here clearly is that we want to at some
+    --               point fallback to non-interactive diagnostics if we see
+    --               repeated failure I think, though maybe that should happen
+    --               at the caller.
+    sess = rpc.open(bufnr, params)
+    diagnostics, err = sess:getInteractiveDiagnostics {
+      start = line,
+      ['end'] = line + 1,
+    }
+    if err then
+      return components.diagnostics(bufnr, line), err
+    end
   end
 
   return components.interactive_diagnostics(diagnostics, line, sess), err

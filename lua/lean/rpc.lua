@@ -299,6 +299,10 @@ end
 ---@field strict? TaggedTextMsgEmbed[]
 ---@field lazy? LazyTraceChildren
 
+---@class WidgetEmbed
+---@field wi UserWidgetInstance A widget instance.
+---@field alt TaggedTextMsgEmbed a fallback rendering of the widget
+
 ---@class TraceEmbed
 ---@field indent integer
 ---@field cls string
@@ -308,11 +312,19 @@ end
 
 ---@class MessageData
 
----@class MsgEmbed
----@field expr? CodeWithInfos
----@field goal? InteractiveGoal
----@field trace? TraceEmbed
----@field lazyTrace? {[1]: number, [2]: string, [3]: MessageData}
+---@class MsgEmbedExpr
+---@field expr CodeWithInfos A piece of Lean code with elaboration/typing data.
+
+---@class MsgEmbedGoal
+---@field goal InteractiveGoal An interactive goal display.
+
+---@class MsgEmbedWidget
+---@field widget WidgetEmbed A widget instance.
+
+---@class MsgEmbedLazyTrace
+---@field lazyTrace {[1]: number, [2]: string, [3]: MessageData}
+
+---@alias MsgEmbed MsgEmbedExpr | MsgEmbedGoal | MsgEmbedWidget | MsgEmbedLazyTrace
 
 ---@class InteractiveDiagnostic
 ---@field range lsp.Range

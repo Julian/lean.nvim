@@ -277,6 +277,73 @@ describe('plain infoviews', function()
         end
       )
     )
+
+    it(
+      'shows the alternate text even for known widget instance diagnostics',
+      helpers.clean_buffer(
+        [[
+          import Lean
+
+          open Lean
+
+          @[widget_module]
+          def TestingModule : Widget.Module where
+            javascript := "
+              import * as React from 'react'
+              export default function(props) { return React.createElement('h1', {}, props[0]) }
+            "
+
+          elab "#knownWidget" : command => do
+            let widget : MessageData := .ofWidget {
+              id := `leanNvimTestWidget
+              javascriptHash := TestingModule.javascriptHash
+              props := Server.RpcEncodable.rpcEncode ["veryImportantStuff"]
+            } "This will be in the hover."
+            logInfo widget
+
+          #knownWidget
+        ]],
+        function()
+          require('lean.widgets').implement('leanNvimTestWidget', function(_, props)
+            return require('lean.tui').Element:new { text = props[1] }
+          end)
+
+          helpers.move_cursor { to = { 20, 2 } }
+          assert.infoview_contents.are [[
+            ▶ 20:1-20:13: information:
+            This will be in the hover.
+          ]]
+        end
+      )
+    )
+
+    it(
+      'shows alternate text for unknown widget instance diagnostics',
+      helpers.clean_buffer(
+        [[
+          import Lean
+
+          open Lean
+
+          elab "#unknownWidget" : command => do
+            let widget : MessageData := .ofWidget {
+              id := `someUnknownWidget
+              javascriptHash := 0
+              props := Server.RpcEncodable.rpcEncode "veryImportantProp"
+            } "You're gonna see this alternate text."
+            logInfo widget
+
+          #unknownWidget
+        ]],
+        function()
+          helpers.move_cursor { to = { 13, 2 } }
+          assert.infoview_contents.are [[
+            ▶ 13:1-13:15: information:
+            You're gonna see this alternate text.
+          ]]
+        end
+      )
+    )
   end)
 
   describe(
