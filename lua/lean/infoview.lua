@@ -1090,10 +1090,10 @@ function Pin:__mk_data_elem(tick, opts)
   local sess = rpc.open(uri, params)
   local blocks = vim
     .iter({
-      components.goal_at(uri, params, sess, self.__use_widgets) or {},
-      components.term_goal_at(uri, params, sess, self.__use_widgets) or {},
-      components.diagnostics_at(uri, params, sess, self.__use_widgets) or {},
-      components.user_widgets_at(uri, params, sess, self.__use_widgets) or {},
+      components.goal_at(params, sess, self.__use_widgets) or {},
+      components.term_goal_at(params, sess, self.__use_widgets) or {},
+      components.diagnostics_at(params, sess, self.__use_widgets) or {},
+      components.user_widgets_at(params, sess, self.__use_widgets) or {},
     })
     :flatten()
     :totable()

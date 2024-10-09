@@ -551,13 +551,14 @@ function components.interactive_diagnostics(diags, line, sess)
     :totable()
 end
 
----@param uri string
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
 ---@return Element[] goal
 ---@return LspError? error
-function components.goal_at(uri, params, sess, use_widgets)
+function components.goal_at(params, sess, use_widgets)
+  local uri = params.textDocument.uri
+
   local goal, err
   if use_widgets ~= false then
     if sess == nil then
@@ -576,13 +577,14 @@ function components.goal_at(uri, params, sess, use_widgets)
   return goal, err
 end
 
----@param uri string
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
 ---@return Element[]
 ---@return LspError?
-function components.term_goal_at(uri, params, sess, use_widgets)
+function components.term_goal_at(params, sess, use_widgets)
+  local uri = params.textDocument.uri
+
   local term_goal, err
   if use_widgets ~= false then
     if sess == nil then
@@ -601,13 +603,13 @@ function components.term_goal_at(uri, params, sess, use_widgets)
   return term_goal, err
 end
 
----@param uri string
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
 ---@return Element[]
 ---@return LspError?
-function components.diagnostics_at(uri, params, sess, use_widgets)
+function components.diagnostics_at(params, sess, use_widgets)
+  local uri = params.textDocument.uri
   local line = params.position.line
 
   if use_widgets == false then
@@ -642,17 +644,14 @@ function components.diagnostics_at(uri, params, sess, use_widgets)
   return components.interactive_diagnostics(diagnostics, line, sess), err
 end
 
----@param uri string
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
 ---@return Element[]? widgets
 ---@return LspError? error
-function components.user_widgets_at(uri, params, sess, use_widgets)
-  -- REMOVEME: This validity check in a bunch of places is us seemingly
-  --           calculating components for a buffer that is gone.
-  --           We need to figure out where we're doing that and not doing it.
-  --           Possibly it's all related to us not detaching "pin" updating.
+function components.user_widgets_at(params, sess, use_widgets)
+  local uri = params.textDocument.uri
+
   if not use_widgets then
     return {}
   elseif sess == nil then
