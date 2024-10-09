@@ -1121,7 +1121,7 @@ function Pin:__update(tick)
             element.events.clear(ctx)
           end
         end)
-        pcall(vim.api.nvim_set_current_win, ctx.self.last_win)
+        ctx.jump_to_last_window()
       end,
     },
   }

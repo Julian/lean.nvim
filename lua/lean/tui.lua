@@ -718,12 +718,13 @@ function BufRenderer:event(event, path, ...)
 end
 
 ---@class ElementEventContext
----@field rerender fun()
----@field rehover fun()
----@field self BufRenderer
+---@field rerender fun():nil
+---@field rehover fun():nil
+---@field jump_to_last_window fun():nil Jump to the last window the cursor came from.
 
 ---@return ElementEventContext
 function BufRenderer:make_event_context()
+  ---@type ElementEventContext
   return {
     rerender = function()
       self:render()
@@ -731,7 +732,11 @@ function BufRenderer:make_event_context()
     rehover = function()
       self:hover()
     end,
-    self = self,
+    jump_to_last_window = function()
+      if self:last_win_valid() then
+        vim.api.nvim_set_current_win(self.last_win)
+      end
+    end,
   }
 end
 
