@@ -21,13 +21,13 @@ local rpc = {}
 ---@class Session
 ---@field client vim.lsp.Client
 ---@field uri string
----@field connected boolean
----@field session_id string?
----@field connect_err string?
----@field on_connected function
----@field keepalive_timer any
+---@field connected? boolean
+---@field session_id? string
+---@field connect_err? string
+---@field on_connected Condvar
+---@field keepalive_timer? uv_timer_t
 ---@field to_release RpcRef[]
----@field release_timer any
+---@field release_timer? table
 local Session = {}
 Session.__index = Session
 
