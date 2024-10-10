@@ -11,6 +11,14 @@ local rpc = require 'lean.rpc'
 local util = require 'lean._util'
 local widgets = require 'lean.widgets'
 
+--- @type table<lsp.DiagnosticSeverity, string>
+local SeverityMarker = {
+  'error',
+  'warning',
+  'information',
+  'hint',
+}
+
 local components = {
   NO_INFO = Element:new { text = 'No info.', name = 'no-info' },
   PROCESSING = Element:new { text = 'Processing file...', name = 'processing' },
@@ -350,6 +358,7 @@ end
 --- @param line number
 --- @return Element[]
 function components.diagnostics(uri, line)
+  --- @param diagnostic vim.Diagnostic
   return vim.tbl_map(function(diagnostic)
     return Element:new {
       name = 'diagnostic',
@@ -359,7 +368,7 @@ function components.diagnostics(uri, line)
           start = { line = diagnostic.lnum, character = diagnostic.col },
           ['end'] = { line = diagnostic.end_lnum, character = diagnostic.end_col },
         },
-        util.DIAGNOSTIC_SEVERITY[diagnostic.severity],
+        SeverityMarker[diagnostic.severity],
         -- So. #check foo gives back a diagnostic with *no* trailing newline
         -- but #eval foo gives back one *with* a trailing newline.
         -- VSCode displays both of them the same, so let's do that as well by
@@ -529,6 +538,7 @@ end
 function components.interactive_diagnostics(diags, line, sess)
   return vim
     .iter(diags)
+    ---@param diagnostic InteractiveDiagnostic
     :map(function(diagnostic)
       -- TOOD: why do we pass these here? Or even, do we actually ever hit this?
       if diagnostic.range.start.line ~= line then
@@ -541,7 +551,7 @@ function components.interactive_diagnostics(diags, line, sess)
         text = H(
           ('%s: %s:\n'):format(
             range_to_string(diagnostic.range),
-            util.DIAGNOSTIC_SEVERITY[diagnostic.severity]
+            SeverityMarker[diagnostic.severity]
           )
         ),
         name = 'diagnostic',

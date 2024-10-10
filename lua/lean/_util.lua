@@ -3,7 +3,7 @@ local Job = require 'plenary.job'
 local a = require 'plenary.async'
 -- local control = require'plenary.async.control'
 
-local M = { DIAGNOSTIC_SEVERITY = { 'error', 'warning', 'information', 'hint' } }
+local M = {}
 
 --- Return an array-like table with a value repeated the given number of times.
 function M.tbl_repeat(value, times)
