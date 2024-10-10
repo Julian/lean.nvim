@@ -110,6 +110,8 @@ end)
 implement('GoToModuleLink', function(_, props)
   return Element:new {
     text = props.modName,
+    highlightable = true,
+    hlgroup = 'widgetLink',
     events = {
       go_to_def = function(_)
         local this_infoview = require('lean.infoview').get_current_infoview()

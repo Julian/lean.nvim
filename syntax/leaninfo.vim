@@ -35,6 +35,8 @@ hi def link widgetElementLoading Comment
 hi def link widgetSuggestions Title
 hi def link widgetSuggestionsSubgoals Statement
 
+hi def link widgetLink Tag
+
 hi def link leanInfoExternalHighlight widgetElementHighlight
 hi def link leanInfoButton Pmenu
 hi def link leanInfoField Folded
