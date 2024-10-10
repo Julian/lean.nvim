@@ -26,9 +26,11 @@
 
 ---@class lean.ft.Config
 ---@field nomodifiable string[] globs to prevent accidental modification
+---@field private should_modify function(path): boolean
 
 ---@class lean.infoview.Config
 ---@field view_options? InfoviewViewOptions
+---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
 
 ---@type lean.MergedConfig
 local DEFAULTS = {
@@ -66,9 +68,16 @@ local DEFAULTS = {
       show_let_values = true,
       reverse = false,
     },
+    severity_markers = {
+      'error:\n',
+      'warning:\n',
+      'information:\n',
+      'hint:\n',
+    },
   },
 }
 
+--- Load our merged configuration merging user configuration with any defaults.
 ---@return lean.MergedConfig
 return function()
   ---@type lean.Config

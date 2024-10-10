@@ -11,14 +11,6 @@ local rpc = require 'lean.rpc'
 local util = require 'lean._util'
 local widgets = require 'lean.widgets'
 
---- @type table<lsp.DiagnosticSeverity, string>
-local SeverityMarker = {
-  'error',
-  'warning',
-  'information',
-  'hint',
-}
-
 local components = {
   NO_INFO = Element:new { text = 'No info.', name = 'no-info' },
   PROCESSING = Element:new { text = 'Processing file...', name = 'processing' },
@@ -358,17 +350,19 @@ end
 --- @param line number
 --- @return Element[]
 function components.diagnostics(uri, line)
+  local markers = config().infoview.severity_markers
+
   --- @param diagnostic vim.Diagnostic
   return vim.tbl_map(function(diagnostic)
     return Element:new {
       name = 'diagnostic',
       text = H(string.format(
-        '%s: %s:\n%s',
+        '%s: %s%s',
         range_to_string {
           start = { line = diagnostic.lnum, character = diagnostic.col },
           ['end'] = { line = diagnostic.end_lnum, character = diagnostic.end_col },
         },
-        SeverityMarker[diagnostic.severity],
+        markers[diagnostic.severity],
         -- So. #check foo gives back a diagnostic with *no* trailing newline
         -- but #eval foo gives back one *with* a trailing newline.
         -- VSCode displays both of them the same, so let's do that as well by
@@ -536,6 +530,8 @@ end
 ---@param sess Subsession
 ---@return Element[]
 function components.interactive_diagnostics(diags, line, sess)
+  local markers = config().infoview.severity_markers
+
   return vim
     .iter(diags)
     ---@param diagnostic InteractiveDiagnostic
@@ -549,10 +545,7 @@ function components.interactive_diagnostics(diags, line, sess)
 
       return Element:new {
         text = H(
-          ('%s: %s:\n'):format(
-            range_to_string(diagnostic.range),
-            SeverityMarker[diagnostic.severity]
-          )
+          ('%s: %s'):format(range_to_string(diagnostic.range), markers[diagnostic.severity])
         ),
         name = 'diagnostic',
         children = { tagged_text_msg_embed(diagnostic.message, sess) },

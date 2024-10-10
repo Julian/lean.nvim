@@ -1,6 +1,8 @@
 local highlight = vim.cmd.highlight
 local syntax = vim.cmd.syntax
 
+local config = require 'lean.config'().infoview
+
 -- Goal state
 
 syntax [[match leanInfoGoals "^▶.*goal.*"]]
@@ -26,14 +28,22 @@ highlight [[default link leanInfoExpectedType Special]]
 
 -- Diagnostics
 
-syntax [[match leanInfoError "^▶.*: error:$"]]
-highlight [[default link leanInfoError DiagnosticError]]
+---@type table<lsp.Diagnostic, string>
+local HLGROUPS = {
+  'DiagnosticError',
+  'DiagnosticWarn',
+  'DiagnosticInfo',
+  'DiagnosticOk',
+}
 
-syntax [[match leanInfoWarning "^▶.*: warning:$"]]
-highlight [[default link leanInfoWarning DiagnosticWarn]]
-
-syntax [[match leanInfoInfo "^▶.*: information:$"]]
-highlight [[default link leanInfoInfo DiagnosticInfo]]
+--- @type string, string
+local match, hlgroup
+for i, to_group in vim.iter(ipairs(HLGROUPS)) do
+  match = config.severity_markers[i]:gsub('\n', [[\_$]])
+  hlgroup = 'leanInfo' .. to_group
+  syntax(('match %s "^▶.*: %s.*$"'):format(hlgroup, match))
+  highlight(('default link %s %s'):format(hlgroup, to_group))
+end
 
 syntax [[match leanInfoComment "--.*"]]
 highlight [[default link leanInfoComment Comment]]
