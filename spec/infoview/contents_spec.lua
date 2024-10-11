@@ -420,6 +420,29 @@ describe('interactive infoview', function()
         end
       )
     )
+
+    it(
+      'shows diagnostics for files with immediate diagnostics',
+      helpers.clean_buffer('import DoesNotExist', function()
+        -- the output in this case has the search path in it, so just match a
+        -- bit of our expected contents
+        helpers.wait_for_loading_pins()
+        assert.are.same(
+          [[unknown module prefix 'DoesNotExist']],
+          require('lean.infoview').get_current_infoview():get_line(1)
+        )
+      end)
+    )
+
+    it(
+      'shows diagnostics for files with broken syntax',
+      helpers.clean_buffer('import 37', function()
+        assert.infoview_contents.are [[
+            ▶ 1:7-1:10: error:
+            unexpected token; expected identifier
+          ]]
+      end)
+    )
   end)
 
   describe(

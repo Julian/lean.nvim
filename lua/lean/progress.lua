@@ -29,18 +29,23 @@ function M.update(params)
   vim.api.nvim_exec_autocmds('User', { pattern = M.AUTOCMD })
 end
 
+--- Check if we're processing the given location, returning the kind if so.
+--- Returns `nil` if we're not processing at the given location.
 --- @param params lsp.TextDocumentPositionParams
-function M.is_processing_at(params)
-  local this_proc_info = M.proc_infos[params.textDocument.uri]
-  if not this_proc_info then
-    return true
+--- @return LeanFileProgressKind? kind
+function M.at(params)
+  local infos = M.proc_infos[params.textDocument.uri]
+  if not infos then -- it's so early we don't even have any info yet
+    return M.Kind.processing
   end
 
   -- ignoring character for now (seems to always be 0)
   local line = params.position.line
-  return vim.iter(this_proc_info):any(function(each)
+  --- @type LeanFileProgressProcessingInfo?
+  local info = vim.iter(infos):find(function(each)
     return (line >= each.range.start.line) and (line <= each.range['end'].line)
   end)
+  return info and (info.kind or M.Kind.processing)
 end
 
 ---Calculate the percentage of a buffer which finished processing.

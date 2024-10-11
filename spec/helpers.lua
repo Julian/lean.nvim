@@ -72,9 +72,8 @@ function helpers.wait_for_loading_pins(iv)
   local last, last_loading, last_processing
   local succeeded, _ = vim.wait(7000, function()
     for _, pin in pairs(vim.list_extend({ info.pin, info.__diff_pin }, info.pins)) do
-      local processing = pin.__position_params
-        and require('lean.progress').is_processing_at(pin.__position_params)
-      if pin.loading or processing then
+      local processing = progress.at(pin.__position_params)
+      if pin.loading or processing == progress.Kind.processing then
         last = pin.id
         last_loading = pin.loading
         last_processing = processing
@@ -161,7 +160,7 @@ end
 --- Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
   local succeeded, _ = vim.wait(15000, function()
-    if progress.is_processing_at(vim.lsp.util.make_position_params()) then
+    if progress.at(vim.lsp.util.make_position_params()) == progress.Kind.processing then
       return false
     end
     local diagnostics = util.lean_lsp_diagnostics {

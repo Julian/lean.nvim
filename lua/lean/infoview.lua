@@ -1085,21 +1085,28 @@ function Pin:__update(tick)
     self:__render_parents()
   end
 
-  if progress.is_processing_at(params) then
+  local processing = progress.at(params)
+  if processing == progress.Kind.processing then
     self.__data_element = options.show_processing and components.PROCESSING or Element.EMPTY
     return
   end
 
   local sess = rpc.open(params)
-  local blocks = vim
-    .iter({
-      components.goal_at(params, sess, self.__use_widgets) or {},
-      components.term_goal_at(params, sess, self.__use_widgets) or {},
-      components.diagnostics_at(params, sess, self.__use_widgets) or {},
-      components.user_widgets_at(params, sess, self.__use_widgets) or {},
-    })
-    :flatten()
-    :totable()
+
+  local blocks
+  if processing == progress.Kind.fatal_error then
+    blocks = components.diagnostics_at(params, sess, self.__use_widgets) or {}
+  else
+    blocks = vim
+      .iter({
+        components.goal_at(params, sess, self.__use_widgets) or {},
+        components.term_goal_at(params, sess, self.__use_widgets) or {},
+        components.diagnostics_at(params, sess, self.__use_widgets) or {},
+        components.user_widgets_at(params, sess, self.__use_widgets) or {},
+      })
+      :flatten()
+      :totable()
+  end
 
   if vim.tbl_isempty(blocks) then
     self.__data_element = options.show_no_info_message and components.NO_INFO or Element.EMPTY

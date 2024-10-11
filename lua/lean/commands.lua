@@ -68,7 +68,7 @@ function commands.show_line_diagnostics()
 
   a.void(function()
     local diagnostics, err
-    if progress.is_processing_at(params) then
+    if progress.at(params) == progress.Kind.processing then
       err = 'Processing...'
     else
       diagnostics, err = components.diagnostics_at(bufnr, params, nil, false)
