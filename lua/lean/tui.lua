@@ -42,21 +42,6 @@ BufRenderer.__index = BufRenderer
 ---@field highlightable boolean? @(for buffer rendering) whether to highlight this element when hovering over it
 ---@field children? Element[] @this element's children
 
----Create an Element whose click and mouse events do nothing.
----@param text string? the text to show when rendering this element
----@return Element
-function Element.noop(text)
-  local noop = function() end
-  return Element:new {
-    text = text,
-    events = {
-      click = noop,
-      mouse_enter = noop,
-      mouse_leave = noop,
-    },
-  }
-end
-
 ---Create a new Element.
 ---@param args? ElementNewArgs
 ---@return Element
@@ -72,6 +57,24 @@ function Element:new(args)
   }
   return setmetatable(obj, self)
 end
+
+---Create an Element whose click and mouse events do nothing.
+---@param text string? the text to show when rendering this element
+---@return Element
+function Element.noop(text)
+  local noop = function() end
+  return Element:new {
+    text = text,
+    events = {
+      click = noop,
+      mouse_enter = noop,
+      mouse_leave = noop,
+    },
+  }
+end
+
+--- The empty element (with no content).
+Element.EMPTY = Element:new {}
 
 ---@param children? Element[]
 function Element:set_children(children)

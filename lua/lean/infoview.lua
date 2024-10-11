@@ -62,7 +62,7 @@ options._DEFAULTS = vim.deepcopy(options)
 --- An individual pin.
 ---@class Pin
 ---@field id string @a label to identify the pin
----@field private __data_element? Element
+---@field private __data_element Element
 ---@field private __element Element
 ---@field private __extmark number
 ---@field private __extmark_buf number
@@ -862,7 +862,7 @@ function Pin:new(obj)
   return setmetatable(
     vim.tbl_extend('keep', obj, {
       paused = paused,
-      __data_element = Element:new { name = 'pin-data' },
+      __data_element = Element.EMPTY,
       __element = Element:new { name = 'pin' },
       __info = obj.parent,
       __ticker = util.Ticker:new(),
@@ -1086,7 +1086,7 @@ function Pin:__update(tick)
   end
 
   if progress.is_processing_at(params) then
-    self.__data_element = options.show_processing and components.PROCESSING or nil
+    self.__data_element = options.show_processing and components.PROCESSING or Element.EMPTY
     return
   end
 
@@ -1102,7 +1102,7 @@ function Pin:__update(tick)
     :totable()
 
   if vim.tbl_isempty(blocks) then
-    self.__data_element = options.show_no_info_message and components.NO_INFO or nil
+    self.__data_element = options.show_no_info_message and components.NO_INFO or Element.EMPTY
     return
   end
 
@@ -1120,7 +1120,7 @@ function Pin:__update(tick)
       end,
     },
   })
-  self.__data_element = new_data_element or Element:new {}
+  self.__data_element = new_data_element or Element.EMPTY
 end
 
 --- Close all open infoviews (across all tabs).
