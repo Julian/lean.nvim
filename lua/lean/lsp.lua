@@ -63,6 +63,13 @@ function lsp.plain_term_goal(params, bufnr)
   return util.client_a_request(client, '$/lean/plainTermGoal', params)
 end
 
+--- @class LeanFileProgressParams
+--- @field textDocument lsp.VersionedTextDocumentIdentifier
+--- @field processing LeanFileProgressProcessingInfo[]
+
+--- Called when `$/lean/fileProgress` is triggered.
+---@param err table?
+---@param params LeanFileProgressParams
 function lsp.handlers.file_progress_handler(err, params)
   if err ~= nil then
     return

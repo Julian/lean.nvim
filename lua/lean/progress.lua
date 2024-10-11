@@ -4,24 +4,32 @@
 --- Indications of Lean's file processing progress.
 ---@brief ]]
 
-local M = { AUTOCMD = 'LeanProgressUpdate' }
+local M = {
+  AUTOCMD = 'LeanProgressUpdate',
 
----@alias LeanFileProgressKind 'Processing' | 'FatalError'
+  --- @enum LeanFileProgressKind
+  Kind = {
+    processing = 1,
+    fatal_error = 2,
+  },
+}
 
 ---@class LeanFileProgressProcessingInfo
 ---@field range lsp.Range Range for which the processing info was reported.
 ---@field kind? LeanFileProgressKind Kind of progress that was reported.
 
----@type table<lsp.URI, LeanFileProgressProcessingInfo>
+---@type table<lsp.URI, LeanFileProgressProcessingInfo[]>
 M.proc_infos = {}
 
 vim.cmd.hi 'def leanProgressBar guifg=orange ctermfg=215'
 
+--- @param params LeanFileProgressParams
 function M.update(params)
   M.proc_infos[params.textDocument.uri] = params.processing
   vim.api.nvim_exec_autocmds('User', { pattern = M.AUTOCMD })
 end
 
+--- @param params lsp.TextDocumentPositionParams
 function M.is_processing_at(params)
   local this_proc_info = M.proc_infos[params.textDocument.uri]
   if not this_proc_info then

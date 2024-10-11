@@ -306,7 +306,11 @@ lsp.plain_term_goal({params}, {bufnr})                     *lsp.plain_term_goal*
         (any)  plain_term_goal
 
 
-lsp.handlers.file_progress_handler()        *lsp.handlers.file_progress_handler*
+                                            *lsp.handlers.file_progress_handler*
+lsp.handlers.file_progress_handler({params})
+
+    Parameters: ~
+        {params}  (LeanFileProgressParams)
 
 
 lsp.handlers.diagnostics_handler()            *lsp.handlers.diagnostics_handler*
