@@ -43,35 +43,32 @@ local function show_popup_or_error(elements, err)
 end
 
 function commands.show_goal(use_widgets)
-  local bufnr = vim.api.nvim_get_current_buf()
   local params = vim.lsp.util.make_position_params()
 
   a.void(function()
-    local goal, err = components.goal_at(bufnr, params, nil, use_widgets)
+    local goal, err = components.goal_at(params, nil, use_widgets)
     show_popup_or_error(goal, err)
   end)()
 end
 
 function commands.show_term_goal(use_widgets)
-  local bufnr = vim.api.nvim_get_current_buf()
   local params = vim.lsp.util.make_position_params()
 
   a.void(function()
-    local goal, err = components.term_goal_at(bufnr, params, nil, use_widgets)
+    local goal, err = components.term_goal_at(params, nil, use_widgets)
     show_popup_or_error(goal, err)
   end)()
 end
 
 function commands.show_line_diagnostics()
   local params = vim.lsp.util.make_position_params()
-  local bufnr = vim.api.nvim_get_current_buf()
 
   a.void(function()
     local diagnostics, err
     if progress.at(params) == progress.Kind.processing then
       err = 'Processing...'
     else
-      diagnostics, err = components.diagnostics_at(bufnr, params, nil, false)
+      diagnostics, err = components.diagnostics_at(params, nil, false)
     end
     show_popup_or_error(diagnostics, err)
   end)()
