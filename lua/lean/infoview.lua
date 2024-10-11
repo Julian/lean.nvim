@@ -1110,7 +1110,6 @@ function Pin:__update(tick)
   new_data_element = Element:concat(blocks, '\n\n', {
     events = {
       clear_all = function(ctx) ---@param ctx ElementEventContext
-        ---@diagnostic disable-next-line: need-check-nil
         new_data_element:find(function(element) ---@param element Element
           if element.events.clear then
             element.events.clear(ctx)
@@ -1119,8 +1118,8 @@ function Pin:__update(tick)
         ctx.jump_to_last_window()
       end,
     },
-  })
-  self.__data_element = new_data_element or Element.EMPTY
+  }) or Element.EMPTY
+  self.__data_element = new_data_element
 end
 
 --- Close all open infoviews (across all tabs).
