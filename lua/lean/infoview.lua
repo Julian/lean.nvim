@@ -1090,7 +1090,7 @@ function Pin:__update(tick)
     return
   end
 
-  local sess = rpc.open(uri, params)
+  local sess = rpc.open(params)
   local blocks = vim
     .iter({
       components.goal_at(params, sess, self.__use_widgets) or {},

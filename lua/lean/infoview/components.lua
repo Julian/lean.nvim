@@ -560,12 +560,10 @@ end
 ---@return Element[] goal
 ---@return LspError? error
 function components.goal_at(params, sess, use_widgets)
-  local uri = params.textDocument.uri
-
   local goal, err
   if use_widgets ~= false then
     if sess == nil then
-      sess = rpc.open(uri, params)
+      sess = rpc.open(params)
     end
 
     goal = sess:getInteractiveGoals(params)
@@ -573,6 +571,7 @@ function components.goal_at(params, sess, use_widgets)
   end
 
   if not goal then
+    local uri = params.textDocument.uri
     err, goal = require('lean.lsp').plain_goal(params, vim.uri_to_bufnr(uri))
     goal = goal and components.plain_goal(goal)
   end
@@ -586,12 +585,10 @@ end
 ---@return Element[]
 ---@return LspError?
 function components.term_goal_at(params, sess, use_widgets)
-  local uri = params.textDocument.uri
-
   local term_goal, err
   if use_widgets ~= false then
     if sess == nil then
-      sess = rpc.open(uri, params)
+      sess = rpc.open(params)
     end
 
     term_goal = sess:getInteractiveTermGoal(params)
@@ -599,6 +596,7 @@ function components.term_goal_at(params, sess, use_widgets)
   end
 
   if not term_goal then
+    local uri = params.textDocument.uri
     err, term_goal = require('lean.lsp').plain_term_goal(params, vim.uri_to_bufnr(uri))
     term_goal = term_goal and components.term_goal(term_goal)
   end
@@ -620,7 +618,7 @@ function components.diagnostics_at(params, sess, use_widgets)
   end
 
   if sess == nil then
-    sess = rpc.open(uri, params)
+    sess = rpc.open(params)
   end
 
   local diagnostics, err = sess:getInteractiveDiagnostics {
@@ -634,7 +632,7 @@ function components.diagnostics_at(params, sess, use_widgets)
     --               point fallback to non-interactive diagnostics if we see
     --               repeated failure I think, though maybe that should happen
     --               at the caller.
-    sess = rpc.open(uri, params)
+    sess = rpc.open(params)
     diagnostics, err = sess:getInteractiveDiagnostics {
       start = line,
       ['end'] = line + 1,
@@ -653,12 +651,10 @@ end
 ---@return Element[]? widgets
 ---@return LspError? error
 function components.user_widgets_at(params, sess, use_widgets)
-  local uri = params.textDocument.uri
-
   if not use_widgets then
     return {}
   elseif sess == nil then
-    sess = rpc.open(uri, params)
+    sess = rpc.open(params)
   end
   local response, err = sess:getWidgets(params.position)
   -- luacheck: max_comment_line_length 200
@@ -667,7 +663,7 @@ function components.user_widgets_at(params, sess, use_widgets)
   --               https://github.com/leanprover/vscode-lean4/blob/33e54067d5fefcdf7f28e4993324fd486a53421c/lean4-infoview/src/infoview/info.tsx#L465-L470
   --               and/or generically retries RPC calls
   if not response then
-    sess = rpc.open(uri, params)
+    sess = rpc.open(params)
     response, err = sess:getWidgets(params.position)
   end
   return widgets.render_response(response), err

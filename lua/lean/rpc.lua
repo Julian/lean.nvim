@@ -213,10 +213,10 @@ function Subsession:call(method, params)
 end
 
 --- Open an RPC session.
----@param uri string
 ---@param params lsp.TextDocumentPositionParams
 ---@return Subsession
-function rpc.open(uri, params)
+function rpc.open(params)
+  local uri = params.textDocument.uri
   if sessions[uri] == nil or sessions[uri].connect_err or sessions[uri]:is_closed() then
     connect(uri)
   end
