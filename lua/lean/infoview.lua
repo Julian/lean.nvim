@@ -62,7 +62,7 @@ options._DEFAULTS = vim.deepcopy(options)
 --- An individual pin.
 ---@class Pin
 ---@field id string @a label to identify the pin
----@field private __data_element Element
+---@field private __data_element? Element
 ---@field private __element Element
 ---@field private __extmark number
 ---@field private __extmark_buf number
@@ -1072,10 +1072,8 @@ end
 
 Pin.update = a.void(Pin.async_update)
 
----@param opts table?
----@param tick Tick
----@return Element?
-function Pin:__mk_data_elem(tick, opts)
+--- async function to update this pin's contents given the current position.
+function Pin:__update(tick)
   local params = self.__position_params
 
   local uri = params.textDocument.uri
@@ -1083,8 +1081,13 @@ function Pin:__mk_data_elem(tick, opts)
     return
   end
 
+  if self:__started_loading() then
+    self:__render_parents()
+  end
+
   if progress.is_processing_at(params) then
-    return options.show_processing and components.PROCESSING or nil
+    self.__data_element = options.show_processing and components.PROCESSING or nil
+    return
   end
 
   local sess = rpc.open(uri, params)
@@ -1098,21 +1101,13 @@ function Pin:__mk_data_elem(tick, opts)
     :flatten()
     :totable()
 
-  if options.show_no_info_message and vim.tbl_isempty(blocks) then
-    return components.NO_INFO
-  end
-
-  return Element:concat(blocks, '\n\n', opts) or Element:new {}
-end
-
---- async function to update this pin's contents given the current position.
-function Pin:__update(tick)
-  if self:__started_loading() then
-    self:__render_parents()
+  if vim.tbl_isempty(blocks) then
+    self.__data_element = options.show_no_info_message and components.NO_INFO or nil
+    return
   end
 
   local new_data_element
-  local opts = {
+  new_data_element = Element:concat(blocks, '\n\n', {
     events = {
       clear_all = function(ctx) ---@param ctx ElementEventContext
         ---@diagnostic disable-next-line: need-check-nil
@@ -1124,11 +1119,8 @@ function Pin:__update(tick)
         ctx.jump_to_last_window()
       end,
     },
-  }
-  new_data_element = self:__mk_data_elem(tick, opts)
-  if new_data_element then
-    self.__data_element = new_data_element
-  end
+  })
+  self.__data_element = new_data_element or Element:new {}
 end
 
 --- Close all open infoviews (across all tabs).
