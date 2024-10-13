@@ -406,48 +406,6 @@ local function tagged_text_msg_embed(t, sess, parent_cls)
       return code_with_infos(embed.expr, sess)
     elseif embed.goal ~= nil then
       return interactive_goal(embed.goal, sess)
-    elseif embed.lazyTrace ~= nil then
-      local indent = embed.lazyTrace[1]
-      local category = embed.lazyTrace[2]
-      local msg_data = embed.lazyTrace[3]
-
-      local is_open = false
-      local expanded, expanded_err
-
-      local click
-      local function render()
-        local header =
-          Element:new { text = string.format(is_open and '[%s] ▼' or '[%s] ▶', category) }
-        header.highlightable = true
-        header.events = { click = click }
-
-        element:set_children { header }
-
-        if is_open then
-          if expanded then
-            element:add_child(tagged_text_msg_embed(expanded, sess))
-          elseif expanded_err then
-            element:add_child(Element:new { text = vim.inspect(expanded_err) })
-          end
-        end
-        return true
-      end
-
-      click = function(ctx)
-        if is_open then
-          is_open = false
-        else
-          is_open = true
-
-          if not expanded then
-            expanded, expanded_err = sess:msgToInteractive(msg_data, indent)
-          end
-        end
-        render()
-        ctx.rerender()
-      end
-
-      render()
     elseif embed.trace ~= nil then
       local indent = embed.trace.indent
       local cls = embed.trace.cls

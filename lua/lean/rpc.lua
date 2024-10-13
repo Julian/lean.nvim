@@ -297,11 +297,13 @@ end
 ---@field append? TaggedTextMsgEmbed[]
 ---@field tag? {[1]: MsgEmbed} -- the second field is always the empty string
 
+---@class StrictTraceChildrenEmbed
+---@field strict TaggedTextMsgEmbed[]
+
 ---@class LazyTraceChildren
 
----@class StrictOrLazyTraceChildren
----@field strict? TaggedTextMsgEmbed[]
----@field lazy? LazyTraceChildren
+---@class LazyTraceChildrenEmbed
+---@field lazy LazyTraceChildren
 
 ---@class WidgetEmbed
 ---@field wi UserWidgetInstance A widget instance.
@@ -312,7 +314,7 @@ end
 ---@field cls string
 ---@field msg TaggedTextMsgEmbed
 ---@field collapsed boolean
----@field children StrictOrLazyTraceChildren
+---@field children StrictTraceChildrenEmbed | LazyTraceChildrenEmbed
 
 ---@class MessageData
 
@@ -325,10 +327,10 @@ end
 ---@class MsgEmbedWidget
 ---@field widget WidgetEmbed A widget instance.
 
----@class MsgEmbedLazyTrace
----@field lazyTrace {[1]: number, [2]: string, [3]: MessageData}
+---@class MsgEmbedTrace
+---@field trace TraceEmbed Traces are too costly to print eagerly.
 
----@alias MsgEmbed MsgEmbedExpr | MsgEmbedGoal | MsgEmbedWidget | MsgEmbedLazyTrace
+---@alias MsgEmbed MsgEmbedExpr | MsgEmbedGoal | MsgEmbedWidget | MsgEmbedTrace
 
 ---@class InteractiveDiagnostic
 ---@field range lsp.Range
