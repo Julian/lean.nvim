@@ -45,12 +45,13 @@ end
 function helpers.move_cursor(opts)
   local window = opts.window or 0
 
-  assert
-    .message(util.s [[
+  local msg = util.s [[
     Cursor is already at %s.
     If you just want to ensure the cursor is at this location,
     use nvim_win_set_cursor directly.
-  ]]).are_not
+  ]]
+  assert
+    .message(msg:format(vim.inspect(opts.to))).are_not
     .same(opts.to, vim.api.nvim_win_get_cursor(window))
 
   vim.api.nvim_win_set_cursor(window, opts.to)
