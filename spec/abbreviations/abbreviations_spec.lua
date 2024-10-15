@@ -93,7 +93,6 @@ describe('unicode abbreviation expansion', function()
 
         assert.is.equal(0, #vim.api.nvim_buf_get_keymap(0, 'i'))
         vim.keymap.set('i', '<Tab>', inc, { buffer = 0, noremap = true })
-        assert.is.equal(1, #vim.api.nvim_buf_get_keymap(0, 'i'))
 
         assert.are.same(vim.b.foo, 0)
         helpers.insert [[<Tab>]]
@@ -108,6 +107,7 @@ describe('unicode abbreviation expansion', function()
         assert.are.same(vim.b.foo, 2)
 
         vim.keymap.del('i', '<Tab>', { buffer = 0 })
+        assert.is.equal(0, #vim.api.nvim_buf_get_keymap(0, 'i'))
       end)
     )
 
