@@ -1046,16 +1046,13 @@ function Pin:async_update()
   --        while it's closed, which if we continued, would end up calling
   --        render. That doesn't seem right, somewhere that should happen
   --        higher up than here.
-  if self.paused or not self.__info.__infoview.window then
+  if self.paused or not self.__info.__infoview.window or not self.__position_params then
     return
   end
 
   self.__tick = self.__tick + 1
   local tick = self.__tick
-
-  if self.__position_params and not self.paused then
-    self:__update()
-  end
+  self:__update()
   if self.__tick ~= tick then
     return
   end
