@@ -16,7 +16,7 @@ test: _rebuild-test-fixtures _clone-test-dependencies
 
 # Run the test suite without rebuilding or recloning any dependencies.
 retest *test_files=spec:
-    nvim --headless -u {{ init_lua }} -c 'lua require("inanis").run{ specs = vim.split("{{ test_files }}", " "), minimal_init = "{{ init_lua }}", sequential = vim.env.TEST_SEQUENTIAL ~= nil }'
+    nvim --headless -u {{ init_lua }} -c 'lua require("inanis").run{ specs = vim.split("{{ test_files }}", " "), minimal_init = "{{ init_lua }}" }'
 
 # Run an instance of neovim with the same minimal init used to run tests.
 nvim setup_table='{}' *ARGS='':
