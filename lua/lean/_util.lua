@@ -122,81 +122,6 @@ function M.client_a_request(client, request, params)
   end, 1)()
 end
 
--- FIXME: tick locking is disabled for now
--- It is really easy to crash the infoview this way if an exception is not handled.
-
----Helper to check whether a Ticker has been updated with a new version.
----@class Tick
----@field tick integer The ticker counter at initiatization time.
----@field ticker Ticker The corresponding ticker
-local Tick = {}
-Tick.__index = Tick
-
----@param tick integer
----@param ticker Ticker
-function Tick:new(tick, ticker)
-  return setmetatable({ tick = tick, ticker = ticker }, self)
-end
-
-function Tick:check()
-  -- this tick has been cancelled
-  if self.ticker.tick ~= self.tick then
-    -- allow waiting ticks to proceed
-    -- if self.ticker._lock == self.tick then
-    --   self.ticker._lock = false
-    --   self.ticker.lock_var:notify_all()
-    -- end
-    return false
-  end
-
-  return true
-end
-
----A ticker allows outdated computations to cancel themselves.
----The ticker maintains an internal counter,
----which is incremented whenever a new computation is started.
----The related Tick class wraps a Ticker with
----the counter from the instant the computation was started,
----and is used to query out-of-datedness.
----@class Ticker
----@field tick integer The current tick counter.
-local Ticker = {}
-Ticker.__index = Ticker
-
-function Ticker:new()
-  return setmetatable({
-    tick = 0,
-    --_lock = false,
-    -- lock_var = control.Condvar.new()
-  }, self)
-end
-
--- Updates the tick.
-function Ticker:lock()
-  -- create new tick
-  self.tick = self.tick + 1
-  local tick = self.tick
-
-  -- if something else has the lock on this pin, wait for it to acknowlege it has been cancelled
-  -- while self._lock do
-  --   self.lock_var:wait()
-  --
-  --   -- if a new tick was created, this is cancelled
-  --   if self.tick ~= tick then return false end
-  -- end
-
-  -- this is the most recent tick, so we can proceed
-  -- self._lock = tick
-
-  return Tick:new(tick, self)
-end
-
--- Release the current tick. Should only be called if certain the tick is up-to-date.
--- luacheck: ignore
-function Ticker:release()
-  -- self._lock = false
-end
-
 -- simple alternative to vim.lsp.util._make_floating_popup_size
 function M.make_floating_popup_size(contents)
   return unpack(vim.iter(contents):fold({ 0, 0 }, function(acc, line)
@@ -207,9 +132,6 @@ function M.make_floating_popup_size(contents)
     }
   end))
 end
-
-M.Tick = Tick
-M.Ticker = Ticker
 
 ---@class UIParams
 ---@field textDocument { uri: string }

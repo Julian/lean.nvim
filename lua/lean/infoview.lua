@@ -68,7 +68,7 @@ options._DEFAULTS = vim.deepcopy(options)
 ---@field private __extmark_buf number
 ---@field private __extmark_hl_group string
 ---@field private __extmark_virt_text table
----@field private __ticker Ticker
+---@field private __tick integer
 ---@field private __info Info
 ---@field private __ui_position_params UIParams
 ---@field private __use_widgets boolean
@@ -865,7 +865,7 @@ function Pin:new(obj)
       __data_element = Element.EMPTY,
       __element = Element:new { name = 'pin' },
       __info = obj.parent,
-      __ticker = util.Ticker:new(),
+      __tick = 0,
       __use_widgets = use_widgets,
     }),
     self
@@ -1000,9 +1000,6 @@ function Pin:pause()
     return
   end
   self.paused = true
-
-  -- abort any pending requests
-  self.__ticker:lock()
 end
 
 ---Restart updating this pin.
@@ -1053,12 +1050,13 @@ function Pin:async_update()
     return
   end
 
-  local tick = self.__ticker:lock()
+  self.__tick = self.__tick + 1
+  local tick = self.__tick
 
   if self.__position_params and not self.paused then
-    self:__update(tick)
+    self:__update()
   end
-  if not tick:check() then
+  if self.__tick ~= tick then
     return
   end
 
@@ -1072,11 +1070,11 @@ end
 Pin.update = a.void(Pin.async_update)
 
 --- async function to update this pin's contents given the current position.
-function Pin:__update(tick)
+function Pin:__update()
   local params = self.__position_params
 
   local uri = params.textDocument.uri
-  if not vim.api.nvim_buf_is_loaded(vim.uri_to_bufnr(uri)) or not tick:check() then
+  if not vim.api.nvim_buf_is_loaded(vim.uri_to_bufnr(uri)) then
     return
   end
 
