@@ -250,16 +250,6 @@ function M.make_position_params()
   }
 end
 
---- Utility function for getting the encoding of the first LSP client on the given buffer.
----@param bufnr number buffer handle or 0 for current, defaults to current
----@returns string encoding first client if there is one, nil otherwise
-function M._get_offset_encoding(bufnr)
-  -- TODO: Can this be removed (or removed once 0.6 support is dropped)?
-  for _, client in pairs(vim.lsp.get_clients { bufnr = bufnr }) do
-    return client.offset_encoding or 'utf-16'
-  end
-end
-
 local format_line_ending = {
   ['unix'] = '\n',
   ['dos'] = '\r\n',

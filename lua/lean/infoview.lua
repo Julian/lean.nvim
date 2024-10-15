@@ -960,13 +960,12 @@ function Pin:update_position()
 
   local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, self.__extmark_ns, extmark, {})
 
-  local encoding = util._get_offset_encoding(buf) or 'utf-32'
   local new_pos = { line = extmark_pos[1] }
 
   local buf_line = vim.api.nvim_buf_get_lines(buf, new_pos.line, new_pos.line + 1, false)[1]
   if buf_line then
-    local utf32, utf16 = vim.str_utfindex(buf_line, extmark_pos[2])
-    new_pos.character = encoding == 'utf-16' and utf16 or utf32
+    local _, utf16 = vim.str_utfindex(buf_line, extmark_pos[2])
+    new_pos.character = utf16
   else
     new_pos.character = 0
   end
