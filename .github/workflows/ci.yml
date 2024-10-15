@@ -31,6 +31,8 @@ jobs:
       - uses: extractions/setup-just@v2
       - name: Run tests
         run: just test
+        env:
+          TEST_SEQUENTIAL: 1
 
   release:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
