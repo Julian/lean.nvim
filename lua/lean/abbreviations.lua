@@ -144,11 +144,19 @@ local function insert_char_pre()
       end
     end)
 
-    for key in vim.iter(mappings) do
-      local current = vim.fn.maparg(key, 'i', false, true)
-      if current.buffer then
-        cleanups[key] = function()
-          vim.fn.mapset(current)
+    for imap in vim.iter(vim.api.nvim_buf_get_keymap(0, 'i')) do
+      local lhs = imap.lhs
+      local rhs = imap.rhs or ''
+      if mappings[lhs] then
+        cleanups[lhs] = function()
+          vim.api.nvim_buf_set_keymap(0, 'i', lhs, rhs, {
+            nowait = imap.nowait,
+            silent = imap.silent,
+            script = imap.script,
+            expr = imap.expr,
+            unique = imap.unique,
+            callback = imap.callback,
+          })
         end
       end
     end
