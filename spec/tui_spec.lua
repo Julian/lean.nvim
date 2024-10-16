@@ -6,42 +6,68 @@ local helpers = require 'spec.helpers'
 local tui = require 'lean.tui'
 local Element = tui.Element
 
-describe('Element:concat', function()
-  it('creates an Element concatenated by a separator', function()
-    local foo = Element:new { text = 'foo', name = 'foo-name' }
-    local bar = Element:new { text = 'bar bar', name = 'bar-name' }
-    local baz = Element:new { name = 'baz-name' }
-
-    local element = Element:concat({ foo, bar, baz }, '\n\n')
-
-    assert.is.same(
-      Element:new {
+describe('Element', function()
+  describe(':to_string', function()
+    it('renders the element and its children', function()
+      local child = Element:new { text = 'bar' }
+      local nested = Element:new {
         children = {
-          foo,
-          Element:new { text = '\n\n' },
-          bar,
-          Element:new { text = '\n\n' },
-          baz,
+          Element:new { text = ' ' },
+          Element:new { text = 'baz' },
         },
-      },
-      element
-    )
+      }
+      local element = Element:new {
+        text = 'foo\n',
+        children = { child, nested },
+      }
+      assert.is.same('foo\nbar baz', element:to_string())
+    end)
+
+    it('renders an empty element', function()
+      assert.is.same('', Element:new():to_string())
+    end)
   end)
 
-  it('returns nil when given no elements', function()
-    assert.is_nil(Element:concat({}, '\n'))
+  describe(':concat', function()
+    it('creates an Element concatenated by a separator', function()
+      local foo = Element:new { text = 'foo', name = 'foo-name' }
+      local bar = Element:new { text = 'bar bar', name = 'bar-name' }
+      local baz = Element:new { name = 'baz-name' }
+
+      local element = Element:concat({ foo, bar, baz }, '\n\n')
+
+      assert.is.same(
+        Element:new {
+          children = {
+            foo,
+            Element:new { text = '\n\n' },
+            bar,
+            Element:new { text = '\n\n' },
+            baz,
+          },
+        },
+        element
+      )
+    end)
+
+    it('returns nil when given no elements', function()
+      assert.is_nil(Element:concat({}, '\n'))
+    end)
+
+    it("doesn't introduce extra nesting when given one element", function()
+      local foo = Element:new { text = 'foo', name = 'foo-name' }
+      assert.is.same(Element:concat({ foo }, '\n'), foo)
+    end)
   end)
 
-  it("doesn't introduce extra nesting when given one element", function()
-    local foo = Element:new { text = 'foo', name = 'foo-name' }
-    assert.is.same(Element:concat({ foo }, '\n'), foo)
-  end)
-end)
-
-describe('Element:renderer', function()
-  it('creates a BufRenderer rendering the element', function()
-    local element = Element:new { text = 'foo', name = 'foo-name' }
-    assert.is.same(tui.BufRenderer:new { buf = 1, element = element }, element:renderer { buf = 1 })
+  describe(':renderer', function()
+    it('creates a BufRenderer rendering the element', function()
+      local element = Element:new { text = 'foo', name = 'foo-name' }
+      assert.is.same(
+        tui.BufRenderer:new { buf = 1, element = element },
+        element:renderer { buf = 1 }
+      )
+    end)
   end)
 end)
 
