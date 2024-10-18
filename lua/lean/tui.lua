@@ -426,31 +426,30 @@ function BufRenderer:new(obj)
     end,
   })
 
-  local opts = { buffer = obj.buf }
   -- Note that only closures work here, we can't go storing this on vim.b due
   -- to neovim/neovim#12544 wherein the metatable would be lost on retrieval.
   -- In other words, if we do vim.b[..].foo = new_renderer, when we come back
   -- to look at it, it's not a BufRenderer anymore. Surprise!
   vim.keymap.set('n', '<Tab>', function()
     new_renderer:enter_tooltip()
-  end, opts)
+  end, { buffer = obj.buf, desc = 'Enter a tooltip.' })
   vim.keymap.set('n', 'J', function()
     new_renderer:enter_tooltip()
-  end, opts)
+  end, { buffer = obj.buf, desc = 'Enter a tooltip.' })
   vim.keymap.set('n', '<S-Tab>', function()
     new_renderer:goto_parent_tooltip()
-  end, opts)
+  end, { buffer = obj.buf, desc = 'Go to the "parent" tooltip.' })
   vim.keymap.set(
     'n',
     '<LocalLeader>\\',
     require'lean.abbreviations'.show_reverse_lookup,
-    opts
+    { buffer = obj.buf, desc = 'Show how to type the unicode character under the cursor.' }
   )
 
   for key, event in pairs(obj.keymaps or {}) do
     vim.keymap.set('n', key, function()
       new_renderer:event(event)
-    end, opts)
+    end, { buffer = obj.buf, desc = ('Fire a %s event.'):format(event) })
   end
 
   return new_renderer

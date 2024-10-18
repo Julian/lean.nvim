@@ -6,7 +6,7 @@ describe('mappings', function()
     'are bound in the current buffer and not others',
     clean_buffer(function()
       lean.use_suggested_mappings()
-      assert.is.same(lean.mappings.n['<LocalLeader>i'], vim.fn.maparg('<LocalLeader>i', 'n'))
+      assert.is.same('<Cmd>LeanInfoviewToggle<CR>', vim.fn.maparg('<LocalLeader>i', 'n'))
 
       vim.cmd.new()
       assert.is.empty(vim.fn.maparg('<LocalLeader>i', 'n'))

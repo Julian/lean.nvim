@@ -16,22 +16,71 @@ local subprocess_check_output = require('lean._util').subprocess_check_output
 
 local lean = {
   mappings = {
-    n = {
-      ['<LocalLeader>i'] = '<Cmd>LeanInfoviewToggle<CR>',
-      ['<LocalLeader>p'] = '<Cmd>LeanInfoviewPinTogglePause<CR>',
-      ['<LocalLeader>x'] = '<Cmd>LeanInfoviewAddPin<CR>',
-      ['<LocalLeader>c'] = '<Cmd>LeanInfoviewClearPins<CR>',
-      ['<LocalLeader>dx'] = '<Cmd>LeanInfoviewSetDiffPin<CR>',
-      ['<LocalLeader>dc'] = '<Cmd>LeanInfoviewClearDiffPin<CR>',
-      ['<LocalLeader>dd'] = '<Cmd>LeanInfoviewToggleAutoDiffPin<CR>',
-      ['<LocalLeader>dt'] = '<Cmd>LeanInfoviewToggleNoClearAutoDiffPin<CR>',
-      ['<LocalLeader>w'] = '<Cmd>LeanInfoviewEnableWidgets<CR>',
-      ['<LocalLeader>W'] = '<Cmd>LeanInfoviewDisableWidgets<CR>',
-      ['<LocalLeader>v'] = '<Cmd>LeanInfoviewViewOptions<CR>',
-      ['<LocalLeader><Tab>'] = '<Cmd>LeanGotoInfoview<CR>',
-      ['<LocalLeader>\\'] = '<Cmd>LeanAbbreviationsReverseLookup<CR>',
+    {
+      '<LocalLeader>i',
+      '<Cmd>LeanInfoviewToggle<CR>',
+      { desc = 'Toggle showing the infoview.' },
     },
-    i = {},
+    {
+      '<LocalLeader>p',
+      '<Cmd>LeanInfoviewPinTogglePause<CR>',
+      { desc = 'Toggle pausing infoview pins.' },
+    },
+    {
+      '<LocalLeader>x',
+      '<Cmd>LeanInfoviewAddPin<CR>',
+      { desc = 'Add an infoview pin.' },
+    },
+    {
+      '<LocalLeader>c',
+      '<Cmd>LeanInfoviewClearPins<CR>',
+      { desc = 'Clear all infoview pins.' },
+    },
+    {
+      '<LocalLeader>dx',
+      '<Cmd>LeanInfoviewSetDiffPin<CR>',
+      { desc = 'Set an infoview diff pin.' },
+    },
+    {
+      '<LocalLeader>dc',
+      '<Cmd>LeanInfoviewClearDiffPin<CR>',
+      { desc = 'Clear all infoview diff pins.' },
+    },
+    {
+      '<LocalLeader>dd',
+      '<Cmd>LeanInfoviewToggleAutoDiffPin<CR>',
+      { desc = 'Toggle "auto-diff" mode in the infoview.' },
+    },
+    {
+      '<LocalLeader>dt',
+      '<Cmd>LeanInfoviewToggleNoClearAutoDiffPin<CR>',
+      { desc = 'Toggle "auto-diff" mode and clear any existing pins.' },
+    },
+    {
+      '<LocalLeader>w',
+      '<Cmd>LeanInfoviewEnableWidgets<CR>',
+      { desc = 'Enable infoview widgets.' },
+    },
+    {
+      '<LocalLeader>W',
+      '<Cmd>LeanInfoviewDisableWidgets<CR>',
+      { desc = 'Disable infoview widgets.' },
+    },
+    {
+      '<LocalLeader>v',
+      '<Cmd>LeanInfoviewViewOptions<CR>',
+      { desc = 'Change the infoview view options.' },
+    },
+    {
+      '<LocalLeader><Tab>',
+      '<Cmd>LeanGotoInfoview<CR>',
+      { desc = 'Jump to the current infoview.' },
+    },
+    {
+      '<LocalLeader>\\',
+      '<Cmd>LeanAbbreviationsReverseLookup<CR>',
+      { desc = 'Show how to type the unicode character under the cursor.' },
+    },
   },
 }
 
@@ -109,11 +158,10 @@ end
 ---Enable mappings for a given buffer
 ---@param bufnr? number the bufnr to enable mappings in, defaulting to 0
 function lean.use_suggested_mappings(bufnr)
-  local opts = { noremap = true, buffer = bufnr or 0 }
-  for mode, mode_mappings in pairs(lean.mappings) do
-    for lhs, rhs in pairs(mode_mappings) do
-      vim.keymap.set(mode, lhs, rhs, opts)
-    end
+  local opts = { buffer = bufnr or 0 }
+  for _, each in ipairs(lean.mappings) do
+    local lhs, rhs, more_opts = unpack(each)
+    vim.keymap.set(each.mode or 'n', lhs, rhs, vim.tbl_extend('error', opts, more_opts))
   end
 end
 

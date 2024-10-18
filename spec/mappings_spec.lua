@@ -1,5 +1,4 @@
 local infoview = require 'lean.infoview'
-local lean = require 'lean'
 local clean_buffer = require('spec.helpers').clean_buffer
 
 vim.g.lean_config = { mappings = true }
@@ -7,7 +6,7 @@ vim.g.lean_config = { mappings = true }
 describe('mappings', function()
   describe('for lean buffers', function()
     local any_lean_lhs = '<LocalLeader>i'
-    local rhs = lean.mappings.n[any_lean_lhs]
+    local rhs = '<Cmd>LeanInfoviewToggle<CR>'
 
     it(
       'are bound in lean buffers',
@@ -22,6 +21,19 @@ describe('mappings', function()
       assert.is.empty(vim.fn.maparg(any_lean_lhs, 'n'))
       vim.cmd.bwipeout()
     end)
+
+    it(
+      'all have desc set',
+      clean_buffer(function()
+        local mappings = vim.api.nvim_buf_get_keymap(0, 'nivx')
+        assert.message('unexpectedly empty').is_not_empty(mappings)
+
+        local msg = 'no desc for `%s`:\n%s'
+        for _, each in ipairs(mappings) do
+          assert.message(msg:format(each.lhs, vim.inspect(each))).is_not.empty(each.desc)
+        end
+      end)
+    )
   end)
 
   describe('for infoviews', function()
@@ -33,6 +45,23 @@ describe('mappings', function()
         infoview.go_to()
         local mapping = vim.fn.maparg(any_infoview_lhs, 'n', false, true)
         assert.is.same('function', type(mapping.callback))
+      end)
+    )
+
+    it(
+      'all have desc set',
+      clean_buffer(function()
+        infoview.go_to()
+
+        -- TODO: Also check tooltips.
+
+        local mappings = vim.api.nvim_buf_get_keymap(0, 'nivx')
+        assert.message('unexpectedly empty').is_not_empty(mappings)
+
+        local msg = 'no desc for `%s`:\n%s'
+        for _, each in ipairs(mappings) do
+          assert.message(msg:format(each.lhs, vim.inspect(each))).is_not.empty(each.desc)
+        end
       end)
     )
 
