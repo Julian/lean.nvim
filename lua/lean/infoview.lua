@@ -70,7 +70,7 @@ options._DEFAULTS = vim.deepcopy(options)
 ---@field private __extmark_virt_text table
 ---@field private __tick integer
 ---@field private __info Info
----@field private __ui_position_params UIParams
+---@field private __position_params lsp.TextDocumentPositionParams
 ---@field private __use_widgets boolean
 local Pin = { __extmark_ns = vim.api.nvim_create_namespace 'lean.pins' }
 Pin.__index = Pin
@@ -650,7 +650,7 @@ function Info:new(opts)
 end
 
 function Info:add_pin()
-  local new_params = vim.deepcopy(self.pin.__ui_position_params)
+  local new_params = vim.deepcopy(self.pin.__position_params)
   table.insert(self.pins, self.pin)
   self:__maybe_show_pin_extmark(self.pin.id)
   self.pin = Pin:new {
@@ -663,7 +663,7 @@ function Info:add_pin()
   self:render()
 end
 
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Info:__set_diff_pin(params)
   if not self.__diff_pin then
     self.__diff_pin = Pin:new {
@@ -742,7 +742,7 @@ function Info:__render_pins()
       end
     end
 
-    local params = pin.__ui_position_params
+    local params = pin.__position_params
     if not current and params then
       local filename = vim.uri_to_fname(params.textDocument.uri)
       if not infoview.debug then
@@ -808,13 +808,11 @@ end
 
 --- Update the diff pin to use the current pin's positon params if they are valid,
 --- and the provided params if they are not.
----@param params? UIParams
+---@param params? lsp.TextDocumentPositionParams
 function Info:__update_auto_diff_pin(params)
-  if
-    self.pin.__ui_position_params and util.position_params_valid(self.pin.__ui_position_params)
-  then
+  if util.position_params_valid(self.pin.__position_params) then
     -- update diff pin to previous position
-    self:__set_diff_pin(self.pin.__ui_position_params)
+    self:__set_diff_pin(self.pin.__position_params)
   elseif params then
     -- if previous position invalid, use current position
     self:__set_diff_pin(params)
@@ -822,7 +820,7 @@ function Info:__update_auto_diff_pin(params)
 end
 
 --- Move the current pin to the specified location.
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Info:move_pin(params)
   if self.__auto_diff_pin then
     self:__update_auto_diff_pin(params)
@@ -892,7 +890,7 @@ function Pin:__teardown()
 end
 
 --- Update pin extmark based on position, used when resetting pin position.
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Pin:__update_extmark(params)
   if not params then
     return
@@ -970,11 +968,10 @@ function Pin:update_position()
     new_pos.character = 0
   end
 
-  local new_params = { textDocument = { uri = vim.uri_from_bufnr(buf) }, position = new_pos }
-  self.__position_params = new_params
-  self.__ui_position_params = {
+  ---@type lsp.TextDocumentPositionParams
+  self.__position_params = {
     textDocument = { uri = vim.uri_from_bufnr(buf) },
-    position = { line = extmark_pos[1], character = extmark_pos[2] },
+    position = new_pos,
   }
 end
 
@@ -1021,7 +1018,7 @@ function Pin:toggle_pause()
 end
 
 --- Triggered when manually moving a pin.
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Pin:move(params)
   self:__update_extmark(params)
   self:update()

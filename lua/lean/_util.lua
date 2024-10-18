@@ -133,14 +133,13 @@ function M.make_floating_popup_size(contents)
   end))
 end
 
----@class UIParams
----@field textDocument { uri: string }
----@field position { line: uinteger, character: uinteger }
-
 --- Check that the given position parameters are valid given the buffer they correspond to.
----@param params UIParams @parameters to verify
+---@param params lsp.TextDocumentPositionParams @parameters to verify
 ---@return boolean
 function M.position_params_valid(params)
+  if not params then
+    return false
+  end
   local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     return false
