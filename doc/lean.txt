@@ -31,10 +31,10 @@ lean.use_suggested_mappings({bufnr?})              *lean.use_suggested_mappings*
 
 
 lean.current_search_paths()                          *lean.current_search_paths*
-     Return the current Lean search path.
+    Return the current Lean search path.
 
-     Includes both the Lean core libraries as well as project-specific
-     directories.
+    Includes both the Lean core libraries as well as project-specific
+    directories.
 
 
 ==============================================================================
@@ -68,14 +68,14 @@ InfoviewViewOptions                                        *InfoviewViewOptions*
 
 
 Pin                                                                        *Pin*
-     An individual pin.
+    An individual pin.
 
     Fields: ~
         {id}  (string)  @a label to identify the pin
 
 
 Info                                                                      *Info*
-     An individual info.
+    An individual info.
 
     Fields: ~
         {pin}   (Pin)
@@ -83,7 +83,7 @@ Info                                                                      *Info*
 
 
 Infoview                                                              *Infoview*
-     A "view" on an info (i.e. window).
+    A "view" on an info (i.e. window).
 
     Fields: ~
         {info}    (Info)
@@ -91,7 +91,7 @@ Infoview                                                              *Infoview*
 
 
 infoview.enable_debug()                                  *infoview.enable_debug*
-     Enables printing of extra debugging information in the infoview.
+    Enables printing of extra debugging information in the infoview.
 
 
 InfoviewNewArgs                                                *InfoviewNewArgs*
@@ -110,98 +110,98 @@ FilterSelection                                                *FilterSelection*
 
 
 infoview.close_all()                                        *infoview.close_all*
-     Close all open infoviews (across all tabs).
+    Close all open infoviews (across all tabs).
 
 
 infoview.__update_pin_by_uri({uri})               *infoview.__update_pin_by_uri*
-     Update pins corresponding to the given URI.
+    Update pins corresponding to the given URI.
 
     Parameters: ~
         {uri}  (string)
 
 
 infoview.__update_pin_positions()              *infoview.__update_pin_positions*
-     on_lines callback to update pins position according to the given textDocument/didChange parameters.
+    on_lines callback to update pins position according to the given textDocument/didChange parameters.
 
 
 infoview.enable()                                              *infoview.enable*
-     Enable and open the infoview across all Lean buffers.
+    Enable and open the infoview across all Lean buffers.
 
 
 infoview.set_autoopen()                                  *infoview.set_autoopen*
-     Set whether a new infoview is automatically opened when entering Lean buffers.
+    Set whether a new infoview is automatically opened when entering Lean buffers.
 
 
 infoview.set_autopause()                                *infoview.set_autopause*
-     Set whether a new pin is automatically paused.
+    Set whether a new pin is automatically paused.
 
 
 infoview.get_current_infoview()                  *infoview.get_current_infoview*
-     Get the infoview corresponding to the current window.
+    Get the infoview corresponding to the current window.
 
     Returns: ~
         (Infoview)
 
 
 infoview.open()                                                  *infoview.open*
-     Open the current infoview (or ensure it is already open).
+    Open the current infoview (or ensure it is already open).
 
 
 infoview.close()                                                *infoview.close*
-     Close the current infoview (or ensure it is already closed).
+    Close the current infoview (or ensure it is already closed).
 
 
 infoview.toggle()                                              *infoview.toggle*
-     Toggle whether the current infoview is opened or closed.
+    Toggle whether the current infoview is opened or closed.
 
 
 infoview.pin_toggle_pause()                          *infoview.pin_toggle_pause*
-     Toggle whether the current pin receives updates.
+    Toggle whether the current pin receives updates.
 
 
 infoview.add_pin()                                            *infoview.add_pin*
-     Add a pin to the current cursor location.
+    Add a pin to the current cursor location.
 
 
 infoview.set_diff_pin()                                  *infoview.set_diff_pin*
-     Set the location for a diff pin to the current cursor location.
+    Set the location for a diff pin to the current cursor location.
 
 
 infoview.clear_pins()                                      *infoview.clear_pins*
-     Clear any pins in the current infoview.
+    Clear any pins in the current infoview.
 
 
 infoview.clear_diff_pin()                              *infoview.clear_diff_pin*
-     Clear a diff pin in the current infoview.
+    Clear a diff pin in the current infoview.
 
 
 infoview.toggle_auto_diff_pin()                  *infoview.toggle_auto_diff_pin*
-     Toggle whether "auto-diff" mode is active for the current infoview.
+    Toggle whether "auto-diff" mode is active for the current infoview.
 
 
 infoview.enable_widgets()                              *infoview.enable_widgets*
-     Enable widgets in the current infoview.
+    Enable widgets in the current infoview.
 
 
 infoview.disable_widgets()                            *infoview.disable_widgets*
-     Disable widgets in the current infoview.
+    Disable widgets in the current infoview.
 
 
 infoview.go_to()                                                *infoview.go_to*
-     Move the cursor to the infoview window.
+    Move the cursor to the infoview window.
 
 
 infoview.reposition()                                      *infoview.reposition*
-     Move the current infoview to the appropriate spot based on the
-     current screen dimensions.
-     Does nothing if there are more than 2 open windows.
+    Move the current infoview to the appropriate spot based on the
+    current screen dimensions.
+    Does nothing if there are more than 2 open windows.
 
 
 infoview.select_view_options()                    *infoview.select_view_options*
-     Interactively set some view options for the infoview.
+    Interactively set some view options for the infoview.
 
-     Does not persist the selected options; if you wish to permanently affect
-     which hypotheses are shown, set them in your lean.nvim configuration.
+    Does not persist the selected options; if you wish to permanently affect
+    which hypotheses are shown, set them in your lean.nvim configuration.
 
 
 ==============================================================================
@@ -210,14 +210,21 @@ infoview.select_view_options()                    *infoview.select_view_options*
  Support for abbreviations (unicode character replacement).
 
 abbreviations.load()                                        *abbreviations.load*
-     Load the Lean abbreviations as a Lua table.
+    Load the Lean abbreviations as a Lua table.
 
 
 abbreviations.reverse_lookup()                    *abbreviations.reverse_lookup*
+    Retrieve the table of abbreviations that would produce the given symbol.
+
+    Allows for trailing junk. E.g. `λean` will produce information about `λ`.
+
+    The result is a table keyed by the length of the prefix match, and
+    whose value is sorted such that shorter abbreviation suggestions are
+    first.
 
 
 abbreviations.show_reverse_lookup()          *abbreviations.show_reverse_lookup*
-     Show a preview window with the reverse-lookup of the current character.
+    Show a preview window with the reverse-lookup of the current character.
 
 
 abbreviations.convert()                                  *abbreviations.convert*
@@ -266,6 +273,10 @@ satellite.nvim integration                                      *lean.satellite*
 
  See https://github.com/lewis6991/satellite.nvim/blob/main/HANDLERS.md
 
+                                                          *Lean.SatelliteConfig*
+Lean.SatelliteConfig : Satellite.Handlers.BaseConfig
+
+
 ==============================================================================
 LSP                                                                   *lean.lsp*
 
@@ -275,7 +286,7 @@ lsp.enable()                                                        *lsp.enable*
 
 
 lsp.client_for({bufnr})                                         *lsp.client_for*
-     Find the vim.lsp.Client attached to the given buffer.
+    Find the vim.lsp.Client attached to the given buffer.
 
     Parameters: ~
         {bufnr}  (number)
@@ -285,6 +296,7 @@ lsp.client_for({bufnr})                                         *lsp.client_for*
 
 
 lsp.plain_goal({params}, {bufnr})                               *lsp.plain_goal*
+    Fetch goal state information from the server (async).
 
     Parameters: ~
         {params}  (lsp.TextDocumentPositionParams)
@@ -296,6 +308,7 @@ lsp.plain_goal({params}, {bufnr})                               *lsp.plain_goal*
 
 
 lsp.plain_term_goal({params}, {bufnr})                     *lsp.plain_term_goal*
+    Fetch term goal state information from the server (async).
 
     Parameters: ~
         {params}  (lsp.TextDocumentPositionParams)
@@ -304,6 +317,13 @@ lsp.plain_term_goal({params}, {bufnr})                     *lsp.plain_term_goal*
     Returns: ~
         (any)  error
         (any)  plain_term_goal
+
+
+LeanFileProgressParams                                  *LeanFileProgressParams*
+
+    Fields: ~
+        {textDocument}  (lsp.VersionedTextDocumentIdentifier)
+        {processing}    (LeanFileProgressProcessingInfo[])
 
 
                                             *lsp.handlers.file_progress_handler*
@@ -337,7 +357,7 @@ stderr.show({message})                                             *stderr.show*
 
 
 stderr.enable()                                                  *stderr.enable*
-     Enable teeing stderr output somewhere (to a second visible buffer by default).
+    Enable teeing stderr output somewhere (to a second visible buffer by default).
 
 
 ==============================================================================
@@ -350,7 +370,7 @@ Client-side sorrying                                                *lean.sorry*
  behavior.
 
 sorry.fill()                                                        *sorry.fill*
-     Fill the current cursor position with `sorry`s to discharge all goals.
+    Fill the current cursor position with `sorry`s to discharge all goals.
 
 
 vim:tw=78:ts=8:noet:ft=help:norl:

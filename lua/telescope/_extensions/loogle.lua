@@ -12,8 +12,8 @@ local loogle = require 'lean.loogle'
 ---@field display string what to display in telescope for this result
 ---@field ordinal string how to sort this result in telescope
 
---- Use telescope to provide a Loogle API based type search
---- @param opts table Options for the telescope framework
+---Use telescope to provide a Loogle API based type search
+---@param opts table Options for the telescope framework
 local function telescope_loogle(opts)
   opts = vim.tbl_extend('keep', opts or {}, { debounce = 200 })
 
@@ -22,7 +22,7 @@ local function telescope_loogle(opts)
       prompt_title = 'Loogle',
       debounce = opts.debounce,
       finder = finders.new_dynamic {
-        --- @param prompt string the currently entered telescope prompt
+        ---@param prompt string the currently entered telescope prompt
         fn = function(prompt)
           if not prompt or prompt == '' then
             return nil
@@ -39,8 +39,8 @@ local function telescope_loogle(opts)
           end
           return results
         end,
-        --- @param entry LoogleResult
-        --- @return LoogleTelescopeEntry
+        ---@param entry LoogleResult
+        ---@return LoogleTelescopeEntry
         entry_maker = function(entry)
           return {
             value = entry,

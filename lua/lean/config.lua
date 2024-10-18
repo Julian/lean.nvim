@@ -77,7 +77,7 @@ local DEFAULTS = {
   },
 }
 
---- Load our merged configuration merging user configuration with any defaults.
+---Load our merged configuration merging user configuration with any defaults.
 ---@return lean.MergedConfig
 return function()
   ---@type lean.Config

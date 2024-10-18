@@ -37,9 +37,9 @@ local function no_timers()
 end
 
 return {
-  --- Check whether lean.nvim is healthy.
+  ---Check whether lean.nvim is healthy.
   ---
-  --- Call me via `:checkhealth lean`.
+  ---Call me via `:checkhealth lean`.
   check = function()
     vim.health.start 'lean.nvim'
     neovim_is_new_enough()

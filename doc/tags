@@ -3,6 +3,8 @@ Info	lean.txt	/*Info*
 Infoview	lean.txt	/*Infoview*
 InfoviewNewArgs	lean.txt	/*InfoviewNewArgs*
 InfoviewViewOptions	lean.txt	/*InfoviewViewOptions*
+Lean.SatelliteConfig	lean.txt	/*Lean.SatelliteConfig*
+LeanFileProgressParams	lean.txt	/*LeanFileProgressParams*
 LoogleResult	lean.txt	/*LoogleResult*
 Pin	lean.txt	/*Pin*
 abbreviations.convert	lean.txt	/*abbreviations.convert*

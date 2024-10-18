@@ -24,7 +24,7 @@ local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
---- We turn widgets off here, but that shouldn't really be affecting updating.
+-- We turn widgets off here, but that shouldn't really be affecting updating.
 require('lean').setup { infoview = { use_widgets = false } }
 
 describe('infoview content (auto-)update', function()
@@ -256,10 +256,10 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('autoupdates when contents are modified without the cursor moving', function()
-    --- FIXME: This test is meant to ensure that we re-send requests on ContentModified LSP
-    ---        errors, but it doesn't seem to do that (it doesn't seem to do particularly that
-    ---        even before being refactored though, as it passes with or without the relevant
-    ---        lines in infoview.lua)
+    -- FIXME: This test is meant to ensure that we re-send requests on ContentModified LSP
+    --        errors, but it doesn't seem to do that (it doesn't seem to do particularly that
+    --        even before being refactored though, as it passes with or without the relevant
+    --        lines in infoview.lua)
     vim.cmd.edit { fixtures.project.child 'Test.lean', bang = true }
     helpers.move_cursor { to = { 23, 1 } }
     assert.infoview_contents.are [[

@@ -8,14 +8,14 @@ local util = require 'lean._util'
 
 local helpers = { _clean_buffer_counter = 1 }
 
---- Feed some keystrokes into the current buffer, replacing termcodes.
+---Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(text, feed_opts)
   feed_opts = feed_opts or 'mtx'
   local to_feed = vim.api.nvim_replace_termcodes(text, true, false, true)
   vim.api.nvim_feedkeys(to_feed, feed_opts, true)
 end
 
---- Insert some text into the current buffer.
+---Insert some text into the current buffer.
 function helpers.insert(text, feed_opts)
   feed_opts = feed_opts or 'x'
   helpers.feed('i' .. text, feed_opts)
@@ -34,12 +34,12 @@ function helpers.all_lean_extmarks(buffer, start, end_)
   return extmarks
 end
 
---- Move the cursor to a new location.
+---Move the cursor to a new location.
 ---
---- Ideally this function wouldn't exist, and one would call
---- `vim.api.nvim_win_set_cursor` directly, but it does not fire `CursorMoved`
---- autocmds. This function exists therefore to make tests which have slightly
---- less implementation details in them (the manual firing of that autocmd).
+---Ideally this function wouldn't exist, and one would call
+---`vim.api.nvim_win_set_cursor` directly, but it does not fire `CursorMoved`
+---autocmds. This function exists therefore to make tests which have slightly
+---less implementation details in them (the manual firing of that autocmd).
 ---
 ---@param opts MoveCursorOpts
 function helpers.move_cursor(opts)
@@ -62,7 +62,7 @@ end
 ---@field window? integer @the window handle. Defaults to the current window.
 ---@field to table @the new cursor position (1-row indexed, as per nvim_win_set_cursor)
 
---- Wait for all of the pins associated with the given infoview to finish loading/processing.
+---Wait for all of the pins associated with the given infoview to finish loading/processing.
 ---@param iv? Infoview
 function helpers.wait_for_loading_pins(iv)
   iv = iv or infoview.get_current_infoview()
@@ -121,11 +121,11 @@ local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
   vim.api.nvim_buf_set_name(bufnr, unique_name)
 end
 
---- Create a clean Lean buffer with the given contents.
+---Create a clean Lean buffer with the given contents.
+---
+---Waits for the LSP to be ready before proceeding with a given callback.
 --
---  Waits for the LSP to be ready before proceeding with a given callback.
---
---  Yes c(lean) may be a double entendre, and no I don't feel bad.
+---Yes c(lean) may be a double entendre, and no I don't feel bad.
 function helpers.clean_buffer(contents, callback)
   local lines
 
@@ -158,7 +158,7 @@ function helpers.clean_buffer(contents, callback)
   end
 end
 
---- Wait a few seconds for line diagnostics, erroring if none arrive.
+---Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
   local succeeded, _ = vim.wait(15000, function()
     if progress.at(vim.lsp.util.make_position_params()) == progress.Kind.processing then
@@ -179,21 +179,21 @@ function helpers.wait_for_filetype()
   assert.message('filetype was never set').is_truthy(result)
 end
 
---- Assert about the current word.
+---Assert about the current word.
 local function has_current_word(_, arguments)
   assert.is.equal(arguments[1], vim.fn.expand '<cword>')
   return true
 end
 assert:register('assertion', 'current_word', has_current_word)
 
---- Assert about the current line.
+---Assert about the current line.
 local function has_current_line(_, arguments)
   assert.is.equal(arguments[1], vim.api.nvim_get_current_line())
   return true
 end
 assert:register('assertion', 'current_line', has_current_line)
 
---- Assert about the current cursor location.
+---Assert about the current cursor location.
 local function has_current_cursor(_, arguments)
   local window = arguments[1].window or 0
   local got = vim.api.nvim_win_get_cursor(window)
@@ -206,14 +206,14 @@ local function has_current_cursor(_, arguments)
 end
 assert:register('assertion', 'current_cursor', has_current_cursor)
 
---- Assert about the current tabpage.
+---Assert about the current tabpage.
 local function has_current_tabpage(_, arguments)
   assert.is.equal(arguments[1], vim.api.nvim_get_current_tabpage())
   return true
 end
 assert:register('assertion', 'current_tabpage', has_current_tabpage)
 
---- Assert about the current window.
+---Assert about the current window.
 local function has_current_window(_, arguments)
   assert.is.equal(arguments[1], vim.api.nvim_get_current_win())
   return true
@@ -230,7 +230,7 @@ local function _expected(arguments)
   return expected
 end
 
---- Assert about the entire buffer contents.
+---Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
   local bufnr = arguments[1].bufnr or 0
   local got = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
@@ -239,7 +239,7 @@ local function has_buf_contents(_, arguments)
 end
 assert:register('assertion', 'contents', has_buf_contents)
 
---- Assert about the current infoview contents.
+---Assert about the current infoview contents.
 local function has_infoview_contents(_, arguments)
   local expected = _expected(arguments)
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
@@ -272,7 +272,7 @@ local function has_infoview_contents(_, arguments)
   return true
 end
 
---- Assert about the current infoview contents without waiting for the pins to load.
+---Assert about the current infoview contents without waiting for the pins to load.
 local function has_infoview_contents_nowait(_, arguments)
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
   local got = table.concat(target_infoview:get_lines(), '\n')
@@ -306,7 +306,7 @@ end
 
 assert:register('assertion', 'has_all', has_all)
 
---- Assert a tabpage has the given windows open in it.
+---Assert a tabpage has the given windows open in it.
 local function has_open_windows(_, arguments)
   local expected
   if arguments.n == 1 and type(arguments[1]) == 'table' then

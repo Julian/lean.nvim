@@ -1,6 +1,7 @@
 ---@brief [[
 --- Tests for the placing of infoview pins.
 ---@brief ]]
+
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 

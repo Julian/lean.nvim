@@ -1,5 +1,5 @@
 ---@brief [[
----Tests for Lean's (user) widgets.
+--- Tests for Lean's (user) widgets.
 ---@brief ]]
 
 local Element = require('lean.tui').Element

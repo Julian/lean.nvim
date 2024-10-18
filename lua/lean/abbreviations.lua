@@ -8,7 +8,7 @@ local abbreviations = {}
 
 local _MEMOIZED = nil
 
---- Load the Lean abbreviations as a Lua table.
+---Load the Lean abbreviations as a Lua table.
 function abbreviations.load()
   if _MEMOIZED ~= nil then
     return _MEMOIZED
@@ -20,13 +20,13 @@ function abbreviations.load()
   return _MEMOIZED
 end
 
---- Retrieve the table of abbreviations that would produce the given symbol.
---
---  Allows for trailing junk. E.g. `λean` will produce information about `λ`.
---
---  The result is a table keyed by the length of the prefix match, and
---  whose value is sorted such that shorter abbreviation suggestions are
---  first.
+---Retrieve the table of abbreviations that would produce the given symbol.
+---
+---Allows for trailing junk. E.g. `λean` will produce information about `λ`.
+---
+---The result is a table keyed by the length of the prefix match, and
+---whose value is sorted such that shorter abbreviation suggestions are
+---first.
 function abbreviations.reverse_lookup(symbol_plus_unknown)
   local reverse = {}
   for key, value in pairs(abbreviations.load()) do
@@ -43,7 +43,7 @@ function abbreviations.reverse_lookup(symbol_plus_unknown)
   return reverse
 end
 
---- Show a preview window with the reverse-lookup of the current character.
+---Show a preview window with the reverse-lookup of the current character.
 function abbreviations.show_reverse_lookup()
   local col = vim.api.nvim_win_get_cursor(0)[2] + 1
   local char = vim.api.nvim_get_current_line():sub(col)

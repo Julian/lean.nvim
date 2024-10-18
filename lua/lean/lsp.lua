@@ -24,7 +24,7 @@ function lsp.enable(opts)
   require('lspconfig').leanls.setup(opts)
 end
 
---- Find the vim.lsp.Client attached to the given buffer.
+---Find the vim.lsp.Client attached to the given buffer.
 ---@param bufnr number
 ---@return vim.lsp.Client
 function lsp.client_for(bufnr)
@@ -32,7 +32,7 @@ function lsp.client_for(bufnr)
   return clients[1]
 end
 
--- Fetch goal state information from the server (async).
+---Fetch goal state information from the server (async).
 ---@param params lsp.TextDocumentPositionParams
 ---@param bufnr number
 ---@return any error
@@ -50,7 +50,7 @@ function lsp.plain_goal(params, bufnr)
   return util.client_a_request(client, '$/lean/plainGoal', params)
 end
 
--- Fetch term goal state information from the server (async).
+---Fetch term goal state information from the server (async).
 ---@param params lsp.TextDocumentPositionParams
 ---@param bufnr number
 ---@return any error
@@ -63,11 +63,11 @@ function lsp.plain_term_goal(params, bufnr)
   return util.client_a_request(client, '$/lean/plainTermGoal', params)
 end
 
---- @class LeanFileProgressParams
---- @field textDocument lsp.VersionedTextDocumentIdentifier
---- @field processing LeanFileProgressProcessingInfo[]
+---@class LeanFileProgressParams
+---@field textDocument lsp.VersionedTextDocumentIdentifier
+---@field processing LeanFileProgressProcessingInfo[]
 
---- Called when `$/lean/fileProgress` is triggered.
+---Called when `$/lean/fileProgress` is triggered.
 ---@param err table?
 ---@param params LeanFileProgressParams
 function lsp.handlers.file_progress_handler(err, params)

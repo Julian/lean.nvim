@@ -19,12 +19,12 @@ local progress = require 'lean.progress'
 local SYMBOL = '│'
 local HIGHLIGHT = 'leanProgressBar'
 
---- @type Satellite.Handler
+---@type Satellite.Handler
 local handler = {
   name = 'lean.nvim',
 }
 
---- @class Lean.SatelliteConfig: Satellite.Handlers.BaseConfig
+---@class Lean.SatelliteConfig: Satellite.Handlers.BaseConfig
 local config = {
   enable = true,
   overlap = true,
@@ -38,8 +38,8 @@ local function setup_hl()
   })
 end
 
---- @param user_config Satellite.Handlers.CursorConfig
---- @param update fun()
+---@param user_config Satellite.Handlers.CursorConfig
+---@param update fun()
 function handler.setup(user_config, update)
   config = vim.tbl_deep_extend('force', config, user_config)
   handler.config = config
@@ -61,7 +61,7 @@ function handler.setup(user_config, update)
 end
 
 function handler.update(bufnr, winid)
-  local marks = {} --- @type Satellite.Mark[]
+  local marks = {} ---@type Satellite.Mark[]
 
   local infos = progress.proc_infos[vim.uri_from_bufnr(bufnr)] or {}
   local pred = async.winbuf_pred(bufnr, winid)

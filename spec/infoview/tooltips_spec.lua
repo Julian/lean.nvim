@@ -1,7 +1,7 @@
 ---@brief [[
----Tests for tooltips (rendered inside infoviews).
+--- Tests for tooltips (rendered inside infoviews).
 ---
----Really this should combine with the user widget tests (which it preceeds).
+--- Really this should combine with the user widget tests (which it preceeds).
 ---@brief ]]
 
 local helpers = require 'spec.helpers'

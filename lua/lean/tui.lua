@@ -73,7 +73,7 @@ function Element.noop(text)
   }
 end
 
---- The empty element (with no content).
+---The empty element (with no content).
 Element.EMPTY = Element:new {}
 
 ---@param children? Element[]
@@ -231,7 +231,7 @@ local function take(arr, n)
   return res
 end
 
--- Finds the innermost element satisfying a predicate
+---Find the innermost element satisfying a predicate.
 ---@param path PathNode[]
 ---@param check fun(element:Element):any
 ---@return Element found The element satisfying check
@@ -271,7 +271,7 @@ local function pos_to_raw_pos(pos, lines)
   return raw_pos
 end
 
--- returns (0, 0)-indexed cursor position from raw byte position and list of lines
+---Return (0, 0)-indexed cursor position from raw byte position and list of lines
 local function raw_pos_to_pos(raw_pos, lines)
   local line_num = 0
   local rem_chars = raw_pos
@@ -545,7 +545,7 @@ function BufRenderer:update_cursor(win)
   end
 end
 
---- Checks if two paths are equal, ignoring auxillary metadata (e.g. offsets)
+---Checks if two paths are equal, ignoring auxillary metadata (e.g. offsets)
 ---@param path_a PathNode[]? @first path
 ---@param path_b PathNode[]? @second path
 local function path_equal(path_a, path_b)

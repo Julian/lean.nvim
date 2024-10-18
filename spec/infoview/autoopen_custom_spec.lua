@@ -2,6 +2,7 @@
 --- Tests for infoview autoopen as a function (where its return value decides
 --- whether to open the new infoview or not).
 ---@brief ]]
+
 require 'spec.helpers'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'

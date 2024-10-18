@@ -1,5 +1,5 @@
 ---@brief [[
----Tests for the console UI framework in isolation from Lean-specific widgets.
+--- Tests for the console UI framework in isolation from Lean-specific widgets.
 ---@brief ]]
 
 local helpers = require 'spec.helpers'

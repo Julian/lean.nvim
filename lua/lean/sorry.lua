@@ -29,7 +29,7 @@ local function calculate_indent(line)
   return string.rep(' ', indent)
 end
 
---- Fill the current cursor position with `sorry`s to discharge all goals.
+---Fill the current cursor position with `sorry`s to discharge all goals.
 function sorry.fill()
   local params = vim.lsp.util.make_position_params()
   local responses = vim.lsp.buf_request_sync(0, '$/lean/plainGoal', params)

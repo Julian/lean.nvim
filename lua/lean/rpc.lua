@@ -161,7 +161,7 @@ function Session:call(pos, method, params)
   return result, err
 end
 
---- Map from bufnr to Session object.
+---Map from bufnr to Session object.
 ---@type table<number, Session>
 local sessions = {}
 
@@ -212,7 +212,7 @@ function Subsession:call(method, params)
   return self.sess:call(self.pos, method, params)
 end
 
---- Open an RPC session.
+---Open an RPC session.
 ---@param params lsp.TextDocumentPositionParams
 ---@return Subsession
 function rpc.open(params)

@@ -1,5 +1,5 @@
 ---@brief [[
----Tests for basic (auto-)attaching of LSP clients.
+--- Tests for basic (auto-)attaching of LSP clients.
 ---@brief ]]
 
 local fixtures = require 'spec.fixtures'

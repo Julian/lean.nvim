@@ -16,15 +16,15 @@ local components = {
   PROCESSING = Element:new { text = 'Processing file...', name = 'processing' },
 }
 
---- Format a heading.
+---Format a heading.
 local function H(contents)
   return ('▶ %s'):format(contents)
 end
 
---- Convert an LSP range to a human-readable, (1,1)-indexed string.
+---Convert an LSP range to a human-readable, (1,1)-indexed string.
 ---
---- The (1, 1) indexing is to match the interface used interactively for
---- `gg` and `|`.
+---The (1, 1) indexing is to match the interface used interactively for
+---`gg` and `|`.
 local function range_to_string(range)
   return ('%d:%d-%d:%d'):format(
     range['start'].line + 1,
@@ -40,7 +40,7 @@ local function goal_header(goals)
     or H(('%d goals\n'):format(#goals))
 end
 
---- The current (tactic) goal state.
+---The current (tactic) goal state.
 ---@param goal table: a Lean `plainGoal` LSP response
 ---@return Element[]
 function components.plain_goal(goal)
@@ -77,7 +77,7 @@ function components.plain_goal(goal)
   }
 end
 
---- The current (term) goal state.
+---The current (term) goal state.
 ---@param term_goal table: a Lean `plainTermGoal` LSP response
 ---@return Element[]
 function components.term_goal(term_goal)
@@ -217,17 +217,17 @@ local function code_with_infos(t, sess)
   return element
 end
 
---- A hypothesis name which is accessible according to Lean's naming conventions.
+---A hypothesis name which is accessible according to Lean's naming conventions.
 ---@param name string
 local function is_accessible(name)
   return name:sub(-#'✝') ~= '✝'
 end
 
---- Filter the hypotheses according to view options, then convert them to elements.
---- @param hyps InteractiveHypothesisBundle[]
---- @param opts InfoviewViewOptions
---- @param sess Subsession
---- @return Element?
+---Filter the hypotheses according to view options, then convert them to elements.
+---@param hyps InteractiveHypothesisBundle[]
+---@param opts InfoviewViewOptions
+---@param sess Subsession
+---@return Element?
 local function to_hypotheses_element(hyps, opts, sess)
   ---@param hyp InteractiveHypothesisBundle
   local children = vim.iter(hyps):map(function(hyp)
@@ -323,7 +323,7 @@ function components.interactive_goals(goal, sess)
   return { Element:new { name = 'interactive-goals', children = children } }
 end
 
---- The current (term) goal state.
+---The current (term) goal state.
 ---@param goal InteractiveTermGoal
 ---@param sess Subsession
 ---@return Element[]
@@ -345,14 +345,14 @@ function components.interactive_term_goal(goal, sess)
   }
 end
 
---- Diagnostic information for the current line from the Lean server.
---- @param uri string
---- @param line number
---- @return Element[]
+---Diagnostic information for the current line from the Lean server.
+---@param uri string
+---@param line number
+---@return Element[]
 function components.diagnostics(uri, line)
   local markers = config().infoview.severity_markers
 
-  --- @param diagnostic vim.Diagnostic
+  ---@param diagnostic vim.Diagnostic
   return vim.tbl_map(function(diagnostic)
     return Element:new {
       name = 'diagnostic',
@@ -482,7 +482,7 @@ local function tagged_text_msg_embed(t, sess, parent_cls)
   return element
 end
 
---- Diagnostic information for the current line from the Lean server.
+---Diagnostic information for the current line from the Lean server.
 ---@param line number
 ---@param diags InteractiveDiagnostic[]
 ---@param sess Subsession

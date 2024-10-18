@@ -13,7 +13,7 @@ local stderr = {}
 local current = {}
 local stderr_height
 
---- Open a window for the stderr buffer of the configured height.
+---Open a window for the stderr buffer of the configured height.
 local function open_window(stderr_bufnr)
   local old_win = vim.api.nvim_get_current_win()
 
@@ -57,7 +57,7 @@ function stderr.show(message)
   end)
 end
 
---- Enable teeing stderr output somewhere (to a second visible buffer by default).
+---Enable teeing stderr output somewhere (to a second visible buffer by default).
 function stderr.enable(config)
   local on_lines = config.on_lines or stderr.show
   local old_error = log.error

@@ -86,7 +86,7 @@ local lean = {
 
 vim.filetype.add { extension = { lean = 'lean' } }
 
---- Setup function to be run in your init.lua (or init.vim).
+---Setup function to be run in your init.lua (or init.vim).
 ---@param opts lean.Config: Configuration options
 function lean.setup(opts)
   opts = opts or {}
@@ -165,10 +165,10 @@ function lean.use_suggested_mappings(bufnr)
   end
 end
 
---- Return the current Lean search path.
+---Return the current Lean search path.
 ---
---- Includes both the Lean core libraries as well as project-specific
---- directories.
+---Includes both the Lean core libraries as well as project-specific
+---directories.
 function lean.current_search_paths()
   local paths
 

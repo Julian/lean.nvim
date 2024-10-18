@@ -7,7 +7,7 @@
 local M = {
   AUTOCMD = 'LeanProgressUpdate',
 
-  --- @enum LeanFileProgressKind
+  ---@enum LeanFileProgressKind
   Kind = {
     processing = 1,
     fatal_error = 2,
@@ -23,16 +23,16 @@ M.proc_infos = {}
 
 vim.cmd.hi 'def leanProgressBar guifg=orange ctermfg=215'
 
---- @param params LeanFileProgressParams
+---@param params LeanFileProgressParams
 function M.update(params)
   M.proc_infos[params.textDocument.uri] = params.processing
   vim.api.nvim_exec_autocmds('User', { pattern = M.AUTOCMD })
 end
 
---- Check if we're processing the given location, returning the kind if so.
---- Returns `nil` if we're not processing at the given location.
---- @param params lsp.TextDocumentPositionParams
---- @return LeanFileProgressKind? kind
+---Check if we're processing the given location, returning the kind if so.
+---Returns `nil` if we're not processing at the given location.
+---@param params lsp.TextDocumentPositionParams
+---@return LeanFileProgressKind? kind
 function M.at(params)
   local infos = M.proc_infos[params.textDocument.uri]
   if not infos then -- it's so early we don't even have any info yet
@@ -41,7 +41,7 @@ function M.at(params)
 
   -- ignoring character for now (seems to always be 0)
   local line = params.position.line
-  --- @type LeanFileProgressProcessingInfo?
+  ---@type LeanFileProgressProcessingInfo?
   local info = vim.iter(infos):find(function(each)
     return (line >= each.range.start.line) and (line <= each.range['end'].line)
   end)

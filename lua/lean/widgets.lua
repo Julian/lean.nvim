@@ -15,26 +15,26 @@ local dedent = require('lean._util').dedent
 
 ---@alias WidgetRenderer fun(self: Widget, props: any): Element[]?
 
---- A Lean user widget.
---- @class Widget
---- @field element WidgetRenderer
+---A Lean user widget.
+---@class Widget
+---@field element WidgetRenderer
 local Widget = {}
 Widget.__index = Widget
 
---- @class WidgetNewArgs
---- @field element WidgetRenderer
+---@class WidgetNewArgs
+---@field element WidgetRenderer
 
---- Create a new Widget.
---- @param args WidgetNewArgs
---- @return Widget
+---Create a new Widget.
+---@param args WidgetNewArgs
+---@return Widget
 function Widget:new(args)
   local obj = { element = args.element }
   return setmetatable(obj, self)
 end
 
---- A null widget which indicates it is standing in for one not-yet-supported.
---- @param id string the ID of the user widget we are not implementing
---- @return Widget
+---A null widget which indicates it is standing in for one not-yet-supported.
+---@param id string the ID of the user widget we are not implementing
+---@return Widget
 function Widget.unsupported(id)
   return Widget:new {
     element = function()
@@ -47,8 +47,8 @@ function Widget.unsupported(id)
   }
 end
 
---- A registry of `Widget`s which we essentially reimplement in Lua rather than
---- by executing their Javascript source modules.
+---A registry of `Widget`s which we essentially reimplement in Lua rather than
+---by executing their Javascript source modules.
 local BYPASSED_WIDGETS = vim.defaulttable(Widget.unsupported)
 
 ---Implement the Lean user widget with the given ID (by
@@ -78,15 +78,15 @@ local function render(instance)
   return Widget.from_user_widget(instance):element(instance.props)
 end
 
---- @alias SuggestionText string
+---@alias SuggestionText string
 
---- @class Suggestion
---- @field suggestion SuggestionText Text to be used as a replacement via a code action.
---- @field preInfo? string Optional info to be printed immediately before replacement text in a widget.
---- @field postInfo? string Optional info to be printed immediately after replacement text in a widget.
+---@class Suggestion
+---@field suggestion SuggestionText Text to be used as a replacement via a code action.
+---@field preInfo? string Optional info to be printed immediately before replacement text in a widget.
+---@field postInfo? string Optional info to be printed immediately after replacement text in a widget.
 
---- @class TryThisParams
---- @field suggestions Suggestion[]
+---@class TryThisParams
+---@field suggestions Suggestion[]
 
 ---@param props TryThisParams
 implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props)
@@ -102,8 +102,8 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props)
   }
 end)
 
---- @class GoToModuleLinkParams
---- @field modName string the module to jump to
+---@class GoToModuleLinkParams
+---@field modName string the module to jump to
 
 ---A "jump to a module" which comes from `import-graph`.
 ---@param props GoToModuleLinkParams

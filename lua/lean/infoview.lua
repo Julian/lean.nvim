@@ -18,7 +18,7 @@ local infoview = {
   ---@type table<number, Infoview>
   _by_tabpage = {},
 
-  --- Whether to print additional debug information in the infoview.
+  ---Whether to print additional debug information in the infoview.
   ---@type boolean
   debug = false,
 }
@@ -59,7 +59,7 @@ options._DEFAULTS = vim.deepcopy(options)
 ---@field show_let_values boolean show let-value bodies
 ---@field reverse boolean order hypotheses bottom-to-top
 
---- An individual pin.
+---An individual pin.
 ---@class Pin
 ---@field id string @a label to identify the pin
 ---@field private __data_element Element
@@ -75,7 +75,7 @@ options._DEFAULTS = vim.deepcopy(options)
 local Pin = { __extmark_ns = vim.api.nvim_create_namespace 'lean.pins' }
 Pin.__index = Pin
 
---- An individual info.
+---An individual info.
 ---@class Info
 ---@field pin Pin
 ---@field pins Pin[]
@@ -90,7 +90,7 @@ Pin.__index = Pin
 local Info = {}
 Info.__index = Info
 
---- A "view" on an info (i.e. window).
+---A "view" on an info (i.e. window).
 ---@class Infoview
 ---@field info Info
 ---@field window integer
@@ -103,7 +103,7 @@ Info.__index = Info
 local Infoview = {}
 Infoview.__index = Infoview
 
---- Enables printing of extra debugging information in the infoview.
+---Enables printing of extra debugging information in the infoview.
 function infoview.enable_debug()
   infoview.debug = true
 end
@@ -114,7 +114,7 @@ end
 ---@field horizontal_position? "top"|"bottom"
 ---@field separate_tab? boolean
 
---- Create a new infoview.
+---Create a new infoview.
 ---@param obj InfoviewNewArgs
 ---@return Infoview
 function Infoview:new(obj)
@@ -139,7 +139,7 @@ function Infoview:__should_be_vertical()
   end
 end
 
---- Open this infoview if it isn't already open
+---Open this infoview if it isn't already open
 function Infoview:open()
   if self.window then
     return
@@ -252,8 +252,8 @@ function Infoview:reposition()
   end
 end
 
---- Move the cursor to the given (1-indexed) goal.
---- @param n? integer the goal number to move to, defaulting to the first
+---Move the cursor to the given (1-indexed) goal.
+---@param n? integer the goal number to move to, defaulting to the first
 function Infoview:move_cursor_to_goal(n)
   n = n or 1
   local lines = vim.api.nvim_buf_get_lines(self.info.__renderer.buf, 0, -1, false)
@@ -270,7 +270,7 @@ function Infoview:move_cursor_to_goal(n)
   end
 end
 
---- Enter the given infoview (i.e. set the current window to it).
+---Enter the given infoview (i.e. set the current window to it).
 function Infoview:enter()
   if self.window and vim.api.nvim_win_is_valid(self.window) then
     vim.api.nvim_set_current_win(self.window)
@@ -281,7 +281,7 @@ end
 ---@field description string
 ---@field option string
 
---- Interactively set view options for this infoview.
+---Interactively set view options for this infoview.
 function Infoview:select_view_options()
   ---@type FilterSelection[]
   local choices = {
@@ -341,9 +341,9 @@ function Infoview:select_view_options()
   end)
 end
 
---- API for opening an auxilliary window relative to the current infoview window.
---- @param buf number @buffer to put in the new window
---- @return number? @new window handle or nil if the infoview is closed
+---API for opening an auxilliary window relative to the current infoview window.
+---@param buf number @buffer to put in the new window
+---@return number? @new window handle or nil if the infoview is closed
 function Infoview:__open_win(buf)
   if not self.window then
     return
@@ -403,9 +403,9 @@ function Infoview:__refresh()
   self.info.__win_event_disable = false
 end
 
---- Filter the pins from this infoview which are relevant to a given buffer.
---- @param uri string @the URI which filters the pins
---- @return Pin[]
+---Filter the pins from this infoview which are relevant to a given buffer.
+---@param uri string @the URI which filters the pins
+---@return Pin[]
 function Infoview:pins_for(uri)
   if not self.window then
     return {}
@@ -432,7 +432,7 @@ function Infoview:__update()
   pcall(info.move_pin, info, util.make_position_params())
 end
 
---- Either open or close a diff window for this infoview depending on whether its info has a diff pin.
+---Either open or close a diff window for this infoview depending on whether its info has a diff pin.
 function Infoview:__refresh_diff()
   if not self.window then
     return
@@ -461,7 +461,7 @@ function Infoview:__refresh_diff()
   self:__refresh()
 end
 
---- Close this infoview's diff window.
+---Close this infoview's diff window.
 function Infoview:__close_diff()
   if not self.window or not self.__diff_win then
     return
@@ -485,7 +485,7 @@ function Infoview:__close_diff()
   self:__refresh()
 end
 
---- Close this infoview.
+---Close this infoview.
 function Infoview:close()
   if not self.window then
     return
@@ -500,7 +500,7 @@ function Infoview:__was_closed()
   self.info.__renderer:event 'clear_all' -- Ensure tooltips close.
 end
 
---- Retrieve the contents of the infoview as a table.
+---Retrieve the contents of the infoview as a table.
 ---@param start_line? number
 ---@param end_line? number
 function Infoview:get_lines(start_line, end_line)
@@ -513,13 +513,13 @@ function Infoview:get_lines(start_line, end_line)
   return vim.api.nvim_buf_get_lines(self.info.__renderer.buf, start_line, end_line, true)
 end
 
---- Retrieve a specific line from the infoview window.
+---Retrieve a specific line from the infoview window.
 ---@param line number
 function Infoview:get_line(line)
   return self:get_lines(line, line + 1)[1]
 end
 
---- Retrieve the contents of the diff window as a table.
+---Retrieve the contents of the diff window as a table.
 ---@param start_line? number
 ---@param end_line? number
 function Infoview:get_diff_lines(start_line, end_line)
@@ -532,7 +532,7 @@ function Infoview:get_diff_lines(start_line, end_line)
   return vim.api.nvim_buf_get_lines(self.info.__diff_renderer.buf, start_line, end_line, true)
 end
 
---- Toggle this infoview being open.
+---Toggle this infoview being open.
 function Infoview:toggle()
   if self.window then
     self:close()
@@ -541,7 +541,7 @@ function Infoview:toggle()
   end
 end
 
---- Update the info contents.
+---Update the info contents.
 local function update_current_infoview()
   if vim.bo.filetype ~= 'lean' then
     return
@@ -553,7 +553,7 @@ local function update_current_infoview()
   return current_infoview:__update()
 end
 
---- Set the currently active Lean buffer to update the infoview.
+---Set the currently active Lean buffer to update the infoview.
 function Infoview:focus_on_current_buffer()
   if self.window then
     vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
@@ -700,7 +700,7 @@ function Info:__clear_diff_pin()
   self:render()
 end
 
---- Show a pin extmark if it is appropriate based on configuration.
+---Show a pin extmark if it is appropriate based on configuration.
 function Info:__maybe_show_pin_extmark(...)
   if not options.indicators or options.indicators == 'never' then
     return
@@ -712,7 +712,7 @@ function Info:__maybe_show_pin_extmark(...)
   self.pin:__show_extmark(...)
 end
 
---- Set the current window as the last window used to update this Info.
+---Set the current window as the last window used to update this Info.
 function Info:set_last_window()
   self.last_window = vim.api.nvim_get_current_win()
 end
@@ -788,7 +788,7 @@ function Info:__render_pins()
   end
 end
 
---- Update this info's physical contents.
+---Update this info's physical contents.
 function Info:render()
   self:__render_pins()
 
@@ -806,8 +806,8 @@ function Info:render()
   collectgarbage() -- FIXME: Why??
 end
 
---- Update the diff pin to use the current pin's positon params if they are valid,
---- and the provided params if they are not.
+---Update the diff pin to use the current pin's positon params if they are valid,
+---and the provided params if they are not.
 ---@param params? UIParams
 function Info:__update_auto_diff_pin(params)
   if
@@ -821,7 +821,7 @@ function Info:__update_auto_diff_pin(params)
   end
 end
 
---- Move the current pin to the specified location.
+---Move the current pin to the specified location.
 ---@param params UIParams
 function Info:move_pin(params)
   if self.__auto_diff_pin then
@@ -830,8 +830,8 @@ function Info:move_pin(params)
   self.pin:move(params)
 end
 
---- Toggle auto diff pin mode.
---- @param clear boolean @clear the pin when disabling auto diff pin mode?
+---Toggle auto diff pin mode.
+---@param clear boolean @clear the pin when disabling auto diff pin mode?
 function Info:__toggle_auto_diff_pin(clear)
   if self.__auto_diff_pin then
     self.__auto_diff_pin = false
@@ -872,13 +872,13 @@ function Pin:new(obj)
   )
 end
 
---- Enable widgets for this pin.
+---Enable widgets for this pin.
 function Pin:enable_widgets()
   self.__use_widgets = true
   self:update()
 end
 
---- Disable widgets (in favor of plaintext goals) for this pin.
+---Disable widgets (in favor of plaintext goals) for this pin.
 function Pin:disable_widgets()
   self.__use_widgets = false
   self:update()
@@ -891,7 +891,7 @@ function Pin:__teardown()
   end
 end
 
---- Update pin extmark based on position, used when resetting pin position.
+---Update pin extmark based on position, used when resetting pin position.
 ---@param params UIParams
 function Pin:__update_extmark(params)
   if not params then
@@ -946,7 +946,7 @@ function Pin:__update_extmark_style(buf, line, col)
   self.__extmark_buf = buf
 end
 
---- Update pin position based on extmark, used directly when changing text, indirectly when setting position.
+---Update pin position based on extmark, used directly when changing text, indirectly when setting position.
 function Pin:update_position()
   local extmark = self.__extmark
   if not extmark then
@@ -1020,7 +1020,7 @@ function Pin:toggle_pause()
   end
 end
 
---- Triggered when manually moving a pin.
+---Triggered when manually moving a pin.
 ---@param params UIParams
 function Pin:move(params)
   self:__update_extmark(params)
@@ -1066,7 +1066,7 @@ end
 
 Pin.update = a.void(Pin.async_update)
 
---- async function to update this pin's contents given the current position.
+---async function to update this pin's contents given the current position.
 function Pin:__update()
   local params = self.__position_params
 
@@ -1123,14 +1123,14 @@ function Pin:__update()
   self.__data_element = new_data_element
 end
 
---- Close all open infoviews (across all tabs).
+---Close all open infoviews (across all tabs).
 function infoview.close_all()
   for _, each in pairs(infoview._by_tabpage) do
     each:close()
   end
 end
 
---- Update pins corresponding to the given URI.
+---Update pins corresponding to the given URI.
 ---@param uri string
 function infoview.__update_pin_by_uri(uri)
   for _, each in pairs(infoview._by_tabpage) do
@@ -1140,7 +1140,7 @@ function infoview.__update_pin_by_uri(uri)
   end
 end
 
---- on_lines callback to update pins position according to the given textDocument/didChange parameters.
+---on_lines callback to update pins position according to the given textDocument/didChange parameters.
 function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
   local uri = vim.uri_from_bufnr(bufnr)
   for _, each in pairs(infoview._by_tabpage) do
@@ -1167,7 +1167,7 @@ end
 --        __update_pin_positions
 local attached_buffers = {}
 
---- Callback when entering a Lean buffer.
+---Callback when entering a Lean buffer.
 local function infoview_bufenter()
   -- Open an infoview for the current buffer if it isn't already open.
   local tabpage = vim.api.nvim_get_current_tabpage()
@@ -1185,7 +1185,7 @@ local function infoview_bufenter()
   update_current_infoview()
 end
 
---- Enable and open the infoview across all Lean buffers.
+---Enable and open the infoview across all Lean buffers.
 function infoview.enable(opts)
   options = vim.tbl_extend('force', options, opts)
   infoview.mappings = options.mappings
@@ -1232,7 +1232,7 @@ function infoview.enable(opts)
   })
 end
 
---- Set whether a new infoview is automatically opened when entering Lean buffers.
+---Set whether a new infoview is automatically opened when entering Lean buffers.
 function infoview.set_autoopen(autoopen)
   if autoopen == true then
     autoopen = function()
@@ -1246,18 +1246,18 @@ function infoview.set_autoopen(autoopen)
   options.autoopen = autoopen
 end
 
---- Set whether a new pin is automatically paused.
+---Set whether a new pin is automatically paused.
 function infoview.set_autopause(autopause)
   options.autopause = autopause
 end
 
---- Get the infoview corresponding to the current window.
+---Get the infoview corresponding to the current window.
 ---@return Infoview
 function infoview.get_current_infoview()
   return infoview._by_tabpage[vim.api.nvim_get_current_tabpage()]
 end
 
---- Open the current infoview (or ensure it is already open).
+---Open the current infoview (or ensure it is already open).
 function infoview.open()
   local tabpage = vim.api.nvim_get_current_tabpage()
   local current_infoview = infoview.get_current_infoview()
@@ -1269,7 +1269,7 @@ function infoview.open()
   return current_infoview
 end
 
---- Close the current infoview (or ensure it is already closed).
+---Close the current infoview (or ensure it is already closed).
 function infoview.close()
   local current_infoview = infoview.get_current_infoview()
   if current_infoview then
@@ -1277,7 +1277,7 @@ function infoview.close()
   end
 end
 
---- Toggle whether the current infoview is opened or closed.
+---Toggle whether the current infoview is opened or closed.
 function infoview.toggle()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then
@@ -1287,7 +1287,7 @@ function infoview.toggle()
   end
 end
 
---- Toggle whether the current pin receives updates.
+---Toggle whether the current pin receives updates.
 function infoview.pin_toggle_pause()
   local iv = infoview.get_current_infoview()
   if iv then
@@ -1295,7 +1295,7 @@ function infoview.pin_toggle_pause()
   end
 end
 
---- Add a pin to the current cursor location.
+---Add a pin to the current cursor location.
 function infoview.add_pin()
   if vim.bo.filetype ~= 'lean' then
     return
@@ -1305,7 +1305,7 @@ function infoview.add_pin()
   current_infoview.info:add_pin()
 end
 
---- Set the location for a diff pin to the current cursor location.
+---Set the location for a diff pin to the current cursor location.
 function infoview.set_diff_pin()
   if vim.bo.filetype ~= 'lean' then
     return
@@ -1315,7 +1315,7 @@ function infoview.set_diff_pin()
   current_infoview.info:__set_diff_pin(util.make_position_params())
 end
 
---- Clear any pins in the current infoview.
+---Clear any pins in the current infoview.
 function infoview.clear_pins()
   local iv = infoview.get_current_infoview()
   if iv then
@@ -1323,7 +1323,7 @@ function infoview.clear_pins()
   end
 end
 
---- Clear a diff pin in the current infoview.
+---Clear a diff pin in the current infoview.
 function infoview.clear_diff_pin()
   local iv = infoview.get_current_infoview()
   if iv then
@@ -1331,7 +1331,7 @@ function infoview.clear_diff_pin()
   end
 end
 
---- Toggle whether "auto-diff" mode is active for the current infoview.
+---Toggle whether "auto-diff" mode is active for the current infoview.
 function infoview.toggle_auto_diff_pin(clear)
   if vim.bo.filetype ~= 'lean' then
     return
@@ -1340,7 +1340,7 @@ function infoview.toggle_auto_diff_pin(clear)
   current_infoview.info:__toggle_auto_diff_pin(clear)
 end
 
---- Enable widgets in the current infoview.
+---Enable widgets in the current infoview.
 function infoview.enable_widgets()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then
@@ -1348,7 +1348,7 @@ function infoview.enable_widgets()
   end
 end
 
---- Disable widgets in the current infoview.
+---Disable widgets in the current infoview.
 function infoview.disable_widgets()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then
@@ -1356,7 +1356,7 @@ function infoview.disable_widgets()
   end
 end
 
---- Move the cursor to the infoview window.
+---Move the cursor to the infoview window.
 function infoview.go_to()
   local curr_info = infoview.open().info
   -- if there is no last win, just go straight to the window itself
@@ -1367,9 +1367,9 @@ function infoview.go_to()
   end
 end
 
---- Move the current infoview to the appropriate spot based on the
---- current screen dimensions.
---- Does nothing if there are more than 2 open windows.
+---Move the current infoview to the appropriate spot based on the
+---current screen dimensions.
+---Does nothing if there are more than 2 open windows.
 function infoview.reposition()
   local iv = infoview.get_current_infoview()
   if iv then
@@ -1377,10 +1377,10 @@ function infoview.reposition()
   end
 end
 
---- Interactively set some view options for the infoview.
+---Interactively set some view options for the infoview.
 ---
---- Does not persist the selected options; if you wish to permanently affect
---- which hypotheses are shown, set them in your lean.nvim configuration.
+---Does not persist the selected options; if you wish to permanently affect
+---which hypotheses are shown, set them in your lean.nvim configuration.
 function infoview.select_view_options()
   infoview.open():select_view_options()
 end

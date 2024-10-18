@@ -1,11 +1,14 @@
--- Stuff that should live in some standard library.
+---@brief [[
+--- Stuff that should live in some standard library.
+---@brief ]]
+
 local Job = require 'plenary.job'
 local a = require 'plenary.async'
 -- local control = require'plenary.async.control'
 
 local M = {}
 
---- Return an array-like table with a value repeated the given number of times.
+---Return an array-like table with a value repeated the given number of times.
 function M.tbl_repeat(value, times)
   local result = {}
   for _ = 1, times do
@@ -14,7 +17,7 @@ function M.tbl_repeat(value, times)
   return result
 end
 
---- Fetch the diagnostics for all Lean LSP clients from the current buffer.
+---Fetch the diagnostics for all Lean LSP clients from the current buffer.
 ---@param opts? table
 ---@param bufnr? number buffer handle or 0 for current, defaults to current
 ---@return vim.Diagnostic[] diagnostics the relevant Lean diagnostics
@@ -56,11 +59,11 @@ function M.create_buf(params)
   return bufnr
 end
 
---- Run a subprocess, blocking on exit, and returning its stdout.
+---Run a subprocess, blocking on exit, and returning its stdout.
 ---
---- Unlike `system()`, we don't mix stdout and stderr, and unlike
---- `vim.uv.spawn`, we wait for process exit and collect the output.
---- @return table: the lines of stdout of the exited process
+---Unlike `system()`, we don't mix stdout and stderr, and unlike
+---`vim.uv.spawn`, we wait for process exit and collect the output.
+---@return table: the lines of stdout of the exited process
 function M.subprocess_check_output(opts, timeout)
   timeout = timeout or 10000
 
@@ -97,16 +100,16 @@ local function max_common_indent(str)
   return common_indent
 end
 
---- Dedent a multi-line string.
+---Dedent a multi-line string.
 ---
---- REPLACEME: plenary.nvim has a version of this but it has odd behavior.
+---REPLACEME: plenary.nvim has a version of this but it has odd behavior.
 function M.dedent(str)
   str = str:gsub('^ +', ''):gsub('\n *$', '\n') -- trim leading/trailing space
   local prefix = max_common_indent(str)
   return str:gsub('\n' .. prefix, '\n')
 end
 
---- Build a single-line string out a multiline one, replacing \n with spaces.
+---Build a single-line string out a multiline one, replacing \n with spaces.
 function M.s(str)
   return M.dedent(str):gsub('\n', ' ')
 end
@@ -122,7 +125,7 @@ function M.client_a_request(client, request, params)
   end, 1)()
 end
 
--- simple alternative to vim.lsp.util._make_floating_popup_size
+---Simple alternative to vim.lsp.util._make_floating_popup_size
 function M.make_floating_popup_size(contents)
   return unpack(vim.iter(contents):fold({ 0, 0 }, function(acc, line)
     local width, height = unpack(acc)
@@ -137,7 +140,7 @@ end
 ---@field textDocument { uri: string }
 ---@field position { line: uinteger, character: uinteger }
 
---- Check that the given position parameters are valid given the buffer they correspond to.
+---Check that the given position parameters are valid given the buffer they correspond to.
 ---@param params UIParams @parameters to verify
 ---@return boolean
 function M.position_params_valid(params)
@@ -188,7 +191,7 @@ local function buf_get_line_ending(bufnr)
 end
 
 ---@private
---- Returns full text of buffer {bufnr} as a string.
+---Returns full text of buffer {bufnr} as a string.
 ---
 ---@param bufnr (number) Buffer handle, or 0 for current.
 ---@return string # Buffer text as string.

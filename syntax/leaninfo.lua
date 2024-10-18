@@ -36,7 +36,7 @@ local HLGROUPS = {
   'DiagnosticOk',
 }
 
---- @type string, string
+---@type string, string
 local match, hlgroup
 for i, to_group in vim.iter(ipairs(HLGROUPS)) do
   match = config.severity_markers[i]:gsub('\n', [[\_$]])
