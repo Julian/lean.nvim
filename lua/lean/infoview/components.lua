@@ -41,7 +41,7 @@ local function goal_header(goals)
 end
 
 ---The current (tactic) goal state.
----@param goal table: a Lean `plainGoal` LSP response
+---@param goal PlainGoal: a Lean `plainGoal` LSP response
 ---@return Element[]
 function components.plain_goal(goal)
   if type(goal) ~= 'table' or not goal.goals then
@@ -515,7 +515,7 @@ end
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
----@return Element[] goal
+---@return Element[]? goal
 ---@return LspError? error
 function components.goal_at(params, sess, use_widgets)
   local goal, err
@@ -540,7 +540,7 @@ end
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
----@return Element[]
+---@return Element[]?
 ---@return LspError?
 function components.term_goal_at(params, sess, use_widgets)
   local term_goal, err
@@ -565,7 +565,7 @@ end
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
 ---@param use_widgets? boolean
----@return Element[]
+---@return Element[]?
 ---@return LspError?
 function components.diagnostics_at(params, sess, use_widgets)
   local uri = params.textDocument.uri

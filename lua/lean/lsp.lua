@@ -24,7 +24,7 @@ function lsp.enable(opts)
   require('lspconfig').leanls.setup(opts)
 end
 
----Find the vim.lsp.Client attached to the given buffer.
+---Find the `vim.lsp.Client` attached to the given buffer.
 ---@param bufnr number
 ---@return vim.lsp.Client
 function lsp.client_for(bufnr)
@@ -32,11 +32,15 @@ function lsp.client_for(bufnr)
   return clients[1]
 end
 
+---@class PlainGoal
+---@field rendered string The goals as pretty-printed Markdown, or something like "no goals" if accomplished.
+---@field goals string[] The pretty-printed goals, empty if all accomplished.
+
 ---Fetch goal state information from the server (async).
 ---@param params lsp.TextDocumentPositionParams
 ---@param bufnr number
----@return any error
----@return any plain_goal
+---@return LspError? error
+---@return PlainGoal? plain_goal
 function lsp.plain_goal(params, bufnr)
   local client = lsp.client_for(bufnr)
   if not client then
@@ -50,11 +54,15 @@ function lsp.plain_goal(params, bufnr)
   return util.client_a_request(client, '$/lean/plainGoal', params)
 end
 
+---@class PlainTermGoal
+---@field goal string
+---@field range lsp.Range
+
 ---Fetch term goal state information from the server (async).
 ---@param params lsp.TextDocumentPositionParams
 ---@param bufnr number
----@return any error
----@return any plain_term_goal
+---@return LspError? error
+---@return PlainTermGoal? plain_term_goal
 function lsp.plain_term_goal(params, bufnr)
   local client = lsp.client_for(bufnr)
   if not client then
@@ -68,7 +76,7 @@ end
 ---@field processing LeanFileProgressProcessingInfo[]
 
 ---Called when `$/lean/fileProgress` is triggered.
----@param err table?
+---@param err LspError?
 ---@param params LeanFileProgressParams
 function lsp.handlers.file_progress_handler(err, params)
   if err ~= nil then

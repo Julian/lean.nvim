@@ -97,7 +97,6 @@ function Session:release_now(refs)
   if #self.to_release == 0 or self:is_closed() then
     return
   end
-  ---@diagnostic disable-next-line: undefined-field
   self.client.notify('$/lean/rpc/release', {
     uri = self.uri,
     sessionId = self.session_id,
