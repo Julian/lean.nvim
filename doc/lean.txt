@@ -286,7 +286,7 @@ lsp.enable()                                                        *lsp.enable*
 
 
 lsp.client_for({bufnr})                                         *lsp.client_for*
-    Find the vim.lsp.Client attached to the given buffer.
+    Find the `vim.lsp.Client` attached to the given buffer.
 
     Parameters: ~
         {bufnr}  (number)
@@ -295,16 +295,27 @@ lsp.client_for({bufnr})                                         *lsp.client_for*
         (vim.lsp.Client)
 
 
+PlainGoal                                                            *PlainGoal*
+
+    Fields: ~
+        {rendered}  (string)    The goals as pretty-printed Markdown, or something like "no goals" if accomplished.
+        {goals}     (string[])  The pretty-printed goals, empty if all accomplished.
+
+
 lsp.plain_goal({params}, {bufnr})                               *lsp.plain_goal*
     Fetch goal state information from the server (async).
 
     Parameters: ~
         {params}  (lsp.TextDocumentPositionParams)
-        {bufnr}   (number)
+        {bufnr}   (number)                          @return LspError? error
+                                                    @return PlainGoal? plain_goal
 
-    Returns: ~
-        (any)  error
-        (any)  plain_goal
+
+PlainTermGoal                                                    *PlainTermGoal*
+
+    Fields: ~
+        {goal}   (string)
+        {range}  (lsp.Range)
 
 
 lsp.plain_term_goal({params}, {bufnr})                     *lsp.plain_term_goal*
@@ -312,11 +323,8 @@ lsp.plain_term_goal({params}, {bufnr})                     *lsp.plain_term_goal*
 
     Parameters: ~
         {params}  (lsp.TextDocumentPositionParams)
-        {bufnr}   (number)
-
-    Returns: ~
-        (any)  error
-        (any)  plain_term_goal
+        {bufnr}   (number)                          @return LspError? error
+                                                    @return PlainTermGoal? plain_term_goal
 
 
 LeanFileProgressParams                                  *LeanFileProgressParams*
