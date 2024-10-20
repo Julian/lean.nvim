@@ -285,11 +285,11 @@ LSP                                                                   *lean.lsp*
 lsp.enable()                                                        *lsp.enable*
 
 
-lsp.client_for({bufnr})                                         *lsp.client_for*
+lsp.client_for({bufnr?})                                        *lsp.client_for*
     Find the `vim.lsp.Client` attached to the given buffer.
 
     Parameters: ~
-        {bufnr}  (number)
+        {bufnr?}  (number)
 
     Returns: ~
         (vim.lsp.Client)
