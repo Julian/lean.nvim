@@ -25,10 +25,10 @@ function lsp.enable(opts)
 end
 
 ---Find the `vim.lsp.Client` attached to the given buffer.
----@param bufnr number
+---@param bufnr? number
 ---@return vim.lsp.Client
 function lsp.client_for(bufnr)
-  local clients = vim.lsp.get_clients { name = 'leanls', bufnr = bufnr }
+  local clients = vim.lsp.get_clients { name = 'leanls', bufnr = bufnr or 0 }
   return clients[1]
 end
 
