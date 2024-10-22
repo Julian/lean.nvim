@@ -81,6 +81,11 @@ local lean = {
       '<Cmd>LeanAbbreviationsReverseLookup<CR>',
       { desc = 'Show how to type the unicode character under the cursor.' },
     },
+    {
+      '<LocalLeader>r',
+      '<Cmd>LeanRestartFile<CR>',
+      { desc = 'Restart the Lean server for the current file.' },
+    },
   },
 }
 
