@@ -14,8 +14,13 @@
 ---@field lsp? table language server configuration
 ---@field progress_bars? table progress bar configuration
 ---@field stderr? table stderr window configuration
+---
+---Developer options.
+---
+---@field log? Log log any messages from lean.nvim's internals
 
 ---@class lean.MergedConfig: lean.Config
+---@field log Log log any messages from lean.nvim's internals
 
 ---@class lean.abbreviations.Config
 ---@field enable? boolean whether to automatically enable expansion
@@ -57,6 +62,9 @@ local DEFAULTS = {
       end)
     end,
   },
+
+  ---@type Log
+  log = function() end,
 
   ---@type lean.infoview.Config
   infoview = {

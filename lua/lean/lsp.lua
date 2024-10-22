@@ -6,8 +6,10 @@
 
 local ms = vim.lsp.protocol.Methods
 
-local lsp = { handlers = {} }
+local log = require 'lean.log'
 local util = require 'lean._util'
+
+local lsp = { handlers = {} }
 
 function lsp.enable(opts)
   opts.handlers = vim.tbl_extend('keep', opts.handlers or {}, {
@@ -18,7 +20,7 @@ function lsp.enable(opts)
     end,
   })
   opts.init_options = vim.tbl_extend('keep', opts.init_options or {}, {
-    editDelay = 0, -- see #289
+    editDelay = 10, -- see #289
     hasWidgets = true,
   })
   require('lspconfig').leanls.setup(opts)
@@ -79,12 +81,17 @@ end
 ---@param err LspError?
 ---@param params LeanFileProgressParams
 function lsp.handlers.file_progress_handler(err, params)
+  log:trace {
+    message = 'got fileProgress',
+    err = err,
+    params = params,
+  }
+
   if err ~= nil then
     return
   end
 
   require('lean.progress').update(params)
-
   -- XXX: Similar to the equivalent line below, this second pcall seems to have
   --      become necessary when we started deleting clean buffers in tests.
   --      That's.. very suspicious, because it probably means it's necessary
@@ -97,6 +104,8 @@ function lsp.handlers.file_progress_handler(err, params)
 end
 
 function lsp.handlers.diagnostics_handler(_, params)
+  log:trace { message = 'got diagnostics', params = params }
+
   -- Make sure there are no zero-length diagnostics.
   for _, diag in pairs(params.diagnostics) do
     ---@type lsp.Range

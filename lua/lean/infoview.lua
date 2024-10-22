@@ -9,6 +9,7 @@ local a = require 'plenary.async'
 
 local Element = require('lean.tui').Element
 local components = require 'lean.infoview.components'
+local log = require 'lean.log'
 local progress = require 'lean.progress'
 local rpc = require 'lean.rpc'
 local util = require 'lean._util'
@@ -376,6 +377,8 @@ function Infoview:__open_win(buf)
 end
 
 function Infoview:__refresh()
+  log:debug { message = 'refreshing infoview', window = self.window }
+
   local valid_windows = {}
 
   self.info.__win_event_disable = true
@@ -424,6 +427,8 @@ end
 
 --FIXME: We shouldn't have both __refresh and __update
 function Infoview:__update()
+  log:debug { message = 'updating infoview', window = self.window }
+
   local info = self.info
   if info.__win_event_disable then
     return
@@ -1135,6 +1140,11 @@ end
 function infoview.__update_pin_by_uri(uri)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
+      log:debug {
+        message = 'updating pin',
+        uri = uri,
+        window = pin.__info.__infoview.window,
+      }
       pin:update()
     end
   end
@@ -1142,6 +1152,7 @@ end
 
 ---on_lines callback to update pins position according to the given textDocument/didChange parameters.
 function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
+  log:debug { message = 'updating pin positions', bufnr = bufnr }
   local uri = vim.uri_from_bufnr(bufnr)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
@@ -1172,6 +1183,7 @@ local function infoview_bufenter()
   -- Open an infoview for the current buffer if it isn't already open.
   local tabpage = vim.api.nvim_get_current_tabpage()
   if not infoview._by_tabpage[tabpage] and options.autoopen() then
+    log:debug { message = 'opening infoview', tabpage = tabpage }
     local new_infoview = Infoview:new {}
     infoview._by_tabpage[tabpage] = new_infoview
     new_infoview:open()

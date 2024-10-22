@@ -6,6 +6,8 @@ local Job = require 'plenary.job'
 local a = require 'plenary.async'
 -- local control = require'plenary.async.control'
 
+local log = require 'lean.log'
+
 local M = {}
 
 ---Return an array-like table with a value repeated the given number of times.
@@ -121,6 +123,7 @@ end
 ---@return any result
 function M.client_a_request(client, request, params)
   return a.wrap(function(handler)
+    log:trace { message = request, params = params }
     return client.request(request, params, handler)
   end, 1)()
 end
