@@ -139,11 +139,15 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 | `<LocalLeader>v`     | interactively configure infoview view options                       |
 | `<LocalLeader><Tab>` | jump into the infoview window associated with the current lean file |
 | `<LocalLeader>\\`    | show what abbreviation produces the symbol under the cursor         |
+| `<LocalLeader>r`     | Restart the Lean server for the current file.                       |
 
 > [!TIP]
 > See `:help <LocalLeader>` if you haven't previously interacted with the local leader key.
 > Some nvim users remap this key to make it easier to reach, so you may want to consider what key that means for your own keyboard layout.
 > My (Julian's) `<Leader>` is set to `<Space>`, and my `<LocalLeader>` to `<Space><Space>`, which may be a good choice for you if you have no other preference.
+
+> [!TIP]
+> If you are also looking for a way to restart the Lean server, you can use the `:LspRestart` command, or map it to a key of your choice. It will restart the language servers for the current buffer/file, so this also applies to other language servers you may be using.
 
 ### In Infoview Windows
 
