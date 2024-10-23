@@ -100,14 +100,15 @@ end
 local function code_with_infos(t, sess)
   local element = Element:new { name = 'code-with-infos' }
 
-  if t.text ~= nil then
+  if t.text then
     element:add_child(Element:new { text = t.text, name = 'text' })
-  elseif t.append ~= nil then
+  elseif t.append then
     for _, s in ipairs(t.append) do
       element:add_child(code_with_infos(s, sess))
     end
-  elseif t.tag ~= nil then
-    local info_with_ctx = t.tag[1].info
+  elseif t.tag then
+    local subexpr_info = unpack(t.tag)
+    local info_with_ctx = subexpr_info.info
 
     local info_open = false
 

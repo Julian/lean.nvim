@@ -224,20 +224,41 @@ function rpc.open(params)
   return Subsession:new(sessions[uri], params)
 end
 
+-- LuaLS has no support for generics with `@class`, so we expand out
+-- `TaggedText` which is generic on the Lean side.
+--
+-- Like some other classes below, it's also really an inductive type on the
+-- Lean side, so one and only one of its fields are set at a time, which we
+-- also fail to represent in Lua clearly.
+
+---The minimal structure needed to represent "string with interesting (tagged) substrings".
+---
+---Implemented in `Lean.Widget.TaggedText`.
+---@class TaggedText
+---@field text? string
+
+---@class TaggedText.MsgEmbed: TaggedText
+---@field append? TaggedText.MsgEmbed[]
+---@field tag? {[1]: MsgEmbed, [2]: ''} the second field happens to always the empty string
+
+---@class TaggedText.SubExprInfo: TaggedText
+---@field append? TaggedText.SubExprInfo[]
+---@field tag? {[1]: SubexprInfo, [2]: TaggedText.SubExprInfo }
+
+---@alias CodeWithInfos TaggedText.SubExprInfo
+
 ---@class InfoWithCtx
 
 ---@alias DiffTag 'wasChanged' | 'willChange' | 'wasDeleted' | 'willDelete' | 'wasInserted' | 'willInsert'
 ---@alias SubexprPos string
 
+---Information about a subexpression within delaborated code.
+---
+---Implemented in `Lean.Widget.InteractiveCode`.
 ---@class SubexprInfo
 ---@field info InfoWithCtx
----@field subexprPos? SubexprPos
+---@field subexprPos integer
 ---@field diffStatus? DiffTag
-
----@class CodeWithInfos
----@field text? string
----@field append? CodeWithInfos[]
----@field tag? {[1]: SubexprInfo, [2]: CodeWithInfos}
 
 ---@class InfoPopup
 ---@field type CodeWithInfos?
@@ -293,13 +314,8 @@ function Subsession:getInteractiveTermGoal(pos)
   return self:call('Lean.Widget.getInteractiveTermGoal', pos)
 end
 
----@class TaggedTextMsgEmbed
----@field text? string
----@field append? TaggedTextMsgEmbed[]
----@field tag? {[1]: MsgEmbed} -- the second field is always the empty string
-
 ---@class StrictTraceChildrenEmbed
----@field strict TaggedTextMsgEmbed[]
+---@field strict TaggedText.MsgEmbed[]
 
 ---@class LazyTraceChildren
 
@@ -308,12 +324,12 @@ end
 
 ---@class WidgetEmbed
 ---@field wi UserWidgetInstance A widget instance.
----@field alt TaggedTextMsgEmbed a fallback rendering of the widget
+---@field alt TaggedText.MsgEmbed a fallback rendering of the widget
 
 ---@class TraceEmbed
 ---@field indent integer
 ---@field cls string
----@field msg TaggedTextMsgEmbed
+---@field msg TaggedText.MsgEmbed
 ---@field collapsed boolean
 ---@field children StrictTraceChildrenEmbed | LazyTraceChildrenEmbed
 
@@ -337,7 +353,7 @@ end
 ---@field range lsp.Range
 ---@field fullRange? lsp.Range
 ---@field severity? lsp.DiagnosticSeverity
----@field message TaggedTextMsgEmbed
+---@field message TaggedText.MsgEmbed
 
 ---@class LineRange
 ---@field start integer
@@ -352,7 +368,7 @@ end
 
 ---@param msg MessageData
 ---@param indent number
----@return TaggedTextMsgEmbed
+---@return TaggedText.MsgEmbed
 ---@return LspError error
 function Subsession:msgToInteractive(msg, indent)
   return self:call(
@@ -362,7 +378,7 @@ function Subsession:msgToInteractive(msg, indent)
 end
 
 ---@param children LazyTraceChildren
----@return TaggedTextMsgEmbed[]
+---@return TaggedText.MsgEmbed[]
 ---@return LspError error
 function Subsession:lazyTraceChildrenToInteractive(children)
   return self:call('Lean.Widget.lazyTraceChildrenToInteractive', children)
