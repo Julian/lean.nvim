@@ -7,6 +7,7 @@
 
 local Element = require('lean.tui').Element
 local config = require 'lean.config'
+local log = require 'lean.log'
 local rpc = require 'lean.rpc'
 local util = require 'lean._util'
 local widgets = require 'lean.widgets'
@@ -14,6 +15,19 @@ local widgets = require 'lean.widgets'
 local components = {
   NO_INFO = Element:new { text = 'No info.', name = 'no-info' },
   PROCESSING = Element:new { text = 'Processing file...', name = 'processing' },
+}
+
+---A user-facing explanation of a changing piece of the goal state.
+---
+---Corresponds to equivalent VSCode explanations.
+---@type table<DiffTag, string>
+local DIFF_TAG_TO_EXPLANATION = {
+  wasChanged = 'This subexpression has been modified.',
+  willChange = 'This subexpression will be modified.',
+  wasInserted = 'This subexpression has been inserted.',
+  willInsert = 'This subexpression will be inserted.',
+  wasDeleted = 'This subexpression has been removed.',
+  willDelete = 'This subexpression will be deleted.',
 }
 
 ---Format a heading.
@@ -112,6 +126,17 @@ local function code_with_infos(t, sess)
 
     local info_open = false
 
+    if subexpr_info.diffStatus then
+      if element.hlgroup then
+        log:warning {
+          message = 'quashing a highlight group',
+          hlgroup = element.hlgroup,
+          diffStatus = subexpr_info.diffStatus,
+        }
+      end
+      element.hlgroup = 'leanInfoDiff' .. subexpr_info.diffStatus
+    end
+
     local do_reset = function(ctx)
       info_open = false
       element:remove_tooltip()
@@ -125,7 +150,7 @@ local function code_with_infos(t, sess)
       if info_popup.exprExplicit ~= nil then
         tooltip_element:add_child(code_with_infos(info_popup.exprExplicit, sess))
         if info_popup.type ~= nil then
-          tooltip_element:add_child(Element:new { text = ' :\n' })
+          tooltip_element:add_child(Element:new { text = ' : ' })
         end
       end
 
@@ -136,6 +161,14 @@ local function code_with_infos(t, sess)
       if info_popup.doc ~= nil then
         tooltip_element:add_child(Element:new { text = '\n\n' })
         tooltip_element:add_child(Element:new { text = info_popup.doc }) -- TODO: markdown
+      end
+
+      if subexpr_info.diffStatus then
+        tooltip_element:add_child(Element:new { text = '\n\n' })
+        tooltip_element:add_child(Element:new {
+          hlgroup = 'Comment',
+          text = DIFF_TAG_TO_EXPLANATION[subexpr_info.diffStatus],
+        })
       end
 
       return tooltip_element
@@ -245,9 +278,17 @@ local function to_hypotheses_element(hyps, opts, sess)
     end
 
     local element = Element:new {
-      text = names:join ' ' .. ' : ',
       name = 'hyp',
-      children = { code_with_infos(hyp.type, sess) },
+      children = {
+        Element:new {
+          text = names:join ' ',
+          hlgroup = hyp.isInserted and 'leanInfoHypNameInserted'
+            or hyp.isRemoved and 'leanInfoHypNameRemoved'
+            or nil,
+        },
+        Element:new { text = ' : ' },
+        code_with_infos(hyp.type, sess),
+      },
     }
 
     if opts.show_let_values and hyp.val then

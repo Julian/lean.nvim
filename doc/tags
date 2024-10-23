@@ -7,6 +7,8 @@ Lean.SatelliteConfig	lean.txt	/*Lean.SatelliteConfig*
 LeanFileProgressParams	lean.txt	/*LeanFileProgressParams*
 LoogleResult	lean.txt	/*LoogleResult*
 Pin	lean.txt	/*Pin*
+PlainGoal	lean.txt	/*PlainGoal*
+PlainTermGoal	lean.txt	/*PlainTermGoal*
 abbreviations.convert	lean.txt	/*abbreviations.convert*
 abbreviations.enable	lean.txt	/*abbreviations.enable*
 abbreviations.load	lean.txt	/*abbreviations.load*

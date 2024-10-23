@@ -34,7 +34,7 @@ describe(
       helpers.feed '<CR>'
       local tooltip_bufnr = vim.api.nvim_win_get_buf(helpers.wait_for_new_window(known_windows))
       assert.contents.are {
-        'Type :\nType 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. ',
+        'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. ',
         bufnr = tooltip_bufnr,
       }
 
