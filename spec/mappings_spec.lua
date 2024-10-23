@@ -34,6 +34,17 @@ describe('mappings', function()
         end
       end)
     )
+
+    it(
+      'can restart file',
+      clean_buffer(function()
+        local restart_file_lhs = '<LocalLeader>r'
+        local restart_file_rhs = '<Cmd>LeanRestartFile<CR>'
+
+        assert.is.not_nil(restart_file_rhs)
+        assert.is.same(restart_file_rhs, vim.fn.maparg(restart_file_lhs, 'n'))
+      end)
+    )
   end)
 
   describe('for infoviews', function()
