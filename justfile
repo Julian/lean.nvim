@@ -16,11 +16,11 @@ test: _rebuild-test-fixtures _clone-test-dependencies
 
 # Run the test suite without rebuilding or recloning any dependencies.
 retest *test_files=spec:
-    nvim --headless -u {{ init_lua }} -c 'lua require("inanis").run{ specs = vim.split("{{ test_files }}", " "), minimal_init = "{{ init_lua }}", sequential = vim.env.TEST_SEQUENTIAL ~= nil }'
+    nvim --headless --clean -u {{ init_lua }} -c 'lua require("inanis").run{ specs = vim.split("{{ test_files }}", " "), minimal_init = "{{ init_lua }}", sequential = vim.env.TEST_SEQUENTIAL ~= nil }'
 
 # Run an instance of neovim with the same minimal init used to run tests.
 nvim setup_table='{}' *ARGS='':
-    nvim -u {{ init_lua }} -c "lua require('lean').setup{{ setup_table }}" {{ ARGS }}
+    nvim --clean -u {{ init_lua }} -c "lua require('lean').setup{{ setup_table }}" {{ ARGS }}
 
 # Run an instance of the `devcontainer` which uses LazyVim.
 devcontainer ocibuild="podman" tag="lazylean" *ARGS='':
@@ -66,7 +66,7 @@ docs:
         {{ lean }}/stderr.lua \
         {{ lean }}/sorry.lua \
         >{{ doc }}/lean.txt
-    nvim --headless -u {{ init_lua }} -c 'helptags {{ doc }}' -c 'quit'
+    nvim --headless --clean -u {{ init_lua }} -c 'helptags {{ doc }}' -c 'quit'
 
 # Update the versions of test fixtures used in CI.
 bump-test-fixtures:
