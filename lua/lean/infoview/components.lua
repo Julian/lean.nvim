@@ -430,7 +430,7 @@ local function abbreviate_common_prefix(a, b)
   end
 end
 
----@param t TaggedTextMsgEmbed
+---@param t TaggedText.MsgEmbed
 ---@param sess Subsession
 ---@param parent_cls? string
 local function tagged_text_msg_embed(t, sess, parent_cls)
