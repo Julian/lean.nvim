@@ -63,4 +63,28 @@ describe('subprocesses', function()
       assert.is.truthy(error:match 'exit status 37')
     end)
   end)
+
+  describe('run', function()
+    it('returns a subprocess result for successful processes', function()
+      local result = util.subprocess_run {
+        command = 'lean',
+        args = { '--run', '--stdin' },
+        writer = util.dedent [[
+          def main : IO Unit := IO.println "Hello, world!"
+        ]],
+      }
+      assert.are.same({ code = 0, stdout = { 'Hello, world!' }, stderr = {} }, result)
+    end)
+
+    it('returns a subprocess result for unsuccessful processes', function()
+      local result = util.subprocess_run {
+        command = 'lean',
+        args = { '--run', '--stdin' },
+        writer = util.dedent [[
+          def main : IO Unit := IO.Process.exit 37
+        ]],
+      }
+      assert.are.same({ code = 37, stdout = {}, stderr = {} }, result)
+    end)
+  end)
 end)
