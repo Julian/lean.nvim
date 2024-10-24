@@ -181,16 +181,21 @@ function lean.current_search_paths()
     root = vim.fn.getcwd()
   end
 
+  local prefix = unpack(util.subprocess_check_output {
+    command = 'lean',
+    args = { '--print-prefix' },
+    cwd = root,
+  })
+
+  local paths = { vim.fs.joinpath(prefix, 'src/lean') }
   local result = util.subprocess_run {
     command = 'lake',
     args = { 'setup-file', vim.api.nvim_buf_get_name(0) },
     cwd = root,
   }
-  local paths = result.code ~= 0 and {} or vim.fn.json_decode(result.stdout).paths.srcPath
-  vim.list_extend(
-    paths,
-    util.subprocess_check_output { command = 'lean', args = { '--print-libdir' }, cwd = root }
-  )
+  if result.code == 0 then
+    vim.list_extend(paths, vim.fn.json_decode(result.stdout).paths.srcPath)
+  end
 
   return vim
     .iter(paths)

@@ -16,7 +16,7 @@ describe('lean.current_search_paths', function()
       -- assertion.
       -- assert.message(vim.inspect(paths)).are.equal(3, #paths)
       assert.has_all(table.concat(paths, '\n') .. '\n', {
-        '/lib/lean\n', -- standard library
+        '/src/lean\n', -- standard library
         project.root .. '\n', -- the project itself
         project.child 'foo\n', -- its dependency
       })
@@ -34,6 +34,6 @@ describe('lean.current_search_paths', function()
     -- assertion.
     -- assert.message(vim.inspect(paths)).are.equal(3, #paths)
     assert.is.equal(#paths, 1)
-    assert.is.truthy(paths[1]:match '/lib/lean')
+    assert.is.truthy(paths[1]:match '/src/lean')
   end)
 end)
