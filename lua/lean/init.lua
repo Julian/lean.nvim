@@ -12,7 +12,7 @@
 ---@tag lean.nvim
 
 local has_satellite = require 'lean.satellite'
-local subprocess_check_output = require('lean._util').subprocess_check_output
+local util = require 'lean._util'
 
 local lean = {
   mappings = {
@@ -174,33 +174,34 @@ end
 ---
 ---Includes both the Lean core libraries as well as project-specific
 ---directories.
+---@return string[] paths the current Lean search path
 function lean.current_search_paths()
-  local paths
-
   local root = vim.lsp.buf.list_workspace_folders()[1]
   if not root then
     root = vim.fn.getcwd()
   end
 
-  local all_paths = vim.fn.json_decode(subprocess_check_output {
+  local result = util.subprocess_run {
     command = 'lake',
     args = { 'setup-file', vim.api.nvim_buf_get_name(0) },
     cwd = root,
-  })
-  paths = vim.tbl_map(function(path)
-    return root .. '/' .. path
-  end, all_paths.paths.srcPath)
+  }
+  local paths = result.code ~= 0 and {} or vim.fn.json_decode(result.stdout).paths.srcPath
   vim.list_extend(
     paths,
-    subprocess_check_output { command = 'lean', args = { '--print-libdir' }, cwd = root }
+    util.subprocess_check_output { command = 'lean', args = { '--print-libdir' }, cwd = root }
   )
 
-  return vim.tbl_map(
-    vim.fn.simplify,
-    vim.tbl_filter(function(path)
-      return path ~= '' and vim.uv.fs_stat(path).type == 'directory'
-    end, paths)
-  )
+  return vim
+    .iter(paths)
+    :map(function(path)
+      -- Sigh. `vim.fs.joinpath` does not do the right thing with absolute paths.
+      -- "Interestingly", while Python and Rust get this right, JS seems not to.
+      -- So languages seem to "argue" here. *Obviously* the JS way is wrong.
+      path = path:sub(1, 1) == '/' and path or vim.fs.joinpath(root, path)
+      return vim.fs.normalize(path)
+    end)
+    :totable()
 end
 
 return lean
