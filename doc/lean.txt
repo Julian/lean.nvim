@@ -36,6 +36,9 @@ lean.current_search_paths()                          *lean.current_search_paths*
     Includes both the Lean core libraries as well as project-specific
     directories.
 
+    Returns: ~
+        (string[])  the current Lean search path
+
 
 ==============================================================================
 Commands                                                         *lean.commands*
