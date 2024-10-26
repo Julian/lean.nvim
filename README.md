@@ -160,8 +160,6 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 | `<Esc>`              | clear all open tooltips                                           |
 | `J`                  | jump into a tooltip (from a widget click)                         |
 | `C`                  | clear all open tooltips                                           |
-| `I`                  | mouse-enter what is under the cursor                              |
-| `i`                  | mouse-leave what is under the cursor                              |
 | `gd`                 | go-to-definition of what is under the cursor                      |
 | `gD`                 | go-to-declaration of what is under the cursor                     |
 | `gy`                 | go-to-type of what is under the cursor                            |

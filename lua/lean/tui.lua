@@ -5,7 +5,8 @@ local util = require 'lean._util'
 ---A fire-able event whose behavior is `Element`-specific.
 ---
 ---An element can define how to handle the event, as well as which keyboard
----keys (or mouse events) trigger it.
+---keys trigger it (or theoretically mouse events, though we don't do so in
+---practice at the moment).
 ---
 ---In gneeral, resist the temptation to add new event types here, as this
 ---entire concept feels slightly like "misdirection" that could be redesigned
@@ -29,9 +30,6 @@ local util = require 'lean._util'
 ---| '"go_to_def"' # Go to the definition of the element contents.
 ---| '"go_to_decl"' # Go to the declaration of the element contents.
 ---| '"go_to_type"' # Go to the type definition of the element contents.
----
----| '"mouse_enter"' # Simulate the mouse hovering over the element.
----| '"mouse_leave"' # Simulate the mouse leaving the element.
 
 ---@alias EventCallbacks { [ElementEvent]: fun(ctx: ElementEventContext, ...:any):boolean? }
 
@@ -91,18 +89,14 @@ function Element:new(args)
   return setmetatable(obj, self)
 end
 
----Create an Element whose click and mouse events do nothing.
+---Create an Element whose click event does nothing.
 ---@param text string? the text to show when rendering this element
 ---@return Element
 function Element.noop(text)
   local noop = function() end
   return Element:new {
     text = text,
-    events = {
-      click = noop,
-      mouse_enter = noop,
-      mouse_leave = noop,
-    },
+    events = { click = noop },
   }
 end
 
@@ -615,8 +609,6 @@ function BufRenderer:update_position()
   self.path = self.element:path_from_pos(raw_pos)
 
   if not path_equal(path_before, self.path) then
-    self:event('cursor_leave', path_before)
-    self:event('cursor_enter', self.path)
     return true
   end
 
