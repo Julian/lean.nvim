@@ -11,11 +11,12 @@ local MIN_SUPPORTED_NVIM = '0.10'
 local function neovim_is_new_enough()
   local version = vim.version()
   if vim.version.lt(vim.version(), MIN_SUPPORTED_NVIM) then
-    local message = 'Neovim %s is too old. %s is the earliest supported version.'
-    vim.health.error(message:format(version, MIN_SUPPORTED_NVIM))
+    local message = 'Neovim is too old. %s is the earliest supported version.'
+    vim.health.error(message:format(MIN_SUPPORTED_NVIM))
   else
     vim.health.ok 'Neovim is new enough.'
   end
+  vim.health.info(('  `vim.version()`:  %s'):format(version))
 end
 
 local function lake_is_runnable()
@@ -24,7 +25,7 @@ local function lake_is_runnable()
     args = { '--version' },
   }
   vim.health.ok 'Lake is runnable.'
-  vim.health.info('`lake --version`:\n  ' .. table.concat(output, '  \n'))
+  vim.health.info('  `lake --version`:  ' .. table.concat(output, '  \n'))
 end
 
 local function no_timers()

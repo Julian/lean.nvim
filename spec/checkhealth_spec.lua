@@ -9,9 +9,9 @@ describe('checkhealth', function()
       dedent [[
         .*lean.nvim.*
         .*- .*OK.* Neovim is new enough.
+        .*- .*vim.version().*
         .*- .*OK.* Lake is runnable.
-        .*-.* `lake ----version`:
-        .*Lean .*version .+
+        .*-.* `lake ----version`: .*Lean .*version .+
       ]],
       table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n')
     )
