@@ -332,7 +332,7 @@ or on each commit automatically if you have run `pre-commit install` in your rep
 You can also use
 
 ```sh
-  just nvim '{ lsp = { enable = true }, mappings = true }'
+  just nvim '{ mappings = true }'
 ```
 
 to get a normal running neovim (again isolated from your own configuration), where the provided argument is a (Lua) table like one would pass to `lean.setup`.
