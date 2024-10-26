@@ -23,7 +23,7 @@ local rpc = {}
 ---@field client vim.lsp.Client
 ---@field uri string
 ---@field connected? boolean
----@field session_id? string
+---@field session_id? integer
 ---@field connect_err? string
 ---@field on_connected Condvar
 ---@field keepalive_timer? uv_timer_t
@@ -92,17 +92,39 @@ function Session:close()
   self:close_without_releasing()
 end
 
+---A notification to release remote references. Should be sent by the client when it no longer needs
+---`RpcRef`s it has previously received from the server. Not doing so is safe but will leak memory.
+---@class RpcReleaseParams
+---@field uri lsp.DocumentUri
+---@field sessionId integer
+---@field refs RpcRef[]
+
 ---@param refs RpcRef[]
 function Session:release_now(refs)
   vim.list_extend(self.to_release, refs)
   if #self.to_release == 0 or self:is_closed() then
     return
   end
-  self.client.notify('$/lean/rpc/release', {
+
+  log:debug {
+    message = 'releasing RPC refs',
+    uri = self.uri,
+    refs = refs,
+  }
+
+  ---@type RpcReleaseParams
+  local params = {
     uri = self.uri,
     sessionId = self.session_id,
     refs = self.to_release,
-  })
+  }
+  local succeeded = pcall(self.client.notify, '$/lean/rpc/release', params)
+  if not succeeded then
+    log:warning {
+      message = 'unable to release RPC session, which leaks a bit of memory',
+      params = params,
+    }
+  end
   self.to_release = {}
 end
 
