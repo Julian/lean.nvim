@@ -238,7 +238,6 @@ local function code_with_infos(t, sess)
           do_reset(ctx)
         end
       end,
-      go_to = go_to,
       go_to_def = go_to_def,
       go_to_decl = go_to_decl,
       go_to_type = go_to_type,

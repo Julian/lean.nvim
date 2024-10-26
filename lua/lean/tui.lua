@@ -2,9 +2,42 @@ local async = require 'plenary.async'
 
 local util = require 'lean._util'
 
+---A fire-able event whose behavior is `Element`-specific.
+---
+---An element can define how to handle the event, as well as which keyboard
+---keys (or mouse events) trigger it.
+---
+---In gneeral, resist the temptation to add new event types here, as this
+---entire concept feels slightly like "misdirection" that could be redesigned
+---at least because it mixes abstraction layers between general events and ones
+---that are very specific to a particular context (like "going to the last
+---window").
+---
+---The values here are our typical mappings for this event.
+---events unless there's specific reason not to (e.g. bind clicking to `<CR>`).
+---This "standard keymap" itself seems like a reason we need to revisit events
+---(because we can likely represent the default key for each event here
+---somehow).
+---@alias ElementEvent
+---| '"click"' # Click on the element.
+---
+---| '"clear"' # Clear the element.
+---| '"clear_all"' # Clear the element and all "related" ones.
+---
+---| '"goto_last_window"' # Move the cursor to the last window it was in.
+---
+---| '"go_to_def"' # Go to the definition of the element contents.
+---| '"go_to_decl"' # Go to the declaration of the element contents.
+---| '"go_to_type"' # Go to the type definition of the element contents.
+---
+---| '"mouse_enter"' # Simulate the mouse hovering over the element.
+---| '"mouse_leave"' # Simulate the mouse leaving the element.
+
+---@alias EventCallbacks { [ElementEvent]: fun(ctx: ElementEventContext, ...:any):boolean? }
+
 ---An individual console user interface element.
 ---@class Element
----@field events table<string, fun(...)> @event function map
+---@field events EventCallbacks @functions to fire for events which this element responds to
 ---@field text string @the text to show when rendering this element
 ---@field name string @a named handle for this element, used when path-searching
 ---@field hlgroup? string|fun(string):string @the highlight group for this element's text, or a function that returns it
@@ -35,7 +68,7 @@ local BufRenderer = {
 BufRenderer.__index = BufRenderer
 
 ---@class ElementNewArgs
----@field events? table<string, fun(ctx:ElementEventContext)> @event function map
+---@field events? EventCallbacks @event function map
 ---@field text? string @the text to show when rendering this element
 ---@field name? string @a named handle for this element, used when path-searching
 ---@field hlgroup? string|fun():string @the highlight group for this element's text, or a function that returns it
@@ -319,10 +352,10 @@ end
 
 ---Trigger the given event at the given path
 ---@param path PathNode[] @the path to trigger the event at
----@param event_name string @the path to trigger the event at
-function Element:event(path, event_name, ...)
+---@param event ElementEvent @the event to fire
+function Element:event(path, event, ...)
   local event_element = self:find_innermost_along(path, function(element)
-    return element.events and element.events[event_name]
+    return element.events and element.events[event]
   end)
   if not event_element then
     return false
@@ -331,7 +364,7 @@ function Element:event(path, event_name, ...)
   local args = { ... }
 
   async.void(function()
-    return event_element.events[event_name](unpack(args))
+    return event_element.events[event](unpack(args))
   end)()
   return true
 end
@@ -385,7 +418,7 @@ end
 ---Create an element which joins a list-like table of elements with the provided separator.
 ---@param elements Element[]
 ---@param sep string
----@param opts table?
+---@param opts ElementNewArgs?
 ---@return Element?
 function Element:concat(elements, sep, opts)
   if #elements == 0 then
@@ -701,6 +734,9 @@ function BufRenderer:hover(force_update_highlight)
   end
 end
 
+---Fire an event.
+---@param event ElementEvent
+---@param path? PathNode[]
 ---@return nil
 function BufRenderer:event(event, path, ...)
   local args = { ... }

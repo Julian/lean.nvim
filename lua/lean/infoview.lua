@@ -36,6 +36,7 @@ local options = {
   show_no_info_message = false,
   use_widgets = true,
 
+  ---@type { [string]: ElementEvent }
   mappings = {
     ['K'] = 'click',
     ['<CR>'] = 'click',
@@ -1114,11 +1115,14 @@ function Pin:__update()
 
   local new_data_element
   new_data_element = Element:concat(blocks, '\n\n', {
+    ---@type EventCallbacks
     events = {
       clear_all = function(ctx) ---@param ctx ElementEventContext
         new_data_element:find(function(element) ---@param element Element
-          if element.events.clear then
-            element.events.clear(ctx)
+          ---@type fun(ctx):boolean?
+          local clear = element.events['clear']
+          if clear then
+            clear(ctx)
           end
         end)
         ctx.jump_to_last_window()
