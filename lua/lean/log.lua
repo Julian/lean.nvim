@@ -6,25 +6,31 @@ local log = vim.schedule_wrap(require 'lean.config'().log)
 
 ---A logger of internal `lean.nvim` events.
 local Logger = {
-  debug = function(self, ...)
-    self(vim.log.levels.DEBUG, ...)
+  ---@param data LogMessage
+  debug = function(self, data)
+    self(vim.log.levels.DEBUG, data)
   end,
-  error = function(self, ...)
-    self(vim.log.levels.ERROR, ...)
+  error = function(self, data)
+    self(vim.log.levels.ERROR, data)
   end,
-  info = function(self, ...)
-    self(vim.log.levels.INFO, ...)
+  ---@param data LogMessage
+  info = function(self, data)
+    self(vim.log.levels.INFO, data)
   end,
-  trace = function(self, ...)
-    self(vim.log.levels.TRACE, ...)
+  ---@param data LogMessage
+  trace = function(self, data)
+    self(vim.log.levels.TRACE, data)
   end,
-  warning = function(self, ...)
-    self(vim.log.levels.WARN, ...)
+  ---@param data LogMessage
+  warning = function(self, data)
+    self(vim.log.levels.WARN, data)
   end,
 
   ---Log a given event.
-  __call = function(_, ...)
-    log(...)
+  ---@param level integer
+  ---@param data LogMessage
+  __call = function(_, level, data)
+    log(level, data)
   end,
 }
 
