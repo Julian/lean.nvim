@@ -535,10 +535,7 @@ function components.interactive_diagnostics(diags, line, sess)
     .iter(diags)
     ---@param diagnostic InteractiveDiagnostic
     :map(function(diagnostic)
-      -- TOOD: why do we pass these here? Or even, do we actually ever hit this?
       if diagnostic.range.start.line ~= line then
-        local message = 'Got a diagnostic from some other line number: %q'
-        vim.notify(message:format(diagnostic), vim.log.levels.DEBUG)
         return
       end
 
