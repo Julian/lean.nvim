@@ -132,9 +132,10 @@ implement('GoToModuleLink', function(_, props)
         end
         ---@type lsp.Position
         local start = { line = 0, character = 0 }
-        vim.lsp.util.jump_to_location(
+        vim.lsp.util.show_document(
           { uri = uri, range = { start = start, ['end'] = start } },
-          'utf-16'
+          'utf-16',
+          { focus = true }
         )
       end,
     },

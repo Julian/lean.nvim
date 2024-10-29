@@ -212,7 +212,7 @@ local function code_with_infos(t, sess)
         vim.api.nvim_set_current_win(this_window)
       end
 
-      vim.lsp.util.jump_to_location(links[1], 'utf-16')
+      vim.lsp.util.show_document(links[1], 'utf-16', { focus = true })
       if #links > 1 then
         vim.fn.setqflist({}, ' ', {
           title = 'LSP locations',
