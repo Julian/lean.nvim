@@ -23,6 +23,13 @@ Introduction                                                         *lean.init*
 lean.setup()                                                        *lean.setup*
 
 
+lean.plugin_version()                                      *lean.plugin_version*
+    Try to find what version of `lean.nvim` this is.
+
+    Assumes your `lean.nvim` comes from a `git` repository.
+    @return string?
+
+
 lean.use_suggested_mappings({bufnr?})              *lean.use_suggested_mappings*
     Enable mappings for a given buffer
 
