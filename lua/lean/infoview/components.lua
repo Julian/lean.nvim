@@ -387,11 +387,15 @@ function components.interactive_term_goal(goal, sess)
 end
 
 ---Diagnostic information for the current line from the Lean server.
----@param uri string
----@param line number
+---@param params lsp.TextDocumentPositionParams
 ---@return Element[]
-function components.diagnostics(uri, line)
+function components.diagnostics(params)
   local markers = config().infoview.severity_markers
+
+  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    return {}
+  end
 
   ---@param diagnostic vim.Diagnostic
   return vim.tbl_map(function(diagnostic)
@@ -412,7 +416,7 @@ function components.diagnostics(uri, line)
         diagnostic.message:gsub('\n$', '')
       )),
     }
-  end, util.lean_lsp_diagnostics({ lnum = line }, vim.uri_to_bufnr(uri)))
+  end, util.lean_lsp_diagnostics({ lnum = params.position.line }, bufnr))
 end
 
 local function abbreviate_common_prefix(a, b)
@@ -606,17 +610,15 @@ end
 ---@return Element[]?
 ---@return LspError?
 function components.diagnostics_at(params, sess, use_widgets)
-  local uri = params.textDocument.uri
-  local line = params.position.line
-
   if use_widgets == false then
-    return components.diagnostics(uri, line)
+    return components.diagnostics(params)
   end
 
   if sess == nil then
     sess = rpc.open(params)
   end
 
+  local line = params.position.line
   local diagnostics, err = sess:getInteractiveDiagnostics {
     start = line,
     ['end'] = line + 1,
@@ -634,7 +636,7 @@ function components.diagnostics_at(params, sess, use_widgets)
       ['end'] = line + 1,
     }
     if err then
-      return components.diagnostics(uri, line), err
+      return components.diagnostics(params), err
     end
   end
 
