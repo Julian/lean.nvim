@@ -129,11 +129,13 @@ function lean.setup(opts)
     command! LeanRestartFile :lua require'lean.lsp'.restart_file()
     command! LeanRefreshFileDependencies :lua require'lean.lsp'.restart_file()
 
-    command! LeanPlainGoal :lua require'lean.commands'.show_goal(false)
-    command! LeanPlainTermGoal :lua require'lean.commands'.show_term_goal(false)
     command! LeanGoal :lua require'lean.commands'.show_goal()
     command! LeanTermGoal :lua require'lean.commands'.show_term_goal()
     command! LeanLineDiagnostics :lua require'lean.commands'.show_line_diagnostics()
+
+    command! LeanPlainGoal :lua require'lean.commands'.show_goal(false)
+    command! LeanPlainTermGoal :lua require'lean.commands'.show_term_goal(false)
+    command! LeanPlainDiagnostics :lua require'lean.commands'.show_line_diagnostics(false)
 
     command! LeanGotoInfoview :lua require'lean.infoview'.go_to()
     command! LeanInfoviewToggle :lua require'lean.infoview'.toggle()

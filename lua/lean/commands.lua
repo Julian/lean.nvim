@@ -42,6 +42,8 @@ local function show_popup_or_error(elements, err)
   end
 end
 
+---Show the goal for the current cursor position in a popup.
+---@param use_widgets boolean? enable widgets in the popup?
 function commands.show_goal(use_widgets)
   local params = vim.lsp.util.make_position_params()
 
@@ -51,6 +53,8 @@ function commands.show_goal(use_widgets)
   end)()
 end
 
+---Show the term goal for the current cursor position in a popup.
+---@param use_widgets boolean? enable widgets in the popup?
 function commands.show_term_goal(use_widgets)
   local params = vim.lsp.util.make_position_params()
 
@@ -60,7 +64,9 @@ function commands.show_term_goal(use_widgets)
   end)()
 end
 
-function commands.show_line_diagnostics()
+---Show diagnostics for the current cursor position in a popup.
+---@param use_widgets boolean? enable widgets in the popup?
+function commands.show_line_diagnostics(use_widgets)
   local params = vim.lsp.util.make_position_params()
 
   a.void(function()
@@ -68,7 +74,7 @@ function commands.show_line_diagnostics()
     if progress.at(params) == progress.Kind.processing then
       err = 'Processing...'
     else
-      diagnostics, err = components.diagnostics_at(params, nil, false)
+      diagnostics, err = components.diagnostics_at(params, nil, use_widgets)
     end
     show_popup_or_error(diagnostics, err)
   end)()
