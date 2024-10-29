@@ -42,7 +42,8 @@ return {
   ---
   ---Call me via `:checkhealth lean`.
   check = function()
-    vim.health.start 'lean.nvim'
+    local version = require('lean').plugin_version()
+    vim.health.start(('lean.nvim (%s)'):format(version))
     neovim_is_new_enough()
     lake_is_runnable()
     no_timers()

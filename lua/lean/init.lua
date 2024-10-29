@@ -160,6 +160,21 @@ function lean.setup(opts)
   vim.g.lean_config = opts
 end
 
+---Try to find what version of `lean.nvim` this is.
+---
+---Assumes your `lean.nvim` comes from a `git` repository.
+---@return string?
+function lean.plugin_version()
+  local result = util.subprocess_run {
+    command = 'git',
+    args = { 'describe', '--tags', '--always' },
+  }
+  if result.code == 0 then
+    local version = table.concat(result.stdout, ''):gsub('%s+', '')
+    return version
+  end
+end
+
 ---Enable mappings for a given buffer
 ---@param bufnr? number the bufnr to enable mappings in, defaulting to 0
 function lean.use_suggested_mappings(bufnr)
