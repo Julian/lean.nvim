@@ -168,7 +168,14 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 ## Full Configuration & Settings Information
 
 ```lua
-  require('lean').setup{
+  ---@module 'lean'
+  ---@type lean.Config
+  require('lean').setup {
+    -- Enable suggested mappings?
+    --
+    -- false by default, true to enable
+    mappings = false,
+
     -- Enable the Lean language server(s)?
     --
     -- false to disable, otherwise should be a table of options to pass to `leanls`
@@ -218,11 +225,6 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
       -- (comma is a popular choice on French keyboards)
       leader = '\\',
     },
-
-    -- Enable suggested mappings?
-    --
-    -- false by default, true to enable
-    mappings = false,
 
     -- Infoview support
     infoview = {
