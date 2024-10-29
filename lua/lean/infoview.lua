@@ -519,8 +519,14 @@ end
 
 ---Retrieve a specific line from the infoview window.
 ---@param line number
+---@return string? line the infoview contents at the given line
 function Infoview:get_line(line)
-  return self:get_lines(line, line + 1)[1]
+  if not self.window then
+    error 'infoview is not open'
+  end
+
+  local lines = vim.api.nvim_buf_get_lines(self.info.__renderer.buf, line, line + 1, false)
+  return lines[1]
 end
 
 ---Retrieve the contents of the diff window as a table.
