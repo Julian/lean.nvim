@@ -27,7 +27,9 @@ lean.plugin_version()                                      *lean.plugin_version*
     Try to find what version of `lean.nvim` this is.
 
     Assumes your `lean.nvim` comes from a `git` repository.
-    @return string?
+
+    Returns: ~
+        (string|nil)  version
 
 
 lean.use_suggested_mappings({bufnr?})              *lean.use_suggested_mappings*
@@ -81,7 +83,7 @@ Pin                                                                        *Pin*
     An individual pin.
 
     Fields: ~
-        {id}  (string)  @a label to identify the pin
+        {id}  (string)  a label to identify the pin
 
 
 Info                                                                      *Info*
@@ -262,8 +264,10 @@ loogle.search({type})                                            *loogle.search*
 
     Parameters: ~
         {type}  (string)  The type pattern to look for.
-                          @return LoogleResult[]? results Loogle hits in the JSON API format
-                          @return string? err An error message from Loogle, in which case no results are returned
+
+    Returns: ~
+        (LoogleResult[]|nil)  Loogle hits in the JSON API format
+        (string|nil)          An error message from Loogle, in which case no results are returned
 
 
 loogle.template({result})                                      *loogle.template*
@@ -317,8 +321,11 @@ lsp.plain_goal({params}, {bufnr})                               *lsp.plain_goal*
 
     Parameters: ~
         {params}  (lsp.TextDocumentPositionParams)
-        {bufnr}   (number)                          @return LspError? error
-                                                    @return PlainGoal? plain_goal
+        {bufnr}   (number)
+
+    Returns: ~
+        (LspError|nil)   error
+        (PlainGoal|nil)  plain_goal
 
 
 PlainTermGoal                                                    *PlainTermGoal*
@@ -333,8 +340,11 @@ lsp.plain_term_goal({params}, {bufnr})                     *lsp.plain_term_goal*
 
     Parameters: ~
         {params}  (lsp.TextDocumentPositionParams)
-        {bufnr}   (number)                          @return LspError? error
-                                                    @return PlainTermGoal? plain_term_goal
+        {bufnr}   (number)
+
+    Returns: ~
+        (LspError|nil)       error
+        (PlainTermGoal|nil)  plain_term_goal
 
 
 LeanFileProgressParams                                  *LeanFileProgressParams*
@@ -371,7 +381,7 @@ stderr.show({message})                                             *stderr.show*
     Show stderr output in a separate stderr buffer.
 
     Parameters: ~
-        {message}  (string)  @a (possibly multi-line) string from stderr
+        {message}  (string)  a (possibly multi-line) string from stderr
 
 
 stderr.enable()                                                  *stderr.enable*

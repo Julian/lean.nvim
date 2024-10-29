@@ -61,7 +61,7 @@ options._DEFAULTS = vim.deepcopy(options)
 
 ---An individual pin.
 ---@class Pin
----@field id string @a label to identify the pin
+---@field id string a label to identify the pin
 ---@field private __data_element Element
 ---@field private __element Element
 ---@field private __extmark number
@@ -85,7 +85,7 @@ Pin.__index = Pin
 ---@field private __diff_pin Pin
 ---@field private __pins_element Element
 ---@field private __diff_pin_element Element
----@field private __infoview Infoview @the infoview this info is attached to
+---@field private __infoview Infoview the infoview this info is attached to
 ---@field private __win_event_disable boolean
 local Info = {}
 Info.__index = Info
@@ -342,8 +342,8 @@ function Infoview:select_view_options()
 end
 
 ---API for opening an auxilliary window relative to the current infoview window.
----@param buf number @buffer to put in the new window
----@return number? @new window handle or nil if the infoview is closed
+---@param buf number buffer to put in the new window
+---@return number? new window handle or nil if the infoview is closed
 function Infoview:__open_win(buf)
   if not self.window then
     return
@@ -406,7 +406,7 @@ function Infoview:__refresh()
 end
 
 ---Filter the pins from this infoview which are relevant to a given buffer.
----@param uri string @the URI which filters the pins
+---@param uri string the URI which filters the pins
 ---@return Pin[]
 function Infoview:pins_for(uri)
   if not self.window then
@@ -835,7 +835,7 @@ function Info:move_pin(params)
 end
 
 ---Toggle auto diff pin mode.
----@param clear boolean @clear the pin when disabling auto diff pin mode?
+---@param clear boolean clear the pin when disabling auto diff pin mode?
 function Info:__toggle_auto_diff_pin(clear)
   if self.__auto_diff_pin then
     self.__auto_diff_pin = false

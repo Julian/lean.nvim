@@ -41,8 +41,8 @@ end
 ---Fetch goal state information from the server (async).
 ---@param params lsp.TextDocumentPositionParams
 ---@param bufnr number
----@return LspError? error
----@return PlainGoal? plain_goal
+---@return LspError|nil error
+---@return PlainGoal|nil plain_goal
 function lsp.plain_goal(params, bufnr)
   local client = lsp.client_for(bufnr)
   if not client then
@@ -63,8 +63,8 @@ end
 ---Fetch term goal state information from the server (async).
 ---@param params lsp.TextDocumentPositionParams
 ---@param bufnr number
----@return LspError? error
----@return PlainTermGoal? plain_term_goal
+---@return LspError|nil error
+---@return PlainTermGoal|nil plain_term_goal
 function lsp.plain_term_goal(params, bufnr)
   local client = lsp.client_for(bufnr)
   if not client then

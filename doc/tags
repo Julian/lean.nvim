@@ -48,6 +48,7 @@ lean.init	lean.txt	/*lean.init*
 lean.loogle	lean.txt	/*lean.loogle*
 lean.lsp	lean.txt	/*lean.lsp*
 lean.nvim	lean.txt	/*lean.nvim*
+lean.plugin_version	lean.txt	/*lean.plugin_version*
 lean.satellite	lean.txt	/*lean.satellite*
 lean.setup	lean.txt	/*lean.setup*
 lean.sorry	lean.txt	/*lean.sorry*

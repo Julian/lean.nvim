@@ -34,7 +34,7 @@ local function open_window(stderr_bufnr)
 end
 
 ---Show stderr output in a separate stderr buffer.
----@param message string @a (possibly multi-line) string from stderr
+---@param message string a (possibly multi-line) string from stderr
 function stderr.show(message)
   vim.schedule(function()
     if not current.bufnr or not vim.api.nvim_buf_is_valid(current.bufnr) then

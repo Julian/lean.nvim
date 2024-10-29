@@ -59,8 +59,8 @@ function helpers.move_cursor(opts)
 end
 
 ---@class MoveCursorOpts
----@field window? integer @the window handle. Defaults to the current window.
----@field to table @the new cursor position (1-row indexed, as per nvim_win_set_cursor)
+---@field window? integer the window handle. Defaults to the current window.
+---@field to table the new cursor position (1-row indexed, as per nvim_win_set_cursor)
 
 ---Wait for all of the pins associated with the given infoview to finish loading/processing.
 ---@param iv? Infoview

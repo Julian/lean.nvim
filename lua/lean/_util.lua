@@ -36,13 +36,13 @@ function M.lean_lsp_diagnostics(opts, bufnr)
 end
 
 ---@class CreateBufParams
----@field name? string @the name of the new buffer
----@field options? table<string, any> @a table of buffer options
----@field listed? boolean @see :h nvim_create_buf (default true)
----@field scratch? boolean @see :h nvim_create_buf (default false)
+---@field name? string the name of the new buffer
+---@field options? table<string, any> a table of buffer options
+---@field listed? boolean see :h nvim_create_buf (default true)
+---@field scratch? boolean see :h nvim_create_buf (default false)
 
 ---Create a new buffer.
----@param params CreateBufParams @new buffer options
+---@param params CreateBufParams new buffer options
 ---@return integer: the new bufnr`
 function M.create_buf(params)
   if params.listed == nil then
@@ -165,7 +165,7 @@ end
 ---@field position { line: uinteger, character: uinteger }
 
 ---Check that the given position parameters are valid given the buffer they correspond to.
----@param params UIParams @parameters to verify
+---@param params UIParams parameters to verify
 ---@return boolean
 function M.position_params_valid(params)
   local bufnr = vim.uri_to_bufnr(params.textDocument.uri)

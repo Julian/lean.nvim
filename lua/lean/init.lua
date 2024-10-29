@@ -163,7 +163,7 @@ end
 ---Try to find what version of `lean.nvim` this is.
 ---
 ---Assumes your `lean.nvim` comes from a `git` repository.
----@return string?
+---@return string|nil version
 function lean.plugin_version()
   local result = util.subprocess_run {
     command = 'git',

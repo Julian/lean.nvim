@@ -35,14 +35,14 @@ local util = require 'lean._util'
 
 ---An individual console user interface element.
 ---@class Element
----@field events EventCallbacks @functions to fire for events which this element responds to
----@field text string @the text to show when rendering this element
----@field name string @a named handle for this element, used when path-searching
----@field hlgroup? string|fun(string):string @the highlight group for this element's text, or a function that returns it
+---@field events EventCallbacks functions to fire for events which this element responds to
+---@field text string the text to show when rendering this element
+---@field name string a named handle for this element, used when path-searching
+---@field hlgroup? string|fun(string):string the highlight group for this element's text, or a function that returns it
 ---@field tooltip? Element? tooltip
----@field highlightable boolean @(for buffer rendering) whether to highlight this element when hovering over it
+---@field highlightable boolean (for buffer rendering) whether to highlight this element when hovering over it
 ---@field _size? integer Computed size of this element, updated by `Element:to_string`
----@field private __children Element[] @this element's children
+---@field private __children Element[] this element's children
 local Element = {}
 Element.__index = Element
 
@@ -66,12 +66,12 @@ local BufRenderer = {
 BufRenderer.__index = BufRenderer
 
 ---@class ElementNewArgs
----@field events? EventCallbacks @event function map
----@field text? string @the text to show when rendering this element
----@field name? string @a named handle for this element, used when path-searching
----@field hlgroup? string|fun():string @the highlight group for this element's text, or a function that returns it
----@field highlightable boolean? @(for buffer rendering) whether to highlight this element when hovering over it
----@field children? Element[] @this element's children
+---@field events? EventCallbacks event function map
+---@field text? string the text to show when rendering this element
+---@field name? string a named handle for this element, used when path-searching
+---@field hlgroup? string|fun():string the highlight group for this element's text, or a function that returns it
+---@field highlightable boolean? (for buffer rendering) whether to highlight this element when hovering over it
+---@field children? Element[] this element's children
 
 ---Create a new Element.
 ---@param args? ElementNewArgs
@@ -109,15 +109,15 @@ function Element:set_children(children)
 end
 
 ---Add a child to this element.
----@param child Element @child element to add
+---@param child Element child element to add
 ---@return nil
 function Element:add_child(child)
   table.insert(self.__children, child)
 end
 
 ---Set this element's tooltip.
----@param element Element @element to use as a tooltip for this element
----@return Element @the added tooltip element
+---@param element Element element to use as a tooltip for this element
+---@return Element the added tooltip element
 function Element:add_tooltip(element)
   self.tooltip = element
   return element
@@ -191,14 +191,14 @@ end
 
 ---Represents a node in a path through an element.
 ---@class PathNode
----@field idx number @the index in the current element's children to follow
----@field name string @the name that the indexed child should have
----@field offset number? @if provided, a byte offset from the beginning of this element
+---@field idx number the index in the current element's children to follow
+---@field name string the name that the indexed child should have
+---@field offset number? if provided, a byte offset from the beginning of this element
 
 ---Get the raw byte position of the element arrived at by following the given path.
----@param path PathNode[] @the path to follow
----@return number? @the position if the path was valid, nil otherwise
----@return number? @the additional byte offset from the position if the path was valid, nil otherwise
+---@param path PathNode[] the path to follow
+---@return number? the position if the path was valid, nil otherwise
+---@return number? the additional byte offset from the position if the path was valid, nil otherwise
 function Element:pos_from_path(path)
   local pos = 1
   for i, p in ipairs(path) do
@@ -225,9 +225,9 @@ function Element:pos_from_path(path)
 end
 
 ---Get the element stack and element arrived at by following the given path.
----@param path PathNode[] @the path to follow
----@return Element[]? @the stack of elements at this path, or nil if the path is invalid
----@return Element? @the element at this path, or nil if the path is invalid
+---@param path PathNode[] the path to follow
+---@return Element[]? the stack of elements at this path, or nil if the path is invalid
+---@return Element? the element at this path, or nil if the path is invalid
 function Element:div_from_path(path)
   local stack = { self }
   for i, p in ipairs(path) do
@@ -345,8 +345,8 @@ function Element:path_from_pos(pos)
 end
 
 ---Trigger the given event at the given path
----@param path PathNode[] @the path to trigger the event at
----@param event ElementEvent @the event to fire
+---@param path PathNode[] the path to trigger the event at
+---@param event ElementEvent the event to fire
 function Element:event(path, event, ...)
   local event_element = self:find_innermost_along(path, function(element)
     return element.events and element.events[event]
@@ -573,8 +573,8 @@ function BufRenderer:update_cursor(win)
 end
 
 ---Checks if two paths are equal, ignoring auxillary metadata (e.g. offsets)
----@param path_a PathNode[]? @first path
----@param path_b PathNode[]? @second path
+---@param path_a PathNode[]? first path
+---@param path_b PathNode[]? second path
 local function path_equal(path_a, path_b)
   if path_a == nil and path_b == nil then
     return true

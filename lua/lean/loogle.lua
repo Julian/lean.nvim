@@ -16,8 +16,8 @@ local loogle = {}
 
 ---Search Loogle for the given type.
 ---@param type string The type pattern to look for.
----@return LoogleResult[]? results Loogle hits in the JSON API format
----@return string? err An error message from Loogle, in which case no results are returned
+---@return LoogleResult[]|nil results Loogle hits in the JSON API format
+---@return string|nil err An error message from Loogle, in which case no results are returned
 function loogle.search(type)
   local res = curl.get {
     url = 'https://loogle.lean-lang.org/json',
