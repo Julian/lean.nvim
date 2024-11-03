@@ -43,7 +43,7 @@ end
 
 ---Create a new buffer.
 ---@param params CreateBufParams new buffer options
----@return integer: the new bufnr`
+---@return integer bufnr the new bufnr
 function M.create_buf(params)
   if params.listed == nil then
     params.listed = true

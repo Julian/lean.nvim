@@ -91,8 +91,8 @@ local lean = {
 
 vim.filetype.add { extension = { lean = 'lean' } }
 
----Setup function to be run in your init.lua (or init.vim).
----@param opts lean.Config: Configuration options
+---Setup function to be run in your init.lua.
+---@param opts lean.Config Configuration options
 function lean.setup(opts)
   opts = opts or {}
 
