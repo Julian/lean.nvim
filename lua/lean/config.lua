@@ -20,6 +20,7 @@
 ---@field log? Log log any messages from lean.nvim's internals
 
 ---@class lean.MergedConfig: lean.Config
+---@field ft lean.ft.MergedConfig filetype configuration
 ---@field log Log log any messages from lean.nvim's internals
 
 ---@class lean.abbreviations.Config
@@ -27,10 +28,10 @@
 ---@field leader? string which key to use to trigger abbreviation expansion
 ---@field extra table<string, string> a table of extra abbreviations to enable
 
----@alias FilterHypothesis fun(hyp: InteractiveHypothesisBundle): boolean?
-
 ---@class lean.ft.Config
 ---@field nomodifiable string[] globs to prevent accidental modification
+
+---@class lean.ft.MergedConfig: lean.ft.Config
 ---@field private should_modify function(path): boolean
 
 ---@class lean.infoview.Config
@@ -47,7 +48,7 @@ local DEFAULTS = {
     extra = {},
   },
 
-  ---@type lean.ft.Config
+  ---@type lean.ft.MergedConfig
   ft = {
     nomodifiable = {
       '.*/src/lean/.*', -- Lean core library
