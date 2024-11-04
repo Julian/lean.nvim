@@ -11,28 +11,34 @@ demos := justfile_directory() + "/demos"
 init_lua := scripts + "/minimal_init.lua"
 
 # Run the lean.nvim test suite.
+[group('testing')]
 test: _rebuild-test-fixtures _clone-test-dependencies
     @just retest
 
 # Run the test suite without rebuilding or recloning any dependencies.
+[group('testing')]
 retest *test_files=spec:
     nvim --headless --clean -u {{ init_lua }} -c 'lua require("inanis").run{ specs = vim.split("{{ test_files }}", " "), minimal_init = "{{ init_lua }}", sequential = vim.env.TEST_SEQUENTIAL ~= nil }'
 
 # Run an instance of neovim with the same minimal init used to run tests.
+[group('dev')]
 nvim setup_table='{}' *ARGS='':
     nvim --clean -u {{ init_lua }} -c "lua require('lean').setup{{ setup_table }}" {{ ARGS }}
 
 # Run an instance of the `devcontainer` which uses LazyVim.
+[group('dev')]
 devcontainer ocibuild="podman" tag="lazylean" *ARGS='':
     {{ ocibuild }} build -f  {{ devcontainer }} -t {{ tag }}
     {{ ocibuild }} run --rm -it {{ tag }} {{ ARGS }}
 
 # Run an instance of neovim with a scratch buffer for interactive testing.
+[group('dev')]
 scratch *ARGS='':
     # still no idea why the extra :edit is required to get the LSP alive
     @just nvim '{ lsp = { enable = true }, mappings = true }' +edit +'setlocal\ buftype=nofile' {{ ARGS }} JustScratch.lean
 
 # Coarsely profile how long the whole test suite takes to run.
+[group('testing')]
 profile-test *ARGS: _rebuild-test-fixtures _clone-test-dependencies
     hyperfine --warmup 2 {{ ARGS }} "just retest"
 
@@ -69,6 +75,7 @@ docs:
     nvim --headless --clean -u {{ init_lua }} -c 'helptags {{ doc }}' -c 'quit'
 
 # Update the versions of test fixtures used in CI.
+[group('testing')]
 bump-test-fixtures:
     gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' | tee "{{ fixtures }}/example-project/lean-toolchain" "{{ demos }}/project/lean-toolchain"
     cd {{ fixtures }}/example-project/ && lake update
@@ -76,14 +83,20 @@ bump-test-fixtures:
     git add {{ justfile_directory() }}/**/lean-toolchain {{ justfile_directory() }}/**/lake-manifest.json
     git commit -m "Bump the Lean versions in CI."
 
-# Delete any previously cloned test dependencies.
-_clean-test-dependencies:
+# Delete any previously cloned dependencies.
+_clean-dependencies:
     rm -rf '{{ packpath }}'
     mkdir '{{ packpath }}'
 
-# Clone any neovim dependencies required for the plugin + test suite.
-_clone-test-dependencies: _clean-test-dependencies
-    for dependency in AndrewRadev/switch.vim andymass/vim-matchup Julian/inanis.nvim neovim/nvim-lspconfig nvim-lua/plenary.nvim tomtom/tcomment_vim; do \
+# Clone any neovim dependencies required for the plugin.
+_clone-dependencies: _clean-dependencies
+    for dependency in AndrewRadev/switch.vim andymass/vim-matchup neovim/nvim-lspconfig nvim-lua/plenary.nvim tomtom/tcomment_vim; do \
+        git clone --quiet --filter=blob:none "https://github.com/$dependency" "{{ packpath }}/$(basename $dependency)"; \
+    done
+
+# Clone any neovim dependencies required for the test suite.
+_clone-test-dependencies: _clone-dependencies
+    for dependency in Julian/inanis.nvim; do \
         git clone --quiet --filter=blob:none "https://github.com/$dependency" "{{ packpath }}/$(basename $dependency)"; \
     done
 
