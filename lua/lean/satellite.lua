@@ -8,7 +8,7 @@
 
 local has_satellite, satellite = pcall(require, 'satellite.handlers')
 if not has_satellite then
-  return
+  return false
 end
 
 local async = require 'satellite.async'
