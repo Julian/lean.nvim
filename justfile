@@ -90,7 +90,7 @@ _clean-dependencies:
 
 # Clone any neovim dependencies required for the plugin.
 _clone-dependencies: _clean-dependencies
-    for dependency in AndrewRadev/switch.vim andymass/vim-matchup neovim/nvim-lspconfig nvim-lua/plenary.nvim tomtom/tcomment_vim; do \
+    for dependency in AndrewRadev/switch.vim andymass/vim-matchup neovim/nvim-lspconfig nvim-lua/plenary.nvim tomtom/tcomment_vim lewis6991/satellite.nvim; do \
         git clone --quiet --filter=blob:none "https://github.com/$dependency" "{{ packpath }}/$(basename $dependency)"; \
     done
 
