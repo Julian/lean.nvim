@@ -424,9 +424,15 @@ describe('interactive infoview', function()
     it(
       'shows diagnostics for files with immediate diagnostics',
       helpers.clean_buffer('import DoesNotExist', function()
+        -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
+        -- something isn't waiting properly, and nondeterministically we don't
+        -- end up with the right contents in tests :/
+        helpers.wait_for_loading_pins()
+        vim.wait(10000, function()
+          return not vim.deep_equal(require('lean.infoview').get_current_infoview():get_lines(), {})
+        end)
         -- the output in this case has the search path in it, so just match a
         -- bit of our expected contents
-        helpers.wait_for_loading_pins()
         assert.are.same(
           [[unknown module prefix 'DoesNotExist']],
           require('lean.infoview').get_current_infoview():get_line(1)
