@@ -55,6 +55,8 @@ local DEFAULTS = {
     },
 
     ---Check whether a given path should be modifiable.
+    ---@param self lean.ft.MergedConfig
+    ---@param path string
     ---@return boolean
     should_modify = function(self, path)
       path = path or vim.api.nvim_buf_get_name(0)
