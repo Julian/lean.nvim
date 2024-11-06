@@ -21,6 +21,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Install Neovim
         uses: rhysd/action-setup-vim@v1
         with:
@@ -46,6 +48,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Upload to LuaRocks
         uses: nvim-neorocks/luarocks-tag-release@v7
         env:
