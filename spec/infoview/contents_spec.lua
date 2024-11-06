@@ -429,7 +429,7 @@ describe('interactive infoview', function()
         -- end up with the right contents in tests :/
         helpers.wait_for_loading_pins()
         vim.wait(10000, function()
-          return not vim.deep_equal(require('lean.infoview').get_current_infoview():get_lines(), {})
+          return require('lean.infoview').get_current_infoview():get_line(1) ~= nil
         end)
         -- the output in this case has the search path in it, so just match a
         -- bit of our expected contents
