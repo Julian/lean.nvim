@@ -71,7 +71,7 @@ function helpers.wait_for_loading_pins(iv)
   end
   local info = iv.info
   local last, last_loading, last_processing
-  local succeeded, _ = vim.wait(7000, function()
+  local succeeded, _ = vim.wait(10000, function()
     for _, pin in pairs(vim.list_extend({ info.pin, info.__diff_pin }, info.pins)) do
       local processing = progress.at(pin.__position_params)
       if pin.loading or processing == progress.Kind.processing then

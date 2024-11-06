@@ -437,6 +437,17 @@ describe('interactive infoview', function()
     it(
       'shows diagnostics for files with broken syntax',
       helpers.clean_buffer('import 37', function()
+        -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
+        -- called by `assert.infoview_contents`) -- something isn't waiting
+        -- properly, and nondeterministically we don't end up with the right
+        -- contents in tests :/
+        helpers.wait_for_loading_pins()
+        vim.wait(10000, function()
+          return not vim.deep_equal(
+            require('lean.infoview').get_current_infoview():get_lines(),
+            { '' }
+          )
+        end)
         assert.infoview_contents.are [[
             ▶ 1:7-1:10: error:
             unexpected token; expected identifier

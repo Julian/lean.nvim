@@ -1099,7 +1099,11 @@ function Pin:__update()
 
   local blocks
   if processing == progress.Kind.fatal_error then
-    blocks = components.diagnostics_at(params, sess, self.__use_widgets) or {}
+    log:debug {
+      message = 'progress.Kind.fatal_error diagnostics',
+      params = params,
+    }
+    blocks = components.diagnostics(params)
   else
     blocks = vim
       .iter({
