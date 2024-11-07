@@ -52,6 +52,8 @@ local DEFAULTS = {
   ft = {
     nomodifiable = {
       '.*/src/lean/.*', -- Lean core library
+      '.*/.elan/.*', -- elan toolchains
+      '.*/.lake/.*', -- project dependencies
     },
 
     ---Check whether a given path should be modifiable.

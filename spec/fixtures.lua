@@ -16,8 +16,16 @@ local fixtures = {
     some_nonexisting_file = child 'DoesNotExist.lean',
     some_nested_existing_file = child 'Test/Squares.lean',
     some_nested_nonexisting_file = child 'Test/DoesNotExist.lean',
+
+    some_dependency_file = child '.lake/packages/importGraph/ImportGraph/Imports.lean',
   },
 }
+
+assert.is_truthy(vim.uv.fs_stat(fixtures.project.some_existing_file))
+assert.is_falsy(vim.uv.fs_stat(fixtures.project.some_nonexisting_file))
+assert.is_truthy(vim.uv.fs_stat(fixtures.project.some_nested_existing_file))
+assert.is_falsy(vim.uv.fs_stat(fixtures.project.some_nested_nonexisting_file))
+assert.is_truthy(vim.uv.fs_stat(fixtures.project.some_dependency_file))
 
 function fixtures.project:files()
   return vim.iter {
