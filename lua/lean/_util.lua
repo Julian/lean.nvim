@@ -2,9 +2,7 @@
 --- Stuff that should live in some standard library.
 ---@brief ]]
 
-local Job = require 'plenary.job'
 local a = require 'plenary.async'
--- local control = require'plenary.async.control'
 
 local log = require 'lean.log'
 
@@ -61,50 +59,21 @@ function M.create_buf(params)
   return bufnr
 end
 
----A subprocess which has completed running.
----@class lean.util.CompletedProcess
----@field stdout string[]
----@field stderr string[]
----@field code integer
-
----Run a subprocess, blocking on exit, and returning a result.
----
----Unlike `system()`, we don't mix stdout and stderr, and unlike
----`vim.uv.spawn`, we wait for process exit and collect the output.
----@return lean.util.CompletedProcess
-function M.subprocess_run(opts, timeout)
-  timeout = timeout or 10000
-
-  local job = Job:new(opts)
-
-  job:start()
-  job:wait(timeout)
-
-  ---@type lean.util.CompletedProcess
-  return {
-    code = job.code,
-    stdout = job:result(),
-    stderr = job:stderr_result(),
-  }
-end
-
 ---Run a subprocess, blocking on exit, and returning its stdout.
----
----Unlike `system()`, we don't mix stdout and stderr, and unlike
----`vim.uv.spawn`, we wait for process exit and collect the output.
----@return string[]: the lines of stdout of the exited process
-function M.subprocess_check_output(opts, ...)
-  local completed = M.subprocess_run(opts, ...)
-  if completed.code == 0 then
-    return completed.stdout
+---@return string: the lines of stdout of the exited process
+function M.subprocess_check_output(...)
+  local process = vim.system(...)
+  local result = process:wait()
+  if result.code == 0 then
+    return result.stdout
   end
 
   error(
     string.format(
       '%s exited with non-zero exit status %d.\nstderr contained:\n%s',
-      vim.inspect(opts.command),
-      completed.code,
-      table.concat(completed.stderr, '\n')
+      vim.inspect(process.cmd),
+      result.code,
+      result.stderr
     )
   )
 end

@@ -167,13 +167,9 @@ end
 ---Assumes your `lean.nvim` comes from a `git` repository.
 ---@return string|nil version
 function lean.plugin_version()
-  local result = util.subprocess_run {
-    command = 'git',
-    args = { 'describe', '--tags', '--always' },
-  }
+  local result = vim.system({ 'git', 'describe', '--tags', '--always' }):wait()
   if result.code == 0 then
-    local version = table.concat(result.stdout, ''):gsub('%s+', '')
-    return version
+    return vim.trim(result.stdout)
   end
 end
 
@@ -198,18 +194,12 @@ function lean.current_search_paths()
     root = vim.fn.getcwd()
   end
 
-  local prefix = unpack(util.subprocess_check_output {
-    command = 'lean',
-    args = { '--print-prefix' },
-    cwd = root,
-  })
+  local prefix = util.subprocess_check_output({ 'lean', '--print-prefix' }, { cwd = root })
 
   local paths = { vim.fs.joinpath(prefix, 'src/lean') }
-  local result = util.subprocess_run {
-    command = 'lake',
-    args = { 'setup-file', vim.api.nvim_buf_get_name(0) },
-    cwd = root,
-  }
+  local result = vim
+    .system({ 'lake', 'setup-file', vim.api.nvim_buf_get_name(0) }, { cwd = root })
+    :wait()
   if result.code == 0 then
     vim.list_extend(paths, vim.fn.json_decode(result.stdout).paths.srcPath)
   end
