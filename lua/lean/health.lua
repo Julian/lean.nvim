@@ -20,9 +20,9 @@ local function neovim_is_new_enough()
 end
 
 local function lake_is_runnable()
-  local output = subprocess_check_output { 'lake', '--version' }
+  local version = vim.trim(subprocess_check_output { 'lake', '--version' })
   vim.health.ok 'Lake is runnable.'
-  vim.health.info('  `lake --version`:  ' .. output)
+  vim.health.info(('  `lake --version`:  %s'):format(version))
 end
 
 local function no_timers()
