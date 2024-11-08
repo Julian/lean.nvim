@@ -9,9 +9,6 @@
 ---@brief ]]
 
 local lsp = require 'lean.lsp'
-local tbl_repeat = require('lean._util').tbl_repeat
-
-local sorry = {}
 
 local function calculate_indent(line)
   local indent = vim.fn.indent(line)
@@ -30,33 +27,35 @@ local function calculate_indent(line)
   return string.rep(' ', indent)
 end
 
----Fill the current cursor position with `sorry`s to discharge all goals.
-function sorry.fill()
-  local client = lsp.client_for(0)
-  local params = vim.lsp.util.make_position_params()
-  local sorrytext, offset
+return {
+  ---Fill the current cursor position with `sorry`s to discharge all goals.
+  fill = function()
+    local client = lsp.client_for(0)
+    local params = vim.lsp.util.make_position_params()
 
-  local response = client.request_sync('$/lean/plainGoal', params, 1000, 0)
-  ---@type PlainGoal?
-  local result = response and response.result
-  if not result or not result.goals or vim.tbl_isempty(result.goals) then
-    return
-  end
+    local response = client.request_sync('$/lean/plainGoal', params, 1000, 0)
+    ---@type PlainGoal?
+    local result = response and response.result
+    if not result or not result.goals or vim.tbl_isempty(result.goals) then
+      return
+    end
 
-  local goals = #result.goals
-  local index = vim.api.nvim_win_get_cursor(0)[1]
-  local indent = calculate_indent(index)
+    local goals = #result.goals
+    local index = vim.api.nvim_win_get_cursor(0)[1]
+    local indent = calculate_indent(index)
 
-  if goals == 1 then
-    sorrytext = 'sorry'
-    offset = 0
-  else
-    sorrytext = '· sorry'
-    offset = 3
-  end
-  local lines = tbl_repeat(indent .. sorrytext, goals)
-  vim.api.nvim_buf_set_lines(0, index, index, true, lines)
-  vim.api.nvim_win_set_cursor(0, { index + 1, #indent + offset }) -- the 's'
-end
+    local sorries, offset = { indent .. 'sorry' }, #indent
+    if goals > 1 then
+      local focus = '· '
+      local focused_sorry = ('%s%ssorry'):format(indent, focus)
+      sorries = {}
+      for _ = 1, goals do
+        table.insert(sorries, focused_sorry)
+      end
+      offset = offset + #focus
+    end
 
-return sorry
+    vim.api.nvim_buf_set_lines(0, index, index, true, sorries)
+    vim.api.nvim_win_set_cursor(0, { index + 1, offset }) -- the 's'
+  end,
+}
