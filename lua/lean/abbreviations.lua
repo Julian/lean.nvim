@@ -13,10 +13,14 @@ function abbreviations.load()
   if _MEMOIZED ~= nil then
     return _MEMOIZED
   end
-  local this_file = debug.getinfo(2, 'S').source:sub(2)
-  local base_directory = vim.fn.fnamemodify(this_file, ':h:h:h')
-  local path = base_directory .. '/vscode-lean/abbreviations.json'
-  _MEMOIZED = vim.fn.json_decode(vim.fn.readfile(path))
+  local this_dir = vim.fs.dirname(debug.getinfo(2, 'S').source:sub(2))
+  local path = vim.fs.joinpath(this_dir, '../../vscode-lean/abbreviations.json')
+  local file = io.open(path, 'r')
+  if not file then
+    error(('Unable to read abbreviations from %q'):format(path))
+  end
+  _MEMOIZED = vim.json.decode(file:read '*a')
+  file:close()
   return _MEMOIZED
 end
 

@@ -201,7 +201,7 @@ function lean.current_search_paths()
     .system({ 'lake', 'setup-file', vim.api.nvim_buf_get_name(0) }, { cwd = root })
     :wait()
   if result.code == 0 then
-    vim.list_extend(paths, vim.fn.json_decode(result.stdout).paths.srcPath)
+    vim.list_extend(paths, vim.json.decode(result.stdout).paths.srcPath)
   end
 
   return vim
