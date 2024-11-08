@@ -1,14 +1,14 @@
-packpath := justfile_directory() + "/packpath"
-scripts := justfile_directory() + "/scripts"
-doc := justfile_directory() + "/doc"
-devcontainer := justfile_directory() + "/.devcontainer/lazyvim/Dockerfile"
-src := justfile_directory() + "/lua"
-lean := src + "/lean"
-spec := justfile_directory() + "/spec"
-fixtures := spec + "/fixtures"
-demos := justfile_directory() + "/demos"
+packpath := justfile_directory() / "packpath"
+scripts := justfile_directory() / "scripts"
+doc := justfile_directory() / "doc"
+devcontainer := justfile_directory() / ".devcontainer/lazyvim/Dockerfile"
+src := justfile_directory() / "lua"
+lean := src / "lean"
+spec := justfile_directory() / "spec"
+fixtures := spec / "fixtures"
+demos := justfile_directory() / "demos"
 
-init_lua := scripts + "/minimal_init.lua"
+init_lua := scripts / "minimal_init.lua"
 
 # Run the lean.nvim test suite.
 [group('testing')]
