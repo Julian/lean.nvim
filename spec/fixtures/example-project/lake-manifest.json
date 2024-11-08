@@ -31,7 +31,7 @@
   {"url": "https://github.com/leanprover-community/import-graph",
    "type": "git",
    "subDir": null,
-   "scope": "",
+   "scope": "leanprover-community",
    "rev": "ac7b989cbf99169509433124ae484318e953d201",
    "name": "importGraph",
    "manifestFile": "lake-manifest.json",
