@@ -1163,8 +1163,8 @@ function infoview.__update_pin_by_uri(uri)
 end
 
 ---on_lines callback to update pins position according to the given textDocument/didChange parameters.
-function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
-  log:debug { message = 'updating pin positions', bufnr = bufnr }
+function infoview.__update_pin_positions(_, bufnr, tick, _, _, _, _, _, _)
+  log:debug { message = 'updating pin positions', bufnr = bufnr, tick = tick }
   local uri = vim.uri_from_bufnr(bufnr)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
