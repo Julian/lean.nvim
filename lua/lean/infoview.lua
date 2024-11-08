@@ -1168,14 +1168,9 @@ function infoview.__update_pin_positions(_, bufnr, tick, _, _, _, _, _, _)
   local uri = vim.uri_from_bufnr(bufnr)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
-      -- immediately mark the pin as loading (useful for tests)
-      if pin:__started_loading() then
-        vim.schedule(function()
-          pin:__render_parents()
-        end)
-      end
+      pin:__started_loading()
+      pin:update_position()
       vim.schedule(function()
-        pin:update_position()
         pin:update()
       end)
     end
