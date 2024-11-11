@@ -34,10 +34,10 @@ repos:
       - id: stylua
         exclude: lua/lean/tui.lua
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.14.0
+    rev: v0.15.0
     hooks:
       - id: markdownlint-cli2
   - repo: https://github.com/woodruffw/zizmor
-    rev: v0.2.0
+    rev: v0.3.0
     hooks:
       - id: zizmor
