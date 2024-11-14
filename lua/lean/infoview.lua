@@ -58,6 +58,7 @@ options._DEFAULTS = vim.deepcopy(options)
 ---@field show_instances boolean show instance hypotheses
 ---@field show_hidden_assumptions boolean show hypothesis names which are inaccessible
 ---@field show_let_values boolean show let-value bodies
+---@field show_term_goals boolean show expected types?
 ---@field reverse boolean order hypotheses bottom-to-top
 
 ---An individual pin.
@@ -305,6 +306,11 @@ function Infoview:select_view_options()
       name = 'show let bodies',
       description = 'Show the bodies of let-values?',
       option = 'show_let_values',
+    },
+    {
+      name = 'show term goals',
+      description = 'Show "expected type" goals?',
+      option = 'show_term_goals',
     },
     {
       name = 'reverse order',
@@ -1106,10 +1112,12 @@ function Pin:__update()
     }
     blocks = components.diagnostics(params)
   else
+    local view_options = require 'lean.config'().infoview.view_options
     blocks = vim
       .iter({
         components.goal_at(params, sess, self.__use_widgets) or {},
-        options.show_term_goals and components.term_goal_at(params, sess, self.__use_widgets) or {},
+        view_options.show_term_goals and components.term_goal_at(params, sess, self.__use_widgets)
+          or {},
         components.diagnostics_at(params, sess, self.__use_widgets) or {},
         components.user_widgets_at(params, sess, self.__use_widgets) or {},
       })

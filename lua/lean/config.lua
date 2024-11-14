@@ -79,6 +79,7 @@ local DEFAULTS = {
       show_instances = true,
       show_hidden_assumptions = true,
       show_let_values = true,
+      show_term_goals = true,
       reverse = false,
     },
     severity_markers = {
