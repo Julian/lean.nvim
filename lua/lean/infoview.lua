@@ -34,6 +34,7 @@ local options = {
   indicators = 'auto',
   show_processing = true,
   show_no_info_message = false,
+  show_term_goals = true,
   use_widgets = true,
 
   ---@type { [string]: ElementEvent }
@@ -1108,7 +1109,7 @@ function Pin:__update()
     blocks = vim
       .iter({
         components.goal_at(params, sess, self.__use_widgets) or {},
-        components.term_goal_at(params, sess, self.__use_widgets) or {},
+        options.show_term_goals and components.term_goal_at(params, sess, self.__use_widgets) or {},
         components.diagnostics_at(params, sess, self.__use_widgets) or {},
         components.user_widgets_at(params, sess, self.__use_widgets) or {},
       })
