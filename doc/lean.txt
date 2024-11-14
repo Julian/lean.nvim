@@ -79,6 +79,7 @@ InfoviewViewOptions                                        *InfoviewViewOptions*
         {show_instances}           (boolean)  show instance hypotheses
         {show_hidden_assumptions}  (boolean)  show hypothesis names which are inaccessible
         {show_let_values}          (boolean)  show let-value bodies
+        {show_term_goals}          (boolean)  show expected types?
         {reverse}                  (boolean)  order hypotheses bottom-to-top
 
 
