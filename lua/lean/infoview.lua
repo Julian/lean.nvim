@@ -1126,7 +1126,13 @@ function Pin:__update()
   end
 
   if vim.tbl_isempty(blocks) then
-    self.__data_element = options.show_no_info_message and components.NO_INFO or Element.EMPTY
+    if vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0, name = 'leanls' }) then
+      self.__data_element = components.LSP_HAS_DIED
+    elseif options.show_no_info_message then
+      self.__data_element = components.NO_INFO
+    else
+      self.__data_element = components.EMPTY
+    end
     return
   end
 
@@ -1234,6 +1240,18 @@ function infoview.enable(opts)
         end
         current_infoview:focus_on_current_buffer()
       end
+
+      vim.api.nvim_create_autocmd('LspDetach', {
+        group = vim.api.nvim_create_augroup('LeanInfoviewLSPDied', { clear = false }),
+        buffer = bufnr,
+        callback = vim.schedule_wrap(function()
+          local current_infoview = infoview.get_current_infoview()
+          if not current_infoview then
+            return
+          end
+          current_infoview:__update()
+        end),
+      })
 
       local focus_augroup = vim.api.nvim_create_augroup('LeanInfoviewSetFocus', { clear = false })
       vim.api.nvim_create_autocmd('BufEnter', {

@@ -474,4 +474,24 @@ describe('interactive infoview', function()
       end)
     end)
   )
+
+  describe(
+    'language server dead',
+    helpers.clean_buffer([[#check 37]], function()
+      it('is shown when the server is dead', function()
+        helpers.wait_for_ready_lsp()
+        vim.lsp.stop_client(vim.lsp.get_clients())
+        local succeeded = vim.wait(1000, function()
+          return vim.tbl_isempty(vim.lsp.get_clients())
+        end)
+        assert.message("Couldn't kill the LSP!").is_true(succeeded)
+
+        -- We don't immediately mark the infoview with our dead message.
+        -- In theory maybe we could by attaching to `LspDetach` and triggering
+        -- a final update, but for now this seems OK.
+        helpers.move_cursor { to = { 1, 6 } }
+        assert.infoview_contents.are '🪦 The Lean language server is dead.'
+      end)
+    end)
+  )
 end)

@@ -13,6 +13,10 @@ local util = require 'lean._util'
 local widgets = require 'lean.widgets'
 
 local components = {
+  LSP_HAS_DIED = Element:new {
+    text = '🪦 The Lean language server is dead.',
+    hlgroup = 'DiagnosticError',
+  },
   NO_INFO = Element:new { text = 'No info.', name = 'no-info' },
   PROCESSING = Element:new { text = 'Processing file...', name = 'processing' },
 }
