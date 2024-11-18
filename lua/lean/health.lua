@@ -21,8 +21,24 @@ end
 
 local function lake_is_runnable()
   local version = vim.trim(subprocess_check_output { 'lake', '--version' })
-  vim.health.ok 'Lake is runnable.'
+  vim.health.ok '`lake` is runnable.'
   vim.health.info(('  `lake --version`:  %s'):format(version))
+end
+
+local function elan_is_runnable()
+  local result = vim.system({ 'elan', 'show' }):wait()
+  if result.code == 0 then
+    local output, count = vim.trim(result.stdout):gsub('\n', '  \n')
+    local separator = count == 0 and '  ' or '\n'
+    vim.health.ok '`elan` is runnable.'
+    vim.health.info(('  `elan show`:%s%s'):format(separator, output))
+  else
+    vim.health.warn(
+      'elan is not runnable.',
+      { [[`lake` may still be runnable, but you'd better know what you're doing.]] }
+    )
+    lake_is_runnable()
+  end
 end
 
 local function no_timers()
@@ -42,7 +58,7 @@ return {
     local version = require('lean').plugin_version()
     vim.health.start(('lean.nvim (%s)'):format(version))
     neovim_is_new_enough()
-    lake_is_runnable()
+    elan_is_runnable()
     no_timers()
   end,
 }
