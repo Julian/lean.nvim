@@ -41,7 +41,7 @@ vim.b.switch_definitions = {
   { 'ℕ', 'ℚ', 'ℝ', 'ℂ' },
 
   {
-    [ [=[\<\(simpa\?\)\(?\?\)\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = function(original)
+    [ [=[\<\(simp_all\|simpa\|simp\)\(?\?\)\(\s\+only\s\+\[[^\]]*]\)\?]=] ] = function(original)
       if original[3] == '' and original[4] == '' then
         return original[2] .. '?'
       else

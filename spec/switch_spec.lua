@@ -98,4 +98,16 @@ describe('tactics', function()
       assert.contents.are [[simpa]]
     end)
   )
+
+  it(
+    'switch between simp_all and simp_all?',
+    clean_buffer([[simp_all]], function()
+      vim.cmd.normal { '1gg0', bang = true }
+      vim.cmd.Switch()
+      assert.contents.are [[simp_all?]]
+
+      vim.cmd.Switch()
+      assert.contents.are [[simp_all]]
+    end)
+  )
 end)
