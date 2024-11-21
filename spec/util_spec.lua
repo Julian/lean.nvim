@@ -3,11 +3,11 @@ local util = require 'lean._util'
 describe('dedent', function()
   it('dedents multiline strings by their common prefix', function()
     assert.is.equal(
+      'foo bar\nbaz quux\n',
       util.dedent [[
         foo bar
         baz quux
-      ]],
-      'foo bar\nbaz quux\n'
+      ]]
     )
   end)
 
@@ -46,7 +46,7 @@ describe('subprocesses', function()
           def main : IO Unit := IO.println "Hello, world!"
         ]],
       })
-      assert.are.same('Hello, world!\n', stdout)
+      assert.is.equal('Hello, world!\n', stdout)
     end)
 
     it('errors for unsuccessful processes', function()

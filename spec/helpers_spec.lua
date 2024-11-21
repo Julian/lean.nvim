@@ -17,9 +17,9 @@ describe('clean_buffer <-> assert.contents', function()
     'creates multiline buffers',
     helpers.clean_buffer(
       [[
-    foo
-    bar
-  ]],
+        foo
+        bar
+      ]],
       function()
         assert.are.same(vim.api.nvim_buf_get_lines(0, 0, -1, false), { 'foo', 'bar' })
         assert.contents.are [[
