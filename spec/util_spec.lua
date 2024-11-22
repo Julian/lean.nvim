@@ -33,6 +33,17 @@ describe('dedent', function()
     )
   end)
 
+  it('also considers the first line indent', function()
+    assert.is.equal(
+      'foo\n  bar\n  baz\n',
+      util.dedent [[
+        foo
+          bar
+          baz
+      ]]
+    )
+  end)
+
   it('leaves single lines with trailing whitespace alone', function()
     assert.is.equal('foo ', util.dedent 'foo ')
   end)

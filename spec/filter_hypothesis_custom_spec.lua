@@ -22,7 +22,7 @@ describe(
   ]],
     function()
       it('filters hypotheses', function()
-        helpers.move_cursor { to = { 2, 2 } }
+        helpers.move_cursor { to = { 2, 4 } }
 
         assert.infoview_contents.are [[
           case h

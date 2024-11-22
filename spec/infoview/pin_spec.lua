@@ -35,7 +35,7 @@ describe(
           h2 : q
           ⊢ q ∨ p
 
-          ▶ expected type (7:3-7:6)
+          ▶ expected type (7:5-7:8)
           ⊢ ∀ {a b : Prop}, b → a ∨ b
         ]]
 
@@ -52,7 +52,7 @@ describe(
             h1 : p
             ⊢ q ∨ p
 
-            ▶ expected type (4:3-4:6)
+            ▶ expected type (4:5-4:8)
             ⊢ ∀ {a b : Prop}, a → a ∨ b
 
             -- %s at 7:6
@@ -61,7 +61,7 @@ describe(
             h2 : q
             ⊢ q ∨ p
 
-            ▶ expected type (7:3-7:6)
+            ▶ expected type (7:5-7:8)
             ⊢ ∀ {a b : Prop}, b → a ∨ b
           ]],
           filename
@@ -70,7 +70,7 @@ describe(
         helpers.move_cursor { to = { 1, 49 } }
         infoview.add_pin()
 
-        helpers.move_cursor { to = { 5, 4 } }
+        helpers.move_cursor { to = { 5, 6 } }
         assert.infoview_contents.are(string.format(
           [[
             case inl.h
@@ -84,7 +84,7 @@ describe(
             h2 : q
             ⊢ q ∨ p
 
-            ▶ expected type (7:3-7:6)
+            ▶ expected type (7:5-7:8)
             ⊢ ∀ {a b : Prop}, b → a ∨ b
 
             -- %s at 1:50
@@ -130,7 +130,7 @@ describe(
           h2 : q
           ⊢ q ∨ p
 
-          ▶ expected type (7:3-7:6)
+          ▶ expected type (7:5-7:8)
           ⊢ ∀ {a b : Prop}, b → a ∨ b
         ]]
 
@@ -187,7 +187,7 @@ describe(
                   ▶ expected type (1:24-1:27)
                   ⊢ 2 = 2
 
-                  -- %s at 6:11
+                  -- %s at 6:13
                   case inl
                   p q : Prop
                   h1 : p
@@ -203,7 +203,7 @@ describe(
                   ▶ expected type (1:24-1:27)
                   ⊢ 2 = 2
 
-                  -- %s at 6:11
+                  -- %s at 6:13
                   case inl
                   p q : Prop
                   h1 : p
@@ -220,7 +220,7 @@ describe(
                   p q : Prop
                   ⊢ p ∨ q → q ∨ p
 
-                  -- %s at 4:11
+                  -- %s at 4:13
                   case inl
                   p q : Prop
                   h1 : p
@@ -236,7 +236,7 @@ describe(
                   p q : Prop
                   ⊢ p ∨ q → q ∨ p
 
-                  -- %s at 4:11
+                  -- %s at 4:13
                   case inl
                   p q : Prop
                   h1 : p
@@ -253,7 +253,7 @@ describe(
                   ▶ expected type (11:24-11:27)
                   ⊢ 2 = 2
 
-                  -- %s at 4:11
+                  -- %s at 4:13
                   case inl
                   p q : Prop
                   h1 : p
@@ -270,7 +270,7 @@ describe(
                   p q : Prop
                   ⊢ p ∨ q → q ∨ p
 
-                  -- %s at 4:11
+                  -- %s at 4:13
                   case inl
                   p q : Prop
                   h1 : p
@@ -281,7 +281,7 @@ describe(
             end)
 
             it('moves pin when changes are made on its line before its column', function()
-              helpers.move_cursor { to = { 4, 7 } }
+              helpers.move_cursor { to = { 4, 9 } }
               vim.cmd.normal 'cl37' -- h1 -> h37
               helpers.move_cursor { to = { 1, 50 } }
               assert.infoview_contents.are(string.format(
@@ -289,7 +289,7 @@ describe(
                   p q : Prop
                   ⊢ p ∨ q → q ∨ p
 
-                  -- %s at 4:12
+                  -- %s at 4:14
                   case inl
                   p q : Prop
                   h37 : p
@@ -308,7 +308,7 @@ describe(
                   p q : Prop
                   ⊢ p ∨ q → q ∨ p
 
-                  -- %s at 4:12
+                  -- %s at 4:14
                   case inl
                   p q : Prop
                   h37 : p
@@ -358,7 +358,7 @@ describe(
                 h37 : p
                 ⊢ q ∨ p
 
-                ▶ expected type (4:3-4:6)
+                ▶ expected type (4:5-4:8)
                 ⊢ ∀ {a b : Prop}, a → a ∨ b
               ]]
 
@@ -370,7 +370,7 @@ describe(
                 h37 : p
                 ⊢ q ∨ p
 
-                ▶ expected type (4:3-4:6)
+                ▶ expected type (4:5-4:8)
                 ⊢ ∀ {a b : Prop}, a → a ∨ b
               ]]
 
@@ -380,7 +380,7 @@ describe(
                 h37 : p
                 ⊢ q ∨ p
 
-                ▶ expected type (4:3-4:6)
+                ▶ expected type (4:5-4:8)
                 ⊢ ∀ {a b : Prop}, a → a ∨ b
               ]]
 
@@ -409,7 +409,7 @@ describe(
                 h37 : p
                 ⊢ q ∨ p
 
-                ▶ expected type (4:3-4:6)
+                ▶ expected type (4:5-4:8)
                 ⊢ ∀ {a b : Prop}, a → a ∨ b
               ]]
             end)
