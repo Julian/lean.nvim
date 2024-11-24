@@ -16,6 +16,8 @@ dependencies = {
   'nvim-lspconfig',
   'plenary.nvim',
 }
+test_dependencies = {
+}
 
 source = {
   url = 'https://github.com/Julian/lean.nvim',
