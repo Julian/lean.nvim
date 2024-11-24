@@ -1,4 +1,3 @@
-packpath := justfile_directory() / "packpath"
 scripts := justfile_directory() / "scripts"
 doc := justfile_directory() / "doc"
 devcontainer := justfile_directory() / ".devcontainer/lazyvim/Dockerfile"
@@ -8,23 +7,23 @@ spec := justfile_directory() / "spec"
 fixture_projects := spec / "fixtures/projects"
 demos := justfile_directory() / "demos"
 
-init_lua := scripts / "minimal_init.lua"
-clean_config := justfile_directory() / ".test-config"
+export LEAN_NVIM_ISOLATED_CONFIG_ROOT := justfile_directory() / ".isolated_config_for_tests"
+packpath := LEAN_NVIM_ISOLATED_CONFIG_ROOT / "local/share/nvim/site/pack/testing/start"
 
 # Run the lean.nvim test suite.
 [group('testing')]
-test: _rebuild-test-fixtures _clone-test-dependencies
-    @just retest
+test *ARGS='': _rebuild-test-fixtures _clone-dependencies
+    @just retest {{ ARGS }}
 
 # Run the test suite without rebuilding or recloning any dependencies.
 [group('testing')]
-retest *test_files=spec:
-    XDG_CONFIG_HOME="{{ clean_config }}" nvim --headless --clean -u {{ init_lua }} -c 'lua require("inanis").run{ specs = vim.split("{{ test_files }}", " "), minimal_init = "{{ init_lua }}", sequential = vim.env.TEST_SEQUENTIAL ~= nil }'
+retest *ARGS='':
+    eval $(luarocks path --no-bin --lua-version 5.1); luarocks --lua-version 5.1 test -- {{ ARGS }}
 
-# Run an instance of neovim with the same minimal init used to run tests.
+# Run an instance of neovim with the same setup used to run tests.
 [group('dev')]
 nvim *ARGS='':
-    XDG_CONFIG_HOME="{{ clean_config }}" nvim --clean -u {{ init_lua }} -c "lua require('lean').setup { mappings = true }" {{ ARGS }}
+    XDG_CONFIG_HOME="{{ LEAN_NVIM_ISOLATED_CONFIG_ROOT }}"/config nvim --clean -u NONE -c "lua require('lean').setup { mappings = true }" {{ ARGS }}
 
 # Run an instance of the `devcontainer` which uses LazyVim.
 [group('dev')]
@@ -40,7 +39,7 @@ scratch *ARGS='':
 
 # Coarsely profile how long the whole test suite takes to run.
 [group('testing')]
-profile-test *ARGS: _rebuild-test-fixtures _clone-test-dependencies
+profile-test *ARGS: _rebuild-test-fixtures _clone-dependencies
     hyperfine --warmup 2 {{ ARGS }} "just retest"
 
 # Lint lean.nvim for style and typing issues.
@@ -51,7 +50,7 @@ lint:
     {{ if `lua-language-server --version 2>&1 >/dev/null; echo $?` != "0" { error('lua-language-server not found') } else { "" } }}
     lua-language-server --check {{ lean }} --checklevel=Warning --configpath "{{ justfile_directory() }}/.luarc.json"
     {{ if `selene --version 2>&1 >/dev/null; echo $?` != "0" { error('selene not found') } else { "" } }}
-    selene {{ src }}
+    selene {{ src }} {{ spec }}
 
 # Rebuild a demo from our VHS script.
 demo:
@@ -94,19 +93,13 @@ bump-test-fixtures:
 
 # Delete any previously cloned dependencies.
 _clean-dependencies:
-    rm -rf '{{ packpath }}'
-    mkdir '{{ packpath }}'
+    rm -rf '{{ LEAN_NVIM_ISOLATED_CONFIG_ROOT }}'
 
 # Clone any neovim dependencies required for the plugin.
 _clone-dependencies: _clean-dependencies
-    for dependency in AndrewRadev/switch.vim andymass/vim-matchup neovim/nvim-lspconfig nvim-lua/plenary.nvim tomtom/tcomment_vim lewis6991/satellite.nvim; do \
-        git clone --quiet --filter=blob:none "https://github.com/$dependency" "{{ packpath }}/$(basename $dependency)"; \
-    done
-
-# Clone any neovim dependencies required for the test suite.
-_clone-test-dependencies: _clone-dependencies
-    for dependency in Julian/inanis.nvim; do \
-        git clone --quiet --filter=blob:none "https://github.com/$dependency" "{{ packpath }}/$(basename $dependency)"; \
+    mkdir -p '{{ packpath }}' && ln -s "{{ justfile_directory() }}" "{{ packpath }}"
+    for dependency in AndrewRadev/switch.vim andymass/vim-matchup tomtom/tcomment_vim lewis6991/satellite.nvim; do \
+      git clone --quiet --filter=blob:none "https://github.com/$dependency" "{{ packpath }}/$(basename $dependency)"; \
     done
 
 # Rebuild some test fixtures used in the test suite.

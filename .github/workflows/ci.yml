@@ -31,6 +31,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+
+      - uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "luajit-openresty"
+      - uses: leafo/gh-actions-luarocks@v4
+
       - name: Install Neovim
         uses: rhysd/action-setup-vim@8e931b9954b19d4203d5caa5ff5521f3bc21dcc7
         with:
@@ -41,8 +47,6 @@ jobs:
       - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Run tests
         run: just test
-        env:
-          TEST_SEQUENTIAL: 1
 
   release:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')

@@ -1,3 +1,5 @@
+local assert = require 'luassert.assert'
+
 local this_file = debug.getinfo(1).source:match '@(.*)$'
 
 local fixtures_root = vim.fs.joinpath(vim.fs.dirname(this_file), 'fixtures')

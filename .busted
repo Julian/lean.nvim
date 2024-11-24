@@ -1,0 +1,19 @@
+return {
+  _all = {
+    helper = 'spec/spec_helper.lua',
+    lpath = 'lua/?.lua;lua/?/init.lua',
+    lua = './spec/nvim-shim',
+  },
+  default = {
+    coverage = false,
+    verbose = false
+  },
+  verbose = {
+    coverage = false,
+    verbose = true
+  },
+  coverage = {
+    coverage = true,
+    verbose = true
+  },
+}
