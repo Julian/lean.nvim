@@ -1,0 +1,8 @@
+#!/bin/sh
+set -euf
+
+export XDG_CONFIG_HOME="$LEAN_NVIM_ISOLATED_CONFIG_ROOT/config"
+export XDG_STATE_HOME="$LEAN_NVIM_ISOLATED_CONFIG_ROOT/local/state/"
+export XDG_DATA_HOME="$LEAN_NVIM_ISOLATED_CONFIG_ROOT/local/share/"
+
+nvim  --cmd 'set loadplugins' -l $@
