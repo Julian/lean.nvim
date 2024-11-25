@@ -24,6 +24,8 @@ describe('lean.current_search_paths', function()
   end
 
   it('returns only the stdlib outside of projects', function()
+    vim.iter(vim.lsp.buf.list_workspace_folders()):map(vim.lsp.buf.remove_workspace_folder)
+
     vim.cmd.edit 'someLoneLeanFile.lean'
     helpers.wait_for_ready_lsp()
 
@@ -33,7 +35,7 @@ describe('lean.current_search_paths', function()
     -- not too big of a loss, so eventually we can just delete this
     -- assertion.
     -- assert.message(vim.inspect(paths)).are.equal(3, #paths)
-    assert.is.equal(#paths, 1)
+    assert.are.same(paths, { paths[1] }) -- len(1), but better error message
     assert.is.truthy(paths[1]:match '/src/lean')
   end)
 end)
