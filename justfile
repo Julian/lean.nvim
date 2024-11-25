@@ -35,7 +35,7 @@ devcontainer ocibuild="podman" tag="lazylean" *ARGS='':
 [group('dev')]
 scratch *ARGS='':
     # still no idea why the extra :edit is required to get the LSP alive
-    @just nvim '{ lsp = { enable = true }, mappings = true }' +edit +'setlocal\ buftype=nofile' {{ ARGS }} JustScratch.lean
+    @just nvim +edit +'setlocal\ buftype=nofile' {{ ARGS }} JustScratch.lean
 
 # Coarsely profile how long the whole test suite takes to run.
 [group('testing')]
