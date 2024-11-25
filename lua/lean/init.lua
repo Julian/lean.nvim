@@ -194,7 +194,8 @@ function lean.current_search_paths()
     root = vim.fn.getcwd()
   end
 
-  local prefix = util.subprocess_check_output({ 'lean', '--print-prefix' }, { cwd = root })
+  local prefix =
+    vim.trim(util.subprocess_check_output({ 'lean', '--print-prefix' }, { cwd = root }))
 
   local paths = { vim.fs.joinpath(prefix, 'src/lean') }
   local result = vim
