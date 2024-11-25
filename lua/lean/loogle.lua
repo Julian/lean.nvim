@@ -30,7 +30,7 @@ function loogle.search(type)
     error('Loogle returned status code: ' .. res.status)
   end
 
-  local body = vim.fn.json_decode(res.body)
+  local body = vim.json.decode(res.body)
   if body.error then
     return nil, body.error
   end

@@ -35,7 +35,7 @@ describe('sorry', function()
       require('lean.sorry').fill()
       assert.contents.are [[
           example (p : Prop) : p → p := by
-            sorry
+          sorry
         ]]
     end)
   )

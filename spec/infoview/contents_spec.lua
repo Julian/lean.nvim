@@ -164,7 +164,7 @@ describe('interactive infoview', function()
           this : Nat
           ⊢ 37 = 37
 
-          ▶ expected type (2:15-2:17)
+          ▶ expected type (2:17-2:19)
           ⊢ Nat
         ]]
       end
@@ -181,7 +181,7 @@ describe('interactive infoview', function()
           · rfl
       ]],
       function()
-        helpers.move_cursor { to = { 2, 6 } }
+        helpers.move_cursor { to = { 2, 9 } }
         assert.infoview_contents.are [[
           ▶ 2 goals
           case zero
@@ -191,7 +191,7 @@ describe('interactive infoview', function()
           n✝ : Nat
           ⊢ n✝ + 1 = n✝ + 1
 
-          ▶ expected type (2:7-2:8)
+          ▶ expected type (2:9-2:10)
           n : Nat
           ⊢ Nat
         ]]
@@ -424,9 +424,15 @@ describe('interactive infoview', function()
     it(
       'shows diagnostics for files with immediate diagnostics',
       helpers.clean_buffer('import DoesNotExist', function()
+        -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
+        -- something isn't waiting properly, and nondeterministically we don't
+        -- end up with the right contents in tests :/
+        helpers.wait_for_loading_pins()
+        vim.wait(10000, function()
+          return require('lean.infoview').get_current_infoview():get_line(1) ~= nil
+        end)
         -- the output in this case has the search path in it, so just match a
         -- bit of our expected contents
-        helpers.wait_for_loading_pins()
         assert.are.same(
           [[unknown module prefix 'DoesNotExist']],
           require('lean.infoview').get_current_infoview():get_line(1)
@@ -437,6 +443,17 @@ describe('interactive infoview', function()
     it(
       'shows diagnostics for files with broken syntax',
       helpers.clean_buffer('import 37', function()
+        -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
+        -- called by `assert.infoview_contents`) -- something isn't waiting
+        -- properly, and nondeterministically we don't end up with the right
+        -- contents in tests :/
+        helpers.wait_for_loading_pins()
+        vim.wait(10000, function()
+          return not vim.deep_equal(
+            require('lean.infoview').get_current_infoview():get_lines(),
+            { '' }
+          )
+        end)
         assert.infoview_contents.are [[
             ▶ 1:7-1:10: error:
             unexpected token; expected identifier
@@ -454,6 +471,26 @@ describe('interactive infoview', function()
         end)
         assert.message('file was never processing').is_true(result)
         assert.infoview_contents_nowait.are 'Processing file...'
+      end)
+    end)
+  )
+
+  describe(
+    'language server dead',
+    helpers.clean_buffer([[#check 37]], function()
+      it('is shown when the server is dead', function()
+        helpers.wait_for_ready_lsp()
+        vim.lsp.stop_client(vim.lsp.get_clients())
+        local succeeded = vim.wait(1000, function()
+          return vim.tbl_isempty(vim.lsp.get_clients())
+        end)
+        assert.message("Couldn't kill the LSP!").is_true(succeeded)
+
+        -- We don't immediately mark the infoview with our dead message.
+        -- In theory maybe we could by attaching to `LspDetach` and triggering
+        -- a final update, but for now this seems OK.
+        helpers.move_cursor { to = { 1, 6 } }
+        assert.infoview_contents.are '🪦 The Lean language server is dead.'
       end)
     end)
   )

@@ -35,7 +35,7 @@ end
 ---@param elements Element[]?
 ---@param err LspError?
 local function show_popup_or_error(elements, err)
-  if elements then
+  if elements and not vim.tbl_isempty(elements) then
     show_popup(Element:concat(elements, '\n\n'))
   elseif err then
     show_popup(Element:new { text = vim.inspect(err) })

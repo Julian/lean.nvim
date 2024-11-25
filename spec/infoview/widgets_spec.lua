@@ -53,11 +53,11 @@ describe('widgets', function()
           apply?
       ]],
       function()
-        helpers.move_cursor { to = { 2, 0 } }
+        helpers.move_cursor { to = { 2, 2 } }
         assert.infoview_contents.are [[
           ⊢ 2 = 2
 
-          ▶ 2:1-2:7: information:
+          ▶ 2:3-2:9: information:
           Try this: exact rfl
 
           ▶ suggestions:

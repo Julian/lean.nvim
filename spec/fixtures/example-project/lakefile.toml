@@ -7,8 +7,7 @@ path = "foo"
 
 [[require]]
 name = "importGraph"
-git = "https://github.com/leanprover-community/import-graph"
-rev = "main"
+scope = "leanprover-community"
 
 [[lean_lib]]
 name = "Test"

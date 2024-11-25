@@ -34,6 +34,7 @@ local options = {
   indicators = 'auto',
   show_processing = true,
   show_no_info_message = false,
+  show_term_goals = true,
   use_widgets = true,
 
   ---@type { [string]: ElementEvent }
@@ -57,6 +58,7 @@ options._DEFAULTS = vim.deepcopy(options)
 ---@field show_instances boolean show instance hypotheses
 ---@field show_hidden_assumptions boolean show hypothesis names which are inaccessible
 ---@field show_let_values boolean show let-value bodies
+---@field show_term_goals boolean show expected types?
 ---@field reverse boolean order hypotheses bottom-to-top
 
 ---An individual pin.
@@ -304,6 +306,11 @@ function Infoview:select_view_options()
       name = 'show let bodies',
       description = 'Show the bodies of let-values?',
       option = 'show_let_values',
+    },
+    {
+      name = 'show term goals',
+      description = 'Show "expected type" goals?',
+      option = 'show_term_goals',
     },
     {
       name = 'reverse order',
@@ -939,8 +946,13 @@ function Pin:__update_extmark_style(buf, line, col)
     if col < #buf_line then
       -- vim.str_utfindex rounds up to the next UTF16 index if in the middle of a UTF8 sequence;
       -- so convert next byte to UTF16 and back to get UTF8 index of next codepoint
-      local _, next_utf16 = vim.str_utfindex(buf_line, col + 1)
-      end_col = vim.str_byteindex(buf_line, next_utf16, true)
+      local succeeded, _, next_utf16 = pcall(vim.str_utfindex, buf_line, col + 1)
+      if succeeded then
+        end_col = vim.str_byteindex(buf_line, next_utf16, true)
+      else
+        log:error { message = 'str_utfindex failed', buf_line = buf_line, col = col }
+        end_col = col
+      end
     else
       end_col = col
     end
@@ -974,8 +986,13 @@ function Pin:update_position()
 
   local buf_line = vim.api.nvim_buf_get_lines(buf, new_pos.line, new_pos.line + 1, false)[1]
   if buf_line then
-    local _, utf16 = vim.str_utfindex(buf_line, extmark_pos[2])
-    new_pos.character = utf16
+    local succeeded, _, utf16 = pcall(vim.str_utfindex, buf_line, extmark_pos[2])
+    if succeeded then
+      new_pos.character = utf16
+    else
+      log:error { message = 'str_utfindex failed', buf_line = buf_line, extmark_pos = extmark_pos }
+      new_pos.character = 0
+    end
   else
     new_pos.character = 0
   end
@@ -1099,12 +1116,18 @@ function Pin:__update()
 
   local blocks
   if processing == progress.Kind.fatal_error then
-    blocks = components.diagnostics_at(params, sess, self.__use_widgets) or {}
+    log:debug {
+      message = 'progress.Kind.fatal_error diagnostics',
+      params = params,
+    }
+    blocks = components.diagnostics(params)
   else
+    local view_options = require 'lean.config'().infoview.view_options
     blocks = vim
       .iter({
         components.goal_at(params, sess, self.__use_widgets) or {},
-        components.term_goal_at(params, sess, self.__use_widgets) or {},
+        view_options.show_term_goals and components.term_goal_at(params, sess, self.__use_widgets)
+          or {},
         components.diagnostics_at(params, sess, self.__use_widgets) or {},
         components.user_widgets_at(params, sess, self.__use_widgets) or {},
       })
@@ -1113,7 +1136,13 @@ function Pin:__update()
   end
 
   if vim.tbl_isempty(blocks) then
-    self.__data_element = options.show_no_info_message and components.NO_INFO or Element.EMPTY
+    if vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0, name = 'leanls' }) then
+      self.__data_element = components.LSP_HAS_DIED
+    elseif options.show_no_info_message then
+      self.__data_element = components.NO_INFO
+    else
+      self.__data_element = components.EMPTY
+    end
     return
   end
 
@@ -1159,19 +1188,14 @@ function infoview.__update_pin_by_uri(uri)
 end
 
 ---on_lines callback to update pins position according to the given textDocument/didChange parameters.
-function infoview.__update_pin_positions(_, bufnr, _, _, _, _, _, _, _)
-  log:debug { message = 'updating pin positions', bufnr = bufnr }
+function infoview.__update_pin_positions(_, bufnr, tick, _, _, _, _, _, _)
+  log:debug { message = 'updating pin positions', bufnr = bufnr, tick = tick }
   local uri = vim.uri_from_bufnr(bufnr)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
-      -- immediately mark the pin as loading (useful for tests)
-      if pin:__started_loading() then
-        vim.schedule(function()
-          pin:__render_parents()
-        end)
-      end
+      pin:__started_loading()
+      pin:update_position()
       vim.schedule(function()
-        pin:update_position()
         pin:update()
       end)
     end
@@ -1226,6 +1250,18 @@ function infoview.enable(opts)
         end
         current_infoview:focus_on_current_buffer()
       end
+
+      vim.api.nvim_create_autocmd('LspDetach', {
+        group = vim.api.nvim_create_augroup('LeanInfoviewLSPDied', { clear = false }),
+        buffer = bufnr,
+        callback = vim.schedule_wrap(function()
+          local current_infoview = infoview.get_current_infoview()
+          if not current_infoview then
+            return
+          end
+          current_infoview:__update()
+        end),
+      })
 
       local focus_augroup = vim.api.nvim_create_augroup('LeanInfoviewSetFocus', { clear = false })
       vim.api.nvim_create_autocmd('BufEnter', {

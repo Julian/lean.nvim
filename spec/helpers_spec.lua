@@ -17,15 +17,34 @@ describe('clean_buffer <-> assert.contents', function()
     'creates multiline buffers',
     helpers.clean_buffer(
       [[
-    foo
-    bar
-  ]],
+        foo
+        bar
+      ]],
       function()
         assert.are.same(vim.api.nvim_buf_get_lines(0, 0, -1, false), { 'foo', 'bar' })
         assert.contents.are [[
-      foo
-      bar
-    ]]
+          foo
+          bar
+        ]]
+      end
+    )
+  )
+
+  it(
+    'creates multiline buffers with different indentation',
+    helpers.clean_buffer(
+      [[
+        foo
+          bar
+          baz
+      ]],
+      function()
+        assert.are.same(vim.api.nvim_buf_get_lines(0, 0, -1, false), { 'foo', '  bar', '  baz' })
+        assert.contents.are [[
+          foo
+            bar
+            baz
+        ]]
       end
     )
   )
@@ -43,10 +62,10 @@ describe(
   'assert.current_cursor',
   helpers.clean_buffer(
     [[
-    foo
-    bar
-    baz
-  ]],
+      foo
+      bar
+      baz
+    ]],
     function()
       it('passes at the current cursor', function()
         vim.api.nvim_win_set_cursor(0, { 1, 0 })

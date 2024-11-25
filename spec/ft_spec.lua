@@ -35,8 +35,13 @@ describe('ft.detect', function()
     assert.is_falsy(vim.bo.modifiable)
   end)
 
+  it('marks dependency files nomodifable by default', function()
+    vim.cmd.edit { project.some_dependency_file, bang = true }
+    assert.is_falsy(vim.bo.modifiable)
+  end)
+
   it('does not mark other lean files nomodifiable', function()
-    vim.cmd('edit! ' .. project.some_existing_file)
+    vim.cmd.edit { project.some_existing_file, bang = true }
     assert.is_truthy(vim.bo.modifiable)
   end)
 end)

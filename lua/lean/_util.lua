@@ -2,22 +2,11 @@
 --- Stuff that should live in some standard library.
 ---@brief ]]
 
-local Job = require 'plenary.job'
 local a = require 'plenary.async'
--- local control = require'plenary.async.control'
 
 local log = require 'lean.log'
 
 local M = {}
-
----Return an array-like table with a value repeated the given number of times.
-function M.tbl_repeat(value, times)
-  local result = {}
-  for _ = 1, times do
-    table.insert(result, value)
-  end
-  return result
-end
 
 ---Fetch the diagnostics for all Lean LSP clients from the current buffer.
 ---@param opts? table
@@ -43,7 +32,7 @@ end
 
 ---Create a new buffer.
 ---@param params CreateBufParams new buffer options
----@return integer: the new bufnr`
+---@return integer bufnr the new bufnr
 function M.create_buf(params)
   if params.listed == nil then
     params.listed = true
@@ -61,63 +50,33 @@ function M.create_buf(params)
   return bufnr
 end
 
----A subprocess which has completed running.
----@class lean.util.CompletedProcess
----@field stdout string[]
----@field stderr string[]
----@field code integer
-
----Run a subprocess, blocking on exit, and returning a result.
----
----Unlike `system()`, we don't mix stdout and stderr, and unlike
----`vim.uv.spawn`, we wait for process exit and collect the output.
----@return lean.util.CompletedProcess
-function M.subprocess_run(opts, timeout)
-  timeout = timeout or 10000
-
-  local job = Job:new(opts)
-
-  job:start()
-  job:wait(timeout)
-
-  ---@type lean.util.CompletedProcess
-  return {
-    code = job.code,
-    stdout = job:result(),
-    stderr = job:stderr_result(),
-  }
-end
-
 ---Run a subprocess, blocking on exit, and returning its stdout.
----
----Unlike `system()`, we don't mix stdout and stderr, and unlike
----`vim.uv.spawn`, we wait for process exit and collect the output.
----@return string[]: the lines of stdout of the exited process
-function M.subprocess_check_output(opts, ...)
-  local completed = M.subprocess_run(opts, ...)
-  if completed.code == 0 then
-    return completed.stdout
+---@return string: the lines of stdout of the exited process
+function M.subprocess_check_output(...)
+  local process = vim.system(...)
+  local result = process:wait()
+  if result.code == 0 then
+    return result.stdout
   end
 
   error(
     string.format(
       '%s exited with non-zero exit status %d.\nstderr contained:\n%s',
-      vim.inspect(opts.command),
-      completed.code,
-      table.concat(completed.stderr, '\n')
+      vim.inspect(process.cmd),
+      result.code,
+      result.stderr
     )
   )
 end
 
 local function max_common_indent(str)
-  local level = math.huge
-  local common_indent = ''
+  local _, _, common_indent, rest = str:find '^(%s*)(.*)'
+  local common_indent_len = #common_indent
   local len
-  for indent in str:gmatch '\n( +)' do
+  for indent in rest:gmatch '\n( +)' do
     len = #indent
-    if len < level then
-      level = len
-      common_indent = indent
+    if len < common_indent_len then
+      common_indent, common_indent_len = indent, len
     end
   end
   return common_indent
@@ -126,10 +85,11 @@ end
 ---Dedent a multi-line string.
 ---
 ---REPLACEME: plenary.nvim has a version of this but it has odd behavior.
+---@param str string
 function M.dedent(str)
-  str = str:gsub('^ +', ''):gsub('\n *$', '\n') -- trim leading/trailing space
+  str = str:gsub('\n *$', '\n') -- trim leading/trailing space
   local prefix = max_common_indent(str)
-  return str:gsub('\n' .. prefix, '\n')
+  return str:gsub('^' .. prefix, ''):gsub('\n' .. prefix, '\n')
 end
 
 ---Build a single-line string out a multiline one, replacing \n with spaces.

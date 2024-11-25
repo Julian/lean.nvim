@@ -3,11 +3,11 @@ local util = require 'lean._util'
 describe('dedent', function()
   it('dedents multiline strings by their common prefix', function()
     assert.is.equal(
+      'foo bar\nbaz quux\n',
       util.dedent [[
         foo bar
         baz quux
-      ]],
-      'foo bar\nbaz quux\n'
+      ]]
     )
   end)
 
@@ -33,6 +33,17 @@ describe('dedent', function()
     )
   end)
 
+  it('also considers the first line indent', function()
+    assert.is.equal(
+      'foo\n  bar\n  baz\n',
+      util.dedent [[
+        foo
+          bar
+          baz
+      ]]
+    )
+  end)
+
   it('leaves single lines with trailing whitespace alone', function()
     assert.is.equal('foo ', util.dedent 'foo ')
   end)
@@ -41,50 +52,24 @@ end)
 describe('subprocesses', function()
   describe('check_output', function()
     it('returns subprocess output', function()
-      local stdout = util.subprocess_check_output {
-        command = 'lean',
-        args = { '--run', '--stdin' },
-        writer = util.dedent [[
+      local stdout = util.subprocess_check_output({ 'lean', '--run', '--stdin' }, {
+        stdin = util.dedent [[
           def main : IO Unit := IO.println "Hello, world!"
         ]],
-      }
-      assert.are.same({ 'Hello, world!' }, stdout)
+      })
+      assert.is.equal('Hello, world!\n', stdout)
     end)
 
     it('errors for unsuccessful processes', function()
-      local successful, error = pcall(util.subprocess_check_output, {
-        command = 'lean',
-        args = { '--run', '--stdin' },
-        writer = util.dedent [[
+      local successful, error = pcall(
+        util.subprocess_check_output,
+        { 'lean', '--run', '--stdin' },
+        { stdin = util.dedent [[
             def main : IO Unit := IO.Process.exit 37
-          ]],
-      })
+          ]] }
+      )
       assert.is_false(successful)
       assert.is.truthy(error:match 'exit status 37')
-    end)
-  end)
-
-  describe('run', function()
-    it('returns a subprocess result for successful processes', function()
-      local result = util.subprocess_run {
-        command = 'lean',
-        args = { '--run', '--stdin' },
-        writer = util.dedent [[
-          def main : IO Unit := IO.println "Hello, world!"
-        ]],
-      }
-      assert.are.same({ code = 0, stdout = { 'Hello, world!' }, stderr = {} }, result)
-    end)
-
-    it('returns a subprocess result for unsuccessful processes', function()
-      local result = util.subprocess_run {
-        command = 'lean',
-        args = { '--run', '--stdin' },
-        writer = util.dedent [[
-          def main : IO Unit := IO.Process.exit 37
-        ]],
-      }
-      assert.are.same({ code = 37, stdout = {}, stderr = {} }, result)
     end)
   end)
 end)

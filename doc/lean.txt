@@ -9,7 +9,6 @@ Loogle ····································�
 satellite.nvim integration ···································· |lean.satellite|
 LSP ································································· |lean.lsp|
 Standard error buffers ··········································· |lean.stderr|
-Client-side sorrying ·············································· |lean.sorry|
 
 ==============================================================================
 Introduction                                                         *lean.init*
@@ -20,7 +19,11 @@ Introduction                                                         *lean.init*
  To find out more, see https://github.com/Julian/lean.nvim.
 
                                                                      *lean.nvim*
-lean.setup()                                                        *lean.setup*
+lean.setup({opts})                                                  *lean.setup*
+    Setup function to be run in your init.lua.
+
+    Parameters: ~
+        {opts}  (lean.Config)  Configuration options
 
 
 lean.plugin_version()                                      *lean.plugin_version*
@@ -76,6 +79,7 @@ InfoviewViewOptions                                        *InfoviewViewOptions*
         {show_instances}           (boolean)  show instance hypotheses
         {show_hidden_assumptions}  (boolean)  show hypothesis names which are inaccessible
         {show_let_values}          (boolean)  show let-value bodies
+        {show_term_goals}          (boolean)  show expected types?
         {reverse}                  (boolean)  order hypotheses bottom-to-top
 
 
@@ -386,19 +390,6 @@ stderr.show({message})                                             *stderr.show*
 
 stderr.enable()                                                  *stderr.enable*
     Enable teeing stderr output somewhere (to a second visible buffer by default).
-
-
-==============================================================================
-Client-side sorrying                                                *lean.sorry*
-
- Support for sorrying multiple goals.
-
- You should generally prefer to use code actions for this functionality, but this module
- is maintained for a subset of users who prefer its behavior over the current code action
- behavior.
-
-sorry.fill()                                                        *sorry.fill*
-    Fill the current cursor position with `sorry`s to discharge all goals.
 
 
 vim:tw=78:ts=8:noet:ft=help:norl:

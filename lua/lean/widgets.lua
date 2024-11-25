@@ -38,11 +38,13 @@ end
 function Widget.unsupported(id)
   return Widget:new {
     element = function()
-      local message = dedent [[
+      local title = vim.uri_encode(('Add support for `%s` widgets'):format(id))
+      local msg = dedent [[
         %q is not a supported Lean widget type.
-        If you think it could be, please file an issue with lean.nvim!
+        If you think it could be, please file an issue at
+        https://github.com/Julian/lean.nvim/issues/new/?title=%s
       ]]
-      vim.notify_once(message:format(id), vim.log.levels.DEBUG)
+      vim.notify_once(msg:format(id, title), vim.log.levels.DEBUG)
     end,
   }
 end

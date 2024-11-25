@@ -1,3 +1,7 @@
+ci:
+  skip:
+    - zizmor # pre-commit.ci doesn't have new enough Rust installed
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -25,11 +29,15 @@ repos:
     hooks:
       - id: luacheck
   - repo: https://github.com/JohnnyMorganz/StyLua
-    rev: v0.20.0
+    rev: v2.0.0
     hooks:
       - id: stylua
         exclude: lua/lean/tui.lua
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.14.0
+    rev: v0.15.0
     hooks:
       - id: markdownlint-cli2
+  - repo: https://github.com/woodruffw/zizmor
+    rev: v0.4.0
+    hooks:
+      - id: zizmor

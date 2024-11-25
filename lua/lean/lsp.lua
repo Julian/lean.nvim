@@ -15,8 +15,8 @@ function lsp.enable(opts)
   opts.handlers = vim.tbl_extend('keep', opts.handlers or {}, {
     ['$/lean/fileProgress'] = lsp.handlers.file_progress_handler,
     ['textDocument/publishDiagnostics'] = function(...)
-      lsp.handlers.diagnostics_handler(...)
       vim.lsp.handlers['textDocument/publishDiagnostics'](...)
+      lsp.handlers.diagnostics_handler(...)
     end,
   })
   opts.init_options = vim.tbl_extend('keep', opts.init_options or {}, {
@@ -125,7 +125,7 @@ function lsp.handlers.diagnostics_handler(_, params)
   --      or (on nightly neovim) some other equally cryptic nested failure.
   --      Putting the pcall here rather than on the nvim_buf_set_lines line
   --      since it's during diagnostic updates that it seems to blow up?
-  pcall(require('lean.infoview').__update_pin_by_uri, params.uri)
+  require('lean.infoview').__update_pin_by_uri(params.uri)
 end
 
 ---Restart the Lean server for an open Lean 4 file.

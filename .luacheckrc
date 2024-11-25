@@ -12,6 +12,8 @@ globals = {
     fields = {
       "contents",
       "message",
+      "is_falsy",
+      "is_truthy",
     }
   },
 }

@@ -89,7 +89,7 @@ describe('plain infoviews', function()
           this : Nat
           ⊢ 37 = 37
 
-          ▶ expected type (2:15-2:17)
+          ▶ expected type (2:17-2:19)
           ⊢ Nat
         ]]
       end
@@ -106,7 +106,7 @@ describe('plain infoviews', function()
           · rfl
       ]],
       function()
-        helpers.move_cursor { to = { 2, 6 } }
+        helpers.move_cursor { to = { 2, 9 } }
         assert.infoview_contents.are [[
           ▶ 2 goals
           case zero
@@ -116,7 +116,7 @@ describe('plain infoviews', function()
           n✝ : Nat
           ⊢ n✝ + 1 = n✝ + 1
 
-          ▶ expected type (2:7-2:8)
+          ▶ expected type (2:9-2:10)
           n : Nat
           ⊢ Nat
         ]]
