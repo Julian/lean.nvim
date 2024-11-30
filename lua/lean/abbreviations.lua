@@ -71,7 +71,11 @@ function abbreviations.show_reverse_lookup()
       end
     end
   end
-  vim.lsp.util.open_floating_preview(lines, 'markdown')
+  vim.lsp.util.open_floating_preview(
+    lines,
+    'markdown',
+    { focus_id = 'lean_abbreviation_help', border = 'rounded' }
+  )
 end
 
 local abbr_mark_ns = vim.api.nvim_create_namespace 'lean.abbreviations'
