@@ -30,6 +30,7 @@ local config = {
   overlap = true,
   priority = 20, -- cursor looks like 100
 }
+handler.config = config
 
 local function setup_hl()
   vim.api.nvim_set_hl(0, HIGHLIGHT, {
