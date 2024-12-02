@@ -57,22 +57,28 @@ function M.indentexpr(linenr)
   -- characters. Specifically `('  foo'):find '^(%s+)([z]?)(.*)'` works fine to
   -- match an optional `z`, but ('  foo'):find '^(%s+)([·]?)(.*)' does not.
   local _, last_indent = last:find '^%s+'
+  local _, current_indent = current:find '^%s*'
+  local shiftwidth = vim.bo.shiftwidth
 
-  if focuses_at(current:gsub('^%s*', '')) then
+  if focuses_at(current, current_indent + 1) then
     -- FIXME this seems wrong, and needs to check if the previous line is focused or not
-    return vim.bo.shiftwidth
+    return shiftwidth
   elseif last:find ':%s*$' then
-    return vim.bo.shiftwidth * 2
+    return shiftwidth * 2
   elseif last:find ':=%s*$' then
-    return vim.bo.shiftwidth
+    return shiftwidth
   elseif last_indent and focuses_at(last, last_indent + 1) then
     return last_indent + #'·'
   elseif INDENT_AFTER:match_str(last) and not INDENT_AFTER:match_str(current) then
-    return (last_indent or 0) + vim.bo.shiftwidth
+    return (last_indent or 0) + shiftwidth
   elseif last_indent and is_enclosed(linenr - 1) then
-    return last_indent + vim.bo.shiftwidth
-  elseif last_indent and not is_block_comment(linenr - 2) then
-    local dedent_one = last_indent - vim.bo.shiftwidth
+    return last_indent + shiftwidth
+  elseif
+    last_indent
+    and (current_indent == 0 or math.abs(current_indent - last_indent) < shiftwidth)
+    and not is_block_comment(linenr - 2)
+  then
+    local dedent_one = last_indent - shiftwidth
 
     -- We could go backwards to check but that would involve looking back
     -- repetaedly over lines backwards, so we cheat and just check whether the
