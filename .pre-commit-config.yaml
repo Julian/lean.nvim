@@ -38,6 +38,6 @@ repos:
     hooks:
       - id: markdownlint-cli2
   - repo: https://github.com/woodruffw/zizmor
-    rev: v0.5.0
+    rev: v0.6.0
     hooks:
       - id: zizmor
