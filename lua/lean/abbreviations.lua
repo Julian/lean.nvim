@@ -164,6 +164,7 @@ local function insert_char_pre()
             expr = imap.expr,
             unique = imap.unique,
             callback = imap.callback,
+            desc = imap.desc,
           })
         end
       end
