@@ -69,24 +69,20 @@ function M.indentexpr(linenr)
     return shiftwidth
   elseif last_indent and focuses_at(last, last_indent + 1) then
     return last_indent + #'·'
-  elseif INDENT_AFTER:match_str(last) and not INDENT_AFTER:match_str(current) then
-    return (last_indent or 0) + shiftwidth
   elseif last_indent and is_enclosed(linenr - 1) then
     return last_indent + shiftwidth
-  elseif
-    last_indent
-    and (current_indent == 0 or math.abs(current_indent - last_indent) < shiftwidth)
-    and not is_block_comment(linenr - 2)
-  then
+  elseif current_indent and current_indent > 0 and current_indent % shiftwidth == 0 then
+    return current_indent
+  elseif last_indent and not is_block_comment(linenr - 2) then
     local dedent_one = last_indent - shiftwidth
 
     -- We could go backwards to check but that would involve looking back
     -- repetaedly over lines backwards, so we cheat and just check whether the
     -- previous line looks like it has a binder on it.
-    local is_end_of_binders = dedent_one > 0
-      and last:find '^%s*[({[]'
-      and INDENT_AFTER:match_str(current)
+    local is_end_of_binders = dedent_one > 0 and last:find '^%s*[({[]'
     return is_end_of_binders and dedent_one or last_indent
+  elseif INDENT_AFTER:match_str(last) and not INDENT_AFTER:match_str(current) then
+    return (last_indent or 0) + shiftwidth
   end
 
   return vim.fn.indent(linenr)
