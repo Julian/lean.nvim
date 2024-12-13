@@ -1,6 +1,9 @@
 local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 
+vim.o.debug = 'throw'
+vim.o.report = 9999
+
 describe('indent', function()
   it(
     'indents after where',
