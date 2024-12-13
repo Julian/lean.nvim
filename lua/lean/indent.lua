@@ -84,6 +84,7 @@ function M.indentexpr(linenr)
   local _, current_indent = current:find '^%s*'
   if
     is_comment(linenr - 1)
+    or current == '}'
     or (current_indent > 0 and current_indent < #current and current_indent % shiftwidth == 0)
   then
     return current_indent ---@type integer
@@ -92,7 +93,7 @@ function M.indentexpr(linenr)
   if not is_comment(linenr - 2) then
     if last:find ':%s*$' then
       return shiftwidth * 2
-    elseif last:find ':=%s*$' then
+    elseif last:find ':=%s*$' or last:find '{%s*$' then
       return shiftwidth
     elseif is_sorry(linenr - 2, #last - 1) then
       return 0

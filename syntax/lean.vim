@@ -65,9 +65,10 @@ syn match leanOp '\([A-Za-z]\)\@<!?'
 syn region leanEncl matchgroup=leanDelim start="#\[" end="\]" contains=TOP
 syn region leanEncl matchgroup=leanDelim start="(" end=")" contains=TOP
 syn region leanEncl matchgroup=leanDelim start="\[" end="\]" contains=TOP
-syn region leanEncl matchgroup=leanDelim start="{"  end="}" contains=TOP
 syn region leanEncl matchgroup=leanDelim start="⦃"  end="⦄" contains=TOP
 syn region leanEncl matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP
+
+syn region leanStructureLiteral matchgroup=leanDelim start="{"  end="}" contains=TOP
 
 " FIXME(gabriel): distinguish backquotes in notations from names
 " syn region      leanNotation        start=+`+    end=+`+

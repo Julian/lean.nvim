@@ -126,7 +126,11 @@ describe('indent', function()
       ]],
       function()
         helpers.feed 'Gorfl⟩'
-        assert.current_line.is '    rfl⟩'
+        assert.contents.are [[
+          example : 2 = 2 ∧ 3 = 3 := by
+            exact ⟨rfl,
+              rfl⟩
+        ]]
       end
     )
   )
