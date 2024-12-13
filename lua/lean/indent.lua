@@ -94,17 +94,15 @@ function M.indentexpr(linenr)
     return current_indent ---@type integer
   end
 
-  if not is_comment(linenr - 2) then
-    if last:find ':%s*$' then
-      return shiftwidth * 2
-    elseif last:find ':=%s*$' or last:find '{%s*$' then
-      return shiftwidth
-    end
+  if last:find ':%s*$' then
+    return shiftwidth * 2
+  elseif last:find ':=%s*$' or last:find '{%s*$' then
+    return shiftwidth
+  end
 
-    local sorry = sorry_at(linenr - 2, #last - 1)
-    if sorry then
-      return math.max(0, sorry - shiftwidth - 1)
-    end
+  local sorry = sorry_at(linenr - 2, #last - 1)
+  if sorry then
+    return math.max(0, sorry - shiftwidth - 1)
   end
 
   -- Lua patterns are... seemingly broken with unicode and/or multibyte
