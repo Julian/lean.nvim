@@ -52,17 +52,21 @@ function M.indentexpr(linenr)
   end
 
   local last, current = unpack(vim.api.nvim_buf_get_lines(0, linenr - 2, linenr, true))
+  local shiftwidth = vim.bo.shiftwidth
+
+  local _, current_indent = current:find '^%s*'
+  if current_indent > 0 and current_indent < #current and current_indent % shiftwidth == 0 then
+    return current_indent
+  end
 
   -- Lua patterns are... seemingly broken with unicode and/or multibyte
   -- characters. Specifically `('  foo'):find '^(%s+)([z]?)(.*)'` works fine to
   -- match an optional `z`, but ('  foo'):find '^(%s+)([·]?)(.*)' does not.
   local _, last_indent = last:find '^%s+'
-  local _, current_indent = current:find '^%s*'
-  local shiftwidth = vim.bo.shiftwidth
 
   if focuses_at(current, current_indent + 1) then
-    -- FIXME this seems wrong, and needs to check if the previous line is focused or not
-    return shiftwidth
+    local last_was_focused = (last_indent or 0) % shiftwidth == #'·'
+    return last_was_focused and (last_indent - #'· ') or last_indent + shiftwidth
   elseif last:find ':%s*$' then
     return shiftwidth * 2
   elseif last:find ':=%s*$' then
@@ -71,8 +75,6 @@ function M.indentexpr(linenr)
     return last_indent + #'·'
   elseif last_indent and is_enclosed(linenr - 1) then
     return last_indent + shiftwidth
-  elseif current_indent and current_indent > 0 and current_indent % shiftwidth == 0 then
-    return current_indent
   elseif last_indent and not is_block_comment(linenr - 2) then
     local dedent_one = last_indent - shiftwidth
 
