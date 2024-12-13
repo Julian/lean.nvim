@@ -15,6 +15,13 @@ local INDENT_AFTER = vim.regex(([[\<\(%s\)$]]):format(table.concat({
   '=>',
   ':=',
 }, [[\|]])))
+local NEVER_INDENT = vim.regex(([[^\s*\(%s\) ]]):format(table.concat({
+  'attribute',
+  'compile_inductive%',
+  'def',
+  'instance',
+  'structure',
+}, [[\|]])))
 
 ---Check whether the given string is a goal focus dot.
 ---@param str string
@@ -67,7 +74,7 @@ end
 function M.indentexpr(linenr)
   linenr = linenr or vim.v.lnum
 
-  if linenr == 1 then
+  if linenr == 1 or NEVER_INDENT:match_line(0, linenr - 1) then
     return 0 -- Don't indent the first line, and now we can subtract from linenr.
   end
 
@@ -107,7 +114,7 @@ function M.indentexpr(linenr)
     -- previous line looks like it has a binder on it.
     local is_end_of_binders = dedent_one > 0 and last:find '^%s*[({[]'
     return is_end_of_binders and dedent_one or last_indent
-  elseif INDENT_AFTER:match_str(last) and not INDENT_AFTER:match_str(current) then
+  elseif INDENT_AFTER:match_str(last) then
     return (last_indent or 0) + shiftwidth
   end
 
