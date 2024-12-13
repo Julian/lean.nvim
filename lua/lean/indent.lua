@@ -25,7 +25,18 @@ local function focuses_at(str, position)
   return str:sub(position, position + 1) == '·'
 end
 
----Check whether the given line number is within a Lean enclosed bracket.
+---Is the given position a Lean sorry?
+---@param linenr number
+---@param position integer
+---@return boolean
+local function is_sorry(linenr, position)
+  local items = vim.inspect_pos(0, linenr, position)
+  local via_tokens = items.semantic_tokens[1]
+  return (via_tokens and via_tokens[1].opts.hl_group == '@lsp.type.leanSorryLike.lean')
+    or (items.syntax[1] and items.syntax[1].hl_group == 'leanSorry')
+end
+
+---Is the given line within a Lean enclosed bracket?
 ---@param linenr number
 ---@return boolean
 local function is_enclosed(linenr)
@@ -33,7 +44,7 @@ local function is_enclosed(linenr)
   return syntax and syntax.hl_group == 'leanEncl'
 end
 
----Check whether the given line number is within a Lean comment (normal or block).
+---Is the given line within a Lean comment (normal or block)?
 ---@param linenr number
 ---@return boolean
 local function is_comment(linenr)
@@ -41,7 +52,7 @@ local function is_comment(linenr)
   return syntax and syntax.hl_group_link == 'Comment'
 end
 
----Check whether the given line number is within a Lean block comment.
+---Is the given line within a Lean block comment?
 ---@param linenr number
 ---@return boolean
 local function is_block_comment(linenr)
@@ -63,21 +74,17 @@ function M.indentexpr(linenr)
   local shiftwidth = vim.bo.shiftwidth
 
   local _, current_indent = current:find '^%s*'
-  if
-    #current - current_indent < #current
-    and current_indent < #current
-    and current_indent % shiftwidth == 0
-  then
-    return current_indent
+  if current_indent > 0 and current_indent < #current and current_indent % shiftwidth == 0 then
+    return current_indent ---@type integer
   end
 
-  if focuses_at(current, current_indent + 1) then
-    return shiftwidth
-  elseif not is_comment(linenr - 2) then
+  if not is_comment(linenr - 2) then
     if last:find ':%s*$' then
       return shiftwidth * 2
     elseif last:find ':=%s*$' then
       return shiftwidth
+    elseif is_sorry(linenr - 2, #last - 1) then
+      return 0
     end
   end
 
@@ -102,7 +109,7 @@ function M.indentexpr(linenr)
     return (last_indent or 0) + shiftwidth
   end
 
-  return vim.fn.indent(linenr)
+  return current_indent ---@type integer
 end
 
 return M

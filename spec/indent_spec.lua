@@ -65,6 +65,44 @@ describe('indent', function()
   )
 
   it(
+    'dedents after sorry',
+    helpers.clean_buffer(
+      [[
+        example : 37 = 37 ∧ 73 = 73 := by
+          sorry
+      ]],
+      function()
+        helpers.feed 'Go#check 37'
+        assert.contents.are [[
+        example : 37 = 37 ∧ 73 = 73 := by
+          sorry
+        #check 37
+      ]]
+      end
+    )
+  )
+
+  it(
+    'dedents after focused sorry',
+    helpers.clean_buffer(
+      [[
+        example : 37 = 37 ∧ 73 = 73 := by
+          constructor
+          · sorry
+      ]],
+      function()
+        helpers.feed 'Go· sorry'
+        assert.contents.are [[
+          example : 37 = 37 ∧ 73 = 73 := by
+            constructor
+            · sorry
+            · sorry
+      ]]
+      end
+    )
+  )
+
+  it(
     'dedents after double indented type',
     helpers.clean_buffer([[example :]], function()
       helpers.feed 'o2 = 2 :=<CR>rfl'
