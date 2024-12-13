@@ -33,6 +33,14 @@ local function is_enclosed(linenr)
   return syntax and syntax.hl_group == 'leanEncl'
 end
 
+---Check whether the given line number is within a Lean comment (normal or block).
+---@param linenr number
+---@return boolean
+local function is_comment(linenr)
+  local syntax = vim.inspect_pos(0, linenr, 0).syntax[1]
+  return syntax and syntax.hl_group_link == 'Comment'
+end
+
 ---Check whether the given line number is within a Lean block comment.
 ---@param linenr number
 ---@return boolean
@@ -55,8 +63,22 @@ function M.indentexpr(linenr)
   local shiftwidth = vim.bo.shiftwidth
 
   local _, current_indent = current:find '^%s*'
-  if current_indent > 0 and current_indent < #current and current_indent % shiftwidth == 0 then
+  if
+    #current - current_indent < #current
+    and current_indent < #current
+    and current_indent % shiftwidth == 0
+  then
     return current_indent
+  end
+
+  if focuses_at(current, current_indent + 1) then
+    return shiftwidth
+  elseif not is_comment(linenr - 2) then
+    if last:find ':%s*$' then
+      return shiftwidth * 2
+    elseif last:find ':=%s*$' then
+      return shiftwidth
+    end
   end
 
   -- Lua patterns are... seemingly broken with unicode and/or multibyte
@@ -64,14 +86,7 @@ function M.indentexpr(linenr)
   -- match an optional `z`, but ('  foo'):find '^(%s+)([·]?)(.*)' does not.
   local _, last_indent = last:find '^%s+'
 
-  if focuses_at(current, current_indent + 1) then
-    local last_was_focused = (last_indent or 0) % shiftwidth == #'·'
-    return last_was_focused and (last_indent - #'· ') or last_indent + shiftwidth
-  elseif last:find ':%s*$' then
-    return shiftwidth * 2
-  elseif last:find ':=%s*$' then
-    return shiftwidth
-  elseif last_indent and focuses_at(last, last_indent + 1) then
+  if last_indent and focuses_at(last, last_indent + 1) then
     return last_indent + #'·'
   elseif last_indent and is_enclosed(linenr - 1) then
     return last_indent + shiftwidth
