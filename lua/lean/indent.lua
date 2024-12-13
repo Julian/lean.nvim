@@ -82,7 +82,10 @@ function M.indentexpr(linenr)
   local shiftwidth = vim.bo.shiftwidth
 
   local _, current_indent = current:find '^%s*'
-  if current_indent > 0 and current_indent < #current and current_indent % shiftwidth == 0 then
+  if
+    is_comment(linenr - 1)
+    or (current_indent > 0 and current_indent < #current and current_indent % shiftwidth == 0)
+  then
     return current_indent ---@type integer
   end
 
