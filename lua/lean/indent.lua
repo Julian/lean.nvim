@@ -52,12 +52,13 @@ local function is_comment(linenr)
   return syntax and syntax.hl_group_link == 'Comment'
 end
 
----Is the given line within a Lean block comment?
+---Is the given line the docstring or attribute before a new declaration?
 ---@param linenr number
 ---@return boolean
-local function is_block_comment(linenr)
+local function is_declaration_args(linenr)
   local syntax = vim.inspect_pos(0, linenr, 0).syntax[1]
-  return syntax and syntax.hl_group == 'leanBlockComment'
+  local hl_group = syntax and syntax.hl_group
+  return hl_group == 'leanBlockComment' or hl_group == 'leanAttributeArgs'
 end
 
 ---A crude `:h indentexpr` for Lean.
@@ -97,7 +98,7 @@ function M.indentexpr(linenr)
     return last_indent + #'·'
   elseif last_indent and is_enclosed(linenr - 1) then
     return last_indent + shiftwidth
-  elseif last_indent and not is_block_comment(linenr - 2) then
+  elseif last_indent and not is_declaration_args(linenr - 2) then
     local dedent_one = last_indent - shiftwidth
 
     -- We could go backwards to check but that would involve looking back
