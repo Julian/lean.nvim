@@ -32,15 +32,18 @@ local function focuses_at(str, position)
   return str:sub(position, position + 1) == '·'
 end
 
----Is the given position a Lean sorry?
+---Find where a sorry starts if one exists at the given position.
 ---@param linenr number
 ---@param position integer
----@return boolean
-local function is_sorry(linenr, position)
+---@return integer?
+local function sorry_at(linenr, position)
   local items = vim.inspect_pos(0, linenr, position)
-  local via_tokens = items.semantic_tokens[1]
-  return (via_tokens and via_tokens[1].opts.hl_group == '@lsp.type.leanSorryLike.lean')
-    or (items.syntax[1] and items.syntax[1].hl_group == 'leanSorry')
+  local token = items.semantic_tokens[1]
+  if token and token.opts.hl_group == '@lsp.type.leanSorryLike.lean' then
+    return token.col
+  elseif items.syntax[1] and items.syntax[1].hl_group == 'leanSorry' then
+    return items.col + 1 - #'sorry'
+  end
 end
 
 ---Is the given line within a Lean enclosed bracket?
@@ -95,8 +98,11 @@ function M.indentexpr(linenr)
       return shiftwidth * 2
     elseif last:find ':=%s*$' or last:find '{%s*$' then
       return shiftwidth
-    elseif is_sorry(linenr - 2, #last - 1) then
-      return 0
+    end
+
+    local sorry = sorry_at(linenr - 2, #last - 1)
+    if sorry then
+      return math.max(0, sorry - shiftwidth - 1)
     end
   end
 
