@@ -16,11 +16,11 @@ local INDENT_AFTER = vim.regex(([[\<\(%s\)$]]):format(table.concat({
   ':=',
 }, [[\|]])))
 local NEVER_INDENT = vim.regex(([[^\s*\(%s\)]]):format(table.concat({
-  'attribute',
-  'compile_inductive%',
-  'def',
-  'instance',
-  'structure',
+  'attribute ',
+  'compile_inductive% ',
+  'def ',
+  'instance ',
+  'structure ',
   '@\\[',
 }, [[\|]])))
 

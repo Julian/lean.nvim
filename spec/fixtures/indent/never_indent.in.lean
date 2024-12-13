@@ -12,3 +12,6 @@ structure baz where
 @[deprecated "Bar Baz"]
 structure quux where
   foo := 37
+
+structure tricky where
+  defValue := 12
