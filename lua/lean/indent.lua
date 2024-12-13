@@ -97,7 +97,8 @@ function M.indentexpr(linenr)
   if last_indent and focuses_at(last, last_indent + 1) then
     return last_indent + #'·'
   elseif last_indent and is_enclosed(linenr - 1) then
-    return last_indent + shiftwidth
+    local _, bracket = last:find '%['
+    return bracket or last_indent + shiftwidth
   elseif last_indent and not is_declaration_args(linenr - 2) then
     local dedent_one = last_indent - shiftwidth
 
