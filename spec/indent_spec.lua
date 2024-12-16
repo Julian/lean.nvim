@@ -118,7 +118,7 @@ describe('indent', function()
   )
 
   it(
-    'indents inside braces',
+    'indents inside anonymous literals',
     helpers.clean_buffer(
       [[
         example : 2 = 2 ∧ 3 = 3 := by
