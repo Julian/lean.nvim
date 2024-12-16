@@ -21,6 +21,7 @@ local NEVER_INDENT = vim.regex(([[^\s*\(%s\)]]):format(table.concat({
   'def ',
   'instance ',
   'structure ',
+  'where',
   '@\\[',
 }, [[\|]])))
 
