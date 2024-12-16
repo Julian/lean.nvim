@@ -14,7 +14,7 @@ syn keyword leanCommand syntax elab elab_rules macro_rules macro
 
 syn keyword leanCommand namespace section end
 
-syn match leanFrenchQuote '«[^»]*»'
+syn match leanFrenchQuote '«[^»]*»' contained
 
 syn match leanDeclarationName ' *[^:({\[[:space:]]*' contained
 syn match leanDeclarationName ' *«[^»]*»' contained
@@ -62,13 +62,13 @@ syn match leanOp "[:=><λ←→↔∀∃∧∨¬≤≥▸·+*-/;$|&%!×]"
 syn match leanOp '\([A-Za-z]\)\@<!?'
 
 " delimiters
-syn region leanEncl matchgroup=leanDelim start="#\[" end="\]" contains=TOP
-syn region leanEncl matchgroup=leanDelim start="(" end=")" contains=TOP
-syn region leanEncl matchgroup=leanDelim start="\[" end="\]" contains=TOP
-syn region leanEncl matchgroup=leanDelim start="⦃"  end="⦄" contains=TOP
-syn region leanEncl matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP
+syn region leanEncl matchgroup=leanDelim start="#\[" end="\]" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
+syn region leanEncl matchgroup=leanDelim start="(" end=")" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
+syn region leanEncl matchgroup=leanDelim start="\[" end="\]" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
+syn region leanEncl matchgroup=leanDelim start="⦃"  end="⦄" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
+syn region leanEncl matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
 
-syn region leanStructureLiteral matchgroup=leanDelim start="{"  end="}" contains=TOP
+syn region leanStructureLiteral matchgroup=leanDelim start="{"  end="}" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
 
 " FIXME(gabriel): distinguish backquotes in notations from names
 " syn region      leanNotation        start=+`+    end=+`+
@@ -80,7 +80,7 @@ syn region leanString start='"' end='"' contains=leanInterpolation,leanStringEsc
 " HACK: Lean supports both interpolated and non-interpolated strings
 " We want "{" to be highlighted as a string (because it often occurs in
 " syntax definitions).
-syn region leanInterpolation contained start='{\(\s*"\)\@!' end='}' contains=TOP keepend
+syn region leanInterpolation contained start='{\(\s*"\)\@!' end='}' contains=TOP keepend contained
 
 syn match leanChar "'[^\\]'"
 syn match leanChar "'\\.'"
@@ -90,6 +90,7 @@ syn match leanNumber '\<0x[0-9a-fA-F]*\>'
 syn match leanNumber '\<\d\d*\.\d*\>'
 
 syn match leanNameLiteral '``*[^ \[()\]}][^ ()\[\]{}]*'
+syn match leanNameLiteral '``' nextgroup=leanFrenchQuote
 
 " syn include     @markdown       syntax/markdown.vim
 syn region      leanBlockComment start="/-" end="-/" contains=@markdown,@Spell,leanBlockComment
