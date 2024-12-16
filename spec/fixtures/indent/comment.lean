@@ -1,7 +1,1 @@
--- Don't:
--- touch the indentation
---         inside
---     commments
--- please then
--- thanks :=
---             !
+comment.in.lean
