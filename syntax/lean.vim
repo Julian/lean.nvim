@@ -62,13 +62,13 @@ syn match leanOp "[:=><λ←→↔∀∃∧∨¬≤≥▸·+*-/;$|&%!×]"
 syn match leanOp '\([A-Za-z]\)\@<!?'
 
 " delimiters
-syn region leanEncl matchgroup=leanDelim start="#\[" end="\]" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
-syn region leanEncl matchgroup=leanDelim start="(" end=")" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
-syn region leanEncl matchgroup=leanDelim start="\[" end="\]" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
-syn region leanEncl matchgroup=leanDelim start="⦃"  end="⦄" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
+syn region leanEncl matchgroup=leanDelim start="#\[" end="\]" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
+syn region leanEncl matchgroup=leanDelim start="(" end=")" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
+syn region leanEncl matchgroup=leanDelim start="\[" end="\]" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
+syn region leanEncl matchgroup=leanDelim start="⦃"  end="⦄" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
 
-syn region leanAnonymousLiteral matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
-syn region leanStructureLiteral matchgroup=leanDelim start="{"  end="}" contains=TOP containedin=ALLBUT,leanFrenchQuote keepend
+syn region leanAnonymousLiteral matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
+syn region leanStructureLiteral matchgroup=leanDelim start="{"  end="}" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
 
 " FIXME(gabriel): distinguish backquotes in notations from names
 " syn region      leanNotation        start=+`+    end=+`+
@@ -80,7 +80,7 @@ syn region leanString start='"' end='"' contains=leanInterpolation,leanStringEsc
 " HACK: Lean supports both interpolated and non-interpolated strings
 " We want "{" to be highlighted as a string (because it often occurs in
 " syntax definitions).
-syn region leanInterpolation contained start='{\(\s*"\)\@!' end='}' contains=TOP keepend contained
+syn region leanInterpolation contained start='{\(\s*"\)\@!' end='}' contains=TOP keepend
 
 syn match leanChar "'[^\\]'"
 syn match leanChar "'\\.'"
@@ -93,7 +93,7 @@ syn match leanNameLiteral '``*[^ \[()\]}][^ ()\[\]{}]*'
 syn match leanNameLiteral '``' nextgroup=leanFrenchQuote
 
 " syn include     @markdown       syntax/markdown.vim
-syn region      leanBlockComment start="/-" end="-/" contains=@markdown,@Spell,leanBlockComment
+syn region      leanBlockComment start="/-" end="-/" contains=@Spell,leanBlockComment
 syn match       leanComment     "--.*" contains=@Spell
 " fix up some highlighting links for markdown
 hi! link markdownCodeBlock Comment
