@@ -135,24 +135,6 @@ describe('indent', function()
     )
   )
 
-  it(
-    'aligns with brackets',
-    helpers.clean_buffer(
-      [[
-        example : 37 = 37 ∧ 73 = 73 := by
-          simp [Nat.lt_or_gt,
-     ]],
-      function()
-        helpers.feed 'GoNat.lt_or_gt]'
-        assert.contents.are [[
-          example : 37 = 37 ∧ 73 = 73 := by
-            simp [Nat.lt_or_gt,
-                  Nat.lt_or_gt]
-        ]]
-      end
-    )
-  )
-
   for each in fixtures.indent() do
     it(each.description, function()
       vim.cmd.edit { each.unindented, bang = true }

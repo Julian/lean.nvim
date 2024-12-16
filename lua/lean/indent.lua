@@ -52,10 +52,12 @@ end
 
 ---Is the given line within a Lean enclosed bracket?
 ---@param linenr number
+---@param position integer
 ---@return boolean
-local function is_enclosed(linenr)
-  local syntax = vim.inspect_pos(0, linenr, 0).syntax[1]
-  return syntax and syntax.hl_group == 'leanEncl'
+local function is_enclosed(linenr, position)
+  local syntax = vim.inspect_pos(0, linenr, position).syntax[1]
+  local hlgroup = syntax and syntax.hl_group
+  return hlgroup == 'leanEncl' or hlgroup == 'leanAnonymousLiteral'
 end
 
 ---Is the given line within a Lean comment (normal or block)?
@@ -110,14 +112,16 @@ function M.indentexpr(linenr)
 
   local _, last_indent = last:find '^%s+'
 
+  if is_enclosed(linenr - 1, 0) then
+    if is_enclosed(linenr - 2, 0) then
+      return last_indent
+    end
+    return (last_indent or 0) + shiftwidth
+  end
+
   if last_indent then
     if focuses_at(last, last_indent + 1) then
       return last_indent + #'·'
-    end
-
-    if is_enclosed(linenr - 1) then
-      local _, bracket = last:find '%['
-      return bracket or last_indent + shiftwidth
     end
 
     if not is_declaration_args(linenr - 2) then
