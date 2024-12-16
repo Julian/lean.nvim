@@ -29,6 +29,9 @@ local NEVER_INDENT = vim.regex(([[^\s*\(%s\)]]):format(table.concat({
 ---@param position? integer
 ---@return boolean
 local function focuses_at(str, position)
+  -- Lua patterns are... seemingly broken with unicode and/or multibyte
+  -- characters. Specifically `('  foo'):find '^(%s+)([z]?)(.*)'` works fine to
+  -- match an optional `z`, but ('  foo'):find '^(%s+)([·]?)(.*)' does not.
   position = position or 1
   return str:sub(position, position + 1) == '·'
 end
@@ -105,25 +108,30 @@ function M.indentexpr(linenr)
     return math.max(0, sorry - shiftwidth - 1)
   end
 
-  -- Lua patterns are... seemingly broken with unicode and/or multibyte
-  -- characters. Specifically `('  foo'):find '^(%s+)([z]?)(.*)'` works fine to
-  -- match an optional `z`, but ('  foo'):find '^(%s+)([·]?)(.*)' does not.
   local _, last_indent = last:find '^%s+'
 
-  if last_indent and focuses_at(last, last_indent + 1) then
-    return last_indent + #'·'
-  elseif last_indent and is_enclosed(linenr - 1) then
-    local _, bracket = last:find '%['
-    return bracket or last_indent + shiftwidth
-  elseif last_indent and not is_declaration_args(linenr - 2) then
-    local dedent_one = last_indent - shiftwidth
+  if last_indent then
+    if focuses_at(last, last_indent + 1) then
+      return last_indent + #'·'
+    end
 
-    -- We could go backwards to check but that would involve looking back
-    -- repetaedly over lines backwards, so we cheat and just check whether the
-    -- previous line looks like it has a binder on it.
-    local is_end_of_binders = dedent_one > 0 and last:find '^%s*[({[]'
-    return is_end_of_binders and dedent_one or last_indent
-  elseif INDENT_AFTER:match_str(last) then
+    if is_enclosed(linenr - 1) then
+      local _, bracket = last:find '%['
+      return bracket or last_indent + shiftwidth
+    end
+
+    if not is_declaration_args(linenr - 2) then
+      local dedent_one = last_indent - shiftwidth
+
+      -- We could go backwards to check but that would involve looking back
+      -- repetaedly over lines backwards, so we cheat and just check whether the
+      -- previous line looks like it has a binder on it.
+      local is_end_of_binders = dedent_one > 0 and last:find '^%s*[({[]'
+      return is_end_of_binders and dedent_one or last_indent
+    end
+  end
+
+  if INDENT_AFTER:match_str(last) then
     return (last_indent or 0) + shiftwidth
   end
 
