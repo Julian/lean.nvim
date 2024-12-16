@@ -6,7 +6,13 @@ local this_dir = vim.fs.dirname(debug.getinfo(1, 'S').source:sub(2))
 local lean_nvim_dir = vim.fs.dirname(this_dir)
 local packpath = vim.fs.joinpath(lean_nvim_dir, 'packpath/*')
 vim.opt.runtimepath:append(packpath)
-vim.opt.runtimepath:append(lean_nvim_dir)
+
+-- Doing this unconditionally seems to fail a random indent test?!?!
+-- Inanis/Plenary will automatically set rtp+. (which seems wrong, but OK)
+-- so really we need this just for `just nvim`...
+if #vim.api.nvim_list_uis() ~= 0 then
+  vim.opt.runtimepath:append(lean_nvim_dir)
+end
 
 vim.cmd [[
   runtime! plugin/lspconfig.vim
