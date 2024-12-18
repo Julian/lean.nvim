@@ -5,3 +5,9 @@
 -- please then
 -- thanks :=
 --             !
+
+/- same here
+   even if I say
+   attribute in
+   this
+-/

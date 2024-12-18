@@ -84,8 +84,10 @@ end
 function M.indentexpr(linenr)
   linenr = linenr or vim.v.lnum
 
-  if linenr == 1 or NEVER_INDENT:match_line(0, linenr - 1) then
+  if linenr == 1 then
     return 0 -- Don't indent the first line, and now we can subtract from linenr.
+  elseif is_comment(linenr - 1) then
+    return vim.fn.indent(linenr)
   end
 
   local last, current = unpack(vim.api.nvim_buf_get_lines(0, linenr - 2, linenr, true))
@@ -93,11 +95,12 @@ function M.indentexpr(linenr)
 
   local _, current_indent = current:find '^%s*'
   if
-    is_comment(linenr - 1)
-    or current == '}'
+    current == '}'
     or (current_indent > 0 and current_indent < #current and current_indent % shiftwidth == 0)
   then
     return current_indent ---@type integer
+  elseif NEVER_INDENT:match_str(current) then
+    return 0
   end
 
   if last:find ':%s*$' then
