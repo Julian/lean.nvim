@@ -114,17 +114,17 @@ function M.indentexpr(linenr)
     return math.max(0, sorry - shiftwidth - 1)
   end
 
-  local _, last_indent = last:find '^%s+'
+  local _, last_indent = last:find '^%s*'
 
   if is_enclosed(linenr - 1, 0) then
     if is_enclosed(linenr - 2, 0) then
       return last_indent
     end
-    return (last_indent or 0) + shiftwidth
+    return last_indent + shiftwidth
   end
 
   if INDENT_AFTER:match_str(last) then
-    return (last_indent or 0) + shiftwidth
+    return last_indent + shiftwidth
   end
 
   if focuses_at(last, last_indent + 1) then
