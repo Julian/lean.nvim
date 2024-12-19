@@ -110,7 +110,7 @@ function M.indentexpr(linenr)
   end
 
   local sorry = sorry_at(linenr - 2, #last - 1)
-  if sorry then
+  if sorry and not last:find ':=' then
     return math.max(0, sorry - shiftwidth - 1)
   end
 
@@ -123,24 +123,22 @@ function M.indentexpr(linenr)
     return (last_indent or 0) + shiftwidth
   end
 
-  if last_indent then
-    if focuses_at(last, last_indent + 1) then
-      return last_indent + #'·'
-    end
-
-    if not is_declaration_args(linenr - 2) then
-      local dedent_one = last_indent - shiftwidth
-
-      -- We could go backwards to check but that would involve looking back
-      -- repetaedly over lines backwards, so we cheat and just check whether the
-      -- previous line looks like it has a binder on it.
-      local is_end_of_binders = dedent_one > 0 and last:find '^%s*[({[]'
-      return is_end_of_binders and dedent_one or last_indent
-    end
-  end
-
   if INDENT_AFTER:match_str(last) then
     return (last_indent or 0) + shiftwidth
+  end
+
+  if focuses_at(last, last_indent + 1) then
+    return last_indent + #'·'
+  end
+
+  if not is_declaration_args(linenr - 2) then
+    local dedent_one = last_indent - shiftwidth
+
+    -- We could go backwards to check but that would involve looking back
+    -- repetaedly over lines backwards, so we cheat and just check whether the
+    -- previous line looks like it has a binder on it.
+    local is_end_of_binders = dedent_one > 0 and last:find '^%s*[({[]'
+    return is_end_of_binders and dedent_one or last_indent
   end
 
   return current_indent ---@type integer

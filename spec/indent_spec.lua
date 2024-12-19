@@ -51,6 +51,24 @@ describe('indent', function()
   )
 
   it(
+    'indents after nested by',
+    helpers.clean_buffer(
+      [[
+        example : 37 = 37 := by
+          have : ∀ x : ℕ, 37 = 37 := by
+     ]],
+      function()
+        helpers.feed 'Gorfl'
+        assert.contents.are [[
+        example : 37 = 37 := by
+          have : ∀ x : ℕ, 37 = 37 := by
+            rfl
+      ]]
+      end
+    )
+  )
+
+  it(
     'respects shiftwidth',
     helpers.clean_buffer([[structure foo where]], function()
       vim.bo.shiftwidth = 7
@@ -77,9 +95,27 @@ describe('indent', function()
       function()
         helpers.feed 'Go#check 37'
         assert.contents.are [[
-        example : 37 = 37 ∧ 73 = 73 := by
-          sorry
-        #check 37
+          example : 37 = 37 ∧ 73 = 73 := by
+            sorry
+          #check 37
+      ]]
+      end
+    )
+  )
+
+  it(
+    'is not confused by sorry with other things on the line',
+    helpers.clean_buffer(
+      [[
+        example : 37 = 37 := by
+          have : ∀ x : ℕ, 37 = 37 := sorry
+     ]],
+      function()
+        helpers.feed 'Gorfl'
+        assert.contents.are [[
+          example : 37 = 37 := by
+            have : ∀ x : ℕ, 37 = 37 := sorry
+            rfl
       ]]
       end
     )
