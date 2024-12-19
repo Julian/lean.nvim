@@ -246,6 +246,13 @@ abbreviations.show_reverse_lookup()          *abbreviations.show_reverse_lookup*
 abbreviations.convert()                                  *abbreviations.convert*
 
 
+abbreviations.attach({bufnr?})                            *abbreviations.attach*
+    Enable abbreviation expansion in the current buffer.
+
+    Parameters: ~
+        {bufnr?}  (number)  the buffer to attach to, defaulting to the current one
+
+
 abbreviations.enable()                                    *abbreviations.enable*
 
 
