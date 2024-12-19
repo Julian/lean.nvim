@@ -35,12 +35,12 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
   dependencies = {
     'neovim/nvim-lspconfig',
     'nvim-lua/plenary.nvim',
-    -- you also will likely want nvim-cmp or some completion engine
+    -- you also will likely want a completion engine
+    -- Saghen/blink.cmp or hrsh7th/nvim-cmp are two popular options.
   },
 
-  -- see details below for full configuration options
-  opts = {
-    lsp = {},
+  ---@type lean.Config
+  opts = { -- see below for full configuration options
     mappings = true,
   }
 }
