@@ -9,6 +9,7 @@ local abbreviations = {}
 local _MEMOIZED = nil
 
 ---Load the Lean abbreviations as a Lua table.
+---@return { [string]: string } abbreviations
 function abbreviations.load()
   if _MEMOIZED ~= nil then
     return _MEMOIZED
