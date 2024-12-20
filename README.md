@@ -85,7 +85,7 @@ If you are on an earlier version of neovim, e.g. `0.9.5`, you can have your plug
 - [switch.vim](https://github.com/AndrewRadev/switch.vim/) base definitions for Lean
 - If [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) is present, a `:Telescope loogle` command is available as a frontend for the [Loogle](https://loogle.lean-lang.org) JSON API.
 - Simple snippets (in [VSCode-compatible format](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax), usable with e.g. [vim-vsnip](https://github.com/hrsh7th/vim-vsnip))
-- Lean library search path access via `lean.current_search_path()`, suitable for use e.g. with [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim/) for live grepping.
+- Lean library search path access via `lean.current_search_path()`, which you might find useful as a set of paths to grep (or live grep) within
   See the wiki for [a sample configuration](https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#live-grep).
 
 ## Configuration & Usage
