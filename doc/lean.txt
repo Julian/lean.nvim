@@ -227,6 +227,7 @@ infoview.select_view_options()                    *infoview.select_view_options*
 
 abbreviations.load()                                        *abbreviations.load*
     Load the Lean abbreviations as a Lua table.
+    @return { [string]: string } abbreviations
 
 
 abbreviations.reverse_lookup()                    *abbreviations.reverse_lookup*
