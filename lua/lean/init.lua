@@ -122,6 +122,7 @@ function lean.setup(opts)
 
   local ok, telescope = pcall(require, 'telescope')
   if ok then
+    telescope.load_extension 'lean_abbreviations'
     telescope.load_extension 'loogle'
   end
 
