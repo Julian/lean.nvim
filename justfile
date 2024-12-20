@@ -9,6 +9,7 @@ fixtures := spec / "fixtures"
 demos := justfile_directory() / "demos"
 
 init_lua := scripts / "minimal_init.lua"
+clean_config := justfile_directory() / ".test-config"
 
 # Run the lean.nvim test suite.
 [group('testing')]
@@ -18,12 +19,12 @@ test: _rebuild-test-fixtures _clone-test-dependencies
 # Run the test suite without rebuilding or recloning any dependencies.
 [group('testing')]
 retest *test_files=spec:
-    nvim --headless --clean -u {{ init_lua }} -c 'lua require("inanis").run{ specs = vim.split("{{ test_files }}", " "), minimal_init = "{{ init_lua }}", sequential = vim.env.TEST_SEQUENTIAL ~= nil }'
+    XDG_CONFIG_HOME="{{ clean_config }}" nvim --headless --clean -u {{ init_lua }} -c 'lua require("inanis").run{ specs = vim.split("{{ test_files }}", " "), minimal_init = "{{ init_lua }}", sequential = vim.env.TEST_SEQUENTIAL ~= nil }'
 
 # Run an instance of neovim with the same minimal init used to run tests.
 [group('dev')]
 nvim *ARGS='':
-    nvim --clean -u {{ init_lua }} -c "lua require('lean').setup { mappings = true }" {{ ARGS }}
+    XDG_CONFIG_HOME="{{ clean_config }}" nvim --clean -u {{ init_lua }} -c "lua require('lean').setup { mappings = true }" {{ ARGS }}
 
 # Run an instance of the `devcontainer` which uses LazyVim.
 [group('dev')]
