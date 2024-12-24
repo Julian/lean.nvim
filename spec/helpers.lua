@@ -160,13 +160,12 @@ end
 
 ---Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
+  local params = vim.lsp.util.make_position_params(0, 'utf-16')
   local succeeded, _ = vim.wait(15000, function()
-    if progress.at(vim.lsp.util.make_position_params()) == progress.Kind.processing then
+    if progress.at(params) == progress.Kind.processing then
       return false
     end
-    local diagnostics = util.lean_lsp_diagnostics {
-      lnum = vim.api.nvim_win_get_cursor(0)[1] - 1,
-    }
+    local diagnostics = util.lean_lsp_diagnostics { lnum = params.position.line }
     return #diagnostics > 0
   end)
   assert.message('Waited for line diagnostics but none came.').True(succeeded)
