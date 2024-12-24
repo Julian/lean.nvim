@@ -1,19 +1,19 @@
 local M = {}
 
 -- Borrowed from the (not merged) https://github.com/leanprover/vscode-lean4/pull/329/
-local INDENT_AFTER = vim.regex(([[\<\(%s\)$]]):format(table.concat({
-  'by',
-  'do',
-  'try',
-  'finally',
-  'then',
-  'else',
-  'where',
-  'from',
-  'extends',
-  'deriving',
+local INDENT_AFTER = vim.regex(([[\(%s\)$]]):format(table.concat({
+  '\\<by',
+  '\\<do',
+  '\\<try',
+  '\\<finally',
+  '\\<then',
+  '\\<else',
+  '\\<where',
+  '\\<from',
+  '\\<extends',
+  '\\<deriving',
+  '\\<:=',
   '=>',
-  ':=',
 }, [[\|]])))
 local NEVER_INDENT = vim.regex(([[^\s*\(%s\)]]):format(table.concat({
   'attribute ',

@@ -69,6 +69,26 @@ describe('indent', function()
   )
 
   it(
+    'indents after =>',
+    helpers.clean_buffer(
+      [[
+        example {n : Nat} : n = n := by
+          induction n with
+          | zero =>
+      ]],
+      function()
+        helpers.feed 'Gorfl'
+        assert.contents.are [[
+          example {n : Nat} : n = n := by
+            induction n with
+            | zero =>
+              rfl
+      ]]
+      end
+    )
+  )
+
+  it(
     'respects shiftwidth',
     helpers.clean_buffer([[structure foo where]], function()
       vim.bo.shiftwidth = 7
