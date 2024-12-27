@@ -142,6 +142,24 @@ describe('indent', function()
   )
 
   it(
+    'is not confused by sorry after from',
+    helpers.clean_buffer(
+      [[
+        example : 37 = 37 := by
+          suffices h : 73 = 73 from sorry
+     ]],
+      function()
+        helpers.feed 'Gorfl'
+        assert.contents.are [[
+          example : 37 = 37 := by
+            suffices h : 73 = 73 from sorry
+            rfl
+      ]]
+      end
+    )
+  )
+
+  it(
     'dedents after focused sorry',
     helpers.clean_buffer(
       [[

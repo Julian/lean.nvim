@@ -110,8 +110,11 @@ function M.indentexpr(linenr)
   end
 
   local sorry = sorry_at(linenr - 2, #last - 1)
-  if sorry and not last:find ':=' then
-    return math.max(0, sorry - shiftwidth - 1)
+  if sorry then
+    local before = last:sub(1, sorry)
+    if not before:find ':=%s*' and not before:find 'from%s*' then
+      return math.max(0, sorry - shiftwidth - 1)
+    end
   end
 
   local _, last_indent = last:find '^%s*'
