@@ -68,7 +68,8 @@
 
 ["for" "in" "do"] @repeat
 
-(import) @include
+(import
+  module: (identifier) @module)
 
 ; Tokens
 
@@ -172,6 +173,10 @@
   "simp"
   (trivial)
 ] @keyword
+
+[
+ "import"
+] @keyword.import
 
 [
   "catch"
