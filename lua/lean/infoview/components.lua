@@ -676,7 +676,7 @@ function components.user_widgets_at(params, sess, use_widgets)
     sess = rpc.open(params)
     response, err = sess:getWidgets(params.position)
   end
-  return widgets.render_response(response), err
+  return widgets.render_response(response, params.textDocument.uri), err
 end
 
 return components

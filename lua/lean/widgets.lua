@@ -13,7 +13,7 @@
 local Element = require('lean.tui').Element
 local dedent = require('lean._util').dedent
 
----@alias WidgetRenderer fun(self: Widget, props: any): Element[]?
+---@alias WidgetRenderer fun(self: Widget, props: any, uri: string): Element[]?
 
 ---A Lean user widget.
 ---@class Widget
@@ -75,9 +75,10 @@ end
 ---
 ---Unsupported widgets are ignored after logging a notice.
 ---@param instance UserWidgetInstance
+---@param uri string the URI of the document whose widgets we are rendering
 ---@return Element?
-local function render(instance)
-  return Widget.from_user_widget(instance):element(instance.props)
+local function render(instance, uri)
+  return Widget.from_user_widget(instance):element(instance.props, uri)
 end
 
 ---@alias SuggestionText string
@@ -89,17 +90,57 @@ end
 
 ---@class TryThisParams
 ---@field suggestions Suggestion[]
+---@field range lsp.Range
+---@field header string
+---@field isInline boolean
+---@field style any
 
 ---@param props TryThisParams
-implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props)
+implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props, uri)
   local blocks = vim.iter(props.suggestions):map(function(each)
-    local pre = (each.preInfo or ''):gsub('\n', '\n  ')
-    local post = (each.postInfo or ''):gsub('\n', '\n  ')
-    local text = vim.iter({ pre, each.suggestion, post }):join '\n'
-    return Element:new { text = text:gsub('\n$', '') }
+    local children = {}
+    if each.preInfo then
+      table.insert(children, Element:new { text = each.preInfo })
+    end
+    table.insert(
+      children,
+      Element:new {
+        text = each.suggestion,
+        hlgroup = 'widgetLink',
+      }
+    )
+    if each.postInfo then
+      table.insert(children, Element:new { text = each.postInfo })
+    end
+    return Element:new {
+      children = children,
+      events = {
+        click = function()
+          local bufnr = vim.uri_to_bufnr(uri)
+          if not vim.api.nvim_buf_is_loaded(bufnr) then
+            return
+          end
+          vim.api.nvim_buf_set_text(
+            bufnr,
+            props.range.start.line,
+            props.range.start.character,
+            props.range['end'].line,
+            props.range['end'].character,
+            { each.suggestion }
+          )
+
+          local this_infoview = require('lean.infoview').get_current_infoview()
+          local this_info = this_infoview and this_infoview.info
+          local last_window = this_info and this_info.last_window
+          if last_window and vim.api.nvim_win_get_buf(last_window) == bufnr then
+            vim.api.nvim_set_current_win(last_window)
+          end
+        end,
+      },
+    }
   end)
   return Element:new {
-    text = '▶ suggestion:',
+    text = '▶ suggestion:\n',
     children = blocks:totable(),
   }
 end)
@@ -118,12 +159,12 @@ implement('GoToModuleLink', function(_, props)
       go_to_def = function(_)
         local this_infoview = require('lean.infoview').get_current_infoview()
         local this_info = this_infoview and this_infoview.info
-        local this_window = this_info and this_info.last_window
-        if not this_window then
+        local last_window = this_info and this_info.last_window
+        if not last_window then
           return
         end
 
-        vim.api.nvim_set_current_win(this_window)
+        vim.api.nvim_set_current_win(last_window)
         -- FIXME: Clearly we need to be able to get a session without touching
         --        internals... Probably this should be a method on ctx.
         local params = this_info.pin.__position_params
@@ -151,10 +192,16 @@ return {
 
   ---Render the given response to one or more TUI elements.
   ---@param response? UserWidgets
+  ---@param uri string the URI of the document whose widgets we are receiving
   ---@return Element[]? elements
-  render_response = function(response)
+  render_response = function(response, uri)
     if response then
-      return vim.iter(response.widgets):map(render):totable()
+      return vim
+        .iter(response.widgets)
+        :map(function(widget)
+          return render(widget, uri)
+        end)
+        :totable()
     end
   end,
 }

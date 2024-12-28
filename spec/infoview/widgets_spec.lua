@@ -63,6 +63,16 @@ describe('widgets', function()
           ▶ suggestion:
           exact rfl
         ]]
+
+        infoview.go_to()
+        helpers.move_cursor { to = { 7, 1 } }
+        helpers.feed '<CR>'
+
+        -- the buffer contents have changed but we also jumped to the lean win
+        assert.contents.are [[
+          example : 2 = 2 := by
+            exact rfl
+        ]]
       end
     )
   )
