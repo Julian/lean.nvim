@@ -443,6 +443,12 @@ function Infoview:__update()
   pcall(info.move_pin, info, util.make_position_params())
 end
 
+---Directly mark that the infoview has died. What a shame.
+function Infoview:died()
+  self.info.pin.__data_element = components.LSP_HAS_DIED -- FIXME: yeah, gross
+  self.info.pin:__update()
+end
+
 ---Either open or close a diff window for this infoview depending on whether its info has a diff pin.
 function Infoview:__refresh_diff()
   if not self.window then
@@ -1259,7 +1265,7 @@ function infoview.enable(opts)
           if not current_infoview then
             return
           end
-          current_infoview:__update()
+          current_infoview:died()
         end),
       })
 
