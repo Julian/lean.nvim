@@ -99,7 +99,7 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props)
     return Element:new { text = text:gsub('\n$', '') }
   end)
   return Element:new {
-    text = '▶ suggestions:',
+    text = '▶ suggestion:',
     children = blocks:totable(),
   }
 end)

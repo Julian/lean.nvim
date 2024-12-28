@@ -60,7 +60,7 @@ describe('widgets', function()
           ▶ 2:3-2:9: information:
           Try this: exact rfl
 
-          ▶ suggestions:
+          ▶ suggestion:
           exact rfl
         ]]
       end
@@ -99,10 +99,10 @@ describe('widgets', function()
           unsolved goals
           ⊢ 37 = 37
 
-          ▶ suggestions:
+          ▶ suggestion:
           trivial
 
-          ▶ suggestions:
+          ▶ suggestion:
           rfl
         ]]
       end

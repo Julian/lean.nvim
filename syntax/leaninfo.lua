@@ -68,11 +68,11 @@ end
 
 -- Widgets
 
-syntax [[match widgetSuggestions "^▶ suggestions.*"]]
-highlight [[default link widgetSuggestions Title]]
+syntax [[match widgetSuggestion "^▶ suggestion.*"]]
+highlight [[default link widgetSuggestion Title]]
 
-syntax [[match widgetSuggestionsSubgoals "^\s*.emaining subgoals:$"]]
-highlight [[default link widgetSuggestionsSubgoals Statement]]
+syntax [[match widgetSuggestionSubgoals "^\s*.emaining subgoals:$"]]
+highlight [[default link widgetSuggestionSubgoals Statement]]
 
 highlight [[default link widgetLink Tag]]
 
