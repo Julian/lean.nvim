@@ -21,7 +21,7 @@ jobs:
           neovim: true
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Install vimcats
-        run: cargo install vimcats --features=cli
+        run: cargo install vimcats --features=cli --force
 
       - name: Generate docs
         run: just docs
