@@ -57,15 +57,15 @@ describe('widgets', function()
         assert.infoview_contents.are [[
           ⊢ 2 = 2
 
-          ▶ 2:3-2:9: information:
-          Try this: exact rfl
-
           ▶ suggestion:
           exact rfl
+
+          ▶ 2:3-2:9: information:
+          Try this: exact rfl
         ]]
 
         infoview.go_to()
-        helpers.move_cursor { to = { 7, 1 } }
+        helpers.move_cursor { to = { 4, 1 } }
         helpers.feed '<CR>'
 
         -- the buffer contents have changed but we also jumped to the lean win
@@ -99,6 +99,12 @@ describe('widgets', function()
         assert.infoview_contents.are [[
           ⊢ 37 = 37
 
+          ▶ suggestion:
+          trivial
+
+          ▶ suggestion:
+          rfl
+
           ▶ 10:25-10:39: information:
           Try this: trivial
 
@@ -108,12 +114,6 @@ describe('widgets', function()
           ▶ 10:22-10:39: error:
           unsolved goals
           ⊢ 37 = 37
-
-          ▶ suggestion:
-          trivial
-
-          ▶ suggestion:
-          rfl
         ]]
       end
     )

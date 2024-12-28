@@ -1128,8 +1128,8 @@ function Pin:__update()
         components.goal_at(params, sess, self.__use_widgets) or {},
         view_options.show_term_goals and components.term_goal_at(params, sess, self.__use_widgets)
           or {},
-        components.diagnostics_at(params, sess, self.__use_widgets) or {},
         components.user_widgets_at(params, sess, self.__use_widgets) or {},
+        components.diagnostics_at(params, sess, self.__use_widgets) or {},
       })
       :flatten()
       :totable()
