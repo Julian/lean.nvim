@@ -156,7 +156,7 @@ function helpers.clean_buffer(contents, callback)
       -- FIXME: Sigh. We need to bisect why nightly has some crazy invalid
       --        bufnr behavior in *semantic token* updates?!?! which cause
       --        obscure test failures.
-      if vim.version.lt(vim.version(), '0.11') then
+      if vim.version.le(vim.version(), '0.10.3') then
         vim.api.nvim_buf_delete(bufnr, { force = true })
       end
     end)
