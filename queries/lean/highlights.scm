@@ -161,13 +161,13 @@
 ;   "builtin_initialize"
 ; ] @keyword
 
-; [
-;   "noncomputable"
-;   "partial"
-;   "private"
-;   "protected"
-;   "unsafe"
-; ] @keyword
+[
+  "noncomputable"
+  "partial"
+  "private"
+  "protected"
+  "unsafe"
+] @keyword.modifier
 ;
 ; [
 ;   "apply"
@@ -212,10 +212,10 @@
   "}" @punctuation.special)
 
 [
- "(" ")"
- "[" "]"
- "{" "}"
-;  "⟨" "⟩"
+  "(" ")"
+  "[" "]"
+  "{" "}"
+ ;  "⟨" "⟩"
  ] @punctuation.bracket
 ;
 ; ["|" "," "." ":" ";"] @punctuation.delimiter
