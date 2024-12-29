@@ -11,13 +11,13 @@
 ;; Declarations
 
 [
-  ; "abbrev"
+  "abbrev"
   "def"
-  ; "theorem"
-  ; "constant"
-  ; "instance"
-  ; "axiom"
-  ; "example"
+  "theorem"
+  "constant"
+  "instance"
+  "axiom"
+  "example"
   ; "inductive"
   ; "structure"
   ; "class"
@@ -50,12 +50,12 @@
 ; (structure
 ;   extends: (identifier) @type)
 ;
-; (where_decl
+; (whereDecl
 ;   type: (identifier) @type)
 ;
-(implicit_binder
+(implicitBinder
     type: (identifier) @type)
-(explicit_binder
+(explicitBinder
     type: (identifier) @type)
 ;
 ; (proj
@@ -155,7 +155,7 @@
 ;   "postfix"
 ;   "notation"
 ;   "macro"
-;   "macro_rules"
+;   "macroRules"
 ;   "syntax"
 ;   "elab"
 ;   "builtin_initialize"
@@ -201,8 +201,8 @@
 (comment) @comment
 (char) @character
 (string) @string
-(interpolated_string) @string
-(quoted_char) @string.escape
+(interpolatedString) @string
+(quotedChar) @string.escape
 
 ; Reset highlighing in string interpolation
 (interpolation) @none
