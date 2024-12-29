@@ -78,6 +78,35 @@ describe('widgets', function()
   )
 
   it(
+    'replaces ranges without being confused by unicode',
+    helpers.clean_buffer(
+      [[
+        example {𝔽 : Type} (x : 𝔽) (_ : 𝔽) (_ : 𝔽) : x = x := by exact?
+      ]],
+      function()
+        helpers.move_cursor { to = { 1, 100 } }
+        assert.infoview_contents.are [[
+          ▶ goals accomplished 🎉
+
+          ▶ suggestion:
+          exact rfl
+
+          ▶ 1:62-1:68: information:
+          Try this: exact rfl
+        ]]
+
+        infoview.go_to()
+        helpers.move_cursor { to = { 4, 1 } }
+        helpers.feed '<CR>'
+
+        assert.contents.are [[
+          example {𝔽 : Type} (x : 𝔽) (_ : 𝔽) (_ : 𝔽) : x = x := by exact rfl
+        ]]
+      end
+    )
+  )
+
+  it(
     'supports try this widgets with multiple suggestions',
     helpers.clean_buffer(
       [[

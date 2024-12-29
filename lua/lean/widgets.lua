@@ -120,14 +120,10 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props, uri)
           if not vim.api.nvim_buf_is_loaded(bufnr) then
             return
           end
-          vim.api.nvim_buf_set_text(
-            bufnr,
-            props.range.start.line,
-            props.range.start.character,
-            props.range['end'].line,
-            props.range['end'].character,
-            { each.suggestion }
-          )
+
+          ---@type lsp.TextEdit
+          local edit = { range = props.range, newText = each.suggestion }
+          vim.lsp.util.apply_text_edits({ edit }, bufnr, 'utf-16')
 
           local this_infoview = require('lean.infoview').get_current_infoview()
           local this_info = this_infoview and this_infoview.info
