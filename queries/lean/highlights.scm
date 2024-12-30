@@ -35,16 +35,16 @@
 ;   name: (identifier) @type)
 (def
   name: (identifier) @function)
-; (theorem
-;   name: (identifier) @function)
-; (constant
-;   name: (identifier) @type)
-; (instance
-;   name: (identifier) @function)
-; (instance
-;   type: (identifier) @type)
-; (axiom
-;   name: (identifier) @function)
+(theorem
+  name: (identifier) @function)
+(constant
+  name: (identifier) @type)
+(instance
+  name: (identifier) @function)
+(instance
+  type: (identifier) @type)
+(axiom
+  name: (identifier) @function)
 ; (structure
 ;   name: (identifier) @type)
 ; (structure
@@ -123,7 +123,6 @@
 
 [
   ; "attribute"
-  ; "by"
   ; "end"
   "export"
   ; "extends"
@@ -169,14 +168,16 @@
   "unsafe"
 ] @keyword.modifier
 ;
-; [
+[
+  "by"
 ;   "apply"
-;   "exact"
+  ; "exact"
 ;   "rewrite"
+  ; "rfl"
 ;   "rw"
 ;   "simp"
 ;   (trivial)
-; ] @keyword
+] @keyword
 
 ; [
 ;   "catch"
@@ -193,7 +194,7 @@
 ;   "mut"
 ; ] @keyword
 ;
-; [(true) (false)] @boolean
+[(true) (false)] @boolean
 
 (number) @number
 ; (float) @number.float
@@ -218,7 +219,13 @@
  ;  "⟨" "⟩"
  ] @punctuation.bracket
 ;
-; ["|" "," "." ":" ";"] @punctuation.delimiter
+[
+  ; "|"
+  ","
+  "."
+  ":"
+  ";"
+] @punctuation.delimiter
 ;
 (sorry) @error
 
