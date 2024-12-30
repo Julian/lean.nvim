@@ -163,7 +163,7 @@
   "private"
   "protected"
   "unsafe"
-] @keyword
+] @keyword.modifier
 
 [
   "apply"
@@ -196,7 +196,7 @@
 [(true) (false)] @boolean
 
 (number) @number
-(float) @float
+(float) @number.float
 
 (comment) @comment
 (char) @character
@@ -211,7 +211,12 @@
   "{" @punctuation.special
   "}" @punctuation.special)
 
-["(" ")" "[" "]" "{" "}" "⟨" "⟩"] @punctuation.bracket
+[
+  "(" ")"
+  "[" "]"
+  "{" "}"
+  "⟨" "⟩"
+] @punctuation.bracket
 
 ["|" "," "." ":" ";"] @punctuation.delimiter
 
