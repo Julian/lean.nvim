@@ -27,6 +27,7 @@ if vim.g.loaded_matchit and not vim.b.match_words then
       [[\<\%(namespace\|section\)\s\+\([^«»]\{-}\>\|«.\{-}»\):\<end\s\+\1]],
       [[^\s*section\s*$:^end\s*$]],
       [[\<if\>:\<then\>:\<else\>]],
+      [[\<do\>:\<return\>]],
     })
     :join ','
 end
