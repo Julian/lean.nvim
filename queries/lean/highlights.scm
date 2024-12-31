@@ -122,6 +122,10 @@
 ] @operator
 
 [
+ "import"
+] @keyword.import
+
+[
   "attribute"
   "by"
   "end"
@@ -173,10 +177,6 @@
   "simp"
   (trivial)
 ] @keyword
-
-[
- "import"
-] @keyword.import
 
 [
   "catch"
