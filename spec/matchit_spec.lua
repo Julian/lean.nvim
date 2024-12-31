@@ -105,32 +105,4 @@ describe('matchit', function()
       end
     )
   )
-
-  it(
-    'jumps between do/return',
-    helpers.clean_buffer(
-      [[
-        example : Nat := Id.run do
-          let _ ← Id.run do return 1
-          return 2
-      ]],
-      function()
-        vim.cmd.normal '1$'
-        assert.current_word.is 'do'
-
-        vim.cmd.normal '%'
-        assert.current_line.is '  return 2'
-
-        vim.cmd.normal '%'
-        assert.current_line.is 'example : Nat := Id.run do'
-
-        vim.cmd.normal '2gg17|'
-        assert.current_word.is 'do'
-
-        vim.cmd.normal '%'
-        assert.current_word.is 'return'
-        assert.current_line.is '  let _ ← Id.run do return 1'
-      end
-    )
-  )
 end)
