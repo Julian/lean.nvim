@@ -35,8 +35,16 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
   dependencies = {
     'neovim/nvim-lspconfig',
     'nvim-lua/plenary.nvim',
-    -- you also will likely want a completion engine
-    -- Saghen/blink.cmp or hrsh7th/nvim-cmp are two popular options.
+
+    -- optional dependencies:
+
+    -- 'andymass/vim-matchup',          -- for enhanced % motion behavior
+    -- 'andrewradev/switch.vim',        -- for switch support
+    -- 'tomtom/tcomment_vim',           -- for commenting
+    -- 'nvim-telescope/telescope.nvim', -- for 2 Lean-specific pickers
+
+    -- a completion engine
+    --    hrsh7th/nvim-cmp or Saghen/blink.cmp are popular choices
   },
 
   ---@type lean.Config
@@ -44,24 +52,6 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
     mappings = true,
   }
 }
-```
-
-or with [vim-plug](https://github.com/junegunn/vim-plug):
-
-```vim
-Plug 'Julian/lean.nvim'
-Plug 'neovim/nvim-lspconfig'
-Plug 'nvim-lua/plenary.nvim'
-
-" Optional Dependencies:
-
-Plug 'hrsh7th/nvim-cmp'        " For LSP completion
-Plug 'hrsh7th/cmp-nvim-lsp'
-Plug 'hrsh7th/cmp-buffer'
-Plug 'hrsh7th/vim-vsnip'       " For snippets
-Plug 'andrewradev/switch.vim'  " For Lean switch support
-Plug 'tomtom/tcomment_vim'     " For commenting motions
-Plug 'nvim-telescope/telescope.nvim' " For Loogle search
 ```
 
 `lean.nvim` supports the latest stable neovim release (currently `0.10.x`) as well as the latest nightly.
@@ -82,6 +72,7 @@ If you are on an earlier version of neovim, e.g. `0.9.5`, you can have your plug
 - If [satellite.nvim](https://github.com/lewis6991/satellite.nvim) is present an extension is registered for showing progress information for the whole document.
   Otherwise, we show progress information in the sign column.
 
+- [vim-matchup](https://github.com/andymass/vim-matchup) definitions for Lean
 - [switch.vim](https://github.com/AndrewRadev/switch.vim/) base definitions for Lean
 - If [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) is present, a `:Telescope loogle` command is available as a frontend for the [Loogle](https://loogle.lean-lang.org) JSON API.
 - Simple snippets (in [VSCode-compatible format](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax), usable with e.g. [vim-vsnip](https://github.com/hrsh7th/vim-vsnip))
