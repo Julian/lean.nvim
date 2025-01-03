@@ -186,7 +186,7 @@
 ; ] @exception
 
 ((apply
-  function: (identifier) @exception)
+  lhs: (identifier) @exception)
  (#match? @exception "throw"))
 
 ; [
