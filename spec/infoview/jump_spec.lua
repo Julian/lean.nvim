@@ -1,9 +1,7 @@
 ---@brief [[
---- Tests for the opening and closing of infoviews via command mode, their Lua
---- API, or combinations of the two.
+--- Tests for jumping from Lean file to infoview and back
 ---@brief ]]
 
-require 'spec.helpers'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 local helpers = require 'spec.helpers'
