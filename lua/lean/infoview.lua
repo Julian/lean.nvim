@@ -589,24 +589,24 @@ end
 
 ---@return Info
 function Info:new(opts)
-  local pins_element = Element:new {
-    name = 'info',
-    events = {
-      goto_last_window = function()
-        if not self.last_window then
-          return
-        end
-        vim.api.nvim_set_current_win(self.last_window)
-      end,
-    },
-  }
   local new_info = setmetatable({
     pins = {},
     __infoview = opts.infoview,
-    __pins_element = pins_element,
+    __pins_element = Element:new { name = 'info' },
     __diff_pin_element = Element:new { name = 'diff' },
     __win_event_disable = false, -- FIXME: This too is really confusing
   }, self)
+
+  new_info.__pins_element.events = {
+    goto_last_window = function()
+      print(vim.inspect(new_info))
+      if not new_info.last_window then
+        return
+      end
+      vim.api.nvim_set_current_win(new_info.last_window)
+    end,
+  }
+
   new_info.pin = Pin:new {
     id = '1',
     paused = options.autopause,
