@@ -3,8 +3,8 @@
 ---@brief ]]
 
 local fixtures = require 'spec.fixtures'
-local infoview = require 'lean.infoview'
 local helpers = require 'spec.helpers'
+local infoview = require 'lean.infoview'
 
 require('lean').setup {}
 
@@ -22,12 +22,12 @@ describe('infoview jumping', function()
     -- Both Lean and infoview windows exist
     assert.windows.are(lean_window, current_infoview.window)
 
-    vim.cmd('LeanGotoInfoview')
+    vim.cmd 'LeanGotoInfoview'
     assert.current_window.is(current_infoview.window)
   end)
 
   it('jumps back from infoview to the associated Lean file', function()
-    helpers.feed('<LocalLeader><Tab>')
+    helpers.feed '<LocalLeader><Tab>'
     assert.current_window.is(lean_window)
   end)
 end)
