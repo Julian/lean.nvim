@@ -8,7 +8,7 @@ local util = require 'lean._util'
 ---keys trigger it (or theoretically mouse events, though we don't do so in
 ---practice at the moment).
 ---
----In gneeral, resist the temptation to add new event types here, as this
+---In general, resist the temptation to add new event types here, as this
 ---entire concept feels slightly like "misdirection" that could be redesigned
 ---at least because it mixes abstraction layers between general events and ones
 ---that are very specific to a particular context (like "going to the last
