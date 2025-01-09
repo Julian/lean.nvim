@@ -22,7 +22,7 @@ describe('infoview jumping', function()
     -- Both Lean and infoview windows exist
     assert.windows.are(lean_window, current_infoview.window)
 
-    vim.cmd 'LeanGotoInfoview'
+    vim.cmd.LeanGotoInfoview()
     assert.current_window.is(current_infoview.window)
   end)
 

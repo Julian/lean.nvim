@@ -599,7 +599,6 @@ function Info:new(opts)
 
   new_info.__pins_element.events = {
     goto_last_window = function()
-      print(vim.inspect(new_info))
       if not new_info.last_window then
         return
       end
