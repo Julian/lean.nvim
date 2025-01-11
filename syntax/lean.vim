@@ -66,9 +66,9 @@ syn region leanEncl matchgroup=leanDelim start="#\[" end="\]" contains=TOP conta
 syn region leanEncl matchgroup=leanDelim start="(" end=")" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
 syn region leanEncl matchgroup=leanDelim start="\[" end="\]" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
 syn region leanEncl matchgroup=leanDelim start="⦃"  end="⦄" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
+syn region leanEncl matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
 
 syn region leanAnonymousLiteral matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
-syn region leanStructureLiteral matchgroup=leanDelim start="{"  end="}" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
 
 " FIXME(gabriel): distinguish backquotes in notations from names
 " syn region      leanNotation        start=+`+    end=+`+
