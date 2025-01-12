@@ -11,7 +11,6 @@
 
 ---@tag lean.nvim
 
-local has_satellite = require 'lean.satellite'
 local util = require 'lean._util'
 
 local lean = {
@@ -110,8 +109,7 @@ function lean.setup(opts)
   end
 
   opts.progress_bars = opts.progress_bars or {}
-  -- FIXME: Maybe someone eventually cares about enabling both.
-  if not has_satellite and opts.progress_bars.enable ~= false then
+  if opts.progress_bars.enable ~= false then
     require('lean.progress_bars').enable(opts.progress_bars)
   end
 
