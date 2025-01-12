@@ -10,7 +10,7 @@
 
 local helpers = require 'spec.helpers'
 
-require('lean').setup {}
+require('lean').setup { progress_bars = { enable = false } }
 
 describe('interactive infoview', function()
   it(
