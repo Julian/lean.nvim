@@ -180,6 +180,16 @@ function Session:call(pos, method, params)
     end
   end
   register(result)
+
+  if err then
+    log:error {
+      message = 'RPC error.',
+      method = method,
+      params = params,
+      error = err,
+      result = result,
+    }
+  end
   return result, err
 end
 
