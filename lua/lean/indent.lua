@@ -20,6 +20,7 @@ local NEVER_INDENT = vim.regex(([[^\s*\(%s\)]]):format(table.concat({
   'compile_inductive% ',
   'def ',
   'instance ',
+  'partial_fixpoint',
   'structure ',
   'where',
   '@\\[',
