@@ -572,13 +572,13 @@ end
 ---@return Element[]? goal
 ---@return LspError? error
 function components.goal_at(params, sess, use_widgets)
-  local goal, err
+  local goal, interactive_err, err
   if use_widgets ~= false then
     if sess == nil then
       sess = rpc.open(params)
     end
 
-    goal = sess:getInteractiveGoals(params)
+    goal, interactive_err = sess:getInteractiveGoals(params)
     goal = goal and components.interactive_goals(goal, sess)
   end
 
@@ -588,7 +588,7 @@ function components.goal_at(params, sess, use_widgets)
     goal = goal and components.plain_goal(goal)
   end
 
-  return goal, err
+  return goal, interactive_err or err
 end
 
 ---@param params lsp.TextDocumentPositionParams
@@ -597,13 +597,13 @@ end
 ---@return Element[]?
 ---@return LspError?
 function components.term_goal_at(params, sess, use_widgets)
-  local term_goal, err
+  local term_goal, interactive_err, err
   if use_widgets ~= false then
     if sess == nil then
       sess = rpc.open(params)
     end
 
-    term_goal = sess:getInteractiveTermGoal(params)
+    term_goal, interactive_err = sess:getInteractiveTermGoal(params)
     term_goal = term_goal and components.interactive_term_goal(term_goal, sess)
   end
 
@@ -613,7 +613,7 @@ function components.term_goal_at(params, sess, use_widgets)
     term_goal = term_goal and components.term_goal(term_goal)
   end
 
-  return term_goal, err
+  return term_goal, interactive_err or err
 end
 
 ---@param params lsp.TextDocumentPositionParams
