@@ -446,7 +446,7 @@ end
 ---Directly mark that the infoview has died. What a shame.
 function Infoview:died()
   self.info.pin.__data_element = components.LSP_HAS_DIED -- FIXME: yeah, gross
-  self.info.pin:__update()
+  self.info.pin:update()
 end
 
 ---Either open or close a diff window for this infoview depending on whether its info has a diff pin.
