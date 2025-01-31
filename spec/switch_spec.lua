@@ -36,6 +36,18 @@ describe('terms', function()
       assert.contents.are [[#check Nat.mul_one]]
     end)
   )
+
+  it(
+    'switch between top and bot',
+    clean_buffer([[#check WithTop]], function()
+      vim.cmd.normal { '1gg$', bang = true }
+      vim.cmd.Switch()
+      assert.contents.are [[#check WithBot]]
+
+      vim.cmd.Switch()
+      assert.contents.are [[#check WithTop]]
+    end)
+  )
 end)
 
 describe('tactics', function()
