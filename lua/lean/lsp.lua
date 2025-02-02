@@ -134,6 +134,13 @@ end
 function lsp.restart_file(bufnr)
   bufnr = bufnr or 0
   local client = lsp.client_for(bufnr)
+  if not client then
+    log:info {
+      message = "Cannot refresh file dependencies, this isn't a Lean file.",
+      bufnr = bufnr,
+    }
+    return
+  end
   local uri = vim.uri_from_bufnr(bufnr)
 
   client.notify(ms.textDocument_didClose, { textDocument = { uri = uri } })
