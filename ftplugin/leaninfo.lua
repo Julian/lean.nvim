@@ -1,3 +1,4 @@
+vim.bo.buflisted = false -- because we don't use nvim_create_buf (yet?)
 vim.bo.modifiable = false
 vim.bo.undolevels = -1
 vim.wo.cursorline = false

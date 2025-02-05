@@ -63,6 +63,12 @@ describe('infoview open/close', function()
     assert.is.falsy(vim.wo[lean_window].winfixwidth)
   end)
 
+  it('is unlisted', function()
+    local current_infoview = infoview.get_current_infoview()
+    local bufnr = vim.api.nvim_win_get_buf(current_infoview.window)
+    assert.is_false(vim.bo[bufnr].buflisted)
+  end)
+
   it('closes via its Lua API and stays closed', function()
     infoview.get_current_infoview():close()
     assert.windows.are(lean_window)
