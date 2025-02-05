@@ -11,6 +11,7 @@
 ---@field ft? lean.ft.Config filetype configuration
 ---@field abbreviations? lean.abbreviations.Config abbreviaton configuration
 ---@field infoview? lean.infoview.Config infoview configuration
+---@field inlay_hint? lean.inlay_hint.Config inlay hint configuration
 ---@field lsp? table language server configuration
 ---@field progress_bars? table progress bar configuration
 ---@field stderr? table stderr window configuration
@@ -21,6 +22,7 @@
 
 ---@class lean.MergedConfig: lean.Config
 ---@field ft lean.ft.MergedConfig filetype configuration
+---@field inlay_hint lean.inlay_hint.Config inlay hint configuration
 ---@field log Log log any messages from lean.nvim's internals
 
 ---@class lean.abbreviations.Config
@@ -37,6 +39,14 @@
 ---@class lean.infoview.Config
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
+
+---Lean uses inlay hints to surface things like auto-implicits of a function.
+---
+---We enable them by default in Lean buffers, but they can be disabled if
+---desired below. Note that they are not enabled globally in Neovim by default
+---(as what exactly is shown in inlay hints can vary widely by language).
+---@class lean.inlay_hint.Config
+---@field enabled? boolean whether to automatically enable inlay hints
 
 ---@type lean.MergedConfig
 local DEFAULTS = {
@@ -89,6 +99,9 @@ local DEFAULTS = {
       'hint:\n',
     },
   },
+
+  ---@type lean.inlay_hint.Config
+  inlay_hint = { enabled = true },
 }
 
 ---Load our merged configuration merging user configuration with any defaults.

@@ -37,4 +37,8 @@ if config.mappings == true then
   require('lean').use_suggested_mappings(0)
 end
 
+if config.inlay_hint.enabled then
+  vim.lsp.inlay_hint.enable(true, { bufnr = 0 })
+end
+
 vim.bo.modifiable = config.ft:should_modify()
