@@ -12,6 +12,7 @@
 
 local Element = require('lean.tui').Element
 local dedent = require('lean._util').dedent
+local log = require 'lean.log'
 
 ---@alias WidgetRenderer fun(self: Widget, props: any, uri: string): Element[]?
 
@@ -44,7 +45,7 @@ function Widget.unsupported(id)
         If you think it could be, please file an issue at
         https://github.com/Julian/lean.nvim/issues/new/?title=%s
       ]]
-      vim.notify_once(msg:format(id, title), vim.log.levels.DEBUG)
+      log:debug { message = msg:format(id, title), id = id }
     end,
   }
 end
