@@ -62,13 +62,13 @@ syn match leanOp "[:=><λ←→↔∀∃∧∨¬≤≥▸·+*-/;$|&%!×]"
 syn match leanOp '\([A-Za-z]\)\@<!?'
 
 " delimiters
-syn region leanEncl matchgroup=leanDelim start="#\[" end="\]" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
-syn region leanEncl matchgroup=leanDelim start="(" end=")" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
-syn region leanEncl matchgroup=leanDelim start="\[" end="\]" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
-syn region leanEncl matchgroup=leanDelim start="⦃"  end="⦄" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
-syn region leanEncl matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
+syn region leanEncl matchgroup=leanDelim start="#\[" end="\]" contains=TOP
+syn region leanEncl matchgroup=leanDelim start="(" end=")" contains=TOP
+syn region leanEncl matchgroup=leanDelim start="\[" end="\]" contains=TOP
+syn region leanEncl matchgroup=leanDelim start="⦃"  end="⦄" contains=TOP
+syn region leanEncl matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP
 
-syn region leanAnonymousLiteral matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP containedin=ALLBUT,leanBlockComment,leanComment,leanFrenchQuote keepend
+syn region leanAnonymousLiteral matchgroup=leanDelim start="⟨"  end="⟩" contains=TOP
 
 " FIXME(gabriel): distinguish backquotes in notations from names
 " syn region      leanNotation        start=+`+    end=+`+
