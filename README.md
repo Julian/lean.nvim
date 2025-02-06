@@ -38,13 +38,13 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
 
     -- optional dependencies:
 
+    -- a completion engine
+    --    hrsh7th/nvim-cmp or Saghen/blink.cmp are popular choices
+
+    -- 'nvim-telescope/telescope.nvim', -- for 2 Lean-specific pickers
     -- 'andymass/vim-matchup',          -- for enhanced % motion behavior
     -- 'andrewradev/switch.vim',        -- for switch support
     -- 'tomtom/tcomment_vim',           -- for commenting
-    -- 'nvim-telescope/telescope.nvim', -- for 2 Lean-specific pickers
-
-    -- a completion engine
-    --    hrsh7th/nvim-cmp or Saghen/blink.cmp are popular choices
   },
 
   ---@type lean.Config
@@ -85,7 +85,7 @@ The short version -- if you followed the instructions above for `lazy.nvim`, you
 
 This is all you need if you already have something registered to run on the `LspAttach` `autocmd` which defines any language server key mappings you like, e.g. if you use Neovim with any other language.
 In particular your `LspAttach` handler should likely bind things like `vim.lsp.buf.code_action` (AKA "the lightbulb") to ensure that you have easy access to code actions in Lean buffers.
-Lean (or really `Std`) uses code actions for replacing "Try this:" suggestions, which you will almost certainly want to be able to perform.
+Lean uses code actions for replacing "Try this:" suggestions, which you will almost certainly want to be able to perform.
 
 If you do not already have a preferred setup which includes LSP key mappings and (auto)completion, you may find the [fuller example here in the wiki](https://github.com/Julian/lean.nvim/wiki/Getting-Started-From-the-Ground-Up) helpful.
 
@@ -121,16 +121,16 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 | -------------------- | ------------------------------------------------------------------- |
 | `<LocalLeader>i`     | toggle the infoview open or closed                                  |
 | `<LocalLeader>p`     | pause the current infoview                                          |
+| `<LocalLeader>r`     | Restart the Lean server for the current file.                       |
+| `<LocalLeader>v`     | interactively configure infoview view options                       |
 | `<LocalLeader>x`     | place an infoview pin                                               |
 | `<LocalLeader>c`     | clear all current infoview pins                                     |
 | `<LocalLeader>dx`    | place an infoview diff pin                                          |
 | `<LocalLeader>dc`    | clear current infoview diff pin                                     |
 | `<LocalLeader>dd`    | toggle auto diff pin mode                                           |
 | `<LocalLeader>dt`    | toggle auto diff pin mode without clearing diff pin                 |
-| `<LocalLeader>v`     | interactively configure infoview view options                       |
 | `<LocalLeader><Tab>` | jump into the infoview window associated with the current lean file |
 | `<LocalLeader>\\`    | show what abbreviation produces the symbol under the cursor         |
-| `<LocalLeader>r`     | Restart the Lean server for the current file.                       |
 
 > [!TIP]
 > See `:help <LocalLeader>` if you haven't previously interacted with the local leader key.
@@ -138,7 +138,8 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 > My (Julian's) `<Leader>` is set to `<Space>`, and my `<LocalLeader>` to `<Space><Space>`, which may be a good choice for you if you have no other preference.
 
 > [!TIP]
-> If you are also looking for a way to restart the Lean server, you can use the `:LspRestart` command, or map it to a key of your choice. It will restart the language servers for the current buffer/file, so this also applies to other language servers you may be using.
+> If you are also looking for a way to restart the Lean server entirely (rather than just refresh the current file), you can use the `:LspRestart` command which comes from `nvim-lspconfig`, or Neovim's builtin API, `vim.lsp.stop_client(vim.lsp.get_clients())`.
+> You may wish to bind one of these to a key if you find yourself doing it often; these operations work for any language server and any language, not just Lean.
 
 ### In Infoview Windows
 
@@ -286,8 +287,6 @@ Below is a (hopelessly incomplete) list of a few:
 - [nvim-lightbulb](https://github.com/kosayoda/nvim-lightbulb) for signalling when code actions are available
 
 - [goto-preview](https://github.com/rmagatti/goto-preview) for peeking definitions (instead of jumping to them)
-
-- [lsp-status.nvim](https://github.com/nvim-lua/lsp-status.nvim) for showing LSP information in your status bar
 
 ## Contributing
 
