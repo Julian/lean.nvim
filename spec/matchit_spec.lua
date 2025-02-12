@@ -105,4 +105,28 @@ describe('matchit', function()
       end
     )
   )
+
+  it(
+    'jumps between block comment markers',
+    helpers.clean_buffer(
+      [[
+        /- A simple
+          block comment -/
+
+        /-- One with
+            two dashes -/
+      ]],
+      function()
+        vim.cmd.normal 'gg'
+        assert.current_line.is '/- A simple'
+        vim.cmd.normal '%'
+        assert.current_line.is '  block comment -/'
+
+        vim.cmd.normal 'gg3j0'
+        assert.current_line.is '/-- One with'
+        vim.cmd.normal '%'
+        assert.current_line.is '    two dashes -/'
+      end
+    )
+  )
 end)
