@@ -192,6 +192,42 @@ describe('indent', function()
   )
 
   it(
+    'dedents after double indented type with braces in tactic mode',
+    helpers.clean_buffer(
+      [[
+        theorem foo :
+            bar {(n : ℤ)} = baz := by
+      ]],
+      function()
+        helpers.feed 'Gobaz'
+        assert.contents.are [[
+          theorem foo :
+              bar {(n : ℤ)} = baz := by
+            baz
+      ]]
+      end
+    )
+  )
+
+  it(
+    'dedents after double indented type with braces in term mode',
+    helpers.clean_buffer(
+      [[
+        theorem foo :
+            bar {(n : ℤ)} = baz :=
+      ]],
+      function()
+        helpers.feed 'Gobaz'
+        assert.contents.are [[
+          theorem foo :
+              bar {(n : ℤ)} = baz :=
+            baz
+      ]]
+      end
+    )
+  )
+
+  it(
     'indents inside anonymous literals',
     helpers.clean_buffer(
       [[
