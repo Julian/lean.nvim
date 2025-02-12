@@ -142,7 +142,7 @@ function M.indentexpr(linenr)
     -- repetaedly over lines backwards, so we cheat and just check whether the
     -- previous line looks like it has a binder on it.
     local is_end_of_binders = dedent_one > 0 and last:find '^%s*[({[]'
-    return is_end_of_binders and dedent_one or last_indent
+    return is_end_of_binders and dedent_one or last_indent == 0 and current_indent or last_indent
   end
 
   return current_indent ---@type integer

@@ -209,6 +209,51 @@ describe('indent', function()
     )
   )
 
+  it(
+    'does not indent after blank lines with no indent below',
+    helpers.clean_buffer(
+      [[
+        theorem foo : 37 = 37 := by
+          rfl
+
+      ]],
+      function()
+        helpers.feed 'G'
+        assert.current_line.is ''
+
+        helpers.feed 'o#check 37'
+        assert.contents.are [[
+          theorem foo : 37 = 37 := by
+            rfl
+
+          #check 37
+      ]]
+      end
+    )
+  )
+
+  it(
+    'does indent after blank lines with indent below',
+    helpers.clean_buffer(
+      [[
+        theorem foo : 37 = 37 := by
+          have : 1 = 1 := rfl
+
+          have : 38 = 38 := rfl
+      ]],
+      function()
+        helpers.feed 'GOhave : 37 = 37 := rfl'
+        assert.contents.are [[
+          theorem foo : 37 = 37 := by
+            have : 1 = 1 := rfl
+
+            have : 37 = 37 := rfl
+            have : 38 = 38 := rfl
+      ]]
+      end
+    )
+  )
+
   for each in fixtures.indent() do
     it(each.description, function()
       vim.cmd.edit { each.unindented, bang = true }
