@@ -254,6 +254,24 @@ describe('indent', function()
     )
   )
 
+  it(
+    'indents again after by at focused stuff',
+    helpers.clean_buffer(
+      [[
+        theorem foo : 37 = 37 := by
+          · have : 37 = 37 := by
+      ]],
+      function()
+        helpers.feed 'Gosorry'
+        assert.contents.are [[
+          theorem foo : 37 = 37 := by
+            · have : 37 = 37 := by
+                sorry
+      ]]
+      end
+    )
+  )
+
   for each in fixtures.indent() do
     it(each.description, function()
       vim.cmd.edit { each.unindented, bang = true }

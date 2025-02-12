@@ -127,12 +127,12 @@ function M.indentexpr(linenr)
     return last_indent + shiftwidth
   end
 
-  if INDENT_AFTER:match_str(last) then
-    return last_indent + shiftwidth
+  if focuses_at(last, last_indent + 1) then
+    last_indent = last_indent + #'·'
   end
 
-  if focuses_at(last, last_indent + 1) then
-    return last_indent + #'·'
+  if INDENT_AFTER:match_str(last) then
+    return last_indent + shiftwidth
   end
 
   if not is_declaration_args(linenr - 2) then
