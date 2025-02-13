@@ -5,7 +5,7 @@
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup { infoview = { use_widgets = false } }
+require('lean').setup {}
 
 describe(
   'move_cursor_to_goal',
@@ -23,7 +23,7 @@ describe(
       it('moves the cursor to the first goal by default', function()
         lean_window = vim.api.nvim_get_current_win()
 
-        helpers.move_cursor { to = { 4, 2 } }
+        helpers.move_cursor { to = { 4, 3 } }
         local current_infoview = infoview.get_current_infoview()
 
         helpers.wait_for_loading_pins(current_infoview)
