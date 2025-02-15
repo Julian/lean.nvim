@@ -22,11 +22,13 @@ local elan = { toolchain = {} }
 ---@field path string the path to the toolchain on this machine
 ---@field resolved_name string the identifier for this toolchain
 
---List the installed toolchains.
+---List the installed toolchains.
+---@return string[] toolchains the toolchains
 function elan.toolchain.list()
   local state = elan.state()
   return vim
     .iter(state.toolchains.installed)
+    ---@param each ElanToolchain
     :map(function(each)
       return each.resolved_name
     end)
