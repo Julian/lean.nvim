@@ -22,6 +22,11 @@
 
 https://github.com/Julian/lean.nvim/assets/329822/87f773a1-17b9-4938-b933-4f260f4228cd
 
+## Sponsors
+
+A portion of `lean.nvim`'s development is graciously sponsored by the [Lean FRO](https://lean-fro.org/).
+It is undoubtedly the case that `lean.nvim` would not be as featureful without the support, for which we owe sincere thanks.
+
 ## Installation
 
 `lean.nvim` can be installed via your favorite plugin manager.
