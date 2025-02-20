@@ -14,10 +14,6 @@ local lsp = { handlers = {} }
 function lsp.enable(opts)
   opts.handlers = vim.tbl_extend('keep', opts.handlers or {}, {
     ['$/lean/fileProgress'] = lsp.handlers.file_progress_handler,
-    ['textDocument/publishDiagnostics'] = function(...)
-      vim.lsp.handlers['textDocument/publishDiagnostics'](...)
-      lsp.handlers.diagnostics_handler(...)
-    end,
   })
   opts.init_options = vim.tbl_extend('keep', opts.init_options or {}, {
     editDelay = 10, -- see #289
@@ -103,30 +99,22 @@ function lsp.handlers.file_progress_handler(err, params)
   require('lean.progress_bars').update(params)
 end
 
-function lsp.handlers.diagnostics_handler(_, params)
-  log:trace { message = 'got diagnostics', params = params }
+vim.api.nvim_create_autocmd('DiagnosticChanged', {
+  group = vim.api.nvim_create_augroup('LeanDiagnostics', {}),
+  callback = function(args)
+    local diagnostics = args.data.diagnostics
 
-  -- Make sure there are no zero-length diagnostics.
-  for _, diag in pairs(params.diagnostics) do
-    ---@type lsp.Range
-    local range = diag.range
-    if
-      range.start.line == range['end'].line and range.start.character == range['end'].character
-    then
-      range['end'].character = range.start.character + 1
-    end
-  end
+    log:trace {
+      message = 'got diagnostics',
+      bufnr = args.buf,
+      diagnostics = diagnostics,
+    }
 
-  -- XXX: Why does this now sometimes fail?!
-  --      The pcall was introduced as part of user widgets; removing it
-  --      should make some tests fail, but tests relating to infoview widgets
-  --      (i.e. not user widgets), and fail with cryptic errors, either about
-  --      nvim_buf_set_lines emitting a E1510: Value too large with no info
-  --      or (on nightly neovim) some other equally cryptic nested failure.
-  --      Putting the pcall here rather than on the nvim_buf_set_lines line
-  --      since it's during diagnostic updates that it seems to blow up?
-  require('lean.infoview').__update_pin_by_uri(params.uri)
-end
+    vim.schedule(function()
+      require('lean.infoview').__update_pin_by_uri(vim.uri_from_bufnr(args.buf))
+    end)
+  end,
+})
 
 ---Restart the Lean server for an open Lean 4 file.
 ---See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
