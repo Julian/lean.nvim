@@ -366,9 +366,6 @@ lsp.handlers.file_progress_handler({params})
         {params}  (LeanFileProgressParams)
 
 
-lsp.handlers.diagnostics_handler()            *lsp.handlers.diagnostics_handler*
-
-
 lsp.restart_file({bufnr?})                                    *lsp.restart_file*
     Restart the Lean server for an open Lean 4 file.
     See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
