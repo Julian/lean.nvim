@@ -71,7 +71,6 @@ docs:
         {{ lean }}/widgets.lua \
         {{ lean }}/health.lua \
         {{ lean }}/stderr.lua \
-        {{ lean }}/sorry.lua \
         >{{ doc }}/lean.txt
     nvim --headless --clean -u {{ init_lua }} -c 'helptags {{ doc }}' -c 'quit'
 
