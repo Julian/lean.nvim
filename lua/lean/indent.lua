@@ -14,6 +14,7 @@ local INDENT_AFTER = vim.regex(([[\(%s\)$]]):format(table.concat({
   '\\<deriving',
   '\\<:=',
   '=>',
+  ' =',
 }, [[\|]])))
 local NEVER_INDENT = vim.regex(([[^\s*\(%s\)]]):format(table.concat({
   'attribute ',

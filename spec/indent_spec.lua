@@ -63,7 +63,7 @@ describe('indent', function()
         example : 37 = 37 := by
           have : ∀ x : ℕ, 37 = 37 := by
             rfl
-      ]]
+        ]]
       end
     )
   )
@@ -83,7 +83,25 @@ describe('indent', function()
             induction n with
             | zero =>
               rfl
-      ]]
+        ]]
+      end
+    )
+  )
+
+  it(
+    'indents after =',
+    helpers.clean_buffer(
+      [[
+        example :
+            2 =
+      ]],
+      function()
+        helpers.feed 'Goif true then 2 else 2 := rfl'
+        assert.contents.are [[
+          example :
+              2 =
+                if true then 2 else 2 := rfl
+        ]]
       end
     )
   )
