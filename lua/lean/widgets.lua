@@ -98,8 +98,10 @@ end
 
 ---@param props TryThisParams
 implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props, uri)
-  local blocks = vim.iter(props.suggestions):map(function(each)
-    local children = {}
+  local blocks = vim.iter(ipairs(props.suggestions)):map(function(i, each)
+    local children = {
+      i ~= 1 and Element:new { text = '\n' } or nil,
+    }
     if each.preInfo then
       table.insert(children, Element:new { text = each.preInfo })
     end

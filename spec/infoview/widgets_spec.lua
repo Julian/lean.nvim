@@ -107,7 +107,41 @@ describe('widgets', function()
   )
 
   it(
-    'supports try this widgets with multiple suggestions',
+    'supports try this widgets with simultaneously added multiple suggestions',
+    helpers.clean_buffer(
+      [[
+        import Lean.Meta.Tactic.TryThis
+
+        open Lean Elab Tactic in
+        elab "foo" : tactic => do
+          Lean.Meta.Tactic.TryThis.addSuggestions (← getRef)
+            #[.suggestion "trivial",
+              .suggestion "sorry"]
+          evalTactic (← `(tactic|sorry))
+
+        example : True := by
+          foo
+      ]],
+      function()
+        helpers.move_cursor { to = { 11, 2 } }
+        assert.infoview_contents.are [[
+          ▶ goals accomplished 🎉
+
+          ▶ suggestion:
+          trivial
+          sorry
+
+          ▶ 11:3-11:6: information:
+          Try these:
+          • trivial
+          • sorry
+        ]]
+      end
+    )
+  )
+
+  it(
+    'supports try this widgets with separately added multiple suggestions',
     helpers.clean_buffer(
       [[
         import Lean.Meta.Tactic.TryThis
