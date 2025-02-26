@@ -43,3 +43,14 @@ if config.inlay_hint.enabled then
 end
 
 vim.bo.modifiable = config.ft:should_modify()
+
+vim.api.nvim_create_autocmd('DiagnosticChanged', {
+  group = vim.api.nvim_create_augroup('LeanDiagnostics', { clear = false }),
+  buffer = 0,
+  callback = function(args)
+    local uri = vim.uri_from_bufnr(args.buf)
+    vim.schedule(function()
+      require('lean.infoview').__update_pin_by_uri(uri)
+    end)
+  end,
+})

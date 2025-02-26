@@ -99,23 +99,6 @@ function lsp.handlers.file_progress_handler(err, params)
   require('lean.progress_bars').update(params)
 end
 
-vim.api.nvim_create_autocmd('DiagnosticChanged', {
-  group = vim.api.nvim_create_augroup('LeanDiagnostics', {}),
-  callback = function(args)
-    local diagnostics = args.data.diagnostics
-
-    log:trace {
-      message = 'got diagnostics',
-      bufnr = args.buf,
-      diagnostics = diagnostics,
-    }
-
-    vim.schedule(function()
-      require('lean.infoview').__update_pin_by_uri(vim.uri_from_bufnr(args.buf))
-    end)
-  end,
-})
-
 ---Restart the Lean server for an open Lean 4 file.
 ---See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
 ---@param bufnr? number
