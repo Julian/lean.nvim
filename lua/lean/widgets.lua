@@ -160,8 +160,8 @@ implement('GoToModuleLink', function(_, props)
         if not last_window then
           return
         end
-
         vim.api.nvim_set_current_win(last_window)
+
         -- FIXME: Clearly we need to be able to get a session without touching
         --        internals... Probably this should be a method on ctx.
         local params = this_info.pin.__position_params

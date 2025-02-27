@@ -300,34 +300,42 @@ end
 ---@alias FVarId string
 ---@alias MVarId string
 
+---In the infoview, if multiple hypotheses `h₁`, `h₂` have the same type `α`,
+---they are rendered as `h₁ h₂ : α`. We call this a 'hypothesis bundle'.
 ---@class InteractiveHypothesisBundle
----@field names string[]
----@field fvarIds? FVarId[]
+---@field names string[] The user-friendly name for each hypothesis.
+---@field fvarIds? FVarId[] The ids for each variable. Should have the same length as `names`.
 ---@field type CodeWithInfos
----@field val? CodeWithInfos
----@field isInstance? boolean
----@field isType? boolean
----@field isInserted? boolean
----@field isRemoved? boolean
+---@field val? CodeWithInfos The value, in the case the hypothesis is a `let`-binder.
+---@field isInstance? boolean The hypothesis is a typeclass instance.
+---@field isType? boolean The hypothesis is a type.
+---@field isInserted? boolean If true, the hypothesis was not present on the previous tactic state.
+---                           Only present in tactic-mode goals.
+---@field isRemoved? boolean If true, the hypothesis will be removed in the next tactic state.
+---                           Only present in tactic-mode goals.
 
 ---@class ContextInfo
 ---@class TermInfo
 
+---The shared parts of interactive term-mode and tactic-mode goals.
 ---@class InteractiveGoalCore
 ---@field hyps InteractiveHypothesisBundle[]
----@field type CodeWithInfos
----@field ctx ContextInfo
+---@field type CodeWithInfos The target type.
+---@field ctx ContextInfo Metavariable context that the goal is well-typed in.
 
+---An interactive tactic-mode goal.
 ---@class InteractiveGoal: InteractiveGoalCore
----@field userName? string
----@field goalPrefix? string
----@field mvarId MVarId
----@field isInserted? boolean
----@field isRemoved? boolean
+---@field userName? string The name `foo` in `case foo`, if any.
+---@field goalPrefix? string The symbol to display before the target type.
+---                          Usually `⊢ ` but `conv` goals use `∣ ` and it could be extended.
+---@field mvarId MVarId Identifies the goal (ie with the unique name of the MVar that it is a goal for.)
+---@field isInserted? boolean If true, the goal was not present on the previous tactic state.
+---@field isRemoved? boolean If true, the goal will be removed on the next tactic state.
 
+---An interactive term-mode goal.
 ---@class InteractiveTermGoal
----@field range? lsp.Range
----@field term TermInfo
+---@field range? lsp.Range Syntactic range of the term.
+---@field term TermInfo Information about the term whose type is the term-mode goal.
 
 ---@class InteractiveGoals
 ---@field goals InteractiveGoal[]
