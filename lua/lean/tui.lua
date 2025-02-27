@@ -510,13 +510,11 @@ function BufRenderer:render()
   local lines = vim.split(text, '\n')
   self.lines = lines
 
-  local hls = self.element:_get_highlights()
-
   vim.bo[buf].modifiable = true
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].modifiable = false
 
-  for _, hl in ipairs(hls) do
+  for _, hl in ipairs(self.element:_get_highlights()) do
     local start_pos = raw_pos_to_pos(hl.start, lines)
     local end_pos = raw_pos_to_pos(hl['end'], lines)
     vim.highlight.range(buf, self.__tui_ns, hl.hlgroup, start_pos, end_pos)
