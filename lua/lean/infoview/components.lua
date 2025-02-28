@@ -516,14 +516,8 @@ local function tagged_text_msg_embed(t, sess, parent_cls)
     elseif embed.widget ~= nil then
       local widget = widgets.render(embed.widget.wi)
       if not widget then
-        local message = util.s [[
-          Unable to render:
-            %s
-
-          Falling back to its `alt` widget.
-        ]]
         log:debug {
-          message = message:format(vim.inspect(embed.widget.wi)),
+          message = 'Widget rendering failed, falling back to the `alt` widget.',
           widget = embed.widget,
         }
         widget = tagged_text_msg_embed(embed.widget.alt, sess)
