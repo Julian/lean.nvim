@@ -89,6 +89,24 @@ function Element:new(args)
   return setmetatable(obj, self)
 end
 
+---@class ElementNewBoxArgs
+---@field title string the heading for this box
+---@field titlehl string? the highlight group for the title
+---@field children? Element[] the children for the body of this box
+
+---Create a new element with a heading and body.
+---@param args ElementNewBoxArgs
+---@return Element
+function Element.box(args)
+  local element = Element:new {
+    text = ('▼ %s:\n'):format(args.title),
+    hlgroup = args.titlehl or 'Title',
+  }
+  local children = { element }
+  vim.list_extend(children, args.children)
+  return Element:new { children = children }
+end
+
 ---Create an Element whose click event does nothing.
 ---@param text string? the text to show when rendering this element
 ---@return Element

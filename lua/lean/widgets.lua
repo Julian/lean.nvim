@@ -109,6 +109,7 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props, uri)
       children,
       Element:new {
         text = each.suggestion,
+        highlightable = true,
         hlgroup = 'widgetLink',
         events = {
           click = function()
@@ -136,8 +137,9 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props, uri)
     end
     return Element:new { children = children }
   end)
-  return Element:new {
-    text = '▶ suggestion:\n',
+  return Element.box {
+    title = 'suggestion',
+    titlehl = 'widgetSuggestion',
     children = blocks:totable(),
   }
 end)

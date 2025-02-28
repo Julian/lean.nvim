@@ -57,7 +57,7 @@ describe('widgets', function()
         assert.infoview_contents.are [[
           ⊢ 2 = 2
 
-          ▶ suggestion:
+          ▼ suggestion:
           exact rfl
 
           ▶ 2:3-2:9: information:
@@ -88,7 +88,7 @@ describe('widgets', function()
         assert.infoview_contents.are [[
           ▶ goals accomplished 🎉
 
-          ▶ suggestion:
+          ▼ suggestion:
           exact rfl
 
           ▶ 1:62-1:68: information:
@@ -127,7 +127,7 @@ describe('widgets', function()
         assert.infoview_contents.are [[
           ▶ goals accomplished 🎉
 
-          ▶ suggestion:
+          ▼ suggestion:
           trivial
           sorry
 
@@ -162,10 +162,10 @@ describe('widgets', function()
         assert.infoview_contents.are [[
           ⊢ 37 = 37
 
-          ▶ suggestion:
+          ▼ suggestion:
           trivial
 
-          ▶ suggestion:
+          ▼ suggestion:
           rfl
 
           ▶ 10:25-10:39: information:

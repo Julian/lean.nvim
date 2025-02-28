@@ -68,12 +68,10 @@ end
 
 -- Widgets
 
-syntax [[match widgetSuggestion "^▶ suggestion.*"]]
 highlight [[default link widgetSuggestion Title]]
 
 syntax [[match widgetSuggestionSubgoals "^\s*.emaining subgoals:$"]]
 highlight [[default link widgetSuggestionSubgoals Statement]]
 
 highlight [[default link widgetLink Tag]]
-
 highlight [[default link widgetElementHighlight DiffChange]]
