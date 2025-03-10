@@ -344,6 +344,46 @@ describe('plain infoviews', function()
         end
       )
     )
+
+    it(
+      'shows diagnostics for files with immediate diagnostics',
+      helpers.clean_buffer('import DoesNotExist', function()
+        -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
+        -- something isn't waiting properly, and nondeterministically we don't
+        -- end up with the right contents in tests :/
+        helpers.wait_for_loading_pins()
+        vim.wait(10000, function()
+          return require('lean.infoview').get_current_infoview():get_line(1) ~= nil
+        end)
+        -- the output in this case has the search path in it, so just match a
+        -- bit of our expected contents
+        assert.are.same(
+          [[unknown module prefix 'DoesNotExist']],
+          require('lean.infoview').get_current_infoview():get_line(1)
+        )
+      end)
+    )
+
+    it(
+      'shows diagnostics for files with broken syntax',
+      helpers.clean_buffer('import 37', function()
+        -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
+        -- called by `assert.infoview_contents`) -- something isn't waiting
+        -- properly, and nondeterministically we don't end up with the right
+        -- contents in tests :/
+        helpers.wait_for_loading_pins()
+        vim.wait(10000, function()
+          return not vim.deep_equal(
+            require('lean.infoview').get_current_infoview():get_lines(),
+            { '' }
+          )
+        end)
+        assert.infoview_contents.are [[
+            ▶ 1:7-1:10: error:
+            unexpected token; expected identifier
+          ]]
+      end)
+    )
   end)
 
   describe(
@@ -355,6 +395,21 @@ describe('plain infoviews', function()
         end)
         assert.message('file was never processing').is_true(result)
         assert.infoview_contents_nowait.are 'Processing file...'
+      end)
+    end)
+  )
+
+  describe(
+    'language server dead',
+    helpers.clean_buffer([[#check 37]], function()
+      it('is shown when the server is dead', function()
+        helpers.wait_for_ready_lsp()
+        vim.lsp.stop_client(vim.lsp.get_clients())
+        local succeeded = vim.wait(1000, function()
+          return vim.tbl_isempty(vim.lsp.get_clients())
+        end)
+        assert.message("Couldn't kill the LSP!").is_true(succeeded)
+        assert.infoview_contents_nowait.are '🪦 The Lean language server is dead.'
       end)
     end)
   )
