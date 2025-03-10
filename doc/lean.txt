@@ -314,6 +314,28 @@ lsp.client_for({bufnr?})                                        *lsp.client_for*
         (vim.lsp.Client)
 
 
+LeanFileProgressParams                                  *LeanFileProgressParams*
+
+    Fields: ~
+        {textDocument}  (lsp.VersionedTextDocumentIdentifier)
+        {processing}    (LeanFileProgressProcessingInfo[])
+
+
+                                            *lsp.handlers.file_progress_handler*
+lsp.handlers.file_progress_handler({params})
+
+    Parameters: ~
+        {params}  (LeanFileProgressParams)
+
+
+lsp.restart_file({bufnr?})                                    *lsp.restart_file*
+    Restart the Lean server for an open Lean 4 file.
+    See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
+
+    Parameters: ~
+        {bufnr?}  (number)
+
+
 PlainGoal                                                            *PlainGoal*
 
     Fields: ~
@@ -350,28 +372,6 @@ lsp.plain_term_goal({params}, {bufnr})                     *lsp.plain_term_goal*
     Returns: ~
         (LspError|nil)       error
         (PlainTermGoal|nil)  plain_term_goal
-
-
-LeanFileProgressParams                                  *LeanFileProgressParams*
-
-    Fields: ~
-        {textDocument}  (lsp.VersionedTextDocumentIdentifier)
-        {processing}    (LeanFileProgressProcessingInfo[])
-
-
-                                            *lsp.handlers.file_progress_handler*
-lsp.handlers.file_progress_handler({params})
-
-    Parameters: ~
-        {params}  (LeanFileProgressParams)
-
-
-lsp.restart_file({bufnr?})                                    *lsp.restart_file*
-    Restart the Lean server for an open Lean 4 file.
-    See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
-
-    Parameters: ~
-        {bufnr?}  (number)
 
 
 ==============================================================================
