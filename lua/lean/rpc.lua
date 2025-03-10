@@ -389,11 +389,7 @@ end
 
 ---@alias MsgEmbed MsgEmbedExpr | MsgEmbedGoal | MsgEmbedWidget | MsgEmbedTrace
 
----@class InteractiveDiagnostic
----@field range lsp.Range
----@field fullRange? lsp.Range
----@field severity? lsp.DiagnosticSeverity
----@field message TaggedText.MsgEmbed
+---@alias InteractiveDiagnostic DiagnosticWith<TaggedText.MsgEmbed>
 
 ---@class LineRange
 ---@field start integer
