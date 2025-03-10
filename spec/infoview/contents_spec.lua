@@ -278,6 +278,34 @@ describe('interactive infoview', function()
     )
 
     it(
+      'shows the full range',
+      helpers.clean_buffer(
+        [[
+          example : 2 = 2 := by
+            exact (
+              rfl :
+                37
+                =
+                37)
+        ]],
+        function()
+          helpers.move_cursor { to = { 2, 3 } }
+          assert.infoview_contents.are [[
+            ⊢ 2 = 2
+
+            ▶ 2:3-6:10: error:
+            type mismatch
+              rfl
+            has type
+              37 = 37 : Prop
+            but is expected to have type
+              2 = 2 : Prop
+          ]]
+        end
+      )
+    )
+
+    it(
       'shows multiline messages which do not terminate in newlines',
       helpers.clean_buffer(
         [[

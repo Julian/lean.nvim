@@ -403,14 +403,25 @@ function components.diagnostics(params)
 
   ---@param diagnostic vim.Diagnostic
   return vim.tbl_map(function(diagnostic)
+    local range = diagnostic.user_data
+        and diagnostic.user_data.lsp
+        and diagnostic.user_data.lsp.fullRange
+      ---@type lsp.Range
+      or {
+        start = {
+          line = diagnostic.lnum,
+          character = diagnostic.col,
+        },
+        ['end'] = {
+          line = diagnostic.end_lnum,
+          character = diagnostic.end_col,
+        },
+      }
     return Element:new {
       name = 'diagnostic',
       text = H(string.format(
         '%s: %s%s',
-        range_to_string {
-          start = { line = diagnostic.lnum, character = diagnostic.col },
-          ['end'] = { line = diagnostic.end_lnum, character = diagnostic.end_col },
-        },
+        range_to_string(range),
         markers[diagnostic.severity],
         -- So. #check foo gives back a diagnostic with *no* trailing newline
         -- but #eval foo gives back one *with* a trailing newline.
@@ -549,10 +560,9 @@ function components.interactive_diagnostics(diags, line, sess)
         return
       end
 
+      local range = diagnostic.fullRange or diagnostic.range
       return Element:new {
-        text = H(
-          ('%s: %s'):format(range_to_string(diagnostic.range), markers[diagnostic.severity])
-        ),
+        text = H(('%s: %s'):format(range_to_string(range), markers[diagnostic.severity])),
         name = 'diagnostic',
         children = { tagged_text_msg_embed(diagnostic.message, sess) },
       }
