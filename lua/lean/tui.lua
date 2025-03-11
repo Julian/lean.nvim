@@ -529,7 +529,12 @@ function BufRenderer:render()
   self.lines = lines
 
   vim.bo[buf].modifiable = true
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  -- XXX: Again I do not understand why tests occasionally are flaky,
+  --      complaining about invalid buffer names, if we don't have this pcall.
+  local ok, _ = pcall(vim.api.nvim_buf_set_lines, buf, 0, -1, false, lines)
+  if not ok then
+    require 'lean.log':error { message = 'infoview failed to update', buf = buf }
+  end
   vim.bo[buf].modifiable = false
 
   for _, hl in ipairs(self.element:_get_highlights()) do
