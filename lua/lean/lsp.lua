@@ -219,6 +219,7 @@ function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
       end_col = ok and end_col or _end.character
 
       vim.api.nvim_buf_set_extmark(bufnr, unsolved_ns, _end.line, end_col, {
+        hl_mode = 'combine',
         virt_text = { { ' ⚒ ', 'leanUnsolvedGoals' } },
         virt_text_pos = 'overlay',
       })
