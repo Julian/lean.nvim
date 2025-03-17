@@ -193,6 +193,24 @@ local silent_ns = vim.api.nvim_create_namespace 'lean.diagnostic.silent'
 ---A namespace for Lean's unsolved goal markers.and goals accomplished ranges
 local goals_ns = vim.api.nvim_create_namespace 'lean.goals'
 
+---Is the given position within a range of a goals accomplished marker?
+---@param bufnr? integer
+---@param position? { [1]: integer, [2]: integer } a (1, 0)-indexed position in the buffer
+---@return boolean is_accomplished
+function lsp.goals_accomplished_at(bufnr, position)
+  bufnr = bufnr or 0
+  position = position or vim.api.nvim_win_get_cursor(0)
+  local zeroidx = { position[1] - 1, position[2] }
+  local hls = vim.api.nvim_buf_get_extmarks(bufnr, goals_ns, zeroidx, zeroidx, {
+    details = true,
+    overlap = true,
+    type = 'highlight',
+  })
+  return vim.iter(hls):any(function(hl)
+    return hl[4].hl_group == 'leanGoalsAccomplished'
+  end)
+end
+
 vim.cmd.highlight [[default link leanUnsolvedGoals DiagnosticInfo]]
 vim.cmd.highlight [[default link leanGoalsAccomplishedSign DiagnosticInfo]]
 
