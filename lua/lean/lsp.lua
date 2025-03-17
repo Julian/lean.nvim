@@ -190,10 +190,11 @@ end
 
 ---A namespace where we put Lean's "silent" diagnostics.
 local silent_ns = vim.api.nvim_create_namespace 'lean.diagnostic.silent'
----A namespace for Lean's unsolved goal markers.
-local unsolved_ns = vim.api.nvim_create_namespace 'lean.unsolved'
+---A namespace for Lean's unsolved goal markers.and goals accomplished ranges
+local goals_ns = vim.api.nvim_create_namespace 'lean.goals'
 
 vim.cmd.highlight [[default link leanUnsolvedGoals DiagnosticInfo]]
+vim.cmd.highlight [[default link leanGoalsAccomplishedSign DiagnosticInfo]]
 
 ---A replacement handler for diagnostic publishing for Lean-specific behavior.
 ---
@@ -205,10 +206,10 @@ vim.cmd.highlight [[default link leanUnsolvedGoals DiagnosticInfo]]
 function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
   local bufnr = vim.uri_to_bufnr(result.uri)
   vim.diagnostic.reset(silent_ns, bufnr)
-  vim.api.nvim_buf_clear_namespace(bufnr, unsolved_ns, 0, -1)
+  vim.api.nvim_buf_clear_namespace(bufnr, goals_ns, 0, -1)
 
   local diagnostics = {}
-  local silent = {}
+  local other_silent = {}
 
   local buf_lines = get_buf_lines(bufnr)
   for _, each in ipairs(result.diagnostics) do
@@ -218,22 +219,30 @@ function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
       local ok, end_col = pcall(vim.str_byteindex, end_line, _end.character, true)
       end_col = ok and end_col or _end.character
 
-      vim.api.nvim_buf_set_extmark(bufnr, unsolved_ns, _end.line, end_col, {
+      vim.api.nvim_buf_set_extmark(bufnr, goals_ns, _end.line, end_col, {
         hl_mode = 'combine',
         virt_text = { { ' ⚒ ', 'leanUnsolvedGoals' } },
         virt_text_pos = 'overlay',
       })
-    end
-
-    if each.isSilent then
-      local known = vim.deep_equal(each.leanTags, { LeanDiagnosticTag.goalsAccomplished })
-      if not known then
-        log:warning {
-          message = 'unknown silent diagnostic',
-          diagnostic = each,
-        }
-      end
-      table.insert(silent, each)
+    elseif vim.deep_equal(each.leanTags, { LeanDiagnosticTag.goalsAccomplished }) then
+      local start = each.fullRange.start
+      vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start.line, start.character, {
+        sign_text = '🎉',
+        sign_hl_group = 'leanGoalsAccomplishedSign',
+      })
+      vim.highlight.range(
+        bufnr,
+        goals_ns,
+        'leanGoalsAccomplished',
+        { start.line, start.character },
+        { each.fullRange['end'].line, each.fullRange['end'].character }
+      )
+    elseif each.isSilent then
+      log:warning {
+        message = 'unknown silent diagnostic',
+        diagnostic = each,
+      }
+      table.insert(other_silent, each)
     else
       table.insert(diagnostics, each)
     end
@@ -242,7 +251,7 @@ function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
   result.diagnostics = diagnostics
   vim.lsp.diagnostic.on_publish_diagnostics(_, result, ctx, config)
 
-  vim.diagnostic.set(silent_ns, bufnr, diagnostic_lsp_to_vim(silent, bufnr, ctx.client_id), {
+  vim.diagnostic.set(silent_ns, bufnr, diagnostic_lsp_to_vim(other_silent, bufnr, ctx.client_id), {
     underline = false,
     virtual_text = false,
     update_in_insert = false,
