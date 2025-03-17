@@ -376,6 +376,12 @@ LeanPublishDiagnosticsParams : lsp.PublishDiagnosticsParams
         {diagnostics}  (DiagnosticWith)
 
 
+lsp.goals_accomplished_at()                          *lsp.goals_accomplished_at*
+
+    Returns: ~
+        (boolean)  is_accomplished
+
+
                                            *lsp.handlers.on_publish_diagnostics*
 lsp.handlers.on_publish_diagnostics({result}, {ctx}, {config?})
     A replacement handler for diagnostic publishing for Lean-specific behavior.
