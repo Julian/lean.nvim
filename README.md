@@ -287,11 +287,11 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 Particularly if you're also a VSCode user, there may be other plugins you're interested in.
 Below is a (hopelessly incomplete) list of a few:
 
-- [actions-preview.nvim](https://github.com/aznhe21/actions-preview.nvim) for showing a preview of what a code action would change
-
 - [nvim-lightbulb](https://github.com/kosayoda/nvim-lightbulb) for signalling when code actions are available
 
 - [goto-preview](https://github.com/rmagatti/goto-preview) for peeking definitions (instead of jumping to them)
+
+- [neominimap.nvim](https://github.com/Isrothy/neominimap.nvim) if you really like minimaps
 
 ## Contributing
 
