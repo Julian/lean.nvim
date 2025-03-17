@@ -34,7 +34,7 @@ jobs:
           version: ${{ matrix.nvim-version }}
 
       - uses: Julian/setup-lean@v1
-      - uses: extractions/setup-just@v2
+      - uses: extractions/setup-just@v3
       - name: Run tests
         run: just test
         env:
