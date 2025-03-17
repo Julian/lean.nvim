@@ -14,7 +14,7 @@ jobs:
         with:
           persist-credentials: true
 
-      - uses: extractions/setup-just@v2
+      - uses: extractions/setup-just@v3
       - name: Install Neovim
         uses: rhysd/action-setup-vim@v1
         with:
