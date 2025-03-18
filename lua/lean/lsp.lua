@@ -188,6 +188,52 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   end, diagnostics)
 end
 
+---The range of a Lean diagnostic.
+---
+---Prioritizes `fullRange`, which is the "real" range of the diagnostic, not
+---the `range`, which clips to just its first line.
+---@param diagnostic DiagnosticWith<string>
+---@return lsp.Range range
+local function range_of(diagnostic)
+  return diagnostic.fullRange or diagnostic.range
+end
+
+---Convert an LSP position to a (0, 0)-indexed tuple.
+---
+---These are used by extmarks.
+---See `:h api-indexing` for details.
+---@param position lsp.Position
+---@param line string the line contents for this position's line
+---@return { [1]: integer, [2]: integer } position
+local function position_to_byte0(position, line)
+  local ok, col = pcall(vim.str_byteindex, line, position.character, true)
+  return { position.line, ok and col or position.character }
+end
+
+---Convert Lean ranges to byte indices.
+---
+---Prioritizes `fullRange`, which is the "real" range of the diagnostic, not
+---the `range`, which clips to just its first line.
+---
+---Returned positions are 0-indexed.
+---@param bufnr integer
+---@param diagnostic DiagnosticWith<string>
+---@return integer start_row
+---@return integer start_col
+---@return integer end_row
+---@return integer end_col
+local function byterange_of(bufnr, diagnostic)
+  local range = range_of(diagnostic)
+  local start_line =
+    vim.api.nvim_buf_get_lines(bufnr, range.start.line, range.start.line + 1, true)[1]
+  local start = position_to_byte0(range.start, start_line)
+
+  local end_line =
+    vim.api.nvim_buf_get_lines(bufnr, range['end'].line, range['end'].line + 1, true)[1]
+  local _end = position_to_byte0(range['end'], end_line)
+  return start[1], start[2], _end[1], _end[2]
+end
+
 ---A namespace where we put Lean's "silent" diagnostics.
 local silent_ns = vim.api.nvim_create_namespace 'lean.diagnostic.silent'
 ---A namespace for Lean's unsolved goal markers.and goals accomplished ranges
@@ -226,47 +272,48 @@ function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
   vim.diagnostic.reset(silent_ns, bufnr)
   vim.api.nvim_buf_clear_namespace(bufnr, goals_ns, 0, -1)
 
-  local diagnostics = {}
   local other_silent = {}
 
-  local buf_lines = get_buf_lines(bufnr)
-  for _, each in ipairs(result.diagnostics) do
-    if vim.deep_equal(each.leanTags, { LeanDiagnosticTag.unsolvedGoals }) then
-      local _end = each.fullRange['end']
-      local end_line = buf_lines and buf_lines[_end.line + 1] or ''
-      local ok, end_col = pcall(vim.str_byteindex, end_line, _end.character, true)
-      end_col = ok and end_col or _end.character
+  ---@param each DiagnosticWith<string>
+  result.diagnostics = vim
+    .iter(result.diagnostics)
+    :map(function(each)
+      local range = range_of(each)
+      if vim.deep_equal(each.leanTags, { LeanDiagnosticTag.unsolvedGoals }) then
+        local buf_lines = get_buf_lines(bufnr)
+        local end_line = buf_lines[range['end'].line + 1] or ''
+        local end_row, end_col = unpack(position_to_byte0(range['end'], end_line))
 
-      vim.api.nvim_buf_set_extmark(bufnr, goals_ns, _end.line, end_col, {
-        hl_mode = 'combine',
-        virt_text = { { ' ⚒ ', 'leanUnsolvedGoals' } },
-        virt_text_pos = 'overlay',
-      })
-    elseif vim.deep_equal(each.leanTags, { LeanDiagnosticTag.goalsAccomplished }) then
-      local start = each.fullRange.start
-      vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start.line, start.character, {
-        sign_text = '🎉',
-        sign_hl_group = 'leanGoalsAccomplishedSign',
-      })
-      vim.highlight.range(
-        bufnr,
-        goals_ns,
-        'leanGoalsAccomplished',
-        { start.line, start.character },
-        { each.fullRange['end'].line, each.fullRange['end'].character }
-      )
-    elseif each.isSilent then
-      log:warning {
-        message = 'unknown silent diagnostic',
-        diagnostic = each,
-      }
-      table.insert(other_silent, each)
-    else
-      table.insert(diagnostics, each)
-    end
-  end
+        vim.api.nvim_buf_set_extmark(bufnr, goals_ns, end_row, end_col, {
+          hl_mode = 'combine',
+          virt_text = { { ' ⚒ ', 'leanUnsolvedGoals' } },
+          virt_text_pos = 'overlay',
+        })
+      elseif vim.deep_equal(each.leanTags, { LeanDiagnosticTag.goalsAccomplished }) then
+        local start_row, start_col, end_row, end_col = byterange_of(bufnr, each)
+        vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
+          sign_text = '🎉',
+          sign_hl_group = 'leanGoalsAccomplishedSign',
+        })
+        vim.highlight.range(
+          bufnr,
+          goals_ns,
+          'leanGoalsAccomplished',
+          { start_row + 1, start_col },
+          { end_row + 1, end_col }
+        )
+      elseif each.isSilent then
+        log:warning {
+          message = 'unknown silent diagnostic',
+          diagnostic = each,
+        }
+        table.insert(other_silent, each)
+      else
+        return each
+      end
+    end)
+    :totable()
 
-  result.diagnostics = diagnostics
   vim.lsp.diagnostic.on_publish_diagnostics(_, result, ctx, config)
 
   vim.diagnostic.set(silent_ns, bufnr, diagnostic_lsp_to_vim(other_silent, bufnr, ctx.client_id), {
