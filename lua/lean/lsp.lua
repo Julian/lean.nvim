@@ -277,7 +277,7 @@ function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
   ---@param each DiagnosticWith<string>
   result.diagnostics = vim
     .iter(result.diagnostics)
-    :map(function(each)
+    :filter(function(each)
       local range = range_of(each)
       if vim.deep_equal(each.leanTags, { LeanDiagnosticTag.unsolvedGoals }) then
         local buf_lines = get_buf_lines(bufnr)
@@ -302,15 +302,9 @@ function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
           { start_row + 1, start_col },
           { end_row + 1, end_col }
         )
-      elseif each.isSilent then
-        log:warning {
-          message = 'unknown silent diagnostic',
-          diagnostic = each,
-        }
-        table.insert(other_silent, each)
-      else
-        return each
       end
+
+      return not each.isSilent
     end)
     :totable()
 
