@@ -464,15 +464,13 @@ end
 ---                         Should be a plain JavaScript ESModule whose default
 ---                         export is the component to render.
 
----@class GetWidgetSourceParams
----@field pos lsp.Position
----@field hash string
-
----@param pos GetWidgetSourceParams
+---Get the static JS source for a widget.
+---@param pos lsp.Position
+---@param hash string
 ---@return WidgetSource
 ---@return LspError error
-function Subsession:getWidgetSource(pos)
-  return self:call('Lean.Widget.getWidgetSource', pos)
+function Subsession:getWidgetSource(pos, hash)
+  return self:call('Lean.Widget.getWidgetSource', { pos = pos, hash = hash })
 end
 
 ---@class GoalLocationHyp

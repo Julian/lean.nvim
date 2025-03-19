@@ -192,11 +192,13 @@ return {
   ---Render the given response to one or more TUI elements.
   ---@param response? UserWidgets
   ---@param uri string the URI of the document whose widgets we are receiving
+  ---@param _ fun(widget: UserWidgetInstance):string,LspError retrieve the JS source of a widget
   ---@return Element[]? elements
-  render_response = function(response, uri)
+  render_response = function(response, uri, _)
     if response then
       return vim
         .iter(response.widgets)
+        ---@param widget UserWidgetInstance
         :map(function(widget)
           return render(widget, uri)
         end)
