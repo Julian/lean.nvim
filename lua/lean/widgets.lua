@@ -45,7 +45,7 @@ function Widget.unsupported(id)
         If you think it could be, please file an issue at
         https://github.com/Julian/lean.nvim/issues/new/?title=%s
       ]]
-      log:debug { message = msg:format(id, title), id = id }
+      log:info { message = msg:format(id, title), id = id }
     end,
   }
 end
