@@ -324,10 +324,7 @@ lsp.client_for({bufnr?})                                        *lsp.client_for*
     Find the `vim.lsp.Client` attached to the given buffer.
 
     Parameters: ~
-        {bufnr?}  (number)
-
-    Returns: ~
-        (vim.lsp.Client)
+        {bufnr?}  (number)  @return vim.lsp.Client?
 
 
 LeanDiagnosticTag                                            *LeanDiagnosticTag*
@@ -376,10 +373,28 @@ LeanPublishDiagnosticsParams : lsp.PublishDiagnosticsParams
         {diagnostics}  (DiagnosticWith)
 
 
-lsp.goals_accomplished_at()                          *lsp.goals_accomplished_at*
+                                                     *lsp.goals_accomplished_on*
+lsp.goals_accomplished_on({bufnr?}, {line?})
+    Is the given line within a range of a goals accomplished marker?
+
+    Parameters: ~
+        {bufnr?}  (integer)
+        {line?}   (integer)  a 0--indexed line number in the buffer
 
     Returns: ~
         (boolean)  is_accomplished
+
+
+lsp.is_unsolved_goals_diagnostic()            *lsp.is_unsolved_goals_diagnostic*
+
+    Returns: ~
+        (boolean)
+
+
+lsp.is_goals_accomplished_diagnostic()    *lsp.is_goals_accomplished_diagnostic*
+
+    Returns: ~
+        (boolean)
 
 
                                            *lsp.handlers.on_publish_diagnostics*
