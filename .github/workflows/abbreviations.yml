@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          persist-credentials: true
       - name: Download VSCode abbreviations
         run: |
           gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover/vscode-lean4/contents/lean4-unicode-input/src/abbreviations.json' >vscode-lean/abbreviations.json
