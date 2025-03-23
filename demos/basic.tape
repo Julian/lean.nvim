@@ -175,7 +175,7 @@ Type "Even more information and functionality can be found in the README." Enter
 Type "Also feel free to ask questions, or to send suggestions." Enter
 Type "You can do so on the Zulip or on lean.nvim's issue tracker."
 Enter
-Type "Goals accomplished 🎉!" Enter
+Type "Goals accomplished 🎉" Enter
 Sleep 5s Escape
 Type ";qa!" Enter
 Sleep 500ms

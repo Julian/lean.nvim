@@ -94,7 +94,10 @@ function helpers.wait_for_loading_pins(iv)
 end
 
 function helpers.wait_for_ready_lsp()
-  local succeeded, _ = vim.wait(15000, lsp.client_for)
+  local succeeded, _ = vim.wait(15000, function()
+    local client = lsp.client_for(0)
+    return client and client.initialized or false
+  end)
   assert.message('LSP server was never ready.').True(succeeded)
 end
 

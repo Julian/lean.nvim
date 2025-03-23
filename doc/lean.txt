@@ -301,7 +301,23 @@ LSP                                                                   *lean.lsp*
 
  Low-level interaction with the Lean language server.
 
-lsp.enable()                                                        *lsp.enable*
+                                                        *LeanClientCapabilities*
+LeanClientCapabilities : lsp.ClientCapabilities
+
+    Fields: ~
+        {silentDiagnosticSupport?}  (boolean)  Whether the client supports `DiagnosticWith.isSilent = true`.
+
+
+LeanClientConfig : vim.lsp.ClientConfig                       *LeanClientConfig*
+
+    Fields: ~
+        {lean?}  (LeanClientCapabilities)
+
+
+lsp.enable({opts})                                                  *lsp.enable*
+
+    Parameters: ~
+        {opts}  (LeanClientConfig)
 
 
 lsp.client_for({bufnr?})                                        *lsp.client_for*
@@ -314,11 +330,69 @@ lsp.client_for({bufnr?})                                        *lsp.client_for*
         (vim.lsp.Client)
 
 
+LeanDiagnosticTag                                            *LeanDiagnosticTag*
+    Custom diagnostic tags provided by the language server.
+    We use a separate diagnostic field for this to avoid confusing LSP clients with our custom tags.
+
+    Values: ~
+        unsolvedGoals      Diagnostics representing an "unsolved goals" error.
+                           Corresponds to `MessageData.tagged `Tactic.unsolvedGoals ..`.
+        goalsAccomplished  Diagnostics representing a "goals accomplished" silent message.
+                           Corresponds to `MessageData.tagged `goalsAccomplished ..`.
+
+
+DiagnosticWith                                                  *DiagnosticWith*
+    Represents a diagnostic, such as a compiler error or warning.
+    Diagnostic objects are only valid in the scope of a resource.
+
+    LSP accepts a `Diagnostic := DiagnosticWith String`.
+    The infoview also accepts `InteractiveDiagnostic := DiagnosticWith (TaggedText MsgEmbed)`.
+    [reference](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic)
+
+
+DiagnosticRelatedInformation                      *DiagnosticRelatedInformation*
+                     `textDocument/publishDiagnostics` notification and
+                     `textDocument/codeAction` request.
+    Represents a related message and source code location for a diagnostic.
+    This should be used to point to code locations that cause or are related to
+    a diagnostics, e.g when duplicating a symbol in a scope.
+
+    Fields: ~
+        {location}  (lsp.Location)
+        {message}   (string)
+
+
 LeanFileProgressParams                                  *LeanFileProgressParams*
 
     Fields: ~
         {textDocument}  (lsp.VersionedTextDocumentIdentifier)
         {processing}    (LeanFileProgressProcessingInfo[])
+
+
+                                                  *LeanPublishDiagnosticsParams*
+LeanPublishDiagnosticsParams : lsp.PublishDiagnosticsParams
+
+    Fields: ~
+        {diagnostics}  (DiagnosticWith)
+
+
+lsp.goals_accomplished_at()                          *lsp.goals_accomplished_at*
+
+    Returns: ~
+        (boolean)  is_accomplished
+
+
+                                           *lsp.handlers.on_publish_diagnostics*
+lsp.handlers.on_publish_diagnostics({result}, {ctx}, {config?})
+    A replacement handler for diagnostic publishing for Lean-specific behavior.
+
+    Publishes all "silent" Lean diagnostics to a separate namespace, and creates
+    unsolved goals markers (in yet another namespace).
+
+    Parameters: ~
+        {result}   (LeanPublishDiagnosticsParams)
+        {ctx}      (lsp.HandlerContext)
+        {config?}  (vim.diagnostic.Opts)
 
 
                                             *lsp.handlers.file_progress_handler*

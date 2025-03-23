@@ -17,7 +17,7 @@ describe('interactive infoview', function()
     'shows no goals',
     helpers.clean_buffer([[example : 37 = 37 := by rfl]], function()
       helpers.move_cursor { to = { 1, 26 } }
-      assert.infoview_contents.are '▶ goals accomplished 🎉'
+      assert.infoview_contents.are 'Goals accomplished 🎉'
     end)
   )
 
