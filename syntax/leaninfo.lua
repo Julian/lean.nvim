@@ -5,7 +5,6 @@ local config = require 'lean.config'().infoview
 
 -- Goal state
 
-syntax [[match leanInfoGoals "^▶.*goal.*"]]
 highlight [[default link leanInfoGoals Title]]
 
 syntax [[match leanInfoGoalCase "^case .*"]]

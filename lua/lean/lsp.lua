@@ -34,13 +34,26 @@ function lsp.enable(opts)
       editDelay = 10, -- see #289
       hasWidgets = true,
     },
+    on_init = function(_, response)
+      local version = response.serverInfo.version
+      ---Lean 4.19 introduces silent diagnostics, which we use to differentiate
+      ---between "No goals." and "Goals accomplished. For older versions, we
+      ---always say the latter (which is consistent with `lean.nvim`'s historic
+      ---behavior, albeit not with VSCode's).
+      ---
+      ---Technically this being a global is wrong, and will mean we start
+      ---showing the wrong message if someone opens an older Lean buffer in the
+      ---same session as a newer one...
+      vim.g.lean_no_goals_message = vim.version.ge(version, '0.3.0') and 'No goals.'
+        or 'Goals accomplished 🎉'
+    end,
   })
   require('lspconfig').leanls.setup(opts)
 end
 
 ---Find the `vim.lsp.Client` attached to the given buffer.
 ---@param bufnr? number
----@return vim.lsp.Client
+---@return vim.lsp.Client?
 function lsp.client_for(bufnr)
   local clients = vim.lsp.get_clients { name = 'leanls', bufnr = bufnr or 0 }
   return clients[1]
@@ -239,15 +252,15 @@ local silent_ns = vim.api.nvim_create_namespace 'lean.diagnostic.silent'
 ---A namespace for Lean's unsolved goal markers.and goals accomplished ranges
 local goals_ns = vim.api.nvim_create_namespace 'lean.goals'
 
----Is the given position within a range of a goals accomplished marker?
+---Is the given line within a range of a goals accomplished marker?
 ---@param bufnr? integer
----@param position? { [1]: integer, [2]: integer } a (1, 0)-indexed position in the buffer
+---@param line? integer a 0--indexed line number in the buffer
 ---@return boolean is_accomplished
-function lsp.goals_accomplished_at(bufnr, position)
+function lsp.goals_accomplished_on(bufnr, line)
   bufnr = bufnr or 0
-  position = position or vim.api.nvim_win_get_cursor(0)
-  local zeroidx = { position[1] - 1, position[2] }
-  local hls = vim.api.nvim_buf_get_extmarks(bufnr, goals_ns, zeroidx, zeroidx, {
+  line = line or (vim.api.nvim_win_get_cursor(0)[1] - 1)
+  local pos = { line, 0 }
+  local hls = vim.api.nvim_buf_get_extmarks(bufnr, goals_ns, pos, pos, {
     details = true,
     overlap = true,
     type = 'highlight',
@@ -259,6 +272,22 @@ end
 
 vim.cmd.highlight [[default link leanUnsolvedGoals DiagnosticInfo]]
 vim.cmd.highlight [[default link leanGoalsAccomplishedSign DiagnosticInfo]]
+
+---Is this a goals accomplished diagnostic?
+---@generic T
+---@param diagnostic DiagnosticWith<T>
+---@return boolean
+function lsp.is_unsolved_goals_diagnostic(diagnostic)
+  return vim.deep_equal(diagnostic.leanTags, { LeanDiagnosticTag.unsolvedGoals })
+end
+
+---Is this a goals accomplished diagnostic?
+---@generic T
+---@param diagnostic DiagnosticWith<T>
+---@return boolean
+function lsp.is_goals_accomplished_diagnostic(diagnostic)
+  return vim.deep_equal(diagnostic.leanTags, { LeanDiagnosticTag.goalsAccomplished })
+end
 
 ---A replacement handler for diagnostic publishing for Lean-specific behavior.
 ---
@@ -274,12 +303,12 @@ function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
 
   local other_silent = {}
 
-  ---@param each DiagnosticWith<string>
   result.diagnostics = vim
     .iter(result.diagnostics)
+    ---@param each DiagnosticWith<string>
     :filter(function(each)
       local range = range_of(each)
-      if vim.deep_equal(each.leanTags, { LeanDiagnosticTag.unsolvedGoals }) then
+      if lsp.is_unsolved_goals_diagnostic(each) then
         local buf_lines = get_buf_lines(bufnr)
         local end_line = buf_lines[range['end'].line + 1] or ''
         local end_row, end_col = unpack(position_to_byte0(range['end'], end_line))
@@ -289,19 +318,19 @@ function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
           virt_text = { { ' ⚒ ', 'leanUnsolvedGoals' } },
           virt_text_pos = 'overlay',
         })
-      elseif vim.deep_equal(each.leanTags, { LeanDiagnosticTag.goalsAccomplished }) then
+      elseif lsp.is_goals_accomplished_diagnostic(each) then
         local start_row, start_col, end_row, end_col = byterange_of(bufnr, each)
         vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
           sign_text = '🎉',
           sign_hl_group = 'leanGoalsAccomplishedSign',
         })
-        vim.highlight.range(
-          bufnr,
-          goals_ns,
-          'leanGoalsAccomplished',
-          { start_row + 1, start_col },
-          { end_row + 1, end_col }
-        )
+        vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
+          end_row = end_row,
+          end_col = end_col,
+          hl_group = 'leanGoalsAccomplished',
+          hl_mode = 'combine',
+          conceal = '🎉',
+        })
       end
 
       return not each.isSilent

@@ -86,7 +86,7 @@ describe('widgets', function()
       function()
         helpers.move_cursor { to = { 1, 100 } }
         assert.infoview_contents.are [[
-          ▶ goals accomplished 🎉
+          Goals accomplished 🎉
 
           ▼ suggestion:
           exact rfl
@@ -125,7 +125,7 @@ describe('widgets', function()
       function()
         helpers.move_cursor { to = { 11, 2 } }
         assert.infoview_contents.are [[
-          ▶ goals accomplished 🎉
+          Goals accomplished 🎉
 
           ▼ suggestion:
           trivial

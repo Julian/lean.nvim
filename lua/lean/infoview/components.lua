@@ -8,6 +8,7 @@
 local Element = require('lean.tui').Element
 local config = require 'lean.config'
 local log = require 'lean.log'
+local lsp = require 'lean.lsp'
 local rpc = require 'lean.rpc'
 local util = require 'lean._util'
 local widgets = require 'lean.widgets'
@@ -52,12 +53,6 @@ local function range_to_string(range)
   )
 end
 
-local function goal_header(goals)
-  return #goals == 0 and H 'goals accomplished 🎉'
-    or #goals == 1 and ''
-    or H(('%d goals\n'):format(#goals))
-end
-
 ---The current (tactic) goal state.
 ---@param goal PlainGoal a Lean `plainGoal` LSP response
 ---@return Element[] goals the current plain goals
@@ -66,33 +61,11 @@ function components.plain_goal(goal)
     return {}
   end
 
-  local children = vim.iter(goal.goals):fold(nil, function(acc, k)
-    if acc then
-      table.insert(
-        acc,
-        Element:new {
-          text = '\n\n' .. k,
-          name = 'plain-goal',
-        }
-      )
-    else
-      acc = { Element:new { text = k, name = 'plain-goal' } }
-    end
+  return vim.iter(goal.goals):fold({}, function(acc, k)
+    local sep = #acc == 0 and '' or '\n\n'
+    table.insert(acc, Element:new { text = sep .. k })
     return acc
   end)
-
-  return {
-    Element:new {
-      name = 'plain-goals',
-      children = {
-        Element:new {
-          name = 'plain-goals-list',
-          text = goal_header(goal.goals),
-          children = children,
-        },
-      },
-    },
-  }
 end
 
 ---The current (term) goal state.
@@ -357,15 +330,11 @@ function components.interactive_goals(goal, sess)
     return {}
   end
 
-  local children = vim
-    .iter(goal.goals)
-    :fold({ Element:new { text = goal_header(goal.goals) } }, function(acc, k)
-      table.insert(acc, Element:new { text = #acc == 1 and '' or '\n\n' })
-      table.insert(acc, interactive_goal(k, sess))
-      return acc
-    end)
-
-  return { Element:new { name = 'interactive-goals', children = children } }
+  return vim.iter(goal.goals):fold({}, function(acc, k)
+    table.insert(acc, Element:new { text = #acc == 0 and '' or '\n\n' })
+    table.insert(acc, interactive_goal(k, sess))
+    return acc
+  end)
 end
 
 ---The current (term) goal state.
@@ -576,23 +545,50 @@ end
 ---@return Element[]? goal
 ---@return LspError? error
 function components.goal_at(params, sess, use_widgets)
-  local goal, interactive_err, err
+  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+  local children, goal, interactive_err, err
   if use_widgets ~= false then
     if sess == nil then
       sess = rpc.open(params)
     end
 
     goal, interactive_err = sess:getInteractiveGoals(params)
-    goal = goal and components.interactive_goals(goal, sess)
+    children = goal and components.interactive_goals(goal, sess)
   end
 
-  if not goal then
-    local uri = params.textDocument.uri
-    err, goal = require('lean.lsp').plain_goal(params, vim.uri_to_bufnr(uri))
-    goal = goal and components.plain_goal(goal)
+  if not children then
+    err, goal = lsp.plain_goal(params, bufnr)
+    children = goal and components.plain_goal(goal)
   end
 
-  return goal, interactive_err or err
+  local count = goal and #goal.goals
+  local header
+  if lsp.goals_accomplished_on(bufnr, params.position.line) then
+    header = 'Goals accomplished 🎉'
+  elseif not count or count == 1 then
+    header = ''
+  elseif count == 0 then -- this seems to happen in between theorems
+    header = vim.g.lean_no_goals_message or 'No goals.'
+  else
+    header = H(('%d goals'):format(count))
+  end
+
+  local sep, body = '', nil
+  if children and #children > 0 then
+    sep = '\n'
+    body = Element:new { children = children }
+  end
+
+  local with_header = header ~= ''
+      and Element:new {
+        children = {
+          Element:new { text = header .. sep, hlgroup = 'leanInfoGoals' },
+          body,
+        },
+      }
+    or body
+
+  return { with_header }, interactive_err or err
 end
 
 ---@param params lsp.TextDocumentPositionParams
@@ -613,11 +609,28 @@ function components.term_goal_at(params, sess, use_widgets)
 
   if not term_goal then
     local uri = params.textDocument.uri
-    err, term_goal = require('lean.lsp').plain_term_goal(params, vim.uri_to_bufnr(uri))
+    err, term_goal = lsp.plain_term_goal(params, vim.uri_to_bufnr(uri))
     term_goal = term_goal and components.term_goal(term_goal)
   end
 
   return term_goal, interactive_err or err
+end
+
+---Retrieve the interactive diagnostics at the given line.
+---
+---Filters out silent diagnostics which we show elsewhere.
+---@param sess Subsession
+---@param line number
+---@return DiagnosticWith<TaggedText.MsgEmbed>[]
+---@return LspError
+local function interactive_diagnostics_for(sess, line)
+  ---@type LineRange
+  local range = { start = line, ['end'] = line + 1 }
+  local diagnostics, err = sess:getInteractiveDiagnostics(range)
+  if err then
+    return {}, err
+  end
+  return diagnostics, err
 end
 
 ---@param params lsp.TextDocumentPositionParams
@@ -635,10 +648,7 @@ function components.diagnostics_at(params, sess, use_widgets)
   end
 
   local line = params.position.line
-  local diagnostics, err = sess:getInteractiveDiagnostics {
-    start = line,
-    ['end'] = line + 1,
-  }
+  local diagnostics, err = interactive_diagnostics_for(sess, line)
   if err then
     -- GENERALIZEME: This is the same kind of code as below for widgets, where
     --               we seem to need some higher-level retry logic.
@@ -646,17 +656,19 @@ function components.diagnostics_at(params, sess, use_widgets)
     --               point fallback to non-interactive diagnostics if we see
     --               repeated failure I think, though maybe that should happen
     --               at the caller.
-    sess = rpc.open(params)
-    diagnostics, err = sess:getInteractiveDiagnostics {
-      start = line,
-      ['end'] = line + 1,
-    }
+    diagnostics, err = interactive_diagnostics_for(rpc.open(params), line)
     if err then
       return components.diagnostics(params), err
     end
   end
 
-  return components.interactive_diagnostics(diagnostics, line, sess), err
+  ---We filter goals accomplished diagnostics from showing in the infoview, as
+  ---they'll be indicated at the top.
+  ---@param each DiagnosticWith<TaggedText.MsgEmbed>
+  local filtered = vim.iter(diagnostics):filter(function(each)
+    return not lsp.is_goals_accomplished_diagnostic(each)
+  end)
+  return components.interactive_diagnostics(filtered, line, sess), err
 end
 
 ---@param params lsp.TextDocumentPositionParams
