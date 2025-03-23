@@ -28,6 +28,117 @@ describe('Element', function()
     end)
   end)
 
+  describe(':titled', function()
+    it('creates an Element with a title and children', function()
+      local foo = Element:new { text = 'foo', name = 'foo-name' }
+      local bar = Element:new { text = 'bar bar', name = 'bar-name' }
+      local baz = Element:new { name = 'baz-name' }
+
+      local element = Element:titled { title = 'quux', body = { foo, bar, baz } }
+
+      assert.is.same(
+        Element:new {
+          children = {
+            Element:new { text = 'quux\n' },
+            Element:new { children = { foo, bar, baz } },
+          },
+        },
+        element
+      )
+    end)
+
+    it('creates a text Element when children is empty', function()
+      local element = Element:titled { title = 'stuff', body = {} }
+
+      assert.is.same(Element:new { text = 'stuff' }, element)
+    end)
+
+    it('creates a text Element when children is nil', function()
+      local element = Element:titled { title = 'stuff' }
+
+      assert.is.same(Element:new { text = 'stuff' }, element)
+    end)
+
+    it('returns nil when given only an empty title', function()
+      assert.is_nil(Element:titled { title = '' })
+    end)
+
+    it('returns nil when given an empty title and no body', function()
+      assert.is_nil(Element:titled { title = '', body = {} })
+    end)
+
+    it('does not add a newline when title is empty', function()
+      local foo = Element:new { text = 'foo', name = 'foo-name' }
+      local bar = Element:new { text = 'bar bar', name = 'bar-name' }
+      local baz = Element:new { name = 'baz-name' }
+
+      local element = Element:titled { title = '', body = { foo, bar, baz } }
+
+      assert.is.same(Element:new { children = { foo, bar, baz } }, element)
+    end)
+
+    describe('title_hlgroup', function()
+      it('creates an Element with a title and children', function()
+        local foo = Element:new { text = 'foo', name = 'foo-name' }
+        local bar = Element:new { text = 'bar bar', name = 'bar-name' }
+
+        local element = Element:titled {
+          title = 'quux',
+          title_hlgroup = 'Title',
+          body = { foo, bar },
+        }
+
+        assert.is.same(
+          Element:new {
+            children = {
+              Element:new { text = 'quux\n', hlgroup = 'Title' },
+              Element:new { children = { foo, bar } },
+            },
+          },
+          element
+        )
+      end)
+
+      it('creates a text Element when children is empty', function()
+        local element = Element:titled {
+          title = 'quux',
+          title_hlgroup = 'Another',
+          body = {},
+        }
+
+        assert.is.same(Element:new { text = 'quux', hlgroup = 'Another' }, element)
+      end)
+
+      it('creates a text Element when children is nil', function()
+        local element = Element:titled { title = 'stuff', title_hlgroup = 'Title' }
+
+        assert.is.same(Element:new { text = 'stuff', hlgroup = 'Title' }, element)
+      end)
+
+      it('returns nil when given only an empty title', function()
+        assert.is_nil(Element:titled { title = '', title_hlgroup = 'Title' })
+      end)
+
+      it('returns nil when given an empty title and no body', function()
+        assert.is_nil(Element:titled { title = '', body = {}, title_hlgroup = 'Title' })
+      end)
+
+      it('does not add a newline when title is empty', function()
+        local foo = Element:new { text = 'foo', name = 'foo-name' }
+        local bar = Element:new { text = 'bar bar', name = 'bar-name' }
+        local baz = Element:new { name = 'baz-name' }
+
+        local element = Element:titled {
+          title = '',
+          title_hlgroup = 'Title',
+          body = { foo, bar, baz },
+        }
+
+        assert.is.same(Element:new { children = { foo, bar, baz } }, element)
+      end)
+    end)
+  end)
+
   describe(':concat', function()
     it('creates an Element concatenated by a separator', function()
       local foo = Element:new { text = 'foo', name = 'foo-name' }

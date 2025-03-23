@@ -573,22 +573,13 @@ function components.goal_at(params, sess, use_widgets)
     header = H(('%d goals'):format(count))
   end
 
-  local sep, body = '', nil
-  if children and #children > 0 then
-    sep = '\n'
-    body = Element:new { children = children }
-  end
+  local element = Element:titled {
+    title = header,
+    body = children,
+    title_hlgroup = 'leanInfoGoals',
+  }
 
-  local with_header = header ~= ''
-      and Element:new {
-        children = {
-          Element:new { text = header .. sep, hlgroup = 'leanInfoGoals' },
-          body,
-        },
-      }
-    or body
-
-  return { with_header }, interactive_err or err
+  return { element }, interactive_err or err
 end
 
 ---@param params lsp.TextDocumentPositionParams

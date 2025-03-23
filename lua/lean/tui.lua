@@ -427,6 +427,34 @@ function Element:filter(fn)
   self:__filter(path, pos, fn)
 end
 
+---@class TitledElementArgs
+---@field title string
+---@field body Element[]?
+---@field title_hlgroup? string the hlgroup to use for the element's title
+
+---Create an element with optional title and body contents.
+---@param opts TitledElementArgs
+---@return Element?
+function Element:titled(opts)
+  local title, body
+  if opts.body and #opts.body > 0 then
+    body = self:new { children = opts.body }
+    if opts.title == '' then
+      return body
+    end
+    title = self:new {
+      text = opts.title .. '\n',
+      hlgroup = opts.title_hlgroup
+    }
+  elseif opts.title == '' then
+    return
+  else
+    return self:new { text = opts.title, hlgroup = opts.title_hlgroup }
+  end
+
+  return self:new { children = { title, body } }
+end
+
 ---Create an element which joins a list-like table of elements with the provided separator.
 ---@param elements Element[]
 ---@param sep string
