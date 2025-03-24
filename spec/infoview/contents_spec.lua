@@ -14,7 +14,7 @@ require('lean').setup { progress_bars = { enable = false } }
 
 describe('interactive infoview', function()
   it(
-    'shows no goals',
+    'shows goals accomplished on the first line of a solved goal',
     helpers.clean_buffer([[example : 37 = 37 := by rfl]], function()
       helpers.move_cursor { to = { 1, 26 } }
       assert.infoview_contents.are 'Goals accomplished 🎉'
@@ -218,6 +218,30 @@ describe('interactive infoview', function()
         ▶ expected type (1:40-1:43)
         𝔽 : Type
         ⊢ 𝔽 = 𝔽
+      ]]
+    end)
+  )
+
+  it(
+    'shows goals accomplished on lines with multiple declarations',
+    helpers.clean_buffer([[example : 2 = 2 := rfl example : 3 = 3 := by]], function()
+      helpers.move_cursor { to = { 1, 20 } }
+      assert.infoview_contents.are [[
+        ▶ expected type (1:20-1:23)
+        ⊢ 2 = 2
+
+        ▶ 1:43-1:45: error:
+        unsolved goals
+        ⊢ 3 = 3
+      ]]
+
+      helpers.move_cursor { to = { 1, 43 } }
+      assert.infoview_contents.are [[
+        ⊢ 3 = 3
+
+        ▶ 1:43-1:45: error:
+        unsolved goals
+        ⊢ 3 = 3
       ]]
     end)
   )
