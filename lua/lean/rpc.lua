@@ -279,6 +279,7 @@ end
 
 ---@alias CodeWithInfos TaggedText.SubExprInfo
 
+---This type is for internal use in the infoview/LSP. It should not be used in user widgets.
 ---@class InfoWithCtx
 
 ---@alias DiffTag 'wasChanged' | 'willChange' | 'wasDeleted' | 'willDelete' | 'wasInserted' | 'willInsert'
@@ -289,7 +290,7 @@ end
 ---Implemented in `Lean.Widget.InteractiveCode`.
 ---@class SubexprInfo
 ---@field info InfoWithCtx
----@field subexprPos integer
+---@field subexprPos integer The position of this subexpression within the top-level expression.
 ---@field diffStatus? DiffTag
 
 ---@class InfoPopup
