@@ -14,7 +14,7 @@ local Element = require('lean.tui').Element
 local dedent = require('lean._util').dedent
 local log = require 'lean.log'
 
----@alias WidgetRenderer fun(self: Widget, props: any, uri: string): Element[]?
+---@alias WidgetRenderer fun(self: Widget, props: any, pos: lsp.TextDocumentPositionParams): Element[]?
 
 ---A Lean user widget.
 ---@class Widget
@@ -76,11 +76,15 @@ end
 ---
 ---Unsupported widgets are ignored after logging a notice.
 ---@param instance UserWidgetInstance
----@param uri string the URI of the document whose widgets we are rendering
+---@param pos lsp.TextDocumentPositionParams the URI & position in the document whose widgets we are rendering
 ---@return Element?
-local function render(instance, uri)
-  return Widget.from_user_widget(instance):element(instance.props, uri)
+local function render(instance, pos)
+  return Widget.from_user_widget(instance):element(instance.props, pos)
 end
+
+-- -----------------
+-- Lean core widgets
+-- -----------------
 
 ---@alias SuggestionText string
 
@@ -97,7 +101,8 @@ end
 ---@field style any
 
 ---@param props TryThisParams
-implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props, uri)
+---@param pos lsp.TextDocumentPositionParams
+implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props, pos)
   local blocks = vim.iter(ipairs(props.suggestions)):map(function(i, each)
     local children = {
       i ~= 1 and Element:new { text = '\n' } or nil,
@@ -113,7 +118,7 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props, uri)
         hlgroup = 'widgetLink',
         events = {
           click = function()
-            local bufnr = vim.uri_to_bufnr(uri)
+            local bufnr = vim.uri_to_bufnr(pos.textDocument.uri)
             if not vim.api.nvim_buf_is_loaded(bufnr) then
               return
             end
@@ -144,10 +149,14 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props, uri)
   }
 end)
 
+-- -------------------
+-- ImportGraph widgets
+-- -------------------
+
 ---@class GoToModuleLinkParams
 ---@field modName string the module to jump to
 
----A "jump to a module" which comes from `import-graph`.
+---A "jump to a module".
 ---@param props GoToModuleLinkParams
 implement('GoToModuleLink', function(_, props)
   return Element:new {
@@ -191,16 +200,16 @@ return {
 
   ---Render the given response to one or more TUI elements.
   ---@param response? UserWidgets
-  ---@param uri string the URI of the document whose widgets we are receiving
+  ---@param pos lsp.TextDocumentPositionParams the URI and position whose widgets we are receiving
   ---@param _ fun(widget: UserWidgetInstance):string,LspError retrieve the JS source of a widget
   ---@return Element[]? elements
-  render_response = function(response, uri, _)
+  render_response = function(response, pos, _)
     if response then
       return vim
         .iter(response.widgets)
         ---@param widget UserWidgetInstance
         :map(function(widget)
-          return render(widget, uri)
+          return render(widget, pos)
         end)
         :totable()
     end

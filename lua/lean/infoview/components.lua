@@ -685,7 +685,7 @@ function components.user_widgets_at(params, sess, use_widgets)
   end
   return widgets.render_response(
     response,
-    params.textDocument.uri,
+    params,
     ---@param widget UserWidgetInstance
     function(widget)
       local source, source_err = sess:getWidgetSource(params.position, widget.javascriptHash)
