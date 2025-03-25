@@ -14,7 +14,7 @@ local Element = require('lean.tui').Element
 local dedent = require('lean._util').dedent
 local log = require 'lean.log'
 
----@alias WidgetRenderer fun(self: Widget, props: any, pos: lsp.TextDocumentPositionParams): Element[]?
+---@alias WidgetRenderer fun(ctx: RenderContext, props: any, hash: string): Element[]?
 
 ---A Lean user widget.
 ---@class Widget
@@ -72,14 +72,73 @@ function Widget.from_user_widget(user_widget)
   return BYPASSED_WIDGETS[user_widget.id]
 end
 
+---Data and common helpers for an actively rendering widget.
+---
+---Passed to any function which implements a widget in order to interact with
+---the rest of the environment.
+---@class RenderContext
+---@field private pos lsp.TextDocumentPositionParams the URI & position in the document whose widgets we are rendering
+---@field private sess Subsession an RPC subsession for the current position
+local RenderContext = {}
+RenderContext.__index = RenderContext
+
+---@class RenderContextNewArgs
+---@field pos lsp.TextDocumentPositionParams the URI & position in the document whose widgets we are rendering
+---@field sess Subsession an RPC session for the current position
+
+---Create a new render context.
+---@param args RenderContextNewArgs
+---@return RenderContext
+function RenderContext:new(args)
+  local obj = { pos = args.pos, sess = args.sess }
+  return setmetatable(obj, self)
+end
+
+---Make a raw RPC call.
+---@param method string
+---@return any result
+---@return LspError error
+function RenderContext:rpc_call(method, params)
+  return self.sess:call(method, params)
+end
+
+---The buffer we currently are rendering a widget to.
+---@return number? bufnr
+function RenderContext:bufnr()
+  local bufnr = vim.uri_to_bufnr(self.pos.textDocument.uri)
+  return vim.api.nvim_buf_is_loaded(bufnr) and bufnr or nil
+end
+
+---The last window before the user visited the infoview.
+---
+---Usually this is which Lean file they were editing.
+---@return number? window
+function RenderContext.get_last_window()
+  local this_infoview = require('lean.infoview').get_current_infoview()
+  local this_info = this_infoview and this_infoview.info
+  return this_info and this_info.last_window
+end
+
+---Retrieve the Javascript source for the given widget.
+---
+---Usually this is useless as we aren't actually rendering Javascript, but it
+---can be useful for implementing a widget to see what its source does.
+---@param hash string the Javascript hash of the widget
+---@return string source
+function RenderContext:source_of(hash)
+  local response = self.sess:getWidgetSource(self.pos.position, hash)
+  return response and response.sourcetext
+end
+
 ---Render a user widget instance into a TUI element.
 ---
 ---Unsupported widgets are ignored after logging a notice.
 ---@param instance UserWidgetInstance
----@param pos lsp.TextDocumentPositionParams the URI & position in the document whose widgets we are rendering
+---@param ctx RenderContext the surrounding context (data) for what we're rendering
 ---@return Element?
-local function render(instance, pos)
-  return Widget.from_user_widget(instance):element(instance.props, pos)
+local function render(instance, ctx)
+  local widget = Widget.from_user_widget(instance)
+  return widget.element(ctx, instance.props, instance.javascriptHash)
 end
 
 -- -----------------
@@ -100,9 +159,9 @@ end
 ---@field isInline boolean
 ---@field style any
 
+---@param ctx RenderContext
 ---@param props TryThisParams
----@param pos lsp.TextDocumentPositionParams
-implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props, pos)
+implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(ctx, props)
   local blocks = vim.iter(ipairs(props.suggestions)):map(function(i, each)
     local children = {
       i ~= 1 and Element:new { text = '\n' } or nil,
@@ -118,8 +177,8 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(_, props, pos)
         hlgroup = 'widgetLink',
         events = {
           click = function()
-            local bufnr = vim.uri_to_bufnr(pos.textDocument.uri)
-            if not vim.api.nvim_buf_is_loaded(bufnr) then
+            local bufnr = ctx:bufnr()
+            if not bufnr then
               return
             end
 
@@ -157,27 +216,21 @@ end)
 ---@field modName string the module to jump to
 
 ---A "jump to a module".
+---@param ctx RenderContext
 ---@param props GoToModuleLinkParams
-implement('GoToModuleLink', function(_, props)
+implement('GoToModuleLink', function(ctx, props)
   return Element:new {
     text = props.modName,
     highlightable = true,
     hlgroup = 'widgetLink',
     events = {
       go_to_def = function(_)
-        local this_infoview = require('lean.infoview').get_current_infoview()
-        local this_info = this_infoview and this_infoview.info
-        local last_window = this_info and this_info.last_window
+        local last_window = ctx.get_last_window()
         if not last_window then
           return
         end
         vim.api.nvim_set_current_win(last_window)
-
-        -- FIXME: Clearly we need to be able to get a session without touching
-        --        internals... Probably this should be a method on ctx.
-        local params = this_info.pin.__position_params
-        local sess = require('lean.rpc').open(params)
-        local uri, err = sess:call('getModuleUri', props.modName)
+        local uri, err = ctx:rpc_call('getModuleUri', props.modName)
         if err then
           return -- FIXME: Yeah, this should go somewhere clearly.
         end
@@ -196,20 +249,35 @@ end)
 return {
   Widget = Widget,
   implement = implement,
-  render = render,
+
+  ---A version of widget rendering that constructs a one-time render context.
+  ---@param widget UserWidgetInstance
+  ---@param sess Subsession
+  ---@return Element?
+  render = function(widget, sess)
+    -- This is used in one place at the minute (in the infoview) and it's not
+    -- clear whether it should be done in a different way yet.
+
+    -- TODO: Is sess.pos the right position??
+    --       I still don't really understand why we have positions on sessions,
+    --       as we essentially never use this attribute (otehr than now here).
+    local ctx = RenderContext:new { pos = sess.pos, sess = sess }
+    return render(widget, ctx)
+  end,
 
   ---Render the given response to one or more TUI elements.
   ---@param response? UserWidgets
   ---@param pos lsp.TextDocumentPositionParams the URI and position whose widgets we are receiving
-  ---@param _ fun(widget: UserWidgetInstance):string,LspError retrieve the JS source of a widget
+  ---@param sess Subsession an RPC subsession for the current position
   ---@return Element[]? elements
-  render_response = function(response, pos, _)
+  render_response = function(response, pos, sess)
     if response then
+      local ctx = RenderContext:new { pos = pos, sess = sess }
       return vim
         .iter(response.widgets)
         ---@param widget UserWidgetInstance
         :map(function(widget)
-          return render(widget, pos)
+          return render(widget, ctx)
         end)
         :totable()
     end

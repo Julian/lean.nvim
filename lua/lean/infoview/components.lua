@@ -494,7 +494,7 @@ local function tagged_text_msg_embed(t, sess, parent_cls)
 
       render()
     elseif embed.widget ~= nil then
-      local widget = widgets.render(embed.widget.wi)
+      local widget = widgets.render(embed.widget.wi, sess)
       if not widget then
         log:debug {
           message = 'Widget rendering failed, falling back to the `alt` widget.',
@@ -683,16 +683,7 @@ function components.user_widgets_at(params, sess, use_widgets)
     sess = rpc.open(params)
     response, err = sess:getWidgets(params.position)
   end
-  return widgets.render_response(
-    response,
-    params,
-    ---@param widget UserWidgetInstance
-    function(widget)
-      local source, source_err = sess:getWidgetSource(params.position, widget.javascriptHash)
-      return source.sourcetext, source_err
-    end
-  ),
-    err
+  return widgets.render_response(response, params, sess), err
 end
 
 return components
