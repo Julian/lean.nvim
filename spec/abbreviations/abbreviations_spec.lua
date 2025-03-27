@@ -135,9 +135,9 @@ describe('unicode abbreviation expansion', function()
     it(
       'does not create orphan mappings',
       helpers.clean_buffer(function()
-        assert.is.empty(vim.fn.mapcheck('<Tab>', 'i'))
+        local mapping = vim.fn.mapcheck('<Tab>', 'i')
         helpers.insert [[\e<Tab>]]
-        assert.is.empty(vim.fn.mapcheck('<Tab>', 'i'))
+        assert.is.equal(vim.fn.mapcheck('<Tab>', 'i'), mapping)
       end)
     )
   end)
