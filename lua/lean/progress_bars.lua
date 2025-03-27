@@ -11,6 +11,11 @@ local sign_ns = vim.api.nvim_create_namespace 'lean.progress'
 vim.diagnostic.config({ virtual_text = false }, sign_ns)
 
 local function _update(bufnr)
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    -- In case the buffer was unloaded in between when we scheduled the update
+    return
+  end
+
   vim.fn.sign_unplace(sign_group_name, { buffer = bufnr })
   local diagnostics = {}
 
@@ -48,8 +53,10 @@ function progress_bars.update(params)
   if not progress_bars.enabled then
     return
   end
-  -- TODO FIXME can potentially create new buffer
   local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
 
   if timers[bufnr] == nil then
     timers[bufnr] = vim.defer_fn(function()
