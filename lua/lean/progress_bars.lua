@@ -8,7 +8,7 @@ local sign_group_name = 'leanProgressBar'
 local sign_name = 'leanProgressBar'
 
 local sign_ns = vim.api.nvim_create_namespace 'lean.progress'
-vim.diagnostic.config({ virtual_text = false }, sign_ns)
+vim.diagnostic.config({ virtual_text = false, virtual_lines = false }, sign_ns)
 
 local function _update(bufnr)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
