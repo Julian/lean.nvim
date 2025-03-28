@@ -255,9 +255,13 @@ local goals_ns = vim.api.nvim_create_namespace 'lean.goals'
 ---Is the given line within a range of a goals accomplished marker?
 ---@param bufnr? integer
 ---@param line? integer a 0--indexed line number in the buffer
----@return boolean is_accomplished
+---@return boolean? accomplished whether there's a marker at the cursor, or nil if the buffer isn't loaded
 function lsp.goals_accomplished_on(bufnr, line)
   bufnr = bufnr or 0
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
+
   line = line or (vim.api.nvim_win_get_cursor(0)[1] - 1)
   local pos = { line, 0 }
   local hls = vim.api.nvim_buf_get_extmarks(bufnr, goals_ns, pos, pos, {
@@ -387,8 +391,8 @@ function lsp.restart_file(bufnr)
   end
   local uri = vim.uri_from_bufnr(bufnr)
 
-  client.notify(ms.textDocument_didClose, { textDocument = { uri = uri } })
-  client.notify(ms.textDocument_didOpen, {
+  client:notify(ms.textDocument_didClose, { textDocument = { uri = uri } })
+  client:notify(ms.textDocument_didOpen, {
     textDocument = {
       version = 0,
       uri = uri,
