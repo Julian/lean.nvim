@@ -314,12 +314,6 @@ LeanClientConfig : vim.lsp.ClientConfig                       *LeanClientConfig*
         {lean?}  (LeanClientCapabilities)
 
 
-lsp.enable({opts})                                                  *lsp.enable*
-
-    Parameters: ~
-        {opts}  (LeanClientConfig)
-
-
 lsp.client_for({bufnr?})                                        *lsp.client_for*
     Find the `vim.lsp.Client` attached to the given buffer.
 
@@ -395,23 +389,10 @@ lsp.is_goals_accomplished_diagnostic()    *lsp.is_goals_accomplished_diagnostic*
         (boolean)
 
 
-                                           *lsp.handlers.on_publish_diagnostics*
-lsp.handlers.on_publish_diagnostics({result}, {ctx})
-    A replacement handler for diagnostic publishing for Lean-specific behavior.
-
-    Publishes all "silent" Lean diagnostics to a separate namespace, and creates
-    unsolved goals markers (in yet another namespace).
+lsp.enable({opts})                                                  *lsp.enable*
 
     Parameters: ~
-        {result}  (LeanPublishDiagnosticsParams)
-        {ctx}     (lsp.HandlerContext)
-
-
-                                            *lsp.handlers.file_progress_handler*
-lsp.handlers.file_progress_handler({params})
-
-    Parameters: ~
-        {params}  (LeanFileProgressParams)
+        {opts}  (LeanClientConfig)
 
 
 lsp.restart_file({bufnr?})                                    *lsp.restart_file*
