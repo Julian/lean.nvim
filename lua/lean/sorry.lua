@@ -31,7 +31,7 @@ return {
   ---Fill the current cursor position with `sorry`s to discharge all goals.
   fill = function()
     local client = lsp.client_for(0)
-    local params = vim.lsp.util.make_position_params()
+    local params = vim.lsp.util.make_position_params(0, 'utf-16')
 
     local response = client.request_sync('$/lean/plainGoal', params, 1000, 0)
     ---@type PlainGoal?
