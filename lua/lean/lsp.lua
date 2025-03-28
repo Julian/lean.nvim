@@ -162,45 +162,6 @@ local function tags_lsp_to_vim(diagnostic, client_id)
   return tags
 end
 
----@param diagnostics DiagnosticWith<string>[]
----@param bufnr integer
----@param client_id integer
----@return vim.Diagnostic[]
-local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
-  local buf_lines = get_buf_lines(bufnr)
-  local client = vim.lsp.get_client_by_id(client_id)
-  local position_encoding = client and client.offset_encoding or 'utf-16'
-  --- @param diagnostic DiagnosticWith<string>
-  --- @return vim.Diagnostic
-  return vim.tbl_map(function(diagnostic)
-    local start = diagnostic.range.start
-    local _end = diagnostic.range['end']
-    local line = buf_lines and buf_lines[start.line + 1] or ''
-    local end_line = buf_lines and buf_lines[_end.line + 1] or ''
-
-    local ok, col, end_col
-    ok, col = pcall(vim.str_byteindex, line, start.character, position_encoding == 'utf-16')
-    col = ok and col or start.character
-    ok, end_col = pcall(vim.str_byteindex, end_line, _end.character, position_encoding == 'utf-16')
-    end_col = ok and end_col or _end.character
-    --- @type vim.Diagnostic
-    return {
-      lnum = start.line,
-      col = col,
-      end_lnum = _end.line,
-      end_col = end_col,
-      severity = severity_lsp_to_vim(diagnostic.severity),
-      message = diagnostic.message,
-      source = diagnostic.source,
-      code = diagnostic.code,
-      _tags = tags_lsp_to_vim(diagnostic, client_id),
-      user_data = {
-        lsp = diagnostic,
-      },
-    }
-  end, diagnostics)
-end
-
 ---The range of a Lean diagnostic.
 ---
 ---Prioritizes `fullRange`, which is the "real" range of the diagnostic, not
@@ -245,6 +206,31 @@ local function byterange_of(bufnr, diagnostic)
     vim.api.nvim_buf_get_lines(bufnr, range['end'].line, range['end'].line + 1, true)[1]
   local _end = position_to_byte0(range['end'], end_line)
   return start[1], start[2], _end[1], _end[2]
+end
+
+---@param diagnostics DiagnosticWith<string>[]
+---@param bufnr integer
+---@param client_id integer
+---@return vim.Diagnostic[]
+local function lean_diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
+  --- @param diagnostic DiagnosticWith<string>
+  --- @return vim.Diagnostic
+  return vim.tbl_map(function(diagnostic)
+    local start_row, start_col, end_row, end_col = byterange_of(bufnr, diagnostic)
+    --- @type vim.Diagnostic
+    return {
+      lnum = start_row,
+      col = start_col,
+      end_lnum = end_row,
+      end_col = end_col,
+      severity = severity_lsp_to_vim(diagnostic.severity),
+      message = diagnostic.message,
+      source = diagnostic.source,
+      code = diagnostic.code,
+      _tags = tags_lsp_to_vim(diagnostic, client_id),
+      user_data = { lsp = diagnostic },
+    }
+  end, diagnostics)
 end
 
 ---A namespace where we put Lean's "silent" diagnostics.
@@ -343,11 +329,16 @@ function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
 
   vim.lsp.diagnostic.on_publish_diagnostics(_, result, ctx, config)
 
-  vim.diagnostic.set(silent_ns, bufnr, diagnostic_lsp_to_vim(other_silent, bufnr, ctx.client_id), {
-    underline = false,
-    virtual_text = false,
-    update_in_insert = false,
-  })
+  vim.diagnostic.set(
+    silent_ns,
+    bufnr,
+    lean_diagnostic_lsp_to_vim(other_silent, bufnr, ctx.client_id),
+    {
+      underline = false,
+      virtual_text = false,
+      update_in_insert = false,
+    }
+  )
 end
 
 ---Called when `$/lean/fileProgress` is triggered.
