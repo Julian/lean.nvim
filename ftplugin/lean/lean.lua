@@ -48,6 +48,13 @@ vim.api.nvim_create_autocmd('DiagnosticChanged', {
   group = vim.api.nvim_create_augroup('LeanDiagnostics', { clear = false }),
   buffer = 0,
   callback = function(args)
+    -- If the buffer is no longer loaded, bail.
+    -- We could instead choose to un-register the autocmd if we notice this has
+    -- happened, but then we'd need to put it back again if it's loaded again.
+    if not vim.api.nvim_buf_is_loaded(args.buf) then
+      return
+    end
+
     local uri = vim.uri_from_bufnr(args.buf)
     vim.schedule(function()
       require('lean.infoview').__update_pin_by_uri(uri)

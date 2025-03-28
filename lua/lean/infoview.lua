@@ -981,7 +981,7 @@ function Pin:update_position()
   end
 
   local buf = self.__extmark_buf
-  if buf == -1 then
+  if not vim.api.nvim_buf_is_loaded(buf) then
     return
   end
 
