@@ -285,8 +285,7 @@ end
 ---unsolved goals markers (in yet another namespace).
 ---@param result LeanPublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
----@param config? vim.diagnostic.Opts
-function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
+function lsp.handlers.on_publish_diagnostics(_, result, ctx)
   local bufnr = vim.uri_to_bufnr(result.uri)
   vim.diagnostic.reset(silent_ns, bufnr)
   vim.api.nvim_buf_clear_namespace(bufnr, goals_ns, 0, -1)
@@ -327,7 +326,7 @@ function lsp.handlers.on_publish_diagnostics(_, result, ctx, config)
     end)
     :totable()
 
-  vim.lsp.diagnostic.on_publish_diagnostics(_, result, ctx, config)
+  vim.lsp.diagnostic.on_publish_diagnostics(_, result, ctx)
 
   vim.diagnostic.set(
     silent_ns,
