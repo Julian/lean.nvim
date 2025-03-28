@@ -17,40 +17,6 @@ local lsp = { handlers = {} }
 ---@class LeanClientConfig : vim.lsp.ClientConfig
 ---@field lean? LeanClientCapabilities
 
----@param opts LeanClientConfig
-function lsp.enable(opts)
-  opts.capabilities = opts.capabilities or vim.lsp.protocol.make_client_capabilities()
-  opts = vim.tbl_deep_extend('keep', opts, {
-    capabilities = {
-      lean = {
-        silentDiagnosticSupport = true,
-      },
-    },
-    handlers = {
-      ['$/lean/fileProgress'] = lsp.handlers.file_progress_handler,
-      [ms.textDocument_publishDiagnostics] = lsp.handlers.on_publish_diagnostics,
-    },
-    init_options = {
-      editDelay = 10, -- see #289
-      hasWidgets = true,
-    },
-    on_init = function(_, response)
-      local version = response.serverInfo.version
-      ---Lean 4.19 introduces silent diagnostics, which we use to differentiate
-      ---between "No goals." and "Goals accomplished. For older versions, we
-      ---always say the latter (which is consistent with `lean.nvim`'s historic
-      ---behavior, albeit not with VSCode's).
-      ---
-      ---Technically this being a global is wrong, and will mean we start
-      ---showing the wrong message if someone opens an older Lean buffer in the
-      ---same session as a newer one...
-      vim.g.lean_no_goals_message = vim.version.ge(version, '0.3.0') and 'No goals.'
-        or 'Goals accomplished 🎉'
-    end,
-  })
-  require('lspconfig').leanls.setup(opts)
-end
-
 ---Find the `vim.lsp.Client` attached to the given buffer.
 ---@param bufnr? number
 ---@return vim.lsp.Client?
@@ -285,7 +251,7 @@ end
 ---unsolved goals markers (in yet another namespace).
 ---@param result LeanPublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
-function lsp.handlers.on_publish_diagnostics(_, result, ctx)
+local function on_publish_diagnostics(_, result, ctx)
   local bufnr = vim.uri_to_bufnr(result.uri)
   vim.diagnostic.reset(silent_ns, bufnr)
   vim.api.nvim_buf_clear_namespace(bufnr, goals_ns, 0, -1)
@@ -343,7 +309,7 @@ end
 ---Called when `$/lean/fileProgress` is triggered.
 ---@param err LspError?
 ---@param params LeanFileProgressParams
-function lsp.handlers.file_progress_handler(err, params)
+local function file_progress_handler(err, params)
   log:trace {
     message = 'got fileProgress',
     err = err,
@@ -364,6 +330,40 @@ function lsp.handlers.file_progress_handler(err, params)
   pcall(require('lean.infoview').__update_pin_by_uri, params.textDocument.uri)
 
   require('lean.progress_bars').update(params)
+end
+
+---@param opts LeanClientConfig
+function lsp.enable(opts)
+  opts.capabilities = opts.capabilities or vim.lsp.protocol.make_client_capabilities()
+  opts = vim.tbl_deep_extend('keep', opts, {
+    capabilities = {
+      lean = {
+        silentDiagnosticSupport = true,
+      },
+    },
+    handlers = {
+      ['$/lean/fileProgress'] = file_progress_handler,
+      [ms.textDocument_publishDiagnostics] = on_publish_diagnostics,
+    },
+    init_options = {
+      editDelay = 10, -- see #289
+      hasWidgets = true,
+    },
+    on_init = function(_, response)
+      local version = response.serverInfo.version
+      ---Lean 4.19 introduces silent diagnostics, which we use to differentiate
+      ---between "No goals." and "Goals accomplished. For older versions, we
+      ---always say the latter (which is consistent with `lean.nvim`'s historic
+      ---behavior, albeit not with VSCode's).
+      ---
+      ---Technically this being a global is wrong, and will mean we start
+      ---showing the wrong message if someone opens an older Lean buffer in the
+      ---same session as a newer one...
+      vim.g.lean_no_goals_message = vim.version.ge(version, '0.3.0') and 'No goals.'
+        or 'Goals accomplished 🎉'
+    end,
+  })
+  require('lspconfig').leanls.setup(opts)
 end
 
 ---Restart the Lean server for an open Lean 4 file.
