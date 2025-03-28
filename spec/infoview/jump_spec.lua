@@ -15,7 +15,7 @@ describe('infoview jumping', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     lean_window = vim.api.nvim_get_current_win()
 
-    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
+    vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
     local current_infoview = infoview.get_current_infoview()
 
     current_infoview:open()

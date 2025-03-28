@@ -22,12 +22,12 @@ describe('infoview custom autoopen', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     local lean_window = vim.api.nvim_get_current_win()
 
-    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
+    vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
     assert.windows.are(lean_window)
 
     should_autoopen = true
 
-    vim.cmd('edit! ' .. fixtures.project.some_nested_existing_file)
+    vim.cmd.edit { fixtures.project.some_nested_existing_file, bang = true }
     assert.windows.are(lean_window, infoview.get_current_infoview().window)
   end)
 end)

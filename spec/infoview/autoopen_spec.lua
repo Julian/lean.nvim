@@ -11,7 +11,7 @@ describe('infoview autoopen', function()
 
   it('automatically opens infoviews when editing new Lean files', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
-    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
+    vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
     lean_window = vim.api.nvim_get_current_win()
     assert.windows.are(lean_window, infoview.get_current_infoview().window)
   end)
@@ -35,7 +35,7 @@ describe('infoview autoopen', function()
     local tab2_window = vim.api.nvim_get_current_win()
     assert.windows.are(tab2_window)
 
-    vim.cmd('edit! ' .. fixtures.project.some_nested_existing_file)
+    vim.cmd.edit { fixtures.project.some_nested_existing_file, bang = true }
     local tab2_infoview = infoview.get_current_infoview()
     assert.are_not.same(tab1_infoview, tab2_infoview)
 
@@ -80,7 +80,7 @@ describe('infoview autoopen', function()
     vim.cmd.tabnew()
     infoview.set_autoopen(false)
     local tab2_window = vim.api.nvim_get_current_win()
-    vim.cmd('edit! ' .. fixtures.project.some_nested_existing_file)
+    vim.cmd.edit { fixtures.project.some_nested_existing_file, bang = true }
     assert.windows.are(tab2_window)
 
     -- But windows can still be opened and closed manually
@@ -99,7 +99,7 @@ describe('infoview autoopen', function()
 
     vim.cmd.tabnew()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
-    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
+    vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
     local current_window = vim.api.nvim_get_current_win()
     assert.windows.are(current_window, infoview.get_current_infoview().window)
   end)

@@ -250,7 +250,7 @@ describe('infoview content (auto-)update', function()
         1
       ]]
 
-      vim.cmd(tab2 .. 'tabclose')
+      vim.cmd.tabclose(tab2)
       assert.current_tabpage.is(vim.api.nvim_win_get_tabpage(lean_window))
     end)
   end)

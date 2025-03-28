@@ -17,7 +17,7 @@ describe('infoview window', function()
   local lean_window = vim.api.nvim_get_current_win()
 
   it('is on bottom with the cursor in the Lean window', function()
-    vim.cmd('edit! ' .. fixtures.project.some_existing_file)
+    vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
 
     assert.are.same({
       'col',
