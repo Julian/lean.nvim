@@ -6,6 +6,7 @@
 
 local ms = vim.lsp.protocol.Methods
 
+local config = require 'lean.config'
 local log = require 'lean.log'
 local util = require 'lean._util'
 
@@ -256,6 +257,8 @@ local function on_publish_diagnostics(_, result, ctx)
   vim.diagnostic.reset(silent_ns, bufnr)
   vim.api.nvim_buf_clear_namespace(bufnr, goals_ns, 0, -1)
 
+  local markers = config().infoview.goal_markers
+
   local other_silent = {}
 
   result.diagnostics = vim
@@ -268,15 +271,17 @@ local function on_publish_diagnostics(_, result, ctx)
         local end_line = buf_lines[range['end'].line + 1] or ''
         local end_row, end_col = unpack(position_to_byte0(range['end'], end_line))
 
-        vim.api.nvim_buf_set_extmark(bufnr, goals_ns, end_row, end_col, {
-          hl_mode = 'combine',
-          virt_text = { { ' ⚒ ', 'leanUnsolvedGoals' } },
-          virt_text_pos = 'overlay',
-        })
-      elseif lsp.is_goals_accomplished_diagnostic(each) then
+        if markers.unsolved ~= '' then
+          vim.api.nvim_buf_set_extmark(bufnr, goals_ns, end_row, end_col, {
+            hl_mode = 'combine',
+            virt_text = { { markers.unsolved, 'leanUnsolvedGoals' } },
+            virt_text_pos = 'overlay',
+          })
+        end
+      elseif markers.accomplished ~= '' and lsp.is_goals_accomplished_diagnostic(each) then
         local start_row, start_col, end_row, end_col = byterange_of(bufnr, each)
         vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
-          sign_text = '🎉',
+          sign_text = markers.accomplished,
           sign_hl_group = 'leanGoalsAccomplishedSign',
         })
         vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
@@ -284,7 +289,7 @@ local function on_publish_diagnostics(_, result, ctx)
           end_col = end_col,
           hl_group = 'leanGoalsAccomplished',
           hl_mode = 'combine',
-          conceal = '🎉',
+          conceal = markers.accomplished,
         })
       end
 

@@ -22,6 +22,7 @@
 
 ---@class lean.MergedConfig: lean.Config
 ---@field ft lean.ft.MergedConfig filetype configuration
+---@field infoview lean.infoview.MergedConfig infoview configuration
 ---@field inlay_hint lean.inlay_hint.Config inlay hint configuration
 ---@field log Log log any messages from lean.nvim's internals
 
@@ -39,6 +40,16 @@
 ---@class lean.infoview.Config
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
+---@field goal_markers? lean.infoview.GoalMarkerConfig characters to use for denoting goal markers
+
+---@class lean.infoview.GoalMarkerConfig
+---@field unsolved? string a character which will be placed on buffer lines where there is an unsolved goal
+---@field accomplished? string a character which will be placed in the sign column of successful proofs
+
+---@class lean.infoview.MergedConfig: lean.infoview.Config
+---@field view_options InfoviewViewOptions
+---@field severity_markers table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
+---@field goal_markers lean.infoview.GoalMarkerConfig characters to use for denoting goal markers
 
 ---Lean uses inlay hints to surface things like auto-implicits of a function.
 ---
@@ -91,6 +102,10 @@ local DEFAULTS = {
       show_let_values = true,
       show_term_goals = true,
       reverse = false,
+    },
+    goal_markers = {
+      unsolved = ' ⚒ ',
+      accomplished = '🎉',
     },
     severity_markers = {
       'error:\n',
