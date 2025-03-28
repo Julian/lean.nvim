@@ -380,9 +380,7 @@ lsp.goals_accomplished_on({bufnr?}, {line?})
     Parameters: ~
         {bufnr?}  (integer)
         {line?}   (integer)  a 0--indexed line number in the buffer
-
-    Returns: ~
-        (boolean)  is_accomplished
+                             @return boolean? accomplished whether there's a marker at the cursor, or nil if the buffer isn't loaded
 
 
 lsp.is_unsolved_goals_diagnostic()            *lsp.is_unsolved_goals_diagnostic*
@@ -398,16 +396,15 @@ lsp.is_goals_accomplished_diagnostic()    *lsp.is_goals_accomplished_diagnostic*
 
 
                                            *lsp.handlers.on_publish_diagnostics*
-lsp.handlers.on_publish_diagnostics({result}, {ctx}, {config?})
+lsp.handlers.on_publish_diagnostics({result}, {ctx})
     A replacement handler for diagnostic publishing for Lean-specific behavior.
 
     Publishes all "silent" Lean diagnostics to a separate namespace, and creates
     unsolved goals markers (in yet another namespace).
 
     Parameters: ~
-        {result}   (LeanPublishDiagnosticsParams)
-        {ctx}      (lsp.HandlerContext)
-        {config?}  (vim.diagnostic.Opts)
+        {result}  (LeanPublishDiagnosticsParams)
+        {ctx}     (lsp.HandlerContext)
 
 
                                             *lsp.handlers.file_progress_handler*
