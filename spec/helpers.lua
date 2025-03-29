@@ -145,17 +145,18 @@ function helpers.clean_buffer(contents, callback)
     local bufnr = vim.api.nvim_create_buf(false, false)
     set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
 
-    -- apparently necessary to trigger BufWinEnter, and below we BufEnter...
-    vim.api.nvim_set_current_buf(bufnr)
-
-    vim.bo.swapfile = false
-    vim.bo.filetype = 'lean'
-
+    vim.bo[bufnr].swapfile = false
+    vim.bo[bufnr].filetype = 'lean'
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-    vim.api.nvim_buf_call(bufnr, function()
-      vim.api.nvim_exec_autocmds('BufEnter', { buffer = bufnr })
-      callback()
-    end)
+
+    -- isn't it fun how fragile the order of the below lines is, and how
+    -- BufWinEnter seems automatically called by `nvim_set_current_buf`, but
+    -- `BufEnter` seems not automatically called by `nvim_buf_call` so we
+    -- manually trigger it?
+    vim.api.nvim_set_current_buf(bufnr)
+    vim.api.nvim_exec_autocmds('BufEnter', { buffer = bufnr })
+    vim.api.nvim_buf_call(bufnr, callback)
+
     vim.schedule(function()
       vim.api.nvim_buf_delete(bufnr, { force = true })
     end)
