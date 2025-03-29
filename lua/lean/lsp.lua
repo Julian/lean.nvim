@@ -386,8 +386,8 @@ function lsp.restart_file(bufnr)
   end
   local uri = vim.uri_from_bufnr(bufnr)
 
-  client:notify(ms.textDocument_didClose, { textDocument = { uri = uri } })
-  client:notify(ms.textDocument_didOpen, {
+  client.notify(ms.textDocument_didClose, { textDocument = { uri = uri } })
+  client.notify(ms.textDocument_didOpen, {
     textDocument = {
       version = 0,
       uri = uri,
