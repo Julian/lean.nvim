@@ -1,6 +1,6 @@
 require 'spec.helpers'
 
-local dedent = require('lean._util').dedent
+local dedent = require('std.text').dedent
 
 describe('checkhealth', function()
   it('passes the health check', function()

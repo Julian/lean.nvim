@@ -4,7 +4,7 @@
 --- Support for `:checkhealth` for lean.nvim.
 ---@brief ]]
 
-local subprocess_check_output = require('lean._util').subprocess_check_output
+local check_output = require('std.subprocess').check_output
 
 local MIN_SUPPORTED_NVIM = '0.10'
 
@@ -20,7 +20,7 @@ local function neovim_is_new_enough()
 end
 
 local function lake_is_runnable()
-  local version = vim.trim(subprocess_check_output { 'lake', '--version' })
+  local version = vim.trim(check_output { 'lake', '--version' })
   vim.health.ok 'Lake is runnable.'
   vim.health.info(('  `lake --version`:  %s'):format(version))
 end

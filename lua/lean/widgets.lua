@@ -11,7 +11,7 @@
 ---@brief ]]
 
 local Element = require('lean.tui').Element
-local dedent = require('lean._util').dedent
+local dedent = require('std.text').dedent
 local log = require 'lean.log'
 
 ---@alias WidgetRenderer fun(ctx: RenderContext, props: any, hash: string): Element[]?

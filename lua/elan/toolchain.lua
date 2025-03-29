@@ -1,4 +1,4 @@
-local subprocess_check_output = require('lean._util').subprocess_check_output
+local check_output = require('std.subprocess').check_output
 
 local elan = require 'elan'
 local toolchain = {}
@@ -25,7 +25,7 @@ local toolchain = {}
 ---@return ElanUsedToolchain[] used any used toolchains
 
 function toolchain.gc()
-  local stdout = subprocess_check_output { 'elan', 'toolchain', 'gc', '--json' }
+  local stdout = check_output { 'elan', 'toolchain', 'gc', '--json' }
   local result = vim.json.decode(stdout)
   return result.unused_toolchains, result.used_toolchains
 end

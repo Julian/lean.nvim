@@ -4,21 +4,22 @@ local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 local lsp = require 'lean.lsp'
 local progress = require 'lean.progress'
+local text = require 'std.text'
 local util = require 'lean._util'
 
 local helpers = { _clean_buffer_counter = 1 }
 
 ---Feed some keystrokes into the current buffer, replacing termcodes.
-function helpers.feed(text, feed_opts)
+function helpers.feed(contents, feed_opts)
   feed_opts = feed_opts or 'mtx'
-  local to_feed = vim.api.nvim_replace_termcodes(text, true, false, true)
+  local to_feed = vim.api.nvim_replace_termcodes(contents, true, false, true)
   vim.api.nvim_feedkeys(to_feed, feed_opts, true)
 end
 
 ---Insert some text into the current buffer.
-function helpers.insert(text, feed_opts)
+function helpers.insert(contents, feed_opts)
   feed_opts = feed_opts or 'x'
-  helpers.feed('i' .. text, feed_opts)
+  helpers.feed('i' .. contents, feed_opts)
 end
 
 function helpers.all_lean_extmarks(buffer, start, end_)
@@ -45,7 +46,7 @@ end
 function helpers.move_cursor(opts)
   local window = opts.window or 0
 
-  local msg = util.s [[
+  local msg = text.s [[
     Cursor is already at %s.
     If you just want to ensure the cursor is at this location,
     use nvim_win_set_cursor directly.
@@ -137,7 +138,7 @@ function helpers.clean_buffer(contents, callback)
     callback = contents
     lines = {}
   else
-    lines = vim.split(util.dedent(contents:gsub('^\n', '')):gsub('\n$', ''), '\n')
+    lines = vim.split(text.dedent(contents:gsub('^\n', '')):gsub('\n$', ''), '\n')
   end
 
   return function()
@@ -225,7 +226,7 @@ assert:register('assertion', 'current_window', has_current_window)
 local function _expected(arguments)
   local expected = arguments[1][1] or arguments[1]
   -- Handle cases where we're indeed checking for a real trailing newline.
-  local dedented = util.dedent(expected)
+  local dedented = text.dedent(expected)
   if dedented ~= expected then
     expected = dedented:gsub('\n$', '')
   end
@@ -294,14 +295,14 @@ assert:register('assertion', 'infoview_contents_nowait', has_infoview_contents_n
 assert:register('assertion', 'diff_contents', has_diff_contents)
 
 local function has_all(_, arguments)
-  local text = arguments[1]
+  local contents = arguments[1]
 
-  if type(text) == 'table' then
-    text = table.concat(text, '\n')
+  if type(contents) == 'table' then
+    contents = table.concat(contents, '\n')
   end
   local expected = arguments[2]
   for _, string in pairs(expected) do
-    assert.has_match(string, text, nil, true)
+    assert.has_match(string, contents, nil, true)
   end
   return true
 end

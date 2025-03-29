@@ -11,7 +11,7 @@
 
 ---@tag lean.nvim
 
-local util = require 'lean._util'
+local check_output = require('std.subprocess').check_output
 
 local lean = {
   mappings = {
@@ -193,8 +193,7 @@ function lean.current_search_paths()
     root = vim.fn.getcwd()
   end
 
-  local prefix =
-    vim.trim(util.subprocess_check_output({ 'lean', '--print-prefix' }, { cwd = root }))
+  local prefix = vim.trim(check_output({ 'lean', '--print-prefix' }, { cwd = root }))
 
   local paths = { vim.fs.joinpath(prefix, 'src/lean') }
   local result = vim
