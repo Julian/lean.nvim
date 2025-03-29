@@ -1,14 +1,7 @@
 local subprocess_check_output = require('lean._util').subprocess_check_output
-local elan = { toolchain = {} }
 
----Elan's dumped state, which can partially change from project to project.
----@class ElanState
----@field elan_version ElanVersionInfo
----@field toolchains ElanToolchainInfo
-
----@class ElanVersionInfo
----@field current string elan's own version
----@field newest table
+local elan = require 'elan'
+local toolchain = {}
 
 ---Information about installed and active Lean toolchains.
 ---@class ElanToolchainInfo
@@ -30,7 +23,8 @@ local elan = { toolchain = {} }
 ---Determine which toolchains are in use.
 ---@return string[] unused the unused toolchains currently installed
 ---@return ElanUsedToolchain[] used any used toolchains
-function elan.toolchain.gc()
+
+function toolchain.gc()
   local stdout = subprocess_check_output { 'elan', 'toolchain', 'gc', '--json' }
   local result = vim.json.decode(stdout)
   return result.unused_toolchains, result.used_toolchains
@@ -38,7 +32,7 @@ end
 
 ---List the installed toolchains.
 ---@return string[] toolchains the toolchains
-function elan.toolchain.list()
+function toolchain.list()
   local state = elan.state()
   return vim
     .iter(state.toolchains.installed)
@@ -49,11 +43,4 @@ function elan.toolchain.list()
     :totable()
 end
 
----Dump elan's state.
----@return ElanState
-function elan.state()
-  local stdout = subprocess_check_output { 'elan', 'dump-state' }
-  return vim.json.decode(stdout)
-end
-
-return elan
+return toolchain
