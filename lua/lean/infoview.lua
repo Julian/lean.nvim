@@ -1259,13 +1259,15 @@ function infoview.enable(opts)
       vim.api.nvim_create_autocmd('LspDetach', {
         group = vim.api.nvim_create_augroup('LeanInfoviewLSPDied', { clear = false }),
         buffer = bufnr,
-        callback = vim.schedule_wrap(function()
+        callback = function()
           local current_infoview = infoview.get_current_infoview()
           if not current_infoview then
             return
           end
-          current_infoview:died()
-        end),
+          vim.schedule(function()
+            current_infoview:died()
+          end)
+        end,
       })
 
       local focus_augroup = vim.api.nvim_create_augroup('LeanInfoviewSetFocus', { clear = false })
