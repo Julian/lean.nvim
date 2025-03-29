@@ -185,8 +185,8 @@ local function insert_char_pre()
 end
 
 local function cmdwin_enter()
-  local came_from = vim.fn.winbufnr(vim.fn.win_getid(vim.fn.winnr '#'))
-  if not vim.bo[came_from].filetype:match '^lean*' then
+  local came_from = vim.api.nvim_win_get_buf(vim.fn.win_getid(vim.fn.winnr '#'))
+  if vim.bo[came_from].filetype ~= 'lean' then
     return
   end
 
