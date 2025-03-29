@@ -151,6 +151,12 @@ function Session:call(pos, method, params)
   if self.connect_err ~= nil then
     return nil, self.connect_err
   end
+
+  local bufnr = vim.uri_to_bufnr(pos.textDocument.uri)
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    self:close_without_releasing()
+  end
+
   if self:is_closed() then
     return nil, { code = -32900, message = 'LSP server disconnected' }
   end
