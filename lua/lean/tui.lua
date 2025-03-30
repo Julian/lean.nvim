@@ -1,5 +1,6 @@
 local async = require 'plenary.async'
 
+local log = require 'lean.log'
 local util = require 'lean._util'
 
 ---A fire-able event whose behavior is `Element`-specific.
@@ -530,7 +531,7 @@ end
 
 ---@param keep_tooltips_open? boolean
 function BufRenderer:close(keep_tooltips_open)
-  if vim.api.nvim_buf_is_valid(self.buf) then
+  if vim.api.nvim_buf_is_loaded(self.buf) then
     vim.api.nvim_buf_delete(self.buf, { force = true })
   end
   if self.tooltip then
@@ -546,7 +547,8 @@ end
 function BufRenderer:render()
   local buf = self.buf
 
-  if not vim.api.nvim_buf_is_valid(buf) then
+  if not vim.api.nvim_buf_is_loaded(buf) then
+    log:warning { message = 'rendering an unloaded buffer', buf = buf }
     return
   end
 
