@@ -8,6 +8,7 @@
 --- missing some retry logic for the RPC call being made.
 ---@brief ]]
 
+local project = require('spec.fixtures').project
 local helpers = require 'spec.helpers'
 
 require('lean').setup { progress_bars = { enable = false } }
@@ -527,18 +528,16 @@ describe('interactive infoview', function()
     end)
   )
 
-  describe(
-    'language server dead',
-    helpers.clean_buffer([[#check 37]], function()
-      it('is shown when the server is dead', function()
-        helpers.wait_for_ready_lsp()
-        vim.lsp.stop_client(vim.lsp.get_clients { bufnr = 0 })
-        local succeeded = vim.wait(1000, function()
-          return vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0 })
-        end)
-        assert.message("Couldn't kill the LSP!").is_true(succeeded)
-        assert.infoview_contents_nowait.are '🪦 The Lean language server is dead.'
+  describe('language server dead', function()
+    it('is shown when the server is dead', function()
+      vim.cmd.edit { project.some_existing_file, bang = true }
+      helpers.wait_for_ready_lsp()
+      vim.lsp.stop_client(vim.lsp.get_clients { bufnr = 0 })
+      local succeeded = vim.wait(5000, function()
+        return vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0 })
       end)
+      assert.message("Couldn't kill the LSP!").is_true(succeeded)
+      assert.infoview_contents_nowait.are '🪦 The Lean language server is dead.'
     end)
-  )
+  end)
 end)
