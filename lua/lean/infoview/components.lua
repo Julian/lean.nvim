@@ -540,24 +540,21 @@ function components.interactive_diagnostics(diags, line, sess)
 end
 
 ---@param params lsp.TextDocumentPositionParams
----@param sess? Subsession
+---@param sess Subsession
 ---@param use_widgets? boolean
 ---@return Element[]? goal
 ---@return LspError? error
 function components.goal_at(params, sess, use_widgets)
-  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-  local children, goal, interactive_err, err
+  local children, goal, err, _
   if use_widgets ~= false then
-    if sess == nil then
-      sess = rpc.open(params)
-    end
-
-    goal, interactive_err = sess:getInteractiveGoals(params)
+    goal, err = sess:getInteractiveGoals(params)
     children = goal and components.interactive_goals(goal, sess)
   end
 
+  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+
   if not children then
-    err, goal = lsp.plain_goal(params, bufnr)
+    _, goal = lsp.plain_goal(params, bufnr)
     children = goal and components.plain_goal(goal)
   end
 
@@ -579,7 +576,7 @@ function components.goal_at(params, sess, use_widgets)
     title_hlgroup = 'leanInfoGoals',
   }
 
-  return { element }, interactive_err or err
+  return { element }, err
 end
 
 ---@param params lsp.TextDocumentPositionParams
