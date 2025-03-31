@@ -8,6 +8,7 @@ local ms = vim.lsp.protocol.Methods
 
 local config = require 'lean.config'
 local log = require 'lean.log'
+local std = require 'std.lsp'
 local util = require 'lean._util'
 
 local lsp = { handlers = {} }
@@ -139,18 +140,6 @@ local function range_of(diagnostic)
   return diagnostic.fullRange or diagnostic.range
 end
 
----Convert an LSP position to a (0, 0)-indexed tuple.
----
----These are used by extmarks.
----See `:h api-indexing` for details.
----@param position lsp.Position
----@param line string the line contents for this position's line
----@return { [1]: integer, [2]: integer } position
-local function position_to_byte0(position, line)
-  local ok, col = pcall(vim.str_byteindex, line, position.character, true)
-  return { position.line, ok and col or position.character }
-end
-
 ---Convert Lean ranges to byte indices.
 ---
 ---Prioritizes `fullRange`, which is the "real" range of the diagnostic, not
@@ -167,11 +156,11 @@ local function byterange_of(bufnr, diagnostic)
   local range = range_of(diagnostic)
   local start_line =
     vim.api.nvim_buf_get_lines(bufnr, range.start.line, range.start.line + 1, true)[1]
-  local start = position_to_byte0(range.start, start_line)
+  local start = std.position_to_byte0(range.start, start_line)
 
   local end_line =
     vim.api.nvim_buf_get_lines(bufnr, range['end'].line, range['end'].line + 1, true)[1]
-  local _end = position_to_byte0(range['end'], end_line)
+  local _end = std.position_to_byte0(range['end'], end_line)
   return start[1], start[2], _end[1], _end[2]
 end
 
@@ -269,7 +258,7 @@ local function on_publish_diagnostics(_, result, ctx)
       if lsp.is_unsolved_goals_diagnostic(each) then
         local buf_lines = get_buf_lines(bufnr)
         local end_line = buf_lines[range['end'].line + 1] or ''
-        local end_row, end_col = unpack(position_to_byte0(range['end'], end_line))
+        local end_row, end_col = unpack(std.position_to_byte0(range['end'], end_line))
 
         if markers.unsolved ~= '' then
           vim.api.nvim_buf_set_extmark(bufnr, goals_ns, end_row, end_col, {
