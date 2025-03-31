@@ -203,7 +203,7 @@ end
 ---A namespace where we put Lean's "silent" diagnostics.
 local silent_ns = vim.api.nvim_create_namespace 'lean.diagnostic.silent'
 ---A namespace for Lean's unsolved goal markers.and goals accomplished ranges
-local goals_ns = vim.api.nvim_create_namespace 'lean.goals'
+local goals_ns = vim.api.nvim_create_namespace 'lean.goal.markers'
 
 ---Is the given line within a range of a goals accomplished marker?
 ---@param bufnr? integer
