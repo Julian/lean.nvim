@@ -5,6 +5,8 @@
 
 ---@tag lean.infoview.components
 
+local range_to_string = require('std.lsp').range_to_string
+
 local Element = require('lean.tui').Element
 local config = require 'lean.config'
 local update_goals_at = require('lean.goals').update_at
@@ -39,19 +41,6 @@ local DIFF_TAG_TO_EXPLANATION = {
 ---Format a heading.
 local function H(contents)
   return ('▶ %s'):format(contents)
-end
-
----Convert an LSP range to a human-readable, (1,1)-indexed string.
----
----The (1, 1) indexing is to match the interface used interactively for
----`gg` and `|`.
-local function range_to_string(range)
-  return ('%d:%d-%d:%d'):format(
-    range['start'].line + 1,
-    range['start'].character + 1,
-    range['end'].line + 1,
-    range['end'].character + 1
-  )
 end
 
 ---The current (tactic) goal state.
