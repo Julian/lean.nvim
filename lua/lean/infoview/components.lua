@@ -7,6 +7,7 @@
 
 local Element = require('lean.tui').Element
 local config = require 'lean.config'
+local update_goals_at = require('lean.goals').update_at
 local log = require 'lean.log'
 local lsp = require 'lean.lsp'
 local rpc = require 'lean.rpc'
@@ -322,17 +323,16 @@ local function interactive_goal(goal, sess)
   return Element:new { name = 'interactive-goal', children = children }
 end
 
----@param goal InteractiveGoals?
+---@param goals InteractiveGoal[]
 ---@param sess Subsession
 ---@return Element[]
-function components.interactive_goals(goal, sess)
-  if goal == nil then
+function components.interactive_goals(goals, sess)
+  if #goals == 0 then
     return {}
   end
-
-  return vim.iter(goal.goals):fold({}, function(acc, k)
+  return vim.iter(goals):fold({}, function(acc, goal)
     table.insert(acc, Element:new { text = #acc == 0 and '' or '\n\n' })
-    table.insert(acc, interactive_goal(k, sess))
+    table.insert(acc, interactive_goal(goal, sess))
     return acc
   end)
 end
@@ -545,20 +545,22 @@ end
 ---@return Element[]? goal
 ---@return LspError? error
 function components.goal_at(params, sess, use_widgets)
-  local children, goal, err, _
+  local children, goal, err
   if use_widgets ~= false then
-    goal, err = sess:getInteractiveGoals(params)
+    goal, err = update_goals_at(params, sess)
     children = goal and components.interactive_goals(goal, sess)
   end
 
   local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
 
   if not children then
-    _, goal = lsp.plain_goal(params, bufnr)
-    children = goal and components.plain_goal(goal)
+    local _, plain = lsp.plain_goal(params, bufnr)
+    if plain then
+      goal, children = plain.goals, components.plain_goal(plain)
+    end
   end
 
-  local count = goal and #goal.goals
+  local count = goal and #goal
   local header
   if lsp.goals_accomplished_on(bufnr, params.position.line) then
     header = 'Goals accomplished 🎉'
@@ -567,7 +569,7 @@ function components.goal_at(params, sess, use_widgets)
   elseif count == 0 then -- this seems to happen in between theorems
     header = vim.g.lean_no_goals_message or 'No goals.'
   else
-    header = H(('%d goals'):format(count))
+    header = H(('%d goals'):format(#goal))
   end
 
   local element = Element:titled {
