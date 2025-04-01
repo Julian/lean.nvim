@@ -260,7 +260,7 @@ return {
 
     -- TODO: Is sess.pos the right position??
     --       I still don't really understand why we have positions on sessions,
-    --       as we essentially never use this attribute (otehr than now here).
+    --       as we essentially never use this attribute (other than now here).
     local ctx = RenderContext:new { pos = sess.pos, sess = sess }
     return render(widget, ctx)
   end,
