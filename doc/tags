@@ -1,10 +1,16 @@
+DiagnosticRelatedInformation	lean.txt	/*DiagnosticRelatedInformation*
+DiagnosticWith	lean.txt	/*DiagnosticWith*
 FilterSelection	lean.txt	/*FilterSelection*
 Info	lean.txt	/*Info*
 Infoview	lean.txt	/*Infoview*
 InfoviewNewArgs	lean.txt	/*InfoviewNewArgs*
 InfoviewViewOptions	lean.txt	/*InfoviewViewOptions*
 Lean.SatelliteConfig	lean.txt	/*Lean.SatelliteConfig*
+LeanClientCapabilities	lean.txt	/*LeanClientCapabilities*
+LeanClientConfig	lean.txt	/*LeanClientConfig*
+LeanDiagnosticTag	lean.txt	/*LeanDiagnosticTag*
 LeanFileProgressParams	lean.txt	/*LeanFileProgressParams*
+LeanPublishDiagnosticsParams	lean.txt	/*LeanPublishDiagnosticsParams*
 LoogleResult	lean.txt	/*LoogleResult*
 Pin	lean.txt	/*Pin*
 PlainGoal	lean.txt	/*PlainGoal*
@@ -57,7 +63,9 @@ loogle.search	lean.txt	/*loogle.search*
 loogle.template	lean.txt	/*loogle.template*
 lsp.client_for	lean.txt	/*lsp.client_for*
 lsp.enable	lean.txt	/*lsp.enable*
-lsp.handlers.file_progress_handler	lean.txt	/*lsp.handlers.file_progress_handler*
+lsp.goals_accomplished_on	lean.txt	/*lsp.goals_accomplished_on*
+lsp.is_goals_accomplished_diagnostic	lean.txt	/*lsp.is_goals_accomplished_diagnostic*
+lsp.is_unsolved_goals_diagnostic	lean.txt	/*lsp.is_unsolved_goals_diagnostic*
 lsp.plain_goal	lean.txt	/*lsp.plain_goal*
 lsp.plain_term_goal	lean.txt	/*lsp.plain_term_goal*
 lsp.restart_file	lean.txt	/*lsp.restart_file*
