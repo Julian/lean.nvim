@@ -10,8 +10,10 @@
 --- components.
 ---@brief ]]
 
-local Element = require('lean.tui').Element
 local dedent = require('std.text').dedent
+
+local Element = require('lean.tui').Element
+local update_goals_at = require('lean.goals').update_at
 local log = require 'lean.log'
 
 ---@alias WidgetRenderer fun(ctx: RenderContext, props: any, hash: string): Element[]?
@@ -117,6 +119,14 @@ function RenderContext.get_last_window()
   local this_infoview = require('lean.infoview').get_current_infoview()
   local this_info = this_infoview and this_infoview.info
   return this_info and this_info.last_window
+end
+
+---The goals at the current infoview position.
+---@return InteractiveGoal[]? goals
+function RenderContext:get_goals()
+  --FIXME: We re-request them here, rather than reusing what we got when
+  --       building the infoview.
+  return update_goals_at(self.pos, self.sess)
 end
 
 ---Retrieve the Javascript source for the given widget.
