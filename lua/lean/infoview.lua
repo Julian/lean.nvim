@@ -9,6 +9,7 @@ local a = require 'plenary.async'
 
 local Element = require('lean.tui').Element
 local components = require 'lean.infoview.components'
+local interactive_goal = require 'lean.widget.interactive_goal'
 local log = require 'lean.log'
 local progress = require 'lean.progress'
 local rpc = require 'lean.rpc'
@@ -1125,7 +1126,7 @@ function Pin:__update()
       message = 'progress.Kind.fatal_error diagnostics',
       params = params,
     }
-    blocks = components.diagnostics(params)
+    blocks = interactive_goal.diagnostics(params)
   else
     local view_options = require 'lean.config'().infoview.view_options
     blocks = vim

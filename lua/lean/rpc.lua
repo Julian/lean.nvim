@@ -262,42 +262,10 @@ function rpc.open(params)
   return Subsession:new(sessions[uri], params)
 end
 
--- LuaLS has no support for generics with `@class`, so we expand out
--- `TaggedText` which is generic on the Lean side.
---
--- Like some other classes below, it's also really an inductive type on the
--- Lean side, so one and only one of its fields are set at a time, which we
--- also fail to represent in Lua clearly.
-
----The minimal structure needed to represent "string with interesting (tagged) substrings".
----
----Implemented in `Lean.Widget.TaggedText`.
----@class TaggedText
----@field text? string
-
----@class TaggedText.MsgEmbed: TaggedText
----@field append? TaggedText.MsgEmbed[]
----@field tag? {[1]: MsgEmbed, [2]: ''} the second field happens to always the empty string
-
----@class TaggedText.SubExprInfo: TaggedText
----@field append? TaggedText.SubExprInfo[]
----@field tag? {[1]: SubexprInfo, [2]: TaggedText.SubExprInfo }
-
----@alias CodeWithInfos TaggedText.SubExprInfo
-
 ---This type is for internal use in the infoview/LSP. It should not be used in user widgets.
 ---@class InfoWithCtx
 
----@alias DiffTag 'wasChanged' | 'willChange' | 'wasDeleted' | 'willDelete' | 'wasInserted' | 'willInsert'
 ---@alias SubexprPos string
-
----Information about a subexpression within delaborated code.
----
----Implemented in `Lean.Widget.InteractiveCode`.
----@class SubexprInfo
----@field info InfoWithCtx
----@field subexprPos integer The position of this subexpression within the top-level expression.
----@field diffStatus? DiffTag
 
 ---@class InfoPopup
 ---@field type CodeWithInfos?
@@ -381,20 +349,6 @@ end
 ---@field children StrictTraceChildrenEmbed | LazyTraceChildrenEmbed
 
 ---@class MessageData
-
----@class MsgEmbedExpr
----@field expr CodeWithInfos A piece of Lean code with elaboration/typing data.
-
----@class MsgEmbedGoal
----@field goal InteractiveGoal An interactive goal display.
-
----@class MsgEmbedWidget
----@field widget WidgetEmbed A widget instance.
-
----@class MsgEmbedTrace
----@field trace TraceEmbed Traces are too costly to print eagerly.
-
----@alias MsgEmbed MsgEmbedExpr | MsgEmbedGoal | MsgEmbedWidget | MsgEmbedTrace
 
 ---@alias InteractiveDiagnostic DiagnosticWith<TaggedText.MsgEmbed>
 
