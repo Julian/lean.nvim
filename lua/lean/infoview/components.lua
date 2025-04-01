@@ -79,7 +79,7 @@ function components.interactive_diagnostics(diags, line, sess)
         return
       end
 
-      local range = diagnostic.fullRange or diagnostic.range
+      local range = lsp.range_of(diagnostic)
       return Element:new {
         text = H(('%s: %s'):format(range_to_string(range), markers[diagnostic.severity])),
         name = 'diagnostic',

@@ -134,9 +134,9 @@ end
 ---
 ---Prioritizes `fullRange`, which is the "real" range of the diagnostic, not
 ---the `range`, which clips to just its first line.
----@param diagnostic DiagnosticWith<string>
+---@param diagnostic DiagnosticWith<any>
 ---@return lsp.Range range
-local function range_of(diagnostic)
+function lsp.range_of(diagnostic)
   return diagnostic.fullRange or diagnostic.range
 end
 
@@ -153,7 +153,7 @@ end
 ---@return integer end_row
 ---@return integer end_col
 local function byterange_of(bufnr, diagnostic)
-  local range = range_of(diagnostic)
+  local range = lsp.range_of(diagnostic)
   local start_line =
     vim.api.nvim_buf_get_lines(bufnr, range.start.line, range.start.line + 1, true)[1]
   local start = std.position_to_byte0(range.start, start_line)
@@ -254,7 +254,7 @@ local function on_publish_diagnostics(_, result, ctx)
     .iter(result.diagnostics)
     ---@param each DiagnosticWith<string>
     :filter(function(each)
-      local range = range_of(each)
+      local range = lsp.range_of(each)
       if lsp.is_unsolved_goals_diagnostic(each) then
         local buf_lines = get_buf_lines(bufnr)
         local end_line = buf_lines[range['end'].line + 1] or ''
