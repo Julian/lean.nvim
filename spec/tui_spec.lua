@@ -2,6 +2,8 @@
 --- Tests for the console UI framework in isolation from Lean-specific widgets.
 ---@brief ]]
 
+local dedent = require('std.text').dedent
+
 local helpers = require 'spec.helpers'
 local tui = require 'lean.tui'
 local Element = tui.Element
@@ -31,7 +33,7 @@ describe('Element', function()
   describe(':titled', function()
     it('creates an Element with a title and children', function()
       local foo = Element:new { text = 'foo', name = 'foo-name' }
-      local bar = Element:new { text = 'bar bar', name = 'bar-name' }
+      local bar = Element:new { text = 'bar bar\n', name = 'bar-name' }
       local baz = Element:new { name = 'baz-name' }
 
       local element = Element:titled { title = 'quux', body = { foo, bar, baz } }
@@ -39,11 +41,21 @@ describe('Element', function()
       assert.is.same(
         Element:new {
           children = {
-            Element:new { text = 'quux\n' },
+            Element:new { text = 'quux' },
+            Element:new { text = '\n\n' },
             Element:new { children = { foo, bar, baz } },
           },
         },
         element
+      )
+
+      assert.is.equal(
+        dedent [[
+          quux
+
+          foobar bar
+        ]],
+        element:to_string()
       )
     end)
 
@@ -51,12 +63,15 @@ describe('Element', function()
       local element = Element:titled { title = 'stuff', body = {} }
 
       assert.is.same(Element:new { text = 'stuff' }, element)
+
+      assert.is.equal('stuff', element:to_string())
     end)
 
     it('creates a text Element when children is nil', function()
       local element = Element:titled { title = 'stuff' }
 
       assert.is.same(Element:new { text = 'stuff' }, element)
+      assert.is.equal('stuff', element:to_string())
     end)
 
     it('returns nil when given only an empty title', function()
@@ -75,12 +90,14 @@ describe('Element', function()
       local element = Element:titled { title = '', body = { foo, bar, baz } }
 
       assert.is.same(Element:new { children = { foo, bar, baz } }, element)
+
+      assert.is.equal('foobar bar', element:to_string())
     end)
 
     describe('title_hlgroup', function()
       it('creates an Element with a title and children', function()
         local foo = Element:new { text = 'foo', name = 'foo-name' }
-        local bar = Element:new { text = 'bar bar', name = 'bar-name' }
+        local bar = Element:new { text = 'bar bar\n', name = 'bar-name' }
 
         local element = Element:titled {
           title = 'quux',
@@ -91,11 +108,21 @@ describe('Element', function()
         assert.is.same(
           Element:new {
             children = {
-              Element:new { text = 'quux\n', hlgroup = 'Title' },
+              Element:new { text = 'quux', hlgroup = 'Title' },
+              Element:new { text = '\n\n' },
               Element:new { children = { foo, bar } },
             },
           },
           element
+        )
+
+        assert.is.equal(
+          dedent [[
+            quux
+
+            foobar bar
+          ]],
+          element:to_string()
         )
       end)
 
@@ -107,12 +134,14 @@ describe('Element', function()
         }
 
         assert.is.same(Element:new { text = 'quux', hlgroup = 'Another' }, element)
+        assert.is.equal('quux', element:to_string())
       end)
 
       it('creates a text Element when children is nil', function()
         local element = Element:titled { title = 'stuff', title_hlgroup = 'Title' }
 
         assert.is.same(Element:new { text = 'stuff', hlgroup = 'Title' }, element)
+        assert.is.equal('stuff', element:to_string())
       end)
 
       it('returns nil when given only an empty title', function()
@@ -135,6 +164,7 @@ describe('Element', function()
         }
 
         assert.is.same(Element:new { children = { foo, bar, baz } }, element)
+        assert.is.equal('foobar bar', element:to_string())
       end)
     end)
   end)

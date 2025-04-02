@@ -437,23 +437,23 @@ end
 ---@param opts TitledElementArgs
 ---@return Element?
 function Element:titled(opts)
-  local title, body
-  if opts.body and #opts.body > 0 then
-    body = self:new { children = opts.body }
-    if opts.title == '' then
-      return body
-    end
-    title = self:new {
-      text = opts.title .. '\n',
-      hlgroup = opts.title_hlgroup
-    }
-  elseif opts.title == '' then
-    return
-  else
-    return self:new { text = opts.title, hlgroup = opts.title_hlgroup }
+  local body = opts.body
+          and #opts.body > 0
+          and self:new { children = opts.body }
+           or nil
+
+  if opts.title == '' then
+    return body
   end
 
-  return self:new { children = { title, body } }
+  local title = self:new { text = opts.title, hlgroup = opts.title_hlgroup }
+
+  if not body then
+    return title
+  end
+
+  local sep = self:new { text = '\n\n' }
+  return self:new { children = { title, sep, body } }
 end
 
 ---Create an element which joins a list-like table of elements with the provided separator.

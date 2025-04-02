@@ -83,7 +83,12 @@ function components.goal_at(params, sess, use_widgets)
   elseif count == 0 then -- this seems to happen in between theorems
     header = vim.g.lean_no_goals_message or 'No goals.'
   else
-    header = H(('%d goals'):format(#goal))
+    return {
+      Element:new {
+        text = H(('%d goals\n'):format(#goal)),
+        children = children,
+      },
+    }
   end
 
   local element = Element:titled {
