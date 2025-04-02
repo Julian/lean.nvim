@@ -373,14 +373,12 @@ lsp.range_of()                                                    *lsp.range_of*
         (lsp.Range)  range
 
 
-                                                     *lsp.goals_accomplished_on*
-lsp.goals_accomplished_on({bufnr?}, {line?})
+lsp.goals_accomplished_at({params})                  *lsp.goals_accomplished_at*
     Is the given line within a range of a goals accomplished marker?
 
     Parameters: ~
-        {bufnr?}  (integer)
-        {line?}   (integer)  a 0--indexed line number in the buffer
-                             @return boolean? accomplished whether there's a marker at the cursor, or nil if the buffer isn't loaded
+        {params}  (lsp.TextDocumentPositionParams)  the document position in question
+                                                    @return boolean? accomplished whether there's a marker at the cursor, or nil if the buffer isn't loaded
 
 
 lsp.is_unsolved_goals_diagnostic()            *lsp.is_unsolved_goals_diagnostic*
