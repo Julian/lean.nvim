@@ -367,6 +367,12 @@ LeanPublishDiagnosticsParams : lsp.PublishDiagnosticsParams
         {diagnostics}  (DiagnosticWith)
 
 
+lsp.range_of()                                                    *lsp.range_of*
+
+    Returns: ~
+        (lsp.Range)  range
+
+
                                                      *lsp.goals_accomplished_on*
 lsp.goals_accomplished_on({bufnr?}, {line?})
     Is the given line within a range of a goals accomplished marker?
@@ -401,44 +407,6 @@ lsp.restart_file({bufnr?})                                    *lsp.restart_file*
 
     Parameters: ~
         {bufnr?}  (number)
-
-
-PlainGoal                                                            *PlainGoal*
-
-    Fields: ~
-        {rendered}  (string)    The goals as pretty-printed Markdown, or something like "no goals" if accomplished.
-        {goals}     (string[])  The pretty-printed goals, empty if all accomplished.
-
-
-lsp.plain_goal({params}, {bufnr})                               *lsp.plain_goal*
-    Fetch goal state information from the server (async).
-
-    Parameters: ~
-        {params}  (lsp.TextDocumentPositionParams)
-        {bufnr}   (number)
-
-    Returns: ~
-        (LspError|nil)   error
-        (PlainGoal|nil)  plain_goal
-
-
-PlainTermGoal                                                    *PlainTermGoal*
-
-    Fields: ~
-        {goal}   (string)
-        {range}  (lsp.Range)
-
-
-lsp.plain_term_goal({params}, {bufnr})                     *lsp.plain_term_goal*
-    Fetch term goal state information from the server (async).
-
-    Parameters: ~
-        {params}  (lsp.TextDocumentPositionParams)
-        {bufnr}   (number)
-
-    Returns: ~
-        (LspError|nil)       error
-        (PlainTermGoal|nil)  plain_term_goal
 
 
 ==============================================================================
