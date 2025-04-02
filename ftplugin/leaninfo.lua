@@ -11,7 +11,7 @@ vim.wo.winfixheight = true
 vim.wo.winfixwidth = true
 vim.wo.wrap = true
 if vim.fn.exists '&winfixbuf' ~= 0 then
-  local wo = vim.wo[vim.api.nvim_get_current_win()]
+  local window = vim.api.nvim_get_current_win()
   -- FIXME: This is obviously ridiculous, but there's seemingly some neovim bug
   --        here which needs minimizing.
   --        The symptoms are that when opening a stacked (vertical) infoview
@@ -27,6 +27,8 @@ if vim.fn.exists '&winfixbuf' ~= 0 then
   --        correctly, including winfixbuf getting set.
   --        We'll minimize. Some day.
   vim.schedule(function()
-    wo.winfixbuf = true
+    if vim.api.nvim_win_is_valid(window) then
+      vim.wo[window].winfixbuf = true
+    end
   end)
 end
