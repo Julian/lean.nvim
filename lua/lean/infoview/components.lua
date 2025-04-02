@@ -26,11 +26,6 @@ local components = {
   PROCESSING = Element:new { text = 'Processing file...', name = 'processing' },
 }
 
----Format a heading.
-local function H(contents)
-  return ('▶ %s'):format(contents)
-end
-
 ---Diagnostic information for the current line from the Lean server.
 ---@param line number
 ---@param diags InteractiveDiagnostic[]
@@ -49,7 +44,7 @@ function components.interactive_diagnostics(diags, line, sess)
 
       local range = lsp.range_of(diagnostic)
       return Element:new {
-        text = H(('%s: %s'):format(range_to_string(range), markers[diagnostic.severity])),
+        text = ('▶ %s: %s'):format(range_to_string(range), markers[diagnostic.severity]),
         name = 'diagnostic',
         children = { TaggedTextMsgEmbed(diagnostic.message, sess) },
       }
@@ -90,7 +85,7 @@ function components.goal_at(params, sess, use_widgets)
   else
     return {
       Element:new {
-        text = H(('%d goals\n'):format(#goal)),
+        text = ('▶ %d goals\n'):format(#goal),
         children = children,
       },
     }
