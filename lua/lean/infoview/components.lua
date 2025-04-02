@@ -73,10 +73,9 @@ function components.goal_at(params, sess, use_widgets)
     goal, children = plain.goal(params)
   end
 
-  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
   local count = goal and #goal
   local header
-  if lsp.goals_accomplished_on(bufnr, params.position.line) then
+  if lsp.goals_accomplished_at(params) then
     header = 'Goals accomplished 🎉'
   elseif not count or count == 1 then
     header = ''

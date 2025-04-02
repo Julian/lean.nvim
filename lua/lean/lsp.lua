@@ -195,17 +195,15 @@ local silent_ns = vim.api.nvim_create_namespace 'lean.diagnostic.silent'
 local goals_ns = vim.api.nvim_create_namespace 'lean.goal.markers'
 
 ---Is the given line within a range of a goals accomplished marker?
----@param bufnr? integer
----@param line? integer a 0--indexed line number in the buffer
+---@param params lsp.TextDocumentPositionParams the document position in question
 ---@return boolean? accomplished whether there's a marker at the cursor, or nil if the buffer isn't loaded
-function lsp.goals_accomplished_on(bufnr, line)
-  bufnr = bufnr or 0
+function lsp.goals_accomplished_at(params)
+  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     return
   end
 
-  line = line or (vim.api.nvim_win_get_cursor(0)[1] - 1)
-  local pos = { line, 0 }
+  local pos = { params.position.line, 0 }
   local hls = vim.api.nvim_buf_get_extmarks(bufnr, goals_ns, pos, pos, {
     details = true,
     overlap = true,
