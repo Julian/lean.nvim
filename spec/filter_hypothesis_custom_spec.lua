@@ -18,7 +18,7 @@ describe(
     [[
   example {A : Type} (n : Nat) (b : 3 = 3) (c : 4 = 4) : n = n ∨ n = 37 := by
     left
-    rfl
+    sorry
   ]],
     function()
       it('filters hypotheses', function()

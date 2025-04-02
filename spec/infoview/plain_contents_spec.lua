@@ -28,6 +28,8 @@ describe('plain infoviews', function()
       function()
         helpers.move_cursor { to = { 2, 3 } }
         assert.infoview_contents.are [[
+          Goals accomplished 🎉
+
           ▶ 2 goals
           case zero
           ⊢ 0 = 0
@@ -87,6 +89,8 @@ describe('plain infoviews', function()
       function()
         helpers.move_cursor { to = { 2, 18 } }
         assert.infoview_contents.are [[
+          Goals accomplished 🎉
+
           this : Nat
           ⊢ 37 = 37
 
@@ -109,6 +113,8 @@ describe('plain infoviews', function()
       function()
         helpers.move_cursor { to = { 2, 9 } }
         assert.infoview_contents.are [[
+          Goals accomplished 🎉
+
           ▶ 2 goals
           case zero
           ⊢ 0 = 0
@@ -153,6 +159,8 @@ describe('plain infoviews', function()
     helpers.clean_buffer([[example : 2 = 2 := rfl example : 3 = 3 := by]], function()
       helpers.move_cursor { to = { 1, 20 } }
       assert.infoview_contents.are [[
+        Goals accomplished 🎉
+
         ▶ expected type (1:20-1:23)
         ⊢ 2 = 2
 
@@ -163,6 +171,8 @@ describe('plain infoviews', function()
 
       helpers.move_cursor { to = { 1, 43 } }
       assert.infoview_contents.are [[
+        Goals accomplished 🎉
+
         ⊢ 3 = 3
 
         ▶ 1:43-1:45: error:

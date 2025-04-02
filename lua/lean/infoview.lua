@@ -446,7 +446,14 @@ end
 
 ---Directly mark that the infoview has died. What a shame.
 function Infoview:died()
-  self.info.pin.__data_element = components.LSP_HAS_DIED -- FIXME: yeah, gross
+  self.info.pin.__data_element = components.LSP_HAS_DIED
+  local params = self.info.pin.__ui_position_params
+  progress.proc_infos[params.textDocument.uri] = {
+    {
+      kind = progress.Kind.fatal_error,
+      range = { start = params.position, ['end'] = params.position },
+    },
+  }
   self.info.pin:update()
 end
 
@@ -1265,9 +1272,7 @@ function infoview.enable(opts)
           if not current_infoview then
             return
           end
-          vim.schedule(function()
-            current_infoview:died()
-          end)
+          current_infoview:died()
         end,
       })
 

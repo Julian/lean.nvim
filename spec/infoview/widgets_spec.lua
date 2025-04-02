@@ -55,6 +55,8 @@ describe('widgets', function()
       function()
         helpers.move_cursor { to = { 2, 2 } }
         assert.infoview_contents.are [[
+          Goals accomplished 🎉
+
           ⊢ 2 = 2
 
           ▼ suggestion:
@@ -65,7 +67,7 @@ describe('widgets', function()
         ]]
 
         infoview.go_to()
-        helpers.move_cursor { to = { 4, 1 } }
+        helpers.move_cursor { to = { 6, 1 } }
         helpers.feed '<CR>'
 
         -- the buffer contents have changed but we also jumped to the lean win
