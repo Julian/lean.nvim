@@ -441,7 +441,7 @@ function Infoview:__update()
     return
   end
   info:set_last_window()
-  pcall(info.move_pin, info, util.make_position_params())
+  info:move_pin(util.make_position_params())
 end
 
 ---Directly mark that the infoview has died. What a shame.

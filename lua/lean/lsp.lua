@@ -313,13 +313,7 @@ local function file_progress_handler(err, params)
   end
 
   require('lean.progress').update(params)
-  -- XXX: Similar to the equivalent line below, this second pcall seems to have
-  --      become necessary when we started deleting clean buffers in tests.
-  --      That's.. very suspicious, because it probably means it's necessary
-  --      for "real life" use cases as well. So something isn't being handled
-  --      correctly here. Without this though, tests in the sorry spec?? and
-  --      not others seem to fail nondeterministically around 50% of the time.
-  pcall(require('lean.infoview').__update_pin_by_uri, params.textDocument.uri)
+  require('lean.infoview').__update_pin_by_uri(params.textDocument.uri)
 
   require('lean.progress_bars').update(params)
 end
