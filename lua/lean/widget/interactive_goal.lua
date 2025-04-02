@@ -161,14 +161,10 @@ end
 ---@param sess Subsession
 ---@return Element[]
 function interactive_goal.interactive_goals(goals, sess)
-  if #goals == 0 then
-    return {}
-  end
-  return vim.iter(goals):fold({}, function(acc, goal)
-    table.insert(acc, Element:new { text = #acc == 0 and '' or '\n\n' })
-    table.insert(acc, interactive_goal.interactive_goal(goal, sess))
-    return acc
+  local children = vim.iter(goals):map(function(goal)
+    return interactive_goal.interactive_goal(goal, sess)
   end)
+  return { Element:concat(children:totable(), '\n\n') }
 end
 
 ---The current (term) goal state.
