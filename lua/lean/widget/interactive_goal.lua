@@ -121,9 +121,16 @@ end
 function interactive_goal.interactive_goal(goal, sess)
   local view_options = config().infoview.view_options or {}
 
-  local children = {
-    goal.userName and Element:new { text = ('case %s\n'):format(goal.userName) } or nil,
-  }
+  local case
+  if goal.userName then
+    case = Element:new {
+      children = {
+        Element:new { text = 'case ', hlgroup = 'leanInfoGoalCase' },
+        Element:new { text = goal.userName .. '\n' },
+      },
+    }
+  end
+  local children = { case }
 
   local goal_element = Element:new {
     text = goal.goalPrefix or '⊢ ',
