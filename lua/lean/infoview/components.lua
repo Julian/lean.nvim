@@ -77,8 +77,13 @@ function components.goal_at(params, sess, use_widgets)
   if goal and #goal > 1 then
     children = {
       Element:new {
-        text = ('▶ %d goals\n'):format(#goal),
-        children = children,
+        children = {
+          Element:new {
+            text = ('▶ %d goals\n'):format(#goal),
+            hlgroup = 'leanInfoMultipleGoals',
+          },
+          Element:new { children = children },
+        },
       },
     }
   end

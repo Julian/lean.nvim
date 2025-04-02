@@ -6,6 +6,7 @@ local config = require 'lean.config'().infoview
 -- Goal state
 
 highlight [[default link leanInfoGoals Title]]
+highlight [[default link leanInfoMultipleGoals DiagnosticHint]]
 highlight [[default link leanInfoGoalCase Statement]]
 
 syntax [[match leanInfoGoalHyp "^[^:\n< ][^:\n⊢{[(⦃]*\( :\@=\)" contains=leanInfoInaccessibleHyp]]
