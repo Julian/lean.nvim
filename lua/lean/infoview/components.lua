@@ -74,16 +74,8 @@ function components.goal_at(params, sess, use_widgets)
     children = goal and interactive_goal.interactive_goals(goal, sess)
   end
 
-  local count = goal and #goal
-  local header
-  if lsp.goals_accomplished_at(params) then
-    header = 'Goals accomplished 🎉'
-  elseif not count or count == 1 then
-    header = ''
-  elseif count == 0 then -- this seems to happen in between theorems
-    header = vim.g.lean_no_goals_message or 'No goals.'
-  else
-    return {
+  if goal and #goal > 1 then
+    children = {
       Element:new {
         text = ('▶ %d goals\n'):format(#goal),
         children = children,
@@ -91,13 +83,21 @@ function components.goal_at(params, sess, use_widgets)
     }
   end
 
+  local title
+  if lsp.goals_accomplished_at(params) then
+    title = 'Goals accomplished 🎉'
+  elseif goal and #goal == 0 then -- between goals / Lean <4.19 with no markers
+    title = vim.g.lean_no_goals_message or 'No goals.'
+  else
+    return children, err
+  end
+
   local element = Element:titled {
-    title = header,
+    title = title,
     body = children,
     title_hlgroup = 'leanInfoGoals',
   }
-
-  return { element }
+  return { element }, err
 end
 
 ---@param params lsp.TextDocumentPositionParams

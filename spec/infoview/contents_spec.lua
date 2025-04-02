@@ -46,9 +46,9 @@ describe('interactive infoview', function()
       function()
         helpers.move_cursor { to = { 2, 0 } }
         assert.infoview_contents.are [[
-      h : 73 = 73
-      ⊢ 37 = 37
-    ]]
+          h : 73 = 73
+          ⊢ 37 = 37
+        ]]
       end
     )
   )
@@ -111,6 +111,21 @@ describe('interactive infoview', function()
           n✝ : Nat
           ⊢ n✝ + 1 = n✝ + 1
         ]]
+      end
+    )
+  )
+
+  it(
+    'shows No goals after tactic proofs are finished',
+    helpers.clean_buffer(
+      [[
+        example : 37 = 37 := by rfl
+
+        example : 12 = 12 := rfl
+      ]],
+      function()
+        helpers.move_cursor { to = { 2, 0 } }
+        assert.infoview_contents.are 'Goals accomplished 🎉'
       end
     )
   )
