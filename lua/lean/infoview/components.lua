@@ -13,6 +13,7 @@ local config = require 'lean.config'
 local interactive_goal = require 'lean.widget.interactive_goal'
 local update_goals_at = require('lean.goals').update_at
 local lsp = require 'lean.lsp'
+local plain = require 'lean.infoview.plain'
 local rpc = require 'lean.rpc'
 local widgets = require 'lean.widgets'
 
@@ -28,39 +29,6 @@ local components = {
 ---Format a heading.
 local function H(contents)
   return ('▶ %s'):format(contents)
-end
-
----The current (tactic) goal state.
----@param goal PlainGoal a Lean `plainGoal` LSP response
----@return Element[] goals the current plain goals
-function components.plain_goal(goal)
-  if type(goal) ~= 'table' or not goal.goals then
-    return {}
-  end
-
-  return vim.iter(goal.goals):fold({}, function(acc, k)
-    local sep = #acc == 0 and '' or '\n\n'
-    table.insert(acc, Element:new { text = sep .. k })
-    return acc
-  end)
-end
-
----The current (term) goal state.
----@param term_goal table a Lean `plainTermGoal` LSP response
----@return Element[]
-function components.term_goal(term_goal)
-  if type(term_goal) ~= 'table' or not term_goal.goal then
-    return {}
-  end
-
-  return {
-    Element:new {
-      text = H(
-        ('expected type (%s)'):format(range_to_string(term_goal.range)) .. '\n' .. term_goal.goal
-      ),
-      name = 'term-goal',
-    },
-  }
 end
 
 ---Diagnostic information for the current line from the Lean server.
@@ -101,15 +69,11 @@ function components.goal_at(params, sess, use_widgets)
     children = goal and interactive_goal.interactive_goals(goal, sess)
   end
 
-  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-
   if not children then
-    local _, plain = lsp.plain_goal(params, bufnr)
-    if plain then
-      goal, children = plain.goals, components.plain_goal(plain)
-    end
+    goal, children = plain.goal(params)
   end
 
+  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
   local count = goal and #goal
   local header
   if lsp.goals_accomplished_on(bufnr, params.position.line) then
@@ -148,9 +112,7 @@ function components.term_goal_at(params, sess, use_widgets)
   end
 
   if not term_goal then
-    local uri = params.textDocument.uri
-    err, term_goal = lsp.plain_term_goal(params, vim.uri_to_bufnr(uri))
-    term_goal = term_goal and components.term_goal(term_goal)
+    term_goal, err = plain.term_goal(params)
   end
 
   return term_goal, interactive_err or err

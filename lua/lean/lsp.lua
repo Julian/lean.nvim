@@ -386,43 +386,4 @@ function lsp.restart_file(bufnr)
   })
 end
 
----@class PlainGoal
----@field rendered string The goals as pretty-printed Markdown, or something like "no goals" if accomplished.
----@field goals string[] The pretty-printed goals, empty if all accomplished.
-
----Fetch goal state information from the server (async).
----@param params lsp.TextDocumentPositionParams
----@param bufnr number
----@return LspError|nil error
----@return PlainGoal|nil plain_goal
-function lsp.plain_goal(params, bufnr)
-  local client = lsp.client_for(bufnr)
-  if not client then
-    return 'LSP server not connected', nil
-  end
-
-  params = vim.deepcopy(params)
-  -- Shift forward by 1, since in vim it's easier to reach word
-  -- boundaries in normal mode.
-  params.position.character = params.position.character + 1
-  return util.client_a_request(client, '$/lean/plainGoal', params)
-end
-
----@class PlainTermGoal
----@field goal string
----@field range lsp.Range
-
----Fetch term goal state information from the server (async).
----@param params lsp.TextDocumentPositionParams
----@param bufnr number
----@return LspError|nil error
----@return PlainTermGoal|nil plain_term_goal
-function lsp.plain_term_goal(params, bufnr)
-  local client = lsp.client_for(bufnr)
-  if not client then
-    return 'LSP server not connected', nil
-  end
-  return util.client_a_request(client, '$/lean/plainTermGoal', params)
-end
-
 return lsp
