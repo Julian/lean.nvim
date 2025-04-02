@@ -1118,8 +1118,6 @@ function Pin:__update()
     return
   end
 
-  local sess = rpc.open(params)
-
   local blocks
   if processing == progress.Kind.fatal_error then
     log:debug {
@@ -1129,6 +1127,8 @@ function Pin:__update()
     blocks = interactive_goal.diagnostics(params)
   else
     local view_options = require 'lean.config'().infoview.view_options
+    local sess = rpc.open(params)
+
     blocks = vim
       .iter({
         components.goal_at(params, sess, self.__use_widgets) or {},

@@ -64,13 +64,19 @@ end
 ---@return LspError? error
 function components.goal_at(params, sess, use_widgets)
   local children, goal, err
-  if use_widgets ~= false then
-    goal, err = update_goals_at(params, sess)
-    children = goal and interactive_goal.interactive_goals(goal, sess)
-  end
-
-  if not children then
+  if use_widgets == false then
     goal, children = plain.goal(params)
+  else
+    goal, err = update_goals_at(params, sess)
+    if err then
+      goal, err = update_goals_at(params, rpc.open(params))
+      -- FIXME: This is again our need for general retrying and/or flakiness
+      --        which happens if we make RPC calls too quickly in our tests.
+      if err then
+        return nil, err
+      end
+    end
+    children = goal and interactive_goal.interactive_goals(goal, sess)
   end
 
   local count = goal and #goal
@@ -96,30 +102,23 @@ function components.goal_at(params, sess, use_widgets)
     title_hlgroup = 'leanInfoGoals',
   }
 
-  return { element }, err
+  return { element }
 end
 
 ---@param params lsp.TextDocumentPositionParams
----@param sess? Subsession
+---@param sess Subsession
 ---@param use_widgets? boolean
 ---@return Element[]?
 ---@return LspError?
 function components.term_goal_at(params, sess, use_widgets)
-  local term_goal, interactive_err, err
-  if use_widgets ~= false then
-    if sess == nil then
-      sess = rpc.open(params)
-    end
-
-    term_goal, interactive_err = sess:getInteractiveTermGoal(params)
-    term_goal = term_goal and interactive_goal.interactive_term_goal(term_goal, sess)
+  if use_widgets == false then
+    local term_goal = plain.term_goal(params)
+    return term_goal
   end
 
-  if not term_goal then
-    term_goal, err = plain.term_goal(params)
-  end
-
-  return term_goal, interactive_err or err
+  local term_goal, err = sess:getInteractiveTermGoal(params)
+  term_goal = term_goal and interactive_goal.interactive_term_goal(term_goal, sess)
+  return term_goal, err
 end
 
 ---Retrieve the interactive diagnostics at the given line.

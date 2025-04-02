@@ -125,7 +125,7 @@ describe('widgets', function()
       function()
         helpers.move_cursor { to = { 11, 2 } }
         assert.infoview_contents.are [[
-          Goals accomplished 🎉
+          ⊢ True
 
           ▼ suggestion:
           trivial
