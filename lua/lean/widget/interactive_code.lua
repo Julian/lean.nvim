@@ -143,6 +143,9 @@ local function render_subexpr_info(subexpr_info, tag, sess)
 
   element.events = {
     click = click,
+    select = function(ctx) ---@param ctx ElementEventContext
+      ctx.toggle_subexpr_selection(subexpr_info.subexprPos)
+    end,
     clear = function(ctx) ---@param ctx ElementEventContext
       if info_open then
         do_reset(ctx)

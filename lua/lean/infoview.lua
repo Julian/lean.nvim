@@ -8,6 +8,7 @@
 local a = require 'plenary.async'
 
 local Element = require('lean.tui').Element
+local Locations = require 'lean.infoview.locations'
 local components = require 'lean.infoview.components'
 local interactive_goal = require 'lean.widget.interactive_goal'
 local log = require 'lean.log'
@@ -42,6 +43,7 @@ local options = {
   mappings = {
     ['K'] = 'click',
     ['<CR>'] = 'click',
+    ['gK'] = 'select',
     ['gd'] = 'go_to_def',
     ['gD'] = 'go_to_decl',
     ['gy'] = 'go_to_type',
@@ -1140,13 +1142,14 @@ function Pin:__update()
   else
     local view_options = require 'lean.config'().infoview.view_options
     local sess = rpc.open(params)
+    local locations = Locations.at(params)
 
     blocks = vim
       .iter({
-        components.goal_at(params, sess, self.__use_widgets) or {},
+        components.goal_at(params, sess, locations, self.__use_widgets) or {},
         view_options.show_term_goals and components.term_goal_at(params, sess, self.__use_widgets)
           or {},
-        components.user_widgets_at(params, sess, self.__use_widgets) or {},
+        components.user_widgets_at(params, sess, locations, self.__use_widgets) or {},
         components.diagnostics_at(params, sess, self.__use_widgets) or {},
       })
       :flatten(1)

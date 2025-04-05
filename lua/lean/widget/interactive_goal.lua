@@ -19,26 +19,42 @@ end
 
 ---Render a hypothesis name.
 ---@param name string
-local function to_hypothesis_name(name)
+---@param mvar_id MVarId
+---@param fvar_id FVarId
+---@param locations Locations
+local function to_hypothesis_name(name, mvar_id, fvar_id, locations)
+  local highlightable, select
+  if mvar_id ~= nil and fvar_id ~= nil then
+    highlightable = true
+
+    select = function()
+      locations:toggle_selection { mvarId = mvar_id, loc = { hyp = fvar_id } }
+    end
+  end
+
   return Element:new {
     text = name,
+    highlightable = highlightable,
+    events = { select = select },
   }
 end
 
 ---Render the hypothesis according to view options.
 ---@param hyp InteractiveHypothesisBundle
+---@param mvar_id MVarId
 ---@param opts InfoviewViewOptions
 ---@param sess Subsession
-local function to_hypothesis_element(hyp, opts, sess)
+---@param locations Locations
+local function to_hypothesis_element(hyp, mvar_id, opts, sess, locations)
   if (not opts.show_instances and hyp.isInstance) or (not opts.show_types and hyp.isType) then
     return
   end
 
   local names = vim
-    .iter(hyp.names)
-    :map(function(name)
+    .iter(ipairs(hyp.names))
+    :map(function(i, name)
       if opts.show_hidden_assumptions or is_accessible(name) then
-        return to_hypothesis_name(name)
+        return to_hypothesis_name(name, mvar_id, hyp.fvarIds[i], locations)
       end
     end)
     :totable()
@@ -116,7 +132,8 @@ end
 
 ---@param goal InteractiveGoal | InteractiveTermGoal
 ---@param sess Subsession
-function interactive_goal.Goal(goal, sess)
+---@param locations Locations
+function interactive_goal.Goal(goal, sess, locations)
   local view_options = config().infoview.view_options or {}
 
   local case
@@ -136,7 +153,7 @@ function interactive_goal.Goal(goal, sess)
     children = { InteractiveCode(goal.type, sess) },
   }
   local hyps = vim.iter(goal.hyps):map(function(hyp)
-    return to_hypothesis_element(hyp, view_options, sess)
+    return to_hypothesis_element(hyp, goal.mvarId, view_options, sess, locations)
   end)
 
   local separator = Element:new { text = '\n' }
@@ -159,10 +176,11 @@ end
 
 ---@param goals InteractiveGoal[]
 ---@param sess Subsession
+---@param locations Locations
 ---@return Element[]
-function interactive_goal.Goals(goals, sess)
+function interactive_goal.Goals(goals, sess, locations)
   local children = vim.iter(goals):map(function(goal)
-    return interactive_goal.Goal(goal, sess)
+    return interactive_goal.Goal(goal, sess, locations)
   end)
   return { Element:concat(children:totable(), '\n\n') }
 end

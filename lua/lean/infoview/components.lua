@@ -54,10 +54,11 @@ end
 
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess Subsession
+---@param locations Locations
 ---@param use_widgets? boolean
 ---@return Element[]? goal
 ---@return LspError? error
-function components.goal_at(params, sess, use_widgets)
+function components.goal_at(params, sess, locations, use_widgets)
   local children, goal, err
   if use_widgets == false then
     goal, children = plain.goal(params)
@@ -71,7 +72,7 @@ function components.goal_at(params, sess, use_widgets)
         return nil, err
       end
     end
-    children = goal and interactive_goal.Goals(goal, sess)
+    children = goal and interactive_goal.Goals(goal, sess, locations)
   end
 
   if goal and #goal > 1 then
@@ -111,6 +112,8 @@ end
 ---@return Element[]?
 ---@return LspError?
 function components.term_goal_at(params, sess, use_widgets)
+  -- Term goals, even in VSCode, seem to not support selecting subexpression
+  -- locations / "shift-click"ing, so there's no `locations` parameter here.
   if use_widgets == false then
     local term_goal = plain.term_goal(params)
     return term_goal
@@ -178,10 +181,11 @@ end
 
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? Subsession
+---@param locations Locations
 ---@param use_widgets? boolean
 ---@return Element[]? widgets
 ---@return LspError? error
-function components.user_widgets_at(params, sess, use_widgets)
+function components.user_widgets_at(params, sess, locations, use_widgets)
   if not use_widgets then
     return {}
   elseif sess == nil then
@@ -197,7 +201,7 @@ function components.user_widgets_at(params, sess, use_widgets)
     sess = rpc.open(params)
     response, err = sess:getWidgets(params.position)
   end
-  return widgets.render_response(response, params, sess), err
+  return widgets.render_response(response, params, sess, locations), err
 end
 
 return components

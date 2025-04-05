@@ -9,6 +9,8 @@ highlight [[default link leanInfoGoals Title]]
 highlight [[default link leanInfoMultipleGoals DiagnosticHint]]
 highlight [[default link leanInfoGoalCase Statement]]
 
+highlight [[default leanInfoSelected cterm=reverse,bold gui=reverse,bold]]
+
 syntax [[match leanInfoGoalHyp "^[^:\n< ][^:\n⊢{[(⦃]*\( :\@=\)" contains=leanInfoInaccessibleHyp]]
 highlight [[default link leanInfoGoalHyp Type]]
 
