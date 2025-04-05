@@ -59,6 +59,37 @@ describe('Element', function()
       )
     end)
 
+    it('supports arbitrary margin lines between title and body', function()
+      local foo = Element:new { text = 'foo\nbar\n' }
+      local element = Element:titled {
+        title = 'stuff',
+        margin = 3,
+        body = { foo },
+      }
+
+      assert.is.same(
+        Element:new {
+          children = {
+            Element:new { text = 'stuff' },
+            Element:new { text = '\n\n\n' },
+            Element:new { children = { foo } },
+          },
+        },
+        element
+      )
+
+      assert.is.equal(
+        dedent [[
+          stuff
+
+
+          foo
+          bar
+        ]],
+        element:to_string()
+      )
+    end)
+
     it('creates a text Element when children is empty', function()
       local element = Element:titled { title = 'stuff', body = {} }
 

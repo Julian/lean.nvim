@@ -90,22 +90,57 @@ function Element:new(args)
   return setmetatable(obj, self)
 end
 
----@class ElementNewBoxArgs
----@field title string the heading for this box
----@field titlehl string? the highlight group for the title
----@field children? Element[] the children for the body of this box
+---@class TitledElementArgs
+---@field title string
+---@field margin? integer how many newlines separating the title from body (defaulting to 2)
+---@field body Element[]?
+---@field title_hlgroup? string the hlgroup to use for the element's title
 
----Create a new element with a heading and body.
----@param args ElementNewBoxArgs
----@return Element
-function Element.box(args)
-  local element = Element:new {
-    text = ('▼ %s:\n'):format(args.title),
-    hlgroup = args.titlehl or 'Title',
-  }
-  local children = { element }
-  vim.list_extend(children, args.children)
-  return Element:new { children = children }
+---Create an element with optional title and body contents.
+---@param opts TitledElementArgs
+---@return Element?
+function Element:titled(opts)
+  local body = opts.body
+          and #opts.body > 0
+          and self:new { children = opts.body }
+           or nil
+
+  if opts.title == '' then
+    return body
+  end
+
+  local title = self:new { text = opts.title, hlgroup = opts.title_hlgroup }
+
+  if not body then
+    return title
+  end
+
+  local sep = self:new { text = string.rep('\n', opts.margin or 2) }
+  return self:new { children = { title, sep, body } }
+end
+
+---Create an element which joins a list-like table of elements with the provided separator.
+---@param elements Element[]
+---@param sep string
+---@param opts ElementNewArgs?
+---@return Element?
+function Element:concat(elements, sep, opts)
+  if #elements == 0 then
+    return
+  elseif #elements == 1 then
+    return elements[1]
+  end
+  local separator = Element:new{ text = sep }
+  return self:new(
+    vim.tbl_extend('error', opts or {}, {
+      children = vim.iter(elements):fold(nil, function(acc, k)
+        if not acc then return { k } end
+        table.insert(acc, separator)
+        table.insert(acc, k)
+        return acc
+      end)
+    })
+  )
 end
 
 ---Create an Element whose click event does nothing.
@@ -426,58 +461,6 @@ function Element:filter(fn)
   fn(self, path, pos)
 
   self:__filter(path, pos, fn)
-end
-
----@class TitledElementArgs
----@field title string
----@field body Element[]?
----@field title_hlgroup? string the hlgroup to use for the element's title
-
----Create an element with optional title and body contents.
----@param opts TitledElementArgs
----@return Element?
-function Element:titled(opts)
-  local body = opts.body
-          and #opts.body > 0
-          and self:new { children = opts.body }
-           or nil
-
-  if opts.title == '' then
-    return body
-  end
-
-  local title = self:new { text = opts.title, hlgroup = opts.title_hlgroup }
-
-  if not body then
-    return title
-  end
-
-  local sep = self:new { text = '\n\n' }
-  return self:new { children = { title, sep, body } }
-end
-
----Create an element which joins a list-like table of elements with the provided separator.
----@param elements Element[]
----@param sep string
----@param opts ElementNewArgs?
----@return Element?
-function Element:concat(elements, sep, opts)
-  if #elements == 0 then
-    return
-  elseif #elements == 1 then
-    return elements[1]
-  end
-  local separator = Element:new{ text = sep }
-  return self:new(
-    vim.tbl_extend('error', opts or {}, {
-      children = vim.iter(elements):fold(nil, function(acc, k)
-        if not acc then return { k } end
-        table.insert(acc, separator)
-        table.insert(acc, k)
-        return acc
-      end)
-    })
-  )
 end
 
 ---Create a BufRenderer that renders this Element.

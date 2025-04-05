@@ -211,10 +211,11 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(ctx, props)
     end
     return Element:new { children = children }
   end)
-  return Element.box {
-    title = 'suggestion',
-    titlehl = 'widgetSuggestion',
-    children = blocks:totable(),
+  return Element:titled {
+    title = '▼ suggestion:',
+    title_hlgroup = 'widgetSuggestion',
+    margin = 1,
+    body = blocks:totable(),
   }
 end)
 
