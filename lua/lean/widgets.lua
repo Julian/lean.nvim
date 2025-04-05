@@ -11,8 +11,12 @@
 ---@brief ]]
 
 local dedent = require('std.text').dedent
+local inductive = require 'std.inductive'
 
 local Element = require('lean.tui').Element
+local InteractiveCode = require 'lean.widget.interactive_code'
+local Locations = require 'lean.infoview.locations'
+local call_cancellable = require 'proofwidgets.call_cancellable'
 local update_goals_at = require('lean.goals').update_at
 local log = require 'lean.log'
 local rpc = require 'lean.rpc'
@@ -135,6 +139,23 @@ function RenderContext:get_goals()
   return update_goals_at(self.params, self:subsession())
 end
 
+---Get the goal with the given MVar ID.
+---@param mvar_id MVarId
+---@return InteractiveGoal? goal
+function RenderContext:goal_with_mvar_id(mvar_id)
+  return vim.iter(self:get_goals()):find(function(goal)
+    return goal.mvarId == mvar_id
+  end)
+end
+
+---Retrieve the currently selected locations in the infoview.
+---
+---In VSCode this is "shift-click"-ing.
+---@return GoalLocation[]
+function RenderContext:selected_locations()
+  return Locations.at(self.params).selected
+end
+
 ---Retrieve the Javascript source for the given widget.
 ---
 ---Usually this is useless as we aren't actually rendering Javascript, but it
@@ -223,6 +244,162 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(ctx, props)
     margin = 1,
     body = blocks:totable(),
   }
+end)
+
+-- --------------------
+-- ProofWidgets widgets
+-- --------------------
+
+---@class HtmlElement
+---@field element { [1]: string, [2]: [string, any][], [3]: Html[] }
+
+---@class HtmlText
+---@field text string
+
+---@class HtmlComponent
+---@field component { [1]: string, [2]: string, [3]:  any, [4]: Html[] }
+
+---@alias Html HtmlElement | HtmlText | HtmlComponent
+local Html = inductive('Html', {
+  ---@param text string
+  ---@return Element
+  text = function(_, text)
+    return Element:new { text = text }
+  end,
+
+  ---@param value { [1]: string, [2]: string, [3]:  any, [4]: Html[] }
+  ---@return Element
+  component = function(self, value, sess)
+    local _, _, props, children = unpack(value)
+    -- TODO: This should render export through our own bypassing logic,
+    --       but we only have a hash here, not the ID...
+    local elements = vim
+      .iter(children)
+      :map(function(child)
+        return self(child, sess)
+      end)
+      :totable()
+    return Element:new {
+      children = {
+        InteractiveCode(props.fmt, sess),
+        Element:new { children = elements },
+      },
+    }
+  end,
+
+  ---@param value { [1]: string, [2]: [string, any][], [3]: Html[] }
+  ---@param ctx RenderContext
+  ---@return Element
+  element = function(self, value, ctx)
+    local tag, _, children = unpack(value)
+    local elements = vim
+      .iter(children)
+      :map(function(child)
+        return self(child, ctx)
+      end)
+      :totable()
+    if tag == 'span' then
+      return Element:new { children = elements }
+    end
+    return Element:new { text = ('<%s>'):format(tag), children = elements }
+  end,
+})
+
+---@class ExprPresentationData
+---@field name string
+---@field userName string
+---@field html Html
+
+---@param ctx RenderContext
+---@return Element?
+implement('ProofWidgets.GoalTypePanel', function(ctx, _)
+  local goals = ctx:get_goals()
+  if not goals or #goals == 0 then
+    return
+  end
+
+  -- from ProofWidgets4/widget/src/presentSelection.tsx
+  local goal = goals[1]
+  local location = { mvarId = goal.mvarId, loc = { target = '/' } } ---@type GoalsLocation
+  local params = { locations = { { goal.ctx, location } } }
+  local expr = ctx:rpc_call('ProofWidgets.goalsLocationsToExprs', params).exprs[1]
+
+  local response = ctx:rpc_call('ProofWidgets.getExprPresentations', { expr = expr })
+  local presentations = response.presentations ---@type ExprPresentationData[]
+  ---@type ExprPresentationData each
+  local children = vim
+    .iter(presentations)
+    :map(function(each)
+      -- XXX: Implement the rest of rendering a presentation which looks like it
+      --      involves some <select> element implementation
+      return Html(each.html, ctx:subsession())
+    end)
+    :totable()
+  return Element:new { children = children }
+end)
+
+local NO_SELECTION_HELP = Element:new {
+  text = 'Nothing selected. You can use `gK` in the infoview to select expressions in the goal.',
+}
+
+---@param ctx RenderContext
+implement('ProofWidgets.SelectionPanel', function(ctx, _)
+  local selected = ctx:selected_locations()
+  if #selected == 0 then
+    return NO_SELECTION_HELP
+  end
+  local elements = vim.iter(selected):map(function(loc) ---@param loc GoalsLocation
+    local goal = ctx:goal_with_mvar_id(loc.mvarId)
+    if not goal then
+      return -- FIXME
+    end
+    local expr = ctx:rpc_call('ProofWidgets.goalsLocationsToExprs', {
+      locations = { { goal.ctx, loc } },
+    }).exprs[1]
+
+    -- TODO: Combine with GTP above (extract to helper)
+    local response = ctx:rpc_call('ProofWidgets.getExprPresentations', { expr = expr })
+    local presentations = response.presentations ---@type ExprPresentationData[]
+    ---@type ExprPresentationData each
+    local children = vim
+      .iter(presentations)
+      :map(function(each)
+        -- XXX: Implement the rest of rendering a presentation which looks like it
+        --      involves some <select> element implementation
+        return Html(each.html, ctx:subsession())
+      end)
+      :totable()
+    return Element:new { children = children }
+  end)
+  if not elements:peek() then
+    return
+  end
+  return Element:titled {
+    title = '▼ Selected expressions:',
+    title_hlgroup = 'Title',
+    body = { Element:concat(elements:totable(), '\n') },
+  }
+end)
+
+-- ---------------
+-- Mathlib widgets
+-- ---------------
+
+implement('Mathlib.Tactic.InteractiveUnfold.UnfoldComponent', function(ctx, props)
+  local params = vim.tbl_extend('error', props, {
+    pos = ctx.params.position,
+    goals = ctx:get_goals(),
+    selectedLocations = ctx:selected_locations(),
+  })
+
+  -- What could go wrong?
+  local method =
+    '_private.Mathlib.Tactic.Widget.InteractiveUnfold.0.Mathlib.Tactic.InteractiveUnfold.rpc._cancellable'
+  call_cancellable(ctx:subsession(), method, params, function(response)
+    vim.print(response)
+  end)
+
+  return Element:new { text = 'hello' }
 end)
 
 -- -------------------

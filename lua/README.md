@@ -13,6 +13,7 @@ There are multiple Lua packages alongside this file which serve as API boundarie
   (This might not necessarily imply moving each of those out into new packages).
 * `elan`: a Lua interface to `elan`, Lean's toolchain version manager.
   It is in early stages.
+* `proofwidgets`: a Lua reimplementation of portions of the [ProofWidgets4](https://github.com/leanprover-community/ProofWidgets4) library and its widgets
 * `std`: a collection of (completely Lean agnostic) Lua "extra standard library" code.
   Code here is stuff we wish were part of `neovim` (which is effectively Lua's real standard library in this case) or maintained in some community standard library.
   Aggressively removing things from it is acceptable if we stop using something or if we find a good implementation elsewhere.
