@@ -8,7 +8,7 @@ local interactive_goal = {}
 
 ---Format a heading.
 local function H(contents)
-  return ('▶ %s'):format(contents)
+  return ('▼ %s'):format(contents)
 end
 
 ---A hypothesis name which is accessible according to Lean's naming conventions.

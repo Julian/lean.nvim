@@ -13,7 +13,7 @@ local plain = {}
 
 ---Format a heading.
 local function H(contents)
-  return ('▶ %s'):format(contents)
+  return ('▼ %s'):format(contents)
 end
 
 ---`$/lean/plainGoal` client<-server reply.

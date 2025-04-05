@@ -23,7 +23,7 @@ describe('widgets', function()
       function()
         helpers.move_cursor { to = { 5, 9 } }
         assert.infoview_contents.are [[
-          ▶ expected type (5:9-5:20)
+          ▼ expected type (5:9-5:20)
           ⊢ Lean.Widget.Module
         ]]
 
@@ -36,7 +36,7 @@ describe('widgets', function()
         helpers.move_cursor { to = { 5, 9 } }
 
         assert.infoview_contents.are [[
-          ▶ expected type (5:9-5:20)
+          ▼ expected type (5:9-5:20)
           ⊢ Lean.Widget.Module
 
           HELLO FROM WIDGET WORLD
@@ -62,7 +62,7 @@ describe('widgets', function()
           ▼ suggestion:
           exact rfl
 
-          ▶ 2:3-2:9: information:
+          ▼ 2:3-2:9: information:
           Try this: exact rfl
         ]]
 
@@ -93,7 +93,7 @@ describe('widgets', function()
           ▼ suggestion:
           exact rfl
 
-          ▶ 1:62-1:68: information:
+          ▼ 1:62-1:68: information:
           Try this: exact rfl
         ]]
 
@@ -133,7 +133,7 @@ describe('widgets', function()
           trivial
           sorry
 
-          ▶ 11:3-11:6: information:
+          ▼ 11:3-11:6: information:
           Try these:
           • trivial
           • sorry
@@ -170,13 +170,13 @@ describe('widgets', function()
           ▼ suggestion:
           rfl
 
-          ▶ 10:25-10:39: information:
+          ▼ 10:25-10:39: information:
           Try this: trivial
 
-          ▶ 10:25-10:39: information:
+          ▼ 10:25-10:39: information:
           Try this: rfl
 
-          ▶ 10:22-10:39: error:
+          ▼ 10:22-10:39: error:
           unsolved goals
           ⊢ 37 = 37
         ]]
@@ -197,7 +197,7 @@ describe('widgets', function()
 
         helpers.move_cursor { to = { 2, 2 } }
         assert.infoview_contents.are [[
-          ▶ 2:1-2:11: information:
+          ▼ 2:1-2:11: information:
           [Init.Prelude]
         ]]
 

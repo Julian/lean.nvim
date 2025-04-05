@@ -44,7 +44,7 @@ function components.interactive_diagnostics(diags, line, sess)
 
       local range = lsp.range_of(diagnostic)
       return Element:new {
-        text = ('▶ %s: %s'):format(range_to_string(range), markers[diagnostic.severity]),
+        text = ('▼ %s: %s'):format(range_to_string(range), markers[diagnostic.severity]),
         name = 'diagnostic',
         children = { TaggedTextMsgEmbed(diagnostic.message, sess) },
       }
@@ -79,7 +79,7 @@ function components.goal_at(params, sess, use_widgets)
       Element:new {
         children = {
           Element:new {
-            text = ('▶ %d goals\n'):format(#goal),
+            text = ('▼ %d goals\n'):format(#goal),
             hlgroup = 'leanInfoMultipleGoals',
           },
           Element:new { children = children },

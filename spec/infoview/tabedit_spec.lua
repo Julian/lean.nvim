@@ -12,10 +12,10 @@ describe('tabedit a lean file', function()
     vim.cmd.tabedit 'openedViaTabedit.lean'
     helpers.insert '#check 37'
     assert.infoview_contents.are [[
-      ▶ expected type (1:8-1:10)
+      ▼ expected type (1:8-1:10)
       ⊢ Nat
 
-      ▶ 1:1-1:7: information:
+      ▼ 1:1-1:7: information:
       37 : Nat
     ]]
     vim.cmd.tabclose()

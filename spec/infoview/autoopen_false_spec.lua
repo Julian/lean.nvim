@@ -31,7 +31,7 @@ describe('infoview', function()
     infoview.open()
     assert.windows.are(lean_window, infoview.get_current_infoview().window)
     assert.infoview_contents.are [[
-      ▶ expected type (3:28-3:36)
+      ▼ expected type (3:28-3:36)
       ⊢ Nat
     ]]
     infoview.close()

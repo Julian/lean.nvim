@@ -18,10 +18,10 @@ describe(
     it('shows widget tooltips', function()
       helpers.move_cursor { to = { 1, 8 } }
       assert.infoview_contents.are [[
-        ▶ expected type (1:8-1:11)
+        ▼ expected type (1:8-1:11)
         ⊢ Type
 
-        ▶ 1:1-1:7: information:
+        ▼ 1:1-1:7: information:
         Nat : Type
       ]]
 
@@ -97,7 +97,7 @@ describe(
       helpers.clean_buffer('example : 37 = 37 := by', function()
         helpers.move_cursor { to = { 1, 19 } }
         assert.infoview_contents.are [[
-          ▶ 1:22-1:24: error:
+          ▼ 1:22-1:24: error:
           unsolved goals
           ⊢ 37 = 37
         ]]

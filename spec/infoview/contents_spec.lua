@@ -107,7 +107,7 @@ describe('interactive infoview', function()
         assert.infoview_contents.are [[
           Goals accomplished 🎉
 
-          ▶ 2 goals
+          ▼ 2 goals
           case zero
           ⊢ 0 = 0
 
@@ -139,7 +139,7 @@ describe('interactive infoview', function()
     helpers.clean_buffer([[def n : Nat := 37]], function()
       helpers.move_cursor { to = { 1, 17 } }
       assert.infoview_contents.are [[
-        ▶ expected type (1:16-1:18)
+        ▼ expected type (1:16-1:18)
         ⊢ Nat
       ]]
     end)
@@ -150,7 +150,7 @@ describe('interactive infoview', function()
     helpers.clean_buffer([[def n (x : Nat) : Nat := x]], function()
       helpers.move_cursor { to = { 1, 26 } }
       assert.infoview_contents.are [[
-        ▶ expected type (1:26-1:27)
+        ▼ expected type (1:26-1:27)
         x : Nat
         ⊢ Nat
       ]]
@@ -162,7 +162,7 @@ describe('interactive infoview', function()
     helpers.clean_buffer([[def n (A : Type) (a : A) : A := a]], function()
       helpers.move_cursor { to = { 1, 34 } }
       assert.infoview_contents.are [[
-          ▶ expected type (1:33-1:34)
+          ▼ expected type (1:33-1:34)
           A : Type
           a : A
           ⊢ A
@@ -186,7 +186,7 @@ describe('interactive infoview', function()
           this : Nat
           ⊢ 37 = 37
 
-          ▶ expected type (2:17-2:19)
+          ▼ expected type (2:17-2:19)
           ⊢ Nat
         ]]
       end
@@ -207,7 +207,7 @@ describe('interactive infoview', function()
         assert.infoview_contents.are [[
           Goals accomplished 🎉
 
-          ▶ 2 goals
+          ▼ 2 goals
           case zero
           ⊢ 0 = 0
 
@@ -215,7 +215,7 @@ describe('interactive infoview', function()
           n✝ : Nat
           ⊢ n✝ + 1 = n✝ + 1
 
-          ▶ expected type (2:9-2:10)
+          ▼ expected type (2:9-2:10)
           n : Nat
           ⊢ Nat
         ]]
@@ -228,7 +228,7 @@ describe('interactive infoview', function()
     helpers.clean_buffer([[def multibyte {𝔽 : Type} : 𝔽 = 𝔽 := rfl]], function()
       helpers.move_cursor { to = { 1, 48 } }
       assert.infoview_contents.are [[
-          ▶ expected type (1:40-1:43)
+          ▼ expected type (1:40-1:43)
           𝔽 : Type
           ⊢ 𝔽 = 𝔽
         ]]
@@ -239,7 +239,7 @@ describe('interactive infoview', function()
 
       helpers.move_cursor { to = { 1, 46 } }
       assert.infoview_contents.are [[
-        ▶ expected type (1:40-1:43)
+        ▼ expected type (1:40-1:43)
         𝔽 : Type
         ⊢ 𝔽 = 𝔽
       ]]
@@ -253,10 +253,10 @@ describe('interactive infoview', function()
       assert.infoview_contents.are [[
         Goals accomplished 🎉
 
-        ▶ expected type (1:20-1:23)
+        ▼ expected type (1:20-1:23)
         ⊢ 2 = 2
 
-        ▶ 1:43-1:45: error:
+        ▼ 1:43-1:45: error:
         unsolved goals
         ⊢ 3 = 3
       ]]
@@ -267,7 +267,7 @@ describe('interactive infoview', function()
 
         ⊢ 3 = 3
 
-        ▶ 1:43-1:45: error:
+        ▼ 1:43-1:45: error:
         unsolved goals
         ⊢ 3 = 3
       ]]
@@ -286,7 +286,7 @@ describe('interactive infoview', function()
         function()
           helpers.move_cursor { to = { 3, 2 } }
           assert.infoview_contents.are [[
-            ▶ 3:1-3:13: information:
+            ▼ 3:1-3:13: information:
             Hello
           ]]
         end
@@ -304,7 +304,7 @@ describe('interactive infoview', function()
         function()
           helpers.move_cursor { to = { 3, 2 } }
           assert.infoview_contents.are [[
-            ▶ 3:1-3:16: warning:
+            ▼ 3:1-3:16: warning:
             Hmm...
           ]]
         end
@@ -322,7 +322,7 @@ describe('interactive infoview', function()
         function()
           helpers.move_cursor { to = { 3, 2 } }
           assert.infoview_contents.are [[
-            ▶ 3:1-3:14: error:
+            ▼ 3:1-3:14: error:
             Uh oh!
           ]]
         end
@@ -345,7 +345,7 @@ describe('interactive infoview', function()
           assert.infoview_contents.are [[
             ⊢ 2 = 2
 
-            ▶ 2:3-6:10: error:
+            ▼ 2:3-6:10: error:
             type mismatch
               rfl
             has type
@@ -370,12 +370,12 @@ describe('interactive infoview', function()
         function()
           helpers.move_cursor { to = { 5, 2 } }
           assert.infoview_contents.are [[
-            ▶ 5:1-5:20: information:
+            ▼ 5:1-5:20: information:
             Multiple
             Line
             Message
 
-            ▶ 5:1-5:20: information:
+            ▼ 5:1-5:20: information:
             Another
           ]]
         end
@@ -395,12 +395,12 @@ describe('interactive infoview', function()
         function()
           helpers.move_cursor { to = { 5, 2 } }
           assert.infoview_contents.are [[
-            ▶ 5:1-5:22: information:
+            ▼ 5:1-5:22: information:
             Multiple
             Lines
 
 
-            ▶ 5:1-5:22: information:
+            ▼ 5:1-5:22: information:
             Another
           ]]
         end
@@ -421,13 +421,13 @@ describe('interactive infoview', function()
         function()
           helpers.move_cursor { to = { 6, 1 } }
           assert.infoview_contents.are [[
-            ▶ 6:1-6:18: information:
+            ▼ 6:1-6:18: information:
             So
 
-            ▶ 6:1-6:18: warning:
+            ▼ 6:1-6:18: warning:
             Many...
 
-            ▶ 6:1-6:18: error:
+            ▼ 6:1-6:18: error:
             Messages!
           ]]
         end
@@ -466,7 +466,7 @@ describe('interactive infoview', function()
 
           helpers.move_cursor { to = { 20, 2 } }
           assert.infoview_contents.are [[
-            ▶ 20:1-20:13: information:
+            ▼ 20:1-20:13: information:
             veryImportantStuff
           ]]
         end
@@ -494,7 +494,7 @@ describe('interactive infoview', function()
         function()
           helpers.move_cursor { to = { 13, 2 } }
           assert.infoview_contents.are [[
-            ▶ 13:1-13:15: information:
+            ▼ 13:1-13:15: information:
             You're gonna see this alternate text.
           ]]
         end
@@ -535,7 +535,7 @@ describe('interactive infoview', function()
           )
         end)
         assert.infoview_contents.are [[
-            ▶ 1:7-1:10: error:
+            ▼ 1:7-1:10: error:
             unexpected token; expected identifier
           ]]
       end)

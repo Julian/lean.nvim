@@ -37,7 +37,7 @@ describe(
           h2 : q
           ⊢ q ∨ p
 
-          ▶ expected type (7:5-7:8)
+          ▼ expected type (7:5-7:8)
           ⊢ ∀ {a b : Prop}, b → a ∨ b
         ]]
 
@@ -56,7 +56,7 @@ describe(
             h1 : p
             ⊢ q ∨ p
 
-            ▶ expected type (4:5-4:8)
+            ▼ expected type (4:5-4:8)
             ⊢ ∀ {a b : Prop}, a → a ∨ b
 
             -- %s at 7:6
@@ -67,7 +67,7 @@ describe(
             h2 : q
             ⊢ q ∨ p
 
-            ▶ expected type (7:5-7:8)
+            ▼ expected type (7:5-7:8)
             ⊢ ∀ {a b : Prop}, b → a ∨ b
           ]],
           filename
@@ -94,7 +94,7 @@ describe(
             h2 : q
             ⊢ q ∨ p
 
-            ▶ expected type (7:5-7:8)
+            ▼ expected type (7:5-7:8)
             ⊢ ∀ {a b : Prop}, b → a ∨ b
 
             -- %s at 1:50
@@ -146,7 +146,7 @@ describe(
           h2 : q
           ⊢ q ∨ p
 
-          ▶ expected type (7:5-7:8)
+          ▼ expected type (7:5-7:8)
           ⊢ ∀ {a b : Prop}, b → a ∨ b
         ]]
 
@@ -204,7 +204,7 @@ describe(
                 [[
                   Goals accomplished 🎉
 
-                  ▶ expected type (1:24-1:27)
+                  ▼ expected type (1:24-1:27)
                   ⊢ 2 = 2
 
                   -- %s at 6:13
@@ -224,7 +224,7 @@ describe(
                 [[
                   Goals accomplished 🎉
 
-                  ▶ expected type (1:24-1:27)
+                  ▼ expected type (1:24-1:27)
                   ⊢ 2 = 2
 
                   -- %s at 6:13
@@ -284,7 +284,7 @@ describe(
               helpers.move_cursor { to = { 11, 24 } }
               assert.infoview_contents.are(string.format(
                 [[
-                  ▶ expected type (11:24-11:27)
+                  ▼ expected type (11:24-11:27)
                   ⊢ 2 = 2
 
                   -- %s at 4:13
@@ -410,7 +410,7 @@ describe(
                 h37 : p
                 ⊢ q ∨ p
 
-                ▶ expected type (4:5-4:8)
+                ▼ expected type (4:5-4:8)
                 ⊢ ∀ {a b : Prop}, a → a ∨ b
               ]]
 
@@ -424,7 +424,7 @@ describe(
                 h37 : p
                 ⊢ q ∨ p
 
-                ▶ expected type (4:5-4:8)
+                ▼ expected type (4:5-4:8)
                 ⊢ ∀ {a b : Prop}, a → a ∨ b
               ]]
 
@@ -436,7 +436,7 @@ describe(
                 h37 : p
                 ⊢ q ∨ p
 
-                ▶ expected type (4:5-4:8)
+                ▼ expected type (4:5-4:8)
                 ⊢ ∀ {a b : Prop}, a → a ∨ b
               ]]
 
@@ -469,7 +469,7 @@ describe(
                 h37 : p
                 ⊢ q ∨ p
 
-                ▶ expected type (4:5-4:8)
+                ▼ expected type (4:5-4:8)
                 ⊢ ∀ {a b : Prop}, a → a ∨ b
               ]]
             end)

@@ -39,7 +39,7 @@ describe('infoview content (auto-)update', function()
     assert.current_cursor.is { 1, 0 }
 
     assert.infoview_contents.are [[
-      ▶ 1:1-1:6: information:
+      ▼ 1:1-1:6: information:
       1
     ]]
   end)
@@ -47,7 +47,7 @@ describe('infoview content (auto-)update', function()
   it('updates when the cursor moves', function()
     helpers.move_cursor { to = { 3, 0 } }
     assert.infoview_contents.are [[
-      ▶ 3:1-3:6: information:
+      ▼ 3:1-3:6: information:
       9.000000
     ]]
   end)
@@ -59,13 +59,13 @@ describe('infoview content (auto-)update', function()
     local second_window = vim.api.nvim_get_current_win()
     assert.current_cursor.is { 3, 0 }
     assert.infoview_contents.are [[
-      ▶ 3:1-3:6: information:
+      ▼ 3:1-3:6: information:
       9.000000
     ]]
 
     helpers.move_cursor { to = { 1, 0 } }
     assert.infoview_contents.are [[
-      ▶ 1:1-1:6: information:
+      ▼ 1:1-1:6: information:
       1
     ]]
 
@@ -73,7 +73,7 @@ describe('infoview content (auto-)update', function()
     -- Firing CursorMoved manually is required now that neovim#23711 is merged
     vim.cmd [[wincmd p | doautocmd CursorMoved]]
     assert.infoview_contents.are [[
-      ▶ 3:1-3:6: information:
+      ▼ 3:1-3:6: information:
       9.000000
     ]]
 
@@ -103,13 +103,13 @@ describe('infoview content (auto-)update', function()
 
     infoview.open()
     assert.infoview_contents.are [[
-      ▶ 1:1-1:6: information:
+      ▼ 1:1-1:6: information:
       1
     ]]
 
     helpers.move_cursor { to = { 3, 0 } }
     assert.infoview_contents.are [[
-      ▶ 3:1-3:6: information:
+      ▼ 3:1-3:6: information:
       9.000000
     ]]
   end)
@@ -133,13 +133,13 @@ describe('infoview content (auto-)update', function()
 
     infoview.open()
     assert.infoview_contents.are [[
-      ▶ 1:1-1:6: information:
+      ▼ 1:1-1:6: information:
       1
     ]]
 
     helpers.move_cursor { to = { 3, 0 } }
     assert.infoview_contents.are [[
-      ▶ 3:1-3:6: information:
+      ▼ 3:1-3:6: information:
       9.000000
     ]]
   end)
@@ -162,13 +162,13 @@ describe('infoview content (auto-)update', function()
     vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
     helpers.move_cursor { to = { 2, 0 } }
     assert.infoview_contents.are [[
-      ▶ 2:1-2:6: information:
+      ▼ 2:1-2:6: information:
       4
     ]]
 
     helpers.move_cursor { to = { 1, 0 } }
     assert.infoview_contents.are [[
-      ▶ 1:1-1:6: information:
+      ▼ 1:1-1:6: information:
       1
     ]]
 
@@ -184,21 +184,21 @@ describe('infoview content (auto-)update', function()
     -- because updating didn't happen yet, but we don't want to blind wait,
     -- it's not worth the tradeoff for fairly simple functionality.
     assert.infoview_contents.are [[
-      ▶ 1:1-1:6: information:
+      ▼ 1:1-1:6: information:
       1
     ]]
 
     -- Unpausing triggers an update.
     pin:unpause()
     assert.infoview_contents.are [[
-      ▶ 3:1-3:6: information:
+      ▼ 3:1-3:6: information:
       9.000000
     ]]
 
     -- And continued movement continues updating.
     helpers.move_cursor { to = { 1, 0 } }
     assert.infoview_contents.are [[
-      ▶ 1:1-1:6: information:
+      ▼ 1:1-1:6: information:
       1
     ]]
   end)
@@ -210,21 +210,21 @@ describe('infoview content (auto-)update', function()
 
       helpers.move_cursor { to = { 2, 0 } }
       assert.infoview_contents.are [[
-        ▶ 2:1-2:6: information:
+        ▼ 2:1-2:6: information:
         4
       ]]
 
       vim.cmd.tabnew(fixtures.project.child 'Test/Squares.lean')
       helpers.move_cursor { to = { 3, 0 } }
       assert.infoview_contents.are [[
-        ▶ 3:1-3:6: information:
+        ▼ 3:1-3:6: information:
         9.000000
       ]]
 
       -- But the first tab's contents are unchanged even without re-entering.
       assert.infoview_contents.are {
         [[
-          ▶ 2:1-2:6: information:
+          ▼ 2:1-2:6: information:
           4
         ]],
         infoview = tab1_infoview,
@@ -240,13 +240,13 @@ describe('infoview content (auto-)update', function()
 
       helpers.move_cursor { to = { 3, 0 } }
       assert.infoview_contents.are [[
-        ▶ 3:1-3:6: information:
+        ▼ 3:1-3:6: information:
         9.000000
       ]]
 
       helpers.move_cursor { to = { 1, 0 } }
       assert.infoview_contents.are [[
-        ▶ 1:1-1:6: information:
+        ▼ 1:1-1:6: information:
         1
       ]]
 

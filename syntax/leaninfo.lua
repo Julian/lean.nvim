@@ -21,7 +21,7 @@ highlight [[default link leanInfoGoalConv Operator]]
 syntax [[match leanInfoInaccessibleHyp "\i\+✝" contained]]
 highlight [[default link leanInfoInaccessibleHyp Comment]]
 
-syntax [[match leanInfoExpectedType "^▶ expected type.*"]]
+syntax [[match leanInfoExpectedType "^▼ expected type.*"]]
 highlight [[default link leanInfoExpectedType Special]]
 
 -- Diagnostics
@@ -39,7 +39,7 @@ local match, hlgroup
 for i, to_group in vim.iter(ipairs(DIAGNOSTIC_HLGROUPS)) do
   match = config.severity_markers[i]:gsub('\n', [[\_$]])
   hlgroup = 'leanInfo' .. to_group
-  syntax(('match %s "^▶.*: %s.*$"'):format(hlgroup, match))
+  syntax(('match %s "^▼.*: %s.*$"'):format(hlgroup, match))
   highlight(('default link %s %s'):format(hlgroup, to_group))
 end
 
