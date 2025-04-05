@@ -106,14 +106,14 @@ end
 ---@param severity lsp.DiagnosticSeverity
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
-    severity = vim.lsp.protocol.DiagnosticSeverity[severity] --- @type integer
+    severity = vim.lsp.protocol.DiagnosticSeverity[severity] ---@type integer
   end
   return severity
 end
 
---- @param diagnostic lsp.Diagnostic
---- @param client_id integer
---- @return table?
+---@param diagnostic lsp.Diagnostic
+---@param client_id integer
+---@return table?
 local function tags_lsp_to_vim(diagnostic, client_id)
   local tags ---@type table?
   for _, tag in ipairs(diagnostic.tags or {}) do
@@ -169,11 +169,11 @@ end
 ---@param client_id integer
 ---@return vim.Diagnostic[]
 local function lean_diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
-  --- @param diagnostic DiagnosticWith<string>
-  --- @return vim.Diagnostic
+  ---@param diagnostic DiagnosticWith<string>
+  ---@return vim.Diagnostic
   return vim.tbl_map(function(diagnostic)
     local start_row, start_col, end_row, end_col = byterange_of(bufnr, diagnostic)
-    --- @type vim.Diagnostic
+    ---@type vim.Diagnostic
     return {
       lnum = start_row,
       col = start_col,

@@ -13,8 +13,6 @@ LeanFileProgressParams	lean.txt	/*LeanFileProgressParams*
 LeanPublishDiagnosticsParams	lean.txt	/*LeanPublishDiagnosticsParams*
 LoogleResult	lean.txt	/*LoogleResult*
 Pin	lean.txt	/*Pin*
-PlainGoal	lean.txt	/*PlainGoal*
-PlainTermGoal	lean.txt	/*PlainTermGoal*
 abbreviations.convert	lean.txt	/*abbreviations.convert*
 abbreviations.enable	lean.txt	/*abbreviations.enable*
 abbreviations.load	lean.txt	/*abbreviations.load*
@@ -63,11 +61,10 @@ loogle.search	lean.txt	/*loogle.search*
 loogle.template	lean.txt	/*loogle.template*
 lsp.client_for	lean.txt	/*lsp.client_for*
 lsp.enable	lean.txt	/*lsp.enable*
-lsp.goals_accomplished_on	lean.txt	/*lsp.goals_accomplished_on*
+lsp.goals_accomplished_at	lean.txt	/*lsp.goals_accomplished_at*
 lsp.is_goals_accomplished_diagnostic	lean.txt	/*lsp.is_goals_accomplished_diagnostic*
 lsp.is_unsolved_goals_diagnostic	lean.txt	/*lsp.is_unsolved_goals_diagnostic*
-lsp.plain_goal	lean.txt	/*lsp.plain_goal*
-lsp.plain_term_goal	lean.txt	/*lsp.plain_term_goal*
+lsp.range_of	lean.txt	/*lsp.range_of*
 lsp.restart_file	lean.txt	/*lsp.restart_file*
 stderr.enable	lean.txt	/*stderr.enable*
 stderr.show	lean.txt	/*stderr.show*
