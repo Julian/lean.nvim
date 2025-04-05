@@ -11,7 +11,9 @@
 ---@brief ]]
 
 local dedent = require('std.text').dedent
+local inductive = require 'std.inductive'
 
+local CodeWithInfos = require('lean.widget.interactive_code').CodeWithInfos
 local Element = require('lean.tui').Element
 local update_goals_at = require('lean.goals').update_at
 local log = require 'lean.log'
@@ -129,6 +131,15 @@ function RenderContext:get_goals()
   return update_goals_at(self.pos, self.sess)
 end
 
+---Retrieve the currently selected locations in the infoview.
+---
+---In VSCode this is "shift-click"-ing.
+---@return GoalLocation[]
+function RenderContext.selected_locations()
+  -- XXX: ImplementMe
+  return {}
+end
+
 ---Retrieve the Javascript source for the given widget.
 ---
 ---Usually this is useless as we aren't actually rendering Javascript, but it
@@ -216,6 +227,110 @@ implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(ctx, props)
     titlehl = 'widgetSuggestion',
     children = blocks:totable(),
   }
+end)
+
+-- --------------------
+-- ProofWidgets widgets
+-- --------------------
+
+---@class HtmlElement
+---@field element { [1]: string, [2]: [string, any][], [3]: Html[] }
+
+---@class HtmlText
+---@field text string
+
+---@class HtmlComponent
+---@field component { [1]: string, [2]: string, [3]:  any, [4]: Html[] }
+
+---@alias Html HtmlElement | HtmlText | HtmlComponent
+local Html = inductive('Html', {
+  ---@param text string
+  ---@return Element
+  text = function(_, text)
+    return Element:new { text = text }
+  end,
+
+  ---@param value { [1]: string, [2]: string, [3]:  any, [4]: Html[] }
+  ---@param ctx RenderContext
+  ---@return Element
+  component = function(self, value, ctx)
+    local hash, _, props, children = unpack(value)
+    -- TODO: This should render export through our own bypassing logic,
+    --       but we only have a hash here, not the ID...
+    local elements = vim
+      .iter(children)
+      :map(function(child)
+        return self(child, ctx)
+      end)
+      :totable()
+    return Element:new {
+      children = {
+        CodeWithInfos(props.fmt, ctx.sess),
+        Element:new { children = children },
+      },
+    }
+  end,
+
+  ---@param value { [1]: string, [2]: [string, any][], [3]: Html[] }
+  ---@param ctx RenderContext
+  ---@return Element
+  element = function(self, value, ctx)
+    local tag, _, children = unpack(value)
+    local elements = vim
+      .iter(children)
+      :map(function(child)
+        return self(child, ctx)
+      end)
+      :totable()
+    if tag == 'span' then
+      return Element:new { children = elements }
+    end
+    return Element:new { text = ('<%s>'):format(tag), children = elements }
+  end,
+})
+
+---@class ExprPresentationData
+---@field name string
+---@field userName string
+---@field html Html
+
+---@param ctx RenderContext
+---@return Element?
+implement('ProofWidgets.GoalTypePanel', function(ctx, _)
+  local goals = ctx:get_goals()
+  if not goals or #goals == 0 then
+    return
+  end
+
+  -- Follows https://github.com/leanprover-community/ProofWidgets4/blob/a602d13aca2913724c7d47b2d7df0353620c4ee8/widget/src/presentSelection.tsx
+  local goal = goals[1]
+  local location = { mvarId = goal.mvarId, loc = { target = '/' } } ---@type GoalsLocation
+  local params = { locations = { { goal.ctx, location } } }
+  local expr = ctx:rpc_call('ProofWidgets.goalsLocationsToExprs', params).exprs[1]
+
+  local response = ctx:rpc_call('ProofWidgets.getExprPresentations', { expr = expr })
+  local presentations = response.presentations ---@type ExprPresentationData[]
+  ---@type ExprPresentationData each
+  local children = vim
+    .iter(presentations)
+    :map(function(each)
+      -- XXX: Implement the rest of rendering a presentation which looks like it
+      --      involves some <select> element implementation
+      return Html(each.html, ctx)
+    end)
+    :totable()
+  return Element:new { children = children }
+end)
+
+---@param ctx RenderContext
+implement('ProofWidgets.SelectionPanel', function(ctx, props)
+  local selected = ctx:selected_locations()
+  if #selected == 0 then
+    return Element:new { -- TOOD: Shift+click -> whatever
+      text = 'Nothing selected. You can use shift-click to select expressions in the goal.',
+    }
+  end
+  return Element:new { text = 'stuff' }
 end)
 
 -- -------------------
