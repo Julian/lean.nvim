@@ -49,8 +49,7 @@ syn match leanCommand "#print axioms"
 syn match leanCommand "#help"
 syn match leanCommand "#run"
 
-syn keyword leanSorry sorry
-syn keyword leanSorry admit
+syn keyword leanSorry sorry admit stop
 syn match leanSorry "#exit"
 
 syn region leanAttributeArgs start='\[' end='\]' contained contains=leanString,leanNumber,leanAttributeArgs keepend
