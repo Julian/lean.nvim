@@ -75,61 +75,6 @@ local LeanDiagnosticTag = {
 ---@class LeanPublishDiagnosticsParams: lsp.PublishDiagnosticsParams
 ---@field diagnostics DiagnosticWith<string>[]
 
--- vim.lsp.diagnostic has a *private* `diagnostic_lsp_to_vim` :/ ...
-
----@param bufnr integer
----@return string[]?
-local function get_buf_lines(bufnr)
-  if vim.api.nvim_buf_is_loaded(bufnr) then
-    return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  end
-
-  local filename = vim.api.nvim_buf_get_name(bufnr)
-  local f = io.open(filename)
-  if not f then
-    return
-  end
-
-  local content = f:read '*a'
-  if not content then
-    -- Some LSP servers report diagnostics at a directory level, in which case
-    -- io.read() returns nil
-    f:close()
-    return
-  end
-
-  local lines = vim.split(content, '\n')
-  f:close()
-  return lines
-end
-
----@param severity lsp.DiagnosticSeverity
-local function severity_lsp_to_vim(severity)
-  if type(severity) == 'string' then
-    severity = vim.lsp.protocol.DiagnosticSeverity[severity] ---@type integer
-  end
-  return severity
-end
-
----@param diagnostic lsp.Diagnostic
----@param client_id integer
----@return table?
-local function tags_lsp_to_vim(diagnostic, client_id)
-  local tags ---@type table?
-  for _, tag in ipairs(diagnostic.tags or {}) do
-    if tag == vim.lsp.protocol.DiagnosticTag.Unnecessary then
-      tags = tags or {}
-      tags.unnecessary = true
-    elseif tag == vim.lsp.protocol.DiagnosticTag.Deprecated then
-      tags = tags or {}
-      tags.deprecated = true
-    else
-      vim.lsp.log.info(string.format('Unknown DiagnosticTag %d from LSP client %d', tag, client_id))
-    end
-  end
-  return tags
-end
-
 ---The range of a Lean diagnostic.
 ---
 ---Prioritizes `fullRange`, which is the "real" range of the diagnostic, not
@@ -179,11 +124,11 @@ local function lean_diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       col = start_col,
       end_lnum = end_row,
       end_col = end_col,
-      severity = severity_lsp_to_vim(diagnostic.severity),
+      severity = std.severity_lsp_to_vim(diagnostic.severity),
       message = diagnostic.message,
       source = diagnostic.source,
       code = diagnostic.code,
-      _tags = tags_lsp_to_vim(diagnostic, client_id),
+      _tags = std.tags_lsp_to_vim(diagnostic, client_id),
       user_data = { lsp = diagnostic },
     }
   end, diagnostics)
@@ -254,7 +199,7 @@ local function on_publish_diagnostics(_, result, ctx)
     :filter(function(each)
       local range = lsp.range_of(each)
       if lsp.is_unsolved_goals_diagnostic(each) then
-        local buf_lines = get_buf_lines(bufnr)
+        local buf_lines = std.get_buf_lines(bufnr)
         local end_line = buf_lines[range['end'].line + 1] or ''
         local end_row, end_col = unpack(std.position_to_byte0(range['end'], end_line))
 

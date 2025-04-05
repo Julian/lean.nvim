@@ -27,4 +27,62 @@ function lsp.range_to_string(range)
   )
 end
 
+-- vim.lsp.diagnostic has a *private* `diagnostic_lsp_to_vim` :/ ...
+--
+-- the below comes from there / is required for assembling vim.Diagnostic
+-- objects out of LSP responses
+
+---@param bufnr integer
+---@return string[]?
+function lsp.get_buf_lines(bufnr)
+  if vim.api.nvim_buf_is_loaded(bufnr) then
+    return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  end
+
+  local filename = vim.api.nvim_buf_get_name(bufnr)
+  local f = io.open(filename)
+  if not f then
+    return
+  end
+
+  local content = f:read '*a'
+  if not content then
+    -- Some LSP servers report diagnostics at a directory level, in which case
+    -- io.read() returns nil
+    f:close()
+    return
+  end
+
+  local lines = vim.split(content, '\n')
+  f:close()
+  return lines
+end
+
+---@param severity lsp.DiagnosticSeverity
+function lsp.severity_lsp_to_vim(severity)
+  if type(severity) == 'string' then
+    severity = vim.lsp.protocol.DiagnosticSeverity[severity] ---@type integer
+  end
+  return severity
+end
+
+---@param diagnostic lsp.Diagnostic
+---@param client_id integer
+---@return table?
+function lsp.tags_lsp_to_vim(diagnostic, client_id)
+  local tags ---@type table?
+  for _, tag in ipairs(diagnostic.tags or {}) do
+    if tag == vim.lsp.protocol.DiagnosticTag.Unnecessary then
+      tags = tags or {}
+      tags.unnecessary = true
+    elseif tag == vim.lsp.protocol.DiagnosticTag.Deprecated then
+      tags = tags or {}
+      tags.deprecated = true
+    else
+      vim.lsp.log.info(string.format('Unknown DiagnosticTag %d from LSP client %d', tag, client_id))
+    end
+  end
+  return tags
+end
+
 return lsp
