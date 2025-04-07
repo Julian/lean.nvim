@@ -44,6 +44,7 @@ local function render_subexpr_info(subexpr_info, tag, sess)
     element.hlgroup = 'leanInfoDiff' .. subexpr_info.diffStatus
   end
 
+  ---@param ctx ElementEventContext
   local do_reset = function(ctx)
     info_open = false
     element:remove_tooltip()
@@ -81,6 +82,7 @@ local function render_subexpr_info(subexpr_info, tag, sess)
     return tooltip_element
   end
 
+  ---@param ctx ElementEventContext
   local do_open_all = function(ctx)
     local info_popup, err = sess:infoToInteractive(info_with_ctx)
 
@@ -96,6 +98,7 @@ local function render_subexpr_info(subexpr_info, tag, sess)
     ctx.rehover()
   end
 
+  ---@param ctx ElementEventContext
   local click = function(ctx)
     if info_open then
       return do_reset(ctx)
@@ -128,19 +131,19 @@ local function render_subexpr_info(subexpr_info, tag, sess)
       vim.cmd 'botright copen'
     end
   end
-  local go_to_def = function(ctx)
+  local go_to_def = function(ctx) ---@param ctx ElementEventContext
     go_to(ctx, 'definition')
   end
-  local go_to_decl = function(ctx)
+  local go_to_decl = function(ctx) ---@param ctx ElementEventContext
     go_to(ctx, 'declaration')
   end
-  local go_to_type = function(ctx)
+  local go_to_type = function(ctx) ---@param ctx ElementEventContext
     go_to(ctx, 'type')
   end
 
   element.events = {
     click = click,
-    clear = function(ctx)
+    clear = function(ctx) ---@param ctx ElementEventContext
       if info_open then
         do_reset(ctx)
       end
