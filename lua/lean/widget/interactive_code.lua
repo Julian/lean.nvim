@@ -21,9 +21,9 @@ local DIFF_TAG_TO_EXPLANATION = {
 
 ---Information about a subexpression within delaborated code.
 ---@class SubexprInfo
----@field info InfoWithCtx
----@field subexprPos integer The position of this subexpression within the top-level expression.
----@field diffStatus? DiffTag
+---@field info InfoWithCtx The `Elab.Info` node with the semantics of this part of the output.
+---@field subexprPos string The position of this subexpression within the top-level expression.
+---@field diffStatus? DiffTag Display the subexpression as in a diff view (e.g. red/green like `git diff`)
 
 ---@param subexpr_info SubexprInfo
 local function render_subexpr_info(subexpr_info, tag, sess)
