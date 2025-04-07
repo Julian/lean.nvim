@@ -157,9 +157,9 @@ function helpers.clean_buffer(contents, callback)
     vim.api.nvim_exec_autocmds('BufEnter', { buffer = bufnr })
     vim.api.nvim_buf_call(bufnr, callback)
 
-    vim.schedule(function()
-      vim.api.nvim_buf_delete(bufnr, { force = true })
-    end)
+    -- FIXME: Deleting buffers seems good for keeping our tests clean, but is
+    --        broken on 0.11 with impossible to diagnose invalid buffer errors.
+    -- vim.api.nvim_buf_delete(bufnr, { force = true })
   end
 end
 
