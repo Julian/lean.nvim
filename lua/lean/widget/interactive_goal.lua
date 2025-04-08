@@ -1,4 +1,4 @@
-local CodeWithInfos = require('lean.widget.interactive_code').CodeWithInfos
+local InteractiveCode = require 'lean.widget.interactive_code'
 local Element = require('lean.tui').Element
 local config = require 'lean.config'
 local range_to_string = require('std.lsp').range_to_string
@@ -47,7 +47,7 @@ local function to_hypotheses_element(hyps, opts, sess)
             or nil,
         },
         Element:new { text = ' : ' },
-        CodeWithInfos(hyp.type, sess),
+        InteractiveCode(hyp.type, sess),
       },
     }
 
@@ -55,7 +55,7 @@ local function to_hypotheses_element(hyps, opts, sess)
       element:add_child(Element:new {
         text = ' := ',
         name = 'hyp_val',
-        children = { CodeWithInfos(hyp.val, sess) },
+        children = { InteractiveCode(hyp.val, sess) },
       })
     end
 
@@ -135,7 +135,7 @@ function interactive_goal.interactive_goal(goal, sess)
   local goal_element = Element:new {
     text = goal.goalPrefix or '⊢ ',
     name = 'goal',
-    children = { CodeWithInfos(goal.type, sess) },
+    children = { InteractiveCode(goal.type, sess) },
   }
   local separator = Element:new { text = '\n' }
   local hyps = to_hypotheses_element(goal.hyps, view_options, sess)

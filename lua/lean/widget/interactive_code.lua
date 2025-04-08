@@ -2,8 +2,6 @@ local Element = require('lean.tui').Element
 local TaggedText = require 'lean.widget.tagged_text'
 local log = require 'lean.log'
 
-local interactive_code = {}
-
 ---@alias DiffTag 'wasChanged' | 'willChange' | 'wasDeleted' | 'willDelete' | 'wasInserted' | 'willInsert'
 
 ---A user-facing explanation of a changing piece of the goal state.
@@ -24,6 +22,8 @@ local DIFF_TAG_TO_EXPLANATION = {
 ---@field info InfoWithCtx The `Elab.Info` node with the semantics of this part of the output.
 ---@field subexprPos string The position of this subexpression within the top-level expression.
 ---@field diffStatus? DiffTag Display the subexpression as in a diff view (e.g. red/green like `git diff`)
+
+local InteractiveCode
 
 ---@param subexpr_info SubexprInfo
 local function render_subexpr_info(subexpr_info, tag, sess)
@@ -56,14 +56,14 @@ local function render_subexpr_info(subexpr_info, tag, sess)
     local tooltip_element = Element.noop()
 
     if info_popup.exprExplicit ~= nil then
-      tooltip_element:add_child(interactive_code.CodeWithInfos(info_popup.exprExplicit, sess))
+      tooltip_element:add_child(InteractiveCode(info_popup.exprExplicit, sess))
       if info_popup.type ~= nil then
         tooltip_element:add_child(Element:new { text = ' : ' })
       end
     end
 
     if info_popup.type ~= nil then
-      tooltip_element:add_child(interactive_code.CodeWithInfos(info_popup.type, sess))
+      tooltip_element:add_child(InteractiveCode(info_popup.type, sess))
     end
 
     if info_popup.doc ~= nil then
@@ -154,7 +154,7 @@ local function render_subexpr_info(subexpr_info, tag, sess)
   }
   element.highlightable = true
 
-  element:add_child(interactive_code.CodeWithInfos(tag, sess))
+  element:add_child(InteractiveCode(tag, sess))
 
   return element
 end
@@ -166,6 +166,6 @@ end
 ---@alias CodeWithInfos TaggedText.SubExprInfo
 
 -- FIXME: make inductive take parameters and really merge with TaggedTextMsgEmbed
-interactive_code.CodeWithInfos = TaggedText('SubexprInfo', render_subexpr_info)
+InteractiveCode = TaggedText('SubexprInfo', render_subexpr_info)
 
-return interactive_code
+return InteractiveCode

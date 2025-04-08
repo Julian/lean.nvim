@@ -1,6 +1,6 @@
 local inductive = require 'std.inductive'
 
-local CodeWithInfos = require('lean.widget.interactive_code').CodeWithInfos
+local InteractiveCode = require 'lean.widget.interactive_code'
 local Element = require('lean.tui').Element
 local InteractiveGoal = require('lean.widget.interactive_goal').interactive_goal
 local TaggedText = require 'lean.widget.tagged_text'
@@ -39,7 +39,7 @@ end
 
 interactive_diagnostic.MsgEmbed = inductive('MsgEmbed', {
   expr = function(_, ...)
-    return CodeWithInfos(...)
+    return InteractiveCode(...)
   end,
 
   goal = function(_, ...)
