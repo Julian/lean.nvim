@@ -14,16 +14,6 @@ repos:
       - id: mixed-line-ending
         args: [--fix, lf]
       - id: trailing-whitespace
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v4.0.0-alpha.8"
-    hooks:
-      - name: prettier
-        id: prettier
-        exclude: |
-          (?x)^(
-            vscode-lean/abbreviations.json|
-            .*/lake-manifest.json
-          )
   - repo: https://github.com/lunarmodules/luacheck
     rev: v1.2.0
     hooks:
