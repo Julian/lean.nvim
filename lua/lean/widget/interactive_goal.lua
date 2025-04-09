@@ -17,59 +17,42 @@ local function is_accessible(name)
   return name:sub(-#'✝') ~= '✝'
 end
 
----Filter the hypotheses according to view options, then convert them to elements.
----@param hyps InteractiveHypothesisBundle[]
----@param opts InfoviewViewOptions
----@param sess Subsession
----@return Element?
-local function to_hypotheses_element(hyps, opts, sess)
-  ---@param hyp InteractiveHypothesisBundle
-  local children = vim.iter(hyps):map(function(hyp)
-    if (not opts.show_instances and hyp.isInstance) or (not opts.show_types and hyp.isType) then
-      return
-    end
-
-    local names = vim.iter(hyp.names)
-    if not opts.show_hidden_assumptions then
-      names = names:filter(is_accessible)
-    end
-    if not names:peek() then
-      return
-    end
-
-    local element = Element:new {
-      name = 'hyp',
-      children = {
-        Element:new {
-          text = names:join ' ',
-          hlgroup = hyp.isInserted and 'leanInfoHypNameInserted'
-            or hyp.isRemoved and 'leanInfoHypNameRemoved'
-            or nil,
-        },
-        Element:new { text = ' : ' },
-        InteractiveCode(hyp.type, sess),
-      },
-    }
-
-    if opts.show_let_values and hyp.val then
-      element:add_child(Element:new {
-        text = ' := ',
-        name = 'hyp_val',
-        children = { InteractiveCode(hyp.val, sess) },
-      })
-    end
-
-    return element
-  end)
-
-  if not children:peek() then
+local function to_hypothesis_element(hyp, opts, sess)
+  if (not opts.show_instances and hyp.isInstance) or (not opts.show_types and hyp.isType) then
     return
   end
-  if opts.reverse then
-    children = children:rev()
+
+  local names = vim.iter(hyp.names)
+  if not opts.show_hidden_assumptions then
+    names = names:filter(is_accessible)
+  end
+  if not names:peek() then
+    return
   end
 
-  return Element:concat(children:totable(), '\n')
+  local element = Element:new {
+    name = 'hyp',
+    children = {
+      Element:new {
+        text = names:join ' ',
+        hlgroup = hyp.isInserted and 'leanInfoHypNameInserted'
+          or hyp.isRemoved and 'leanInfoHypNameRemoved'
+          or nil,
+      },
+      Element:new { text = ' : ' },
+      InteractiveCode(hyp.type, sess),
+    },
+  }
+
+  if opts.show_let_values and hyp.val then
+    element:add_child(Element:new {
+      text = ' := ',
+      name = 'hyp_val',
+      children = { InteractiveCode(hyp.val, sess) },
+    })
+  end
+
+  return element
 end
 
 ---Diagnostic information for the current line from the Lean server.
@@ -137,18 +120,20 @@ function interactive_goal.interactive_goal(goal, sess)
     name = 'goal',
     children = { InteractiveCode(goal.type, sess) },
   }
-  local separator = Element:new { text = '\n' }
-  local hyps = to_hypotheses_element(goal.hyps, view_options, sess)
+  local hyps = vim.iter(goal.hyps):map(function(hyp)
+    return to_hypothesis_element(hyp, view_options, sess)
+  end)
 
+  local separator = Element:new { text = '\n' }
   if view_options.reverse then
     table.insert(children, goal_element)
-    if hyps then
+    if hyps:peek() then
       table.insert(children, separator)
-      table.insert(children, hyps)
+      table.insert(children, Element:concat(hyps:rev():totable(), '\n'))
     end
   else
-    if hyps then
-      table.insert(children, hyps)
+    if hyps:peek() then
+      table.insert(children, Element:concat(hyps:totable(), '\n'))
       table.insert(children, separator)
     end
     table.insert(children, goal_element)
