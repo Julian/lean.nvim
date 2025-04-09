@@ -101,7 +101,7 @@ end
 
 ---@param goal InteractiveGoal | InteractiveTermGoal
 ---@param sess Subsession
-function interactive_goal.interactive_goal(goal, sess)
+function interactive_goal.Goal(goal, sess)
   local view_options = config().infoview.view_options or {}
 
   local case
@@ -147,7 +147,7 @@ end
 ---@return Element[]
 function interactive_goal.interactive_goals(goals, sess)
   local children = vim.iter(goals):map(function(goal)
-    return interactive_goal.interactive_goal(goal, sess)
+    return interactive_goal.Goal(goal, sess)
   end)
   return { Element:concat(children:totable(), '\n\n') }
 end
@@ -164,7 +164,7 @@ function interactive_goal.interactive_term_goal(goal, sess)
   local term_state_element = Element:new {
     text = H(string.format('expected type (%s)\n', range_to_string(goal.range))),
     name = 'term-state',
-    children = { interactive_goal.interactive_goal(goal, sess) },
+    children = { interactive_goal.Goal(goal, sess) },
   }
   return {
     Element:new {

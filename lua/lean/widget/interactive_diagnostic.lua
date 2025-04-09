@@ -2,7 +2,7 @@ local inductive = require 'std.inductive'
 
 local InteractiveCode = require 'lean.widget.interactive_code'
 local Element = require('lean.tui').Element
-local InteractiveGoal = require('lean.widget.interactive_goal').interactive_goal
+local InteractiveGoal = require('lean.widget.interactive_goal').Goal
 local TaggedText = require 'lean.widget.tagged_text'
 local log = require 'lean.log'
 local widgets = require 'lean.widgets'
