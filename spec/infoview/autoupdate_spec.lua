@@ -102,6 +102,7 @@ describe('infoview content (auto-)update', function()
     helpers.move_cursor { to = { 1, 0 } }
 
     infoview.open()
+    helpers.wait_for_line_diagnostics()
     assert.infoview_contents.are [[
       ▼ 1:1-1:6: information:
       1

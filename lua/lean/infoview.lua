@@ -258,6 +258,11 @@ end
 ---Move the cursor to the given (1-indexed) goal.
 ---@param n? integer the goal number to move to, defaulting to the first
 function Infoview:move_cursor_to_goal(n)
+  if not self.window then
+    log:error { message = 'Moving cursor in closed infoview.' }
+    return
+  end
+
   n = n or 1
   local lines = vim.api.nvim_buf_get_lines(self.info.__renderer.buf, 0, -1, false)
   for i, line in ipairs(lines) do
