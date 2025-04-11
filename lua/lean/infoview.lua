@@ -833,7 +833,7 @@ function Info:render()
   end
 
   -- Set the cursor to the line with first goal (just after the marker).
-  if vim.api.nvim_get_current_win() ~= self.__infoview.window then
+  if self.__infoview.window and vim.api.nvim_get_current_win() ~= self.__infoview.window then
     self.__infoview:move_cursor_to_goal()
   end
 
