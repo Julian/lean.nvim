@@ -160,7 +160,7 @@ end
 ---@param goals InteractiveGoal[]
 ---@param sess Subsession
 ---@return Element[]
-function interactive_goal.interactive_goals(goals, sess)
+function interactive_goal.Goals(goals, sess)
   local children = vim.iter(goals):map(function(goal)
     return interactive_goal.Goal(goal, sess)
   end)

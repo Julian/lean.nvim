@@ -71,7 +71,7 @@ function components.goal_at(params, sess, use_widgets)
         return nil, err
       end
     end
-    children = goal and interactive_goal.interactive_goals(goal, sess)
+    children = goal and interactive_goal.Goals(goal, sess)
   end
 
   if goal and #goal > 1 then
