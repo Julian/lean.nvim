@@ -17,28 +17,43 @@ local function is_accessible(name)
   return name:sub(-#'✝') ~= '✝'
 end
 
+---Render a hypothesis name.
+---@param name string
+local function to_hypothesis_name(name)
+  return Element:new {
+    text = name,
+  }
+end
+
+---Render the hypothesis according to view options.
+---@param hyp InteractiveHypothesisBundle
+---@param opts InfoviewViewOptions
+---@param sess Subsession
 local function to_hypothesis_element(hyp, opts, sess)
   if (not opts.show_instances and hyp.isInstance) or (not opts.show_types and hyp.isType) then
     return
   end
 
-  local names = vim.iter(hyp.names)
-  if not opts.show_hidden_assumptions then
-    names = names:filter(is_accessible)
-  end
-  if not names:peek() then
+  local names = vim
+    .iter(hyp.names)
+    :map(function(name)
+      if opts.show_hidden_assumptions or is_accessible(name) then
+        return to_hypothesis_name(name)
+      end
+    end)
+    :totable()
+  if #names == 0 then
     return
   end
 
   local element = Element:new {
     name = 'hyp',
     children = {
-      Element:new {
-        text = names:join ' ',
+      Element:concat(names, ' ', {
         hlgroup = hyp.isInserted and 'leanInfoHypNameInserted'
           or hyp.isRemoved and 'leanInfoHypNameRemoved'
           or nil,
-      },
+      }),
       Element:new { text = ' : ' },
       InteractiveCode(hyp.type, sess),
     },
