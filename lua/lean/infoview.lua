@@ -1149,7 +1149,7 @@ function Pin:__update()
         components.user_widgets_at(params, sess, self.__use_widgets) or {},
         components.diagnostics_at(params, sess, self.__use_widgets) or {},
       })
-      :flatten()
+      :flatten(1)
       :totable()
   end
 
