@@ -28,7 +28,11 @@ return function(name, defs)
     local methods = vim.tbl_keys(first)
 
     to_obj = function(constructor_name, impl)
-      local obj = setmetatable({}, { __index = Type })
+      local obj = setmetatable({
+        serialize = function(self)
+          return { [constructor_name] = self[1] }
+        end,
+      }, { __index = Type })
 
       for _, method_name in ipairs(methods) do
         local method = impl[method_name]

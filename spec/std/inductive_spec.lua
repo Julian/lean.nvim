@@ -57,8 +57,8 @@ describe('inductive', function()
     end, 'Invalid Empty constructor: something')
   end)
 
-  describe('additional methods', function()
-    it('can be defined for each constructor', function()
+  describe('with additional methods', function()
+    it('are defined for each constructor', function()
       local MaybeWithMethods = inductive('Maybe', {
         some = {
           map = function(self, f)
@@ -92,7 +92,7 @@ describe('inductive', function()
       assert.are.equal(0, still_nothing:unwrap_or(0))
     end)
 
-    it('allows explicitly calling constructors', function()
+    it('allow explicitly calling constructors', function()
       local MaybeExplicitConstructor = inductive('Maybe', {
         some = {
           map = function(self, f)
@@ -146,6 +146,35 @@ describe('inductive', function()
         error:match 'map method is missing for Result.err'
           or error:match 'map method is unexpected for Result.ok'
       )
+    end)
+
+    it('supports serializing back to a plain table', function()
+      local Foo = inductive('Foo', {
+        id = {
+          calc = function(_, z)
+            return z
+          end,
+        },
+        const = {
+          calc = function(self, z)
+            return self[1] + z
+          end,
+        },
+        pair = {
+          calc = function(self, z)
+            return self.x + self.y + z
+          end,
+        },
+      })
+
+      local id = { id = {} }
+      assert.are.same(id, Foo(id):serialize())
+
+      local const = { const = 37 }
+      assert.are.same(const, Foo(const):serialize())
+
+      local pair = { pair = { x = 37, y = 73 } }
+      assert.are.same(pair, Foo(pair):serialize())
     end)
   end)
 end)
