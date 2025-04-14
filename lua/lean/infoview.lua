@@ -1072,10 +1072,6 @@ function Pin:move(params)
   self:update()
 end
 
-function Pin:__render_parents()
-  self.__info:render()
-end
-
 ---Indicate that the pin has started loading.
 function Pin:__started_loading()
   if self.loading then
@@ -1105,7 +1101,7 @@ function Pin:async_update()
   if self.loading then
     self.loading = false
     self.__element:set_children { self.__data_element }
-    self:__render_parents()
+    self.__info:render()
   end
 end
 
@@ -1121,7 +1117,7 @@ function Pin:__update()
   end
 
   if self:__started_loading() then
-    self:__render_parents()
+    self.__info:render()
   end
 
   local processing = progress.at(params)
