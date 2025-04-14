@@ -1066,7 +1066,6 @@ function Pin:toggle_pause()
   end
 end
 
----Triggered when manually moving a pin.
 ---@param params UIParams
 function Pin:move(params)
   self:__update_extmark(params)
