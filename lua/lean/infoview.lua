@@ -1082,7 +1082,7 @@ function Pin:__started_loading()
   return true
 end
 
-function Pin:async_update()
+Pin.update = a.void(function(self)
   -- FIXME: For one, we're guarding here against the infoview being updated
   --        while it's closed, which if we continued, would end up calling
   --        render. That doesn't seem right, somewhere that should happen
@@ -1103,9 +1103,7 @@ function Pin:async_update()
     self.__element:set_children { self.__data_element }
     self.__info:render()
   end
-end
-
-Pin.update = a.void(Pin.async_update)
+end)
 
 ---async function to update this pin's contents given the current position.
 function Pin:__update()
