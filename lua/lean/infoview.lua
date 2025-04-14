@@ -1015,10 +1015,11 @@ function Pin:update_position()
     new_pos.character = 0
   end
 
-  local new_params = { textDocument = { uri = vim.uri_from_bufnr(buf) }, position = new_pos }
-  self.__position_params = new_params
+  local uri = vim.uri_from_bufnr(buf)
+  ---@type lsp.TextDocumentPositionParams
+  self.__position_params = { textDocument = { uri = uri }, position = new_pos }
   self.__ui_position_params = {
-    textDocument = { uri = vim.uri_from_bufnr(buf) },
+    textDocument = { uri = uri },
     position = { line = extmark_pos[1], character = extmark_pos[2] },
   }
 end
@@ -1111,8 +1112,7 @@ Pin.update = a.void(Pin.async_update)
 function Pin:__update()
   local params = self.__position_params
 
-  local uri = params.textDocument.uri
-  if not vim.api.nvim_buf_is_loaded(vim.uri_to_bufnr(uri)) then
+  if not vim.api.nvim_buf_is_loaded(vim.uri_to_bufnr(params.textDocument.uri)) then
     return
   end
 
