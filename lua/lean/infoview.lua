@@ -1072,16 +1072,6 @@ function Pin:move(params)
   self:update()
 end
 
----Indicate that the pin has started loading.
-function Pin:__started_loading()
-  if self.loading then
-    return false
-  end
-  self.loading = true
-  self.__element:set_children { self.__data_element }
-  return true
-end
-
 Pin.update = a.void(function(self)
   -- FIXME: For one, we're guarding here against the infoview being updated
   --        while it's closed, which if we continued, would end up calling
@@ -1113,7 +1103,8 @@ function Pin:__update()
     return
   end
 
-  if self:__started_loading() then
+  if not self.loading then
+    self.loading = true
     self.__info:render()
   end
 
@@ -1204,7 +1195,7 @@ function infoview.__update_pin_positions(_, bufnr, tick, _, _, _, _, _, _)
   local uri = vim.uri_from_bufnr(bufnr)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
-      pin:__started_loading()
+      pin.loading = true
       pin:update_position()
       vim.schedule(function()
         pin:update()
