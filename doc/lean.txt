@@ -106,10 +106,6 @@ Infoview                                                              *Infoview*
         {window}  (integer)
 
 
-infoview.enable_debug()                                  *infoview.enable_debug*
-    Enables printing of extra debugging information in the infoview.
-
-
 InfoviewNewArgs                                                *InfoviewNewArgs*
 
     Fields: ~
