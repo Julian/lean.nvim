@@ -440,7 +440,7 @@ function Infoview:__update()
   if info.__win_event_disable then
     return
   end
-  info:set_last_window()
+  info:update_last_window()
   info:move_pin(util.make_position_params())
 end
 
@@ -743,8 +743,16 @@ function Info:__maybe_show_pin_extmark(...)
 end
 
 ---Set the current window as the last window used to update this Info.
-function Info:set_last_window()
+function Info:update_last_window()
   self.last_window = vim.api.nvim_get_current_win()
+end
+
+---Jump to the last window used to update this Info, if any.
+function Info:jump_to_last_window()
+  if not self.last_window then
+    return
+  end
+  vim.api.nvim_set_current_win(self.last_window)
 end
 
 ---Update this info's pins element.
@@ -767,12 +775,16 @@ function Info:__render_pins()
       header_element.highlightable = true
       header_element.events = {
         click = function()
-          if self.last_window then
-            vim.api.nvim_set_current_win(self.last_window)
-            local uri_bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-            vim.api.nvim_set_current_buf(uri_bufnr)
-            vim.api.nvim_win_set_cursor(0, { params.position.line + 1, params.position.character })
+          local start_window = vim.api.nvim_get_current_win()
+          self:jump_to_last_window()
+
+          if start_window == vim.api.nvim_get_current_win() then
+            return
           end
+
+          local uri_bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+          vim.api.nvim_set_current_buf(uri_bufnr)
+          vim.api.nvim_win_set_cursor(0, { params.position.line + 1, params.position.character })
         end,
       }
     end
@@ -781,7 +793,7 @@ function Info:__render_pins()
     end
 
     local pin_element = Element:new { name = 'pin_wrapper', children = { header_element } }
-    if pin.__element then
+    if pin.__element then -- FIXME: wut?????
       pin_element:add_child(pin.__element)
     end
 
@@ -1331,7 +1343,7 @@ function infoview.add_pin()
     return
   end
   local current_infoview = infoview.open()
-  current_infoview.info:set_last_window()
+  current_infoview.info:update_last_window()
   current_infoview.info:add_pin()
 end
 
@@ -1341,7 +1353,7 @@ function infoview.set_diff_pin()
     return
   end
   local current_infoview = infoview.open()
-  current_infoview.info:set_last_window()
+  current_infoview.info:update_last_window()
   current_infoview.info:__set_diff_pin(util.make_position_params())
 end
 
