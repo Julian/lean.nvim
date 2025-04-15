@@ -26,7 +26,7 @@ describe(
       local first_pin_position
 
       it('can be placed', function()
-        local filename = vim.api.nvim_buf_get_name(0)
+        local filename = vim.fs.basename(vim.api.nvim_buf_get_name(0))
 
         first_pin_position = { 7, 5 }
         helpers.move_cursor { to = first_pin_position }
@@ -160,8 +160,7 @@ describe(
         infoview.add_pin()
         infoview.clear_pins()
         infoview.add_pin()
-        assert.infoview_contents.are(string.format(
-          [[
+        assert.infoview_contents.are(([[
             Goals accomplished 🎉
 
             case inl
@@ -174,9 +173,7 @@ describe(
             p q : Prop
             h1 : p
             ⊢ q ∨ p
-          ]],
-          vim.api.nvim_buf_get_name(0)
-        ))
+          ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
       end)
 
       describe('click', function()
@@ -184,23 +181,22 @@ describe(
           local lean_window = vim.api.nvim_get_current_win()
 
           vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
-          local filename = vim.api.nvim_buf_get_name(0)
           local pin_position = { 2, 0 }
           helpers.move_cursor { to = pin_position }
           infoview.add_pin()
 
           vim.cmd.edit { fixtures.project.child 'some-other-file.lean', bang = true }
           helpers.insert [[example : 2 = 2 := by sorry]]
-          assert.infoview_contents.are(([[
+          assert.infoview_contents.are [[
             No goals.
 
             ▼ 1:1-1:8: warning:
             declaration uses 'sorry'
 
-            -- %s at 2:1
+            -- Test/Squares.lean at 2:1
             ▼ 2:1-2:6: information:
             4
-          ]]):format(filename))
+          ]]
 
           infoview.go_to()
           helpers.move_cursor { to = { 6, 3 } }
@@ -238,8 +234,7 @@ describe(
             it('moves pin when lines are added above it', function()
               vim.api.nvim_buf_set_lines(0, 0, 0, true, { 'theorem foo : 2 = 2 := rfl', '' })
               helpers.move_cursor { to = { 1, 24 } }
-              assert.infoview_contents.are(string.format(
-                [[
+              assert.infoview_contents.are(([[
                   Goals accomplished 🎉
 
                   ▼ expected type (1:24-1:27)
@@ -252,14 +247,11 @@ describe(
                   p q : Prop
                   h1 : p
                   ⊢ q ∨ p
-                ]],
-                vim.api.nvim_buf_get_name(0)
-              ))
+                ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
             end)
 
             it('moves pin when lines are removed above it', function()
-              assert.infoview_contents.are(string.format(
-                [[
+              assert.infoview_contents.are(([[
                   Goals accomplished 🎉
 
                   ▼ expected type (1:24-1:27)
@@ -272,15 +264,12 @@ describe(
                   p q : Prop
                   h1 : p
                   ⊢ q ∨ p
-                ]],
-                vim.api.nvim_buf_get_name(0)
-              ))
+                ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
 
               helpers.move_cursor { to = { 3, 50 } }
               vim.api.nvim_buf_set_lines(0, 0, 2, true, {})
 
-              assert.infoview_contents.are(string.format(
-                [[
+              assert.infoview_contents.are(([[
                   Goals accomplished 🎉
 
                   p q : Prop
@@ -293,14 +282,11 @@ describe(
                   p q : Prop
                   h1 : p
                   ⊢ q ∨ p
-                ]],
-                vim.api.nvim_buf_get_name(0)
-              ))
+                ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
             end)
 
             it('does not move pin when lines are added or removed below it', function()
-              assert.infoview_contents.are(string.format(
-                [[
+              assert.infoview_contents.are(([[
                   Goals accomplished 🎉
 
                   p q : Prop
@@ -313,15 +299,12 @@ describe(
                   p q : Prop
                   h1 : p
                   ⊢ q ∨ p
-                ]],
-                vim.api.nvim_buf_get_name(0)
-              ))
+                ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
 
               vim.api.nvim_buf_set_lines(0, -1, -1, true, { '', 'theorem foo : 2 = 2 := rfl' })
 
               helpers.move_cursor { to = { 11, 24 } }
-              assert.infoview_contents.are(string.format(
-                [[
+              assert.infoview_contents.are(([[
                   ▼ expected type (11:24-11:27)
                   ⊢ 2 = 2
 
@@ -332,15 +315,12 @@ describe(
                   p q : Prop
                   h1 : p
                   ⊢ q ∨ p
-                ]],
-                vim.api.nvim_buf_get_name(0)
-              ))
+                ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
 
               vim.api.nvim_buf_set_lines(0, 9, 11, true, {})
 
               helpers.move_cursor { to = { 1, 50 } }
-              assert.infoview_contents.are(string.format(
-                [[
+              assert.infoview_contents.are(([[
                   Goals accomplished 🎉
 
                   p q : Prop
@@ -353,17 +333,14 @@ describe(
                   p q : Prop
                   h1 : p
                   ⊢ q ∨ p
-                ]],
-                vim.api.nvim_buf_get_name(0)
-              ))
+                ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
             end)
 
             it('moves pin when changes are made on its line before its column', function()
               helpers.move_cursor { to = { 4, 9 } }
               vim.cmd.normal 'cl37' -- h1 -> h37
               helpers.move_cursor { to = { 1, 50 } }
-              assert.infoview_contents.are(string.format(
-                [[
+              assert.infoview_contents.are(([[
                   Goals accomplished 🎉
 
                   p q : Prop
@@ -376,17 +353,14 @@ describe(
                   p q : Prop
                   h37 : p
                   ⊢ q ∨ p
-                ]],
-                vim.api.nvim_buf_get_name(0)
-              ))
+                ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
             end)
 
             it('does not move pin when changes are made on its line after its column', function()
               helpers.move_cursor { to = { 4, 13 } }
               vim.cmd.normal 'a    '
               helpers.move_cursor { to = { 1, 50 } }
-              assert.infoview_contents.are(string.format(
-                [[
+              assert.infoview_contents.are(([[
                   Goals accomplished 🎉
 
                   p q : Prop
@@ -399,9 +373,7 @@ describe(
                   p q : Prop
                   h37 : p
                   ⊢ q ∨ p
-                ]],
-                vim.api.nvim_buf_get_name(0)
-              ))
+                ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
 
               infoview.clear_pins()
               assert.infoview_contents.are [[

@@ -12,6 +12,33 @@ function lsp.position_to_byte0(position, line)
   return { position.line, ok and col or position.character }
 end
 
+---Polyfill vim.fs.relpath-ish for Neovim < 0.11.
+---
+---Don't use this for real filesystem operations (as opposed to display),
+---its implementation is naive!
+local relpath = vim.fs.relpath
+  or function(base, target)
+    if vim.startswith(target, base .. '/') then
+      return target:sub(#base + 2)
+    end
+    return target
+  end
+
+---Convert LSP document params inside the current buffer to a human-readable (1, 1)-indexed string.
+---
+---Takes the workspace into account in order to return a relative path.
+---@param params UIParams
+function lsp.text_document_position_to_string(params)
+  local workspace = vim.lsp.buf.list_workspace_folders()[1] or vim.uv.cwd()
+  local filename = vim.uri_to_fname(params.textDocument.uri)
+
+  return ('%s at %d:%d'):format(
+    relpath(workspace, filename) or filename,
+    params.position.line + 1,
+    params.position.character + 1
+  )
+end
+
 ---Convert an LSP range to a human-readable (1, 1)-indexed string.
 ---
 ---We use 1-based indexing here as the `gg` and `|` motions are 1-indexed,

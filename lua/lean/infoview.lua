@@ -6,6 +6,7 @@
 ---@brief ]]
 
 local a = require 'plenary.async'
+local text_document_position_to_string = require('std.lsp').text_document_position_to_string
 
 local Element = require('lean.tui').Element
 local components = require 'lean.infoview.components'
@@ -878,15 +879,9 @@ function Pin:render(current, click_header)
     return self.__element
   end
 
-  local location_text = ('%s at %d:%d'):format(
-    vim.uri_to_fname(params.textDocument.uri),
-    params.position.line + 1,
-    params.position.character + 1
-  )
-
   local header_element = Element:new {
     name = 'pin-header',
-    text = ('-- %s\n'):format(location_text),
+    text = ('-- %s\n'):format(text_document_position_to_string(params)),
     highlightable = true,
     events = { click = click_header(params) },
   }
