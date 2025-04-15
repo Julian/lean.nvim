@@ -115,11 +115,9 @@ local function render_subexpr_info(subexpr_info, tag, sess)
     end
 
     -- Switch to window of current Lean file
-    local this_infoview = require('lean.infoview').get_current_infoview()
-    local this_info = this_infoview and this_infoview.info
-    local this_window = this_info and this_info.last_window
-    if this_window then
-      vim.api.nvim_set_current_win(this_window)
+    local current_infoview = require('lean.infoview').get_current_infoview()
+    if current_infoview and current_infoview.info then
+      current_infoview.info:jump_to_last_window()
     end
 
     vim.lsp.util.show_document(links[1], 'utf-16', { focus = true })
