@@ -106,11 +106,6 @@ Info.__index = Info
 local Infoview = {}
 Infoview.__index = Infoview
 
----Enables printing of extra debugging information in the infoview.
-function infoview.enable_debug()
-  infoview.debug = true
-end
-
 ---@class InfoviewNewArgs
 ---@field width? integer
 ---@field height? integer
@@ -758,33 +753,10 @@ function Info:__render_pins()
   ---@param current boolean
   local function render_pin(pin, current)
     local header_element = Element:new { name = 'pin-header' }
-    if infoview.debug then
-      header_element:add_child(Element:new { text = '-- PIN ' .. pin.id, name = 'pin-id-header' })
-
-      local function add_attribute(text, name)
-        header_element:add_child(
-          Element:new { text = ' [' .. text .. ']', name = name .. '-attribute' }
-        )
-      end
-      if current then
-        add_attribute('CURRENT', 'current')
-      end
-      if pin.paused then
-        add_attribute('PAUSED', 'paused')
-      end
-      if pin.loading then
-        add_attribute('LOADING', 'loading')
-      end
-    end
-
     local params = pin.__ui_position_params
     if not current and params then
       local filename = vim.uri_to_fname(params.textDocument.uri)
-      if not infoview.debug then
-        header_element:add_child(Element:new { text = '-- ', name = 'pin-id-header' })
-      else
-        header_element:add_child(Element:new { text = ': ', name = 'pin-header-separator' })
-      end
+      header_element:add_child(Element:new { text = '-- ', name = 'pin-id-header' })
       local location_text = ('%s at %d:%d'):format(
         filename,
         params.position.line + 1,
