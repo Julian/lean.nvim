@@ -755,61 +755,28 @@ function Info:jump_to_last_window()
   vim.api.nvim_set_current_win(self.last_window)
 end
 
----Update this info's pins element.
-function Info:__render_pins()
-  ---@param pin Pin
-  ---@param current boolean
-  local function render_pin(pin, current)
-    local header_element = Element:new { name = 'pin-header' }
-    local params = pin.__ui_position_params
-    if not current and params then
-      local filename = vim.uri_to_fname(params.textDocument.uri)
-      header_element:add_child(Element:new { text = '-- ', name = 'pin-id-header' })
-      local location_text = ('%s at %d:%d'):format(
-        filename,
-        params.position.line + 1,
-        params.position.character + 1
-      )
-      header_element:add_child(Element:new { text = location_text, name = 'pin-location' })
-
-      header_element.highlightable = true
-      header_element.events = {
-        click = function()
-          local start_window = vim.api.nvim_get_current_win()
-          self:jump_to_last_window()
-
-          if start_window == vim.api.nvim_get_current_win() then
-            return
-          end
-
-          local uri_bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-          vim.api.nvim_set_current_buf(uri_bufnr)
-          vim.api.nvim_win_set_cursor(0, { params.position.line + 1, params.position.character })
-        end,
-      }
-    end
-    if not header_element:is_empty() then
-      header_element:add_child(Element:new { text = '\n', name = 'pin-header-end' })
-    end
-
-    local pin_element = Element:new { name = 'pin_wrapper', children = { header_element } }
-    if pin.__element then -- FIXME: wut?????
-      pin_element:add_child(pin.__element)
-    end
-
-    return pin_element
-  end
-
-  self.__pins_element:set_children { render_pin(self.pin, true) }
-  for _, pin in ipairs(self.pins) do
-    self.__pins_element:add_child(Element:new { text = '\n\n', name = 'pin_spacing' })
-    self.__pins_element:add_child(render_pin(pin, false))
-  end
-end
-
 ---Update this info's physical contents.
 function Info:render()
-  self:__render_pins()
+  local function click_header(params)
+    return function()
+      local start_window = vim.api.nvim_get_current_win()
+      self:jump_to_last_window()
+
+      if start_window == vim.api.nvim_get_current_win() then
+        return
+      end
+
+      local uri_bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+      vim.api.nvim_set_current_buf(uri_bufnr)
+      vim.api.nvim_win_set_cursor(0, { params.position.line + 1, params.position.character })
+    end
+  end
+
+  self.__pins_element:set_children { self.pin:render(true, click_header) }
+  for _, pin in ipairs(self.pins) do
+    self.__pins_element:add_child(Element:new { text = '\n\n', name = 'pin_spacing' })
+    self.__pins_element:add_child(pin:render(false, click_header))
+  end
 
   self.__renderer:render()
   if self.__diff_pin then
@@ -901,6 +868,36 @@ end
 function Pin:disable_widgets()
   self.__use_widgets = false
   self:update()
+end
+
+---@param current boolean
+---@param click_header fun(params:lsp.TextDocumentPositionParams):fun():nil
+function Pin:render(current, click_header)
+  local header_element = Element:new { name = 'pin-header' }
+  local params = self.__ui_position_params
+  if not current and params then
+    local filename = vim.uri_to_fname(params.textDocument.uri)
+    header_element:add_child(Element:new { text = '-- ', name = 'pin-id-header' })
+    local location_text = ('%s at %d:%d'):format(
+      filename,
+      params.position.line + 1,
+      params.position.character + 1
+    )
+    header_element:add_child(Element:new { text = location_text, name = 'pin-location' })
+
+    header_element.highlightable = true
+    header_element.events = { click = click_header(params) }
+  end
+  if not header_element:is_empty() then
+    header_element:add_child(Element:new { text = '\n', name = 'pin-header-end' })
+  end
+
+  local pin_element = Element:new { name = 'pin_wrapper', children = { header_element } }
+  if self.__element then -- FIXME: wut?????
+    pin_element:add_child(self.__element)
+  end
+
+  return pin_element
 end
 
 function Pin:__teardown()
