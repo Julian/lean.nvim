@@ -12,11 +12,11 @@ function lsp.position_to_byte0(position, line)
   return { position.line, ok and col or position.character }
 end
 
----Convert an LSP position to a (1, 1)-indexed string.
+---Convert an LSP range to a human-readable (1, 1)-indexed string.
 ---
----We use 1-based indexing here as this is meant for human-readable strings,
----and the `gg` and `|` motions are 1-indexed, which is the most likely way a
----human (you!) will interact with this information.
+---We use 1-based indexing here as the `gg` and `|` motions are 1-indexed,
+---which is the most likely way a human (you?) will interact with this
+---information.
 ---@param range lsp.Range
 function lsp.range_to_string(range)
   return ('%d:%d-%d:%d'):format(
