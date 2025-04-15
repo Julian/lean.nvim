@@ -873,31 +873,24 @@ end
 ---@param current boolean
 ---@param click_header fun(params:UIParams):fun():nil
 function Pin:render(current, click_header)
-  local header_element = Element:new { name = 'pin-header' }
   local params = self.__ui_position_params
-  if not current and params then
-    local filename = vim.uri_to_fname(params.textDocument.uri)
-    header_element:add_child(Element:new { text = '-- ', name = 'pin-id-header' })
-    local location_text = ('%s at %d:%d'):format(
-      filename,
-      params.position.line + 1,
-      params.position.character + 1
-    )
-    header_element:add_child(Element:new { text = location_text, name = 'pin-location' })
-
-    header_element.highlightable = true
-    header_element.events = { click = click_header(params) }
-  end
-  if not header_element:is_empty() then
-    header_element:add_child(Element:new { text = '\n', name = 'pin-header-end' })
+  if current or not params then -- FIXME: Why/when is params nil?!
+    return self.__element
   end
 
-  local pin_element = Element:new { name = 'pin_wrapper', children = { header_element } }
-  if self.__element then -- FIXME: wut?????
-    pin_element:add_child(self.__element)
-  end
+  local location_text = ('%s at %d:%d'):format(
+    vim.uri_to_fname(params.textDocument.uri),
+    params.position.line + 1,
+    params.position.character + 1
+  )
 
-  return pin_element
+  local header_element = Element:new {
+    name = 'pin-header',
+    text = ('-- %s\n'):format(location_text),
+    highlightable = true,
+    events = { click = click_header(params) },
+  }
+  return Element:new { children = { header_element, self.__element } }
 end
 
 function Pin:__teardown()
