@@ -590,22 +590,6 @@ function BufRenderer:last_win_valid()
     and vim.api.nvim_win_get_buf(self.last_win) == self.buf
 end
 
-function BufRenderer:update_cursor(win)
-  win = win or vim.api.nvim_get_current_win()
-  if vim.api.nvim_win_get_buf(win) == self.buf then
-    self.last_win = win
-  end
-  if not self:last_win_valid() then
-    return
-  end
-
-  local path_changed = self:update_position()
-
-  if path_changed then
-    self:hover()
-  end
-end
-
 ---Checks if two paths are equal, ignoring auxillary metadata (e.g. offsets)
 ---@param path_a PathNode[]? first path
 ---@param path_b PathNode[]? second path
@@ -632,21 +616,25 @@ local function path_equal(path_a, path_b)
   return true
 end
 
-function BufRenderer:update_position()
-  local path_before = self.path
-  local cursor_pos = vim.api.nvim_win_get_cursor(self.last_win)
-  local raw_pos = pos_to_raw_pos(cursor_pos, self.lines)
-  if not raw_pos then
+function BufRenderer:update_cursor(win)
+  win = win or vim.api.nvim_get_current_win()
+  if vim.api.nvim_win_get_buf(win) == self.buf then
+    self.last_win = win
+  end
+  if not self:last_win_valid() then
     return
   end
 
-  self.path = self.element:path_from_pos(raw_pos)
+  local path_before = self.path
+  local cursor_pos = vim.api.nvim_win_get_cursor(self.last_win)
+  local raw_pos = pos_to_raw_pos(cursor_pos, self.lines)
+  if raw_pos then
+    self.path = self.element:path_from_pos(raw_pos)
 
-  if not path_equal(path_before, self.path) then
-    return true
+    if not path_equal(path_before, self.path) then
+      self:hover()
+    end
   end
-
-  return false
 end
 
 function BufRenderer:hover(force_update_highlight)
