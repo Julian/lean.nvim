@@ -1,6 +1,5 @@
 local Element = require('lean.tui').Element
 local TaggedText = require 'lean.widget.tagged_text'
-local log = require 'lean.log'
 
 ---@alias DiffTag 'wasChanged' | 'willChange' | 'wasDeleted' | 'willDelete' | 'wasInserted' | 'willInsert'
 
@@ -28,21 +27,11 @@ local InteractiveCode
 ---@param subexpr_info SubexprInfo
 local function render_subexpr_info(subexpr_info, tag, sess)
   local element = Element:new {}
-
-  local info_with_ctx = subexpr_info.info
-
-  local info_open = false
-
   if subexpr_info.diffStatus then
-    if element.hlgroup then
-      log:warning {
-        message = 'quashing a highlight group',
-        hlgroup = element.hlgroup,
-        diffStatus = subexpr_info.diffStatus,
-      }
-    end
     element.hlgroup = 'leanInfoDiff' .. subexpr_info.diffStatus
   end
+
+  local info_open = false
 
   ---@param ctx ElementEventContext
   local do_reset = function(ctx)
@@ -81,6 +70,8 @@ local function render_subexpr_info(subexpr_info, tag, sess)
 
     return tooltip_element
   end
+
+  local info_with_ctx = subexpr_info.info
 
   ---@param ctx ElementEventContext
   local do_open_all = function(ctx)
