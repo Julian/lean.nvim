@@ -773,10 +773,10 @@ function Info:render()
     end
   end
 
-  self.__pins_element:set_children { self.pin:render(true, click_header) }
+  self.__pins_element:set_children { self.pin.__element }
   for _, pin in ipairs(self.pins) do
     self.__pins_element:add_child(Element:new { text = '\n\n', name = 'pin_spacing' })
-    self.__pins_element:add_child(pin:render(false, click_header))
+    self.__pins_element:add_child(pin:render_with_header(click_header))
   end
 
   self.__renderer:render()
@@ -871,14 +871,11 @@ function Pin:disable_widgets()
   self:update()
 end
 
----@param current boolean
+---Render a pin with an extra header indicating its location.
+---
 ---@param click_header fun(params:UIParams):fun():nil
-function Pin:render(current, click_header)
+function Pin:render_with_header(click_header)
   local params = self.__ui_position_params
-  if current or not params then -- FIXME: Why/when is params nil?!
-    return self.__element
-  end
-
   local header_element = Element:new {
     name = 'pin-header',
     text = ('-- %s\n'):format(text_document_position_to_string(params)),
