@@ -1008,27 +1008,23 @@ end
 
 ---Stop updating this pin.
 function Pin:pause()
-  if self.paused then
-    return
-  end
   self.paused = true
 end
 
 ---Restart updating this pin.
 function Pin:unpause()
-  if not self.paused then
-    return
+  if self.paused then
+    self.paused = false
+    self:update()
   end
-  self.paused = false
-  self:update()
 end
 
 ---Toggle whether this pin receives updates.
 function Pin:toggle_pause()
-  if not self.paused then
-    self:pause()
-  else
+  if self.paused then
     self:unpause()
+  else
+    self:pause()
   end
 end
 
