@@ -871,7 +871,7 @@ function Pin:disable_widgets()
 end
 
 ---@param current boolean
----@param click_header fun(params:lsp.TextDocumentPositionParams):fun():nil
+---@param click_header fun(params:UIParams):fun():nil
 function Pin:render(current, click_header)
   local header_element = Element:new { name = 'pin-header' }
   local params = self.__ui_position_params
