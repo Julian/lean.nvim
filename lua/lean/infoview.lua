@@ -1041,46 +1041,15 @@ function Pin:move(params)
   self:update()
 end
 
-Pin.update = a.void(function(self)
-  -- FIXME: For one, we're guarding here against the infoview being updated
-  --        while it's closed, which if we continued, would end up calling
-  --        render. That doesn't seem right, somewhere that should happen
-  --        higher up than here.
-  if self.paused or not self.__info.__infoview.window or not self.__position_params then
-    return
-  end
-
-  self.__tick = self.__tick + 1
-  local tick = self.__tick
-  self:__update()
-  if self.__tick ~= tick then
-    return
-  end
-
-  if self.loading then
-    self.loading = false
-    self.__element:set_children { self.__data_element }
-    self.__info:render()
-  end
-end)
-
----async function to update this pin's contents given the current position.
-function Pin:__update()
-  local params = self.__position_params
-
-  if not vim.api.nvim_buf_is_loaded(vim.uri_to_bufnr(params.textDocument.uri)) then
-    return
-  end
-
-  if not self.loading then
-    self.loading = true
-    self.__info:render()
-  end
-
+---Render the combined contents of the infoview for the given parameters.
+---
+---@param params lsp.TextDocumentPositionParams
+---@param use_widgets boolean
+---@return Element
+local function contents_for(params, use_widgets)
   local processing = progress.at(params)
   if processing == progress.Kind.processing then
-    self.__data_element = options.show_processing and components.PROCESSING or Element.EMPTY
-    return
+    return options.show_processing and components.PROCESSING or Element.EMPTY
   end
 
   local blocks
@@ -1096,25 +1065,24 @@ function Pin:__update()
 
     blocks = vim
       .iter({
-        components.goal_at(params, sess, self.__use_widgets) or {},
-        view_options.show_term_goals and components.term_goal_at(params, sess, self.__use_widgets)
-          or {},
-        components.user_widgets_at(params, sess, self.__use_widgets) or {},
-        components.diagnostics_at(params, sess, self.__use_widgets) or {},
+        components.goal_at(params, sess, use_widgets) or {},
+        view_options.show_term_goals and components.term_goal_at(params, sess, use_widgets) or {},
+        components.user_widgets_at(params, sess, use_widgets) or {},
+        components.diagnostics_at(params, sess, use_widgets) or {},
       })
       :flatten(1)
       :totable()
   end
 
   if vim.tbl_isempty(blocks) then
-    if vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0, name = 'leanls' }) then
-      self.__data_element = components.LSP_HAS_DIED
+    local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+    if vim.tbl_isempty(vim.lsp.get_clients { bufnr = bufnr, name = 'leanls' }) then
+      return components.LSP_HAS_DIED
     elseif options.show_no_info_message then
-      self.__data_element = components.NO_INFO
+      return components.NO_INFO
     else
-      self.__data_element = components.EMPTY
+      return components.EMPTY
     end
-    return
   end
 
   local new_data_element
@@ -1133,8 +1101,47 @@ function Pin:__update()
       end,
     },
   }) or Element.EMPTY
-  self.__data_element = new_data_element
+  return new_data_element
 end
+
+Pin.update = a.void(function(self)
+  -- FIXME: For one, we're guarding here against the infoview being updated
+  --        while it's closed, which if we continued, would end up calling
+  --        render. That doesn't seem right, somewhere that should happen
+  --        higher up than here.
+  if self.paused or not self.__info.__infoview.window then
+    return
+  end
+
+  local params = self.__position_params
+  if not params then
+    return
+  end
+
+  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
+
+  self.__tick = self.__tick + 1
+  local tick = self.__tick
+
+  if not self.loading then
+    self.loading = true
+    self.__info:render()
+  end
+  self.__data_element = contents_for(self.__position_params, self.__use_widgets)
+
+  if self.__tick ~= tick then
+    return
+  end
+
+  if self.loading then
+    self.loading = false
+    self.__element:set_children { self.__data_element }
+    self.__info:render()
+  end
+end)
 
 ---Close all open infoviews (across all tabs).
 function infoview.close_all()
