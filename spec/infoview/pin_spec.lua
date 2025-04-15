@@ -2,6 +2,7 @@
 --- Tests for the placing of infoview pins.
 ---@brief ]]
 
+local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
@@ -9,7 +10,7 @@ require('lean').setup {}
 
 describe(
   'infoview pins',
-  helpers.clean_buffer(
+  helpers.clean_buffer( -- FIXME: Clearly this shouldn't surround all tests
     [[
       theorem has_tactic_goal : p ∨ q → q ∨ p := by
         intro h
@@ -176,6 +177,43 @@ describe(
           ]],
           vim.api.nvim_buf_get_name(0)
         ))
+      end)
+
+      describe('click', function()
+        it('jumps to the pin position', function()
+          local lean_window = vim.api.nvim_get_current_win()
+
+          vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
+          local filename = vim.api.nvim_buf_get_name(0)
+          local pin_position = { 2, 0 }
+          helpers.move_cursor { to = pin_position }
+          infoview.add_pin()
+
+          vim.cmd.edit { fixtures.project.child 'some-other-file.lean', bang = true }
+          helpers.insert [[example : 2 = 2 := by sorry]]
+          assert.infoview_contents.are(([[
+            No goals.
+
+            ▼ 1:1-1:8: warning:
+            declaration uses 'sorry'
+
+            -- %s at 2:1
+            ▼ 2:1-2:6: information:
+            4
+          ]]):format(filename))
+
+          infoview.go_to()
+          helpers.move_cursor { to = { 6, 3 } }
+          helpers.feed '<CR>'
+
+          assert.message("Didn't jump to the pin location!").are.same({
+            vim.api.nvim_get_current_win(),
+            vim.api.nvim_win_get_cursor(0),
+          }, {
+            lean_window,
+            pin_position,
+          })
+        end)
       end)
 
       describe(
