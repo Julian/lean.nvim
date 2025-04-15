@@ -161,18 +161,18 @@ describe(
         infoview.clear_pins()
         infoview.add_pin()
         assert.infoview_contents.are(([[
-            Goals accomplished 🎉
+          Goals accomplished 🎉
 
-            case inl
-            p q : Prop
-            h1 : p
-            ⊢ q ∨ p
+          case inl
+          p q : Prop
+          h1 : p
+          ⊢ q ∨ p
 
-            -- %s at 4:6
-            case inl
-            p q : Prop
-            h1 : p
-            ⊢ q ∨ p
+          -- %s at 4:6
+          case inl
+          p q : Prop
+          h1 : p
+          ⊢ q ∨ p
           ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
       end)
 
@@ -235,104 +235,104 @@ describe(
               vim.api.nvim_buf_set_lines(0, 0, 0, true, { 'theorem foo : 2 = 2 := rfl', '' })
               helpers.move_cursor { to = { 1, 24 } }
               assert.infoview_contents.are(([[
-                  Goals accomplished 🎉
+                Goals accomplished 🎉
 
-                  ▼ expected type (1:24-1:27)
-                  ⊢ 2 = 2
+                ▼ expected type (1:24-1:27)
+                ⊢ 2 = 2
 
-                  -- %s at 6:13
-                  Goals accomplished 🎉
+                -- %s at 6:13
+                Goals accomplished 🎉
 
-                  case inl
-                  p q : Prop
-                  h1 : p
-                  ⊢ q ∨ p
+                case inl
+                p q : Prop
+                h1 : p
+                ⊢ q ∨ p
                 ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
             end)
 
             it('moves pin when lines are removed above it', function()
               assert.infoview_contents.are(([[
-                  Goals accomplished 🎉
+                Goals accomplished 🎉
 
-                  ▼ expected type (1:24-1:27)
-                  ⊢ 2 = 2
+                ▼ expected type (1:24-1:27)
+                ⊢ 2 = 2
 
-                  -- %s at 6:13
-                  Goals accomplished 🎉
+                -- %s at 6:13
+                Goals accomplished 🎉
 
-                  case inl
-                  p q : Prop
-                  h1 : p
-                  ⊢ q ∨ p
+                case inl
+                p q : Prop
+                h1 : p
+                ⊢ q ∨ p
                 ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
 
               helpers.move_cursor { to = { 3, 50 } }
               vim.api.nvim_buf_set_lines(0, 0, 2, true, {})
 
               assert.infoview_contents.are(([[
-                  Goals accomplished 🎉
+                Goals accomplished 🎉
 
-                  p q : Prop
-                  ⊢ p ∨ q → q ∨ p
+                p q : Prop
+                ⊢ p ∨ q → q ∨ p
 
-                  -- %s at 4:13
-                  Goals accomplished 🎉
+                -- %s at 4:13
+                Goals accomplished 🎉
 
-                  case inl
-                  p q : Prop
-                  h1 : p
-                  ⊢ q ∨ p
+                case inl
+                p q : Prop
+                h1 : p
+                ⊢ q ∨ p
                 ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
             end)
 
             it('does not move pin when lines are added or removed below it', function()
               assert.infoview_contents.are(([[
-                  Goals accomplished 🎉
+                Goals accomplished 🎉
 
-                  p q : Prop
-                  ⊢ p ∨ q → q ∨ p
+                p q : Prop
+                ⊢ p ∨ q → q ∨ p
 
-                  -- %s at 4:13
-                  Goals accomplished 🎉
+                -- %s at 4:13
+                Goals accomplished 🎉
 
-                  case inl
-                  p q : Prop
-                  h1 : p
-                  ⊢ q ∨ p
+                case inl
+                p q : Prop
+                h1 : p
+                ⊢ q ∨ p
                 ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
 
               vim.api.nvim_buf_set_lines(0, -1, -1, true, { '', 'theorem foo : 2 = 2 := rfl' })
 
               helpers.move_cursor { to = { 11, 24 } }
               assert.infoview_contents.are(([[
-                  ▼ expected type (11:24-11:27)
-                  ⊢ 2 = 2
+                ▼ expected type (11:24-11:27)
+                ⊢ 2 = 2
 
-                  -- %s at 4:13
-                  Goals accomplished 🎉
+                -- %s at 4:13
+                Goals accomplished 🎉
 
-                  case inl
-                  p q : Prop
-                  h1 : p
-                  ⊢ q ∨ p
+                case inl
+                p q : Prop
+                h1 : p
+                ⊢ q ∨ p
                 ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
 
               vim.api.nvim_buf_set_lines(0, 9, 11, true, {})
 
               helpers.move_cursor { to = { 1, 50 } }
               assert.infoview_contents.are(([[
-                  Goals accomplished 🎉
+                Goals accomplished 🎉
 
-                  p q : Prop
-                  ⊢ p ∨ q → q ∨ p
+                p q : Prop
+                ⊢ p ∨ q → q ∨ p
 
-                  -- %s at 4:13
-                  Goals accomplished 🎉
+                -- %s at 4:13
+                Goals accomplished 🎉
 
-                  case inl
-                  p q : Prop
-                  h1 : p
-                  ⊢ q ∨ p
+                case inl
+                p q : Prop
+                h1 : p
+                ⊢ q ∨ p
                 ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
             end)
 
@@ -341,18 +341,18 @@ describe(
               vim.cmd.normal 'cl37' -- h1 -> h37
               helpers.move_cursor { to = { 1, 50 } }
               assert.infoview_contents.are(([[
-                  Goals accomplished 🎉
+                Goals accomplished 🎉
 
-                  p q : Prop
-                  ⊢ p ∨ q → q ∨ p
+                p q : Prop
+                ⊢ p ∨ q → q ∨ p
 
-                  -- %s at 4:14
-                  Goals accomplished 🎉
+                -- %s at 4:14
+                Goals accomplished 🎉
 
-                  case inl
-                  p q : Prop
-                  h37 : p
-                  ⊢ q ∨ p
+                case inl
+                p q : Prop
+                h37 : p
+                ⊢ q ∨ p
                 ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
             end)
 
@@ -361,18 +361,18 @@ describe(
               vim.cmd.normal 'a    '
               helpers.move_cursor { to = { 1, 50 } }
               assert.infoview_contents.are(([[
-                  Goals accomplished 🎉
+                Goals accomplished 🎉
 
-                  p q : Prop
-                  ⊢ p ∨ q → q ∨ p
+                p q : Prop
+                ⊢ p ∨ q → q ∨ p
 
-                  -- %s at 4:14
-                  Goals accomplished 🎉
+                -- %s at 4:14
+                Goals accomplished 🎉
 
-                  case inl
-                  p q : Prop
-                  h37 : p
-                  ⊢ q ∨ p
+                case inl
+                p q : Prop
+                h37 : p
+                ⊢ q ∨ p
                 ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
 
               infoview.clear_pins()
