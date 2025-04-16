@@ -211,18 +211,31 @@ local function on_publish_diagnostics(_, result, ctx)
           })
         end
       elseif markers.accomplished ~= '' and lsp.is_goals_accomplished_diagnostic(each) then
-        local start_row, start_col, end_row, end_col = byterange_of(bufnr, each)
-        vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
-          sign_text = markers.accomplished,
-          sign_hl_group = 'leanGoalsAccomplishedSign',
-        })
-        vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
-          end_row = end_row,
-          end_col = end_col,
-          hl_group = 'leanGoalsAccomplished',
-          hl_mode = 'combine',
-          conceal = markers.accomplished,
-        })
+        -- Protect setting markers with a pcall, which seems like it can happen
+        -- if we're still processing diagnostics but the buffer has already
+        -- changed, which can give out of range errors when setting the
+        -- extmarks.
+        local succeeded = pcall(function()
+          local start_row, start_col, end_row, end_col = byterange_of(bufnr, each)
+          vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
+            sign_text = markers.accomplished,
+            sign_hl_group = 'leanGoalsAccomplishedSign',
+          })
+          vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
+            end_row = end_row,
+            end_col = end_col,
+            hl_group = 'leanGoalsAccomplished',
+            hl_mode = 'combine',
+            conceal = markers.accomplished,
+          })
+        end)
+        if not succeeded then
+          log:warning {
+            message = 'Failed to set goals accomplished markers',
+            diagnostic = each,
+            bufnr = bufnr,
+          }
+        end
       end
 
       return not each.isSilent
