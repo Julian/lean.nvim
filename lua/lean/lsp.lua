@@ -198,24 +198,23 @@ local function on_publish_diagnostics(_, result, ctx)
     ---@param each DiagnosticWith<string>
     :filter(function(each)
       local range = lsp.range_of(each)
-      if lsp.is_unsolved_goals_diagnostic(each) then
-        local buf_lines = std.get_buf_lines(bufnr)
-        local end_line = buf_lines[range['end'].line + 1] or ''
-        local end_row, end_col = unpack(std.position_to_byte0(range['end'], end_line))
+      -- Protect setting markers with a pcall, which seems like it can happen
+      -- if we're still processing diagnostics but the buffer has already
+      -- changed, which can give out of range errors when setting the extmarks.
+      local succeeded = pcall(function()
+        if lsp.is_unsolved_goals_diagnostic(each) then
+          local buf_lines = std.get_buf_lines(bufnr)
+          local end_line = buf_lines[range['end'].line + 1] or ''
+          local end_row, end_col = unpack(std.position_to_byte0(range['end'], end_line))
 
-        if markers.unsolved ~= '' then
-          vim.api.nvim_buf_set_extmark(bufnr, goals_ns, end_row, end_col, {
-            hl_mode = 'combine',
-            virt_text = { { markers.unsolved, 'leanUnsolvedGoals' } },
-            virt_text_pos = 'overlay',
-          })
-        end
-      elseif markers.accomplished ~= '' and lsp.is_goals_accomplished_diagnostic(each) then
-        -- Protect setting markers with a pcall, which seems like it can happen
-        -- if we're still processing diagnostics but the buffer has already
-        -- changed, which can give out of range errors when setting the
-        -- extmarks.
-        local succeeded = pcall(function()
+          if markers.unsolved ~= '' then
+            vim.api.nvim_buf_set_extmark(bufnr, goals_ns, end_row, end_col, {
+              hl_mode = 'combine',
+              virt_text = { { markers.unsolved, 'leanUnsolvedGoals' } },
+              virt_text_pos = 'overlay',
+            })
+          end
+        elseif markers.accomplished ~= '' and lsp.is_goals_accomplished_diagnostic(each) then
           local start_row, start_col, end_row, end_col = byterange_of(bufnr, each)
           vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
             sign_text = markers.accomplished,
@@ -228,14 +227,14 @@ local function on_publish_diagnostics(_, result, ctx)
             hl_mode = 'combine',
             conceal = markers.accomplished,
           })
-        end)
-        if not succeeded then
-          log:warning {
-            message = 'Failed to set goals accomplished markers',
-            diagnostic = each,
-            bufnr = bufnr,
-          }
         end
+      end)
+      if not succeeded then
+        log:info {
+          message = 'Failed to set goals accomplished markers',
+          diagnostic = each,
+          bufnr = bufnr,
+        }
       end
 
       return not each.isSilent
