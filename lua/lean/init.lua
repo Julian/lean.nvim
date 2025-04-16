@@ -166,7 +166,10 @@ end
 ---Assumes your `lean.nvim` comes from a `git` repository.
 ---@return string|nil version
 function lean.plugin_version()
-  local result = vim.system({ 'git', 'describe', '--tags', '--always' }):wait()
+  local this_file = debug.getinfo(1, 'S').source:sub(2)
+  local lean_nvim_root = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(this_file)))
+  local git = vim.fs.joinpath(lean_nvim_root, '.git')
+  local result = vim.system({ 'git', '--git-dir', git, 'describe', '--tags', '--always' }):wait()
   if result.code == 0 then
     return vim.trim(result.stdout)
   end
