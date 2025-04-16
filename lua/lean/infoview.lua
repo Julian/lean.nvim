@@ -608,10 +608,7 @@ function Info:new(opts)
 
   new_info.__pins_element.events = {
     goto_last_window = function()
-      if not new_info.last_window then
-        return
-      end
-      vim.api.nvim_set_current_win(new_info.last_window)
+      new_info:jump_to_last_window()
     end,
   }
 
