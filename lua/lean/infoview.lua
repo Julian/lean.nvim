@@ -1113,6 +1113,8 @@ Pin.update = a.void(function(self)
     return
   end
 
+  -- FIXME: This tick business is some bizarre way of telling whether
+  --        info:render calls back into us to re-render this pin.
   self.__tick = self.__tick + 1
   local tick = self.__tick
 
@@ -1122,11 +1124,7 @@ Pin.update = a.void(function(self)
   end
   self.__data_element = contents_for(self.__position_params, self.__use_widgets)
 
-  if self.__tick ~= tick then
-    return
-  end
-
-  if self.loading then
+  if self.__tick == tick and self.loading then
     self.loading = false
     self.__element:set_children { self.__data_element }
     self.__info:render()
