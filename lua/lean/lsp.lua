@@ -230,7 +230,7 @@ local function on_publish_diagnostics(_, result, ctx)
         end
       end)
       if not succeeded then
-        log:info {
+        log:debug {
           message = 'Failed to set goals accomplished markers',
           diagnostic = each,
           bufnr = bufnr,
