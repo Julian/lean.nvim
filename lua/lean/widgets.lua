@@ -15,6 +15,7 @@ local dedent = require('std.text').dedent
 local Element = require('lean.tui').Element
 local update_goals_at = require('lean.goals').update_at
 local log = require 'lean.log'
+local rpc = require 'lean.rpc'
 
 ---@alias WidgetRenderer fun(ctx: RenderContext, props: any, hash: string): Element[]?
 
@@ -79,35 +80,40 @@ end
 ---Passed to any function which implements a widget in order to interact with
 ---the rest of the environment.
 ---@class RenderContext
----@field private pos lsp.TextDocumentPositionParams the URI & position in the document whose widgets we are rendering
----@field private sess Subsession an RPC subsession for the current position
+---@field private params lsp.TextDocumentPositionParams the document and position whose widgets we are rendering
 local RenderContext = {}
 RenderContext.__index = RenderContext
 
----@class RenderContextNewArgs
----@field pos lsp.TextDocumentPositionParams the URI & position in the document whose widgets we are rendering
----@field sess Subsession an RPC session for the current position
-
 ---Create a new render context.
----@param args RenderContextNewArgs
+---
+---@param params lsp.TextDocumentPositionParams the document and position whose widgets we are rendering
 ---@return RenderContext
-function RenderContext:new(args)
-  local obj = { pos = args.pos, sess = args.sess }
-  return setmetatable(obj, self)
+function RenderContext:new(params)
+  return setmetatable({ params = params }, self)
+end
+
+---Open an RPC session for the current position.
+---
+---Prefer using a higher level API (or adding one) over calling this!
+---@return Subsession
+function RenderContext:subsession()
+  return rpc.open(self.params)
 end
 
 ---Make a raw RPC call.
+---
+---Prefer using an even higher level API (or adding one) over calling this!
 ---@param method string
 ---@return any result
 ---@return LspError error
 function RenderContext:rpc_call(method, params)
-  return self.sess:call(method, params)
+  return self:subsession():call(method, params)
 end
 
 ---The buffer we currently are rendering a widget to.
 ---@return number? bufnr
 function RenderContext:bufnr()
-  local bufnr = vim.uri_to_bufnr(self.pos.textDocument.uri)
+  local bufnr = vim.uri_to_bufnr(self.params.textDocument.uri)
   return vim.api.nvim_buf_is_loaded(bufnr) and bufnr or nil
 end
 
@@ -126,7 +132,7 @@ end
 function RenderContext:get_goals()
   --FIXME: We re-request them here, rather than reusing what we got when
   --       building the infoview.
-  return update_goals_at(self.pos, self.sess)
+  return update_goals_at(self.params, self:subsession())
 end
 
 ---Retrieve the Javascript source for the given widget.
@@ -136,7 +142,7 @@ end
 ---@param hash string the Javascript hash of the widget
 ---@return string source
 function RenderContext:source_of(hash)
-  local response = self.sess:getWidgetSource(self.pos.position, hash)
+  local response = self:subsession():getWidgetSource(self.params.position, hash)
   return response and response.sourcetext
 end
 
@@ -272,18 +278,17 @@ return {
     -- TODO: Is sess.pos the right position??
     --       I still don't really understand why we have positions on sessions,
     --       as we essentially never use this attribute (other than now here).
-    local ctx = RenderContext:new { pos = sess.pos, sess = sess }
+    local ctx = RenderContext:new(sess.pos)
     return render(widget, ctx)
   end,
 
   ---Render the given response to one or more TUI elements.
   ---@param response? UserWidgets
-  ---@param pos lsp.TextDocumentPositionParams the URI and position whose widgets we are receiving
-  ---@param sess Subsession an RPC subsession for the current position
+  ---@param params lsp.TextDocumentPositionParams the URI and position whose widgets we are receiving
   ---@return Element[]? elements
-  render_response = function(response, pos, sess)
+  render_response = function(response, params)
     if response then
-      local ctx = RenderContext:new { pos = pos, sess = sess }
+      local ctx = RenderContext:new(params)
       return vim
         .iter(response.widgets)
         ---@param widget UserWidgetInstance
