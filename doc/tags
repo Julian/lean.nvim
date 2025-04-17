@@ -30,7 +30,6 @@ infoview.close	lean.txt	/*infoview.close*
 infoview.close_all	lean.txt	/*infoview.close_all*
 infoview.disable_widgets	lean.txt	/*infoview.disable_widgets*
 infoview.enable	lean.txt	/*infoview.enable*
-infoview.enable_debug	lean.txt	/*infoview.enable_debug*
 infoview.enable_widgets	lean.txt	/*infoview.enable_widgets*
 infoview.get_current_infoview	lean.txt	/*infoview.get_current_infoview*
 infoview.go_to	lean.txt	/*infoview.go_to*
