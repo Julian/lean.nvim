@@ -9,7 +9,6 @@ local ms = vim.lsp.protocol.Methods
 local config = require 'lean.config'
 local log = require 'lean.log'
 local std = require 'std.lsp'
-local util = require 'lean._util'
 
 local lsp = { handlers = {} }
 
@@ -351,7 +350,7 @@ function lsp.restart_file(bufnr)
       version = 0,
       uri = uri,
       languageId = 'lean',
-      text = util.buf_get_full_text(bufnr),
+      text = std.buf_get_full_text(bufnr),
     },
   })
 end

@@ -54,6 +54,35 @@ function lsp.range_to_string(range)
   )
 end
 
+-- ~*~ vim.lsp._private_functions we still need... ~*~
+
+local format_line_ending = {
+  ['unix'] = '\n',
+  ['dos'] = '\r\n',
+  ['mac'] = '\r',
+}
+
+---@private
+---@param bufnr (number)
+---@return string
+local function buf_get_line_ending(bufnr)
+  return format_line_ending[vim.bo[bufnr].fileformat] or '\n'
+end
+
+---@private
+---Returns full text of buffer {bufnr} as a string.
+---
+---@param bufnr (number) Buffer handle, or 0 for current.
+---@return string # Buffer text as string.
+function lsp.buf_get_full_text(bufnr)
+  local line_ending = buf_get_line_ending(bufnr)
+  local text = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, true), line_ending)
+  if vim.bo[bufnr].eol then
+    text = text .. line_ending
+  end
+  return text
+end
+
 -- vim.lsp.diagnostic has a *private* `diagnostic_lsp_to_vim` :/ ...
 --
 -- the below comes from there / is required for assembling vim.Diagnostic
