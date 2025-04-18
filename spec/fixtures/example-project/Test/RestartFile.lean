@@ -1,0 +1,2 @@
+-- This file is used (and modified) by the test suite to check behavior of `:LeanRestartFile`,
+-- i.e. lean.nvim's dependency updating functionality.
