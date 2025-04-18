@@ -225,7 +225,6 @@ local function on_publish_diagnostics(_, result, ctx)
             end_col = end_col,
             hl_group = 'leanGoalsAccomplished',
             hl_mode = 'combine',
-            conceal = markers.accomplished,
           })
         end
       end)
