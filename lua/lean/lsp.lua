@@ -258,20 +258,42 @@ end
 ---@param err LspError?
 ---@param params LeanFileProgressParams
 local function file_progress_handler(err, params)
-  log:trace {
-    message = 'got fileProgress',
-    err = err,
-    params = params,
-  }
-
   if err ~= nil then
+    log:error {
+      message = 'fileProgress error',
+      err = err,
+      params = params,
+    }
     return
+  else
+    log:trace {
+      message = 'got fileProgress',
+      err = err,
+      params = params,
+    }
   end
 
   require('lean.progress').update(params)
+  require('lean.progress_bars').update(params)
+
+  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    log:warning {
+      message = 'updating fileProgress for an unloaded buffer',
+      bufnr = bufnr,
+      err = err,
+      params = params,
+    }
+    return
+  end
+
   require('lean.infoview').__update_pin_by_uri(params.textDocument.uri)
 
-  require('lean.progress_bars').update(params)
+  -- Lean sends partial semantic token information while a file is processing,
+  -- and asks clients to re-trigger refresh requests until the file is fully
+  -- processed, as processing may take minutes to complete (and waiting
+  -- therefore for fully processed files would be unusable).
+  vim.lsp.semantic_tokens.force_refresh(bufnr)
 end
 
 ---@param opts LeanClientConfig
