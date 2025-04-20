@@ -39,7 +39,7 @@ local util = require 'lean._util'
 ---@field events EventCallbacks functions to fire for events which this element responds to
 ---@field text string the text to show when rendering this element
 ---@field name string a named handle for this element, used when path-searching
----@field hlgroup? string|fun(string):string the highlight group for this element's text, or a function that returns it
+---@field hlgroup? string|fun(string):string? the highlight group for this element's text, or a function that returns it
 ---@field tooltip? Element? tooltip
 ---@field highlightable boolean (for buffer rendering) whether to highlight this element when hovering over it
 ---@field _size? integer Computed size of this element, updated by `Element:to_string`
@@ -70,7 +70,7 @@ BufRenderer.__index = BufRenderer
 ---@field events? EventCallbacks event function map
 ---@field text? string the text to show when rendering this element
 ---@field name? string a named handle for this element, used when path-searching
----@field hlgroup? string|fun():string the highlight group for this element's text, or a function that returns it
+---@field hlgroup? string|fun():string? the highlight group for this element's text, or a function that returns it
 ---@field highlightable boolean? (for buffer rendering) whether to highlight this element when hovering over it
 ---@field children? Element[] this element's children
 
