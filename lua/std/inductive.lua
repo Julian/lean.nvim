@@ -1,14 +1,11 @@
----A term of a specific inductive type.
----@class InductiveTerm
----@field [string] any term-specific methods
-
----@alias Constructor fun(self: any, ...: any): any
----@alias InductiveMethod fun(self: any, ...: any): any
+---@generic S
+---@alias Constructor fun(self: any, ...: any): S
+---@alias InductiveMethod fun(self: S, ...: any): any
 
 ---@alias ConstructorDefs table<string, Constructor> | table<string, table<string, InductiveMethod>>
 
----@class Inductive : { [string]: InductiveMethod }
----@operator call(table): InductiveTerm
+---@class Inductive<S> : { [string]: InductiveMethod }
+---@operator call(table): `S`
 
 ---Create a new inductive type.
 ---@param name string The name of the new type, used only for errors
