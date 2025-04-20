@@ -442,7 +442,11 @@ end
 ---@class GoalLocationTarget
 ---@field target SubexprPos
 
----@alias GoalLocation GoalLocationHyp | GoalLocationHypType | GoalLocationHypValue |  GoalLocationTarget
+---@alias GoalLocation
+---  | GoalLocationHyp
+---  | GoalLocationHypType
+---  | GoalLocationHypValue
+---  | GoalLocationTarget
 
 ---@class GoalsLocation
 ---@field mvarId MVarId
