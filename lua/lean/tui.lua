@@ -512,18 +512,15 @@ function BufRenderer:new(obj)
   return new_renderer
 end
 
----@param keep_tooltips_open? boolean
-function BufRenderer:close(keep_tooltips_open)
+function BufRenderer:close()
   if vim.api.nvim_buf_is_loaded(self.buf) then
     vim.api.nvim_buf_delete(self.buf, { force = true })
   end
   if self.tooltip then
     self.tooltip.parent = nil
     self.tooltip.parent_path = nil
-    if not keep_tooltips_open then
-      self.tooltip:close()
-      self.tooltip = nil
-    end
+    self.tooltip:close()
+    self.tooltip = nil
   end
 end
 
