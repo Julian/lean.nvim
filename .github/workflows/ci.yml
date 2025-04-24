@@ -31,13 +31,13 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Neovim
-        uses: rhysd/action-setup-vim@v1
+        uses: rhysd/action-setup-vim@8e931b9954b19d4203d5caa5ff5521f3bc21dcc7
         with:
           neovim: true
           version: ${{ matrix.nvim-version }}
 
-      - uses: Julian/setup-lean@v1
-      - uses: extractions/setup-just@v3
+      - uses: Julian/setup-lean@37545d8e61474a1c44e39c949ea6d71cc16b2738
+      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Run tests
         run: just test
         env:
@@ -58,10 +58,10 @@ jobs:
         with:
           persist-credentials: false
       - name: Upload to LuaRocks
-        uses: nvim-neorocks/luarocks-tag-release@v7
+        uses: nvim-neorocks/luarocks-tag-release@adbca66e871a519055f4917c6af5fbf19f656f5d
         env:
           LUAROCKS_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
       - name: Create a GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631
         with:
           generate_release_notes: true
