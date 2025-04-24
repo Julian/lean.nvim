@@ -1,5 +1,6 @@
 local assert = require 'luassert'
 
+local Window = require 'std.nvim.window'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 local lsp = require 'lean.lsp'
@@ -199,8 +200,13 @@ assert:register('assertion', 'current_line', has_current_line)
 
 ---Assert about the current cursor location.
 local function has_current_cursor(_, arguments)
-  local window = arguments[1].window or 0
-  local got = vim.api.nvim_win_get_cursor(window)
+  local window = arguments[1].window
+  if not window then
+    window = Window:current()
+  elseif type(window) == 'number' then
+    window = Window:from_id(window)
+  end
+  local got = window:cursor()
 
   local column = arguments[1][2] or arguments[1].column or 0
   local expected = { arguments[1][1] or got[1], column }

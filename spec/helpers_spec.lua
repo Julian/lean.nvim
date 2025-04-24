@@ -2,6 +2,7 @@
 --- Tests for our own testing helpers.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
 local helpers = require 'spec.helpers'
 
 describe('clean_buffer <-> assert.contents', function()
@@ -68,36 +69,39 @@ describe(
     ]],
     function()
       it('passes at the current cursor', function()
-        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+        local window = Window:current()
+        window:set_cursor { 1, 0 }
         assert.current_cursor.is { 1, 0 }
 
-        vim.api.nvim_win_set_cursor(0, { 2, 2 })
+        window:set_cursor { 2, 2 }
         assert.current_cursor.is { 2, 2 }
       end)
 
       it('optionally checks other windows', function()
-        local window = vim.api.nvim_get_current_win()
+        local first = Window:current()
         assert.current_cursor.is { 2, 2 }
 
         vim.cmd.split()
-        vim.api.nvim_win_set_cursor(0, { 1, 1 })
+        local split = Window:current()
+        split:set_cursor { 1, 1 }
 
         assert.current_cursor.is { 1, 1 }
-        assert.current_cursor.is { 2, 2, window = window }
+        assert.current_cursor.is { 2, 2, window = first }
 
-        vim.cmd.close()
+        split:close()
       end)
 
       it('defaults column to 0', function()
-        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+        Window:current():set_cursor { 1, 0 }
         assert.current_cursor.is { 1 }
       end)
 
       it('can assert just against the column', function()
-        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+        local current = Window:current()
+        current:set_cursor { 1, 0 }
         assert.current_cursor { column = 0 }
 
-        vim.api.nvim_win_set_cursor(0, { 2, 2 })
+        current:set_cursor { 2, 2 }
         assert.current_cursor { column = 2 }
       end)
     end
