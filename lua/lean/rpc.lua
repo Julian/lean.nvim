@@ -32,6 +32,16 @@ local rpc = {}
 local Session = {}
 Session.__index = Session
 
+---How long to wait between sending Lean's RPC keep-alive notifications.
+---
+---`Lean.Server.FileWorker.Utils` defines this to be 30000(ms), i.e. it must be
+---sent as least that often, so we pick a number less than that.
+---
+---It so happens the VSCode extension (in `src/infoview.ts`) uses 10000 but
+---it isn't clear why it would matter to send it even more often, as long as
+---it's sent more often than the 30s deadline.
+local KEEPALIVE_PERIOD_MS = 20000
+
 ---@param client vim.lsp.Client
 ---@param bufnr number
 ---@param uri string
@@ -49,8 +59,8 @@ function Session:new(client, bufnr, uri)
   }, self)
   self.keepalive_timer = uv.new_timer()
   self.keepalive_timer:start(
-    20000, -- Lean.Server.FileWorker.Utils defines this to be 30000(ms)
-    20000, -- so we use a value to stay under that.
+    KEEPALIVE_PERIOD_MS,
+    KEEPALIVE_PERIOD_MS,
     vim.schedule_wrap(function()
       if not self:is_closed() and self.session_id ~= nil then
         self.client.notify('$/lean/rpc/keepAlive', {
