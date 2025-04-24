@@ -295,6 +295,28 @@ assert:register('assertion', 'infoview_contents', has_infoview_contents)
 assert:register('assertion', 'infoview_contents_nowait', has_infoview_contents_nowait)
 assert:register('assertion', 'diff_contents', has_diff_contents)
 
+local function has_highlighted_text(_, arguments)
+  local inspected = vim.inspect_pos(0)
+  local highlight = vim.iter(inspected.extmarks):find(function(mark)
+    return mark.opts.hl_group == 'widgetElementHighlight'
+  end)
+
+  assert.is_not_nil(highlight, ('No highlighted text found in %s'):format(vim.inspect(inspected)))
+
+  local got = vim.api.nvim_buf_get_text(
+    0,
+    highlight.row,
+    highlight.col,
+    highlight.end_row,
+    highlight.end_col,
+    {}
+  )[1]
+  assert.are.same(arguments[1], got)
+  return true
+end
+
+assert:register('assertion', 'highlighted_text', has_highlighted_text)
+
 local function has_all(_, arguments)
   local contents = arguments[1]
 
