@@ -143,6 +143,15 @@ function Element:concat(elements, sep, opts)
   )
 end
 
+---Create an element which represents textual user input.
+---
+---Parallels the HTML `<kbd>` tag.
+---@param key string
+---@return Element
+function Element.kbd(key)
+  return Element:new { text = key, hlgroup = 'widgetKbd' }
+end
+
 ---Create an Element whose click event does nothing.
 ---@param text string? the text to show when rendering this element
 ---@return Element

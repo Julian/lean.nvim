@@ -232,6 +232,12 @@ describe('Element', function()
     end)
   end)
 
+  describe(':kbd', function()
+    it('creates an element representing a keyboard input sequence', function()
+      assert.are.same(Element:new { text = 'Ctrl', hlgroup = 'widgetKbd' }, Element.kbd 'Ctrl')
+    end)
+  end)
+
   describe(':renderer', function()
     it('creates a BufRenderer rendering the element', function()
       local element = Element:new { text = 'foo', name = 'foo-name' }

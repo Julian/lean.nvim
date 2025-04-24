@@ -66,10 +66,11 @@ end
 
 -- Widgets
 
-highlight [[default link widgetSuggestion Title]]
+vim.api.nvim_set_hl(0, 'widgetSuggestion', { link = 'Title' })
 
 syntax [[match widgetSuggestionSubgoals "^\s*.emaining subgoals:$"]]
-highlight [[default link widgetSuggestionSubgoals Statement]]
+vim.api.nvim_set_hl(0, 'widgetSuggestionSubgoals', { link = 'Statement' })
 
-highlight [[default link widgetLink Tag]]
-highlight [[default link widgetElementHighlight DiffChange]]
+vim.api.nvim_set_hl(0, 'widgetLink', { link = 'Tag' })
+vim.api.nvim_set_hl(0, 'widgetKbd', { link = 'String' })
+vim.api.nvim_set_hl(0, 'widgetElementHighlight', { link = 'DiffChange' })
