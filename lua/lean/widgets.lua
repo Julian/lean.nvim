@@ -12,7 +12,6 @@
 
 local dedent = require('std.text').dedent
 
-local Element = require('lean.tui').Element
 local update_goals_at = require('lean.goals').update_at
 local log = require 'lean.log'
 local rpc = require 'lean.rpc'
@@ -44,7 +43,7 @@ function Widget.unsupported(id)
     element = function()
       local title = vim.uri_encode(('Add support for `%s` widgets'):format(id))
       local msg = dedent [[
-        %q is not a supported Lean widget type.
+        %q is not a supported Lean widget.
         If you think it could be, please file an issue at
         https://github.com/Julian/lean.nvim/issues/new/?title=%s
       ]]
@@ -53,26 +52,18 @@ function Widget.unsupported(id)
   }
 end
 
----A registry of `Widget`s which we essentially reimplement in Lua rather than
----by executing their Javascript source modules.
-local BYPASSED_WIDGETS = vim.defaulttable(Widget.unsupported)
-
----Implement the Lean user widget with the given ID (by
----bypassing its Javascript and calling the given function instead).
----@param id string
----@param element WidgetRenderer
----@return nil
-local function implement(id, element)
-  BYPASSED_WIDGETS[id] = Widget:new { element = element }
-end
-
 ---Parse a supported user widget by bypassing it if it is supported.
 ---
 ---Unsupported widgets are ignored after logging a notice.
 ---@param user_widget UserWidget
 ---@return Widget
 function Widget.from_user_widget(user_widget)
-  return BYPASSED_WIDGETS[user_widget.id]
+  local lua_module = 'lean.widgets.' .. user_widget.id
+  local ok, widget = pcall(require, lua_module)
+  if not ok then
+    return Widget.unsupported(user_widget.id)
+  end
+  return Widget:new { element = widget }
 end
 
 ---Data and common helpers for an actively rendering widget.
@@ -157,115 +148,8 @@ local function render(instance, ctx)
   return widget.element(ctx, instance.props, instance.javascriptHash)
 end
 
--- -----------------
--- Lean core widgets
--- -----------------
-
----@alias SuggestionText string
-
----@class Suggestion
----@field suggestion SuggestionText Text to be used as a replacement via a code action.
----@field preInfo? string Optional info to be printed immediately before replacement text in a widget.
----@field postInfo? string Optional info to be printed immediately after replacement text in a widget.
-
----@class TryThisParams
----@field suggestions Suggestion[]
----@field range lsp.Range
----@field header string
----@field isInline boolean
----@field style any
-
----@param ctx RenderContext
----@param props TryThisParams
-implement('Lean.Meta.Tactic.TryThis.tryThisWidget', function(ctx, props)
-  local blocks = vim.iter(ipairs(props.suggestions)):map(function(i, each)
-    local children = {
-      i ~= 1 and Element:new { text = '\n' } or nil,
-    }
-    if each.preInfo then
-      table.insert(children, Element:new { text = each.preInfo })
-    end
-    table.insert(
-      children,
-      Element:new {
-        text = each.suggestion,
-        highlightable = true,
-        hlgroup = 'widgetLink',
-        events = {
-          click = function()
-            local bufnr = ctx:bufnr()
-            if not bufnr then
-              return
-            end
-
-            ---@type lsp.TextEdit
-            local edit = { range = props.range, newText = each.suggestion }
-            vim.lsp.util.apply_text_edits({ edit }, bufnr, 'utf-16')
-
-            local this_infoview = require('lean.infoview').get_current_infoview()
-            local this_info = this_infoview and this_infoview.info
-            local last_window = this_info and this_info.last_window
-            if last_window and vim.api.nvim_win_get_buf(last_window) == bufnr then
-              vim.api.nvim_set_current_win(last_window)
-            end
-          end,
-        },
-      }
-    )
-    if each.postInfo then
-      table.insert(children, Element:new { text = each.postInfo })
-    end
-    return Element:new { children = children }
-  end)
-  return Element:titled {
-    title = '▼ suggestion:',
-    title_hlgroup = 'widgetSuggestion',
-    margin = 1,
-    body = blocks:totable(),
-  }
-end)
-
--- -------------------
--- ImportGraph widgets
--- -------------------
-
----@class GoToModuleLinkParams
----@field modName string the module to jump to
-
----A "jump to a module".
----@param ctx RenderContext
----@param props GoToModuleLinkParams
-implement('GoToModuleLink', function(ctx, props)
-  return Element:new {
-    text = props.modName,
-    highlightable = true,
-    hlgroup = 'widgetLink',
-    events = {
-      go_to_def = function(_)
-        local last_window = ctx.get_last_window()
-        if not last_window then
-          return
-        end
-        vim.api.nvim_set_current_win(last_window)
-        local uri, err = ctx:rpc_call('getModuleUri', props.modName)
-        if err then
-          return -- FIXME: Yeah, this should go somewhere clearly.
-        end
-        ---@type lsp.Position
-        local start = { line = 0, character = 0 }
-        vim.lsp.util.show_document(
-          { uri = uri, range = { start = start, ['end'] = start } },
-          'utf-16',
-          { focus = true }
-        )
-      end,
-    },
-  }
-end)
-
 return {
   Widget = Widget,
-  implement = implement,
 
   ---A version of widget rendering that constructs a one-time render context.
   ---@param widget UserWidgetInstance

@@ -2,10 +2,11 @@
 --- Tests for Lean's (user) widgets.
 ---@brief ]]
 
-local Element = require('lean.tui').Element
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
-local widgets = require 'lean.widgets'
+local testing_widgets = require('spec.fixtures').widgets
+
+package.path = package.path .. ';' .. testing_widgets .. '/?.lua'
 
 require('lean').setup {}
 
@@ -21,20 +22,8 @@ describe('widgets', function()
         #widget helloWidget
       ]],
       function()
+        -- (see the testing widget directory for the trivial implementation)
         helpers.move_cursor { to = { 5, 9 } }
-        assert.infoview_contents.are [[
-          ▼ expected type (5:9-5:20)
-          ⊢ Lean.Widget.Module
-        ]]
-
-        widgets.implement('helloWidget', function()
-          return Element:new { text = 'HELLO FROM WIDGET WORLD' }
-        end)
-
-        -- Move away and back to trigger re-rendering.
-        helpers.move_cursor { to = { 4, 0 } }
-        helpers.move_cursor { to = { 5, 9 } }
-
         assert.infoview_contents.are [[
           ▼ expected type (5:9-5:20)
           ⊢ Lean.Widget.Module

@@ -434,72 +434,75 @@ describe('interactive infoview', function()
       )
     )
 
-    it(
-      'shows known widget instance diagnostics',
-      helpers.clean_buffer(
-        [[
-          import Lean
+    describe('widgets', function()
+      local original = package.path
+      package.path = package.path .. ';' .. require('spec.fixtures').widgets .. '/?.lua'
 
-          open Lean
+      it(
+        'shows known widget instance diagnostics',
+        helpers.clean_buffer(
+          [[
+            import Lean
 
-          @[widget_module]
-          def TestingModule : Widget.Module where
-            javascript := "
-              import * as React from 'react'
-              export default function(props) { return React.createElement('h1', {}, props[0]) }
-            "
+            open Lean
 
-          elab "#knownWidget" : command => do
-            let widget : MessageData := .ofWidget {
-              id := `leanNvimTestWidget
-              javascriptHash := TestingModule.javascriptHash
-              props := Server.RpcEncodable.rpcEncode ["veryImportantStuff"]
-            } "This will be in the hover."
-            logInfo widget
+            @[widget_module]
+            def TestingModule : Widget.Module where
+              javascript := "
+                import * as React from 'react'
+                export default function(props) { return React.createElement('h1', {}, props[0]) }
+              "
 
-          #knownWidget
-        ]],
-        function()
-          require('lean.widgets').implement('leanNvimTestWidget', function(_, props)
-            return require('lean.tui').Element:new { text = props[1] }
-          end)
+            elab "#knownWidget" : command => do
+              let widget : MessageData := .ofWidget {
+                id := `showPropWithHover
+                javascriptHash := TestingModule.javascriptHash
+                props := Server.RpcEncodable.rpcEncode ["veryImportantStuff"]
+              } "This will be in the hover."
+              logInfo widget
 
-          helpers.move_cursor { to = { 20, 2 } }
-          assert.infoview_contents.are [[
-            ▼ 20:1-20:13: information:
-            veryImportantStuff
-          ]]
-        end
+            #knownWidget
+          ]],
+          function()
+            helpers.move_cursor { to = { 20, 2 } }
+            assert.infoview_contents.are [[
+              ▼ 20:1-20:13: information:
+              veryImportantStuff
+            ]]
+          end
+        )
       )
-    )
 
-    it(
-      'shows alternate text for unknown widget instance diagnostics',
-      helpers.clean_buffer(
-        [[
-          import Lean
+      it(
+        'shows alternate text for unknown widget instance diagnostics',
+        helpers.clean_buffer(
+          [[
+            import Lean
 
-          open Lean
+            open Lean
 
-          elab "#unknownWidget" : command => do
-            let widget : MessageData := .ofWidget {
-              id := `someUnknownWidget
-              javascriptHash := 0
-              props := Server.RpcEncodable.rpcEncode "veryImportantProp"
-            } "You're gonna see this alternate text."
-            logInfo widget
+            elab "#unknownWidget" : command => do
+              let widget : MessageData := .ofWidget {
+                id := `someUnknownWidget
+                javascriptHash := 0
+                props := Server.RpcEncodable.rpcEncode "veryImportantProp"
+              } "You're gonna see this alternate text."
+              logInfo widget
 
-          #unknownWidget
-        ]],
-        function()
-          helpers.move_cursor { to = { 13, 2 } }
-          assert.infoview_contents.are [[
-            ▼ 13:1-13:15: information:
-            You're gonna see this alternate text.
-          ]]
-        end
+            #unknownWidget
+          ]],
+          function()
+            helpers.move_cursor { to = { 13, 2 } }
+            assert.infoview_contents.are [[
+              ▼ 13:1-13:15: information:
+              You're gonna see this alternate text.
+            ]]
+          end
+        )
       )
-    )
+
+      package.path = original
+    end)
 
     it(
       'shows diagnostics for files with immediate diagnostics',

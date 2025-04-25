@@ -11,6 +11,8 @@ There are multiple Lua packages alongside this file which serve as API boundarie
       - our infoview implementation
 
   (This might not necessarily imply moving each of those out into new packages).
+* `lean.widgets`: A namespace for Lua reimplementations of Lean user widgets.
+  For example, the `Lean.Meta.Tactic.TryThis.tryThisWidget` lives at `lean.widgets.Lean.Meta.Tactic.TryThis.trythisWidget`, a Lua module which implements its behavior.
 * `elan`: a Lua interface to `elan`, Lean's toolchain version manager.
   It is in early stages.
 * `std`: a collection of (completely Lean agnostic) Lua "extra standard library" code.
