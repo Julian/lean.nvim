@@ -1,28 +1,27 @@
-local highlight = vim.cmd.highlight
 local syntax = vim.cmd.syntax
 
 local config = require 'lean.config'().infoview
 
 -- Goal state
 
-highlight [[default link leanInfoGoals Title]]
-highlight [[default link leanInfoMultipleGoals DiagnosticHint]]
-highlight [[default link leanInfoGoalCase Statement]]
+vim.api.nvim_set_hl(0, 'leanInfoGoals', { link = 'Title' })
+vim.api.nvim_set_hl(0, 'leanInfoMultipleGoals', { link = 'DiagnosticHint' })
+vim.api.nvim_set_hl(0, 'leanInfoGoalCase', { link = 'Statement' })
 
 syntax [[match leanInfoGoalHyp "^[^:\n< ][^:\n⊢{[(⦃]*\( :\@=\)" contains=leanInfoInaccessibleHyp]]
-highlight [[default link leanInfoGoalHyp Type]]
+vim.api.nvim_set_hl(0, 'leanInfoGoalHyp', { link = 'Type' })
 
 syntax [[match leanInfoGoalVDash "^⊢"]]
-highlight [[default link leanInfoGoalVDash Operator]]
+vim.api.nvim_set_hl(0, 'leanInfoGoalVDash', { link = 'Operator' })
 
 syntax [[match leanInfoGoalConv "^|"]]
-highlight [[default link leanInfoGoalConv Operator]]
+vim.api.nvim_set_hl(0, 'leanInfoGoalConv', { link = 'Operator' })
 
 syntax [[match leanInfoInaccessibleHyp "\i\+✝" contained]]
-highlight [[default link leanInfoInaccessibleHyp Comment]]
+vim.api.nvim_set_hl(0, 'leanInfoInaccessibleHyp', { link = 'Comment' })
 
 syntax [[match leanInfoExpectedType "^▼ expected type.*"]]
-highlight [[default link leanInfoExpectedType Special]]
+vim.api.nvim_set_hl(0, 'leanInfoExpectedType', { link = 'Special' })
 
 -- Diagnostics
 
@@ -40,16 +39,16 @@ for i, to_group in vim.iter(ipairs(DIAGNOSTIC_HLGROUPS)) do
   match = config.severity_markers[i]:gsub('\n', [[\_$]])
   hlgroup = 'leanInfo' .. to_group
   syntax(('match %s "^▼.*: %s.*$"'):format(hlgroup, match))
-  highlight(('default link %s %s'):format(hlgroup, to_group))
+  vim.api.nvim_set_hl(0, hlgroup, { link = to_group })
 end
 
 syntax [[match leanInfoComment "--.*"]]
-highlight [[default link leanInfoComment Comment]]
+vim.api.nvim_set_hl(0, 'leanInfoComment', { link = 'Comment' })
 
 -- Goal Diffing
 
-highlight [[default link leanInfoHypNameInserted DiffAdd]]
-highlight [[default link leanInfoHypNameRemoved DiffDelete]]
+vim.api.nvim_set_hl(0, 'leanInfoHypNameInserted', { link = 'DiffAdd' })
+vim.api.nvim_set_hl(0, 'leanInfoHypNameRemoved', { link = 'DiffDelete' })
 
 ---@type table<DiffTag, string>
 local DIFF_TAG_HLGROUPS = {
@@ -61,7 +60,7 @@ local DIFF_TAG_HLGROUPS = {
   willDelete = 'DiffDelete',
 }
 for diff_tag, to_group in vim.iter(DIFF_TAG_HLGROUPS) do
-  highlight(('default link leanInfoDiff%s %s'):format(diff_tag, to_group))
+  vim.api.nvim_set_hl(0, 'leanInfoDiff' .. diff_tag, { link = to_group })
 end
 
 -- Widgets
