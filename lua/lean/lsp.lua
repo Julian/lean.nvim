@@ -210,7 +210,7 @@ local function on_publish_diagnostics(_, result, ctx)
             vim.api.nvim_buf_set_extmark(bufnr, goals_ns, end_row, end_col, {
               hl_mode = 'combine',
               virt_text = { { markers.unsolved, 'leanUnsolvedGoals' } },
-              virt_text_pos = 'overlay',
+              virt_text_pos = 'inline',
             })
           end
         elseif markers.accomplished ~= '' and lsp.is_goals_accomplished_diagnostic(each) then
