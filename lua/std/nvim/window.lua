@@ -22,6 +22,23 @@ function Window:bufnr()
   return vim.api.nvim_win_get_buf(self.id)
 end
 
+---@class SplitOpts
+---@field bufnr? integer the buffer number to open in the new window (default 0)
+---@field enter? boolean whether to enter the window (default false)
+---@field direction? 'left'|'right'|'above'|'below' the direction to split
+
+---Split a new window relative to this window.
+---@param opts? SplitOpts
+---@return Window
+function Window:split(opts)
+  opts = vim.tbl_extend('keep', opts or {}, { enter = false })
+  local direction = opts.direction or vim.o.splitright and 'right' or 'left'
+
+  local config = { win = self.id, split = direction }
+  local id = vim.api.nvim_open_win(opts.bufnr or 0, opts.enter, config)
+  return Window:from_id(id)
+end
+
 ---Return the window's current cursor position.
 ---
 ---(1, 0)-indexed, like `nvim_win_get_cursor()`.
@@ -36,6 +53,22 @@ end
 ---@param pos { [1]: integer, [2]: integer } the new cursor position
 function Window:set_cursor(pos)
   vim.api.nvim_win_set_cursor(self.id, pos)
+end
+
+---Run a function with the window as temporary current window.
+function Window:call(fn)
+  vim.api.nvim_win_call(self.id, fn)
+end
+
+---Check if the window is valid.
+---
+---Do you wonder exactly what that corresponds to?
+---Well keep wondering because the Neovim docstring doesn't elaborate.
+---
+---But for one, closed windows return `false`.
+---@return boolean valid
+function Window:is_valid()
+  return vim.api.nvim_win_is_valid(self.id)
 end
 
 ---Close the window.
