@@ -55,6 +55,18 @@ function Window:set_cursor(pos)
   vim.api.nvim_win_set_cursor(self.id, pos)
 end
 
+---Return the window's height.
+---@return integer height
+function Window:height()
+  return vim.api.nvim_win_get_height(self.id)
+end
+
+---Set the window's height.
+---@param height integer
+function Window:set_height(height)
+  vim.api.nvim_win_set_height(self.id, height)
+end
+
 ---Run a function with the window as temporary current window.
 function Window:call(fn)
   vim.api.nvim_win_call(self.id, fn)
