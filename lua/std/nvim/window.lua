@@ -67,6 +67,18 @@ function Window:set_height(height)
   vim.api.nvim_win_set_height(self.id, height)
 end
 
+---Return the window's width.
+---@return integer width
+function Window:width()
+  return vim.api.nvim_win_get_width(self.id)
+end
+
+---Set the window's width.
+---@param width integer
+function Window:set_width(height)
+  vim.api.nvim_win_set_width(self.id, height)
+end
+
 ---Run a function with the window as temporary current window.
 function Window:call(fn)
   vim.api.nvim_win_call(self.id, fn)
