@@ -11,7 +11,5 @@ demo.mp4
 /pack
 
 /.tests
-/lua/tests/fixtures/example-project/build
-/lua/tests/fixtures/example-project/foo/build
 
 luacov.*.out
