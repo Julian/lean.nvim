@@ -450,28 +450,6 @@ function Element:find(check)
   end
 end
 
-function Element:__filter(path, pos, fn)
-  pos = pos + #self.text
-
-  for idx, child in ipairs(self.__children) do
-    local new_path = { unpack(path) }
-    table.insert(new_path, { idx = idx, name = child.name })
-    fn(child, new_path, pos)
-
-    pos = child:__filter(new_path, pos, fn)
-  end
-
-  return pos
-end
-
-function Element:filter(fn)
-  local path = { { idx = -1, name = self.name } }
-  local pos = 1
-  fn(self, path, pos)
-
-  self:__filter(path, pos, fn)
-end
-
 ---Create a BufRenderer that renders this Element.
 ---@param obj table
 function Element:renderer(obj)
