@@ -21,7 +21,13 @@ end
 ---Return the buffer shown in the window.
 ---@return Buffer buffer
 function Window:buffer()
-  return Buffer:from_bufnr(vim.api.nvim_win_get_buf(self.id))
+  return Buffer:from_bufnr(self:bufnr())
+end
+
+---Return the buffer number of the window.
+---@return integer bufnr
+function Window:bufnr()
+  return vim.api.nvim_win_get_buf(self.id)
 end
 
 ---@class SplitOpts
@@ -107,7 +113,7 @@ end
 ---@return string contents text from cursor position to the end of line
 function Window:rest_of_cursor_line()
   local row, col = unpack(self:cursor())
-  local line = vim.api.nvim_buf_get_lines(self:buffer().bufnr, row - 1, row, true)[1]
+  local line = vim.api.nvim_buf_get_lines(self:bufnr(), row - 1, row, true)[1]
   return line:sub(col + 1)
 end
 

@@ -118,6 +118,15 @@ describe('Window', function()
     end)
   end)
 
+  describe('bufnr', function()
+    it('returns the bufnr for the window', function()
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local window = Window:current():split { buffer = Buffer:from_bufnr(bufnr) }
+      assert.are.equal(bufnr, window:bufnr())
+      window:close()
+    end)
+  end)
+
   describe('cursor', function()
     it('tracks the window cursor', function()
       local bufnr = vim.api.nvim_create_buf(false, true)
