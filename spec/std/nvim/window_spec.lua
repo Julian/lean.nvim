@@ -1,3 +1,4 @@
+local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
 
 describe('Window', function()
@@ -77,9 +78,9 @@ describe('Window', function()
     end)
 
     it('places a specified buffer', function()
-      local bufnr = vim.api.nvim_create_buf(false, true)
-      local split = Window:split { bufnr = bufnr }
-      assert.are.same(bufnr, split:bufnr())
+      local buffer = Buffer:from_bufnr(vim.api.nvim_create_buf(false, true))
+      local split = Window:split { buffer = buffer }
+      assert.are.same(buffer, split:buffer())
       split:close()
     end)
   end)
@@ -102,18 +103,18 @@ describe('Window', function()
     end)
   end)
 
-  describe('bufnr', function()
-    it('returns the bufnr for the window', function()
-      local bufnr = vim.api.nvim_create_buf(false, true)
-      local window = Window:current():split { bufnr = bufnr }
-      assert.are.equal(bufnr, vim.api.nvim_win_get_buf(window.id))
-      assert.are.equal(bufnr, window:bufnr())
+  describe('buffer', function()
+    it('returns the buffer in the window', function()
+      local buffer = Buffer:from_bufnr(vim.api.nvim_create_buf(false, true))
+      local window = Window:current():split { buffer = buffer }
+      assert.are.same(buffer, window:buffer())
+      assert.are.equal(buffer.bufnr, vim.api.nvim_win_get_buf(window.id))
 
       window:close()
     end)
 
     it('is the current buffer for the current window', function()
-      assert.are.equal(vim.api.nvim_get_current_buf(), Window:current():bufnr())
+      assert.are.same(Buffer:current(), Window:current():buffer())
     end)
   end)
 
@@ -122,7 +123,8 @@ describe('Window', function()
       local bufnr = vim.api.nvim_create_buf(false, true)
       vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { 'foo', 'bar' })
 
-      local window = Window:split { bufnr = bufnr }
+      local buffer = Buffer:from_bufnr(bufnr)
+      local window = Window:split { buffer = buffer }
 
       assert.are.same(window:cursor(), { 1, 0 })
 

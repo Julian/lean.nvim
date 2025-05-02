@@ -2,6 +2,8 @@
 --- Tests for widgets from the ImportGraph Lean library.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
+
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
@@ -16,8 +18,8 @@ describe('ImportGraph widgets', function()
         #find_home Nat.add_one
       ]],
       function()
-        local lean_window = vim.api.nvim_get_current_win()
-        local initial_path = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
+        local lean_window = Window:current()
+        local initial_buffer = lean_window:buffer()
 
         helpers.move_cursor { to = { 2, 2 } }
         assert.infoview_contents.are [[
@@ -30,10 +32,10 @@ describe('ImportGraph widgets', function()
         helpers.feed 'gd'
 
         assert.is_truthy(vim.wait(15000, function()
-          return vim.api.nvim_buf_get_name(0) ~= initial_path
+          return lean_window:buffer():name() ~= initial_buffer:name()
         end))
 
-        local path = vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(lean_window))
+        local path = lean_window:buffer():name()
         assert.is_truthy(path:match 'Init/Prelude.lean')
       end
     )

@@ -1,0 +1,35 @@
+local Buffer = require 'std.nvim.buffer'
+
+describe('Buffer', function()
+  describe('current', function()
+    it('is the current buffer', function()
+      assert.are.same(Buffer:from_bufnr(vim.api.nvim_get_current_buf()), Buffer:current())
+    end)
+  end)
+
+  describe('from_bufnr', function()
+    it('defaults to current buffer', function()
+      assert.are.same(Buffer:current(), Buffer:from_bufnr())
+    end)
+  end)
+
+  describe('name', function()
+    it('returns the buffer name', function()
+      local buffer = Buffer:from_bufnr(vim.api.nvim_create_buf(false, true))
+      vim.api.nvim_buf_set_name(buffer.bufnr, '/tmp/foo/bar')
+      assert.are.same('/tmp/foo/bar', buffer:name())
+    end)
+  end)
+
+  describe('bufnr', function()
+    it('is the bufnr for the buffer', function()
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local buffer = Buffer:from_bufnr(bufnr)
+      assert.are.equal(bufnr, buffer.bufnr)
+    end)
+
+    it('is the current bufnr for the current buffer', function()
+      assert.are.equal(vim.api.nvim_get_current_buf(), Buffer:current().bufnr)
+    end)
+  end)
+end)

@@ -1,10 +1,12 @@
+local Buffer = require 'std.nvim.buffer'
+
 ---A Neovim window.
 ---@class Window
 ---@field id integer The window ID
 local Window = {}
 Window.__index = Window
 
----Bind to a neovim Window.
+---Bind to a Neovim window.
 ---@param id? integer Window ID, defaulting to the current window
 ---@return Window
 function Window:from_id(id)
@@ -16,14 +18,14 @@ function Window:current()
   return self:from_id(vim.api.nvim_get_current_win())
 end
 
----Return the buffer number of the window.
----@return integer bufnr
-function Window:bufnr()
-  return vim.api.nvim_win_get_buf(self.id)
+---Return the buffer shown in the window.
+---@return Buffer buffer
+function Window:buffer()
+  return Buffer:from_bufnr(vim.api.nvim_win_get_buf(self.id))
 end
 
 ---@class SplitOpts
----@field bufnr? integer the buffer number to open in the new window (default 0)
+---@field buffer? Buffer the buffer to open in the new window (default current)
 ---@field enter? boolean whether to enter the window (default false)
 ---@field direction? 'left'|'right'|'above'|'below' the direction to split
 
@@ -35,7 +37,8 @@ function Window:split(opts)
   local direction = opts.direction or vim.o.splitright and 'right' or 'left'
 
   local config = { win = self.id, split = direction }
-  local id = vim.api.nvim_open_win(opts.bufnr or 0, opts.enter, config)
+  local bufnr = opts.buffer and opts.buffer.bufnr or 0
+  local id = vim.api.nvim_open_win(bufnr, opts.enter, config)
   return Window:from_id(id)
 end
 
@@ -104,7 +107,7 @@ end
 ---@return string contents text from cursor position to the end of line
 function Window:rest_of_cursor_line()
   local row, col = unpack(self:cursor())
-  local line = vim.api.nvim_buf_get_lines(self:bufnr(), row - 1, row, true)[1]
+  local line = vim.api.nvim_buf_get_lines(self:buffer().bufnr, row - 1, row, true)[1]
   return line:sub(col + 1)
 end
 
