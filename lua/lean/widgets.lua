@@ -12,7 +12,7 @@
 
 local dedent = require('std.text').dedent
 
-local update_goals_at = require('lean.goals').update_at
+local goals = require 'lean.goals'
 local log = require 'lean.log'
 local rpc = require 'lean.rpc'
 
@@ -121,9 +121,7 @@ end
 ---The goals at the current infoview position.
 ---@return InteractiveGoal[]? goals
 function RenderContext:get_goals()
-  --FIXME: We re-request them here, rather than reusing what we got when
-  --       building the infoview.
-  return update_goals_at(self.params, self:subsession())
+  return goals.at(self.params, self:subsession())
 end
 
 ---Retrieve the Javascript source for the given widget.

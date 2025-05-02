@@ -10,8 +10,8 @@ local range_to_string = require('std.lsp').range_to_string
 local Element = require('lean.tui').Element
 local TaggedTextMsgEmbed = require('lean.widget.interactive_diagnostic').TaggedTextMsgEmbed
 local config = require 'lean.config'
+local goals = require 'lean.goals'
 local interactive_goal = require 'lean.widget.interactive_goal'
-local update_goals_at = require('lean.goals').update_at
 local lsp = require 'lean.lsp'
 local plain = require 'lean.infoview.plain'
 local rpc = require 'lean.rpc'
@@ -62,9 +62,9 @@ function components.goal_at(params, sess, use_widgets)
   if use_widgets == false then
     goal, children = plain.goal(params)
   else
-    goal, err = update_goals_at(params, sess)
+    goal, err = goals.at(params, sess)
     if err then
-      goal, err = update_goals_at(params, rpc.open(params))
+      goal, err = goals.at(params, rpc.open(params))
       -- FIXME: This is again our need for general retrying and/or flakiness
       --        which happens if we make RPC calls too quickly in our tests.
       if err then
