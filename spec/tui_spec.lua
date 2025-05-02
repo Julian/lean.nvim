@@ -2,6 +2,7 @@
 --- Tests for the console UI framework in isolation from Lean-specific widgets.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
 local dedent = require('std.text').dedent
 
 local helpers = require 'spec.helpers'
@@ -252,7 +253,7 @@ end)
 describe(
   'select_many',
   helpers.clean_buffer(function()
-    local initial_window = vim.api.nvim_get_current_win()
+    local initial_window = Window:current()
 
     it('interactively selects between choices', function()
       local selected
@@ -262,7 +263,7 @@ describe(
       end)
       local popup = helpers.wait_for_new_window { initial_window }
 
-      assert.are.equal(popup, vim.api.nvim_get_current_win())
+      assert.is_true(popup:is_current())
       -- Sigh, force a BufEnter to make sure BufRenderer:update_position is
       -- called, which doesn't happen automatically here but does interactively.
       vim.api.nvim_exec_autocmds('BufEnter', {})
@@ -285,10 +286,7 @@ describe(
 
       helpers.feed '<CR>'
 
-      assert.are.same(
-        { { 'bar', 'baz' }, initial_window },
-        { selected, vim.api.nvim_get_current_win() }
-      )
+      assert.are.same({ { 'bar', 'baz' }, initial_window }, { selected, Window:current() })
     end)
 
     it('formats items as specified', function()
@@ -420,15 +418,15 @@ describe(
 
       assert.contents.are {
         "foo's tooltip",
-        bufnr = vim.api.nvim_win_get_buf(tooltip),
+        bufnr = tooltip:bufnr(),
       }
 
       helpers.feed '<Esc>'
 
       -- FIXME: Are we abandoning tooltip windows?
       -- Why is clear_all so hard to define?
-      vim.api.nvim_win_close(tooltip, true)
-      assert.windows.are { initial_window }
+      tooltip:close()
+      assert.windows.are { initial_window.id }
     end)
 
     it('restricts the cursor to the entry lines', function()
@@ -450,22 +448,22 @@ describe(
       -- we end up on the first entry, not the blank line before it
       assert.current_line.is ' ✅ foo'
 
-      vim.api.nvim_win_close(selection_window, true)
+      selection_window:close()
     end)
 
     it('autocloses if the window is left', function()
-      assert.windows.are { initial_window }
+      assert.windows.are { initial_window.id }
 
       tui.select_many({ 'foo', 'bar', 'baz', 'quux' }, nil, function() end)
 
       local selection_window = helpers.wait_for_new_window { initial_window }
-      assert.windows.are { initial_window, selection_window }
+      assert.windows.are { initial_window.id, selection_window.id }
 
       vim.cmd.wincmd '%'
 
       -- FIXME: Here too we don't actually end up with just the initial window
       -- in tests...
-      -- assert.windows.are{ initial_window }
+      -- assert.windows.are{ initial_window.id }
     end)
   end)
 )

@@ -2,6 +2,8 @@
 --- Tests for infoview layout using a new tab.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
+
 require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
@@ -11,7 +13,7 @@ describe('infoview window', function()
   it('opens in a new tab with the cursor in the Lean window', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     assert.is.equal(1, #vim.api.nvim_list_tabpages())
-    local lean_window = vim.api.nvim_get_current_win()
+    local lean_window = Window:current()
 
     infoview.open()
 
@@ -30,7 +32,7 @@ describe('infoview window', function()
   it('repositioning has no effect', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
     assert.is.equal(1, #vim.api.nvim_list_tabpages())
-    local lean_window = vim.api.nvim_get_current_win()
+    local lean_window = Window:current()
 
     infoview.open()
 

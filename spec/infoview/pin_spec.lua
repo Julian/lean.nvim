@@ -2,6 +2,8 @@
 --- Tests for the placing of infoview pins.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
+
 local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
@@ -178,7 +180,7 @@ describe(
 
       describe('click', function()
         it('jumps to the pin position', function()
-          local lean_window = vim.api.nvim_get_current_win()
+          local lean_window = Window:current()
 
           vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
           local pin_position = { 2, 0 }
@@ -203,8 +205,8 @@ describe(
           helpers.feed '<CR>'
 
           assert.message("Didn't jump to the pin location!").are.same({
-            vim.api.nvim_get_current_win(),
-            vim.api.nvim_win_get_cursor(0),
+            Window:current(),
+            Window:current():cursor(),
           }, {
             lean_window,
             pin_position,
@@ -406,9 +408,9 @@ describe(
             local lean_window
 
             it('opens a diff window when placed', function()
-              lean_window = vim.api.nvim_get_current_win()
+              lean_window = Window:current()
               local current_infoview = infoview.get_current_infoview()
-              assert.windows.are { lean_window, current_infoview.window }
+              assert.windows.are { lean_window.id, current_infoview.window }
 
               helpers.move_cursor { to = { 4, 5 } }
 
@@ -451,12 +453,12 @@ describe(
               ]]
 
               local diff_window =
-                helpers.wait_for_new_window { lean_window, current_infoview.window }
+                helpers.wait_for_new_window { lean_window, Window:from_id(current_infoview.window) }
 
-              assert.windows.are { lean_window, current_infoview.window, diff_window }
+              assert.windows.are { lean_window.id, current_infoview.window, diff_window.id }
 
               assert.is_true(vim.wo[current_infoview.window].diff)
-              assert.is_true(vim.wo[diff_window].diff)
+              assert.is_true(vim.wo[diff_window.id].diff)
             end)
 
             it('maintains separate text', function()
@@ -487,26 +489,26 @@ describe(
             it('closes the diff window if the infoview is closed', function()
               assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
               infoview.close()
-              assert.windows.are { lean_window }
+              assert.windows.are { lean_window.id }
             end)
 
             it('reopens a diff window when the infoview is reopened', function()
-              assert.windows.are { lean_window }
+              assert.windows.are { lean_window.id }
 
               local current_infoview = infoview.open()
               local diff_window =
-                helpers.wait_for_new_window { lean_window, current_infoview.window }
+                helpers.wait_for_new_window { lean_window, Window:from_id(current_infoview.window) }
 
-              assert.windows.are { lean_window, current_infoview.window, diff_window }
+              assert.windows.are { lean_window.id, current_infoview.window, diff_window.id }
 
               assert.is_true(vim.wo[current_infoview.window].diff)
-              assert.is_true(vim.wo[diff_window].diff)
+              assert.is_true(vim.wo[diff_window.id].diff)
             end)
 
             it('closes when cleared', function()
               assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
               infoview.clear_diff_pin()
-              assert.windows.are { lean_window, infoview.get_current_infoview().window }
+              assert.windows.are { lean_window.id, infoview.get_current_infoview().window }
             end)
 
             it('can be re-placed', function()
@@ -520,10 +522,10 @@ describe(
               assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
               local current_infoview = infoview.get_current_infoview()
               local diff_window =
-                helpers.wait_for_new_window { lean_window, current_infoview.window }
-              vim.api.nvim_set_current_win(diff_window)
+                helpers.wait_for_new_window { lean_window, Window:from_id(current_infoview.window) }
+              diff_window:make_current()
               vim.cmd.quit()
-              assert.windows.are { lean_window, infoview.get_current_infoview().window }
+              assert.windows.are { lean_window.id, infoview.get_current_infoview().window }
             end)
           end
         )

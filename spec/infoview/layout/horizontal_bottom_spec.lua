@@ -2,6 +2,8 @@
 --- Tests for a portrait layout with the infoview on bottom.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
+
 require 'spec.helpers'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
@@ -14,7 +16,7 @@ require('lean').setup { infoview = { horizontal_position = 'bottom' } }
 
 describe('infoview window', function()
   assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
-  local lean_window = vim.api.nvim_get_current_win()
+  local lean_window = Window:current()
 
   it('is on bottom with the cursor in the Lean window', function()
     vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
@@ -22,7 +24,7 @@ describe('infoview window', function()
     assert.are.same({
       'col',
       { -- see :h winlayout
-        { 'leaf', lean_window },
+        { 'leaf', lean_window.id },
         { 'leaf', infoview.get_current_infoview().window },
       },
     }, vim.fn.winlayout())

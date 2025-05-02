@@ -25,7 +25,7 @@ describe('infoview open/close', function()
     assert.windows.are(lean_window.id, current_infoview.window)
 
     -- Cursor did not move
-    assert.current_window.is(lean_window.id)
+    assert.current_window.is(lean_window)
     assert.current_cursor.is(cursor)
 
     -- Infoview is positioned at the top
@@ -139,19 +139,19 @@ describe('infoview open/close', function()
 
       vim.cmd.tabnew()
       local tab2 = vim.api.nvim_get_current_tabpage()
-      local tab2_window = vim.api.nvim_get_current_win()
-      assert.windows.are(tab2_window)
+      local tab2_window = Window:current()
+      assert.windows.are(tab2_window.id)
 
       vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
 
       local tab2_infoview = infoview.get_current_infoview()
       assert.are_not.same(tab1_infoview, tab2_infoview)
 
-      assert.windows.are(tab2_window, tab2_infoview.window)
+      assert.windows.are(tab2_window.id, tab2_infoview.window)
 
       -- Close the second tab infoview, and assert the first one stayed open
       tab2_infoview:close()
-      assert.windows.are(tab2_window)
+      assert.windows.are(tab2_window.id)
 
       vim.cmd.tabprevious()
       assert.windows.are(lean_window.id, tab1_infoview.window)
@@ -214,22 +214,22 @@ describe('infoview open/close', function()
 
   it('can be reopened when an infoview buffer was reused for editing a file', function()
     vim.cmd.tabnew()
-    local transient_window = vim.api.nvim_get_current_win()
+    local transient_window = Window:current()
 
     vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
     local initial_infoview = infoview.get_current_infoview()
-    local initial_infoview_window = initial_infoview.window
-    assert.windows.are(transient_window, initial_infoview_window)
+    local initial_infoview_window = Window:from_id(initial_infoview.window)
+    assert.windows.are(transient_window.id, initial_infoview_window.id)
 
     vim.cmd.quit()
     assert.current_window.is(initial_infoview_window)
     vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
-    assert.windows.are(initial_infoview_window)
+    assert.windows.are(initial_infoview_window.id)
 
     local second_infoview = infoview.get_current_infoview()
-    assert.is_not.equal(second_infoview.window, initial_infoview_window)
+    assert.is_not.equal(second_infoview.window, initial_infoview_window.id)
     second_infoview:open()
-    assert.windows.are(initial_infoview_window, second_infoview.window)
+    assert.windows.are(initial_infoview_window.id, second_infoview.window)
 
     vim.cmd.tabclose()
   end)

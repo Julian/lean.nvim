@@ -758,10 +758,10 @@ end
 function Info:render()
   local function click_header(params)
     return function()
-      local start_window = vim.api.nvim_get_current_win()
+      local start_window = Window:current()
       self:jump_to_last_window()
 
-      if start_window == vim.api.nvim_get_current_win() then
+      if start_window:is_current() then
         return
       end
 

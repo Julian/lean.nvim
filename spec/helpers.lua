@@ -106,15 +106,22 @@ end
 ---Wait until a window that isn't one of the known ones shows up.
 ---@param known table
 function helpers.wait_for_new_window(known)
+  local ids = vim
+    .iter(known)
+    :map(function(window)
+      return window.id
+    end)
+    :totable()
+
   local new_window
   local succeeded = vim.wait(1000, function()
     new_window = vim.iter(vim.api.nvim_tabpage_list_wins(0)):find(function(window)
-      return not vim.tbl_contains(known, window)
+      return not vim.tbl_contains(ids, window)
     end)
     return new_window
   end)
   assert.message('Never found a new window').is_true(succeeded)
-  return new_window
+  return Window:from_id(new_window)
 end
 
 -- Even though we can delete a buffer, so should be able to reuse names,
@@ -225,7 +232,7 @@ assert:register('assertion', 'current_tabpage', has_current_tabpage)
 
 ---Assert about the current window.
 local function has_current_window(_, arguments)
-  assert.is.equal(arguments[1], vim.api.nvim_get_current_win())
+  assert.are.same(arguments[1], Window:current())
   return true
 end
 assert:register('assertion', 'current_window', has_current_window)

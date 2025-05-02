@@ -4,6 +4,8 @@
 --- Really this should combine with the user widget tests (which it preceeds).
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
+
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
@@ -12,7 +14,7 @@ require('lean').setup {}
 describe(
   'infoview widgets',
   helpers.clean_buffer('#check Nat', function()
-    local lean_window = vim.api.nvim_get_current_win()
+    local lean_window = Window:current()
     local current_infoview = infoview.get_current_infoview()
 
     it('shows widget tooltips', function()
@@ -28,11 +30,11 @@ describe(
       current_infoview:enter()
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
 
-      local known_windows = { lean_window, current_infoview.window }
-      assert.windows.are(known_windows)
+      local known_windows = { lean_window, Window:from_id(current_infoview.window) }
+      assert.windows.are(lean_window.id, current_infoview.window)
 
       helpers.feed '<CR>'
-      local tooltip_bufnr = vim.api.nvim_win_get_buf(helpers.wait_for_new_window(known_windows))
+      local tooltip_bufnr = helpers.wait_for_new_window(known_windows):bufnr()
       assert.contents.are {
         'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. ',
         bufnr = tooltip_bufnr,
@@ -40,12 +42,12 @@ describe(
 
       -- Close the tooltip.
       helpers.feed '<Esc>'
-      assert.windows.are(known_windows)
+      assert.windows.are(lean_window.id, current_infoview.window)
     end)
 
     it('does not abandon tooltips when the infoview is closed', function()
       vim.cmd.tabnew '#'
-      local tab2_window = vim.api.nvim_get_current_win()
+      local tab2_window = Window:current()
       local tab2_infoview = infoview.get_current_infoview()
       helpers.move_cursor { to = { 1, 9 } }
       helpers.wait_for_loading_pins()
@@ -53,21 +55,21 @@ describe(
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
       helpers.feed '<CR>'
 
-      helpers.wait_for_new_window { tab2_window, tab2_infoview.window }
+      helpers.wait_for_new_window { tab2_window, Window:from_id(tab2_infoview.window) }
       assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
 
       -- Now close the infoview entirely, and the tooltip should close too.
       tab2_infoview:close()
 
       assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
-      vim.api.nvim_win_close(tab2_window, false)
+      tab2_window:close()
 
       assert.is.equal(1, #vim.api.nvim_list_tabpages())
     end)
 
     it('does not abandon tooltips when windows are closed', function()
       vim.cmd.tabnew '#'
-      local tab2_window = vim.api.nvim_get_current_win()
+      local tab2_window = Window:current()
       local tab2_infoview = infoview.get_current_infoview()
       helpers.move_cursor { to = { 1, 8 } }
       helpers.wait_for_loading_pins()
@@ -75,14 +77,14 @@ describe(
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
       helpers.feed '<CR>'
 
-      helpers.wait_for_new_window { tab2_window, tab2_infoview.window }
+      helpers.wait_for_new_window { tab2_window, Window:from_id(tab2_infoview.window) }
       assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
 
       assert.is.equal(2, #vim.api.nvim_list_tabpages())
 
       -- Now close the other 2 windows, and the tooltip should close too.
       vim.api.nvim_win_close(tab2_infoview.window, false)
-      vim.api.nvim_win_close(tab2_window, false)
+      tab2_window:close()
 
       assert.is.equal(1, #vim.api.nvim_list_tabpages())
     end)

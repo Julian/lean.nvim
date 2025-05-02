@@ -20,6 +20,8 @@
 --- terrible when doing so.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
+
 local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
@@ -34,7 +36,7 @@ describe('infoview content (auto-)update', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
 
     vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
-    lean_window = vim.api.nvim_get_current_win()
+    lean_window = Window:current()
     -- In theory we don't care where we are, but the right answer changes
     assert.current_cursor.is { 1, 0 }
 
@@ -92,7 +94,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('does not error while closed and continues updating when reopened', function()
-    assert.windows.are(lean_window, infoview.get_current_infoview().window)
+    assert.windows.are(lean_window.id, infoview.get_current_infoview().window)
 
     infoview.close()
 
@@ -116,7 +118,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('does not error while closed manually and continues updating when reopened', function()
-    assert.windows.are(lean_window, infoview.get_current_infoview().window)
+    assert.windows.are(lean_window.id, infoview.get_current_infoview().window)
 
     infoview.go_to()
     vim.cmd.quit { bang = true }
@@ -146,7 +148,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('does not have line contents while closed', function()
-    assert.windows.are(lean_window, infoview.get_current_infoview().window)
+    assert.windows.are(lean_window.id, infoview.get_current_infoview().window)
     infoview.close()
     assert.has.errors(function()
       infoview.get_current_infoview():get_lines()
@@ -207,7 +209,7 @@ describe('infoview content (auto-)update', function()
   describe('in multiple tabs', function()
     it('updates separate infoviews independently', function()
       local tab1_infoview = infoview.get_current_infoview()
-      assert.windows.are(lean_window, tab1_infoview.window)
+      assert.windows.are(lean_window.id, tab1_infoview.window)
 
       helpers.move_cursor { to = { 2, 0 } }
       assert.infoview_contents.are [[
@@ -234,7 +236,7 @@ describe('infoview content (auto-)update', function()
 
     it('updates separate infoviews independently when one is closed', function()
       local tab2 = vim.api.nvim_get_current_tabpage()
-      assert.is_not.equal(vim.api.nvim_win_get_tabpage(lean_window), tab2)
+      assert.is_not.equal(vim.api.nvim_win_get_tabpage(lean_window.id), tab2)
 
       infoview.close()
       vim.cmd.tabprevious()
@@ -252,7 +254,7 @@ describe('infoview content (auto-)update', function()
       ]]
 
       vim.cmd.tabclose(tab2)
-      assert.current_tabpage.is(vim.api.nvim_win_get_tabpage(lean_window))
+      assert.current_tabpage.is(vim.api.nvim_win_get_tabpage(lean_window.id))
     end)
   end)
 

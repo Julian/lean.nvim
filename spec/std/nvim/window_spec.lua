@@ -83,6 +83,25 @@ describe('Window', function()
       assert.are.same(buffer, split:buffer())
       split:close()
     end)
+
+    it('can be entered when created', function()
+      local split = Window:split { enter = true }
+      assert.is_true(split:is_current())
+      split:close()
+    end)
+  end)
+
+  describe('is_current', function()
+    it('is true for the current window', function()
+      local current = Window:current()
+      assert.is_true(current:is_current())
+    end)
+
+    it('is false for other windows', function()
+      local split = Window:split {}
+      assert.is_false(split:is_current())
+      split:close()
+    end)
   end)
 
   describe('make_current', function()

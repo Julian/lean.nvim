@@ -2,6 +2,8 @@
 --- Tests for infoview layout on a landscape display.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
+
 require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
@@ -14,14 +16,14 @@ require('lean').setup { infoview = { autoopen = false } }
 describe('infoview window', function()
   it('opens on the right with the cursor in the Lean window', function()
     assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
-    local lean_window = vim.api.nvim_get_current_win()
+    local lean_window = Window:current()
 
     infoview.open()
 
     assert.are.same({
       'row',
       { -- see :h winlayout
-        { 'leaf', lean_window },
+        { 'leaf', lean_window.id },
         { 'leaf', infoview.get_current_infoview().window },
       },
     }, vim.fn.winlayout())
