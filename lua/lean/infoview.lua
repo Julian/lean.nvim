@@ -743,7 +743,7 @@ end
 
 ---Set the current window as the last window used to update this Info.
 function Info:update_last_window()
-  self.last_window = vim.api.nvim_get_current_win()
+  self.last_window = Window:current()
 end
 
 ---Jump to the last window used to update this Info, if any.
@@ -751,7 +751,7 @@ function Info:jump_to_last_window()
   if not self.last_window then
     return
   end
-  vim.api.nvim_set_current_win(self.last_window)
+  self.last_window:make_current()
 end
 
 ---Update this info's physical contents.
