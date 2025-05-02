@@ -32,21 +32,9 @@ return function(ctx, props)
         hlgroup = 'widgetLink',
         events = {
           click = function()
-            local bufnr = ctx:bufnr()
-            if not bufnr then
-              return
-            end
-
-            ---@type lsp.TextEdit
-            local edit = { range = props.range, newText = each.suggestion }
-            vim.lsp.util.apply_text_edits({ edit }, bufnr, 'utf-16')
-
-            local this_infoview = require('lean.infoview').get_current_infoview()
-            local this_info = this_infoview and this_infoview.info
-            local last_window = this_info and this_info.last_window
-            if last_window and vim.api.nvim_win_get_buf(last_window) == bufnr then
-              vim.api.nvim_set_current_win(last_window)
-            end
+            ctx:apply_edits {
+              { range = props.range, newText = each.suggestion },
+            }
           end,
         },
       }

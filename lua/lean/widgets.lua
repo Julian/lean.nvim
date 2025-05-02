@@ -101,11 +101,27 @@ function RenderContext:rpc_call(method, params)
   return self:subsession():call(method, params)
 end
 
----The buffer we currently are rendering a widget to.
----@return number? bufnr
-function RenderContext:bufnr()
+---Apply text edits to the Lean source buffer whose widgets we are rendering.
+---
+---Jumps to the Lean window afterwards if it was the last window.
+---@param edits lsp.TextEdit[]
+function RenderContext:apply_edits(edits)
   local bufnr = vim.uri_to_bufnr(self.params.textDocument.uri)
-  return vim.api.nvim_buf_is_loaded(bufnr) and bufnr or nil
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    log:warning {
+      message = 'Cannot apply edits to unloaded buffer',
+      bufnr = bufnr,
+      edits = edits,
+    }
+    return
+  end
+
+  vim.lsp.util.apply_text_edits(edits, bufnr, 'utf-16')
+
+  local last_window = self.get_last_window()
+  if last_window and vim.api.nvim_win_get_buf(last_window) == bufnr then
+    vim.api.nvim_set_current_win(last_window)
+  end
 end
 
 ---The last window before the user visited the infoview.
