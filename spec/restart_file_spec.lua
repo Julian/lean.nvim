@@ -4,6 +4,8 @@
 --- which Lean allows users to run to trigger recompiling imports.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
+
 local helpers = require 'spec.helpers'
 local project = require('spec.fixtures').project
 
@@ -23,7 +25,7 @@ describe('restart file', function()
 
   it('does not error when running LeanRestartFile', function()
     vim.cmd.edit { dependent, bang = true }
-    local dependent_win = vim.api.nvim_get_current_win()
+    local dependent_win = Window:current()
 
     helpers.move_cursor { to = { 2, 8 } }
     assert.infoview_contents.are [[
@@ -36,7 +38,7 @@ describe('restart file', function()
     vim.api.nvim_buf_set_lines(0, -1, -1, false, { 'def addedByTest := 37' })
     vim.cmd.write()
 
-    vim.api.nvim_set_current_win(dependent_win)
+    dependent_win:make_current()
     helpers.wait_for_line_diagnostics()
 
     restart_file()

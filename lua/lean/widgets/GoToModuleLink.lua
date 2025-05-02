@@ -17,7 +17,7 @@ return function(ctx, props)
         if not last_window then
           return
         end
-        vim.api.nvim_set_current_win(last_window)
+        last_window:make_current()
         local uri, err = ctx:rpc_call('getModuleUri', props.modName)
         if err then
           return -- FIXME: Yeah, this should go somewhere clearly.

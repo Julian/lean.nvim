@@ -5,6 +5,7 @@
 --- Lean's interactive goal state.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
 local a = require 'plenary.async'
 local text_document_position_to_string = require('std.lsp').text_document_position_to_string
 
@@ -144,7 +145,7 @@ function Infoview:open()
     return
   end
 
-  local window_before_split = vim.api.nvim_get_current_win()
+  local window_before_split = Window:current()
 
   if self:__should_be_vertical() then
     self.__orientation = 'vertical'
@@ -157,7 +158,7 @@ function Infoview:open()
       local position = self.__horizontal_position == 'bottom' and 'botright ' or 'topleft '
       vim.cmd(position .. self.__height .. 'split')
     end
-    -- FIXME: No idea why this is required (and the below immediate call to
+    -- FIXME: No idea why this is required (and the below call to
     --        nvim_set_current_win is insufficient). Without doing things this
     --        way, when setting position to "top", either syntax highlighting
     --        breaks in the Lean window, or the cursor isn't properly placed in
@@ -165,7 +166,7 @@ function Infoview:open()
     --        doing this twice seems harmless for any other scenario.
     if vim.fn.has 'vim_starting' == 1 then
       vim.schedule(function()
-        vim.api.nvim_set_current_win(window_before_split)
+        window_before_split:make_current()
       end)
     end
   end
@@ -176,7 +177,7 @@ function Infoview:open()
   vim.bo[self.info.__renderer.buf].filetype = 'leaninfo'
   self.window = vim.api.nvim_get_current_win()
 
-  vim.api.nvim_set_current_win(window_before_split)
+  window_before_split:make_current()
 
   vim.api.nvim_create_autocmd({ 'BufHidden', 'QuitPre' }, {
     group = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false }),
@@ -359,7 +360,7 @@ function Infoview:__open_win(buf)
   end
 
   self.info.__win_event_disable = true
-  local window_before_split = vim.api.nvim_get_current_win()
+  local window_before_split = Window:current()
   self:enter()
 
   if self.__orientation == 'vertical' then
@@ -378,7 +379,7 @@ function Infoview:__open_win(buf)
   vim.api.nvim_win_set_buf(new_win, buf)
   vim.bo[buf].filetype = 'leaninfo'
 
-  vim.api.nvim_set_current_win(window_before_split)
+  window_before_split:make_current()
   self.info.__win_event_disable = false
 
   return new_win

@@ -10,6 +10,7 @@
 --- components.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
 local dedent = require('std.text').dedent
 
 local goals = require 'lean.goals'
@@ -119,19 +120,19 @@ function RenderContext:apply_edits(edits)
   vim.lsp.util.apply_text_edits(edits, bufnr, 'utf-16')
 
   local last_window = self.get_last_window()
-  if last_window and vim.api.nvim_win_get_buf(last_window) == bufnr then
-    vim.api.nvim_set_current_win(last_window)
+  if last_window and last_window:bufnr() == bufnr then
+    last_window:make_current()
   end
 end
 
 ---The last window before the user visited the infoview.
 ---
 ---Usually this is which Lean file they were editing.
----@return number? window
+---@return Window? window
 function RenderContext.get_last_window()
   local this_infoview = require('lean.infoview').get_current_infoview()
   local this_info = this_infoview and this_infoview.info
-  return this_info and this_info.last_window
+  return this_info and Window:from_id(this_info.last_window)
 end
 
 ---The goals at the current infoview position.

@@ -2,6 +2,8 @@
 --- Tests for moving the cursor to goals.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
+
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
@@ -21,7 +23,7 @@ describe(
       local lean_window
 
       it('moves the cursor to the first goal by default', function()
-        lean_window = vim.api.nvim_get_current_win()
+        lean_window = Window:current()
 
         helpers.move_cursor { to = { 4, 3 } }
         local current_infoview = infoview.get_current_infoview()
@@ -36,7 +38,7 @@ describe(
 
         current_infoview:enter()
         assert.current_line.is '⊢ n = n'
-        vim.api.nvim_set_current_win(lean_window)
+        lean_window:make_current()
       end)
 
       it('moves the cursor to a specific goal number', function()
@@ -44,13 +46,13 @@ describe(
 
         current_infoview:enter()
         assert.current_line.is '⊢ n = n'
-        vim.api.nvim_set_current_win(lean_window)
+        lean_window:make_current()
 
         current_infoview:move_cursor_to_goal(2)
 
         current_infoview:enter()
         assert.current_line.is '⊢ n = n ∨ n = 0 ∨ n = n✝ + 1'
-        vim.api.nvim_set_current_win(lean_window)
+        lean_window:make_current()
       end)
     end
   )

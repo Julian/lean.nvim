@@ -64,6 +64,11 @@ function Window:set_cursor(pos)
   vim.api.nvim_win_set_cursor(self.id, pos)
 end
 
+---Make this window be the current one.
+function Window:make_current()
+  vim.api.nvim_set_current_win(self.id)
+end
+
 ---Return the window's height.
 ---@return integer height
 function Window:height()

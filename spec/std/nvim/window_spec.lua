@@ -85,6 +85,15 @@ describe('Window', function()
     end)
   end)
 
+  describe('make_current', function()
+    it('makes the window the current one', function()
+      local split = Window:split {}
+      assert.are_not.same(split, Window:current())
+      split:make_current()
+      assert.are.same(split, Window:current())
+    end)
+  end)
+
   describe('close', function()
     it('closes the window', function()
       local window = Window:current():split()

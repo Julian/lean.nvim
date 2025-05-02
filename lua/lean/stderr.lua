@@ -6,6 +6,8 @@
 
 local log = require 'vim.lsp.log'
 
+local Window = require 'std.nvim.window'
+
 local infoview = require 'lean.infoview'
 local util = require 'lean._util'
 
@@ -15,7 +17,7 @@ local stderr_height
 
 ---Open a window for the stderr buffer of the configured height.
 local function open_window(stderr_bufnr)
-  local old_win = vim.api.nvim_get_current_win()
+  local old_win = Window:current()
 
   -- split the infoview window if open
   local iv = infoview.get_current_infoview()
@@ -29,7 +31,7 @@ local function open_window(stderr_bufnr)
   vim.cmd(('resize %d'):format(stderr_height))
   local stderr_winnr = vim.api.nvim_get_current_win()
   vim.bo[stderr_bufnr].filetype = 'leanstderr'
-  vim.api.nvim_set_current_win(old_win)
+  old_win:make_current()
   return stderr_winnr
 end
 
