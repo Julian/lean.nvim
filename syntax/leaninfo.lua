@@ -8,6 +8,8 @@ vim.api.nvim_set_hl(0, 'leanInfoGoals', { link = 'Title' })
 vim.api.nvim_set_hl(0, 'leanInfoMultipleGoals', { link = 'DiagnosticHint' })
 vim.api.nvim_set_hl(0, 'leanInfoGoalCase', { link = 'Statement' })
 
+vim.api.nvim_set_hl(0, 'leanInfoSelected', { reverse = true, bold = true })
+
 syntax [[match leanInfoGoalHyp "^[^:\n< ][^:\n⊢{[(⦃]*\( :\@=\)" contains=leanInfoInaccessibleHyp]]
 vim.api.nvim_set_hl(0, 'leanInfoGoalHyp', { link = 'Type' })
 

@@ -9,5 +9,9 @@ path = "foo"
 name = "importGraph"
 scope = "leanprover-community"
 
+[[require]]
+name = "proofwidgets"
+scope = "leanprover-community"
+
 [[lean_lib]]
 name = "Test"

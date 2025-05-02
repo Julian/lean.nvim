@@ -12,6 +12,7 @@
 
 local dedent = require('std.text').dedent
 
+local Locations = require 'lean.infoview.locations'
 local goals = require 'lean.goals'
 local log = require 'lean.log'
 local rpc = require 'lean.rpc'
@@ -138,6 +139,23 @@ end
 ---@return InteractiveGoal[]? goals
 function RenderContext:get_goals()
   return goals.at(self.params, self:subsession())
+end
+
+---Get the goal with the given MVar ID.
+---@param mvar_id MVarId
+---@return InteractiveGoal? goal
+function RenderContext:goal_with_mvar_id(mvar_id)
+  return vim.iter(self:get_goals()):find(function(goal)
+    return goal.mvarId == mvar_id
+  end)
+end
+
+---Retrieve the currently selected locations in the infoview.
+---
+---In VSCode this is "shift-click"-ing.
+---@return GoalsLocation[]
+function RenderContext:selected_locations()
+  return Locations.selected_at(self.params)
 end
 
 ---Retrieve the Javascript source for the given widget.

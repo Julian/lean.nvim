@@ -440,27 +440,27 @@ function Subsession:getWidgetSource(pos, hash)
   return self:call('Lean.Widget.getWidgetSource', { pos = pos, hash = hash })
 end
 
----@class GoalLocationHyp
----@field hyp FVarId
+---@class rpc.GoalLocationHyp
+---@field hyp GoalLocationHyp
 
----@class GoalLocationHypType
----@field hypType {[1]: FVarId, [2]: SubexprPos}
+---@class rpc.GoalLocationHypType
+---@field hypType GoalLocationHypType
 
----@class GoalLocationHypValue
----@field hypValue {[1]: FVarId, [2]: SubexprPos}
+---@class rpc.GoalLocationHypValue
+---@field hypValue GoalLocationHypValue
 
----@class GoalLocationTarget
----@field target SubexprPos
+---@class rpc.GoalLocationTarget
+---@field target GoalLocationTarget
 
----@alias GoalLocation
----  | GoalLocationHyp
----  | GoalLocationHypType
----  | GoalLocationHypValue
----  | GoalLocationTarget
+---@alias rpc.GoalLocation
+---  | rpc.GoalLocationHyp
+---  | rpc.GoalLocationHypType
+---  | rpc.GoalLocationHypValue
+---  | rpc.GoalLocationTarget
 
 ---@class GoalsLocation
 ---@field mvarId MVarId
----@field loc GoalLocation
+---@field loc rpc.GoalLocation
 
 return rpc
 
