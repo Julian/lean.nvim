@@ -94,8 +94,8 @@ end
 
 ---Set the window's width.
 ---@param width integer
-function Window:set_width(height)
-  vim.api.nvim_win_set_width(self.id, height)
+function Window:set_width(width)
+  vim.api.nvim_win_set_width(self.id, width)
 end
 
 ---Run a function with the window as temporary current window.
