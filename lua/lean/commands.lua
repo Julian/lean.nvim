@@ -60,7 +60,7 @@ function commands.show_term_goal(use_widgets)
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
 
   a.void(function()
-    local goal, err = components.term_goal_at(params, nil, use_widgets)
+    local goal, err = components.term_goal_at(params, rpc.open(params), use_widgets)
     show_popup_or_error(goal, err)
   end)()
 end
