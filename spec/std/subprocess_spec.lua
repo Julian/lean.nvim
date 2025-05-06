@@ -3,7 +3,7 @@ local dedent = require('std.text').dedent
 
 describe('check_output', function()
   it('returns subprocess output', function()
-    local stdout = subprocess.check_output({ 'lean', '--run', '--stdin' }, {
+    local stdout = subprocess.check_output({ 'lean', '--stdin', '--run' }, {
       stdin = dedent [[
         def main : IO Unit := IO.println "Hello, world!"
       ]],
@@ -14,7 +14,7 @@ describe('check_output', function()
   it('errors for unsuccessful processes', function()
     local successful, error = pcall(
       subprocess.check_output,
-      { 'lean', '--run', '--stdin' },
+      { 'lean', '--stdin', '--run' },
       { stdin = dedent [[
           def main : IO Unit := IO.Process.exit 37
         ]] }
