@@ -183,8 +183,10 @@ local function on_publish_diagnostics(_, result, ctx)
   vim.diagnostic.reset(silent_ns, bufnr)
   vim.api.nvim_buf_clear_namespace(bufnr, goals_ns, 0, -1)
 
-  local markers = config().infoview.goal_markers
+  local markers = config().goal_markers
 
+  ---@type { [1]: integer, [2]: integer }[]
+  local unsolved = {}
   local other_silent = {}
 
   result.diagnostics = vim
@@ -197,13 +199,7 @@ local function on_publish_diagnostics(_, result, ctx)
       -- changed, which can give out of range errors when setting the extmarks.
       local succeeded = pcall(function()
         if markers.unsolved ~= '' and lsp.is_unsolved_goals_diagnostic(each) then
-          local end_row, end_col = unpack(std.position_to_byte0(range['end'], bufnr))
-
-          vim.api.nvim_buf_set_extmark(bufnr, goals_ns, end_row, end_col, {
-            hl_mode = 'combine',
-            virt_text = { { markers.unsolved, 'leanUnsolvedGoals' } },
-            virt_text_pos = 'inline',
-          })
+          table.insert(unsolved, std.position_to_byte0(range['end'], bufnr))
         elseif markers.accomplished ~= '' and lsp.is_goals_accomplished_diagnostic(each) then
           local start_row, start_col, end_row, end_col = byterange_of(bufnr, each)
           vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
@@ -231,6 +227,40 @@ local function on_publish_diagnostics(_, result, ctx)
     :totable()
 
   vim.lsp.diagnostic.on_publish_diagnostics(_, result, ctx)
+
+  if #unsolved ~= 0 then
+    local function place_marker(pos)
+      local succeeded = pcall(vim.api.nvim_buf_set_extmark, bufnr, goals_ns, pos[1], pos[2], {
+        hl_mode = 'combine',
+        virt_text = { { markers.unsolved, 'leanUnsolvedGoals' } },
+        virt_text_pos = 'inline',
+      })
+      if not succeeded then
+        log:debug {
+          message = 'Failed to set unsolved goal marker',
+          bufnr = bufnr,
+        }
+      end
+    end
+
+    local function place_all()
+      vim.iter(unsolved):each(place_marker)
+      unsolved = {} -- so we don't place 2 markers on hold + insert leave
+    end
+
+    local mode = vim.api.nvim_get_mode().mode
+    if mode == 'i' then
+      vim.api.nvim_create_autocmd({ 'InsertLeave', 'CursorHoldI' }, {
+        group = vim.api.nvim_create_augroup('LeanUnsolvedGoalsMarkers', {}),
+        buffer = bufnr,
+        callback = place_all,
+        once = true,
+        desc = 'place unsolved goals markers',
+      })
+    else
+      place_all()
+    end
+  end
 
   vim.diagnostic.set(
     silent_ns,

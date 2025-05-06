@@ -100,6 +100,18 @@ function lean.setup(opts)
     require('lean.abbreviations').enable('*.lean', opts.abbreviations)
   end
 
+  if opts.infoview and opts.infoview.goal_markers then
+    vim.deprecate(
+      'lean.setup { infoview = { goal_markers = { ... } } }',
+      'lean.setup { goal_markers = { ... } }',
+      'v2025.10.1',
+      'lean.nvim',
+      false
+    )
+    opts.goal_markers = opts.infoview.goal_markers
+    opts.infoview.goal_markers = nil
+  end
+
   opts.infoview = opts.infoview or {}
   require('lean.infoview').enable(opts.infoview)
 

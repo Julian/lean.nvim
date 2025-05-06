@@ -10,6 +10,7 @@
 ---@field mappings? boolean whether to automatically enable key mappings
 ---@field ft? lean.ft.Config filetype configuration
 ---@field abbreviations? lean.abbreviations.Config abbreviaton configuration
+---@field goal_markers? lean.goal_markers.Config characters to use for denoting goal markers
 ---@field infoview? lean.infoview.Config infoview configuration
 ---@field inlay_hint? lean.inlay_hint.Config inlay hint configuration
 ---@field lsp? table language server configuration
@@ -22,6 +23,7 @@
 
 ---@class lean.MergedConfig: lean.Config
 ---@field ft lean.ft.MergedConfig filetype configuration
+---@field goal_markers lean.goal_markers.Config characters to use for denoting goal markers
 ---@field infoview lean.infoview.MergedConfig infoview configuration
 ---@field inlay_hint lean.inlay_hint.Config inlay hint configuration
 ---@field log Log log any messages from lean.nvim's internals
@@ -35,21 +37,19 @@
 ---@field nomodifiable string[] globs to prevent accidental modification
 
 ---@class lean.ft.MergedConfig: lean.ft.Config
----@field private should_modify function(path): boolean
+---@field private should_modify fun(self, path:string): boolean
+
+---@class lean.goal_markers.Config
+---@field unsolved? string a character which will be placed on buffer lines where there is an unsolved goal
+---@field accomplished? string a character which will be placed in the sign column of successful proofs
 
 ---@class lean.infoview.Config
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
----@field goal_markers? lean.infoview.GoalMarkerConfig characters to use for denoting goal markers
 
----@class lean.infoview.GoalMarkerConfig
----@field unsolved? string a character which will be placed on buffer lines where there is an unsolved goal
----@field accomplished? string a character which will be placed in the sign column of successful proofs
-
----@class lean.infoview.MergedConfig: lean.infoview.Config
+---@class lean.infoview.MergedConfig
 ---@field view_options InfoviewViewOptions
 ---@field severity_markers table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
----@field goal_markers lean.infoview.GoalMarkerConfig characters to use for denoting goal markers
 
 ---Lean uses inlay hints to surface things like auto-implicits of a function.
 ---
@@ -89,6 +89,12 @@ local DEFAULTS = {
     end,
   },
 
+  ---@type lean.goal_markers.Config
+  goal_markers = {
+    unsolved = ' ⚒ ',
+    accomplished = '🎉',
+  },
+
   ---@type Log
   log = function() end,
 
@@ -102,10 +108,6 @@ local DEFAULTS = {
       show_let_values = true,
       show_term_goals = true,
       reverse = false,
-    },
-    goal_markers = {
-      unsolved = ' ⚒ ',
-      accomplished = '🎉',
     },
     severity_markers = {
       'error:\n',
