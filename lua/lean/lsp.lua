@@ -98,13 +98,8 @@ end
 ---@return integer end_col
 local function byterange_of(bufnr, diagnostic)
   local range = lsp.range_of(diagnostic)
-  local start_line =
-    vim.api.nvim_buf_get_lines(bufnr, range.start.line, range.start.line + 1, true)[1]
-  local start = std.position_to_byte0(range.start, start_line)
-
-  local end_line =
-    vim.api.nvim_buf_get_lines(bufnr, range['end'].line, range['end'].line + 1, true)[1]
-  local _end = std.position_to_byte0(range['end'], end_line)
+  local start = std.position_to_byte0(range.start, bufnr)
+  local _end = std.position_to_byte0(range['end'], bufnr)
   return start[1], start[2], _end[1], _end[2]
 end
 
@@ -201,18 +196,14 @@ local function on_publish_diagnostics(_, result, ctx)
       -- if we're still processing diagnostics but the buffer has already
       -- changed, which can give out of range errors when setting the extmarks.
       local succeeded = pcall(function()
-        if lsp.is_unsolved_goals_diagnostic(each) then
-          local buf_lines = std.get_buf_lines(bufnr)
-          local end_line = buf_lines[range['end'].line + 1] or ''
-          local end_row, end_col = unpack(std.position_to_byte0(range['end'], end_line))
+        if markers.unsolved ~= '' and lsp.is_unsolved_goals_diagnostic(each) then
+          local end_row, end_col = unpack(std.position_to_byte0(range['end'], bufnr))
 
-          if markers.unsolved ~= '' then
-            vim.api.nvim_buf_set_extmark(bufnr, goals_ns, end_row, end_col, {
-              hl_mode = 'combine',
-              virt_text = { { markers.unsolved, 'leanUnsolvedGoals' } },
-              virt_text_pos = 'inline',
-            })
-          end
+          vim.api.nvim_buf_set_extmark(bufnr, goals_ns, end_row, end_col, {
+            hl_mode = 'combine',
+            virt_text = { { markers.unsolved, 'leanUnsolvedGoals' } },
+            virt_text_pos = 'inline',
+          })
         elseif markers.accomplished ~= '' and lsp.is_goals_accomplished_diagnostic(each) then
           local start_row, start_col, end_row, end_col = byterange_of(bufnr, each)
           vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {

@@ -5,9 +5,10 @@ local lsp = {}
 ---These are used by extmarks.
 ---See `:h api-indexing` for details.
 ---@param position lsp.Position
----@param line string the line contents for this position's line
+---@param bufnr integer the buffer whose position is referred to
 ---@return { [1]: integer, [2]: integer } position
-function lsp.position_to_byte0(position, line)
+function lsp.position_to_byte0(position, bufnr)
+  local line = vim.api.nvim_buf_get_lines(bufnr, position.line, position.line + 1, false)[1] or ''
   local ok, col = pcall(vim.str_byteindex, line, position.character, true)
   return { position.line, ok and col or position.character }
 end
@@ -87,32 +88,6 @@ end
 --
 -- the below comes from there / is required for assembling vim.Diagnostic
 -- objects out of LSP responses
-
----@param bufnr integer
----@return string[]?
-function lsp.get_buf_lines(bufnr)
-  if vim.api.nvim_buf_is_loaded(bufnr) then
-    return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  end
-
-  local filename = vim.api.nvim_buf_get_name(bufnr)
-  local f = io.open(filename)
-  if not f then
-    return
-  end
-
-  local content = f:read '*a'
-  if not content then
-    -- Some LSP servers report diagnostics at a directory level, in which case
-    -- io.read() returns nil
-    f:close()
-    return
-  end
-
-  local lines = vim.split(content, '\n')
-  f:close()
-  return lines
-end
 
 ---@param severity lsp.DiagnosticSeverity
 function lsp.severity_lsp_to_vim(severity)
