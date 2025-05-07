@@ -308,12 +308,6 @@ local function file_progress_handler(err, params)
   end
 
   require('lean.infoview').__update_pin_by_uri(params.textDocument.uri)
-
-  -- Lean sends partial semantic token information while a file is processing,
-  -- and asks clients to re-trigger refresh requests until the file is fully
-  -- processed, as processing may take minutes to complete (and waiting
-  -- therefore for fully processed files would be unusable).
-  vim.lsp.semantic_tokens.force_refresh(bufnr)
 end
 
 ---@param opts LeanClientConfig
