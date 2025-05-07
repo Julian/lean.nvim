@@ -78,14 +78,12 @@ describe('interactive infoview', function()
       [[
         example (n : Nat) : n = n := by
           cases n
-          · rfl
-          · rfl
+          · sorry
+          · sorry
       ]],
       function()
         helpers.move_cursor { to = { 3, 3 } }
         assert.infoview_contents.are [[
-          Goals accomplished 🎉
-
           case zero
           ⊢ 0 = 0
         ]]
@@ -99,14 +97,12 @@ describe('interactive infoview', function()
       [[
         example (n : Nat) : n = n := by
           cases n
-          · rfl
-          · rfl
+          · sorry
+          · sorry
       ]],
       function()
         helpers.move_cursor { to = { 2, 3 } }
         assert.infoview_contents.are [[
-          Goals accomplished 🎉
-
           ▼ 2 goals
           case zero
           ⊢ 0 = 0
@@ -176,13 +172,11 @@ describe('interactive infoview', function()
       [[
         example : 37 = 37 := by
           have : Nat := 37
-          rfl
+          sorry
       ]],
       function()
         helpers.move_cursor { to = { 2, 18 } }
         assert.infoview_contents.are [[
-          Goals accomplished 🎉
-
           this : Nat
           ⊢ 37 = 37
 
@@ -199,14 +193,12 @@ describe('interactive infoview', function()
       [[
         example (n : Nat) : n = n := by
           cases n
-          · rfl
-          · rfl
+          · sorry
+          · sorry
       ]],
       function()
         helpers.move_cursor { to = { 2, 9 } }
         assert.infoview_contents.are [[
-          Goals accomplished 🎉
-
           ▼ 2 goals
           case zero
           ⊢ 0 = 0

@@ -401,7 +401,7 @@ describe(
                 exact h37
               | inr h2 =>
                 apply Or.inl
-                assumption
+                sorry
           ]],
 
           function()
@@ -415,8 +415,6 @@ describe(
               helpers.move_cursor { to = { 4, 5 } }
 
               assert.infoview_contents.are [[
-                Goals accomplished 🎉
-
                 case inl
                 p q : Prop
                 h37 : p
@@ -429,8 +427,6 @@ describe(
               infoview.set_diff_pin()
 
               assert.infoview_contents.are [[
-                Goals accomplished 🎉
-
                 case inl
                 p q : Prop
                 h37 : p
@@ -441,8 +437,6 @@ describe(
               ]]
 
               assert.diff_contents.are [[
-                Goals accomplished 🎉
-
                 case inl
                 p q : Prop
                 h37 : p
@@ -465,8 +459,6 @@ describe(
               helpers.move_cursor { to = { 5, 5 } }
 
               assert.infoview_contents.are [[
-                Goals accomplished 🎉
-
                 case inl.h
                 p q : Prop
                 h37 : p
@@ -474,8 +466,6 @@ describe(
               ]]
 
               assert.diff_contents.are [[
-                Goals accomplished 🎉
-
                 case inl
                 p q : Prop
                 h37 : p
