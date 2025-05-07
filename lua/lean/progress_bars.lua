@@ -11,30 +11,12 @@ local sign_ns = vim.api.nvim_create_namespace 'lean.progress'
 vim.diagnostic.config({ virtual_text = false, virtual_lines = false }, sign_ns)
 
 local function _update(bufnr)
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
-    -- In case the buffer was unloaded in between when we scheduled the update
-    return
-  end
-
   vim.fn.sign_unplace(sign_group_name, { buffer = bufnr })
   local diagnostics = {}
 
   for _, proc_info in ipairs(progress.proc_infos[vim.uri_from_bufnr(bufnr)]) do
     local start_line = proc_info.range.start.line + 1
     local end_line = proc_info.range['end'].line + 1
-
-    -- FIXME: Is this still relevant now that we have no Lean 3 support?
-    --
-    -- Don't show multiple diagnostics if there are overlapping ranges (which
-    -- seems to happen in Lean 3 at least), and here we don't shift by 1.
-    if not diagnostics[start_line] then
-      diagnostics[start_line] = {
-        lnum = proc_info.range.start.line,
-        col = 0,
-        message = 'Processing...',
-        severity = vim.diagnostic.severity.INFO,
-      }
-    end
 
     for line = start_line, end_line do
       vim.fn.sign_place(0, sign_group_name, sign_group_name, bufnr, {
@@ -61,7 +43,10 @@ function progress_bars.update(params)
   if timers[bufnr] == nil then
     timers[bufnr] = vim.defer_fn(function()
       timers[bufnr] = nil
-      _update(bufnr)
+      -- In case the buffer was unloaded in between the scheduled update
+      if vim.api.nvim_buf_is_loaded(bufnr) then
+        _update(bufnr)
+      end
     end, 100)
   end
 end
