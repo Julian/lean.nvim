@@ -1,0 +1,36 @@
+name: Performance Benchmarks
+
+on:
+  schedule:
+    # Run every day at 3:47 UTC
+    - cron: '47 3 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  profile-test:
+    name: Test Suite Runtime
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@8e931b9954b19d4203d5caa5ff5521f3bc21dcc7
+        with:
+          neovim: true
+
+      - name: Profile the test suite
+        run: |
+          mkdir output
+          just profile-test -- --export-json output/results.json --export-markdown "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: profile-test
+          path: output/results.json
