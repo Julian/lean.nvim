@@ -2,6 +2,7 @@
 --- Tests for the placing of infoview pins.
 ---@brief ]]
 
+local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
 
 local fixtures = require 'spec.fixtures'
@@ -477,7 +478,7 @@ describe(
             end)
 
             it('closes the diff window if the infoview is closed', function()
-              assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+              assert.is.equal(3, #Tab:current():windows())
               infoview.close()
               assert.windows.are { lean_window.id }
             end)
@@ -496,20 +497,20 @@ describe(
             end)
 
             it('closes when cleared', function()
-              assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+              assert.is.equal(3, #Tab:current():windows())
               infoview.clear_diff_pin()
               assert.windows.are { lean_window.id, infoview.get_current_infoview().window }
             end)
 
             it('can be re-placed', function()
-              assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
+              assert.is.equal(2, #Tab:current():windows())
               helpers.move_cursor { to = { 3, 2 } }
               infoview.set_diff_pin()
-              assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+              assert.is.equal(3, #Tab:current():windows())
             end)
 
             it('can be :quit', function()
-              assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+              assert.is.equal(3, #Tab:current():windows())
               local current_infoview = infoview.get_current_infoview()
               local diff_window =
                 helpers.wait_for_new_window { lean_window, Window:from_id(current_infoview.window) }

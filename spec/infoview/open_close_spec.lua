@@ -3,8 +3,10 @@
 --- API, or combinations of the two.
 ---@brief ]]
 
-require 'spec.helpers'
+local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
+
+require 'spec.helpers'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 
@@ -14,11 +16,11 @@ describe('infoview open/close', function()
   local lean_window
 
   it('opens', function()
-    assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+    assert.is.equal(1, #Tab:current():windows())
     lean_window = Window:current()
 
     vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
-    local cursor = vim.api.nvim_win_get_cursor(0)
+    local cursor = lean_window:cursor()
     local current_infoview = infoview.get_current_infoview()
 
     current_infoview:open()
@@ -170,17 +172,16 @@ describe('infoview open/close', function()
 
     it('closes independently via :quit', function()
       vim.cmd.tabedit(fixtures.project.some_existing_file)
-      local tab2_windows = vim.api.nvim_tabpage_list_wins(0)
-      assert.is.equal(2, #tab2_windows)
+      assert.is.equal(2, #Tab:current():windows())
 
       vim.cmd.tabedit(fixtures.project.some_existing_file)
-      assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
+      assert.is.equal(2, #Tab:current():windows())
 
       -- Close the two tab 3 windows
       vim.cmd.quit()
       vim.cmd.quit()
 
-      assert.is.equal(2, #vim.api.nvim_tabpage_list_wins(0))
+      assert.is.equal(2, #Tab:current():windows())
 
       vim.cmd.tabclose()
     end)
