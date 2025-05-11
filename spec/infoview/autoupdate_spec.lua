@@ -20,6 +20,7 @@
 --- terrible when doing so.
 ---@brief ]]
 
+local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
 
 local fixtures = require 'spec.fixtures'
@@ -33,7 +34,7 @@ describe('infoview content (auto-)update', function()
   local lean_window
 
   it("shows the initial cursor location's infoview", function()
-    assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+    assert.is.equal(1, #Tab:current():windows())
 
     vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
     lean_window = Window:current()

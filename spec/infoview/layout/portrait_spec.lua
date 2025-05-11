@@ -2,6 +2,7 @@
 --- Tests for infoview layout on a portrait display.
 ---@brief ]]
 
+local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
 
 require 'spec.helpers'
@@ -15,7 +16,7 @@ require('lean').setup { infoview = { autoopen = false } }
 
 describe('infoview window', function()
   it('opens on the bottom with the cursor in the Lean window', function()
-    assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+    assert.is.equal(1, #Tab:current():windows())
     local lean_window = Window:current()
 
     infoview.open()
@@ -33,16 +34,16 @@ describe('infoview window', function()
   end)
 
   it('opens on the bottom of stacked splits at full height', function()
-    assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
-    local top_window = vim.api.nvim_get_current_win()
+    assert.is.equal(1, #Tab:current():windows())
+    local top_window = Window:current()
     vim.cmd 'botright split'
-    local bottom_window = vim.api.nvim_get_current_win()
+    local bottom_window = Window:current()
 
     assert.are.same({ -- see :h winlayout
       'col',
       {
-        { 'leaf', top_window },
-        { 'leaf', bottom_window },
+        { 'leaf', top_window.id },
+        { 'leaf', bottom_window.id },
       },
     }, vim.fn.winlayout())
 
@@ -51,8 +52,8 @@ describe('infoview window', function()
     assert.are.same({ -- see :h winlayout
       'col',
       {
-        { 'leaf', top_window },
-        { 'leaf', bottom_window },
+        { 'leaf', top_window.id },
+        { 'leaf', bottom_window.id },
         { 'leaf', infoview.get_current_infoview().window },
       },
     }, vim.fn.winlayout())

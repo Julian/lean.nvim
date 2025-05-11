@@ -1,3 +1,6 @@
+local Tab = require 'std.nvim.tab'
+local Window = require 'std.nvim.window'
+
 local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
@@ -8,7 +11,7 @@ describe('infoview', function()
   local lean_window
 
   it('does not automatically open infoviews', function()
-    assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+    assert.is.equal(1, #Tab:current():windows())
     vim.cmd.edit { fixtures.project.child 'Test.lean', bang = true }
     -- FIXME: This obviously shouldn't require running twice, but without
     --        it, somehow the test run differs from interactive use!
@@ -21,15 +24,15 @@ describe('infoview', function()
     --        To know whether you can remove this, undo the change from #245
     --        and ensure this test properly fails.
     vim.cmd.edit { fixtures.project.child 'Test.lean', bang = true }
-    lean_window = vim.api.nvim_get_current_win()
-    assert.windows.are(lean_window)
+    lean_window = Window:current()
+    assert.windows.are(lean_window.id)
   end)
 
   it('allows infoviews to be manually opened', function()
-    assert.windows.are(lean_window)
+    assert.windows.are(lean_window.id)
     helpers.move_cursor { to = { 3, 27 } }
     infoview.open()
-    assert.windows.are(lean_window, infoview.get_current_infoview().window)
+    assert.windows.are(lean_window.id, infoview.get_current_infoview().window)
     assert.infoview_contents.are [[
       ▼ expected type (3:28-3:36)
       ⊢ Nat

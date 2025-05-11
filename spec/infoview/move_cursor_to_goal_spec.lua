@@ -32,7 +32,10 @@ describe(
         assert.matches('3 goals', current_infoview:get_line(0))
 
         -- Move the cursor anywhere else.
-        helpers.move_cursor { window = current_infoview.window, to = { 1, 0 } }
+        helpers.move_cursor {
+          to = { 1, 0 },
+          window = Window:from_id(current_infoview.window),
+        }
 
         current_infoview:move_cursor_to_goal(1)
 

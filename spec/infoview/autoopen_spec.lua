@@ -1,3 +1,6 @@
+local Tab = require 'std.nvim.tab'
+local Window = require 'std.nvim.window'
+
 require 'spec.helpers'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
@@ -10,10 +13,10 @@ describe('infoview autoopen', function()
   local lean_window
 
   it('automatically opens infoviews when editing new Lean files', function()
-    assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+    assert.is.equal(1, #Tab:current():windows())
     vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
-    lean_window = vim.api.nvim_get_current_win()
-    assert.windows.are(lean_window, infoview.get_current_infoview().window)
+    lean_window = Window:current()
+    assert.windows.are(lean_window.id, infoview.get_current_infoview().window)
   end)
 
   it('reuses the same infoview for new Lean files in the same tab', function()
@@ -46,12 +49,12 @@ describe('infoview autoopen', function()
 
   it('does not (auto-)open infoviews for non-Lean files', function()
     vim.cmd.tabnew()
-    assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+    assert.is.equal(1, #Tab:current():windows())
 
     vim.cmd.edit 'some_other_file.foo'
-    local non_lean_window = vim.api.nvim_get_current_win()
+    local non_lean_window = Window:current()
 
-    assert.windows.are(non_lean_window)
+    assert.windows.are(non_lean_window.id)
 
     vim.cmd.tabclose()
   end)
@@ -62,18 +65,18 @@ describe('infoview autoopen', function()
     assert.is.truthy(vim.tbl_contains(windows, infoview.get_current_infoview().window))
 
     infoview.close()
-    assert.windows.are(lean_window)
+    assert.windows.are(lean_window.id)
 
     vim.cmd.split(fixtures.project.some_nested_existing_file)
-    assert.windows.are(lean_window, vim.api.nvim_get_current_win())
+    assert.windows.are(lean_window.id, vim.api.nvim_get_current_win())
 
     vim.cmd.quit()
   end)
 
   it('allows infoviews to reopen manually after closing', function()
-    assert.windows.are(lean_window)
+    assert.windows.are(lean_window.id)
     local reopened_infoview = infoview.open()
-    assert.windows.are(lean_window, reopened_infoview.window)
+    assert.windows.are(lean_window.id, reopened_infoview.window)
   end)
 
   it('can be disabled', function()

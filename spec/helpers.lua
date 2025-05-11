@@ -38,31 +38,29 @@ end
 
 ---Move the cursor to a new location.
 ---
----Ideally this function wouldn't exist, and one would call
----`vim.api.nvim_win_set_cursor` directly, but it does not fire `CursorMoved`
----autocmds. This function exists therefore to make tests which have slightly
+---Ideally this function wouldn't exist, and one would call `set_cursor`
+---directly, but it does not fire `CursorMoved` autocmds.
+---This function exists therefore to make tests which have slightly
 ---less implementation details in them (the manual firing of that autocmd).
 ---
 ---@param opts MoveCursorOpts
 function helpers.move_cursor(opts)
-  local window = opts.window or 0
+  local window = opts.window or Window:current()
 
   local msg = text.s [[
     Cursor is already at %s.
     If you just want to ensure the cursor is at this location,
     use nvim_win_set_cursor directly.
   ]]
-  assert
-    .message(msg:format(vim.inspect(opts.to))).are_not
-    .same(opts.to, vim.api.nvim_win_get_cursor(window))
+  assert.message(msg:format(vim.inspect(opts.to))).are_not.same(opts.to, window:cursor())
 
-  vim.api.nvim_win_set_cursor(window, opts.to)
+  window:set_cursor(opts.to)
   vim.api.nvim_exec_autocmds('CursorMoved', {})
 end
 
 ---@class MoveCursorOpts
----@field window? integer the window handle. Defaults to the current window.
----@field to table the new cursor position (1-row indexed, as per nvim_win_set_cursor)
+---@field window? Window the window handle. Defaults to the current window.
+---@field to { [1]: integer, [2]: integer } the new cursor position (1-row indexed, as in nvim_win_set_cursor)
 
 ---Wait for all of the pins associated with the given infoview to finish loading/processing.
 ---@param iv? Infoview
