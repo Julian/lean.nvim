@@ -10,7 +10,7 @@ Tab.__index = Tab
 ---@param id? integer tab ID, defaulting to the current one
 ---@return Tab
 function Tab:from_id(id)
-  return setmetatable({ id = id or vim.api.nvim_get_current_buf() }, self)
+  return setmetatable({ id = id or vim.api.nvim_get_current_tabpage() }, self)
 end
 
 ---Bind to the current tab.

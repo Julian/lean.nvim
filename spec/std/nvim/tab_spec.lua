@@ -10,7 +10,9 @@ describe('Tab', function()
 
   describe('from_id', function()
     it('defaults to current tab', function()
-      assert.are.same(Tab:current(), Tab:from_id())
+      local tab = Tab:from_id()
+      assert.are.same(Tab:current(), tab)
+      assert.are.equal(tab.id, vim.api.nvim_get_current_tabpage())
     end)
   end)
 
