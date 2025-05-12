@@ -233,6 +233,73 @@ describe('Element', function()
     end)
   end)
 
+  describe(':walk', function()
+    it('walks an element with children', function()
+      local foo = Element:new { text = 'foo' }
+      local bar = Element:new { text = 'bar' }
+      local baz = Element:new { children = { bar } }
+
+      local element = Element:new {
+        text = 'quux',
+        children = { foo, baz },
+      }
+
+      local visited = vim.iter(element:walk()):totable()
+      assert.are.same({ element, foo, baz, bar }, visited)
+    end)
+
+    it('walks a single element', function()
+      local element = Element:new { text = 'foo' }
+      local visited = vim.iter(element:walk()):totable()
+      assert.are.same({ element }, visited)
+    end)
+  end)
+
+  describe(':find', function()
+    it('finds a child matching a predicate', function()
+      local foo = Element:new { text = 'foo' }
+      local bar = Element:new { text = 'bar' }
+      local baz = Element:new { children = { bar } }
+
+      local element = Element:new {
+        text = 'quux',
+        children = { foo, baz },
+      }
+
+      assert.are.same(
+        bar,
+        element:find(function(e)
+          return e.text == 'bar'
+        end)
+      )
+    end)
+
+    it('returns the element itself if it matches the predicate', function()
+      local foo = Element:new { text = 'foo' }
+      local bar = Element:new { text = 'bar' }
+      local baz = Element:new { children = { bar } }
+
+      local element = Element:new {
+        text = 'quux',
+        children = { foo, baz },
+      }
+
+      assert.are.same(
+        element,
+        element:find(function()
+          return true
+        end)
+      )
+    end)
+
+    it('returns nil if no element is found', function()
+      local element = Element:new {}
+      assert.is_nil(element:find(function()
+        return false
+      end))
+    end)
+  end)
+
   describe(':kbd', function()
     it('creates an element representing a keyboard input sequence', function()
       assert.are.same(Element:new { text = 'Ctrl', hlgroup = 'widgetKbd' }, Element.kbd 'Ctrl')

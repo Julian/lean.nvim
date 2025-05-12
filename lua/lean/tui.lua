@@ -426,28 +426,38 @@ function Element:event(path, event, ...)
   return true
 end
 
+---Walk all elements in this element.
+---
+---Visits the element itself first, then all children in order, then a tooltip
+---if present.
+---@return fun():Element iterator
+---@return any state
+---@return any ctrl
+function Element:walk()
+  local stack = { self }
+  local function iter()
+    local e = table.remove(stack)
+    if not e then
+      return nil
+    end
+
+    if e.tooltip then
+      table.insert(stack, e.tooltip)
+    end
+
+    for i = #e.__children, 1, -1 do -- reverse so they're iterated in original order
+      table.insert(stack, e.__children[i])
+    end
+    return e
+  end
+  return iter, nil, nil
+end
+
 ---Returns the first element matching the given check function.
 ---Searches first this element itself, then its children, then its tooltip.
 ---@param check fun(element:Element):boolean?
 function Element:find(check)
-  if check(self) then
-    return self
-  end
-
-  local found
-  for _, child in ipairs(self.__children) do
-    found = child:find(check)
-    if found then
-      return found
-    end
-  end
-
-  if self.tooltip then
-    found = self.tooltip:find(check)
-    if found then
-      return found
-    end
-  end
+  return vim.iter(self:walk()):find(check)
 end
 
 ---Create a BufRenderer that renders this Element.
