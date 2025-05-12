@@ -18,6 +18,14 @@ function Tab:current()
   return self:from_id(vim.api.nvim_get_current_tabpage())
 end
 
+---Open a new tab page.
+---@param opts? table options for the new tab
+function Tab:new()
+  -- See https://github.com/neovim/neovim/pull/27223
+  vim.cmd.tabnew()
+  return self:current()
+end
+
 ---Return the windows present in the tab.
 ---@return Window[] windows
 function Tab:windows()

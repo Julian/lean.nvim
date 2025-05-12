@@ -30,6 +30,12 @@ function Window:bufnr()
   return vim.api.nvim_win_get_buf(self.id)
 end
 
+---Return the tab the window is on.
+---@return Tab tab
+function Window:tab()
+  return require('std.nvim.tab'):from_id(vim.api.nvim_win_get_tabpage(self.id))
+end
+
 ---@class SplitOpts
 ---@field buffer? Buffer the buffer to open in the new window (default current)
 ---@field enter? boolean whether to enter the window (default false)

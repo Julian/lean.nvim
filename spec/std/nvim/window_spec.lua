@@ -1,4 +1,5 @@
 local Buffer = require 'std.nvim.buffer'
+local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
 
 describe('Window', function()
@@ -128,6 +129,16 @@ describe('Window', function()
       assert.is_true(window:is_valid())
       window:close()
       assert.is_false(window:is_valid())
+    end)
+  end)
+
+  describe('tab', function()
+    it("returns the window's tabpage", function()
+      local initial = Tab:current()
+      assert.are.same(initial, Window:current():tab())
+
+      local new = Tab:new()
+      assert.are.same(new, Window:current():tab())
     end)
   end)
 

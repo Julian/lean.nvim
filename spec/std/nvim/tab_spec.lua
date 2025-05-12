@@ -24,4 +24,19 @@ describe('Tab', function()
       assert.are.same({ split, window }, tab:windows())
     end)
   end)
+
+  describe('new', function()
+    it('creates a new tab page', function()
+      local initial = vim.api.nvim_get_current_tabpage()
+      local tab = Tab:current()
+      assert.are.same(tab.id, initial)
+
+      local new = Tab:new {}
+      local id = vim.api.nvim_get_current_tabpage()
+      assert.are_not.same(id, initial)
+
+      assert.are.same(new.id, id)
+      assert.are.same(Tab:current(), new)
+    end)
+  end)
 end)
