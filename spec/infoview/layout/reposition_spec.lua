@@ -2,6 +2,8 @@
 --- Tests for repositioning infoviews (when e.g. screen dimensions change).
 ---@brief ]]
 
+local Tab = require 'std.nvim.tab'
+
 require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
@@ -136,7 +138,7 @@ describe('infoview window', function()
 
   it('does not touch leaf windows', function()
     vim.cmd.wincmd 'o'
-    assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+    assert.is.equal(1, #Tab:current():windows())
     local layout = vim.fn.winlayout()
     infoview.reposition()
     assert.are.same(layout, vim.fn.winlayout())

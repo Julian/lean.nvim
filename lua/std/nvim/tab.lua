@@ -18,6 +18,17 @@ function Tab:current()
   return self:from_id(vim.api.nvim_get_current_tabpage())
 end
 
+---All current tabs.
+---@return Tab[] tabs
+function Tab:all()
+  return vim
+    .iter(vim.api.nvim_list_tabpages())
+    :map(function(tab_id)
+      return self:from_id(tab_id)
+    end)
+    :totable()
+end
+
 ---Open a new tab page.
 function Tab:new()
   -- See https://github.com/neovim/neovim/pull/27223

@@ -4,6 +4,7 @@
 --- Really this should combine with the user widget tests (which it preceeds).
 ---@brief ]]
 
+local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
 
 local helpers = require 'spec.helpers'
@@ -56,15 +57,15 @@ describe(
       helpers.feed '<CR>'
 
       helpers.wait_for_new_window { tab2_window, Window:from_id(tab2_infoview.window) }
-      assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+      assert.is.equal(3, #Tab:current():windows())
 
       -- Now close the infoview entirely, and the tooltip should close too.
       tab2_infoview:close()
 
-      assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))
+      assert.is.equal(1, #Tab:current():windows())
       tab2_window:close()
 
-      assert.is.equal(1, #vim.api.nvim_list_tabpages())
+      assert.is.equal(1, #Tab:all())
     end)
 
     it('does not abandon tooltips when windows are closed', function()
@@ -78,15 +79,15 @@ describe(
       helpers.feed '<CR>'
 
       helpers.wait_for_new_window { tab2_window, Window:from_id(tab2_infoview.window) }
-      assert.is.equal(3, #vim.api.nvim_tabpage_list_wins(0))
+      assert.is.equal(3, #Tab:current():windows())
 
-      assert.is.equal(2, #vim.api.nvim_list_tabpages())
+      assert.is.equal(2, #Tab:all())
 
       -- Now close the other 2 windows, and the tooltip should close too.
       vim.api.nvim_win_close(tab2_infoview.window, false)
       tab2_window:close()
 
-      assert.is.equal(1, #vim.api.nvim_list_tabpages())
+      assert.is.equal(1, #Tab:all())
     end)
   end)
 )

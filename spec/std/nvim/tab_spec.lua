@@ -37,6 +37,8 @@ describe('Tab', function()
 
       assert.are.same(new.id, id)
       assert.are.same(Tab:current(), new)
+
+      new:close()
     end)
   end)
 
@@ -68,6 +70,24 @@ describe('Tab', function()
       assert.is_falsy(vim.api.nvim_tabpage_is_valid(first.id))
       assert.is_truthy(vim.api.nvim_tabpage_is_valid(second.id))
       assert.are.same(Tab:current(), second)
+
+      second:close()
+    end)
+  end)
+
+  describe('all', function()
+    it('returns all tabs', function()
+      assert.is.equal(1, #vim.api.nvim_list_tabpages())
+
+      local initial = Tab:current()
+      local second = Tab:new()
+      local third = Tab:new()
+
+      local all = Tab:all()
+      assert.are.same(all, { initial, second, third })
+
+      second:close()
+      third:close()
     end)
   end)
 end)
