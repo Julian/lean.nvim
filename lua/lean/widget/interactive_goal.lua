@@ -19,27 +19,51 @@ end
 
 ---Render a hypothesis name.
 ---@param name string
-local function to_hypothesis_name(name)
+---@param mvar_id MVarId
+---@param fvar_id FVarId
+---@param locations? Locations
+local function to_hypothesis_name(name, mvar_id, fvar_id, locations)
+  local highlightable, select, hlgroup
+  if locations and mvar_id and fvar_id then
+    highlightable = true
+
+    ---@type GoalsLocation
+    local location = { mvarId = mvar_id, loc = { hyp = fvar_id } }
+
+    function hlgroup()
+      return locations:is_selected(location) and 'leanInfoSelected'
+        or (is_accessible(name) and 'leanInfoHypName' or 'leanInfoInaccessibleHypName')
+    end
+
+    select = function()
+      locations:toggle_selection(location)
+    end
+  end
+
   return Element:new {
-    hlgroup = is_accessible(name) and 'leanInfoHypName' or 'leanInfoInaccessibleHypName',
     text = name,
+    highlightable = highlightable,
+    hlgroup = hlgroup,
+    events = { select = select },
   }
 end
 
 ---Render the hypothesis according to view options.
 ---@param hyp InteractiveHypothesisBundle
+---@param mvar_id MVarId
 ---@param opts InfoviewViewOptions
 ---@param sess Subsession
-local function to_hypothesis_element(hyp, opts, sess)
+---@param locations? Locations
+local function to_hypothesis_element(hyp, mvar_id, opts, sess, locations)
   if (not opts.show_instances and hyp.isInstance) or (not opts.show_types and hyp.isType) then
     return
   end
 
   local names = vim
-    .iter(hyp.names)
-    :map(function(name)
+    .iter(ipairs(hyp.names))
+    :map(function(i, name)
       if opts.show_hidden_assumptions or is_accessible(name) then
-        return to_hypothesis_name(name)
+        return to_hypothesis_name(name, mvar_id, hyp.fvarIds[i], locations)
       end
     end)
     :totable()
@@ -47,6 +71,14 @@ local function to_hypothesis_element(hyp, opts, sess)
     return
   end
 
+  local type_locations = locations
+    and mvar_id
+    and hyp.fvarIds
+    and hyp.fvarIds[1]
+    and locations:in_template {
+      mvarId = mvar_id,
+      loc = { hypType = { hyp.fvarIds[1], '' } },
+    }
   local element = Element:new {
     name = 'hyp',
     children = {
@@ -56,15 +88,23 @@ local function to_hypothesis_element(hyp, opts, sess)
           or nil,
       }),
       Element:new { text = ' : ' },
-      InteractiveCode(hyp.type, sess),
+      InteractiveCode(hyp.type, sess, type_locations),
     },
   }
 
   if opts.show_let_values and hyp.val then
+    local val_locations = locations
+      and mvar_id
+      and hyp.fvarIds
+      and hyp.fvarIds[1]
+      and locations:in_template {
+        mvarId = mvar_id,
+        loc = { hypValue = { hyp.fvarIds[1], '' } },
+      }
     element:add_child(Element:new {
       text = ' := ',
       name = 'hyp_val',
-      children = { InteractiveCode(hyp.val, sess) },
+      children = { InteractiveCode(hyp.val, sess, val_locations) },
     })
   end
 
@@ -117,7 +157,8 @@ end
 
 ---@param goal InteractiveGoal | InteractiveTermGoal
 ---@param sess Subsession
-function interactive_goal.Goal(goal, sess)
+---@param locations Locations? nil if we're rendering a term goal
+function interactive_goal.Goal(goal, sess, locations)
   local view_options = config().infoview.view_options or {}
 
   local case
@@ -131,15 +172,21 @@ function interactive_goal.Goal(goal, sess)
   end
   local children = { case }
 
+  local goal_locations = locations
+    and goal.mvarId
+    and locations:in_template {
+      mvarId = goal.mvarId,
+      loc = { target = '' },
+    }
   local goal_element = Element:new {
     name = 'goal',
     children = {
       Element:new { text = goal.goalPrefix or '⊢ ', hlgroup = 'leanInfoGoalPrefix' },
-      InteractiveCode(goal.type, sess),
+      InteractiveCode(goal.type, sess, goal_locations),
     },
   }
   local hyps = vim.iter(goal.hyps):map(function(hyp)
-    return to_hypothesis_element(hyp, view_options, sess)
+    return to_hypothesis_element(hyp, goal.mvarId, view_options, sess, locations)
   end)
 
   local separator = Element:new { text = '\n' }
@@ -162,10 +209,12 @@ end
 
 ---@param goals InteractiveGoal[]
 ---@param sess Subsession
+---@param locations Locations
 ---@return Element[]
-function interactive_goal.Goals(goals, sess)
+function interactive_goal.Goals(goals, sess, locations)
+  ---@param goal InteractiveGoal
   local children = vim.iter(goals):map(function(goal)
-    return interactive_goal.Goal(goal, sess)
+    return interactive_goal.Goal(goal, sess, locations)
   end)
   return { Element:concat(children:totable(), '\n\n') }
 end

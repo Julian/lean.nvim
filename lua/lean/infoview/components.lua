@@ -8,6 +8,7 @@
 local range_to_string = require('std.lsp').range_to_string
 
 local Element = require('lean.tui').Element
+local Locations = require 'lean.infoview.locations'
 local TaggedTextMsgEmbed = require('lean.widget.interactive_diagnostic').TaggedTextMsgEmbed
 local config = require 'lean.config'
 local goals = require 'lean.goals'
@@ -71,7 +72,7 @@ function components.goal_at(params, sess, use_widgets)
         return nil, err
       end
     end
-    children = goal and interactive_goal.Goals(goal, sess)
+    children = goal and interactive_goal.Goals(goal, sess, Locations.at(params))
   end
 
   if goal and #goal > 1 then
@@ -111,6 +112,8 @@ end
 ---@return Element[]?
 ---@return LspError?
 function components.term_goal_at(params, sess, use_widgets)
+  -- Term goals, even in VSCode, seem to not support selecting subexpression
+  -- locations / "shift-click"ing, so there's no `locations` parameter here.
   if use_widgets == false then
     local term_goal = plain.term_goal(params)
     return term_goal

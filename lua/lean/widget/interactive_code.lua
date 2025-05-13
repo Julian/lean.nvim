@@ -25,8 +25,11 @@ local DIFF_TAG_TO_EXPLANATION = {
 local InteractiveCode
 
 ---@param subexpr_info SubexprInfo
-local function render_subexpr_info(subexpr_info, tag, sess)
-  local element = Element:new {}
+---@param tag TaggedText.SubExprInfo
+---@param sess Subsession
+---@param locations? Locations
+local function render_subexpr_info(subexpr_info, tag, sess, locations)
+  local element = Element:new { highlightable = true }
   if subexpr_info.diffStatus then
     element.hlgroup = 'leanInfoDiff' .. subexpr_info.diffStatus
   end
@@ -45,14 +48,14 @@ local function render_subexpr_info(subexpr_info, tag, sess)
     local tooltip_element = Element.noop()
 
     if info_popup.exprExplicit ~= nil then
-      tooltip_element:add_child(InteractiveCode(info_popup.exprExplicit, sess))
+      tooltip_element:add_child(InteractiveCode(info_popup.exprExplicit, sess, locations))
       if info_popup.type ~= nil then
         tooltip_element:add_child(Element:new { text = ' : ' })
       end
     end
 
     if info_popup.type ~= nil then
-      tooltip_element:add_child(InteractiveCode(info_popup.type, sess))
+      tooltip_element:add_child(InteractiveCode(info_popup.type, sess, locations))
     end
 
     if info_popup.doc ~= nil then
@@ -141,9 +144,17 @@ local function render_subexpr_info(subexpr_info, tag, sess)
     go_to_decl = go_to_decl,
     go_to_type = go_to_type,
   }
-  element.highlightable = true
 
-  element:add_child(InteractiveCode(tag, sess))
+  if locations then
+    function element.hlgroup()
+      return locations:is_subexpr_selected(subexpr_info.subexprPos) and 'leanInfoSelected' or nil
+    end
+    element.events.select = function()
+      locations:toggle_subexpr_selection(subexpr_info.subexprPos)
+    end
+  end
+
+  element:add_child(InteractiveCode(tag, sess, locations))
 
   return element
 end

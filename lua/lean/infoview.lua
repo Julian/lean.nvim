@@ -44,6 +44,7 @@ local options = {
   mappings = {
     ['K'] = 'click',
     ['<CR>'] = 'click',
+    ['gK'] = 'select',
     ['gd'] = 'go_to_def',
     ['gD'] = 'go_to_decl',
     ['gy'] = 'go_to_type',

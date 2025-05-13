@@ -22,6 +22,7 @@ local util = require 'lean._util'
 ---somehow).
 ---@alias ElementEvent
 ---| '"click"'     # Click on the element.
+---| '"select"'    # Select or unselect ("shift+click") an element
 ---
 ---| '"clear"'     # Clear the element.
 ---| '"clear_all"' # Clear the element and all "related" ones.

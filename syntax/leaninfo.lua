@@ -10,6 +10,7 @@ vim.api.nvim_set_hl(0, 'leanInfoGoalCase', { link = 'Statement' })
 vim.api.nvim_set_hl(0, 'leanInfoGoalPrefix', { link = 'Operator' })
 vim.api.nvim_set_hl(0, 'leanInfoHypName', { link = 'Type' })
 vim.api.nvim_set_hl(0, 'leanInfoInaccessibleHypName', { link = 'Comment' })
+vim.api.nvim_set_hl(0, 'leanInfoSelected', { reverse = true, bold = true })
 
 syntax [[match leanInfoExpectedType "^▼ expected type.*"]]
 vim.api.nvim_set_hl(0, 'leanInfoExpectedType', { link = 'Special' })

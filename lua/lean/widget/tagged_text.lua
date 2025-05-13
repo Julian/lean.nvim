@@ -15,13 +15,13 @@ local function TaggedText(tag_type_name, tag_type)
       return Element:new { text = text }
     end,
 
-    ---@param sess Subsession
-    append = function(self, append, sess)
+    append = function(self, append, ...)
+      local args = { ... }
       return Element:new {
         children = vim
           .iter(append)
           :map(function(each)
-            return self(each, sess)
+            return self(each, unpack(args))
           end)
           :totable(),
       }
