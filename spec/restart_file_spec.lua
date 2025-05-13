@@ -27,7 +27,7 @@ describe('restart file', function()
     vim.cmd.edit { dependent, bang = true }
     local dependent_win = Window:current()
 
-    helpers.move_cursor { to = { 2, 8 } }
+    dependent_win:move_cursor { 2, 8 }
     assert.infoview_contents.are [[
       ▼ 2:8-2:19: error:
       unknown identifier 'addedByTest'

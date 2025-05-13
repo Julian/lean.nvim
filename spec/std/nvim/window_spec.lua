@@ -174,15 +174,83 @@ describe('Window', function()
       local buffer = Buffer:from_bufnr(bufnr)
       local window = Window:split { buffer = buffer }
 
-      assert.are.same(window:cursor(), { 1, 0 })
+      assert.are.same({ 1, 0 }, window:cursor())
 
       vim.api.nvim_win_set_cursor(window.id, { 1, 2 })
-      assert.are.same(window:cursor(), { 1, 2 })
+      assert.are.same({ 1, 2 }, window:cursor())
 
       window:set_cursor { 2, 1 }
       assert.are.same({ 2, 1 }, vim.api.nvim_win_get_cursor(window.id))
 
       window:close()
+      vim.api.nvim_buf_delete(bufnr, {})
+    end)
+
+    describe('move_cursor', function()
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { 'foo', 'bar' })
+      local buffer = Buffer:from_bufnr(bufnr)
+
+      it('moves the cursor firing global CursorMoved', function()
+        local count = 0
+        local autocmd = vim.api.nvim_create_autocmd('CursorMoved', {
+          callback = function()
+            count = count + 1
+          end,
+        })
+
+        local window = Window:split { buffer = buffer }
+
+        assert.are.equal(0, count)
+        window:move_cursor { 1, 1 }
+        assert.are.same({ 1, 1 }, window:cursor())
+        assert.are.equal(1, count)
+
+        window:close()
+        vim.api.nvim_del_autocmd(autocmd)
+      end)
+
+      it('moves the cursor firing buffer-local CursorMoved', function()
+        local count = 0
+        local autocmd = vim.api.nvim_create_autocmd('CursorMoved', {
+          buffer = bufnr,
+          callback = function()
+            count = count + 1
+          end,
+        })
+
+        local window = Window:split { buffer = buffer }
+
+        assert.are.equal(0, count)
+        window:move_cursor { 2, 1 }
+        assert.are.same({ 2, 1 }, window:cursor())
+        assert.are.equal(1, count)
+
+        window:close()
+        vim.api.nvim_del_autocmd(autocmd)
+      end)
+
+      it('does not fire autocmds if the cursor does not move', function()
+        local count = 0
+        local autocmd = vim.api.nvim_create_autocmd('CursorMoved', {
+          callback = function()
+            count = count + 1
+          end,
+        })
+
+        local window = Window:split { buffer = buffer }
+
+        window:set_cursor { 2, 1 }
+        assert.are.equal(0, count)
+        window:move_cursor { 2, 1 }
+        assert.are.same({ 2, 1 }, window:cursor())
+        assert.are.equal(0, count)
+
+        window:close()
+        vim.api.nvim_del_autocmd(autocmd)
+      end)
+
+      vim.api.nvim_buf_delete(bufnr, {})
     end)
   end)
 

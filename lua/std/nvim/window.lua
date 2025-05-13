@@ -125,6 +125,23 @@ function Window:close()
   vim.api.nvim_win_close(self.id, false)
 end
 
+-- Beyond the Neovim API...
+
+---Move the cursor to a given position.
+---
+---(1, 0)-indexed, like `nvim_win_set_cursor()`.
+---
+---Fires `CursorMoved` if (and only if) the cursor is now at a new position.
+---@param pos { [1]: integer, [2]: integer } the new cursor position
+function Window:move_cursor(pos)
+  local start = self:cursor()
+  self:set_cursor(pos)
+  if vim.deep_equal(self:cursor(), start) then
+    return
+  end
+  vim.api.nvim_exec_autocmds('CursorMoved', { buffer = self:bufnr() })
+end
+
 ---Get the contents of the remainder of the line with the window's cursor.
 ---@return string contents text from cursor position to the end of line
 function Window:rest_of_cursor_line()
