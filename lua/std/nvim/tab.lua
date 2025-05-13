@@ -19,11 +19,15 @@ function Tab:current()
 end
 
 ---Open a new tab page.
----@param opts? table options for the new tab
 function Tab:new()
   -- See https://github.com/neovim/neovim/pull/27223
   vim.cmd.tabnew()
   return self:current()
+end
+
+---Close the tab page.
+function Tab:close()
+  vim.cmd.tabclose(vim.api.nvim_tabpage_get_number(self.id))
 end
 
 ---Return the windows present in the tab.

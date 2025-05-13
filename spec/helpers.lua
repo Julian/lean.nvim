@@ -1,11 +1,12 @@
-local assert = require 'luassert'
-
+local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
+local assert = require 'luassert'
+local text = require 'std.text'
+
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 local lsp = require 'lean.lsp'
 local progress = require 'lean.progress'
-local text = require 'std.text'
 local util = require 'lean._util'
 
 local helpers = { _clean_buffer_counter = 1 }
@@ -223,14 +224,14 @@ assert:register('assertion', 'current_cursor', has_current_cursor)
 
 ---Assert about the current tabpage.
 local function has_current_tabpage(_, arguments)
-  assert.is.equal(arguments[1], vim.api.nvim_get_current_tabpage())
+  assert.are.same(Tab:current(), arguments[1])
   return true
 end
 assert:register('assertion', 'current_tabpage', has_current_tabpage)
 
 ---Assert about the current window.
 local function has_current_window(_, arguments)
-  assert.are.same(arguments[1], Window:current())
+  assert.are.same(Window:current(), arguments[1])
   return true
 end
 assert:register('assertion', 'current_window', has_current_window)

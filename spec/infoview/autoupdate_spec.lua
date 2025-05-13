@@ -236,8 +236,8 @@ describe('infoview content (auto-)update', function()
     end)
 
     it('updates separate infoviews independently when one is closed', function()
-      local tab2 = vim.api.nvim_get_current_tabpage()
-      assert.is_not.equal(vim.api.nvim_win_get_tabpage(lean_window.id), tab2)
+      local tab2 = Tab:current()
+      assert.is_not.same(lean_window:tab(), tab2)
 
       infoview.close()
       vim.cmd.tabprevious()
@@ -254,8 +254,8 @@ describe('infoview content (auto-)update', function()
         1
       ]]
 
-      vim.cmd.tabclose(tab2)
-      assert.current_tabpage.is(vim.api.nvim_win_get_tabpage(lean_window.id))
+      tab2:close()
+      assert.current_tabpage.is(lean_window:tab())
     end)
   end)
 
