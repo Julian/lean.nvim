@@ -107,4 +107,4 @@ _clone-test-dependencies: _clone-dependencies
 
 # Rebuild some test fixtures used in the test suite.
 _rebuild-test-fixtures:
-    cd "{{ fixtures }}/example-project/"; lake build
+    cd "{{ fixtures }}/example-project/"; lake build && lake build ProofWidgets

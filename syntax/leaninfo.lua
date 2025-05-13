@@ -64,4 +64,5 @@ vim.api.nvim_set_hl(0, 'widgetSuggestionSubgoals', { link = 'Statement' })
 
 vim.api.nvim_set_hl(0, 'widgetLink', { link = 'Tag' })
 vim.api.nvim_set_hl(0, 'widgetKbd', { link = 'String' })
+vim.api.nvim_set_hl(0, 'widgetSelect', { link = 'Special' })
 vim.api.nvim_set_hl(0, 'widgetElementHighlight', { link = 'DiffChange' })

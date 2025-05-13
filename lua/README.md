@@ -16,6 +16,7 @@ There are multiple Lua packages alongside this file which serve as API boundarie
   Note that most of the guts here still lives in `lean/tui.lua` as it needs a bit of tearing away from Lean-specific functionality to truly be self contained, which we want to do but will likely do incrementally.
 * `elan`: a Lua interface to `elan`, Lean's toolchain version manager.
   It is in early stages.
+* `proofwidgets`: a Lua reimplementation of portions of the [ProofWidgets4](https://github.com/leanprover-community/ProofWidgets4) library and its widgets
 * `std`: a collection of (again Lean agnostic) "Lua standard library" code.
   Code here is stuff we wish were part of `neovim` (which is effectively Lua's real standard library in this case) or maintained in some community standard library.
   Aggressively removing things from it is acceptable if we stop using something or if we find a good implementation elsewhere.

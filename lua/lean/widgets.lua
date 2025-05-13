@@ -13,6 +13,7 @@
 local dedent = require('std.text').dedent
 
 local Element = require('lean.tui').Element
+local Locations = require 'lean.infoview.locations'
 local goals = require 'lean.goals'
 local log = require 'lean.log'
 local rpc = require 'lean.rpc'
@@ -152,6 +153,15 @@ function RenderContext:get_goals()
   return goals.at(self.params, self:subsession())
 end
 
+---Get the goal with the given MVar ID.
+---@param mvar_id MVarId
+---@return InteractiveGoal? goal
+function RenderContext:goal_with_mvar_id(mvar_id)
+  return vim.iter(self:get_goals()):find(function(goal)
+    return goal.mvarId == mvar_id
+  end)
+end
+
 ---Retrieve the Javascript source for the given widget.
 ---
 ---Usually this is useless as we aren't actually rendering Javascript, but it
@@ -161,6 +171,43 @@ end
 function RenderContext:source_of(hash)
   local response = self:subsession():getWidgetSource(self.params.position, hash)
   return response and response.sourcetext
+end
+
+---See ProofWidgets.Component.Panel.Basic.
+---@class PanelWidgetProps
+---@field pos lsp.Position Cursor position in the file at which the widget is being displayed.
+---@field goals InteractiveGoal[] The current tactic-mode goals.
+---@field termGoal? InteractiveTermGoal The current term-mode goal, if any.
+---@field selectedLocations GoalsLocation[] Locations currently selected in the goal state.
+
+local NO_SELECTION_HELP = Element:concat({
+  Element:new { text = 'Nothing selected. You can use' },
+  Element.kbd 'gK',
+  Element:new { text = 'in the infoview to select expressions in the goal.' },
+}, ' ')
+
+---A wrapper for widgets which interact with selected locations.
+---
+---Shows a hint for how to select locations if none are selected.
+---
+---Once some locations are selected, delegates to the wrapped widget function.
+---@param widget_fn fun(ctx:RenderContext, props:PanelWidgetProps):Element?
+local function panel(widget_fn)
+  return function(ctx, props)
+    local selected = Locations.selected_at(ctx.params)
+    if #selected == 0 then
+      return NO_SELECTION_HELP
+    end
+
+    ---@type PanelWidgetProps
+    local params = vim.tbl_extend('error', props, {
+      pos = ctx.params.position,
+      goals = ctx:get_goals(),
+      selectedLocations = selected,
+    })
+
+    return widget_fn(ctx, params)
+  end
 end
 
 ---Render a user widget instance into a TUI element.
@@ -176,6 +223,8 @@ end
 
 return {
   Widget = Widget,
+
+  panel = panel,
 
   ---A version of widget rendering that constructs a one-time render context.
   ---@param widget UserWidgetInstance
