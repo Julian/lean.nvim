@@ -21,9 +21,9 @@ local util = require 'lean._util'
 ---(because we can likely represent the default key for each event here
 ---somehow).
 ---@alias ElementEvent
----| '"click"' # Click on the element.
+---| '"click"'     # Click on the element.
 ---
----| '"clear"' # Clear the element.
+---| '"clear"'     # Clear the element.
 ---| '"clear_all"' # Clear the element and all "related" ones.
 ---
 ---| '"goto_last_window"' # Move the cursor to the last window it was in.
@@ -453,11 +453,16 @@ function Element:walk()
   return iter, nil, nil
 end
 
----Returns the first element matching the given check function.
----Searches first this element itself, then its children, then its tooltip.
+---Returns the first element matching the given predicate.
 ---@param check fun(element:Element):boolean?
 function Element:find(check)
   return vim.iter(self:walk()):find(check)
+end
+
+---Return all elements matching the given predicate.
+---@param check fun(element:Element):boolean?
+function Element:filter(check)
+  return vim.iter(self:walk()):filter(check)
 end
 
 ---Create a BufRenderer that renders this Element.

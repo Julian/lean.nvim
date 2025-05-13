@@ -300,6 +300,42 @@ describe('Element', function()
     end)
   end)
 
+  describe(':filter', function()
+    it('returns all elements matching a predicate', function()
+      local foo = Element:new { text = 'foo' }
+      local bar = Element:new { text = 'bar' }
+      local baz = Element:new { children = { bar } }
+
+      local element = Element:new {
+        text = 'quux',
+        children = { foo, baz },
+      }
+
+      local filtered = element:filter(function(e)
+        return e.text == 'bar' or e.text == 'quux'
+      end)
+
+      assert.are.same({ element, bar }, filtered:totable())
+    end)
+
+    it('returns an empty iterator when no elements match', function()
+      local foo = Element:new { text = 'foo' }
+      local bar = Element:new { text = 'bar' }
+      local baz = Element:new { children = { bar } }
+
+      local element = Element:new {
+        text = 'quux',
+        children = { foo, baz },
+      }
+
+      local filtered = element:filter(function(e)
+        return e.text == 'nonexistent'
+      end)
+
+      assert.are.same({}, filtered:totable())
+    end)
+  end)
+
   describe(':kbd', function()
     it('creates an element representing a keyboard input sequence', function()
       assert.are.same(Element:new { text = 'Ctrl', hlgroup = 'widgetKbd' }, Element.kbd 'Ctrl')
