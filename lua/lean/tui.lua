@@ -154,7 +154,7 @@ function Element.kbd(key)
 end
 
 ---Create an Element whose click event does nothing.
----@param text string? the text to show when rendering this element
+---@param text string the text to show when rendering this element
 ---@return Element
 function Element.noop(text)
   local noop = function() end
