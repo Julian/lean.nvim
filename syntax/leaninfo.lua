@@ -7,18 +7,9 @@ local config = require 'lean.config'().infoview
 vim.api.nvim_set_hl(0, 'leanInfoGoals', { link = 'Title' })
 vim.api.nvim_set_hl(0, 'leanInfoMultipleGoals', { link = 'DiagnosticHint' })
 vim.api.nvim_set_hl(0, 'leanInfoGoalCase', { link = 'Statement' })
-
-syntax [[match leanInfoGoalHyp "^[^:\n< ][^:\n⊢{[(⦃]*\( :\@=\)" contains=leanInfoInaccessibleHyp]]
-vim.api.nvim_set_hl(0, 'leanInfoGoalHyp', { link = 'Type' })
-
-syntax [[match leanInfoGoalVDash "^⊢"]]
-vim.api.nvim_set_hl(0, 'leanInfoGoalVDash', { link = 'Operator' })
-
-syntax [[match leanInfoGoalConv "^|"]]
-vim.api.nvim_set_hl(0, 'leanInfoGoalConv', { link = 'Operator' })
-
-syntax [[match leanInfoInaccessibleHyp "\i\+✝" contained]]
-vim.api.nvim_set_hl(0, 'leanInfoInaccessibleHyp', { link = 'Comment' })
+vim.api.nvim_set_hl(0, 'leanInfoGoalPrefix', { link = 'Operator' })
+vim.api.nvim_set_hl(0, 'leanInfoHypName', { link = 'Type' })
+vim.api.nvim_set_hl(0, 'leanInfoInaccessibleHypName', { link = 'Comment' })
 
 syntax [[match leanInfoExpectedType "^▼ expected type.*"]]
 vim.api.nvim_set_hl(0, 'leanInfoExpectedType', { link = 'Special' })

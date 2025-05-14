@@ -21,6 +21,7 @@ end
 ---@param name string
 local function to_hypothesis_name(name)
   return Element:new {
+    hlgroup = is_accessible(name) and 'leanInfoHypName' or 'leanInfoInaccessibleHypName',
     text = name,
   }
 end
@@ -131,9 +132,11 @@ function interactive_goal.Goal(goal, sess)
   local children = { case }
 
   local goal_element = Element:new {
-    text = goal.goalPrefix or '⊢ ',
     name = 'goal',
-    children = { InteractiveCode(goal.type, sess) },
+    children = {
+      Element:new { text = goal.goalPrefix or '⊢ ', hlgroup = 'leanInfoGoalPrefix' },
+      InteractiveCode(goal.type, sess),
+    },
   }
   local hyps = vim.iter(goal.hyps):map(function(hyp)
     return to_hypothesis_element(hyp, view_options, sess)
