@@ -184,9 +184,7 @@ function Infoview:open()
     group = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false }),
     buffer = self.info.__renderer.buf,
     callback = function()
-      if not self.info.__win_event_disable then
-        self:__was_closed()
-      end
+      self:__was_closed()
     end,
   })
 
@@ -391,7 +389,6 @@ function Infoview:__refresh()
 
   local valid_windows = {}
 
-  self.info.__win_event_disable = true
   for _, win in pairs { self.window, self.__diff_win } do
     if win and vim.api.nvim_win_is_valid(win) then
       table.insert(valid_windows, win)
@@ -413,7 +410,6 @@ function Infoview:__refresh()
       end
     end)
   end
-  self.info.__win_event_disable = false
 end
 
 ---Filter the pins from this infoview which are relevant to a given buffer.
@@ -495,7 +491,6 @@ function Infoview:__close_diff()
     return
   end
 
-  self.info.__win_event_disable = true
   vim.api.nvim_win_call(self.window, function()
     vim.cmd.diffoff()
   end)
@@ -506,7 +501,6 @@ function Infoview:__close_diff()
     end)
     vim.api.nvim_win_close(self.__diff_win, true)
   end
-  self.info.__win_event_disable = false
 
   self.__diff_win = nil
 
@@ -638,18 +632,14 @@ function Info:new(opts)
     group = pin_augroup,
     buffer = pin_bufnr,
     callback = function()
-      if not new_info.__win_event_disable then
-        new_info:__maybe_show_pin_extmark 'current'
-      end
+      new_info:__maybe_show_pin_extmark 'current'
     end,
   })
   vim.api.nvim_create_autocmd('WinLeave', {
     group = pin_augroup,
     buffer = pin_bufnr,
     callback = function()
-      if not new_info.__win_event_disable then
-        new_info.pin:__hide_extmark()
-      end
+      new_info.pin:__hide_extmark()
     end,
   })
 
@@ -670,9 +660,7 @@ function Info:new(opts)
     group = close_augroup,
     buffer = diff_bufnr,
     callback = function()
-      if not self.__win_event_disable then
-        self:__clear_diff_pin()
-      end
+      self:__clear_diff_pin()
     end,
   })
 
