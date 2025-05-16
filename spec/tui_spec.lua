@@ -9,6 +9,14 @@ local helpers = require 'spec.helpers'
 local tui = require 'lean.tui'
 local Element = tui.Element
 
+---A silly fake event context.
+---@type ElementEventContext
+local NULL_CONTEXT = {
+  rerender = function() end,
+  rehover = function() end,
+  jump_to_last_window = function() end,
+}
+
 describe('Element', function()
   describe(':to_string', function()
     it('renders the element and its children', function()
@@ -336,7 +344,55 @@ describe('Element', function()
     end)
   end)
 
-  describe(':kbd', function()
+  describe('select', function()
+    local original_select = vim.ui.select
+
+    after_each(function()
+      vim.ui.select = original_select
+    end)
+
+    it('creates an element representing a selectable choice', function()
+      vim.ui.select = function(choices, opts, on_choice)
+        assert.are.equal(opts.prompt, 'Select a color')
+        on_choice(choices[3])
+      end
+
+      local element = Element.select({ 'red', 'green', 'blue' }, {
+        prompt = 'Select a color',
+        initial = 'green',
+      })
+
+      assert.are.equal('green ▾', element:to_string())
+
+      element.events.click(NULL_CONTEXT)
+
+      assert.are.equal('blue ▾', element:to_string())
+    end)
+
+    it('supports more complicated selectable items', function()
+      local function format_item(item)
+        return item .. item
+      end
+
+      vim.ui.select = function(choices, opts, on_choice)
+        assert.are.same(opts, { format_item = format_item })
+        on_choice(choices[3])
+      end
+
+      local element = Element.select({ 'red', 'green', 'blue' }, {
+        format_item = format_item,
+        initial = 'green',
+      })
+
+      assert.are.equal('greengreen ▾', element:to_string())
+
+      element.events.click(NULL_CONTEXT)
+
+      assert.are.equal('blueblue ▾', element:to_string())
+    end)
+  end)
+
+  describe('kbd', function()
     it('creates an element representing a keyboard input sequence', function()
       assert.are.same(Element:new { text = 'Ctrl', hlgroup = 'widgetKbd' }, Element.kbd 'Ctrl')
     end)
