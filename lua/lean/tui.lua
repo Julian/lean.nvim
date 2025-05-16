@@ -144,6 +144,57 @@ function Element:concat(elements, sep, opts)
   )
 end
 
+---@generic T
+---@class SelectionOpts<T>
+---@field prompt string? the prompt to show when selecting a choice
+---@field initial string the initial text to show
+---@field format_item fun(T):string render the item to a string
+
+---Create an element which represents a selectable choice.
+---
+---Parallels the HTML `<select>` tag.
+---@generic T
+---@param choices T[]
+---@param opts? SelectionOpts<T>
+---@param on_choice? fun(T):Element decide what the new text should be given the choice
+---@return Element
+function Element.select(choices, opts, on_choice)
+  if not on_choice then
+    on_choice = function(choice)
+      return Element:new { text = choice }
+    end
+  end
+  opts = vim.tbl_extend('keep', opts or {}, {
+    initial = choices[1],
+  })
+
+  local selected = Element:new {
+    children = { Element:new { text = opts.initial } },
+  }
+  return Element:new {
+    children = {
+      selected,
+      Element:new { text =  ' ▾' },
+    },
+    highlightable = true,
+    hlgroup = 'widgetSelect',
+    events = {
+      click = function(ctx)
+        vim.ui.select(choices, {
+          format_item = opts.format_item,
+          prompt = opts.prompt,
+        }, function(choice)
+          if not choice then
+            return
+          end
+          selected:set_children { on_choice(choice) }
+          ctx:rerender()
+        end)
+      end,
+    },
+  }
+end
+
 ---Create an element which represents textual user input.
 ---
 ---Parallels the HTML `<kbd>` tag.
