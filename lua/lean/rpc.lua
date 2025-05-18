@@ -9,11 +9,22 @@
 
 local a = require 'plenary.async'
 local control = require 'plenary.async.control'
+
 local log = require 'lean.log'
 local lsp = require 'lean.lsp'
-local util = require 'lean._util'
 
 local uv = vim.uv or vim.loop
+
+---@param client vim.lsp.Client
+---@param request string LSP request name
+---@param params table LSP request parameters
+---@return any error
+---@return any result
+local function client_a_request(client, request, params)
+  return a.wrap(function(handler)
+    return client.request(request, params, handler)
+  end, 1)()
+end
 
 local rpc = {}
 
@@ -170,7 +181,7 @@ function Session:call(pos, method, params)
   if self:is_closed() then
     return nil, { code = -32900, message = 'LSP server disconnected' }
   end
-  local err, result = util.client_a_request(
+  local err, result = client_a_request(
     self.client,
     '$/lean/rpc/call',
     vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params })
@@ -227,7 +238,7 @@ local function connect(uri)
     return err
   end
   a.void(function()
-    local err, result = util.client_a_request(client, '$/lean/rpc/connect', { uri = uri })
+    local err, result = client_a_request(client, '$/lean/rpc/connect', { uri = uri })
     sess.connected = true
     if err ~= nil then
       sess.connect_err = err

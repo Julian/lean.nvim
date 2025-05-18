@@ -2,10 +2,6 @@
 --- Stuff that should live in some standard library.
 ---@brief ]]
 
-local a = require 'plenary.async'
-
-local log = require 'lean.log'
-
 local M = {}
 
 ---Fetch the diagnostics for all Lean LSP clients from the current buffer.
@@ -48,18 +44,6 @@ function M.create_buf(params)
     vim.api.nvim_buf_set_name(bufnr, params.name)
   end
   return bufnr
-end
-
----@param client vim.lsp.Client
----@param request string LSP request name
----@param params table LSP request parameters
----@return any error
----@return any result
-function M.client_a_request(client, request, params)
-  return a.wrap(function(handler)
-    log:trace { message = request, params = params }
-    return client.request(request, params, handler)
-  end, 1)()
 end
 
 ---Simple alternative to vim.lsp.util._make_floating_popup_size
