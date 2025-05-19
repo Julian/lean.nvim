@@ -37,7 +37,7 @@ jobs:
           neovim: true
           version: ${{ matrix.nvim-version }}
 
-      - uses: Julian/setup-lean@d332d7dc68d75eda1eb85581e7822cbf866edc5b
+      - uses: Julian/setup-lean@c93774d9180849a5b6c4034c3c63d4544bdd943c
       - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Run tests
         run: just test
