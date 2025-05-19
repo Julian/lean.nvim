@@ -3,12 +3,10 @@ Table of Contents                                                         *lean*
 
 Introduction ······················································· |lean.init|
 Commands ······················································· |lean.commands|
-The Infoview ··················································· |lean.infoview|
 (Unicode) Abbreviation Expansion ·························· |lean.abbreviations|
-Loogle ··························································· |lean.loogle|
-satellite.nvim integration ···································· |lean.satellite|
-LSP ································································· |lean.lsp|
+The Infoview ··················································· |lean.infoview|
 Standard error buffers ··········································· |lean.stderr|
+LSP ································································· |lean.lsp|
 
 ==============================================================================
 Introduction                                                         *lean.init*
@@ -64,6 +62,36 @@ commands.show_term_goal()                              *commands.show_term_goal*
 
 
 commands.show_line_diagnostics()                *commands.show_line_diagnostics*
+
+
+==============================================================================
+(Unicode) Abbreviation Expansion                            *lean.abbreviations*
+
+ Support for abbreviations (unicode character replacement).
+
+abbreviations.load()                                        *abbreviations.load*
+    Load the Lean abbreviations as a Lua table.
+    @return { [string]: string } abbreviations
+
+
+abbreviations.reverse_lookup()                    *abbreviations.reverse_lookup*
+    Retrieve the table of abbreviations that would produce the given symbol.
+
+    Allows for trailing junk. E.g. `λean` will produce information about `λ`.
+
+    The result is a table keyed by the length of the prefix match, and
+    whose value is sorted such that shorter abbreviation suggestions are
+    first.
+
+
+abbreviations.show_reverse_lookup()          *abbreviations.show_reverse_lookup*
+    Show a preview window with the reverse-lookup of the current character.
+
+
+abbreviations.convert()                                  *abbreviations.convert*
+
+
+abbreviations.enable()                                    *abbreviations.enable*
 
 
 ==============================================================================
@@ -216,80 +244,29 @@ infoview.select_view_options()                    *infoview.select_view_options*
     which hypotheses are shown, set them in your lean.nvim configuration.
 
 
-==============================================================================
-(Unicode) Abbreviation Expansion                            *lean.abbreviations*
-
- Support for abbreviations (unicode character replacement).
-
-abbreviations.load()                                        *abbreviations.load*
-    Load the Lean abbreviations as a Lua table.
-    @return { [string]: string } abbreviations
-
-
-abbreviations.reverse_lookup()                    *abbreviations.reverse_lookup*
-    Retrieve the table of abbreviations that would produce the given symbol.
-
-    Allows for trailing junk. E.g. `λean` will produce information about `λ`.
-
-    The result is a table keyed by the length of the prefix match, and
-    whose value is sorted such that shorter abbreviation suggestions are
-    first.
-
-
-abbreviations.show_reverse_lookup()          *abbreviations.show_reverse_lookup*
-    Show a preview window with the reverse-lookup of the current character.
-
-
-abbreviations.convert()                                  *abbreviations.convert*
-
-
-abbreviations.enable()                                    *abbreviations.enable*
-
-
-==============================================================================
-Loogle                                                             *lean.loogle*
-
- Support for interacting with the Loogle search engine.
-
-LoogleResult                                                      *LoogleResult*
-
-    Fields: ~
-        {name}    (string)
-        {type}    (string)
-        {module}  (string)
-        {doc}     (string)
-
-
-loogle.search({type})                                            *loogle.search*
-    Search Loogle for the given type.
+goals.at({params}, {sess})                                            *goals.at*
+    Return the interactive goals at the given position, caching them for access.
 
     Parameters: ~
-        {type}  (string)  The type pattern to look for.
-
-    Returns: ~
-        (LoogleResult[]|nil)  Loogle hits in the JSON API format
-        (string|nil)          An error message from Loogle, in which case no results are returned
-
-
-loogle.template({result})                                      *loogle.template*
-    Create a minimal Lean file out of the given result.
-
-    Parameters: ~
-        {result}  (LoogleResult)  the result to template out
-
-    Returns: ~
-        (string[])  a list-like table containing a Lean file template
+        {params}  (lsp.TextDocumentPositionParams)
+        {sess}    (Subsession)                      @return InteractiveGoal[]? goals
+                                                    @return LspError? err
 
 
 ==============================================================================
-satellite.nvim integration                                      *lean.satellite*
+Standard error buffers                                             *lean.stderr*
 
- A satellite.nvim progress handler.
+ Support for propagating low-level LSP messages emitted on standard error.
 
- See https://github.com/lewis6991/satellite.nvim/blob/main/HANDLERS.md
+stderr.show({message})                                             *stderr.show*
+    Show stderr output in a separate stderr buffer.
 
-                                                          *Lean.SatelliteConfig*
-Lean.SatelliteConfig : Satellite.Handlers.BaseConfig
+    Parameters: ~
+        {message}  (string)  a (possibly multi-line) string from stderr
+
+
+stderr.enable()                                                  *stderr.enable*
+    Enable teeing stderr output somewhere (to a second visible buffer by default).
 
 
 ==============================================================================
@@ -401,22 +378,6 @@ lsp.restart_file({bufnr?})                                    *lsp.restart_file*
 
     Parameters: ~
         {bufnr?}  (number)
-
-
-==============================================================================
-Standard error buffers                                             *lean.stderr*
-
- Support for propagating low-level LSP messages emitted on standard error.
-
-stderr.show({message})                                             *stderr.show*
-    Show stderr output in a separate stderr buffer.
-
-    Parameters: ~
-        {message}  (string)  a (possibly multi-line) string from stderr
-
-
-stderr.enable()                                                  *stderr.enable*
-    Enable teeing stderr output somewhere (to a second visible buffer by default).
 
 
 vim:tw=78:ts=8:noet:ft=help:norl:

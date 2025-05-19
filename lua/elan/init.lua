@@ -1,3 +1,15 @@
+---@toc elan
+
+---@mod elan.init Introduction
+
+---@brief [[
+--- Interaction with Lean's version manager, elan.
+---
+--- See :help lean for information on lean.nvim.
+---@brief ]]
+
+---@tag elan.nvim
+
 local check_output = require('std.subprocess').check_output
 
 local elan = {}

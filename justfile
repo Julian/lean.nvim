@@ -63,15 +63,20 @@ docs:
         {{ lean }}/init.lua \
         {{ lean }}/commands.lua \
         {{ lean }}/config.lua \
-        {{ lean }}/infoview.lua \
         {{ lean }}/abbreviations.lua \
-        {{ lean }}/loogle.lua \
-        {{ lean }}/satellite.lua \
-        {{ lean }}/lsp.lua \
         {{ lean }}/widgets.lua \
         {{ lean }}/health.lua \
+        {{ lean }}/infoview.lua \
+        {{ lean }}/goals.lua \
         {{ lean }}/stderr.lua \
+        {{ lean }}/widgets.lua \
+        {{ lean }}/lsp.lua \
         >{{ doc }}/lean.txt
+    vimcats \
+        {{ src }}/elan/init.lua \
+        {{ src }}/elan/toolchain.lua \
+        >{{ doc }}/elan.txt
+
     nvim --headless --clean -u {{ init_lua }} -c 'helptags {{ doc }}' -c 'quit'
 
 # Update the versions of test fixtures used in CI.

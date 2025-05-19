@@ -1,0 +1,77 @@
+==============================================================================
+Table of Contents                                                         *elan*
+
+Introduction ······················································· |elan.init|
+
+==============================================================================
+Introduction                                                         *elan.init*
+
+ Interaction with Lean's version manager, elan.
+
+ See :help lean for information on lean.nvim.
+
+                                                                     *elan.nvim*
+ElanState                                                            *ElanState*
+    Elan's dumped state, which can partially change from project to project.
+
+    Fields: ~
+        {elan_version}  (ElanVersionInfo)
+        {toolchains}    (ElanToolchainInfo)
+
+
+ElanVersionInfo                                                *ElanVersionInfo*
+
+    Fields: ~
+        {current}  (string)  elan's own version
+        {newest}   (table)
+
+
+elan.state()                                                        *elan.state*
+    Dump elan's state.
+
+    Returns: ~
+        (ElanState)
+
+
+ElanToolchainInfo                                            *ElanToolchainInfo*
+    Information about installed and active Lean toolchains.
+
+    Fields: ~
+        {active_override?}  (table)            information about an overridden toolchain for the current project
+        {default?}          (table)            information about the default toolchain
+        {installed}         (ElanToolchain[])  the currently installed toolchains
+        {resolved_active}   (table)            information about the resolved active toolchain
+
+
+ElanToolchain                                                    *ElanToolchain*
+    A single toolchain.
+
+    Fields: ~
+        {path}           (string)  the path to the toolchain on this machine
+        {resolved_name}  (string)  the identifier for this toolchain
+
+
+ElanUsedToolchain                                            *ElanUsedToolchain*
+    Information about a toolchain which is in use by a project on the machine.
+
+    Fields: ~
+        {toolchain}  (string)  the name of the toolchain
+        {user}       (string)  a path (or in some cases reason) that causes the toolchain to be considered in-use
+
+
+toolchain.gc()                                                    *toolchain.gc*
+    Determine which toolchains are in use.
+
+    Returns: ~
+        (string[])             the unused toolchains currently installed
+        (ElanUsedToolchain[])  any used toolchains
+
+
+toolchain.list()                                                *toolchain.list*
+    List the installed toolchains.
+
+    Returns: ~
+        (string[])  the toolchains
+
+
+vim:tw=78:ts=8:noet:ft=help:norl:
