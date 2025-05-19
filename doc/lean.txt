@@ -164,8 +164,11 @@ infoview.__update_pin_positions()              *infoview.__update_pin_positions*
     on_lines callback to update pins position according to the given textDocument/didChange parameters.
 
 
-infoview.enable()                                              *infoview.enable*
+infoview.enable({opts})                                        *infoview.enable*
     Enable and open the infoview across all Lean buffers.
+
+    Parameters: ~
+        {opts}  (lean.infoview.Config)
 
 
 infoview.set_autoopen()                                  *infoview.set_autoopen*
