@@ -26,6 +26,7 @@ local infoview = {
   ---@type boolean
   debug = false,
 }
+---@type lean.infoview.Config
 local options = {
   width = 50,
   height = 20,
@@ -40,7 +41,6 @@ local options = {
   show_term_goals = true,
   use_widgets = true,
 
-  ---@type { [string]: ElementEvent }
   mappings = {
     ['K'] = 'click',
     ['<CR>'] = 'click',
@@ -1186,7 +1186,9 @@ local function infoview_bufenter()
 end
 
 ---Enable and open the infoview across all Lean buffers.
+---@param opts lean.infoview.Config
 function infoview.enable(opts)
+  ---@type lean.infoview.MergedConfig
   options = vim.tbl_extend('force', options, opts)
   infoview.mappings = options.mappings
   infoview.enabled = true

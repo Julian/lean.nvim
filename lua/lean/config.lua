@@ -44,6 +44,7 @@
 ---@field accomplished? string a character which will be placed in the sign column of successful proofs
 
 ---@class lean.infoview.Config
+---@field mappings? { [string]: ElementEvent }
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
 
