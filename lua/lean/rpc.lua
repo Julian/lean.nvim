@@ -13,8 +13,6 @@ local control = require 'plenary.async.control'
 local log = require 'lean.log'
 local lsp = require 'lean.lsp'
 
-local uv = vim.uv or vim.loop
-
 ---@param client vim.lsp.Client
 ---@param request string LSP request name
 ---@param params table LSP request parameters
@@ -68,7 +66,7 @@ function Session:new(client, bufnr, uri)
     to_release = {},
     release_timer = nil,
   }, self)
-  self.keepalive_timer = uv.new_timer()
+  self.keepalive_timer = vim.uv.new_timer()
   self.keepalive_timer:start(
     KEEPALIVE_PERIOD_MS,
     KEEPALIVE_PERIOD_MS,
