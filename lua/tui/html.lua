@@ -16,8 +16,13 @@ end)
 
 ---A `<details>` tag.
 function html.Tag.details(children)
-  -- TODO: make me foldable when we support that
-  return Element:new { children = children }
+  -- TODO: foldable, when it exists, and this should maybe go search for the
+  --       summary child and assemble it here so we have a "real" title.
+  return Element:titled {
+    title = '▼ ',
+    margin = 0,
+    body = children,
+  }
 end
 
 ---A `<summary>` tag (within `details`).
