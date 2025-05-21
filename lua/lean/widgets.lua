@@ -12,6 +12,7 @@
 
 local dedent = require('std.text').dedent
 
+local Element = require('lean.tui').Element
 local goals = require 'lean.goals'
 local log = require 'lean.log'
 local rpc = require 'lean.rpc'
@@ -96,9 +97,20 @@ end
 ---Prefer using an even higher level API (or adding one) over calling this!
 ---@param method string
 ---@return any result
----@return LspError error
+---@return Element? error if an error occurs, an element which will render it
 function RenderContext:rpc_call(method, params)
-  return self:subsession():call(method, params)
+  local response, err = self:subsession():call(method, params)
+  if err then
+    local kind = vim.lsp.protocol.ErrorCodes[err.code] or tostring(err.code)
+    return nil,
+      Element:titled {
+        title = 'RPC Error: ' .. kind,
+        title_hlgroup = 'ErrorMsg',
+        margin = 1,
+        body = { Element:new { text = err.message } },
+      }
+  end
+  return response
 end
 
 ---Apply text edits to the Lean source buffer whose widgets we are rendering.
