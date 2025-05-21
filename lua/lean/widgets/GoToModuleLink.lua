@@ -1,3 +1,9 @@
+---@brief [[
+--- An import graph widget that allows jumping to a module.
+---
+--- (It's not namespaced, so it shows up here "globally".)
+---@brief ]]
+
 local Element = require('lean.tui').Element
 
 ---@class GoToModuleLinkParams
