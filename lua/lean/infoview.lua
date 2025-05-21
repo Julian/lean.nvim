@@ -155,20 +155,22 @@ function Infoview:open()
     self.__orientation = 'horizontal'
     if self.__separate_tab then
       vim.cmd.tabnew()
+    elseif self.__horizontal_position == 'bottom' then
+      vim.cmd('botright ' .. self.__height .. 'split')
     else
-      local position = self.__horizontal_position == 'bottom' and 'botright ' or 'topleft '
-      vim.cmd(position .. self.__height .. 'split')
-    end
-    -- FIXME: No idea why this is required (and the below call to
-    --        nvim_set_current_win is insufficient). Without doing things this
-    --        way, when setting position to "top", either syntax highlighting
-    --        breaks in the Lean window, or the cursor isn't properly placed in
-    --        the Lean window (and stays in the top infoview window). For now
-    --        doing this twice seems harmless for any other scenario.
-    if vim.fn.has 'vim_starting' == 1 then
-      vim.schedule(function()
-        window_before_split:make_current()
-      end)
+      vim.cmd('topleft ' .. self.__height .. 'split')
+
+      -- FIXME: If vim is first starting and we're creating a new topmost
+      --        window neovim seems to want to put the cursor in it. This seems
+      --        to be the case even if we set enter=false, and even though
+      --        below below we call `:make_current` immediately.
+      --        It seems pretty likely there's some Neovim bug here which needs
+      --        minimizing.
+      if vim.fn.has 'vim_starting' == 1 then
+        vim.schedule(function()
+          window_before_split:make_current()
+        end)
+      end
     end
   end
   vim.api.nvim_win_set_buf(0, self.info.__renderer.buf)
