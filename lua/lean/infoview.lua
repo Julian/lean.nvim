@@ -848,6 +848,14 @@ function Pin:new(obj)
   )
 end
 
+---Return all selectable elements within this pin.
+---@return Iter
+function Pin:selectable()
+  return self.__data_element:filter(function(element)
+    return element.events.select ~= nil
+  end)
+end
+
 ---Enable widgets for this pin.
 function Pin:enable_widgets()
   self.__use_widgets = true

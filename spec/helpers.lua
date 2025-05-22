@@ -50,6 +50,16 @@ function helpers.move_cursor(opts)
   window:move_cursor(opts.to)
 end
 
+---Search forward in the buffer for the given text.
+---
+---Fires `CursorMoved` if the cursor moves and fails if it does not.
+function helpers.search(string)
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  vim.fn.search(string)
+  assert.are_not.same(cursor, vim.api.nvim_win_get_cursor(0), 'Cursor did not move!')
+  vim.api.nvim_exec_autocmds('CursorMoved', {})
+end
+
 ---@class MoveCursorOpts
 ---@field window? Window the window handle. Defaults to the current window.
 ---@field to { [1]: integer, [2]: integer } the new cursor position (1-row indexed, as in nvim_win_set_cursor)
