@@ -52,7 +52,7 @@ syn match leanCommand "#run"
 syn keyword leanSorry sorry admit stop
 syn match leanSorry "#exit"
 
-syn region leanAttributeArgs start='\[' end='\]' contained contains=leanString,leanNumber,leanAttributeArgs keepend
+syn region leanAttributeArgs start='\[' end='\]' contained contains=leanString,leanNumber,leanAttributeArgs
 syn match leanCommandPrefix '@' nextgroup=leanAttributeArgs
 syn keyword leanCommandPrefix attribute skipwhite nextgroup=leanAttributeArgs
 
