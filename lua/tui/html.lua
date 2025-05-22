@@ -32,7 +32,13 @@ end
 
 ---Just render the children, as we don't (yet?) support passing through styles.
 function html.Tag.div(children)
-  return Element:new { children = children }
+  return Element:new {
+    text = '\n', -- TODO: clearly this isn't fully "block" element-y
+    children = {
+      Element:new { children = children },
+      Element:new { text = '\n' },
+    },
+  }
 end
 
 ---Just render the children, as we don't (yet?) support passing through styles.
