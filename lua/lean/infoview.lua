@@ -10,6 +10,7 @@ local a = require 'plenary.async'
 local text_document_position_to_string = require('std.lsp').text_document_position_to_string
 
 local Element = require('lean.tui').Element
+local Locations = require 'lean.infoview.locations'
 local components = require 'lean.infoview.components'
 local interactive_goal = require 'lean.widget.interactive_goal'
 local log = require 'lean.log'
@@ -1087,6 +1088,7 @@ local function contents_for(params, use_widgets)
             clear(ctx)
           end
         end)
+        Locations.clear(params)
         ctx.jump_to_last_window()
       end,
     },

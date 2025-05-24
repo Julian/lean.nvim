@@ -130,6 +130,16 @@ describe('ProofWidgets widgets', function()
           🐙 2 + 2 🐙				With octopodes ▾
           🐙 2 + 2 = 4 🐙				With octopodes ▾
         ]]
+
+        helpers.feed '<Esc>'
+        assert.infoview_contents.are [[
+          Goals accomplished 🎉
+
+          _h : 2 + 2 = 5
+          ⊢ 2 + 2 = 4
+
+          Nothing selected. You can use gK in the infoview to select expressions in the goal.
+        ]]
       end)
     )
   end)

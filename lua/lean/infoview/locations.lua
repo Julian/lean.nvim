@@ -94,6 +94,25 @@ function Locations.at(params)
   return Locations:new { params = params }
 end
 
+---Clear the selected locations for the given position.
+---@param params lsp.TextDocumentPositionParams
+function Locations.clear(params)
+  selected_at[params.textDocument.uri] = nil
+
+  local infoview = require('lean.infoview').get_current_infoview()
+  if not infoview or not infoview.window then
+    return
+  end
+
+  -- FIXME: The cursor nonsense is because we're improperly re-rendering
+  --        more than we need to (and moving the cursor to the goal line)
+  local cursor = vim.api.nvim_win_get_cursor(infoview.window)
+  infoview.info.last_window:call(function()
+    infoview:__update()
+  end)
+  vim.api.nvim_win_set_cursor(infoview.window, cursor)
+end
+
 ---Is the given location selected?
 ---
 ---@param loc GoalsLocation
