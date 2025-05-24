@@ -62,6 +62,7 @@ vim.api.nvim_set_hl(0, 'widgetSuggestion', { link = 'Title' })
 syntax [[match widgetSuggestionSubgoals "^\s*.emaining subgoals:$"]]
 vim.api.nvim_set_hl(0, 'widgetSuggestionSubgoals', { link = 'Statement' })
 
+vim.api.nvim_set_hl(0, 'widgetChangedText', { link = 'Visual' })
 vim.api.nvim_set_hl(0, 'widgetLink', { link = 'Tag' })
 vim.api.nvim_set_hl(0, 'widgetKbd', { link = 'String' })
 vim.api.nvim_set_hl(0, 'widgetSelect', { link = 'Special' })
