@@ -36,7 +36,7 @@ function html.Tag.div(children)
     text = '\n', -- TODO: clearly this isn't fully "block" element-y
     children = {
       Element:new { children = children },
-      Element:new { text = '\n' },
+      -- Element:new { text = '\n' },
     },
   }
 end

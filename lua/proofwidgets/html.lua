@@ -2,6 +2,7 @@ local inductive = require 'std.inductive'
 
 local Element = require('lean.tui').Element
 local InteractiveCode = require 'lean.widget.interactive_code'
+local MakeEditLink = require 'proofwidgets.make_edit_link'
 local Tag = require('tui.html').Tag
 
 ---@class HtmlElement
@@ -43,6 +44,8 @@ local Html = inductive('Html', {
           Element:new { children = children },
         },
       }
+    elseif props.edit then
+      return MakeEditLink(props, children, ctx)
     end
 
     return Element:new {
