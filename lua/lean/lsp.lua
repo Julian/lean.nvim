@@ -233,7 +233,7 @@ local function on_publish_diagnostics(_, result, ctx)
       local succeeded = pcall(vim.api.nvim_buf_set_extmark, bufnr, goals_ns, pos[1], pos[2], {
         hl_mode = 'combine',
         virt_text = { { markers.unsolved, 'leanUnsolvedGoals' } },
-        virt_text_pos = 'inline',
+        virt_text_pos = 'eol',
       })
       if not succeeded then
         log:debug {
