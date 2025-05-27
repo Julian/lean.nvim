@@ -44,6 +44,7 @@ profile-test *ARGS: _rebuild-test-fixtures _clone-test-dependencies
     hyperfine --warmup 2 {{ ARGS }} "just retest"
 
 # Lint lean.nvim for style and typing issues.
+[group('dev')]
 lint:
     pre-commit run --all-files
     @echo
@@ -58,6 +59,7 @@ demo:
     cd {{ justfile_directory() }}; vhs {{ demos }}/basic.tape
 
 # Regenerate the vimdoc help text. Assumes you have already installed https://github.com/mrcjkb/vimcats.
+[group('dev')]
 docs:
     vimcats \
         {{ lean }}/init.lua \
