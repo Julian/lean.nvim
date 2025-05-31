@@ -267,7 +267,7 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
       priority = 10,
     },
 
-    -- Redirect Lean's stderr messages somehwere (to a buffer by default)
+    -- Redirect Lean's stderr messages somewhere (to a buffer by default)
     stderr = {
       enable = true,
       -- height of the window
@@ -299,7 +299,7 @@ Below is a (hopelessly incomplete) list of a few:
 Contributions are most welcome.
 Feel free to send pull requests for anything you'd like to see, or open an issue if you'd like to discuss.
 
-Running the tests can be done via [`just`](https://github.com/casey/just) using the adjacent [`justfile`](../justfile):
+Running the tests can be done via [`just`](https://github.com/casey/just) using the adjacent [`justfile`](justfile):
 
 ```sh
   just
