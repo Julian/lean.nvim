@@ -31,6 +31,7 @@ local infoview = {
 local options = {
   width = 50,
   height = 20,
+  orientation = 'auto',
   horizontal_position = 'bottom',
   separate_tab = false,
 
@@ -102,6 +103,7 @@ Info.__index = Info
 ---@field info Info
 ---@field window integer
 ---@field private __orientation "vertical"|"horizontal"
+---@field private __orientation_pref "auto"|"vertical"|"horizontal"
 ---@field private __width number
 ---@field private __height number
 ---@field private __horizontal_position "top"|"bottom"
@@ -122,6 +124,7 @@ Infoview.__index = Infoview
 function Infoview:new(obj)
   obj = obj or {}
   local new_infoview = setmetatable({
+    __orientation_pref = obj.orientation or options.orientation,
     __width = obj.width or options.width,
     __height = obj.height or options.height,
     __horizontal_position = obj.horizontal_position or options.horizontal_position,
@@ -133,11 +136,11 @@ function Infoview:new(obj)
 end
 
 function Infoview:__should_be_vertical()
-  if self.__separate_tab then
+  if self.__separate_tab or self.__orientation_pref == "horizontal" then
     return false
   else
     local ch_aspect_ratio = 2.5 -- characters are 2.5x taller than they are wide
-    return vim.o.columns > ch_aspect_ratio * vim.o.lines
+    return vim.o.columns > ch_aspect_ratio * vim.o.lines or self.__orientation_pref == "vertical"
   end
 end
 
