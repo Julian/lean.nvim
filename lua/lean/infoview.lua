@@ -136,11 +136,11 @@ function Infoview:new(obj)
 end
 
 function Infoview:__should_be_vertical()
-  if self.__separate_tab or self.__orientation_pref == "horizontal" then
+  if self.__separate_tab or self.__orientation_pref == 'horizontal' then
     return false
   else
     local ch_aspect_ratio = 2.5 -- characters are 2.5x taller than they are wide
-    return vim.o.columns > ch_aspect_ratio * vim.o.lines or self.__orientation_pref == "vertical"
+    return vim.o.columns > ch_aspect_ratio * vim.o.lines or self.__orientation_pref == 'vertical'
   end
 end
 
