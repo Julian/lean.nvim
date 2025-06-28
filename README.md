@@ -239,6 +239,11 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
       width = 50,
       height = 20,
 
+      -- Set the infoviews' orientation to be dynamic based on screen layout
+      -- or fixed to a vertical or horizontal orientation
+      -- auto | vertical | horizontal
+      orientation = "auto",
+
       -- Put the infoview on the top or bottom when horizontal?
       -- top | bottom
       horizontal_position = "bottom",
