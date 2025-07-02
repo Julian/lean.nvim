@@ -29,8 +29,8 @@ local infoview = {
 }
 ---@type lean.infoview.Config
 local options = {
-  width = 50,
-  height = 20,
+  width = 1/3,
+  height = 1/3,
   orientation = 'auto',
   horizontal_position = 'bottom',
   separate_tab = false,
@@ -118,6 +118,13 @@ Infoview.__index = Infoview
 ---@field horizontal_position? "top"|"bottom"
 ---@field separate_tab? boolean
 
+---Resolve the dimensions from integer or fraction
+---@param x number
+---@param max number
+local function res_dim(x, max)
+    return (x < 1) and math.ceil(x * max) or x
+end
+
 ---Create a new infoview.
 ---@param obj InfoviewNewArgs
 ---@return Infoview
@@ -125,8 +132,8 @@ function Infoview:new(obj)
   obj = obj or {}
   local new_infoview = setmetatable({
     __orientation_pref = obj.orientation or options.orientation,
-    __width = obj.width or options.width,
-    __height = obj.height or options.height,
+    __width = res_dim(obj.width or options.width, vim.o.columns),
+    __height = res_dim(obj.height or options.height, vim.o.lines),
     __horizontal_position = obj.horizontal_position or options.horizontal_position,
     __separate_tab = obj.separate_tab or options.separate_tab,
   }, self)
@@ -213,7 +220,7 @@ function Infoview:move_to_top()
   vim.api.nvim_win_call(self.window, function()
     vim.cmd.wincmd 'K'
   end)
-  vim.api.nvim_win_set_height(self.window, options.height)
+  vim.api.nvim_win_set_height(self.window, res_dim(options.height, vim.o.lines))
 end
 
 ---Move this infoview's window to the bottom of the tab, then size it properly.
@@ -221,7 +228,7 @@ function Infoview:move_to_bottom()
   vim.api.nvim_win_call(self.window, function()
     vim.cmd.wincmd 'J'
   end)
-  vim.api.nvim_win_set_height(self.window, options.height)
+  vim.api.nvim_win_set_height(self.window, res_dim(options.height, vim.o.lines))
 end
 
 ---Move this infoview's window (vertically or horizontally) based on the
@@ -236,9 +243,9 @@ function Infoview:reposition()
   -- Resize but don't move window layouts if there are more than 2 windows.
   if #vim.api.nvim_tabpage_list_wins(0) ~= 2 then
     if orientation == 'col' then
-      vim.api.nvim_win_set_height(self.window, options.height)
+      vim.api.nvim_win_set_height(self.window, res_dim(options.height, vim.o.lines))
     else
-      vim.api.nvim_win_set_width(self.window, options.width)
+      vim.api.nvim_win_set_width(self.window, res_dim(options.width, vim.o.columns))
     end
 
     return
