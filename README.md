@@ -235,7 +235,7 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
       autoopen = true,
 
       -- Set the initial size (in columns/lines) of the infoview's window.
-      -- Windows open horizontally or vertically based on available space. 
+      -- Windows open horizontally or vertically based on available space.
       -- Values less than 1 are treated as a percentage of the current
       -- buffer's max columns or lines.
       width = 1/3,
