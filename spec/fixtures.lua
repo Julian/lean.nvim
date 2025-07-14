@@ -1,6 +1,6 @@
 local this_file = debug.getinfo(1).source:match '@(.*)$'
 
-local fixtures_root = vim.fs.abspath(vim.fs.joinpath(vim.fs.dirname(this_file), 'fixtures'))
+local fixtures_root = vim.fs.joinpath(vim.fs.dirname(this_file), 'fixtures')
 local indent = vim.fs.joinpath(fixtures_root, 'indent')
 local widgets = vim.fs.joinpath(fixtures_root, 'widgets')
 local projects = vim.fs.joinpath(fixtures_root, 'projects')
