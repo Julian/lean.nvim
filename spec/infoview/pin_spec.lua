@@ -183,7 +183,7 @@ describe(
         it('jumps to the pin position', function()
           local lean_window = Window:current()
 
-          vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
+          vim.cmd.edit { fixtures.project.child 'Example/Squares.lean', bang = true }
           local pin_position = { 2, 0 }
           helpers.move_cursor { to = pin_position }
           infoview.add_pin()
@@ -196,7 +196,7 @@ describe(
             ▼ 1:1-1:8: warning:
             declaration uses 'sorry'
 
-            -- Test/Squares.lean at 2:1
+            -- Example/Squares.lean at 2:1
             ▼ 2:1-2:6: information:
             4
           ]]

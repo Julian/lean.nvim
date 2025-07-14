@@ -12,7 +12,7 @@ describe('infoview', function()
 
   it('does not automatically open infoviews', function()
     assert.is.equal(1, #Tab:current():windows())
-    vim.cmd.edit { fixtures.project.child 'Test.lean', bang = true }
+    vim.cmd.edit { fixtures.project.child 'Example.lean', bang = true }
     -- FIXME: This obviously shouldn't require running twice, but without
     --        it, somehow the test run differs from interactive use!
     --        Specifically, ft.detect doesn't run at all until the second
@@ -23,7 +23,7 @@ describe('infoview', function()
     --        to be here twice to prevent regressions like #245.
     --        To know whether you can remove this, undo the change from #245
     --        and ensure this test properly fails.
-    vim.cmd.edit { fixtures.project.child 'Test.lean', bang = true }
+    vim.cmd.edit { fixtures.project.child 'Example.lean', bang = true }
     lean_window = Window:current()
     assert.windows.are(lean_window.id)
   end)

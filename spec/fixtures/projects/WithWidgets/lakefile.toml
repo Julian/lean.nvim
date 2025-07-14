@@ -1,9 +1,5 @@
-name = "test"
-defaultTargets = ["Test"]
-
-[[require]]
-name = "foo"
-path = "foo"
+name = "WithWidgets"
+defaultTargets = ["WithWidgets"]
 
 [[require]]
 name = "importGraph"
@@ -18,4 +14,4 @@ name = "mathlib"
 scope = "leanprover-community"
 
 [[lean_lib]]
-name = "Test"
+name = "WithWidgets"

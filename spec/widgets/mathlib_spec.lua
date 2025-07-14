@@ -2,6 +2,7 @@
 --- Tests for widgets from Mathlib.
 ---@brief ]]
 
+local with_widgets = require('spec.fixtures').with_widgets
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
@@ -12,11 +13,11 @@ describe('Mathlib widgets', function()
     'supports conv? widgets',
     helpers.clean_buffer(
       [[
-      import Mathlib.Tactic.Widget.Conv
+        import Mathlib.Tactic.Widget.Conv
 
-      example {n : Nat} : n = n := by
-        conv?
-    ]],
+        example {n : Nat} : n = n := by
+          conv?
+      ]],
       function()
         helpers.search 'conv?'
         assert.infoview_contents.are [[
@@ -47,7 +48,8 @@ describe('Mathlib widgets', function()
 
         -- We've jumped to the Lean window.
         assert.current_line.is '  conv =>'
-      end
+      end,
+      with_widgets
     )
   )
 end)

@@ -5,7 +5,7 @@ devcontainer := justfile_directory() / ".devcontainer/lazyvim/Dockerfile"
 src := justfile_directory() / "lua"
 lean := src / "lean"
 spec := justfile_directory() / "spec"
-fixtures := spec / "fixtures"
+fixture_projects := spec / "fixtures/projects"
 demos := justfile_directory() / "demos"
 
 init_lua := scripts / "minimal_init.lua"
@@ -81,12 +81,14 @@ docs:
 
     nvim --headless --clean -u {{ init_lua }} -c 'helptags {{ doc }}' -c 'quit'
 
-# Update the versions of test fixtures used in CI.
+export MATHLIB_NO_CACHE_ON_UPDATE := "1"
+
+# Update the version of Lean we use to the one currently used by Mathlib, along with any Lean dependencies.
 [group('testing')]
 bump-test-fixtures:
-    gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' | tee "{{ fixtures }}/example-project/lean-toolchain" "{{ demos }}/project/lean-toolchain"
-    cd {{ fixtures }}/example-project/ && lake update
-    cd {{ demos }}/project/ && MATHLIB_NO_CACHE_ON_UPDATE=1 lake update
+    gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' | tee "{{ fixture_projects }}"/*/lean-toolchain "{{ demos }}/project/lean-toolchain"
+    for each in "{{ fixture_projects }}"/*; do cd "$each" && lake update; done
+    cd {{ demos }}/project/ && lake update
     git add {{ justfile_directory() }}/**/lean-toolchain {{ justfile_directory() }}/**/lake-manifest.json
     git commit -m "Bump the Lean versions in CI."
 
@@ -109,4 +111,5 @@ _clone-test-dependencies: _clone-dependencies
 
 # Rebuild some test fixtures used in the test suite.
 _rebuild-test-fixtures:
-    cd "{{ fixtures }}/example-project/"; lake build && lake build ProofWidgets Mathlib.Tactic.Widget.Conv
+    cd "{{ fixture_projects}}/Example/" && lake build
+    cd "{{ fixture_projects }}/WithWidgets/" && lake build ProofWidgets Mathlib.Tactic.Widget.Conv
