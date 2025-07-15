@@ -356,6 +356,29 @@ function Infoview:select_view_options()
   end)
 end
 
+---Wait until the infoview has finished processing.
+---@param timeout? number the maximum time (in ms) to wait, defaulting to 10s
+function Infoview:wait(timeout)
+  timeout = timeout or 10000
+  local info = self.info
+  local pins = vim.list_extend({ info.pin, info.__diff_pin }, info.pins)
+  local succeeded, _ = vim.wait(timeout, function()
+    pins = vim
+      .iter(pins)
+      :filter(function(pin)
+        local processing = progress.at(pin.__position_params)
+        return pin.loading or processing == progress.Kind.processing
+      end)
+      :totable()
+    return #pins == 0
+  end)
+
+  if succeeded then
+    return
+  end
+  error(('Pins %s are still processing.'):format(vim.inspect(pins)))
+end
+
 ---API for opening an auxilliary window relative to the current infoview window.
 ---@param buf number buffer to put in the new window
 ---@return number? new window handle or nil if the infoview is closed

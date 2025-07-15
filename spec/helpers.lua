@@ -71,28 +71,7 @@ function helpers.wait_for_loading_pins(iv)
   if not iv then
     error 'Infoview is not open!'
   end
-  local info = iv.info
-  local last, last_loading, last_processing
-  local succeeded, _ = vim.wait(10000, function()
-    for _, pin in pairs(vim.list_extend({ info.pin, info.__diff_pin }, info.pins)) do
-      local processing = progress.at(pin.__position_params)
-      if pin.loading or processing == progress.Kind.processing then
-        last = pin.id
-        last_loading = pin.loading
-        last_processing = processing
-        return false
-      end
-    end
-    return true
-  end)
-  local msg = last_loading and 'loading' or ''
-  if last_loading and last_processing then
-    msg = msg .. '/'
-  end
-  msg = msg .. (last_processing and 'processing' or '')
-  assert
-    .message(string.format('Pin %s never finished %s.', tostring(last) or '', msg))
-    .True(succeeded)
+  iv:wait()
 end
 
 function helpers.wait_for_ready_lsp()
