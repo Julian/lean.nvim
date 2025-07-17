@@ -29,8 +29,8 @@ local infoview = {
 }
 ---@type lean.infoview.Config
 local options = {
-  width = 1/3,
-  height = 1/3,
+  width = 1 / 3,
+  height = 1 / 3,
   orientation = 'auto',
   horizontal_position = 'bottom',
   separate_tab = false,
@@ -122,7 +122,7 @@ Infoview.__index = Infoview
 ---@param x number
 ---@param max number
 local function res_dim(x, max)
-    return (x < 1) and math.ceil(x * max) or x
+  return (x < 1) and math.ceil(x * max) or x
 end
 
 ---Create a new infoview.
