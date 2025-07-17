@@ -211,11 +211,10 @@ function lean.current_search_paths()
   local prefix = vim.trim(check_output({ 'lean', '--print-prefix' }, { cwd = root }))
 
   local paths = { vim.fs.joinpath(prefix, 'src/lean') }
-  local result = vim
-    .system({ 'lake', 'setup-file', vim.api.nvim_buf_get_name(0) }, { cwd = root })
-    :wait()
+  local result = vim.system({ 'lake', 'env' }, { cwd = root }):wait()
   if result.code == 0 then
-    vim.list_extend(paths, vim.json.decode(result.stdout).paths.srcPath)
+    local src_path = result.stdout:match 'LEAN_SRC_PATH=(.-)\n'
+    vim.list_extend(paths, vim.split(src_path, ':'))
   end
 
   return vim

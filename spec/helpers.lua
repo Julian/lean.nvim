@@ -126,10 +126,11 @@ end
 
 -- Even though we can delete a buffer, so should be able to reuse names,
 -- we do this to ensure if a test fails, future ones still get new "files".
-local function set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
+local function set_unique_name_so_we_have_a_separate_fake_file(bufnr, project)
+  project = project or fixtures.example
   local counter = helpers._clean_buffer_counter
   helpers._clean_buffer_counter = helpers._clean_buffer_counter + 1
-  local unique_name = fixtures.project.child(('unittest-%d.lean'):format(counter))
+  local unique_name = project:child(('unittest-%d.lean'):format(counter))
   vim.api.nvim_buf_set_name(bufnr, unique_name)
 end
 
@@ -138,7 +139,7 @@ end
 ---Waits for the LSP to be ready before proceeding with a given callback.
 --
 ---Yes c(lean) may be a double entendre, and no I don't feel bad.
-function helpers.clean_buffer(contents, callback)
+function helpers.clean_buffer(contents, callback, project)
   local lines
 
   -- Support a 1-arg version where we assume the contents is an empty buffer.
@@ -151,7 +152,7 @@ function helpers.clean_buffer(contents, callback)
 
   return function()
     local bufnr = vim.api.nvim_create_buf(false, false)
-    set_unique_name_so_we_always_have_a_separate_fake_file(bufnr)
+    set_unique_name_so_we_have_a_separate_fake_file(bufnr, project)
 
     vim.bo[bufnr].swapfile = false
     vim.bo[bufnr].filetype = 'lean'

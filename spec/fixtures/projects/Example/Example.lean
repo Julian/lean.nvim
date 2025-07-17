@@ -1,4 +1,4 @@
-import Test.Squares
+import Example.Squares
 
 def has_term_goal : Nat := square 4
 

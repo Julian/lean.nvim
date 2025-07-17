@@ -273,6 +273,32 @@ describe('indent', function()
   )
 
   it(
+    'does not indent after blank lines with #commands',
+    helpers.clean_buffer(
+      [[
+        example : True :=
+          trivial
+
+        example : 37 = 37 :=
+          rfl
+      ]],
+      function()
+        helpers.search 'trivial'
+        helpers.feed 'j'
+        assert.current_line.is ''
+        helpers.insert '#check Nat'
+        assert.contents.are [[
+          example : True :=
+            trivial
+          #check Nat
+          example : 37 = 37 :=
+            rfl
+        ]]
+      end
+    )
+  )
+
+  it(
     'indents again after by at focused stuff',
     helpers.clean_buffer(
       [[

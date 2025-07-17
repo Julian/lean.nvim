@@ -4,6 +4,7 @@
 
 local Buffer = require 'std.nvim.buffer'
 
+local with_widgets = require('spec.fixtures').with_widgets
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
@@ -36,7 +37,8 @@ describe('ImportGraph widgets', function()
 
         local path = Buffer:current():name()
         assert.is_truthy(path:match 'Init/Prelude.lean')
-      end
+      end,
+      with_widgets
     )
   )
 end)

@@ -4,6 +4,7 @@
 
 local Window = require 'std.nvim.window'
 
+local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
@@ -21,7 +22,7 @@ local function in_demo(name, fn)
       return vim.api.nvim_buf_get_name(0) ~= initial_path
     end))
     fn()
-  end)
+  end, fixtures.with_widgets)
 end
 
 describe('ProofWidgets widgets', function()

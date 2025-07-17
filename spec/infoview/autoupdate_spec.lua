@@ -36,7 +36,7 @@ describe('infoview content (auto-)update', function()
   it("shows the initial cursor location's infoview", function()
     assert.is.equal(1, #Tab:current():windows())
 
-    vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
+    vim.cmd.edit { fixtures.project.child 'Example/Squares.lean', bang = true }
     lean_window = Window:current()
     -- In theory we don't care where we are, but the right answer changes
     assert.current_cursor.is { 1, 0 }
@@ -163,7 +163,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('can pause and unpause updates', function()
-    vim.cmd.edit { fixtures.project.child 'Test/Squares.lean', bang = true }
+    vim.cmd.edit { fixtures.project.child 'Example/Squares.lean', bang = true }
     helpers.move_cursor { to = { 2, 0 } }
     assert.infoview_contents.are [[
       ▼ 2:1-2:6: information:
@@ -218,7 +218,7 @@ describe('infoview content (auto-)update', function()
         4
       ]]
 
-      vim.cmd.tabnew(fixtures.project.child 'Test/Squares.lean')
+      vim.cmd.tabnew(fixtures.project.child 'Example/Squares.lean')
       helpers.move_cursor { to = { 3, 0 } }
       assert.infoview_contents.are [[
         ▼ 3:1-3:6: information:
@@ -264,7 +264,7 @@ describe('infoview content (auto-)update', function()
     --        errors, but it doesn't seem to do that (it doesn't seem to do particularly that
     --        even before being refactored though, as it passes with or without the relevant
     --        lines in infoview.lua)
-    vim.cmd.edit { fixtures.project.child 'Test.lean', bang = true }
+    vim.cmd.edit { fixtures.project.child 'Example.lean', bang = true }
     helpers.move_cursor { to = { 23, 1 } }
     assert.infoview_contents.are [[
       ⊢ 37 = 37

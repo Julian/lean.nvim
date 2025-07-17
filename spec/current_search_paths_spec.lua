@@ -12,11 +12,7 @@ describe('lean.current_search_paths', function()
       helpers.wait_for_ready_lsp()
 
       local paths = lean.current_search_paths()
-      -- Sigh. We depend on import graph for another test, so now we can't
-      -- really say exactly how many paths should appear here. I guess that's
-      -- not too big of a loss, so eventually we can just delete this
-      -- assertion.
-      -- assert.message(vim.inspect(paths)).are.equal(3, #paths)
+      assert.message(vim.inspect(paths)).are.equal(4, #paths)
       assert.has_all(table.concat(paths, '\n') .. '\n', {
         '/src/lean\n', -- standard library
         project.root .. '\n', -- the project itself
@@ -32,12 +28,7 @@ describe('lean.current_search_paths', function()
     helpers.wait_for_ready_lsp()
 
     local paths = lean.current_search_paths()
-    -- Sigh. We depend on import graph for another test, so now we can't
-    -- really say exactly how many paths should appear here. I guess that's
-    -- not too big of a loss, so eventually we can just delete this
-    -- assertion.
-    -- assert.message(vim.inspect(paths)).are.equal(3, #paths)
-    assert.are.same(paths, { paths[1] }) -- len(1), but better error message
+    assert.message(vim.inspect(paths)).are.equal(2, #paths)
     assert.is.truthy(paths[1]:match '/src/lean')
   end)
 end)
