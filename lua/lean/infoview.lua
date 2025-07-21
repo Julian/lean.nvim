@@ -1127,7 +1127,7 @@ Pin.update = a.void(function(self)
   --        while it's closed, which if we continued, would end up calling
   --        render. That doesn't seem right, somewhere that should happen
   --        higher up than here.
-  if self.paused or not self.__info.__infoview.window then
+  if self.paused or not self.__info or not self.__info.__infoview.window then
     return
   end
 
