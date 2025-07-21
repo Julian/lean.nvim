@@ -5,6 +5,7 @@
 --- Lean's interactive goal state.
 ---@brief ]]
 
+local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
 local a = require 'plenary.async'
 local text_document_position_to_string = require('std.lsp').text_document_position_to_string
@@ -177,18 +178,18 @@ function Infoview:open()
       end
     end
   end
-  vim.api.nvim_win_set_buf(0, self.info.__renderer.buf)
+  vim.api.nvim_win_set_buf(0, self.info.__renderer.buffer.bufnr)
   -- Set the filetype now. Any earlier, and only buffer-local options will be
   -- properly set in the infoview, since the buffer isn't actually shown in a
   -- window until we run nvim_win_set_buf.
-  vim.bo[self.info.__renderer.buf].filetype = 'leaninfo'
+  vim.bo[self.info.__renderer.buffer.bufnr].filetype = 'leaninfo'
   self.window = vim.api.nvim_get_current_win()
 
   window_before_split:make_current()
 
   vim.api.nvim_create_autocmd({ 'BufHidden', 'QuitPre' }, {
     group = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false }),
-    buffer = self.info.__renderer.buf,
+    buffer = self.info.__renderer.buffer.bufnr,
     callback = function()
       self:__was_closed()
     end,
@@ -266,7 +267,7 @@ function Infoview:move_cursor_to_goal(n)
   end
 
   n = n or 1
-  local lines = vim.api.nvim_buf_get_lines(self.info.__renderer.buf, 0, -1, false)
+  local lines = vim.api.nvim_buf_get_lines(self.info.__renderer.buffer.bufnr, 0, -1, false)
   for i, line in ipairs(lines) do
     if line:find '^⊢ ' then
       n = n - 1
@@ -500,7 +501,7 @@ function Infoview:__refresh_diff()
 
   if not self.__diff_win then
     ---@diagnostic disable-next-line: assign-type-mismatch
-    self.__diff_win = self:__open_win(diff_renderer.buf)
+    self.__diff_win = self:__open_win(diff_renderer.buffer.bufnr)
   end
 
   for _, win in pairs { self.__diff_win, self.window } do
@@ -561,7 +562,7 @@ function Infoview:get_lines(start_line, end_line)
 
   start_line = start_line or 0
   end_line = end_line or -1
-  return vim.api.nvim_buf_get_lines(self.info.__renderer.buf, start_line, end_line, true)
+  return vim.api.nvim_buf_get_lines(self.info.__renderer.buffer.bufnr, start_line, end_line, true)
 end
 
 ---Retrieve a specific line from the infoview window.
@@ -572,7 +573,7 @@ function Infoview:get_line(line)
     error 'infoview is not open'
   end
 
-  local lines = vim.api.nvim_buf_get_lines(self.info.__renderer.buf, line, line + 1, false)
+  local lines = vim.api.nvim_buf_get_lines(self.info.__renderer.buffer.bufnr, line, line + 1, false)
   return lines[1]
 end
 
@@ -586,7 +587,12 @@ function Infoview:get_diff_lines(start_line, end_line)
 
   start_line = start_line or 0
   end_line = end_line or -1
-  return vim.api.nvim_buf_get_lines(self.info.__diff_renderer.buf, start_line, end_line, true)
+  return vim.api.nvim_buf_get_lines(
+    self.info.__diff_renderer.buffer.bufnr,
+    start_line,
+    end_line,
+    true
+  )
 end
 
 ---Toggle this infoview being open.
@@ -646,40 +652,40 @@ function Info:new(opts)
 
   local id = vim.api.nvim_get_current_tabpage()
 
-  local pin_bufnr = util.create_buf {
+  local pin_buffer = Buffer.create {
     name = 'lean://info/' .. id .. '/curr',
     options = { bufhidden = 'hide' },
     scratch = true,
   }
   new_info.__renderer = new_info.__pins_element:renderer {
-    buf = pin_bufnr,
+    buffer = pin_buffer,
     keymaps = options.mappings,
   }
   -- Show/hide current pin extmark when entering/leaving infoview.
   local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })
   vim.api.nvim_create_autocmd('WinEnter', {
     group = pin_augroup,
-    buffer = pin_bufnr,
+    buffer = pin_buffer.bufnr,
     callback = function()
       new_info:__maybe_show_pin_extmark 'current'
     end,
   })
   vim.api.nvim_create_autocmd('WinLeave', {
     group = pin_augroup,
-    buffer = pin_bufnr,
+    buffer = pin_buffer.bufnr,
     callback = function()
       new_info.pin:__hide_extmark()
     end,
   })
 
-  local diff_bufnr = util.create_buf {
+  local diff_buffer = Buffer.create {
     name = 'lean://info/' .. id .. '/diff',
     options = { bufhidden = 'hide' },
     listed = false,
     scratch = true,
   }
   new_info.__diff_renderer = new_info.__diff_pin_element:renderer {
-    buf = diff_bufnr,
+    buffer = diff_buffer,
     keymaps = options.mappings,
   }
 
@@ -687,7 +693,7 @@ function Info:new(opts)
   local close_augroup = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false })
   vim.api.nvim_create_autocmd('BufHidden', {
     group = close_augroup,
-    buffer = diff_bufnr,
+    buffer = diff_buffer.bufnr,
     callback = function()
       self:__clear_diff_pin()
     end,

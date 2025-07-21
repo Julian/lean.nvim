@@ -20,32 +20,6 @@ function M.lean_lsp_diagnostics(opts, bufnr)
   )
 end
 
----@class CreateBufParams
----@field name? string the name of the new buffer
----@field options? table<string, any> a table of buffer options
----@field listed? boolean see :h nvim_create_buf (default true)
----@field scratch? boolean see :h nvim_create_buf (default false)
-
----Create a new buffer.
----@param params CreateBufParams new buffer options
----@return integer bufnr the new bufnr
-function M.create_buf(params)
-  if params.listed == nil then
-    params.listed = true
-  end
-  if params.scratch == nil then
-    params.scratch = false
-  end
-  local bufnr = vim.api.nvim_create_buf(params.listed, params.scratch)
-  for option, value in pairs(params.options or {}) do
-    vim.bo[bufnr][option] = value
-  end
-  if params.name ~= nil then
-    vim.api.nvim_buf_set_name(bufnr, params.name)
-  end
-  return bufnr
-end
-
 ---Simple alternative to vim.lsp.util._make_floating_popup_size
 function M.make_floating_popup_size(contents)
   return unpack(vim.iter(contents):fold({ 0, 0 }, function(acc, line)

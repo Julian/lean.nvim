@@ -6,10 +6,10 @@
 
 local log = require 'vim.lsp.log'
 
+local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
 
 local infoview = require 'lean.infoview'
-local util = require 'lean._util'
 
 local stderr = {}
 local current = {}
@@ -39,20 +39,24 @@ end
 ---@param message string a (possibly multi-line) string from stderr
 function stderr.show(message)
   vim.schedule(function()
-    if not current.bufnr or not vim.api.nvim_buf_is_valid(current.bufnr) then
-      current.bufnr = util.create_buf { name = 'lean://stderr', listed = false, scratch = true }
+    if not current.buffer or not current.buffer:is_valid() then
+      current.buffer = Buffer.create {
+        name = 'lean://stderr',
+        listed = false,
+        scratch = true,
+      }
       current.winnr = nil
     end
     if not current.winnr or not vim.api.nvim_win_is_valid(current.winnr) then
-      current.winnr = open_window(current.bufnr)
+      current.winnr = open_window(current.buffer.bufnr)
     end
     local lines = vim.split(message, '\n')
-    local num_lines = vim.api.nvim_buf_line_count(current.bufnr)
+    local num_lines = vim.api.nvim_buf_line_count(current.buffer.bufnr)
     if lines[#lines] == '' then
       table.remove(lines)
     end
     num_lines = num_lines + #lines
-    vim.api.nvim_buf_set_lines(current.bufnr, num_lines, num_lines, false, lines)
+    vim.api.nvim_buf_set_lines(current.buffer.bufnr, num_lines, num_lines, false, lines)
     if vim.api.nvim_get_current_win() ~= current.winnr then
       vim.api.nvim_win_set_cursor(current.winnr, { num_lines, 0 })
     end

@@ -1,5 +1,7 @@
 local async = require 'plenary.async'
 
+local Buffer = require 'std.nvim.buffer'
+
 local log = require 'lean.log'
 local util = require 'lean._util'
 
@@ -50,7 +52,7 @@ Element.__index = Element
 
 ---Renders elements within a specific buffer.
 ---@class BufRenderer
----@field buf integer Buffer number of the buffer the element renders to
+---@field buffer Buffer Buffer the element renders to
 ---@field element Element the element rendered by this renderer
 ---@field lines? string[] Rendered lines.
 ---@field path? PathNode[] Current cursor path
@@ -532,11 +534,11 @@ end
 function BufRenderer:new(obj)
   obj = obj or {}
   local new_renderer = setmetatable(obj, self)
-  vim.bo[obj.buf].modifiable = false
+  vim.bo[obj.buffer.bufnr].modifiable = false
 
   vim.api.nvim_create_autocmd({ 'BufEnter', 'CursorMoved' }, {
     group = vim.api.nvim_create_augroup('WidgetPosition', { clear = false }),
-    buffer = obj.buf,
+    buffer = obj.buffer.bufnr,
     callback = function()
       new_renderer:update_cursor()
     end,
@@ -548,32 +550,32 @@ function BufRenderer:new(obj)
   -- to look at it, it's not a BufRenderer anymore. Surprise!
   vim.keymap.set('n', '<Tab>', function()
     new_renderer:enter_tooltip()
-  end, { buffer = obj.buf, desc = 'Enter a tooltip.' })
+  end, { buffer = obj.buffer.bufnr, desc = 'Enter a tooltip.' })
   vim.keymap.set('n', 'J', function()
     new_renderer:enter_tooltip()
-  end, { buffer = obj.buf, desc = 'Enter a tooltip.' })
+  end, { buffer = obj.buffer.bufnr, desc = 'Enter a tooltip.' })
   vim.keymap.set('n', '<S-Tab>', function()
     new_renderer:goto_parent_tooltip()
-  end, { buffer = obj.buf, desc = 'Go to the "parent" tooltip.' })
+  end, { buffer = obj.buffer.bufnr, desc = 'Go to the "parent" tooltip.' })
   vim.keymap.set(
     'n',
     '<LocalLeader>\\',
     require'lean.abbreviations'.show_reverse_lookup,
-    { buffer = obj.buf, desc = 'Show how to type the unicode character under the cursor.' }
+    { buffer = obj.buffer.bufnr, desc = 'Show how to type the unicode character under the cursor.' }
   )
 
   for key, event in pairs(obj.keymaps or {}) do
     vim.keymap.set('n', key, function()
       new_renderer:event(event)
-    end, { buffer = obj.buf, desc = ('Fire a %s event.'):format(event) })
+    end, { buffer = obj.buffer.bufnr, desc = ('Fire a %s event.'):format(event) })
   end
 
   return new_renderer
 end
 
 function BufRenderer:close()
-  if vim.api.nvim_buf_is_loaded(self.buf) then
-    vim.api.nvim_buf_delete(self.buf, { force = true })
+  if vim.api.nvim_buf_is_loaded(self.buffer.bufnr) then
+    self.buffer:force_delete()
   end
   if self.tooltip then
     self.tooltip.parent = nil
@@ -584,7 +586,7 @@ function BufRenderer:close()
 end
 
 function BufRenderer:render()
-  local buf = self.buf
+  local buf = self.buffer.bufnr
 
   if not vim.api.nvim_buf_is_loaded(buf) then
     log:warning { message = 'rendering an unloaded buffer', buf = buf }
@@ -643,7 +645,7 @@ end
 function BufRenderer:last_win_valid()
   return self.last_win
     and vim.api.nvim_win_is_valid(self.last_win)
-    and vim.api.nvim_win_get_buf(self.last_win) == self.buf
+    and vim.api.nvim_win_get_buf(self.last_win) == self.buffer.bufnr
 end
 
 ---Checks if two paths are equal, ignoring auxillary metadata (e.g. offsets)
@@ -674,7 +676,7 @@ end
 
 function BufRenderer:update_cursor(win)
   win = win or vim.api.nvim_get_current_win()
-  if vim.api.nvim_win_get_buf(win) == self.buf then
+  if vim.api.nvim_win_get_buf(win) == self.buffer.bufnr then
     self.last_win = win
   end
   if not self:last_win_valid() then
@@ -703,7 +705,7 @@ function BufRenderer:hover(force_update_highlight)
       self.tooltip:close()
       self.tooltip = nil
     end
-    vim.api.nvim_buf_clear_namespace(self.buf, self.__hl_ns, 0, -1)
+    vim.api.nvim_buf_clear_namespace(self.buffer.bufnr, self.__hl_ns, 0, -1)
     self.hover_range = nil
     return
   end
@@ -745,7 +747,7 @@ function BufRenderer:hover(force_update_highlight)
       self.tooltip.parent_path = tt_parent_element_path
     else
       self.tooltip = new_tooltip_element:renderer {
-        buf = util.create_buf {
+        buffer = Buffer.create {
           listed = false,
           scratch = true,
           options = { bufhidden = 'wipe' },
@@ -764,13 +766,13 @@ function BufRenderer:hover(force_update_highlight)
       height = height,
       border = 'rounded',
       bufpos = bufpos,
-      zindex = 50 + self.tooltip.buf, -- later tooltips are guaranteed to have greater buffer handles
+      zindex = 50 + self.tooltip.buffer.bufnr, -- later tooltips are guaranteed to have greater buffer handles
     }
 
     if not self.tooltip:last_win_valid() then
       -- fresh non-reused tooltip, open window
       self.tooltip.last_win = vim.api.nvim_open_win(
-        self.tooltip.buf,
+        self.tooltip.buffer.bufnr,
         false,  -- avoid firing update_cursor by disabling the autocmds
         vim.tbl_extend('error', win_options, { noautocmd = true } )
       )
@@ -796,10 +798,10 @@ function BufRenderer:hover(force_update_highlight)
   end
 
   if force_update_highlight or not vim.deep_equal(old_hover_range, self.hover_range) then
-    vim.api.nvim_buf_clear_namespace(self.buf, self.__hl_ns, 0, -1)
+    vim.api.nvim_buf_clear_namespace(self.buffer.bufnr, self.__hl_ns, 0, -1)
     local hlgroup = 'widgetElementHighlight'
     if self.hover_range then
-      vim.highlight.range(self.buf, self.__hl_ns, hlgroup, self.hover_range[1], self.hover_range[2])
+      vim.highlight.range(self.buffer.bufnr, self.__hl_ns, hlgroup, self.hover_range[1], self.hover_range[2])
     end
   end
 end
@@ -896,7 +898,7 @@ local function select_many(choices, opts, on_choices)
     title = 'Select one or more of:',
   })
 
-  local bufnr = vim.api.nvim_create_buf(false, true)
+  local buffer = Buffer.create { listed = false, scratch = true }
   local win_options = {
     style = 'minimal',
     relative = 'win',
@@ -911,7 +913,7 @@ local function select_many(choices, opts, on_choices)
     zindex = 50,
   }
 
-  local window = vim.api.nvim_open_win(bufnr, true, win_options)
+  local window = vim.api.nvim_open_win(buffer.bufnr, true, win_options)
   vim.wo[window].winfixbuf = true
 
   local selected = vim.iter(choices):map(opts.start_selected):totable()
@@ -975,7 +977,7 @@ local function select_many(choices, opts, on_choices)
   }
 
   local renderer = element:renderer {
-    buf = bufnr,
+    buffer = buffer,
     keymaps = {
       ['K'] = 'click',
       ['<Tab>'] = 'toggle',
@@ -995,12 +997,12 @@ local function select_many(choices, opts, on_choices)
   local group = vim.api.nvim_create_augroup('LeanSelectManyWindow', { clear = false })
   vim.api.nvim_create_autocmd('WinLeave', {
     group = group,
-    buffer = bufnr,
+    buffer = buffer.bufnr,
     callback = function() renderer:event 'clear' end
   })
   vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
     group = group,
-    buffer = bufnr,
+    buffer = buffer.bufnr,
     callback = function()  -- clip the cursor to the real editable region
       local row, column = unpack(vim.api.nvim_win_get_cursor(window))
       row = math.max(math.min(row, end_line), start_line)

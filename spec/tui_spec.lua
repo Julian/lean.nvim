@@ -2,6 +2,7 @@
 --- Tests for the console UI framework in isolation from Lean-specific widgets.
 ---@brief ]]
 
+local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
 local dedent = require('std.text').dedent
 
@@ -400,11 +401,13 @@ describe('Element', function()
 
   describe(':renderer', function()
     it('creates a BufRenderer rendering the element', function()
+      local buffer = Buffer.create { name = 'foo-buffer' }
       local element = Element:new { text = 'foo', name = 'foo-name' }
       assert.is.same(
-        tui.BufRenderer:new { buf = 1, element = element },
-        element:renderer { buf = 1 }
+        tui.BufRenderer:new { buffer = buffer, element = element },
+        element:renderer { buffer = buffer }
       )
+      buffer:delete()
     end)
   end)
 end)
