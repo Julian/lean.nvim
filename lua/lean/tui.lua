@@ -574,7 +574,7 @@ function BufRenderer:new(obj)
 end
 
 function BufRenderer:close()
-  if vim.api.nvim_buf_is_loaded(self.buffer.bufnr) then
+  if self.buffer:is_loaded() then
     self.buffer:force_delete()
   end
   if self.tooltip then
@@ -587,8 +587,7 @@ end
 
 function BufRenderer:render()
   local buf = self.buffer.bufnr
-
-  if not vim.api.nvim_buf_is_loaded(buf) then
+  if not self.buffer:is_loaded() then
     log:warning { message = 'rendering an unloaded buffer', buf = buf }
     return
   end

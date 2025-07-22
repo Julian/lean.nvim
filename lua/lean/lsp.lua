@@ -6,9 +6,11 @@
 
 local ms = vim.lsp.protocol.Methods
 
+local Buffer = require 'std.nvim.buffer'
+local std = require 'std.lsp'
+
 local config = require 'lean.config'
 local log = require 'lean.log'
-local std = require 'std.lsp'
 
 local lsp = { handlers = {} }
 
@@ -137,13 +139,13 @@ local goals_ns = vim.api.nvim_create_namespace 'lean.goal.markers'
 ---@param params lsp.TextDocumentPositionParams the document position in question
 ---@return boolean? accomplished whether there's a marker at the cursor, or nil if the buffer isn't loaded
 function lsp.goals_accomplished_at(params)
-  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
+  local buffer = Buffer:from_uri(params.textDocument.uri)
+  if not buffer:is_loaded() then
     return
   end
 
   local pos = { params.position.line, 0 }
-  local hls = vim.api.nvim_buf_get_extmarks(bufnr, goals_ns, pos, pos, {
+  local hls = vim.api.nvim_buf_get_extmarks(buffer.bufnr, goals_ns, pos, pos, {
     details = true,
     overlap = true,
     type = 'highlight',

@@ -4,6 +4,12 @@
 local Buffer = {}
 Buffer.__index = Buffer
 
+---Bind to the current buffer.
+---@return Buffer
+function Buffer:current()
+  return self:from_bufnr(vim.api.nvim_get_current_buf())
+end
+
 ---Bind to a Neovim buffer.
 ---@param bufnr? integer buffer number, defaulting to the current one
 ---@return Buffer
@@ -11,10 +17,11 @@ function Buffer:from_bufnr(bufnr)
   return setmetatable({ bufnr = bufnr or vim.api.nvim_get_current_buf() }, self)
 end
 
----Bind to the current buffer.
+---Bind to a Neovim buffer from its URI.
+---@param uri string the buffer's URI
 ---@return Buffer
-function Buffer:current()
-  return self:from_bufnr(vim.api.nvim_get_current_buf())
+function Buffer:from_uri(uri)
+  return self:from_bufnr(vim.uri_to_bufnr(uri))
 end
 
 ---@class CreateBufferOpts
@@ -50,6 +57,12 @@ end
 ---@return string name
 function Buffer:name()
   return vim.api.nvim_buf_get_name(self.bufnr)
+end
+
+---Check if the buffer is loaded.
+---@return boolean
+function Buffer:is_loaded()
+  return vim.api.nvim_buf_is_loaded(self.bufnr)
 end
 
 ---Check if the buffer is valid.

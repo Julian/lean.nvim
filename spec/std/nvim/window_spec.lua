@@ -79,7 +79,7 @@ describe('Window', function()
     end)
 
     it('places a specified buffer', function()
-      local buffer = Buffer:from_bufnr(vim.api.nvim_create_buf(false, true))
+      local buffer = Buffer.create { listed = false, scratch = true }
       local split = Window:split { buffer = buffer }
       assert.are.same(buffer, split:buffer())
       split:close()
@@ -183,13 +183,12 @@ describe('Window', function()
       assert.are.same({ 2, 1 }, vim.api.nvim_win_get_cursor(window.id))
 
       window:close()
-      vim.api.nvim_buf_delete(bufnr, {})
+      buffer:delete()
     end)
 
     describe('move_cursor', function()
-      local bufnr = vim.api.nvim_create_buf(false, true)
-      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { 'foo', 'bar' })
-      local buffer = Buffer:from_bufnr(bufnr)
+      local buffer = Buffer.create { listed = false, scratch = true }
+      vim.api.nvim_buf_set_lines(buffer.bufnr, 0, -1, false, { 'foo', 'bar' })
 
       it('moves the cursor firing global CursorMoved', function()
         local count = 0
@@ -213,7 +212,7 @@ describe('Window', function()
       it('moves the cursor firing buffer-local CursorMoved', function()
         local count = 0
         local autocmd = vim.api.nvim_create_autocmd('CursorMoved', {
-          buffer = bufnr,
+          buffer = buffer.bufnr,
           callback = function()
             count = count + 1
           end,
@@ -250,7 +249,7 @@ describe('Window', function()
         vim.api.nvim_del_autocmd(autocmd)
       end)
 
-      vim.api.nvim_buf_delete(bufnr, {})
+      buffer:delete()
     end)
   end)
 
