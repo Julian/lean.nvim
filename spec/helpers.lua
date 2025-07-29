@@ -71,7 +71,7 @@ function helpers.wait_for_loading_pins(iv)
   if not iv then
     error 'Infoview is not open!'
   end
-  iv:wait()
+  iv:wait(20000)
 end
 
 function helpers.wait_for_ready_lsp()

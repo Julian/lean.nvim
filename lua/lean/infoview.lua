@@ -358,12 +358,12 @@ function Infoview:select_view_options()
 end
 
 ---Wait until the infoview has finished processing.
----@param timeout? number the maximum time (in ms) to wait, defaulting to 10s
-function Infoview:wait(timeout)
-  timeout = timeout or 10000
+---@param timeout_ms? number the maximum time to wait, defaulting to 10s
+function Infoview:wait(timeout_ms)
+  timeout_ms = timeout_ms or 10000
   local info = self.info
   local pins = vim.list_extend({ info.pin, info.__diff_pin }, info.pins)
-  local succeeded, _ = vim.wait(timeout, function()
+  local succeeded, _ = vim.wait(timeout_ms, function()
     pins = vim
       .iter(pins)
       :filter(function(pin)
