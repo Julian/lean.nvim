@@ -131,7 +131,7 @@ Infoview                                                              *Infoview*
 
     Fields: ~
         {info}    (Info)
-        {window}  (integer)
+        {window}  (Window)
 
 
 InfoviewNewArgs                                                *InfoviewNewArgs*
