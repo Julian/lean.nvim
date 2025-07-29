@@ -178,12 +178,13 @@ function Infoview:open()
       end
     end
   end
-  vim.api.nvim_win_set_buf(0, self.info.__renderer.buffer.bufnr)
+
+  self.window = Window:current()
+  self.window:set_buffer(self.info.__renderer.buffer)
   -- Set the filetype now. Any earlier, and only buffer-local options will be
   -- properly set in the infoview, since the buffer isn't actually shown in a
-  -- window until we run nvim_win_set_buf.
+  -- window until we `set_buffer`.
   vim.bo[self.info.__renderer.buffer.bufnr].filetype = 'leaninfo'
-  self.window = Window:current()
 
   window_before_split:make_current()
 
@@ -381,9 +382,9 @@ function Infoview:wait(timeout_ms)
 end
 
 ---API for opening an auxilliary window relative to the current infoview window.
----@param buf number buffer to put in the new window
+---@param buffer Buffer buffer to put in the new window
 ---@return Window? window a new window handle, or nil if the infoview is closed
-function Infoview:__open_win(buf)
+function Infoview:__open_win(buffer)
   if not self.window then
     return
   end
@@ -404,9 +405,8 @@ function Infoview:__open_win(buf)
     end
   end
   local new_win = Window:current()
-
-  vim.api.nvim_win_set_buf(new_win.id, buf)
-  vim.bo[buf].filetype = 'leaninfo'
+  new_win:set_buffer(buffer)
+  vim.bo[buffer.bufnr].filetype = 'leaninfo'
 
   window_before_split:make_current()
   self.info.__win_event_disable = false
@@ -501,7 +501,7 @@ function Infoview:__refresh_diff()
 
   if not self.__diff_win then
     ---@diagnostic disable-next-line: assign-type-mismatch
-    self.__diff_win = self:__open_win(diff_renderer.buffer.bufnr)
+    self.__diff_win = self:__open_win(diff_renderer.buffer)
   end
 
   for _, win in pairs { self.__diff_win, self.window } do

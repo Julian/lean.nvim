@@ -59,7 +59,7 @@ describe('infoview content (auto-)update', function()
     assert.current_window.is(lean_window)
 
     vim.cmd.split()
-    local second_window = vim.api.nvim_get_current_win()
+    local second_window = Window:current()
     assert.current_cursor.is { 3, 0 }
     assert.infoview_contents.are [[
       ▼ 3:1-3:6: information:
@@ -80,7 +80,7 @@ describe('infoview content (auto-)update', function()
       9.000000
     ]]
 
-    vim.api.nvim_win_close(second_window, false)
+    second_window:close()
   end)
 
   it('does not update for non-Lean buffers', function()

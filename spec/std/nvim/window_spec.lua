@@ -144,7 +144,7 @@ describe('Window', function()
 
   describe('buffer', function()
     it('returns the buffer in the window', function()
-      local buffer = Buffer:from_bufnr(vim.api.nvim_create_buf(false, true))
+      local buffer = Buffer.create { listed = false, scratch = true }
       local window = Window:current():split { buffer = buffer }
       assert.are.same(buffer, window:buffer())
       assert.are.equal(buffer.bufnr, vim.api.nvim_win_get_buf(window.id))
@@ -157,21 +157,35 @@ describe('Window', function()
     end)
   end)
 
+  describe('set_buffer', function()
+    it('sets the buffer in the window', function()
+      local initial = Buffer.create { listed = false, scratch = true }
+      local window = Window:split { buffer = initial }
+      assert.are.same(initial, window:buffer())
+
+      local new = Buffer.create { listed = false, scratch = true }
+      window:set_buffer(new)
+      assert.are.same(new, window:buffer())
+      assert.are.equal(new.bufnr, vim.api.nvim_win_get_buf(window.id))
+
+      window:close()
+    end)
+  end)
+
   describe('bufnr', function()
     it('returns the bufnr for the window', function()
-      local bufnr = vim.api.nvim_create_buf(false, true)
-      local window = Window:current():split { buffer = Buffer:from_bufnr(bufnr) }
-      assert.are.equal(bufnr, window:bufnr())
+      local buffer = Buffer.create { listed = false, scratch = true }
+      local window = Window:current():split { buffer = buffer }
+      assert.are.equal(buffer.bufnr, window:bufnr())
       window:close()
     end)
   end)
 
   describe('cursor', function()
     it('tracks the window cursor', function()
-      local bufnr = vim.api.nvim_create_buf(false, true)
-      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { 'foo', 'bar' })
+      local buffer = Buffer.create { listed = false, scratch = true }
+      vim.api.nvim_buf_set_lines(buffer.bufnr, 0, -1, false, { 'foo', 'bar' })
 
-      local buffer = Buffer:from_bufnr(bufnr)
       local window = Window:split { buffer = buffer }
 
       assert.are.same({ 1, 0 }, window:cursor())

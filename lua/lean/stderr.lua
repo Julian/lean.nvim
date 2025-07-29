@@ -16,23 +16,25 @@ local current = {}
 local stderr_height
 
 ---Open a window for the stderr buffer of the configured height.
-local function open_window(stderr_bufnr)
-  local old_win = Window:current()
+---@param stderr_buffer Buffer the buffer to open in the new window
+---@return Window stderr_window the newly created window
+local function open_window(stderr_buffer)
+  local initial_window = Window:current()
 
   -- split the infoview window if open
   local iv = infoview.get_current_infoview()
   if iv then
     iv:enter()
-    vim.cmd(('rightbelow sbuffer %d'):format(stderr_bufnr))
+    vim.cmd(('rightbelow sbuffer %d'):format(stderr_buffer.bufnr))
   else
-    vim.cmd(('botright sbuffer %d'):format(stderr_bufnr))
+    vim.cmd(('botright sbuffer %d'):format(stderr_buffer.bufnr))
   end
 
-  vim.cmd(('resize %d'):format(stderr_height))
-  local stderr_winnr = vim.api.nvim_get_current_win()
-  vim.bo[stderr_bufnr].filetype = 'leanstderr'
-  old_win:make_current()
-  return stderr_winnr
+  local stderr_window = Window:current()
+  stderr_window:set_height(stderr_height)
+  vim.bo[stderr_buffer.bufnr].filetype = 'leanstderr'
+  initial_window:make_current()
+  return stderr_window
 end
 
 ---Show stderr output in a separate stderr buffer.
@@ -45,10 +47,10 @@ function stderr.show(message)
         listed = false,
         scratch = true,
       }
-      current.winnr = nil
+      current.window = nil
     end
-    if not current.winnr or not vim.api.nvim_win_is_valid(current.winnr) then
-      current.winnr = open_window(current.buffer.bufnr)
+    if not current.window or not current.window:is_valid() then
+      current.window = open_window(current.buffer)
     end
     local lines = vim.split(message, '\n')
     local num_lines = vim.api.nvim_buf_line_count(current.buffer.bufnr)
@@ -57,8 +59,8 @@ function stderr.show(message)
     end
     num_lines = num_lines + #lines
     vim.api.nvim_buf_set_lines(current.buffer.bufnr, num_lines, num_lines, false, lines)
-    if vim.api.nvim_get_current_win() ~= current.winnr then
-      vim.api.nvim_win_set_cursor(current.winnr, { num_lines, 0 })
+    if not current.window:is_current() then
+      current.window:set_cursor { num_lines, 0 }
     end
   end)
 end

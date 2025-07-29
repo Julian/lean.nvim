@@ -24,6 +24,12 @@ function Window:buffer()
   return Buffer:from_bufnr(self:bufnr())
 end
 
+---Set the window's buffer.
+---@param buffer Buffer
+function Window:set_buffer(buffer)
+  vim.api.nvim_win_set_buf(self.id, buffer.bufnr)
+end
+
 ---Return the buffer number of the window.
 ---@return integer bufnr
 function Window:bufnr()
