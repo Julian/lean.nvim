@@ -368,21 +368,9 @@ function Element:div_from_path(path)
   return stack, self
 end
 
----@generic T
----@param arr T[]
----@param n integer
----@return T[]
-local function take(arr, n)
-  local res = {}
-  for i = 1, n do
-    table.insert(res, arr[i])
-  end
-  return res
-end
-
 ---Find the innermost element satisfying a predicate.
 ---@param path PathNode[]
----@param check fun(element:Element):any
+---@param check fun(_, element:Element):any
 ---@return Element found The element satisfying check
 ---@return Element[] stack The element stack up to and including that element
 ---@return PathNode[] subpath The subpath up to that element
@@ -393,11 +381,9 @@ function Element:find_innermost_along(path, check)
     return
   end
 
-  for i = #stack, 1, -1 do
-    local this_element = stack[i]
-    if check(this_element) then
-      return this_element, take(stack, i), take(path, i)
-    end
+  local i, element = vim.iter(stack):enumerate():rfind(check)
+  if i then
+    return element, vim.list_slice(stack, 1, i), vim.list_slice(path, 1, i)
   end
 end
 
@@ -470,7 +456,7 @@ end
 ---@param path PathNode[] the path to trigger the event at
 ---@param event ElementEvent the event to fire
 function Element:event(path, event, ...)
-  local event_element = self:find_innermost_along(path, function(element)
+  local event_element = self:find_innermost_along(path, function(_, element)
     return element.events and element.events[event]
   end)
   if not event_element then
@@ -712,7 +698,7 @@ function BufRenderer:hover(force_update_highlight)
   local hover_element, _, hover_element_path = self.element:find_innermost_along(
     path,
     ---@param element Element
-    function(element)
+    function(_, element)
       return element.highlightable
     end
   )
@@ -720,7 +706,7 @@ function BufRenderer:hover(force_update_highlight)
   local tt_parent_element, _, tt_parent_element_path = self.element:find_innermost_along(
     path,
     ---@param element Element
-    function(element)
+    function(_, element)
       return element.tooltip
     end
   )
