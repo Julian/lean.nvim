@@ -606,7 +606,9 @@ end
 
 ---Update the info contents.
 local function update_current_infoview()
-  if vim.bo.filetype ~= 'lean' then
+  if
+    vim.bo.filetype ~= 'lean' or vim.api.nvim_win_get_config(0).relative ~= '' -- floating window
+  then
     return
   end
   local current_infoview = infoview.get_current_infoview()
