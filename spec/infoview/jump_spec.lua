@@ -22,10 +22,10 @@ describe('infoview jumping', function()
 
     current_infoview:open()
     -- Both Lean and infoview windows exist
-    assert.windows.are(lean_window.id, current_infoview.window)
+    assert.windows.are { lean_window, current_infoview.window }
 
     vim.cmd.LeanGotoInfoview()
-    assert.current_window.is(Window:from_id(current_infoview.window))
+    assert.current_window.is(current_infoview.window)
   end)
 
   it('jumps back from infoview to the associated Lean file', function()

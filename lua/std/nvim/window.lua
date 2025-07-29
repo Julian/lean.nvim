@@ -125,6 +125,11 @@ function Window:close()
   vim.api.nvim_win_close(self.id, false)
 end
 
+---Force close the window.
+function Window:force_close()
+  vim.api.nvim_win_close(self.id, true)
+end
+
 -- Beyond the Neovim API...
 
 ---Move the cursor to a given position.

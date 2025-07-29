@@ -106,11 +106,11 @@ function Locations.clear(params)
 
   -- FIXME: The cursor nonsense is because we're improperly re-rendering
   --        more than we need to (and moving the cursor to the goal line)
-  local cursor = vim.api.nvim_win_get_cursor(infoview.window)
+  local cursor = infoview.window:cursor()
   infoview.info.last_window:call(function()
     infoview:__update()
   end)
-  vim.api.nvim_win_set_cursor(infoview.window, cursor)
+  infoview.window:set_cursor(cursor)
 end
 
 ---Is the given location selected?
@@ -148,11 +148,11 @@ function Locations:toggle_selection(loc)
 
   -- FIXME: The cursor nonsense is because we're improperly re-rendering
   --        more than we need to (and moving the cursor to the goal line)
-  local cursor = vim.api.nvim_win_get_cursor(infoview.window)
+  local cursor = infoview.window:cursor()
   infoview.info.last_window:call(function()
     infoview:__update()
   end)
-  vim.api.nvim_win_set_cursor(infoview.window, cursor)
+  infoview.window:set_cursor(cursor)
 end
 
 ---A Locations object which represents those within the given "template" location.

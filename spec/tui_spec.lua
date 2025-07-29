@@ -588,7 +588,7 @@ describe(
       -- FIXME: Are we abandoning tooltip windows?
       -- Why is clear_all so hard to define?
       tooltip:close()
-      assert.windows.are { initial_window.id }
+      assert.windows.are { initial_window }
     end)
 
     it('restricts the cursor to the entry lines', function()
@@ -614,18 +614,18 @@ describe(
     end)
 
     it('autocloses if the window is left', function()
-      assert.windows.are { initial_window.id }
+      assert.windows.are { initial_window }
 
       tui.select_many({ 'foo', 'bar', 'baz', 'quux' }, nil, function() end)
 
       local selection_window = helpers.wait_for_new_window { initial_window }
-      assert.windows.are { initial_window.id, selection_window.id }
+      assert.windows.are { initial_window, selection_window }
 
       vim.cmd.wincmd '%'
 
       -- FIXME: Here too we don't actually end up with just the initial window
       -- in tests...
-      -- assert.windows.are{ initial_window.id }
+      -- assert.windows.are{ initial_window }
     end)
   end)
 )

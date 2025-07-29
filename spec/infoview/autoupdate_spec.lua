@@ -95,7 +95,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('does not error while closed and continues updating when reopened', function()
-    assert.windows.are(lean_window.id, infoview.get_current_infoview().window)
+    assert.windows.are { lean_window, infoview.get_current_infoview().window }
 
     infoview.close()
 
@@ -119,7 +119,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('does not error while closed manually and continues updating when reopened', function()
-    assert.windows.are(lean_window.id, infoview.get_current_infoview().window)
+    assert.windows.are { lean_window, infoview.get_current_infoview().window }
 
     infoview.go_to()
     vim.cmd.quit { bang = true }
@@ -149,7 +149,7 @@ describe('infoview content (auto-)update', function()
   end)
 
   it('does not have line contents while closed', function()
-    assert.windows.are(lean_window.id, infoview.get_current_infoview().window)
+    assert.windows.are { lean_window, infoview.get_current_infoview().window }
     infoview.close()
     assert.has.errors(function()
       infoview.get_current_infoview():get_lines()
@@ -210,7 +210,7 @@ describe('infoview content (auto-)update', function()
   describe('in multiple tabs', function()
     it('updates separate infoviews independently', function()
       local tab1_infoview = infoview.get_current_infoview()
-      assert.windows.are(lean_window.id, tab1_infoview.window)
+      assert.windows.are { lean_window, tab1_infoview.window }
 
       helpers.move_cursor { to = { 2, 0 } }
       assert.infoview_contents.are [[

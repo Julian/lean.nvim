@@ -25,14 +25,14 @@ describe('infoview', function()
     --        and ensure this test properly fails.
     vim.cmd.edit { fixtures.project.child 'Example.lean', bang = true }
     lean_window = Window:current()
-    assert.windows.are(lean_window.id)
+    assert.windows.are { lean_window }
   end)
 
   it('allows infoviews to be manually opened', function()
-    assert.windows.are(lean_window.id)
+    assert.windows.are { lean_window }
     helpers.move_cursor { to = { 3, 27 } }
     infoview.open()
-    assert.windows.are(lean_window.id, infoview.get_current_infoview().window)
+    assert.windows.are { lean_window, infoview.get_current_infoview().window }
     assert.infoview_contents.are [[
       ▼ expected type (3:28-3:36)
       ⊢ Nat

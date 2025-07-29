@@ -15,30 +15,30 @@ describe('Infoview.toggle', function()
     lean_window = Window:current()
     local current_infoview = infoview.get_current_infoview()
 
-    assert.windows.are(lean_window.id, current_infoview.window)
+    assert.windows.are { lean_window, current_infoview.window }
 
     current_infoview:toggle()
-    assert.windows.are(lean_window.id)
+    assert.windows.are { lean_window }
   end)
 
   it('opens a closed infoview', function()
-    assert.windows.are(lean_window.id)
+    assert.windows.are { lean_window }
     local current_infoview = infoview.get_current_infoview()
     current_infoview:toggle()
-    assert.windows.are(lean_window.id, current_infoview.window)
+    assert.windows.are { lean_window, current_infoview.window }
   end)
 
   it('toggles back and forth', function()
     local current_infoview = infoview.get_current_infoview()
-    assert.windows.are(lean_window.id, current_infoview.window)
+    assert.windows.are { lean_window, current_infoview.window }
 
     current_infoview:toggle()
-    assert.windows.are(lean_window.id)
+    assert.windows.are { lean_window }
 
     current_infoview:toggle()
-    assert.windows.are(lean_window.id, current_infoview.window)
+    assert.windows.are { lean_window, current_infoview.window }
 
     current_infoview:toggle()
-    assert.windows.are(lean_window.id)
+    assert.windows.are { lean_window }
   end)
 end)

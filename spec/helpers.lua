@@ -330,15 +330,22 @@ local function has_open_windows(_, arguments)
   local expected
   if arguments.n == 1 and type(arguments[1]) == 'table' then
     expected = arguments[1]
-    expected.n = #expected
   else
     expected = arguments
   end
+
+  local ids = vim
+    .iter(expected)
+    :map(function(window)
+      return window.id
+    end)
+    :totable()
+  table.sort(ids)
+
   local got = vim.api.nvim_tabpage_list_wins(0)
-  got.n = #got
-  table.sort(expected)
   table.sort(got)
-  assert.are.same(expected, got)
+
+  assert.are.same(ids, got)
   return true
 end
 

@@ -411,7 +411,7 @@ describe(
             it('opens a diff window when placed', function()
               lean_window = Window:current()
               local current_infoview = infoview.get_current_infoview()
-              assert.windows.are { lean_window.id, current_infoview.window }
+              assert.windows.are { lean_window, current_infoview.window }
 
               helpers.move_cursor { to = { 4, 5 } }
 
@@ -448,11 +448,11 @@ describe(
               ]]
 
               local diff_window =
-                helpers.wait_for_new_window { lean_window, Window:from_id(current_infoview.window) }
+                helpers.wait_for_new_window { lean_window, current_infoview.window }
 
-              assert.windows.are { lean_window.id, current_infoview.window, diff_window.id }
+              assert.windows.are { lean_window, current_infoview.window, diff_window }
 
-              assert.is_true(vim.wo[current_infoview.window].diff)
+              assert.is_true(vim.wo[current_infoview.window.id].diff)
               assert.is_true(vim.wo[diff_window.id].diff)
             end)
 
@@ -480,26 +480,26 @@ describe(
             it('closes the diff window if the infoview is closed', function()
               assert.is.equal(3, #Tab:current():windows())
               infoview.close()
-              assert.windows.are { lean_window.id }
+              assert.windows.are { lean_window }
             end)
 
             it('reopens a diff window when the infoview is reopened', function()
-              assert.windows.are { lean_window.id }
+              assert.windows.are { lean_window }
 
               local current_infoview = infoview.open()
               local diff_window =
-                helpers.wait_for_new_window { lean_window, Window:from_id(current_infoview.window) }
+                helpers.wait_for_new_window { lean_window, current_infoview.window }
 
-              assert.windows.are { lean_window.id, current_infoview.window, diff_window.id }
+              assert.windows.are { lean_window, current_infoview.window, diff_window }
 
-              assert.is_true(vim.wo[current_infoview.window].diff)
+              assert.is_true(vim.wo[current_infoview.window.id].diff)
               assert.is_true(vim.wo[diff_window.id].diff)
             end)
 
             it('closes when cleared', function()
               assert.is.equal(3, #Tab:current():windows())
               infoview.clear_diff_pin()
-              assert.windows.are { lean_window.id, infoview.get_current_infoview().window }
+              assert.windows.are { lean_window, infoview.get_current_infoview().window }
             end)
 
             it('can be re-placed', function()
@@ -513,10 +513,10 @@ describe(
               assert.is.equal(3, #Tab:current():windows())
               local current_infoview = infoview.get_current_infoview()
               local diff_window =
-                helpers.wait_for_new_window { lean_window, Window:from_id(current_infoview.window) }
+                helpers.wait_for_new_window { lean_window, current_infoview.window }
               diff_window:make_current()
               vim.cmd.quit()
-              assert.windows.are { lean_window.id, infoview.get_current_infoview().window }
+              assert.windows.are { lean_window, infoview.get_current_infoview().window }
             end)
           end
         )

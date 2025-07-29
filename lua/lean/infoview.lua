@@ -102,14 +102,14 @@ Info.__index = Info
 ---A "view" on an info (i.e. window).
 ---@class Infoview
 ---@field info Info
----@field window integer
+---@field window Window
 ---@field private __orientation "vertical"|"horizontal"
 ---@field private __orientation_pref "auto"|"vertical"|"horizontal"
 ---@field private __width number
 ---@field private __height number
 ---@field private __horizontal_position "top"|"bottom"
 ---@field private __separate_tab? boolean
----@field private __diff_win integer
+---@field private __diff_win? Window
 local Infoview = {}
 Infoview.__index = Infoview
 
@@ -183,7 +183,7 @@ function Infoview:open()
   -- properly set in the infoview, since the buffer isn't actually shown in a
   -- window until we run nvim_win_set_buf.
   vim.bo[self.info.__renderer.buffer.bufnr].filetype = 'leaninfo'
-  self.window = vim.api.nvim_get_current_win()
+  self.window = Window:current()
 
   window_before_split:make_current()
 
@@ -203,26 +203,26 @@ end
 
 ---Move this infoview's window to the right of the tab, then size it properly.
 function Infoview:move_to_right()
-  vim.api.nvim_win_call(self.window, function()
+  self.window:call(function()
     vim.cmd.wincmd 'L'
   end)
-  vim.api.nvim_win_set_width(self.window, options.width)
+  self.window:set_width(options.width)
 end
 
 ---Move this infoview's window to the top of the tab, then size it properly.
 function Infoview:move_to_top()
-  vim.api.nvim_win_call(self.window, function()
+  self.window:call(function()
     vim.cmd.wincmd 'K'
   end)
-  vim.api.nvim_win_set_height(self.window, options.height)
+  self.window:set_height(options.height)
 end
 
 ---Move this infoview's window to the bottom of the tab, then size it properly.
 function Infoview:move_to_bottom()
-  vim.api.nvim_win_call(self.window, function()
+  self.window:call(function()
     vim.cmd.wincmd 'J'
   end)
-  vim.api.nvim_win_set_height(self.window, options.height)
+  self.window:set_height(options.height)
 end
 
 ---Move this infoview's window (vertically or horizontally) based on the
@@ -237,9 +237,9 @@ function Infoview:reposition()
   -- Resize but don't move window layouts if there are more than 2 windows.
   if #vim.api.nvim_tabpage_list_wins(0) ~= 2 then
     if orientation == 'col' then
-      vim.api.nvim_win_set_height(self.window, options.height)
+      self.window:set_height(options.height)
     else
-      vim.api.nvim_win_set_width(self.window, options.width)
+      self.window:set_width(options.width)
     end
 
     return
@@ -272,7 +272,7 @@ function Infoview:move_cursor_to_goal(n)
     if line:find '^⊢ ' then
       n = n - 1
       if n == 0 then
-        vim.api.nvim_win_call(self.window, function()
+        self.window:call(function()
           vim.cmd.normal { i .. 'z-2l', bang = true }
         end)
         break
@@ -283,8 +283,8 @@ end
 
 ---Enter the given infoview (i.e. set the current window to it).
 function Infoview:enter()
-  if self.window and vim.api.nvim_win_is_valid(self.window) then
-    vim.api.nvim_set_current_win(self.window)
+  if self.window and self.window:is_valid() then
+    self.window:make_current()
   end
 end
 
@@ -340,7 +340,7 @@ function Infoview:select_view_options()
       return previous[choice.option]
     end,
     title = 'View Options',
-    relative_win = self.window,
+    relative_win = self.window.id,
   }, function(selected, unselected)
     -- XXX: This needs fixing when there are multiple infoviews.
     local view_options = {}
@@ -382,7 +382,7 @@ end
 
 ---API for opening an auxilliary window relative to the current infoview window.
 ---@param buf number buffer to put in the new window
----@return number? new window handle or nil if the infoview is closed
+---@return Window? window a new window handle, or nil if the infoview is closed
 function Infoview:__open_win(buf)
   if not self.window then
     return
@@ -403,9 +403,9 @@ function Infoview:__open_win(buf)
       vim.cmd('resize ' .. self.__height)
     end
   end
-  local new_win = vim.api.nvim_get_current_win()
+  local new_win = Window:current()
 
-  vim.api.nvim_win_set_buf(new_win, buf)
+  vim.api.nvim_win_set_buf(new_win.id, buf)
   vim.bo[buf].filetype = 'leaninfo'
 
   window_before_split:make_current()
@@ -415,22 +415,22 @@ function Infoview:__open_win(buf)
 end
 
 function Infoview:__refresh()
-  log:debug { message = 'refreshing infoview', window = self.window }
+  log:debug { message = 'refreshing infoview', window = self.window.id }
 
   local valid_windows = {}
 
   for _, win in pairs { self.window, self.__diff_win } do
-    if win and vim.api.nvim_win_is_valid(win) then
+    if win and win:is_valid() then
       table.insert(valid_windows, win)
     end
   end
 
   for _, win in pairs(valid_windows) do
-    vim.wo[win].winfixwidth = true
+    vim.wo[win.id].winfixwidth = true
   end
 
   for _, win in pairs(valid_windows) do
-    vim.api.nvim_win_call(win, function()
+    win:call(function()
       if self.__orientation == 'vertical' then
         vim.cmd('vertical resize ' .. self.__width)
       else
@@ -463,7 +463,7 @@ end
 
 --FIXME: We shouldn't have both __refresh and __update
 function Infoview:__update()
-  log:debug { message = 'updating infoview', window = self.window }
+  log:debug { message = 'updating infoview', window = self.window and self.window.id or nil }
 
   local info = self.info
   if info.__win_event_disable then
@@ -505,7 +505,7 @@ function Infoview:__refresh_diff()
   end
 
   for _, win in pairs { self.__diff_win, self.window } do
-    vim.api.nvim_win_call(win, function()
+    win:call(function()
       vim.cmd.diffthis()
       vim.wo.foldmethod = 'manual'
       vim.wo.wrap = true
@@ -521,15 +521,15 @@ function Infoview:__close_diff()
     return
   end
 
-  vim.api.nvim_win_call(self.window, function()
+  self.window:call(function()
     vim.cmd.diffoff()
   end)
 
-  if vim.api.nvim_win_is_valid(self.__diff_win) then
-    vim.api.nvim_win_call(self.__diff_win, function()
+  if self.__diff_win:is_valid() then
+    self.__diff_win:call(function()
       vim.cmd.diffoff()
     end)
-    vim.api.nvim_win_close(self.__diff_win, true)
+    self.__diff_win:force_close()
   end
 
   self.__diff_win = nil
@@ -543,7 +543,7 @@ function Infoview:close()
     return
   end
   self:__close_diff()
-  vim.api.nvim_win_close(self.window, true)
+  self.window:force_close()
   self:__was_closed()
 end
 
@@ -807,7 +807,7 @@ function Info:render()
   end
 
   -- Set the cursor to the line with first goal (just after the marker).
-  if self.__infoview.window and vim.api.nvim_get_current_win() ~= self.__infoview.window then
+  if self.__infoview.window and not self.__infoview.window:is_current() then
     self.__infoview:move_cursor_to_goal()
   end
 
@@ -1180,7 +1180,7 @@ function infoview.__update_pin_by_uri(uri)
       log:debug {
         message = 'updating pin',
         uri = uri,
-        window = pin.__info.__infoview.window,
+        window = pin.__info.__infoview.window.id,
       }
       pin:update()
     end

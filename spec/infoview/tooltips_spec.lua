@@ -31,8 +31,8 @@ describe(
       current_infoview:enter()
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
 
-      local known_windows = { lean_window, Window:from_id(current_infoview.window) }
-      assert.windows.are(lean_window.id, current_infoview.window)
+      local known_windows = { lean_window, current_infoview.window }
+      assert.windows.are(known_windows)
 
       helpers.feed '<CR>'
       local tooltip_bufnr = helpers.wait_for_new_window(known_windows):bufnr()
@@ -43,7 +43,7 @@ describe(
 
       -- Close the tooltip.
       helpers.feed '<Esc>'
-      assert.windows.are(lean_window.id, current_infoview.window)
+      assert.windows.are(known_windows)
     end)
 
     it('does not abandon tooltips when the infoview is closed', function()
@@ -56,7 +56,7 @@ describe(
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
       helpers.feed '<CR>'
 
-      helpers.wait_for_new_window { tab2_window, Window:from_id(tab2_infoview.window) }
+      helpers.wait_for_new_window { tab2_window, tab2_infoview.window }
       assert.is.equal(3, #Tab:current():windows())
 
       -- Now close the infoview entirely, and the tooltip should close too.
@@ -78,13 +78,13 @@ describe(
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
       helpers.feed '<CR>'
 
-      helpers.wait_for_new_window { tab2_window, Window:from_id(tab2_infoview.window) }
+      helpers.wait_for_new_window { tab2_window, tab2_infoview.window }
       assert.is.equal(3, #Tab:current():windows())
 
       assert.is.equal(2, #Tab:all())
 
       -- Now close the other 2 windows, and the tooltip should close too.
-      vim.api.nvim_win_close(tab2_infoview.window, false)
+      tab2_infoview.window:close()
       tab2_window:close()
 
       assert.is.equal(1, #Tab:all())

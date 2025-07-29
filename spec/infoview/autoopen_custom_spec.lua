@@ -24,11 +24,11 @@ describe('infoview custom autoopen', function()
     local lean_window = Window:current()
 
     vim.cmd.edit { fixtures.project.some_existing_file, bang = true }
-    assert.windows.are(lean_window.id)
+    assert.windows.are { lean_window }
 
     should_autoopen = true
 
     vim.cmd.edit { fixtures.project.some_nested_existing_file, bang = true }
-    assert.windows.are(lean_window.id, infoview.get_current_infoview().window)
+    assert.windows.are { lean_window, infoview.get_current_infoview().window }
   end)
 end)

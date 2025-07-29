@@ -24,7 +24,7 @@ describe('infoview window', function()
     assert.are.same({
       'col',
       { -- see :h winlayout
-        { 'leaf', infoview.get_current_infoview().window },
+        { 'leaf', infoview.get_current_infoview().window.id },
         { 'leaf', lean_window.id },
       },
     }, vim.fn.winlayout())
@@ -35,7 +35,7 @@ describe('infoview window', function()
     assert.are.same({
       'col',
       { -- see :h winlayout
-        { 'leaf', infoview.get_current_infoview().window },
+        { 'leaf', infoview.get_current_infoview().window.id },
         { 'leaf', lean_window.id },
       },
     }, vim.fn.winlayout())
@@ -46,7 +46,7 @@ describe('infoview window', function()
     assert.are.same({
       'col',
       { -- see :h winlayout
-        { 'leaf', infoview.get_current_infoview().window },
+        { 'leaf', infoview.get_current_infoview().window.id },
         { 'leaf', lean_window.id },
       },
     }, vim.fn.winlayout())

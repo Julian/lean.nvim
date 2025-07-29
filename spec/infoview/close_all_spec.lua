@@ -12,10 +12,10 @@ describe('infoview.close_all', function()
 
     vim.cmd.edit { 'temp.lean', bang = true }
     local current_infoview = infoview.open()
-    assert.windows.are(lean_window.id, current_infoview.window)
+    assert.windows.are { lean_window, current_infoview.window }
 
     infoview.close_all()
-    assert.windows.are(lean_window.id)
+    assert.windows.are { lean_window }
   end)
 
   it('closes many infoviews, some already closed', function()
@@ -42,10 +42,10 @@ describe('infoview.close_all', function()
     local temp4_infoview = infoview.open()
 
     assert.are.same(vim.tbl_map(Tab.windows, tabpages), {
-      { temp1, Window:from_id(temp1_infoview.window) },
-      { temp2, Window:from_id(temp2_infoview.window) },
+      { temp1, temp1_infoview.window },
+      { temp2, temp2_infoview.window },
       { temp3 },
-      { temp4, Window:from_id(temp4_infoview.window) },
+      { temp4, temp4_infoview.window },
     })
 
     infoview.close_all()

@@ -22,20 +22,20 @@ describe('infoview window', function()
     vim.o.lines = 80
     local current_infoview = infoview.open()
     assert.are.same(
-      { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
+      { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window.id } } },
       vim.fn.winlayout()
     )
-    assert.are.same(vim.api.nvim_win_get_height(infoview.get_current_infoview().window), HEIGHT)
+    assert.are.same(infoview.get_current_infoview().window:height(), HEIGHT)
     vim.o.columns = 80
     vim.o.lines = 24
 
     infoview.reposition()
 
     assert.are.same(
-      { 'row', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
+      { 'row', { { 'leaf', lean_window }, { 'leaf', current_infoview.window.id } } },
       vim.fn.winlayout()
     )
-    assert.are.same(vim.api.nvim_win_get_width(infoview.get_current_infoview().window), WIDTH)
+    assert.are.same(infoview.get_current_infoview().window:width(), WIDTH)
 
     infoview.close()
   end)
@@ -46,7 +46,7 @@ describe('infoview window', function()
     local current_infoview = infoview.open()
     vim.cmd.wincmd 'L'
     assert.are.same(
-      { 'row', { { 'leaf', current_infoview.window }, { 'leaf', lean_window } } },
+      { 'row', { { 'leaf', current_infoview.window.id }, { 'leaf', lean_window } } },
       vim.fn.winlayout()
     )
     vim.o.columns = 80
@@ -55,7 +55,7 @@ describe('infoview window', function()
     infoview.reposition()
 
     assert.are.same(
-      { 'row', { { 'leaf', current_infoview.window }, { 'leaf', lean_window } } },
+      { 'row', { { 'leaf', current_infoview.window.id }, { 'leaf', lean_window } } },
       vim.fn.winlayout()
     )
 
@@ -67,20 +67,20 @@ describe('infoview window', function()
     vim.o.lines = 24
     local current_infoview = infoview.open()
     assert.are.same(
-      { 'row', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
+      { 'row', { { 'leaf', lean_window }, { 'leaf', current_infoview.window.id } } },
       vim.fn.winlayout()
     )
-    assert.are.same(vim.api.nvim_win_get_width(infoview.get_current_infoview().window), WIDTH)
+    assert.are.same(infoview.get_current_infoview().window:width(), WIDTH)
     vim.o.columns = 24
     vim.o.lines = 80
 
     infoview.reposition()
 
     assert.are.same(
-      { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
+      { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window.id } } },
       vim.fn.winlayout()
     )
-    assert.are.same(vim.api.nvim_win_get_height(infoview.get_current_infoview().window), HEIGHT)
+    assert.are.same(infoview.get_current_infoview().window:height(), HEIGHT)
 
     infoview.close()
   end)
@@ -91,7 +91,7 @@ describe('infoview window', function()
     local current_infoview = infoview.open()
     vim.cmd.wincmd 'K'
     assert.are.same(
-      { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
+      { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window.id } } },
       vim.fn.winlayout()
     )
     vim.o.columns = 24
@@ -100,7 +100,7 @@ describe('infoview window', function()
     infoview.reposition()
 
     assert.are.same(
-      { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window } } },
+      { 'col', { { 'leaf', lean_window }, { 'leaf', current_infoview.window.id } } },
       vim.fn.winlayout()
     )
 
@@ -131,7 +131,7 @@ describe('infoview window', function()
     infoview.reposition()
     assert.are.same(layout, vim.fn.winlayout())
 
-    assert.are.same(vim.api.nvim_win_get_width(infoview.get_current_infoview().window), WIDTH)
+    assert.are.same(infoview.get_current_infoview().window:width(), WIDTH)
 
     infoview.close()
   end)

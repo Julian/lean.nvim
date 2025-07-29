@@ -25,7 +25,7 @@ describe('infoview window', function()
       'row',
       { -- see :h winlayout
         { 'leaf', lean_window.id },
-        { 'leaf', infoview.get_current_infoview().window },
+        { 'leaf', infoview.get_current_infoview().window.id },
       },
     }, vim.fn.winlayout())
     assert.current_window.is(lean_window)
@@ -53,7 +53,7 @@ describe('infoview window', function()
       'row',
       { -- see :h winlayout
         { 'col', { { 'leaf', top_window.id }, { 'leaf', bottom_window.id } } },
-        { 'leaf', infoview.get_current_infoview().window },
+        { 'leaf', infoview.get_current_infoview().window.id },
       },
     }, vim.fn.winlayout())
   end)
