@@ -340,7 +340,7 @@ function Infoview:select_view_options()
       return previous[choice.option]
     end,
     title = 'View Options',
-    relative_win = self.window.id,
+    relative_win = self.window,
   }, function(selected, unselected)
     -- XXX: This needs fixing when there are multiple infoviews.
     local view_options = {}

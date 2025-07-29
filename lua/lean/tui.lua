@@ -866,7 +866,7 @@ end
 ---@field start_selected? fun(c: any): boolean whether the item should start initially selected
 ---@field title? string an optional title, typically used for the prompt
 ---@field footer? string an optional footer, typically used for instructions
----@field relative_win? number a window ID to open the popup relative to
+---@field relative_win? Window a window to open the popup relative to
 
 ---Interactively select from a set of choices.
 ---@generic C : any
@@ -887,7 +887,7 @@ local function select_many(choices, opts, on_choices)
   local win_options = {
     style = 'minimal',
     relative = 'win',
-    win = opts.relative_win,
+    win = opts.relative_win and opts.relative_win.id or 0,
     border = 'rounded',
     title = opts.title,
     footer =  '<Tab>: toggle, <CR>: confirm, <Esc>: cancel',
