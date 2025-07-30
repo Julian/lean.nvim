@@ -240,6 +240,60 @@ describe('Element', function()
       local foo = Element:new { text = 'foo', name = 'foo-name' }
       assert.is.same(Element:concat({ foo }, '\n'), foo)
     end)
+
+    describe('with opts', function()
+      it('preserves opts when elements has one item', function()
+        local called = false
+        local foo = Element:new { text = 'foo' }
+        local element = Element:concat({ foo }, '\n', {
+          events = {
+            test_event = function()
+              called = true
+            end,
+          },
+          name = 'single_concat',
+        })
+
+        assert.is_not_nil(element)
+        assert.is.same('single_concat', element.name)
+        assert.is.not_nil(element.events.test_event)
+
+        element.events.test_event()
+        assert.is_true(called)
+      end)
+
+      it('preserves opts when elements has multiple items', function()
+        local called = false
+        local foo = Element:new { text = 'foo' }
+        local bar = Element:new { text = 'bar' }
+        local element = Element:concat({ foo, bar }, '\n', {
+          events = {
+            test_event = function()
+              called = true
+            end,
+          },
+          name = 'multi_concat',
+        })
+
+        assert.is_not_nil(element)
+        assert.is.same('multi_concat', element.name)
+        assert.is.not_nil(element.events.test_event)
+
+        element.events.test_event()
+        assert.is_true(called)
+      end)
+
+      it('errors when given opts with no elements', function()
+        assert.has_error(function()
+          Element:concat({}, '\n', {
+            events = {
+              test_event = function() end,
+            },
+            name = 'empty_concat',
+          })
+        end, 'opts: expected nil, got table')
+      end)
+    end)
   end)
 
   describe(':walk', function()

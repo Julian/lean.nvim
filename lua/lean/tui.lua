@@ -129,10 +129,14 @@ end
 ---@return Element?
 function Element:concat(elements, sep, opts)
   if #elements == 0 then
+    vim.validate('opts', opts, 'nil')
     return
   elseif #elements == 1 then
-    return elements[1]
+    return opts
+      and self:new(vim.tbl_extend('error', opts, { children = { elements[1] } }))
+      or elements[1]
   end
+
   local separator = Element:new{ text = sep }
   return self:new(
     vim.tbl_extend('error', opts or {}, {

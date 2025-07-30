@@ -35,14 +35,50 @@ describe(
       assert.windows.are(known_windows)
 
       helpers.feed '<CR>'
-      local tooltip_bufnr = helpers.wait_for_new_window(known_windows):bufnr()
+      local tooltip = helpers.wait_for_new_window(known_windows)
       assert.contents.are {
         'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. ',
-        bufnr = tooltip_bufnr,
+        bufnr = tooltip:bufnr(),
       }
 
       -- Close the tooltip.
       helpers.feed '<Esc>'
+      assert.windows.are(known_windows)
+    end)
+
+    it('dismisses nested tooltips', function()
+      helpers.move_cursor { to = { 1, 8 } }
+      assert.infoview_contents.are [[
+        ▼ expected type (1:8-1:11)
+        ⊢ Type
+
+        ▼ 1:1-1:7: information:
+        Nat : Type
+      ]]
+
+      current_infoview:enter()
+      helpers.search 'Type'
+
+      local known_windows = { lean_window, current_infoview.window }
+      assert.windows.are(known_windows)
+
+      helpers.feed '<CR>'
+      local tooltip = helpers.wait_for_new_window(known_windows)
+      assert.current_window.is(current_infoview.window)
+
+      helpers.feed '<Tab>'
+      assert.current_window.is(tooltip)
+
+      local with_tooltip = vim.list_extend(vim.deepcopy(known_windows), { tooltip })
+
+      helpers.search 'Type 1'
+      helpers.feed '<CR>'
+
+      helpers.wait_for_new_window(with_tooltip)
+
+      helpers.feed '<Esc>'
+
+      -- All tooltips are gone.
       assert.windows.are(known_windows)
     end)
 
@@ -90,6 +126,68 @@ describe(
       assert.is.equal(1, #Tab:all())
     end)
   end)
+)
+
+describe(
+  'tactic mode',
+  helpers.clean_buffer(
+    [[
+      example : Type := by
+        sorry
+    ]],
+    function()
+      local lean_window = Window:current()
+      local current_infoview = infoview.get_current_infoview()
+
+      it('shows widget tooltips', function()
+        helpers.search 'sorry'
+        assert.infoview_contents.are [[⊢ Type]]
+
+        local known_windows = { lean_window, current_infoview.window }
+        assert.windows.are(known_windows)
+
+        current_infoview:enter()
+        helpers.search 'ype' -- we're actually already on T
+        helpers.feed '<CR>'
+        local tooltip = helpers.wait_for_new_window(known_windows)
+        assert.contents.are {
+          'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. ',
+          bufnr = tooltip:bufnr(),
+        }
+
+        -- Close the tooltip - this should work if clear_all event is preserved
+        helpers.feed '<Esc>'
+        assert.windows.are(known_windows)
+      end)
+
+      it('dismisses nested tooltips in simple tactic mode', function()
+        assert.infoview_contents.are [[⊢ Type]]
+
+        local known_windows = { lean_window, current_infoview.window }
+        assert.windows.are(known_windows)
+
+        current_infoview:enter()
+        helpers.search 'pe' -- we're actually already on y
+        helpers.feed '<CR>'
+        local tooltip = helpers.wait_for_new_window(known_windows)
+        assert.current_window.is(current_infoview.window)
+
+        helpers.feed '<Tab>'
+        assert.current_window.is(tooltip)
+
+        local with_tooltip = vim.list_extend(vim.deepcopy(known_windows), { tooltip })
+
+        helpers.search 'Type 1'
+        helpers.feed '<CR>'
+        helpers.wait_for_new_window(with_tooltip)
+
+        helpers.feed '<Esc>'
+
+        -- All tooltips are gone.
+        assert.windows.are(known_windows)
+      end)
+    end
+  )
 )
 
 describe(
