@@ -341,7 +341,7 @@ function Infoview:select_view_options()
       return previous[choice.option]
     end,
     title = 'View Options',
-    relative_win = self.window,
+    relative_window = self.window,
   }, function(selected, unselected)
     -- XXX: This needs fixing when there are multiple infoviews.
     local view_options = {}
@@ -1420,7 +1420,7 @@ end
 function infoview.go_to()
   local curr_info = infoview.open().info
   -- if there is no last win, just go straight to the window itself
-  if not curr_info.__renderer:last_win_valid() then
+  if not curr_info.__renderer:last_window_valid() then
     infoview.get_current_infoview():enter()
   else
     curr_info.__renderer:enter_win()

@@ -1,6 +1,7 @@
 local async = require 'plenary.async'
 
 local Buffer = require 'std.nvim.buffer'
+local Window = require 'std.nvim.window'
 
 local log = require 'lean.log'
 local util = require 'lean._util'
@@ -56,7 +57,7 @@ Element.__index = Element
 ---@field element Element the element rendered by this renderer
 ---@field lines? string[] Rendered lines.
 ---@field path? PathNode[] Current cursor path
----@field last_win? integer Window number of the last event
+---@field last_window? Window window of the last event
 ---@field keymaps table Extra keymaps (inherited by tooltips)
 ---@field hover_range? integer[][] (0,0)-range of the highlighted node
 ---@field tooltip? BufRenderer currently open tooltip
@@ -603,11 +604,10 @@ function BufRenderer:render()
     -- TODO: cache div_from_path() return value to use in hover()
     if not self.element:div_from_path(self.path) then
       self.path = nil
-    elseif self:last_win_valid() then
+    elseif self:last_window_valid() then
       local raw_pos, offset = self.element:pos_from_path(self.path)
       local pos = raw_pos_to_pos(raw_pos + offset, lines)
-      pos[1] = pos[1] + 1
-      vim.api.nvim_win_set_cursor(self.last_win, pos)
+      self.last_window:set_cursor { pos[1] + 1, pos[2] }
     end
   end
 
@@ -615,21 +615,21 @@ function BufRenderer:render()
 end
 
 function BufRenderer:enter_tooltip()
-  if self.tooltip and self.tooltip:last_win_valid() then
-    vim.api.nvim_set_current_win(self.tooltip.last_win)
+  if self.tooltip and self.tooltip:last_window_valid() then
+    self.tooltip.last_window:make_current()
   end
 end
 
 function BufRenderer:goto_parent_tooltip()
-  if self.parent and self.parent:last_win_valid() then
-    vim.api.nvim_set_current_win(self.parent.last_win)
+  if self.parent and self.parent:last_window_valid() then
+    self.parent.last_window:make_current()
   end
 end
 
-function BufRenderer:last_win_valid()
-  return self.last_win
-    and vim.api.nvim_win_is_valid(self.last_win)
-    and vim.api.nvim_win_get_buf(self.last_win) == self.buffer.bufnr
+function BufRenderer:last_window_valid()
+  return self.last_window
+    and self.last_window:is_valid()
+    and self.last_window:bufnr() == self.buffer.bufnr
 end
 
 ---Checks if two paths are equal, ignoring auxillary metadata (e.g. offsets)
@@ -658,17 +658,18 @@ local function path_equal(path_a, path_b)
   return true
 end
 
-function BufRenderer:update_cursor(win)
-  win = win or vim.api.nvim_get_current_win()
-  if vim.api.nvim_win_get_buf(win) == self.buffer.bufnr then
-    self.last_win = win
+---@param window Window?
+function BufRenderer:update_cursor(window)
+  window = window or Window:current()
+  if window:bufnr() == self.buffer.bufnr then
+    self.last_window = window
   end
-  if not self:last_win_valid() then
+  if not self:last_window_valid() then
     return
   end
 
   local path_before = self.path
-  local cursor_pos = vim.api.nvim_win_get_cursor(self.last_win)
+  local cursor_pos = self.last_window:cursor()
   local raw_pos = pos_to_raw_pos(cursor_pos, self.lines)
   if raw_pos then
     self.path = self.element:path_from_pos(raw_pos)
@@ -742,24 +743,18 @@ function BufRenderer:hover(force_update_highlight)
       }
     end
 
-    local win_options = {
-      relative = 'win',
-      win = self.last_win,
-      style = 'minimal',
-      width = width,
-      height = height,
-      border = 'rounded',
-      bufpos = bufpos,
-      zindex = 50 + self.tooltip.buffer.bufnr, -- later tooltips are guaranteed to have greater buffer handles
-    }
-
-    if not self.tooltip:last_win_valid() then
-      -- fresh non-reused tooltip, open window
-      self.tooltip.last_win = vim.api.nvim_open_win(
-        self.tooltip.buffer.bufnr,
-        false,  -- avoid firing update_cursor by disabling the autocmds
-        vim.tbl_extend('error', win_options, { noautocmd = true } )
-      )
+    if not self.tooltip:last_window_valid() then
+      self.tooltip.last_window = self.last_window:float {
+        buffer = self.tooltip.buffer,
+        enter = false,  -- avoid firing update_cursor by disabling the autocmds
+        noautocmd = true,
+        style = 'minimal',
+        width = width,
+        height = height,
+        border = 'rounded',
+        bufpos = bufpos,
+        zindex = 50 + self.tooltip.buffer.bufnr, -- later tooltips are guaranteed to have greater buffer handles
+      }
       -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
       vim.cmd.redraw()
     end
@@ -822,8 +817,8 @@ function BufRenderer:make_event_context()
       self:hover()
     end,
     jump_to_last_window = function()
-      if self:last_win_valid() then
-        vim.api.nvim_set_current_win(self.last_win)
+      if self:last_window_valid() then
+        self.last_window:make_current()
       end
     end,
   }
@@ -831,8 +826,8 @@ end
 
 function BufRenderer:enter_win()
   local deepest_tooltip = self:get_deepest_tooltip()
-  if deepest_tooltip:last_win_valid() then
-    vim.api.nvim_set_current_win(deepest_tooltip.last_win)
+  if deepest_tooltip:last_window_valid() then
+    deepest_tooltip.last_window:make_current()
   end
 end
 
@@ -860,7 +855,7 @@ end
 ---@field start_selected? fun(c: any): boolean whether the item should start initially selected
 ---@field title? string an optional title, typically used for the prompt
 ---@field footer? string an optional footer, typically used for instructions
----@field relative_win? Window a window to open the popup relative to
+---@field relative_window? Window a window to open the popup relative to
 
 ---Interactively select from a set of choices.
 ---@generic C : any
@@ -878,22 +873,21 @@ local function select_many(choices, opts, on_choices)
   })
 
   local buffer = Buffer.create { listed = false, scratch = true }
-  local win_options = {
+  local relative = opts.relative_window or Window:current()
+  local modal = relative:float {
+    buffer = buffer,
+    enter = true,
     style = 'minimal',
-    relative = 'win',
-    win = opts.relative_win and opts.relative_win.id or 0,
     border = 'rounded',
     title = opts.title,
     footer =  '<Tab>: toggle, <CR>: confirm, <Esc>: cancel',
     footer_pos = 'center',
-    bufpos = {100, 10},
+    bufpos = { 100, 10 },
     width = 50,
     height = #choices + 2,
     zindex = 50,
   }
-
-  local window = vim.api.nvim_open_win(buffer.bufnr, true, win_options)
-  vim.wo[window].winfixbuf = true
+  vim.wo[modal.id].winfixbuf = true
 
   local selected = vim.iter(choices):map(opts.start_selected):totable()
 
@@ -940,7 +934,7 @@ local function select_many(choices, opts, on_choices)
 
     events = {
       make_selection = function(_)
-        vim.api.nvim_win_close(window, true)
+        modal:force_close()
         local chosen = {}
         local unchosen = {}
         vim.iter(ipairs(choices)):each(function(i, choice)
@@ -950,7 +944,7 @@ local function select_many(choices, opts, on_choices)
         on_choices(chosen, unchosen)
       end,
       clear = function(_)
-        vim.api.nvim_win_close(window, true)
+        modal:force_close()
       end,
     },
   }
@@ -971,7 +965,7 @@ local function select_many(choices, opts, on_choices)
   local end_line = #choices + 1
   local first_column = 5
 
-  vim.api.nvim_win_set_cursor(window, { start_line, first_column })
+  modal:set_cursor { start_line, first_column }
 
   local group = vim.api.nvim_create_augroup('LeanSelectManyWindow', { clear = false })
   vim.api.nvim_create_autocmd('WinLeave', {
@@ -983,10 +977,10 @@ local function select_many(choices, opts, on_choices)
     group = group,
     buffer = buffer.bufnr,
     callback = function()  -- clip the cursor to the real editable region
-      local row, column = unpack(vim.api.nvim_win_get_cursor(window))
+      local row, column = unpack(modal:cursor())
       row = math.max(math.min(row, end_line), start_line)
       column = math.max(column, first_column)
-      vim.api.nvim_win_set_cursor(window, { row, column })
+      modal:set_cursor { row, column }
     end,
   })
 end
