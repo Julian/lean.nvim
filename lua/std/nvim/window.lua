@@ -47,7 +47,7 @@ end
 ---@field enter? boolean whether to enter the window (default false)
 ---@field direction? 'left'|'right'|'above'|'below' the direction to split
 
----Split a new window relative to this window.
+---Split a new window from this window.
 ---@param opts? SplitOpts
 ---@return Window
 function Window:split(opts)
@@ -57,6 +57,33 @@ function Window:split(opts)
   local config = { win = self.id, split = direction }
   local bufnr = opts.buffer and opts.buffer.bufnr or 0
   local id = vim.api.nvim_open_win(bufnr, opts.enter, config)
+  return Window:from_id(id)
+end
+
+---Open a new floating window relative to this one.
+---@param opts?
+---@return Window
+function Window:float(opts)
+  opts = opts or {}
+
+  local bufnr, enter
+  if opts.enter ~= nil then
+    enter, opts.enter = opts.enter, nil
+  else
+    enter = false
+  end
+
+  if opts.buffer ~= nil then
+    bufnr, opts.buffer = opts.buffer.bufnr, nil
+  else
+    bufnr = 0
+  end
+
+  local config = vim.tbl_extend('error', opts, {
+    win = self.id,
+    relative = 'win',
+  })
+  local id = vim.api.nvim_open_win(bufnr, enter, config)
   return Window:from_id(id)
 end
 
@@ -151,6 +178,21 @@ function Window:move_cursor(pos)
     return
   end
   vim.api.nvim_exec_autocmds('CursorMoved', { buffer = self:bufnr() })
+end
+
+---Get the window's configuration.
+---
+---See :h nvim_open_win for details.
+function Window:config()
+  return vim.api.nvim_win_get_config(self.id)
+end
+
+---Set the window's configuration.
+---
+---See :h nvim_open_win for details.
+---@param config table
+function Window:set_config(config)
+  vim.api.nvim_win_set_config(self.id, config)
 end
 
 ---Get the contents of the remainder of the line with the window's cursor.

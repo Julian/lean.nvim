@@ -92,6 +92,58 @@ describe('Window', function()
     end)
   end)
 
+  describe('float', function()
+    it('opens a floating window relative to the window', function()
+      local current = Window:current()
+      local float = current:float {
+        width = 15,
+        height = 2,
+        row = 1,
+        col = 2,
+      }
+      local config = float:config()
+      assert.are.same({
+        width = 15,
+        height = 2,
+        row = 1,
+        col = 2,
+        relative = 'win',
+        win = current.id,
+        external = false,
+        hide = false,
+        anchor = config.anchor,
+        focusable = config.focusable,
+        mouse = config.mouse,
+        zindex = config.zindex,
+      }, config)
+      float:close()
+    end)
+
+    it('can set a buffer', function()
+      local buffer = Buffer.create { listed = false, scratch = true }
+      local float = Window:current():float {
+        buffer = buffer,
+        bufpos = { 1, 0 },
+        width = 5,
+        height = 2,
+      }
+      assert.are.same(buffer, float:buffer())
+      float:close()
+    end)
+
+    it('can be entered when created', function()
+      local float = Window:current():float {
+        enter = true,
+        width = 15,
+        height = 2,
+        row = 1,
+        col = 2,
+      }
+      assert.is_true(float:is_current())
+      float:close()
+    end)
+  end)
+
   describe('is_current', function()
     it('is true for the current window', function()
       local current = Window:current()
@@ -310,6 +362,17 @@ describe('Window', function()
       assert.are.same(ran, { original, new })
 
       new:close()
+    end)
+  end)
+
+  describe('config', function()
+    it('returns the window configuration', function()
+      local window = Window:current()
+      local initial = vim.api.nvim_win_get_config(window.id)
+      window:set_config { mouse = not initial.mouse }
+      assert.are.equal(not initial.mouse, window:config().mouse)
+      window:set_config { mouse = initial.mouse }
+      assert.are.equal(initial.mouse, vim.api.nvim_win_get_config(window.id).mouse)
     end)
   end)
 
