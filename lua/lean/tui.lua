@@ -57,7 +57,6 @@ Element.__index = Element
 ---@field lines? string[] Rendered lines.
 ---@field path? PathNode[] Current cursor path
 ---@field last_win? integer Window number of the last event
----@field last_win_options? table When used as a tooltip, the window options.
 ---@field keymaps table Extra keymaps (inherited by tooltips)
 ---@field hover_range? integer[][] (0,0)-range of the highlighted node
 ---@field tooltip? BufRenderer currently open tooltip
@@ -763,11 +762,6 @@ function BufRenderer:hover(force_update_highlight)
       )
       -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
       vim.cmd.redraw()
-      self.tooltip.last_win_options = vim.deepcopy(win_options)
-    elseif not vim.deep_equal(win_options, self.tooltip.last_win_options) then
-      vim.api.nvim_win_set_config(self.tooltip.last_win, win_options)
-      vim.cmd.redraw()
-      self.tooltip.last_win_options = vim.deepcopy(win_options)
     end
 
     self.tooltip:render()
