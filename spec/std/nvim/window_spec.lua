@@ -112,6 +112,7 @@ describe('Window', function()
         external = false,
         hide = false,
         anchor = config.anchor,
+        border = config.border,
         focusable = config.focusable,
         mouse = config.mouse,
         zindex = config.zindex,
@@ -369,10 +370,10 @@ describe('Window', function()
     it('returns the window configuration', function()
       local window = Window:current()
       local initial = vim.api.nvim_win_get_config(window.id)
-      window:set_config { mouse = not initial.mouse }
-      assert.are.equal(not initial.mouse, window:config().mouse)
-      window:set_config { mouse = initial.mouse }
-      assert.are.equal(initial.mouse, vim.api.nvim_win_get_config(window.id).mouse)
+      window:set_config { hide = not initial.hide }
+      assert.are.equal(not initial.hide, window:config().hide)
+      window:set_config { hide = initial.hide }
+      assert.are.equal(initial.hide, vim.api.nvim_win_get_config(window.id).hide)
     end)
   end)
 

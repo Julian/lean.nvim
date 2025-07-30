@@ -129,7 +129,12 @@ end
 ---@return Element?
 function Element:concat(elements, sep, opts)
   if #elements == 0 then
-    vim.validate('opts', opts, 'nil')
+    -- sigh, polyfill nonsense
+    if vim.version.lt(vim.version(), { 0, 11, 0 }) then
+      vim.validate { opts = { opts, 'nil' } }
+    else
+      vim.validate('opts', opts, 'nil')
+    end
     return
   elseif #elements == 1 then
     return opts
