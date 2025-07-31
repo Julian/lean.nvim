@@ -834,28 +834,13 @@ function BufRenderer:make_event_context()
 end
 
 function BufRenderer:enter_win()
-  local deepest_tooltip = self:get_deepest_tooltip()
-  if deepest_tooltip:last_window_valid() then
-    deepest_tooltip.last_window:make_current()
+  local deepest = self
+  while deepest.tooltip do
+    deepest = deepest.tooltip
   end
-end
-
-function BufRenderer:get_deepest_tooltip()
-  ---@diagnostic disable-next-line: need-check-nil
-  while self.tooltip do
-    self = self.tooltip
+  if deepest:last_window_valid() then
+    deepest.last_window:make_current()
   end
-  return self
-end
-
----@return BufRenderer
-function BufRenderer:get_root_ancestor()
-  ---@diagnostic disable-next-line: need-check-nil
-  while self.parent do
-    self = self.parent
-  end
-  ---@diagnostic disable-next-line: return-type-mismatch
-  return self
 end
 
 ---@class SelectionOpts<C>
