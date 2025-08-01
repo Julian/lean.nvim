@@ -116,6 +116,7 @@ Infoview.__index = Infoview
 ---@class InfoviewNewArgs
 ---@field width? integer
 ---@field height? integer
+---@field orientation? "auto"|"vertical"|"horizontal"
 ---@field horizontal_position? "top"|"bottom"
 ---@field separate_tab? boolean
 

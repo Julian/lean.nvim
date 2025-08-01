@@ -45,6 +45,7 @@
 
 ---@class lean.infoview.Config
 ---@field mappings? { [string]: ElementEvent }
+---@field orientation "auto"|"vertical"|"horizontal" what orientation to use for opened infoviews
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
 
