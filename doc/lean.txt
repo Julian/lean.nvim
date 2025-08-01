@@ -137,9 +137,9 @@ Infoview                                                              *Infoview*
 InfoviewNewArgs                                                *InfoviewNewArgs*
 
     Fields: ~
-        {width?}                (integer)
-        {height?}               (integer)
-        {horizontal_position?}  ()
+        {width?}        (integer)
+        {height?}       (integer)
+        {orientation?}  ()
 
 
 FilterSelection                                                *FilterSelection*
