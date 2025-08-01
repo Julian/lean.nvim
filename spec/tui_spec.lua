@@ -634,7 +634,7 @@ describe(
 
       assert.contents.are {
         "foo's tooltip",
-        bufnr = tooltip:bufnr(),
+        buffer = tooltip:buffer(),
       }
 
       helpers.feed '<Esc>'

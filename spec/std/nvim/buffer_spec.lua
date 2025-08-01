@@ -117,4 +117,27 @@ describe('Buffer', function()
       buffer:force_delete()
     end)
   end)
+
+  describe('lines', function()
+    it('returns lines from start until end', function()
+      local buffer = Buffer.create {}
+      vim.api.nvim_buf_set_lines(buffer.bufnr, 0, -1, false, { 'foo', 'bar', 'baz', 'quux' })
+      assert.are.same({ 'bar', 'baz' }, buffer:lines(1, 3))
+      buffer:force_delete()
+    end)
+
+    it('allows an implicit end', function()
+      local buffer = Buffer.create {}
+      vim.api.nvim_buf_set_lines(buffer.bufnr, 0, -1, false, { 'foo', 'bar', 'baz', 'quux' })
+      assert.are.same({ 'baz', 'quux' }, buffer:lines(2))
+      buffer:force_delete()
+    end)
+
+    it('returns all lines when given no arguments', function()
+      local buffer = Buffer.create {}
+      vim.api.nvim_buf_set_lines(buffer.bufnr, 0, -1, false, { 'foo', 'bar', 'baz' })
+      assert.are.same({ 'foo', 'bar', 'baz' }, buffer:lines())
+      buffer:force_delete()
+    end)
+  end)
 end)

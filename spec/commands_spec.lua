@@ -18,7 +18,7 @@ describe('LeanTermGoal', function()
       assert.are.same({
         '▼ expected type (1:16-1:18)',
         '⊢ Nat',
-      }, vim.api.nvim_buf_get_lines(popup:bufnr(), 0, -1, false))
+      }, popup:buffer():lines())
     end)
   )
 end)

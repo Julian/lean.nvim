@@ -86,4 +86,9 @@ function Buffer:line_count()
   return vim.api.nvim_buf_line_count(self.bufnr)
 end
 
+---The buffer's line contents.
+function Buffer:lines(start, end_)
+  return vim.api.nvim_buf_get_lines(self.bufnr, start or 0, end_ or -1, true)
+end
+
 return Buffer

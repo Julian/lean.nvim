@@ -38,7 +38,7 @@ describe(
       local tooltip = helpers.wait_for_new_window(known_windows)
       assert.contents.are {
         'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. ',
-        bufnr = tooltip:bufnr(),
+        buffer = tooltip:buffer(),
       }
 
       -- Close the tooltip.
@@ -152,7 +152,7 @@ describe(
         local tooltip = helpers.wait_for_new_window(known_windows)
         assert.contents.are {
           'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. ',
-          bufnr = tooltip:bufnr(),
+          buffer = tooltip:buffer(),
         }
 
         -- Close the tooltip - this should work if clear_all event is preserved

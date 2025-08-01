@@ -1,3 +1,4 @@
+local Buffer = require 'std.nvim.buffer'
 local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
 local assert = require 'luassert'
@@ -229,8 +230,8 @@ end
 
 ---Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
-  local bufnr = arguments[1].bufnr or 0
-  local got = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
+  local buffer = arguments[1].buffer or Buffer:current()
+  local got = table.concat(buffer:lines(), '\n')
   assert.is.equal(_expected(arguments), got)
   return true
 end
