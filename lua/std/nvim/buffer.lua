@@ -81,4 +81,9 @@ function Buffer:force_delete()
   vim.api.nvim_buf_delete(self.bufnr, { force = true })
 end
 
+---The buffer's line count.
+function Buffer:line_count()
+  return vim.api.nvim_buf_line_count(self.bufnr)
+end
+
 return Buffer

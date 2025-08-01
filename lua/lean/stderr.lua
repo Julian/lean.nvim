@@ -53,7 +53,7 @@ function stderr.show(message)
       current.window = open_window(current.buffer)
     end
     local lines = vim.split(message, '\n')
-    local num_lines = vim.api.nvim_buf_line_count(current.buffer.bufnr)
+    local num_lines = current.buffer:line_count()
     if lines[#lines] == '' then
       table.remove(lines)
     end

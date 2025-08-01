@@ -105,4 +105,16 @@ describe('Buffer', function()
       assert.is_false(buffer:is_loaded())
     end)
   end)
+
+  describe('line_count', function()
+    it('returns the line count', function()
+      local buffer = Buffer.create {}
+      assert.are.equal(1, buffer:line_count())
+
+      vim.api.nvim_buf_set_lines(buffer.bufnr, 0, -1, false, { 'foo', 'bar', 'baz' })
+      assert.are.equal(3, buffer:line_count())
+
+      buffer:force_delete()
+    end)
+  end)
 end)
