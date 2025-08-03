@@ -86,9 +86,20 @@ function Buffer:line_count()
   return vim.api.nvim_buf_line_count(self.bufnr)
 end
 
----The buffer's line contents.
+---Get lines from the buffer.
+---
+---Zero-indexed, like nvim_buf_get_lines().
+---
+---@param start? integer start line (default 0)
+---@param end_? integer end line (default -1, meaning the end of the buffer)
 function Buffer:lines(start, end_)
   return vim.api.nvim_buf_get_lines(self.bufnr, start or 0, end_ or -1, true)
+end
+
+---Get a specific line from the buffer.
+---@param line integer the line number (0-indexed)
+function Buffer:line(line)
+  return vim.api.nvim_buf_get_lines(self.bufnr, line, line + 1, true)[1]
 end
 
 return Buffer

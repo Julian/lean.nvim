@@ -269,8 +269,7 @@ function Infoview:move_cursor_to_goal(n)
   end
 
   n = n or 1
-  local lines = vim.api.nvim_buf_get_lines(self.info.__renderer.buffer.bufnr, 0, -1, false)
-  for i, line in ipairs(lines) do
+  for i, line in ipairs(self.info.__renderer.buffer:lines()) do
     if line:find '^⊢ ' then
       n = n - 1
       if n == 0 then
@@ -560,10 +559,7 @@ function Infoview:get_lines(start_line, end_line)
   if not self.window then
     error 'infoview is not open'
   end
-
-  start_line = start_line or 0
-  end_line = end_line or -1
-  return vim.api.nvim_buf_get_lines(self.info.__renderer.buffer.bufnr, start_line, end_line, true)
+  return self.info.__renderer.buffer:lines(start_line, end_line)
 end
 
 ---Retrieve a specific line from the infoview window.
@@ -573,9 +569,7 @@ function Infoview:get_line(line)
   if not self.window then
     error 'infoview is not open'
   end
-
-  local lines = vim.api.nvim_buf_get_lines(self.info.__renderer.buffer.bufnr, line, line + 1, false)
-  return lines[1]
+  return self.info.__renderer.buffer:line(line)
 end
 
 ---Retrieve the contents of the diff window as a table.
@@ -585,15 +579,7 @@ function Infoview:get_diff_lines(start_line, end_line)
   if not self.__diff_win then
     error 'diff window is not open'
   end
-
-  start_line = start_line or 0
-  end_line = end_line or -1
-  return vim.api.nvim_buf_get_lines(
-    self.info.__diff_renderer.buffer.bufnr,
-    start_line,
-    end_line,
-    true
-  )
+  return self.info.__diff_renderer.buffer:lines(start_line, end_line)
 end
 
 ---Toggle this infoview being open.

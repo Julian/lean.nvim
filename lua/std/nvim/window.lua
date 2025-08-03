@@ -199,8 +199,7 @@ end
 ---@return string contents text from cursor position to the end of line
 function Window:rest_of_cursor_line()
   local row, col = unpack(self:cursor())
-  local line = vim.api.nvim_buf_get_lines(self:bufnr(), row - 1, row, true)[1]
-  return line:sub(col + 1)
+  return self:buffer():line(row - 1):sub(col + 1)
 end
 
 return Window

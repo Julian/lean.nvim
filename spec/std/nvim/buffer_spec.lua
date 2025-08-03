@@ -140,4 +140,13 @@ describe('Buffer', function()
       buffer:force_delete()
     end)
   end)
+
+  describe('line', function()
+    it('returns the given line', function()
+      local buffer = Buffer.create {}
+      vim.api.nvim_buf_set_lines(buffer.bufnr, 0, -1, false, { 'foo', 'bar', 'baz', 'quux' })
+      assert.are.same('bar', buffer:line(1))
+      buffer:force_delete()
+    end)
+  end)
 end)
