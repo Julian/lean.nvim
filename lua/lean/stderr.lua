@@ -70,23 +70,34 @@ function stderr.enable(config)
   local on_lines = config.on_lines or stderr.show
   local old_error = log.error
   stderr_height = config.height or 5
+
   -- TODO: add upstream neovim API
-  log.error = function(...)
-    local argc = select('#', ...)
-    if argc == 0 then
-      return true
-    end -- always enable error messages
-    if
-      argc == 4
-      and select(1, ...) == 'rpc'
-      and select(3, ...) == 'stderr'
-      and string.match(select(2, ...), 'lean')
-    then
-      local chunk = select(4, ...)
-      on_lines(chunk)
+  local function patch_log_error()
+    if log.error == old_error then
+      log.error = function(...)
+        local argc = select('#', ...)
+        if argc == 0 then
+          return true
+        end -- always enable error messages
+        if
+          argc == 4
+          and select(1, ...) == 'rpc'
+          and select(3, ...) == 'stderr'
+          and string.match(select(2, ...), 'lean')
+        then
+          local chunk = select(4, ...)
+          on_lines(chunk)
+        end
+        old_error(...)
+      end
     end
-    old_error(...)
   end
+
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'lean',
+    callback = patch_log_error,
+    once = true,
+  })
 end
 
 return stderr
