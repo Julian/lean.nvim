@@ -69,7 +69,7 @@ end
 ---Render the current plain (term) goal state.
 ---@param params lsp.TextDocumentPositionParams
 ---@return Element[]? term_goal the rendered goals
----@return lsp.ResponseError? err
+---@return LspError? err
 function plain.term_goal(params)
   local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
   if not vim.api.nvim_buf_is_loaded(bufnr) then

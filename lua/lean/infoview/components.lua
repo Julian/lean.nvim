@@ -77,14 +77,11 @@ function components.goal_at(params, sess, use_widgets)
 
   if goal and #goal > 1 then
     children = {
-      Element:new {
-        children = {
-          Element:new {
-            text = ('▼ %d goals\n'):format(#goal),
-            hlgroup = 'leanInfoMultipleGoals',
-          },
-          Element:new { children = children },
-        },
+      Element:titled {
+        title = ('▼ %d goals'):format(#goal),
+        body = children,
+        margin = 1,
+        title_hlgroup = 'leanInfoMultipleGoals',
       },
     }
   end
@@ -115,8 +112,7 @@ function components.term_goal_at(params, sess, use_widgets)
   -- Term goals, even in VSCode, seem to not support selecting subexpression
   -- locations / "shift-click"ing, so there's no `locations` parameter here.
   if use_widgets == false then
-    local term_goal = plain.term_goal(params)
-    return term_goal
+    return plain.term_goal(params)
   end
 
   local term_goal, err = sess:getInteractiveTermGoal(params)
