@@ -377,6 +377,16 @@ describe('Window', function()
     end)
   end)
 
+  describe('o', function()
+    it('returns the window options table', function()
+      local window = Window:split()
+      assert.is_false(vim.wo[window.id].cursorline)
+      window.o.cursorline = true
+      assert.is_true(vim.wo[window.id].cursorline)
+      window:close()
+    end)
+  end)
+
   describe('rest_of_cursor_line', function()
     it('gets the rest of the line at cursor position', function()
       vim.cmd.new()

@@ -149,4 +149,14 @@ describe('Buffer', function()
       buffer:force_delete()
     end)
   end)
+
+  describe('o', function()
+    it('returns the buffer options table', function()
+      local buffer = Buffer.create { options = { buftype = 'nofile' } }
+      assert.are.same('nofile', buffer.o.buftype)
+      buffer.o.buftype = 'nowrite'
+      assert.are.same('nowrite', vim.bo[buffer.bufnr].buftype)
+      buffer:force_delete()
+    end)
+  end)
 end)

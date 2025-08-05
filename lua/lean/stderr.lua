@@ -32,7 +32,7 @@ local function open_window(stderr_buffer)
 
   local stderr_window = Window:current()
   stderr_window:set_height(stderr_height)
-  vim.bo[stderr_buffer.bufnr].filetype = 'leanstderr'
+  stderr_buffer.o.filetype = 'leanstderr'
   initial_window:make_current()
   return stderr_window
 end

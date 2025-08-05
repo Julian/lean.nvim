@@ -529,7 +529,7 @@ end
 function BufRenderer:new(obj)
   obj = obj or {}
   local new_renderer = setmetatable(obj, self)
-  vim.bo[obj.buffer.bufnr].modifiable = false
+  obj.buffer.o.modifiable = false
 
   vim.api.nvim_create_autocmd({ 'BufEnter', 'CursorMoved' }, {
     group = vim.api.nvim_create_augroup('WidgetPosition', { clear = false }),
@@ -593,14 +593,14 @@ function BufRenderer:render()
   local lines = vim.split(text, '\n')
   self.lines = lines
 
-  vim.bo[buf].modifiable = true
+  self.buffer.o.modifiable = true
   -- XXX: Again I do not understand why tests occasionally are flaky,
   --      complaining about invalid buffer names, if we don't have this pcall.
   local ok, _ = pcall(vim.api.nvim_buf_set_lines, buf, 0, -1, false, lines)
   if not ok then
     log:error { message = 'infoview failed to update', buf = buf }
   end
-  vim.bo[buf].modifiable = false
+  self.buffer.o.modifiable = false
 
   for _, hl in ipairs(self.element:_get_highlights()) do
     local start_pos = raw_pos_to_pos(hl.start, lines)
@@ -755,8 +755,8 @@ function BufRenderer:hover(force_update_highlight)
     if not self.tooltip:last_window_valid() then
       self.tooltip.last_window = self.last_window:float {
         buffer = self.tooltip.buffer,
-        enter = false,  -- avoid firing update_cursor by disabling the autocmds
-        noautocmd = true,
+        enter = false,
+        noautocmd = true,  -- avoid firing update_cursor by disabling the autocmds
         style = 'minimal',
         width = width,
         height = height,
@@ -881,7 +881,7 @@ local function select_many(choices, opts, on_choices)
     height = #choices + 2,
     zindex = 50,
   }
-  vim.wo[modal.id].winfixbuf = true
+  modal.o.winfixbuf = true
 
   local selected = vim.iter(choices):map(opts.start_selected):totable()
 

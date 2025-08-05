@@ -185,7 +185,7 @@ function Infoview:open()
   -- Set the filetype now. Any earlier, and only buffer-local options will be
   -- properly set in the infoview, since the buffer isn't actually shown in a
   -- window until we `set_buffer`.
-  vim.bo[self.info.__renderer.buffer.bufnr].filetype = 'leaninfo'
+  self.info.__renderer.buffer.o.filetype = 'leaninfo'
 
   window_before_split:make_current()
 
@@ -406,7 +406,7 @@ function Infoview:__open_win(buffer)
   end
   local new_win = Window:current()
   new_win:set_buffer(buffer)
-  vim.bo[buffer.bufnr].filetype = 'leaninfo'
+  buffer.o.filetype = 'leaninfo'
 
   window_before_split:make_current()
   self.info.__win_event_disable = false
@@ -426,7 +426,7 @@ function Infoview:__refresh()
   end
 
   for _, win in pairs(valid_windows) do
-    vim.wo[win.id].winfixwidth = true
+    win.o.winfixwidth = true
   end
 
   for _, win in pairs(valid_windows) do

@@ -3,8 +3,14 @@ local Buffer = require 'std.nvim.buffer'
 ---A Neovim window.
 ---@class Window
 ---@field id integer The window ID
+---@field o table<string, any> Window-local options (alias for vim.wo[id])
 local Window = {}
-Window.__index = Window
+Window.__index = function(self, key)
+  if key == 'o' then
+    return vim.wo[self.id]
+  end
+  return Window[key]
+end
 
 ---Bind to a Neovim window.
 ---@param id? integer Window ID, defaulting to the current window
