@@ -150,16 +150,6 @@ describe('Buffer', function()
     end)
   end)
 
-  describe('o', function()
-    it('returns the buffer options table', function()
-      local buffer = Buffer.create { options = { buftype = 'nofile' } }
-      assert.are.same('nofile', buffer.o.buftype)
-      buffer.o.buftype = 'nowrite'
-      assert.are.same('nowrite', vim.bo[buffer.bufnr].buftype)
-      buffer:force_delete()
-    end)
-  end)
-
   describe('make_current', function()
     it('makes a buffer the current buffer', function()
       local window = Window:current()
@@ -168,6 +158,26 @@ describe('Buffer', function()
       buffer:make_current()
       assert.is.same(buffer, window:buffer())
       assert.is.equal(vim.api.nvim_get_current_buf(), buffer.bufnr)
+    end)
+  end)
+
+  describe('b', function()
+    it('returns the buffer-local variables', function()
+      local buffer = Buffer.create {}
+      assert.is_nil(buffer.b.foo)
+      buffer.b.foo = 37
+      assert.is.equal(37, buffer.b.foo)
+      buffer:force_delete()
+    end)
+  end)
+
+  describe('o', function()
+    it('returns the buffer options table', function()
+      local buffer = Buffer.create { options = { buftype = 'nofile' } }
+      assert.are.same('nofile', buffer.o.buftype)
+      buffer.o.buftype = 'nowrite'
+      assert.are.same('nowrite', vim.bo[buffer.bufnr].buftype)
+      buffer:force_delete()
     end)
   end)
 end)

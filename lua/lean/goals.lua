@@ -1,3 +1,5 @@
+local Buffer = require 'std.nvim.buffer'
+
 local goals = {}
 
 ---The most recently fetched goals for a position within a buffer.
@@ -11,14 +13,14 @@ local cache = {}
 ---@return InteractiveGoal[]? goals
 ---@return LspError? err
 function goals.at(params, sess)
-  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
-    return nil, ('%s is not not loaded'):format(bufnr)
+  local buffer = Buffer:from_uri(params.textDocument.uri)
+  if not buffer:is_loaded() then
+    return nil, ('%s is not not loaded'):format(buffer.bufnr)
   end
 
-  local tick = vim.b[bufnr].changedtick
+  local tick = buffer.b.changedtick
 
-  local cached = cache[bufnr]
+  local cached = cache[buffer.bufnr]
   local cache_hit = cached and cached[1] == tick and vim.deep_equal(cached[2], params.position)
   if cache_hit then
     return cached[3]
@@ -29,7 +31,7 @@ function goals.at(params, sess)
     return nil, err
   end
 
-  cache[bufnr] = { tick, params.position, result.goals }
+  cache[buffer.bufnr] = { tick, params.position, result.goals }
   return result.goals, err
 end
 

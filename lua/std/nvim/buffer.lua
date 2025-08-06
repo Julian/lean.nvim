@@ -1,11 +1,14 @@
 ---A Neovim buffer.
 ---@class Buffer
 ---@field bufnr integer The buffer number
+---@field b table<string, any> Buffer-local variables (alias for vim.b[bufnr])
 ---@field o table<string, any> Buffer-local options (alias for vim.bo[bufnr])
 local Buffer = {}
 Buffer.__index = function(self, key)
   if key == 'o' then
     return vim.bo[self.bufnr]
+  elseif key == 'b' then
+    return vim.b[self.bufnr]
   end
   return Buffer[key]
 end
