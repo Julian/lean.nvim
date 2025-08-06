@@ -2,12 +2,13 @@ local Element = require('lean.tui').Element
 
 local html = {}
 
-vim.api.nvim_set_hl(0, 'tuiHTMLUnsupported', { link = 'ErrorMsg' })
+vim.api.nvim_set_hl(0, 'tui.html.b', { bold = true })
+vim.api.nvim_set_hl(0, 'tui.html.unsupported', { link = 'ErrorMsg' })
 
 html.Tag = vim.defaulttable(function(tag)
   return function(children)
     return Element:new {
-      hlgroup = 'tuiHTMLUnsupported',
+      hlgroup = 'tui.html.unsupported',
       text = ('<%s>'):format(tag),
       children = children,
     }
@@ -44,6 +45,16 @@ end
 ---Just render the children, as we don't (yet?) support passing through styles.
 function html.Tag.span(children)
   return Element:new { children = children }
+end
+
+---Render a paragraph.
+function html.Tag.p(children)
+  return Element:new { children = children }
+end
+
+---Render bold text.
+function html.Tag.b(children)
+  return Element:new { hlgroup = 'tui.html.b', children = children }
 end
 
 return html

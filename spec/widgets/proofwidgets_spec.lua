@@ -56,6 +56,17 @@ describe('ProofWidgets widgets', function()
     end)
   )
 
+  it(
+    'supports HtmlDisplayPanel widgets',
+    in_demo('ProofWidgets.Demos.Jsx', function()
+      helpers.search '#html <b>What, HTML in Lean?!'
+      assert.infoview_contents.are [[
+        ▼ HTML Display
+        What, HTML in Lean?!
+      ]]
+    end)
+  )
+
   describe('SelectionPanel widgets', function()
     it(
       'with no selection shows instructions',
