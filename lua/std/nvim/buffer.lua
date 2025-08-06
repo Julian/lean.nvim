@@ -87,6 +87,11 @@ function Buffer:force_delete()
   vim.api.nvim_buf_delete(self.bufnr, { force = true })
 end
 
+---Make the buffer be the current one.
+function Buffer:make_current()
+  vim.api.nvim_set_current_buf(self.bufnr)
+end
+
 ---The buffer's line count.
 function Buffer:line_count()
   return vim.api.nvim_buf_line_count(self.bufnr)

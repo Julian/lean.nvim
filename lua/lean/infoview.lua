@@ -778,9 +778,9 @@ function Info:render()
         return
       end
 
-      local uri_bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-      vim.api.nvim_set_current_buf(uri_bufnr)
-      vim.api.nvim_win_set_cursor(0, { params.position.line + 1, params.position.character })
+      local buffer = Buffer:from_uri(params.textDocument.uri)
+      buffer:make_current()
+      Window:current():set_cursor { params.position.line + 1, params.position.character }
     end
   end
 
