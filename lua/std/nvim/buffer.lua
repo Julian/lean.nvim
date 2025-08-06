@@ -112,8 +112,12 @@ end
 
 ---Get a specific line from the buffer.
 ---@param line integer the line number (0-indexed)
-function Buffer:line(line)
-  return vim.api.nvim_buf_get_lines(self.bufnr, line, line + 1, true)[1]
+---@param strict_indexing? boolean Whether out-of-bounds should be an error
+function Buffer:line(line, strict_indexing)
+  if strict_indexing == nil then
+    strict_indexing = true
+  end
+  return vim.api.nvim_buf_get_lines(self.bufnr, line, line + 1, strict_indexing)[1]
 end
 
 return Buffer

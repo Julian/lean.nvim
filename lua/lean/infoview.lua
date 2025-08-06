@@ -569,7 +569,7 @@ function Infoview:get_line(line)
   if not self.window then
     error 'infoview is not open'
   end
-  return self.info.__renderer.buffer:line(line)
+  return self.info.__renderer.buffer:line(line, false)
 end
 
 ---Retrieve the contents of the diff window as a table.
