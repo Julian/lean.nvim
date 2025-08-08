@@ -11,11 +11,6 @@ local lsp = require 'lean.lsp'
 
 local plain = {}
 
----Format a heading.
-local function H(contents)
-  return ('▼ %s'):format(contents)
-end
-
 ---`$/lean/plainGoal` client<-server reply.
 ---@class PlainGoal
 ---@field rendered string The goals as pretty-printed Markdown, or something like "no goals" if accomplished.
@@ -91,10 +86,10 @@ function plain.term_goal(params)
 
   return term_goal
     and {
-      Element:new {
-        text = H(
-          ('expected type (%s)\n'):format(range_to_string(term_goal.range)) .. term_goal.goal
-        ),
+      Element:titled {
+        title = ('▼ expected type (%s)'):format(range_to_string(term_goal.range)),
+        body = { Element:new { text = term_goal.goal } },
+        margin = 1,
       },
     }
 end

@@ -6,11 +6,6 @@ local util = require 'lean._util'
 
 local interactive_goal = {}
 
----Format a heading.
-local function H(contents)
-  return ('▼ %s'):format(contents)
-end
-
 ---A hypothesis name which is accessible according to Lean's naming conventions.
 ---@param name string
 local function is_accessible(name)
@@ -138,19 +133,19 @@ function interactive_goal.diagnostics(params)
           character = diagnostic.end_col,
         },
       }
-    return Element:new {
-      name = 'diagnostic',
-      text = H(string.format(
-        '%s: %s%s',
-        range_to_string(range),
-        markers[diagnostic.severity],
-        -- So. #check foo gives back a diagnostic with *no* trailing newline
-        -- but #eval foo gives back one *with* a trailing newline.
-        -- VSCode displays both of them the same, so let's do that as well by
-        -- essentially stripping off one trailing newline if present in a
-        -- diagnostic message.
-        diagnostic.message:gsub('\n$', '')
-      )),
+    return Element:titled {
+      title = ('▼ %s: %s'):format(range_to_string(range), markers[diagnostic.severity]),
+      body = {
+        Element:new {
+          -- So. #check foo gives back a diagnostic with *no* trailing newline
+          -- but #eval foo gives back one *with* a trailing newline.
+          -- VSCode displays both of them the same, so let's do that as well by
+          -- essentially stripping off one trailing newline if present in a
+          -- diagnostic message.
+          text = diagnostic.message:gsub('\n$', ''),
+        },
+      },
+      margin = 0,
     }
   end, util.lean_lsp_diagnostics({ lnum = params.position.line }, bufnr))
 end
@@ -228,15 +223,11 @@ function interactive_goal.interactive_term_goal(goal, sess)
     return {}
   end
 
-  local term_state_element = Element:new {
-    text = H(string.format('expected type (%s)\n', range_to_string(goal.range))),
-    name = 'term-state',
-    children = { interactive_goal.Goal(goal, sess) },
-  }
   return {
-    Element:new {
-      name = 'interactive-term-goal',
-      children = { term_state_element },
+    Element:titled {
+      title = ('▼ expected type (%s)'):format(range_to_string(goal.range)),
+      body = { interactive_goal.Goal(goal, sess) },
+      margin = 1,
     },
   }
 end
