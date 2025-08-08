@@ -11,6 +11,8 @@
 local project = require('spec.fixtures').project
 local helpers = require 'spec.helpers'
 
+local infoview = require 'lean.infoview'
+
 require('lean').setup { progress_bars = { enable = false } }
 
 describe('interactive infoview', function()
@@ -504,13 +506,13 @@ describe('interactive infoview', function()
         -- end up with the right contents in tests :/
         helpers.wait_for_loading_pins()
         vim.wait(10000, function()
-          return require('lean.infoview').get_current_infoview():get_line(1) ~= nil
+          return infoview.get_current_infoview():get_line(1) ~= nil
         end)
         -- the output in this case has the search path in it, so just match a
         -- bit of our expected contents
         assert.are.same(
           [[unknown module prefix 'DoesNotExist']],
-          require('lean.infoview').get_current_infoview():get_line(1)
+          infoview.get_current_infoview():get_line(1)
         )
       end)
     )
@@ -524,10 +526,7 @@ describe('interactive infoview', function()
         -- contents in tests :/
         helpers.wait_for_loading_pins()
         vim.wait(10000, function()
-          return not vim.deep_equal(
-            require('lean.infoview').get_current_infoview():get_lines(),
-            { '' }
-          )
+          return not vim.deep_equal(infoview.get_current_infoview():get_lines(), { '' })
         end)
         assert.infoview_contents.are [[
             ▼ 1:7-1:10: error:
