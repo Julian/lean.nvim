@@ -20,17 +20,6 @@ function M.lean_lsp_diagnostics(opts, bufnr)
   )
 end
 
----Simple alternative to vim.lsp.util._make_floating_popup_size
-function M.make_floating_popup_size(contents)
-  return unpack(vim.iter(contents):fold({ 0, 0 }, function(acc, line)
-    local width, height = unpack(acc)
-    return {
-      math.max(width, vim.fn.strdisplaywidth(line)),
-      height + 1,
-    }
-  end))
-end
-
 ---@class UIParams
 ---@field textDocument { uri: string }
 ---@field position { line: uinteger, character: uinteger }

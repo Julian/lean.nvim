@@ -4,7 +4,6 @@ local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
 
 local log = require 'lean.log'
-local util = require 'lean._util'
 
 ---A fire-able event whose behavior is `Element`-specific.
 ---
@@ -258,6 +257,19 @@ end
 ---@return nil
 function Element:remove_tooltip()
   self.tooltip = nil
+end
+
+---Return the {width, height} of the element as rendered.
+---@return integer width
+---@return integer height
+function Element:layout()
+  -- Don't add new callers of this function, we want to remove it.
+  local lines = vim.split(self:to_string(), '\n')
+  local width = 0
+  for _, line in ipairs(lines) do
+    width = math.max(width, vim.fn.strdisplaywidth(line))
+  end
+  return width, #lines
 end
 
 ---@class ElementHighlight
@@ -727,12 +739,6 @@ function BufRenderer:hover(force_update_highlight)
   end
 
   if new_tooltip_element ~= nil then
-    local width, height =
-      util.make_floating_popup_size(vim.split(new_tooltip_element:to_string(), '\n'))
-
-    local tt_parent_path = tt_parent_element_path
-    local bufpos = raw_pos_to_pos(self.element:pos_from_path(tt_parent_path), self.lines)
-
     if self.tooltip then -- reuse old tooltip window
       -- FIXME: Some method call instead of mutating attributes
       self.tooltip.element = new_tooltip_element
@@ -752,6 +758,12 @@ function BufRenderer:hover(force_update_highlight)
     end
 
     if not self.tooltip:last_window_valid() then
+      local bufpos = raw_pos_to_pos(
+        self.element:pos_from_path(tt_parent_element_path),
+        self.lines
+      )
+      local width, height = new_tooltip_element:layout()
+
       self.tooltip.last_window = self.last_window:float {
         buffer = self.tooltip.buffer,
         enter = false,
