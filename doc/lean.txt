@@ -233,6 +233,8 @@ infoview.disable_widgets()                            *infoview.disable_widgets*
 infoview.go_to()                                                *infoview.go_to*
     Move the cursor to the infoview window.
 
+    -If the infoview is not open, it will be opened.
+
 
 infoview.reposition()                                      *infoview.reposition*
     Move the current infoview to the appropriate spot based on the

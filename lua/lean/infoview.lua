@@ -1399,14 +1399,10 @@ function infoview.disable_widgets()
 end
 
 ---Move the cursor to the infoview window.
+---
+----If the infoview is not open, it will be opened.
 function infoview.go_to()
-  local curr_info = infoview.open().info
-  -- if there is no last win, just go straight to the window itself
-  if not curr_info.__renderer:last_window_valid() then
-    infoview.get_current_infoview():enter()
-  else
-    curr_info.__renderer:enter_win()
-  end
+  infoview.open():enter()
 end
 
 ---Move the current infoview to the appropriate spot based on the
