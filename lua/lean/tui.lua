@@ -326,12 +326,6 @@ function Element:to_string()
   return table.concat(pieces)
 end
 
----Return true if the element renders into the empty string.
----@return boolean
-function Element:is_empty()
-  return #self:to_string() == 0
-end
-
 ---Represents a node in a path through an element.
 ---@class PathNode
 ---@field idx number the index in the current element's children to follow
@@ -775,8 +769,6 @@ function BufRenderer:hover(force_update_highlight)
         bufpos = bufpos,
         zindex = 50 + self.tooltip.buffer.bufnr, -- later tooltips are guaranteed to have greater buffer handles
       }
-      -- workaround for neovim/neovim#13403, as it seems this wasn't entirely resolved by neovim/neovim#14770
-      vim.cmd.redraw()
     end
 
     self.tooltip:render()
