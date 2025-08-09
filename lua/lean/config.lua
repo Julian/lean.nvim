@@ -49,7 +49,7 @@
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
 
----@class lean.infoview.MergedConfig
+---@class lean.infoview.MergedConfig: lean.infoview.Config
 ---@field view_options InfoviewViewOptions
 ---@field severity_markers table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
 
