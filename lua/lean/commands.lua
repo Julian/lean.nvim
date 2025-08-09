@@ -4,6 +4,7 @@
 --- (Neovim) commands added by lean.nvim for interacting with Lean.
 ---@brief ]]
 
+local Buffer = require 'std.nvim.buffer'
 local a = require 'plenary.async'
 
 local Element = require('lean.tui').Element
@@ -22,14 +23,16 @@ local function show_popup(element)
     return
   end
 
-  local bufnr, winnr = vim.lsp.util.open_floating_preview(
+  local bufnr = vim.lsp.util.open_floating_preview(
     vim.split(str, '\n'),
     'leaninfo',
     { focus_id = 'lean_goal', border = 'rounded' }
   )
 
-  local renderer = element:renderer { buf = bufnr, keymaps = infoview.mappings }
-  renderer.last_win = winnr
+  local renderer = element:renderer {
+    buffer = Buffer:from_bufnr(bufnr),
+    keymaps = infoview.mappings,
+  }
   renderer:render()
 end
 
