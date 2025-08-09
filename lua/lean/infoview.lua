@@ -189,9 +189,8 @@ function Infoview:open()
 
   window_before_split:make_current()
 
-  vim.api.nvim_create_autocmd({ 'BufHidden', 'QuitPre' }, {
+  self.info.__renderer.buffer:create_autocmd({ 'BufHidden', 'QuitPre' }, {
     group = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false }),
-    buffer = self.info.__renderer.buffer.bufnr,
     callback = function()
       self:__was_closed()
     end,
@@ -652,16 +651,14 @@ function Info:new(opts)
   }
   -- Show/hide current pin extmark when entering/leaving infoview.
   local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })
-  vim.api.nvim_create_autocmd('WinEnter', {
+  pin_buffer:create_autocmd('WinEnter', {
     group = pin_augroup,
-    buffer = pin_buffer.bufnr,
     callback = function()
       new_info:__maybe_show_pin_extmark 'current'
     end,
   })
-  vim.api.nvim_create_autocmd('WinLeave', {
+  pin_buffer:create_autocmd('WinLeave', {
     group = pin_augroup,
-    buffer = pin_buffer.bufnr,
     callback = function()
       new_info.pin:__hide_extmark()
     end,
@@ -679,10 +676,8 @@ function Info:new(opts)
   }
 
   -- Make sure we notice even if someone manually :q's the diff window.
-  local close_augroup = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false })
-  vim.api.nvim_create_autocmd('BufHidden', {
-    group = close_augroup,
-    buffer = diff_buffer.bufnr,
+  diff_buffer:create_autocmd('BufHidden', {
+    group = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false }),
     callback = function()
       self:__clear_diff_pin()
     end,

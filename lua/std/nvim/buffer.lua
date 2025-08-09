@@ -120,4 +120,16 @@ function Buffer:line(line, strict_indexing)
   return vim.api.nvim_buf_get_lines(self.bufnr, line, line + 1, strict_indexing)[1]
 end
 
+---Create an autocmd for this buffer.
+---
+---See nvim_create_autocmd() for details.
+---
+---@param event string|string[] The event or events.
+---@param opts table The autocmd options (callback, etc). Buffer will be set automatically.
+---@return integer autocmd_id
+function Buffer:create_autocmd(event, opts)
+  opts = vim.tbl_extend('error', { buffer = self.bufnr }, opts)
+  return vim.api.nvim_create_autocmd(event, opts)
+end
+
 return Buffer

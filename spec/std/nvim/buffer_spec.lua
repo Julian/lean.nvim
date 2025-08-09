@@ -161,6 +161,28 @@ describe('Buffer', function()
     end)
   end)
 
+  describe('create_autocmd', function()
+    it('creates an autocmd for the buffer', function()
+      local original = Buffer:current()
+
+      local buffer = Buffer.create {}
+      local triggered = false
+      buffer:create_autocmd('CursorHoldI', {
+        callback = function()
+          triggered = true
+        end,
+      })
+
+      vim.api.nvim_exec_autocmds('CursorHoldI', { buffer = original.bufnr })
+      assert.is_false(triggered)
+
+      vim.api.nvim_exec_autocmds('CursorHoldI', { buffer = buffer.bufnr })
+      assert.is_true(triggered)
+
+      buffer:force_delete()
+    end)
+  end)
+
   describe('b', function()
     it('returns the buffer-local variables', function()
       local buffer = Buffer.create {}

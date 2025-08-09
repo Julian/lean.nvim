@@ -531,9 +531,8 @@ function BufRenderer:new(obj)
   local new_renderer = setmetatable(obj, self)
   obj.buffer.o.modifiable = false
 
-  vim.api.nvim_create_autocmd({ 'BufEnter', 'CursorMoved' }, {
+  obj.buffer:create_autocmd({ 'BufEnter', 'CursorMoved' }, {
     group = vim.api.nvim_create_augroup('WidgetPosition', { clear = false }),
-    buffer = obj.buffer.bufnr,
     callback = function()
       new_renderer:update_cursor()
     end,
@@ -962,14 +961,12 @@ local function select_many(choices, opts, on_choices)
   modal:set_cursor { start_line, first_column }
 
   local group = vim.api.nvim_create_augroup('LeanSelectManyWindow', { clear = false })
-  vim.api.nvim_create_autocmd('WinLeave', {
+  buffer:create_autocmd('WinLeave', {
     group = group,
-    buffer = buffer.bufnr,
     callback = function() renderer:event 'clear' end
   })
-  vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+  buffer:create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
     group = group,
-    buffer = buffer.bufnr,
     callback = function()  -- clip the cursor to the real editable region
       local row, column = unpack(modal:cursor())
       row = math.max(math.min(row, end_line), start_line)
