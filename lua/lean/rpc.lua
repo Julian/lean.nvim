@@ -218,8 +218,8 @@ function Session:call(pos, method, params)
   return result, err
 end
 
----Map from bufnr to Session object.
----@type table<number, Session>
+---Map from URI to Session object.
+---@type table<string, Session>
 local sessions = {}
 
 ---@param uri string
