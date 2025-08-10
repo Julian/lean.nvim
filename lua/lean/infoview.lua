@@ -74,7 +74,7 @@ options._DEFAULTS = vim.deepcopy(options)
 ---@field private __data_element Element
 ---@field private __element Element
 ---@field private __extmark number
----@field private __extmark_buf number
+---@field private __extmark_buffer Buffer
 ---@field private __extmark_hl_group string
 ---@field private __extmark_virt_text table
 ---@field private __tick integer
@@ -902,7 +902,7 @@ end
 function Pin:__teardown()
   self.__info = nil
   if self.__extmark then
-    vim.api.nvim_buf_del_extmark(self.__extmark_buf, self.__extmark_ns, self.__extmark)
+    self.__extmark_buffer:del_extmark(self.__extmark_ns, self.__extmark)
   end
 end
 
@@ -912,25 +912,28 @@ function Pin:__update_extmark(params)
   if not params then
     return
   end
-  local buf = vim.uri_to_bufnr(params.textDocument.uri)
-  if not vim.api.nvim_buf_is_loaded(buf) then
+  local buffer = Buffer:from_uri(params.textDocument.uri)
+  if not buffer:is_loaded() then
     return
   end
 
-  self:__update_extmark_style(buf, params.position.line, params.position.character)
+  self:__update_extmark_style(buffer, params.position.line, params.position.character)
 
   self:update_position()
 end
 
-function Pin:__update_extmark_style(buf, line, col)
+---@param buffer? Buffer
+---@param line? number
+---@param col? number
+function Pin:__update_extmark_style(buffer, line, col)
   -- not a brand new extmark
-  if not buf then
+  if not buffer then
     if not self.__extmark then
       return
     end
-    buf = self.__extmark_buf
+    buffer = self.__extmark_buffer
     local extmark_pos =
-      vim.api.nvim_buf_get_extmark_by_id(buf, self.__extmark_ns, self.__extmark, {})
+      vim.api.nvim_buf_get_extmark_by_id(buffer.bufnr, self.__extmark_ns, self.__extmark, {})
     if vim.tbl_isempty(extmark_pos) then
       return
     end
@@ -938,7 +941,7 @@ function Pin:__update_extmark_style(buf, line, col)
     col = extmark_pos[2]
   end
 
-  local buf_line = vim.api.nvim_buf_get_lines(buf, line, line + 1, false)[1]
+  local buf_line = buffer:line(line, false)
   local end_col = 0
   if buf_line then
     if col < #buf_line then
@@ -956,14 +959,14 @@ function Pin:__update_extmark_style(buf, line, col)
     end
   end
 
-  self.__extmark = vim.api.nvim_buf_set_extmark(buf, self.__extmark_ns, line, col, {
+  self.__extmark = buffer:set_extmark(self.__extmark_ns, line, col, {
     id = self.__extmark,
     end_col = end_col,
     hl_group = self.__extmark_hl_group,
     virt_text = self.__extmark_virt_text,
     virt_text_pos = 'right_align',
   })
-  self.__extmark_buf = buf
+  self.__extmark_buffer = buffer
 end
 
 ---Update pin position based on extmark, used directly when changing text, indirectly when setting position.
@@ -973,16 +976,17 @@ function Pin:update_position()
     return
   end
 
-  local buf = self.__extmark_buf
-  if not vim.api.nvim_buf_is_loaded(buf) then
+  local buffer = self.__extmark_buffer
+  if not buffer:is_loaded() then
     return
   end
 
-  local extmark_pos = vim.api.nvim_buf_get_extmark_by_id(buf, self.__extmark_ns, extmark, {})
+  local extmark_pos =
+    vim.api.nvim_buf_get_extmark_by_id(buffer.bufnr, self.__extmark_ns, extmark, {})
 
   local new_pos = { line = extmark_pos[1] }
 
-  local buf_line = vim.api.nvim_buf_get_lines(buf, new_pos.line, new_pos.line + 1, false)[1]
+  local buf_line = buffer:line(new_pos.line, false)
   if buf_line then
     local succeeded, _, utf16 = pcall(vim.str_utfindex, buf_line, extmark_pos[2])
     if succeeded then
@@ -995,7 +999,7 @@ function Pin:update_position()
     new_pos.character = 0
   end
 
-  local uri = vim.uri_from_bufnr(buf)
+  local uri = buffer:uri()
   ---@type lsp.TextDocumentPositionParams
   self.__position_params = { textDocument = { uri = uri }, position = new_pos }
   self.__ui_position_params = {
@@ -1126,8 +1130,7 @@ Pin.update = a.void(function(self)
     return
   end
 
-  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
+  if not Buffer:from_uri(params.textDocument.uri):is_loaded() then
     return
   end
 
@@ -1205,10 +1208,10 @@ local function infoview_bufenter()
     new_infoview:open()
   end
 
-  local bufnr = vim.api.nvim_get_current_buf()
-  if not attached_buffers[bufnr] then
-    vim.api.nvim_buf_attach(bufnr, false, { on_lines = infoview.__update_pin_positions })
-    attached_buffers[bufnr] = true
+  local buffer = Buffer:current()
+  if not attached_buffers[buffer.bufnr] then
+    buffer:attach { on_lines = infoview.__update_pin_positions }
+    attached_buffers[buffer.bufnr] = true
   end
   update_current_infoview()
 end

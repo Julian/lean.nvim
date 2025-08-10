@@ -7,6 +7,7 @@
 --- the below data structures.
 ---@brief ]]
 
+local Buffer = require 'std.nvim.buffer'
 local a = require 'plenary.async'
 local control = require 'plenary.async.control'
 
@@ -52,10 +53,10 @@ Session.__index = Session
 local KEEPALIVE_PERIOD_MS = 20000
 
 ---@param client vim.lsp.Client
----@param bufnr number
+---@param buffer Buffer
 ---@param uri string
 ---@return Session
-function Session:new(client, bufnr, uri)
+function Session:new(client, buffer, uri)
   self = setmetatable({
     client = client,
     uri = uri,
@@ -80,14 +81,14 @@ function Session:new(client, bufnr, uri)
     end)
   )
   -- Terminate RPC session when document is closed.
-  vim.api.nvim_buf_attach(bufnr, false, {
+  buffer:attach {
     on_reload = function()
       self:close_without_releasing()
     end,
     on_detach = function()
       self:close_without_releasing()
     end,
-  })
+  }
   return self
 end
 
@@ -171,8 +172,7 @@ function Session:call(pos, method, params)
     return nil, self.connect_err
   end
 
-  local bufnr = vim.uri_to_bufnr(pos.textDocument.uri)
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
+  if not Buffer:from_uri(pos.textDocument.uri):is_loaded() then
     self:close_without_releasing()
   end
 
@@ -225,9 +225,9 @@ local sessions = {}
 ---@param uri string
 ---@result string error
 local function connect(uri)
-  local bufnr = vim.uri_to_bufnr(uri)
-  local client = lsp.client_for(bufnr)
-  local sess = Session:new(client, bufnr, uri)
+  local buffer = Buffer:from_uri(uri)
+  local client = lsp.client_for(buffer.bufnr)
+  local sess = Session:new(client, buffer, uri)
   sessions[uri] = sess
   if client == nil then
     sess.connected = true

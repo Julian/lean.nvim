@@ -24,6 +24,15 @@ describe('Buffer', function()
     end)
   end)
 
+  describe('uri', function()
+    it('returns the buffer URI', function()
+      local buffer = Buffer.create { name = '/tmp/test/uri_buf' }
+      local expected_uri = vim.uri_from_bufnr(buffer.bufnr)
+      assert.are.same(expected_uri, buffer:uri())
+      buffer:force_delete()
+    end)
+  end)
+
   describe('create', function()
     it('creates a new buffer', function()
       local before = vim.api.nvim_list_bufs()
@@ -141,6 +150,23 @@ describe('Buffer', function()
     end)
   end)
 
+  describe('set_lines', function()
+    it('sets all lines when given no other arguments', function()
+      local buffer = Buffer.create {}
+      buffer:set_lines { 'foo', 'bar', 'baz', 'quux' }
+      assert.are.same({ 'foo', 'bar', 'baz', 'quux' }, buffer:lines())
+      buffer:force_delete()
+    end)
+
+    it('sets lines from start until end', function()
+      local buffer = Buffer.create {}
+      buffer:set_lines { 'foo', 'bar', 'baz', 'quux' }
+      buffer:set_lines({ 'a', 'b' }, 1, 3, false)
+      assert.are.same({ 'foo', 'a', 'b', 'quux' }, buffer:lines())
+      buffer:force_delete()
+    end)
+  end)
+
   describe('line', function()
     it('returns the given line', function()
       local buffer = Buffer.create {}
@@ -199,6 +225,97 @@ describe('Buffer', function()
       assert.are.same('nofile', buffer.o.buftype)
       buffer.o.buftype = 'nowrite'
       assert.are.same('nowrite', vim.bo[buffer.bufnr].buftype)
+      buffer:force_delete()
+    end)
+  end)
+
+  describe('attach', function()
+    it('attaches an on_lines callback to the buffer', function()
+      local buffer = Buffer.create {}
+      local triggered = false
+      buffer:attach {
+        on_lines = function()
+          triggered = true
+        end,
+      }
+      buffer:set_lines { 'foo' }
+      assert.is_true(triggered)
+      buffer:force_delete()
+    end)
+  end)
+
+  describe('extmarks', function()
+    it('gets extmarks in the buffer', function()
+      local buffer = Buffer.create {}
+      local ns = vim.api.nvim_create_namespace ''
+      local another = vim.api.nvim_create_namespace ''
+      local one = vim.api.nvim_buf_set_extmark(buffer.bufnr, ns, 0, 0, {})
+      local two = vim.api.nvim_buf_set_extmark(buffer.bufnr, another, 0, 0, {})
+
+      assert.are.same({ { one, 0, 0 }, { two, 0, 0 } }, buffer:extmarks())
+
+      buffer:force_delete()
+    end)
+
+    it('filters by namespace ID', function()
+      local buffer = Buffer.create {}
+      local ns = vim.api.nvim_create_namespace ''
+      local another = vim.api.nvim_create_namespace ''
+      local one = vim.api.nvim_buf_set_extmark(buffer.bufnr, ns, 0, 0, {})
+      vim.api.nvim_buf_set_extmark(buffer.bufnr, another, 0, 0, {})
+
+      assert.are.same({ { one, 0, 0 } }, buffer:extmarks(ns))
+
+      buffer:force_delete()
+    end)
+
+    it('only returns marks within the given range', function()
+      local buffer = Buffer.create {}
+      buffer:set_lines { 'line 1', 'line 2', 'line 3' }
+      local ns = vim.api.nvim_create_namespace ''
+      vim.api.nvim_buf_set_extmark(buffer.bufnr, ns, 0, 0, {})
+      local two = vim.api.nvim_buf_set_extmark(buffer.bufnr, ns, 1, 0, {})
+      local three = vim.api.nvim_buf_set_extmark(buffer.bufnr, ns, 1, 2, {})
+      local four = vim.api.nvim_buf_set_extmark(buffer.bufnr, ns, 1, 4, {})
+      vim.api.nvim_buf_set_extmark(buffer.bufnr, ns, 2, 0, {})
+      assert.are.same(
+        { { two, 1, 0 }, { three, 1, 2 }, { four, 1, 4 } },
+        buffer:extmarks(ns, two, four)
+      )
+
+      buffer:force_delete()
+    end)
+  end)
+
+  describe('set_extmark', function()
+    it('sets an extmark in the buffer', function()
+      local buffer = Buffer.create {}
+      local ns = vim.api.nvim_create_namespace ''
+      local id = buffer:set_extmark(ns, 0, 0, {})
+      assert.is_number(id)
+      local marks = buffer:extmarks(ns)
+      assert.are.same({ { id, 0, 0 } }, marks)
+      buffer:force_delete()
+    end)
+  end)
+
+  describe('del_extmark', function()
+    it('deletes an existing extmark', function()
+      local buffer = Buffer.create {}
+      local ns = vim.api.nvim_create_namespace ''
+      local id = buffer:set_extmark(ns, 0, 0, {})
+      assert.are.same({ { id, 0, 0 } }, buffer:extmarks(ns))
+      buffer:del_extmark(ns, id)
+      assert.are.same({}, buffer:extmarks(ns))
+      buffer:force_delete()
+    end)
+
+    it('errors when deleting a non-existent extmark', function()
+      local buffer = Buffer.create {}
+      local ns = vim.api.nvim_create_namespace ''
+      assert.has_error(function()
+        buffer:del_extmark(ns, 999)
+      end, 'extmark 999 does not exist in namespace ' .. ns)
       buffer:force_delete()
     end)
   end)

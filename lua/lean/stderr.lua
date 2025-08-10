@@ -58,7 +58,7 @@ function stderr.show(message)
       table.remove(lines)
     end
     num_lines = num_lines + #lines
-    vim.api.nvim_buf_set_lines(current.buffer.bufnr, num_lines, num_lines, false, lines)
+    current.buffer:set_lines(lines, num_lines, num_lines, false)
     if not current.window:is_current() then
       current.window:set_cursor { num_lines, 0 }
     end

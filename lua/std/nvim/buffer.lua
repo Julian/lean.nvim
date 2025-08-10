@@ -68,6 +68,12 @@ function Buffer:name()
   return vim.api.nvim_buf_get_name(self.bufnr)
 end
 
+---The buffer's URI.
+---@return string uri
+function Buffer:uri()
+  return vim.uri_from_bufnr(self.bufnr)
+end
+
 ---Check if the buffer is loaded.
 ---@return boolean
 function Buffer:is_loaded()
@@ -118,6 +124,72 @@ function Buffer:line(line, strict_indexing)
     strict_indexing = true
   end
   return vim.api.nvim_buf_get_lines(self.bufnr, line, line + 1, strict_indexing)[1]
+end
+
+---Set lines in the buffer.
+---
+---See :h nvim_buf_set_lines for details.
+---
+---@param replacement string[]
+---@param start? integer
+---@param end_? integer
+---@param strict_indexing? boolean defaults to true
+function Buffer:set_lines(replacement, start, end_, strict_indexing)
+  vim.api.nvim_buf_set_lines(
+    self.bufnr,
+    start or 0,
+    end_ or -1,
+    strict_indexing == nil and true or strict_indexing,
+    replacement
+  )
+end
+
+---Attach a callback to a buffer.
+---
+---See :h nvim_buf_attach for details.
+---
+---@param opts table See :h nvim_buf_attach
+function Buffer:attach(opts)
+  vim.api.nvim_buf_attach(self.bufnr, false, opts)
+end
+
+---Get extmarks from the buffer.
+---
+---See :h nvim_buf_get_extmarks for details.
+---
+---@param ns_id? integer
+---@param start? integer| { [1]: integer, [2]: integer }
+---@param end_? integer| { [1]: integer, [2]: integer }
+---@param opts? table
+function Buffer:extmarks(ns_id, start, end_, opts)
+  return vim.api.nvim_buf_get_extmarks(self.bufnr, ns_id or -1, start or 0, end_ or -1, opts or {})
+end
+
+---Set an extmark in the buffer.
+---
+---See :h nvim_buf_set_extmark for details.
+---
+---@param ns_id integer
+---@param line integer
+---@param col integer
+---@param opts table
+---@return integer
+function Buffer:set_extmark(ns_id, line, col, opts)
+  return vim.api.nvim_buf_set_extmark(self.bufnr, ns_id, line, col, opts)
+end
+
+---Delete an extmark in the buffer.
+---
+---See :h nvim_buf_del_extmark for details.
+---
+---@param ns_id integer
+---@param id integer the extmark ID
+function Buffer:del_extmark(ns_id, id)
+  local ok = vim.api.nvim_buf_del_extmark(self.bufnr, ns_id, id)
+  if not ok then
+    local message = 'extmark %d does not exist in namespace %d'
+    error(message:format(id, ns_id))
+  end
 end
 
 ---Create an autocmd for this buffer.

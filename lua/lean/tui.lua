@@ -601,7 +601,7 @@ function BufRenderer:render()
   self.buffer.o.modifiable = true
   -- XXX: Again I do not understand why tests occasionally are flaky,
   --      complaining about invalid buffer names, if we don't have this pcall.
-  local ok, _ = pcall(vim.api.nvim_buf_set_lines, buf, 0, -1, false, lines)
+  local ok, _ = pcall(Buffer.set_lines, self.buffer, lines)
   if not ok then
     log:error { message = 'infoview failed to update', buf = buf }
   end
