@@ -14,6 +14,17 @@ if #vim.api.nvim_list_uis() ~= 0 then
   vim.opt.runtimepath:append(lean_nvim_dir)
 end
 
+---@type lean.Config
+vim.g.lean_config = {
+  log = function(level, data)
+    if level < vim.log.levels[vim.env.LEAN_NVIM_MIN_LOG_LEVEL or 'INFO'] then
+      return
+    end
+    print(vim.inspect(data), level)
+  end,
+  mappings = true,
+}
+
 vim.cmd [[
   runtime! plugin/lspconfig.vim
   runtime! plugin/matchit.vim

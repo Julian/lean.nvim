@@ -24,7 +24,7 @@ retest *test_files=spec:
 # Run an instance of neovim with the same minimal init used to run tests.
 [group('dev')]
 nvim *ARGS='':
-    XDG_CONFIG_HOME="{{ clean_config }}" nvim --clean -u {{ init_lua }} -c "lua require('lean').setup { mappings = true }" {{ ARGS }}
+    XDG_CONFIG_HOME="{{ clean_config }}" nvim --clean -u {{ init_lua }} -c "lua require('lean').setup(vim.g.lean_config)" {{ ARGS }}
 
 # Run an instance of the `devcontainer` which uses LazyVim.
 [group('dev')]
