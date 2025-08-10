@@ -152,6 +152,18 @@ function helpers.clean_buffer(contents, callback, project)
   end
 end
 
+---Wait until we are not processing at the current cursor position.
+function helpers.wait_for_processing()
+  local params = vim.lsp.util.make_position_params(0, 'utf-16')
+  vim.wait(5000, function()
+    return progress.at(params) == progress.Kind.processing
+  end)
+  local succeeded, _ = vim.wait(15000, function()
+    return progress.at(params) == nil
+  end)
+  assert.message('Never finished processing').True(succeeded)
+end
+
 ---Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
