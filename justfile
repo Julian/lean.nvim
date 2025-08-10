@@ -49,7 +49,8 @@ lint:
     pre-commit run --all-files
     @echo
     {{ if `lua-language-server --version 2>&1 >/dev/null; echo $?` != "0" { error('lua-language-server not found') } else { "" } }}
-    lua-language-server --check {{ lean }} --checklevel=Warning --configpath "{{ justfile_directory() }}/.luarc.json"
+    # Commented out as luals is impossible to configure for finding Neovim's own type declarations
+    # lua-language-server --check {{ lean }} --checklevel=Warning --configpath "{{ justfile_directory() }}/.luarc.json"
     {{ if `selene --version 2>&1 >/dev/null; echo $?` != "0" { error('selene not found') } else { "" } }}
     selene {{ src }}
 
