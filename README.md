@@ -75,7 +75,7 @@ If you are on an earlier version of neovim, e.g. `0.9.5`, you can have your plug
   - `:LeanTermGoal` for showing term-mode type information in a preview window
 
 - File progress information for visible lines in the sign column.
-  If [satellite.nvim](https://github.com/lewis6991/satellite.nvim) is present a satellite extension is registered for showing progress information for the whole document within its floating window.
+  If [satellite.nvim](https://github.com/lewis6991/satellite.nvim) is present, a satellite extension is registered for showing progress information for the whole document within its floating window.
 
 - [vim-matchup](https://github.com/andymass/vim-matchup) definitions for Lean
 - [switch.vim](https://github.com/AndrewRadev/switch.vim/) base definitions for Lean
