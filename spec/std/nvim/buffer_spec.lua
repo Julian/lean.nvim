@@ -319,4 +319,61 @@ describe('Buffer', function()
       buffer:force_delete()
     end)
   end)
+
+  describe('clear_namespace', function()
+    it('clears all extmarks in a namespace', function()
+      local buffer = Buffer.create {}
+      local ns = vim.api.nvim_create_namespace ''
+      local another_ns = vim.api.nvim_create_namespace ''
+      buffer:set_extmark(ns, 0, 0, {})
+      buffer:set_extmark(ns, 1, 0, {})
+      buffer:set_extmark(another_ns, 0, 0, {})
+
+      assert.are.same(2, #buffer:extmarks(ns))
+      assert.are.same(1, #buffer:extmarks(another_ns))
+
+      buffer:clear_namespace(ns)
+
+      assert.are.same(0, #buffer:extmarks(ns))
+      assert.are.same(1, #buffer:extmarks(another_ns))
+
+      buffer:force_delete()
+    end)
+
+    it('clears all extmarks in all namespaces when given no ID', function()
+      local buffer = Buffer.create {}
+      local ns = vim.api.nvim_create_namespace ''
+      local another_ns = vim.api.nvim_create_namespace ''
+      buffer:set_extmark(ns, 0, 0, {})
+      buffer:set_extmark(ns, 1, 0, {})
+      buffer:set_extmark(another_ns, 0, 0, {})
+
+      buffer:clear_namespace()
+
+      assert.are.same(0, #buffer:extmarks())
+
+      buffer:force_delete()
+    end)
+
+    it('clears extmarks in a namespace within a given range', function()
+      local buffer = Buffer.create {}
+      local ns = vim.api.nvim_create_namespace ''
+      buffer:set_lines { 'line1', 'line2', 'line3', 'line4' }
+      buffer:set_extmark(ns, 0, 0, {})
+      buffer:set_extmark(ns, 1, 0, {})
+      buffer:set_extmark(ns, 2, 0, {})
+      buffer:set_extmark(ns, 3, 0, {})
+
+      assert.are.same(4, #buffer:extmarks(ns))
+
+      buffer:clear_namespace(ns, 1, 3)
+
+      local remaining_extmarks = buffer:extmarks(ns)
+      assert.are.same(2, #remaining_extmarks)
+      assert.are.same(0, remaining_extmarks[1][2]) -- line 0
+      assert.are.same(3, remaining_extmarks[2][2]) -- line 3
+
+      buffer:force_delete()
+    end)
+  end)
 end)

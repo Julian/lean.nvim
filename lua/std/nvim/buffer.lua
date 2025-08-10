@@ -192,6 +192,17 @@ function Buffer:del_extmark(ns_id, id)
   end
 end
 
+---Clear a namespace in the buffer.
+---
+---See :h nvim_buf_clear_namespace for details.
+---
+---@param ns_id integer
+---@param start_line? integer
+---@param end_line? integer
+function Buffer:clear_namespace(ns_id, start_line, end_line)
+  vim.api.nvim_buf_clear_namespace(self.bufnr, ns_id or -1, start_line or 0, end_line or -1)
+end
+
 ---Create an autocmd for this buffer.
 ---
 ---See nvim_create_autocmd() for details.

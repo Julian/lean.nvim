@@ -181,9 +181,9 @@ end
 ---@param result LeanPublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
 local function on_publish_diagnostics(_, result, ctx)
-  local bufnr = vim.uri_to_bufnr(result.uri)
-  vim.diagnostic.reset(silent_ns, bufnr)
-  vim.api.nvim_buf_clear_namespace(bufnr, goals_ns, 0, -1)
+  local buffer = Buffer:from_uri(result.uri)
+  vim.diagnostic.reset(silent_ns, buffer.bufnr)
+  buffer:clear_namespace(goals_ns)
 
   local markers = config().goal_markers
 
@@ -201,14 +201,14 @@ local function on_publish_diagnostics(_, result, ctx)
       -- changed, which can give out of range errors when setting the extmarks.
       local succeeded = pcall(function()
         if markers.unsolved ~= '' and lsp.is_unsolved_goals_diagnostic(each) then
-          table.insert(unsolved, std.position_to_byte0(range['end'], bufnr))
+          table.insert(unsolved, std.position_to_byte0(range['end'], buffer.bufnr))
         elseif markers.accomplished ~= '' and lsp.is_goals_accomplished_diagnostic(each) then
-          local start_row, start_col, end_row, end_col = byterange_of(bufnr, each)
-          vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
+          local start_row, start_col, end_row, end_col = byterange_of(buffer.bufnr, each)
+          buffer:set_extmark(goals_ns, start_row, start_col, {
             sign_text = markers.accomplished,
             sign_hl_group = 'leanGoalsAccomplishedSign',
           })
-          vim.api.nvim_buf_set_extmark(bufnr, goals_ns, start_row, start_col, {
+          buffer:set_extmark(goals_ns, start_row, start_col, {
             end_row = end_row,
             end_col = end_col,
             hl_group = 'leanGoalsAccomplished',
@@ -220,7 +220,7 @@ local function on_publish_diagnostics(_, result, ctx)
         log:debug {
           message = 'Failed to set goals accomplished markers',
           diagnostic = each,
-          bufnr = bufnr,
+          bufnr = buffer.bufnr,
         }
       end
 
@@ -232,7 +232,7 @@ local function on_publish_diagnostics(_, result, ctx)
 
   if #unsolved ~= 0 then
     local function place_marker(pos)
-      local succeeded = pcall(vim.api.nvim_buf_set_extmark, bufnr, goals_ns, pos[1], pos[2], {
+      local succeeded = pcall(Buffer.set_extmark, buffer, goals_ns, pos[1], pos[2], {
         hl_mode = 'combine',
         virt_text = { { markers.unsolved, 'leanUnsolvedGoals' } },
         virt_text_pos = 'eol',
@@ -240,7 +240,7 @@ local function on_publish_diagnostics(_, result, ctx)
       if not succeeded then
         log:debug {
           message = 'Failed to set unsolved goal marker',
-          bufnr = bufnr,
+          bufnr = buffer.bufnr,
         }
       end
     end
@@ -252,9 +252,8 @@ local function on_publish_diagnostics(_, result, ctx)
 
     local mode = vim.api.nvim_get_mode().mode
     if mode == 'i' then
-      vim.api.nvim_create_autocmd({ 'InsertLeave', 'CursorHoldI' }, {
+      buffer:create_autocmd({ 'InsertLeave', 'CursorHoldI' }, {
         group = vim.api.nvim_create_augroup('LeanUnsolvedGoalsMarkers', {}),
-        buffer = bufnr,
         callback = place_all,
         once = true,
         desc = 'place unsolved goals markers',
@@ -266,8 +265,8 @@ local function on_publish_diagnostics(_, result, ctx)
 
   vim.diagnostic.set(
     silent_ns,
-    bufnr,
-    lean_diagnostic_lsp_to_vim(other_silent, bufnr, ctx.client_id),
+    buffer.bufnr,
+    lean_diagnostic_lsp_to_vim(other_silent, buffer.bufnr, ctx.client_id),
     {
       underline = false,
       virtual_text = false,

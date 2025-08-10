@@ -586,13 +586,15 @@ function BufRenderer:close()
 end
 
 function BufRenderer:render()
-  local buf = self.buffer.bufnr
   if not self.buffer:is_loaded() then
-    log:warning { message = 'rendering an unloaded buffer', buf = buf }
+    log:warning {
+      message = 'rendering an unloaded buffer',
+      bufnr = self.buffer.bufnr,
+    }
     return
   end
 
-  vim.api.nvim_buf_clear_namespace(buf, self.__tui_ns, 0, -1)
+  self.buffer:clear_namespace(self.__tui_ns)
 
   local text = self.element:to_string()
   local lines = vim.split(text, '\n')
@@ -603,14 +605,17 @@ function BufRenderer:render()
   --      complaining about invalid buffer names, if we don't have this pcall.
   local ok, _ = pcall(Buffer.set_lines, self.buffer, lines)
   if not ok then
-    log:error { message = 'infoview failed to update', buf = buf }
+    log:error {
+      message = 'infoview failed to update',
+      bufnr = self.buffer.bufnr,
+    }
   end
   self.buffer.o.modifiable = false
 
   for _, hl in ipairs(self.element:_get_highlights()) do
     local start_pos = raw_pos_to_pos(hl.start, lines)
     local end_pos = raw_pos_to_pos(hl['end'], lines)
-    vim.highlight.range(buf, self.__tui_ns, hl.hlgroup, start_pos, end_pos)
+    vim.highlight.range(self.buffer.bufnr, self.__tui_ns, hl.hlgroup, start_pos, end_pos)
   end
 
   if self.path then
@@ -704,7 +709,7 @@ function BufRenderer:hover(force_update_highlight)
       self.tooltip:close()
       self.tooltip = nil
     end
-    vim.api.nvim_buf_clear_namespace(self.buffer.bufnr, self.__hl_ns, 0, -1)
+    self.buffer:clear_namespace(self.__hl_ns)
     self.hover_range = nil
     return
   end
@@ -784,7 +789,7 @@ function BufRenderer:hover(force_update_highlight)
   end
 
   if force_update_highlight or not vim.deep_equal(old_hover_range, self.hover_range) then
-    vim.api.nvim_buf_clear_namespace(self.buffer.bufnr, self.__hl_ns, 0, -1)
+    self.buffer:clear_namespace(self.__hl_ns)
     local hlgroup = 'widgetElementHighlight'
     if self.hover_range then
       vim.highlight.range(self.buffer.bufnr, self.__hl_ns, hlgroup, self.hover_range[1], self.hover_range[2])
