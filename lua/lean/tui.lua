@@ -603,11 +603,12 @@ function BufRenderer:render()
   self.buffer.o.modifiable = true
   -- XXX: Again I do not understand why tests occasionally are flaky,
   --      complaining about invalid buffer names, if we don't have this pcall.
-  local ok, _ = pcall(Buffer.set_lines, self.buffer, lines)
+  local ok, err = pcall(Buffer.set_lines, self.buffer, lines)
   if not ok then
     log:error {
       message = 'infoview failed to update',
       bufnr = self.buffer.bufnr,
+      error = err,
     }
   end
   self.buffer.o.modifiable = false

@@ -11,7 +11,10 @@ local Logger = {
     self(vim.log.levels.DEBUG, data)
   end,
   error = function(self, data)
-    self(vim.log.levels.ERROR, data)
+    local with_tb = vim.tbl_extend('keep', data, {
+      traceback = debug.traceback(data.message or '', 2),
+    })
+    self(vim.log.levels.ERROR, with_tb)
   end,
   ---@param data LogMessage
   info = function(self, data)
