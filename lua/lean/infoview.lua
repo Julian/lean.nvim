@@ -125,6 +125,7 @@ Infoview.__index = Infoview
 ---@return Infoview
 function Infoview:new(obj)
   obj = obj or {}
+  log:trace { message = 'creating new infoview', obj = obj }
   local new_infoview = setmetatable({
     __orientation_pref = obj.orientation or options.orientation,
     __width = obj.width or options.width,
@@ -148,6 +149,7 @@ end
 
 ---Open this infoview if it isn't already open
 function Infoview:open()
+  log:trace { message = 'opening infoview', id = self.window and self.window.id or nil }
   if self.window then
     return
   end
@@ -764,6 +766,10 @@ end
 
 ---Update this info's physical contents.
 function Info:render()
+  log:trace {
+    message = 'rendering infoview info',
+    infoview_id = self.__infoview.window and self.__infoview.window.id or nil,
+  }
   local function click_header(params)
     return function()
       local start_window = Window:current()
@@ -1117,6 +1123,7 @@ local function contents_for(params, use_widgets)
 end
 
 Pin.update = a.void(function(self)
+  log:trace { message = 'updating pin', id = self.id, paused = self.paused, loading = self.loading }
   -- FIXME: For one, we're guarding here against the infoview being updated
   --        while it's closed, which if we continued, would end up calling
   --        render. That doesn't seem right, somewhere that should happen

@@ -179,6 +179,7 @@ function Session:call(pos, method, params)
   if self:is_closed() then
     return nil, { code = -32900, message = 'LSP server disconnected' }
   end
+  log:trace { message = 'calling RPC method', method = method, params = params }
   local err, result = client_a_request(
     self.client,
     '$/lean/rpc/call',
@@ -236,6 +237,7 @@ local function connect(uri)
     return err
   end
   a.void(function()
+    log:trace { message = 'connecting to RPC', uri = uri }
     local err, result = client_a_request(client, '$/lean/rpc/connect', { uri = uri })
     sess.connected = true
     if err ~= nil then

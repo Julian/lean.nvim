@@ -311,6 +311,7 @@ end
 ---Render the element into a string.
 ---@return string
 function Element:to_string()
+  log:trace { message = 'converting element to string', name = self.name }
   local pieces = {}
   ---@param element Element
   local function go(element)
@@ -586,6 +587,7 @@ function BufRenderer:close()
 end
 
 function BufRenderer:render()
+  log:trace { message = 'rendering buffer', bufnr = self.buffer.bufnr }
   if not self.buffer:is_loaded() then
     log:warning {
       message = 'rendering an unloaded buffer',
