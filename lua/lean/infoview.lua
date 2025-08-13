@@ -59,6 +59,8 @@ local options = {
 
 options._DEFAULTS = vim.deepcopy(options)
 
+local FOCUS_AUGROUP = vim.api.nvim_create_augroup('LeanInfoviewFocus', {})
+
 --TODO: Move use_widgets here, if not delete it.
 ---@class InfoviewViewOptions
 ---@field show_types boolean show type hypotheses
@@ -610,9 +612,9 @@ end
 function Infoview:focus_on_current_buffer()
   if self.window then
     vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-      group = vim.api.nvim_create_augroup('LeanInfoviewUpdate', {}),
-      buffer = 0,
       callback = update_current_infoview,
+      buffer = 0,
+      group = vim.api.nvim_create_augroup('LeanInfoviewUpdate', {}),
     })
   end
 end
@@ -1247,9 +1249,10 @@ function infoview.enable(opts)
         current_infoview:focus_on_current_buffer()
       end
 
+      -- in case we are re-entering a buffer, clear old autocmds first
+      vim.api.nvim_clear_autocmds { group = FOCUS_AUGROUP, buffer = bufnr }
+
       vim.api.nvim_create_autocmd('LspDetach', {
-        group = vim.api.nvim_create_augroup('LeanInfoviewLSPDied', { clear = false }),
-        buffer = bufnr,
         callback = function()
           local current_infoview = infoview.get_current_infoview()
           if not current_infoview then
@@ -1257,21 +1260,20 @@ function infoview.enable(opts)
           end
           current_infoview:died()
         end,
+        buffer = bufnr,
+        group = FOCUS_AUGROUP,
       })
 
-      local focus_augroup = vim.api.nvim_create_augroup('LeanInfoviewSetFocus', { clear = false })
       vim.api.nvim_create_autocmd('BufEnter', {
-        group = focus_augroup,
-        buffer = bufnr,
         callback = infoview_bufenter,
+        buffer = bufnr,
+        group = FOCUS_AUGROUP,
       })
 
       -- WinEnter is necessary for the edge case where you have
       -- a file open in a tab with an infoview and move to a
       -- new window in a new tab with that same file but no infoview
       vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter' }, {
-        group = focus_augroup,
-        buffer = bufnr,
         callback = function()
           local current_infoview = infoview.get_current_infoview()
           if not current_infoview then
@@ -1279,6 +1281,8 @@ function infoview.enable(opts)
           end
           current_infoview:focus_on_current_buffer()
         end,
+        buffer = bufnr,
+        group = FOCUS_AUGROUP,
       })
     end,
   })
