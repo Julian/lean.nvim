@@ -11,6 +11,10 @@ local function autocmds()
     .iter(vim.api.nvim_get_autocmds { buffer = 0 })
     :filter(function(each)
       return not each.group_name:match '^nvim'
+        -- nvim 0.10...
+        and not each.group_name:match '^lsp_'
+        and not each.group_name:match '^lsp_'
+        and not each.group_name:match '^DiagnosticBufWipeout'
     end)
     :totable()
 end
