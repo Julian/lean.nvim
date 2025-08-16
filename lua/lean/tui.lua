@@ -47,6 +47,7 @@ local log = require 'lean.log'
 ---@field highlightable boolean (for buffer rendering) whether to highlight this element when hovering over it
 ---@field _size? integer Computed size of this element, updated by `Element:to_string`
 ---@field private __children Element[] this element's children
+---@field private __async_init? fun(on_result: fun(Element):nil):nil
 local Element = {}
 Element.__index = Element
 
@@ -75,6 +76,7 @@ BufRenderer.__index = BufRenderer
 ---@field hlgroup? string|fun():string? the highlight group for this element's text, or a function that returns it
 ---@field highlightable boolean? (for buffer rendering) whether to highlight this element when hovering over it
 ---@field children? Element[] this element's children
+---@field private __async_init? fun(on_result: fun(Element):nil):nil
 
 ---Create a new Element.
 ---@param args? ElementNewArgs
@@ -86,8 +88,9 @@ function Element:new(args)
     name = args.name or '',
     hlgroup = args.hlgroup,
     highlightable = args.highlightable or false,
-    __children = args.children or {},
     events = args.events or {},
+    __children = args.children or {},
+    __async_init = args.__async_init,
   }
   return setmetatable(obj, self)
 end
@@ -230,6 +233,22 @@ function Element.noop(text)
   }
 end
 
+---Create an Element whose contents will be resolved asynchronously.
+---@return Element element the (empty) element, placeable within other elements
+---@return fun(Element):nil on_result a callback to call when the element is resolved
+function Element.async()
+  local on_result_cb
+  local el = Element:new {
+    __async_init = function(on_result)
+      on_result_cb = on_result
+    end,
+  }
+  return el, function(resolved_element)
+    assert(on_result_cb, 'on_result was not set by the renderer. Did you forget to render the element?')
+    on_result_cb(resolved_element)
+  end
+end
+
 ---The empty element (with no content).
 Element.EMPTY = Element:new {}
 
@@ -309,12 +328,21 @@ function Element:_get_highlights()
 end
 
 ---Render the element into a string.
+---@param renderer? BufRenderer
 ---@return string
-function Element:to_string()
+function Element:to_string(renderer)
   log:trace { message = 'converting element to string', name = self.name }
   local pieces = {}
   ---@param element Element
   local function go(element)
+    if element.__async_init and renderer then
+      element.__async_init(function(resolved_element)  ---@type Element resolved_element
+        element:set_children { resolved_element }
+        renderer:render()
+      end)
+      element.__async_init = nil -- only run once
+    end
+
     table.insert(pieces, element.text)
     local size = #element.text
     for _, child in ipairs(element.__children) do
@@ -598,9 +626,11 @@ function BufRenderer:render()
 
   self.buffer:clear_namespace(self.__tui_ns)
 
-  local text = self.element:to_string()
+  local text = self.element:to_string(self)
   local lines = vim.split(text, '\n')
+
   self.lines = lines
+
 
   self.buffer.o.modifiable = true
   -- XXX: Again I do not understand why tests occasionally are flaky,
