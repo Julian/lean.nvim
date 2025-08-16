@@ -57,4 +57,38 @@ function html.Tag.b(children)
   return Element:new { hlgroup = 'tui.html.b', children = children }
 end
 
+---Render an unordered list.
+function html.Tag.ul(children)
+  local items = vim
+    .iter(children)
+    :map(function(child)
+      return Element:new { text = '• ', children = { child } }
+    end)
+    :totable()
+  return Element:new {
+    text = '\n',
+    children = { Element:concat(items, '\n') },
+  }
+end
+
+---Render an ordered list.
+function html.Tag.ol(children)
+  local items = vim
+    .iter(children)
+    :enumerate()
+    :map(function(i, child)
+      return Element:new { text = tostring(i) .. '. ', children = { child } }
+    end)
+    :totable()
+  return Element:new {
+    text = '\n',
+    children = { Element:concat(items, '\n') },
+  }
+end
+
+---Render a list item.
+function html.Tag.li(children)
+  return Element:new { children = children }
+end
+
 return html
