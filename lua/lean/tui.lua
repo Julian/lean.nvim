@@ -234,18 +234,28 @@ function Element.noop(text)
 end
 
 ---Create an Element whose contents will be resolved asynchronously.
+---@param name? string the name of the element, used for debugging
 ---@return Element element the (empty) element, placeable within other elements
 ---@return fun(Element):nil on_result a callback to call when the element is resolved
-function Element.async()
-  local on_result_cb
-  local el = Element:new {
+function Element.async(name)
+  local element, resolve
+
+  ---Replaced if we successfully resolve the element, otherwise logs an error.
+  resolve = function(_)
+    log:error {
+      message = 'Element.async was not resolved',
+      name = name,
+    }
+  end
+  element = Element:new {
+    name = name,
     __async_init = function(on_result)
-      on_result_cb = on_result
+      resolve = on_result
     end,
   }
-  return el, function(resolved_element)
-    assert(on_result_cb, 'on_result was not set by the renderer. Did you forget to render the element?')
-    on_result_cb(resolved_element)
+
+  return element, function(resolved_element)
+    resolve(resolved_element)
   end
 end
 
@@ -336,8 +346,10 @@ function Element:to_string(renderer)
   ---@param element Element
   local function go(element)
     if element.__async_init and renderer then
+      renderer.pending_elements[element] = true
       element.__async_init(function(resolved_element)  ---@type Element resolved_element
         element:set_children { resolved_element }
+        renderer.pending_elements[element] = nil
         renderer:render()
       end)
       element.__async_init = nil -- only run once
@@ -563,6 +575,7 @@ end
 ---Create a new BufRenderer.
 function BufRenderer:new(obj)
   obj = obj or {}
+  obj.pending_elements = {}
   local new_renderer = setmetatable(obj, self)
   obj.buffer.o.modifiable = false
 
