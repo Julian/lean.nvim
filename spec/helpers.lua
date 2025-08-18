@@ -75,6 +75,23 @@ function helpers.wait_for_loading_pins(iv)
   iv:wait(20000)
 end
 
+---Wait for all async elements to be resolved in the given infoview.
+---@param iv? Infoview
+function helpers.wait_for_async_elements(iv)
+  iv = iv or infoview.get_current_infoview()
+  if not iv then
+    error 'Infoview is not open!'
+  end
+  local renderer = iv.info.__renderer -- FIXME
+  vim.wait(5000, function()
+    return not vim.tbl_isempty(renderer.pending_elements)
+  end)
+  local succeeded, _ = vim.wait(20000, function()
+    return vim.tbl_isempty(renderer.pending_elements)
+  end)
+  assert.message('Never finished resolving async elements.').True(succeeded)
+end
+
 function helpers.wait_for_ready_lsp()
   local succeeded, _ = vim.wait(15000, function()
     local client = lsp.client_for(0)

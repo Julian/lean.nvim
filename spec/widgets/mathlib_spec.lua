@@ -21,33 +21,84 @@ describe('Mathlib widgets', function()
       function()
         helpers.search 'conv?'
         assert.infoview_contents.are [[
-        n : Nat
-        ⊢ n = n
+          n : Nat
+          ⊢ n = n
 
-        Nothing selected. You can use gK in the infoview to select expressions in the goal.
-      ]]
+          Nothing selected. You can use gK in the infoview to select expressions in the goal.
+        ]]
 
         infoview.go_to()
         helpers.feed 'gK'
 
         assert.infoview_contents.are [[
-        n : Nat
-        ⊢ n = n
+          n : Nat
+          ⊢ n = n
 
-        ▼ Conv 🔍
-        Generate conv
-      ]]
+          ▼ Conv 🔍
+          Generate conv
+        ]]
 
         helpers.search 'Generate'
         helpers.feed '<CR>'
 
         assert.infoview_contents.are [[
-        n : Nat
-        | n = n
-      ]]
+          n : Nat
+          | n = n
+        ]]
 
         -- We've jumped to the Lean window.
         assert.current_line.is '  conv =>'
+      end,
+      with_widgets
+    )
+  )
+
+  it(
+    'supports unfold? widgets',
+    helpers.clean_buffer(
+      [[
+        import Mathlib.Tactic.Widget.InteractiveUnfold
+
+        def isUninteresting (x : Nat) := x ≠ 37
+
+        example : isUninteresting 73 := by
+          unfold?
+      ]],
+      function()
+        helpers.search 'unfold?'
+        assert.infoview_contents.are [[
+          ⊢ isUninteresting 73
+
+          Nothing selected. You can use gK in the infoview to select expressions in the goal.
+        ]]
+
+        infoview.go_to()
+
+        helpers.search 'Uninteresting'
+        helpers.feed 'gK'
+        helpers.wait_for_async_elements()
+
+        assert.infoview_contents.are [[
+          ⊢ isUninteresting 73
+
+          ▼ Definitional rewrites:
+          • 73 ≠ 37
+          • ¬73 = 37
+          • 73 = 37 → False
+        ]]
+
+        helpers.search '≠'
+        helpers.feed '<CR>'
+
+        -- we're back in the Lean buffer
+        assert.contents.are [[
+          import Mathlib.Tactic.Widget.InteractiveUnfold
+
+          def isUninteresting (x : Nat) := x ≠ 37
+
+          example : isUninteresting 73 := by
+            rw [show isUninteresting 73 = (73 ≠ 37) from rfl]
+        ]]
       end,
       with_widgets
     )
