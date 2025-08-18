@@ -103,4 +103,44 @@ describe('Mathlib widgets', function()
       with_widgets
     )
   )
+
+  it(
+    'supports rw?? widgets',
+    helpers.clean_buffer(
+      [[
+        import Mathlib.Tactic.Widget.LibraryRewrite
+
+        example (P Q : Prop) (h : P ↔ Q) : P → Q := by
+          rw??
+      ]],
+      function()
+        helpers.search 'rw??'
+        helpers.wait_for_async_elements()
+        assert.infoview_contents.are [[
+          P Q : Prop
+          h : P ↔ Q
+          ⊢ P → Q
+
+          Nothing selected. You can use gK in the infoview to select expressions in the goal.
+        ]]
+
+        infoview.go_to()
+        helpers.search 'Q'
+        helpers.feed 'gK'
+        helpers.wait_for_async_elements()
+
+        assert.infoview_contents.are [[
+          37
+        ]]
+
+        helpers.feed '<CR>'
+        helpers.wait_for_async_elements()
+
+        assert.infoview_contents.are [[
+          37
+        ]]
+      end,
+      with_widgets
+    )
+  )
 end)
