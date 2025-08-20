@@ -191,8 +191,10 @@ local NO_SELECTION_HELP = Element:concat({
 ---Shows a hint for how to select locations if none are selected.
 ---
 ---Once some locations are selected, delegates to the wrapped widget function.
----@param widget_fn fun(ctx:RenderContext, props:PanelWidgetProps):Element?
+---@param widget_fn fun(ctx:RenderContext, props?:PanelWidgetProps):Element?
 local function panel(widget_fn)
+  ---@param ctx RenderContext
+  ---@param props? PanelWidgetProps
   return function(ctx, props)
     local selected = Locations.selected_at(ctx.params)
     if #selected == 0 then
@@ -200,11 +202,14 @@ local function panel(widget_fn)
     end
 
     ---@type PanelWidgetProps
-    local params = vim.tbl_extend('error', props, {
+    local params = {
       pos = ctx.params.position,
       goals = ctx:get_goals(),
       selectedLocations = selected,
-    })
+    }
+    if props then
+      params = vim.tbl_extend('error', params, props)
+    end
 
     return widget_fn(ctx, params)
   end
