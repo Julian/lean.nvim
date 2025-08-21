@@ -959,7 +959,7 @@ function Pin:__update_extmark_style(buffer, line, col)
       if succeeded then
         end_col = vim.str_byteindex(buf_line, next_utf16, true)
       else
-        log:error { message = 'str_utfindex failed', buf_line = buf_line, col = col }
+        log:debug { message = 'str_utfindex failed', buf_line = buf_line, col = col }
         end_col = col
       end
     else
@@ -1000,7 +1000,7 @@ function Pin:update_position()
     if succeeded then
       new_pos.character = utf16
     else
-      log:error { message = 'str_utfindex failed', buf_line = buf_line, extmark_pos = extmark_pos }
+      log:debug { message = 'str_utfindex failed', buf_line = buf_line, extmark_pos = extmark_pos }
       new_pos.character = 0
     end
   else
