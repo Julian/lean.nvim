@@ -1,7 +1,7 @@
 packpath := justfile_directory() / "packpath"
 scripts := justfile_directory() / "scripts"
 doc := justfile_directory() / "doc"
-devcontainer := justfile_directory() / ".devcontainer/lazyvim/Dockerfile"
+devcontainer := justfile_directory() / ".devcontainer/lazyvim"
 src := justfile_directory() / "lua"
 lean := src / "lean"
 spec := justfile_directory() / "spec"
@@ -26,10 +26,12 @@ retest *test_files=spec:
 nvim *ARGS='':
     XDG_CONFIG_HOME="{{ clean_config }}" nvim --clean -u {{ init_lua }} -c "lua require('lean').setup(vim.g.lean_config)" {{ ARGS }}
 
+ocibuild := if os() == "macos"  { "container" } else { "podman" }
+
 # Run an instance of the `devcontainer` which uses LazyVim.
 [group('dev')]
-devcontainer ocibuild="podman" tag="lazylean" *ARGS='':
-    {{ ocibuild }} build -f  {{ devcontainer }} -t {{ tag }}
+devcontainer ocibuild=ocibuild tag="lazylean" *ARGS='':
+    {{ ocibuild }} build -f  {{ devcontainer }}/Dockerfile -t {{ tag }} {{ devcontainer }}
     {{ ocibuild }} run --rm -it {{ tag }} {{ ARGS }}
 
 # Run an instance of neovim with a scratch buffer for interactive testing.
