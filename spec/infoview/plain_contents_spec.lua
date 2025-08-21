@@ -248,12 +248,12 @@ describe('plain infoviews', function()
             ⊢ 2 = 2
 
             ▼ 2:3-6:10: error:
-            type mismatch
+            Type mismatch
               rfl
             has type
-              37 = 37 : Prop
+              37 = 37
             but is expected to have type
-              2 = 2 : Prop
+              2 = 2
           ]]
         end
       )

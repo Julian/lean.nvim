@@ -30,7 +30,7 @@ describe('restart file', function()
     dependent_win:move_cursor { 2, 8 }
     assert.infoview_contents.are [[
       ▼ 2:8-2:19: error:
-      unknown identifier 'addedByTest'
+      Unknown identifier `addedByTest`
     ]]
 
     vim.cmd.vsplit { dependency, bang = true }
