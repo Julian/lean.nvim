@@ -9,6 +9,19 @@ require('lean').setup {}
 
 describe('Lean core widgets', function()
   it(
+    'supports error description widgets',
+    helpers.clean_buffer('def f := g', function()
+      assert.infoview_contents.are [[
+        ▼ 1:10-1:11: error:
+        Unknown identifier `g`
+
+        Error code: lean.unknownIdentifier
+        View explanation
+      ]]
+    end)
+  )
+
+  it(
     'supports try this widgets with one suggestion',
     helpers.clean_buffer(
       [[

@@ -31,6 +31,9 @@ describe('restart file', function()
     assert.infoview_contents.are [[
       ▼ 2:8-2:19: error:
       Unknown identifier `addedByTest`
+
+      Error code: lean.unknownIdentifier
+      View explanation
     ]]
 
     vim.cmd.vsplit { dependency, bang = true }
