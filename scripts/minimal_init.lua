@@ -14,13 +14,18 @@ if #vim.api.nvim_list_uis() ~= 0 then
   vim.opt.runtimepath:append(lean_nvim_dir)
 end
 
+local inspect = vim.env.LEAN_NVIM_LOG_INSPECT and vim.inspect
+  or function(data)
+    return vim.inspect(data, { newline = ' ', indent = '' })
+  end
+
 ---@type lean.Config
 vim.g.lean_config = {
   log = function(level, data)
     if level < vim.log.levels[vim.env.LEAN_NVIM_MIN_LOG_LEVEL or 'INFO'] then
       return
     end
-    print(vim.inspect(data), level)
+    print(inspect(data), level)
   end,
   mappings = true,
 }
