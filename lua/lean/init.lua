@@ -93,6 +93,9 @@ vim.filetype.add { extension = { lean = 'lean' } }
 ---Setup function to be run in your init.lua.
 ---@param opts lean.Config Configuration options
 function lean.setup(opts)
+  -- Apply Neovim compatibility fixes early
+  require('lean.neovim_compat').apply_fixes()
+  
   opts = opts or {}
 
   opts.abbreviations = opts.abbreviations or {}

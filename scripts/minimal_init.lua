@@ -2,10 +2,32 @@ vim.o.display = 'lastline' -- Avoid neovim/neovim#11362
 vim.o.directory = ''
 vim.o.shada = ''
 
-local this_dir = vim.fs.dirname(debug.getinfo(1, 'S').source:sub(2))
-local lean_nvim_dir = vim.fs.dirname(this_dir)
-local packpath = vim.fs.joinpath(lean_nvim_dir, 'packpath/*')
+-- Apply compatibility fixes for path functions
+local function dirname(path)
+  return vim.fs and vim.fs.dirname and vim.fs.dirname(path) or vim.fn.fnamemodify(path, ':h')
+end
+
+local function joinpath(...)
+  if vim.fs and vim.fs.joinpath then
+    return vim.fs.joinpath(...)
+  else
+    local parts = {...}
+    return table.concat(parts, '/')
+  end
+end
+
+local this_dir = dirname(debug.getinfo(1, 'S').source:sub(2))
+local lean_nvim_dir = dirname(this_dir)
+local packpath = joinpath(lean_nvim_dir, 'packpath/*')
 vim.opt.runtimepath:append(packpath)
+
+-- Add lean.nvim to the runtime path early so we can load compatibility fixes
+vim.opt.runtimepath:append(lean_nvim_dir)
+
+-- Apply Neovim compatibility fixes early, before any LSP or plugin loading
+pcall(function()
+  require('lean.neovim_compat').apply_fixes()
+end)
 
 -- Doing this unconditionally seems to fail a random indent test?!?!
 -- Inanis/Plenary will automatically set rtp+. (which seems wrong, but OK)
@@ -40,7 +62,7 @@ vim.cmd [[
 
 -- plenary forks subprocesses, so enable coverage here when appropriate
 if vim.env.LEAN_NVIM_COVERAGE then
-  local luapath = vim.fs.joinpath(lean_nvim_dir, 'luapath')
+  local luapath = joinpath(lean_nvim_dir, 'luapath')
   package.path = package.path
     .. ';'
     .. luapath

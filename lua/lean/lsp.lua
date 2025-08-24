@@ -314,6 +314,14 @@ end
 ---@param opts LeanClientConfig
 function lsp.enable(opts)
   opts.capabilities = opts.capabilities or vim.lsp.protocol.make_client_capabilities()
+  
+  -- Apply compatibility fix for file watching issues
+  local capabilities = opts.capabilities
+  if capabilities and capabilities.workspace then
+    -- Disable file watching capabilities that might trigger the band error
+    capabilities.workspace.didChangeWatchedFiles = nil
+  end
+  
   opts = vim.tbl_deep_extend('keep', opts, {
     capabilities = {
       lean = {

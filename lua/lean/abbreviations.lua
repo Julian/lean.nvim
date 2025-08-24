@@ -14,8 +14,9 @@ function abbreviations.load()
   if _MEMOIZED ~= nil then
     return _MEMOIZED
   end
-  local this_dir = vim.fs.dirname(debug.getinfo(2, 'S').source:sub(2))
-  local path = vim.fs.joinpath(this_dir, '../../vscode-lean/abbreviations.json')
+  local path_utils = require('lean._path')
+  local this_dir = path_utils.dirname(debug.getinfo(2, 'S').source:sub(2))
+  local path = path_utils.joinpath(this_dir, '../../vscode-lean/abbreviations.json')
   local file = io.open(path, 'r')
   if not file then
     error(('Unable to read abbreviations from %q'):format(path))
