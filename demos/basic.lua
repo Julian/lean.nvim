@@ -30,5 +30,7 @@ DEMO = {
 ---Leaves actually typing and then exiting to be driven within VHS.
 function DEMO.popup()
   Popup(DEMO.overlay_opts):mount()
+  vim.bo.filetype = 'markdown'
+  vim.b.completion = false -- disable blink, completion popping up is noisy
   vim.cmd.startinsert()
 end

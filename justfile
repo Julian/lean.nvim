@@ -56,7 +56,7 @@ lint:
     {{ if `selene --version 2>&1 >/dev/null; echo $?` != "0" { error('selene not found') } else { "" } }}
     selene {{ src }}
 
-# Rebuild a demo from our VHS script.
+# Rebuild a demo from our VHS script. Requires `vhs` to be installed.
 demo:
     cd {{ demos }}/project/ && lake build Mathlib.Analysis.SpecialFunctions.Pow.Real Mathlib.Data.Real.Irrational
     cd {{ justfile_directory() }}; vhs {{ demos }}/basic.tape

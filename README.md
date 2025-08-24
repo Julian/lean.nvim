@@ -20,7 +20,7 @@
 
 </div>
 
-https://github.com/Julian/lean.nvim/assets/329822/87f773a1-17b9-4938-b933-4f260f4228cd
+https://github.com/user-attachments/assets/d17554ae-bcce-4f73-ac34-38ae556caf45
 
 ## Sponsors
 
