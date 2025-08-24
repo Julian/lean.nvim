@@ -106,6 +106,15 @@ function compat.apply_fixes()
     vim.uv = vim.loop
   end
   
+  -- Add missing vim.lsp.protocol.Methods for older Neovim versions
+  if vim.lsp.protocol and not vim.lsp.protocol.Methods then
+    vim.lsp.protocol.Methods = {
+      textDocument_publishDiagnostics = 'textDocument/publishDiagnostics',
+      textDocument_didClose = 'textDocument/didClose',
+      textDocument_didOpen = 'textDocument/didOpen',
+    }
+  end
+  
   -- Add missing vim.version.ge for older Neovim versions
   if vim.version and not vim.version.ge then
     vim.version.ge = function(v1, v2)
@@ -118,12 +127,13 @@ function compat.apply_fixes()
             patch = tonumber(patch) or 0
           }
         end
-        return v
+        return v or { major = 0, minor = 0, patch = 0 }
       end
       
       v1 = parse_version(v1)
       v2 = parse_version(v2)
       
+      if not v1 or not v2 then return false end
       if v1.major > v2.major then return true end
       if v1.major < v2.major then return false end
       if v1.minor > v2.minor then return true end
