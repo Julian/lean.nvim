@@ -146,38 +146,48 @@ function compat.apply_fixes()
   if not vim.iter then
     -- Simplified vim.iter implementation for compatibility
     vim.iter = function(t)
-      local mt = {}
-      
-      function mt:map(func)
-        local result = {}
-        for i, v in ipairs(t) do
-          result[i] = func(v)
-        end
-        return setmetatable(result, mt)
-      end
-      
-      function mt:filter(func)
-        local result = {}
-        for _, v in ipairs(t) do
-          if func(v) then
-            table.insert(result, v)
-          end
-        end
-        return setmetatable(result, mt)
-      end
-      
-      function mt:each(func)
-        for _, v in ipairs(t) do
-          func(v)
-        end
-      end
-      
-      function mt:totable()
+      if type(t) ~= 'table' then
         return t
       end
       
+      local result = {}
+      for i, v in ipairs(t) do
+        result[i] = v
+      end
+      
+      local mt = {}
+      
+      function mt:map(func)
+        local mapped = {}
+        for i, v in ipairs(result) do
+          mapped[i] = func(v)
+        end
+        return vim.iter(mapped)
+      end
+      
+      function mt:filter(func)
+        local filtered = {}
+        for _, v in ipairs(result) do
+          if func(v) then
+            table.insert(filtered, v)
+          end
+        end
+        return vim.iter(filtered)
+      end
+      
+      function mt:each(func)
+        for _, v in ipairs(result) do
+          func(v)
+        end
+        return vim.iter(result)
+      end
+      
+      function mt:totable()
+        return result
+      end
+      
       function mt:any(func)
-        for _, v in ipairs(t) do
+        for _, v in ipairs(result) do
           if func(v) then
             return true
           end
@@ -187,27 +197,26 @@ function compat.apply_fixes()
       
       function mt:fold(init, func)
         local acc = init
-        for _, v in ipairs(t) do
+        for _, v in ipairs(result) do
           acc = func(acc, v)
         end
         return acc
       end
       
-      return setmetatable(t, { __index = mt })
+      return setmetatable({}, { __index = mt })
     end
   end
+  
+  -- Apply the band fix unconditionally to be safe
+  fix_band_error()
   
   -- Check if we're running a version that might have the band issue
   local nvim_version = vim.version and vim.version() or { major = 0, minor = 9, patch = 0 }
   local is_nightly = vim.version and (vim.version().prerelease or string.find(tostring(vim.version()), 'dev'))
   
   if is_nightly then
-    -- For nightly versions, apply both fixes defensively
-    fix_band_error()
+    -- For nightly versions, apply file watching disable as well
     disable_file_watching()
-  else
-    -- For stable versions, just try the band fix in case it's needed
-    fix_band_error()
   end
 end
 
