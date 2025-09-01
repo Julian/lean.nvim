@@ -6,7 +6,7 @@ vim.b.did_ftplugin = 1
 vim.opt.wildignore:append [[*.olean]]
 
 vim.bo.iskeyword = [[a-z,A-Z,_,48-57,192-255,!,',?,#]]
-vim.bo.comments = [[s0:/-,mb:\ ,ex:-/,:--]]
+vim.bo.comments = [[s0:/-,mb: ,ex:-/,:--]]
 vim.bo.commentstring = [[/- %s -/]]
 
 vim.bo.includeexpr = [[substitute(v:fname, '\.', '/', 'g') . '.lean']]
