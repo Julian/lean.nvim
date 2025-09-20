@@ -342,7 +342,7 @@ function lsp.enable(opts)
         or 'Goals accomplished 🎉'
     end,
   })
-  vim.lsp.enable('leanls')
+  vim.lsp.enable 'leanls'
   vim.lsp.config('leanls', opts)
 end
 
