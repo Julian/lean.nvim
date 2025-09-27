@@ -31,7 +31,6 @@ vim.g.lean_config = {
 }
 
 vim.cmd [[
-  runtime! plugin/lspconfig.vim
   runtime! plugin/matchit.vim
   runtime! plugin/plenary.vim
   runtime! plugin/switch.vim
