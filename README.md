@@ -12,7 +12,7 @@
   </table>
 
 [![Lua](https://img.shields.io/badge/Lua-blue.svg?style=for-the-badge&logo=lua)](http://www.lua.org)
-[![Neovim](https://img.shields.io/badge/Neovim%200.10+-green.svg?style=for-the-badge&logo=neovim)](https://neovim.io)
+[![Neovim](https://img.shields.io/badge/Neovim%200.11+-green.svg?style=for-the-badge&logo=neovim)](https://neovim.io)
 [![MIT](https://img.shields.io/badge/MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 <a href="https://dotfyle.com/plugins/Julian/lean.nvim">
 <img alt="dotfiles using lean.nvim" src="https://dotfyle.com/plugins/Julian/lean.nvim/shield?style=for-the-badge" />
@@ -59,8 +59,8 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
 }
 ```
 
-`lean.nvim` supports the latest stable neovim release (currently `0.10.x`) as well as the latest nightly.
-If you are on an earlier version of neovim, e.g. `0.9.5`, you can have your plugin manager install the [`nvim-0.9` tag](https://github.com/Julian/lean.nvim/releases/tag/nvim-0.9) until you upgrade.
+`lean.nvim` supports the latest stable neovim release (currently `0.11.x`) as well as the latest nightly.
+If you are on an earlier version of neovim, e.g. `0.10.2`, you can have your plugin manager install the [`nvim-0.10` tag](https://github.com/Julian/lean.nvim/releases/tag/nvim-0.10) until you upgrade.
 
 ## Features
 

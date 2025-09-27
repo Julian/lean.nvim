@@ -25,7 +25,6 @@ jobs:
         nvim-version:
           - stable
           - nightly
-          - v0.10.4
 
     steps:
       - uses: actions/checkout@v5
