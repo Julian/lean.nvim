@@ -21,7 +21,7 @@ local lsp = require 'lean.lsp'
 ---@return any result
 local function client_a_request(client, request, params)
   return a.wrap(function(handler)
-    return client.request(request, params, handler)
+    return client:request(request, params, handler)
   end, 1)()
 end
 
@@ -73,7 +73,7 @@ function Session:new(client, buffer, uri)
     KEEPALIVE_PERIOD_MS,
     vim.schedule_wrap(function()
       if not self:is_closed() and self.session_id ~= nil then
-        self.client.notify('$/lean/rpc/keepAlive', {
+        self.client:notify('$/lean/rpc/keepAlive', {
           uri = self.uri,
           sessionId = self.session_id,
         })
@@ -93,7 +93,7 @@ function Session:new(client, buffer, uri)
 end
 
 function Session:is_closed()
-  if self.client and self.client.is_stopped() then
+  if self.client and self.client:is_stopped() then
     self:close_without_releasing()
   end
   return self.client == nil
