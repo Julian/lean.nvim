@@ -2,12 +2,16 @@
 --- Tests for widgets from Lean core.
 ---@brief ]]
 
+local Window = require 'std.nvim.window'
+
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
 require('lean').setup {}
 
 describe('Lean core widgets', function()
+  local lean_window = Window:current()
+
   it(
     'supports error description widgets',
     helpers.clean_buffer('def f := g', function()
@@ -35,18 +39,17 @@ describe('Lean core widgets', function()
 
           ⊢ 2 = 2
 
-          ▼ suggestion:
-          exact rfl
-
           ▼ 2:3-2:9: information:
-          Try this: exact rfl
+          Try this:
+            exact rfl
         ]]
 
         infoview.go_to()
-        helpers.move_cursor { to = { 6, 1 } }
+        helpers.search 'exact '
         helpers.feed '<CR>'
 
         -- the buffer contents have changed but we also jumped to the lean win
+        assert.current_window.is(lean_window)
         assert.contents.are [[
           example : 2 = 2 := by
             exact rfl
@@ -66,17 +69,16 @@ describe('Lean core widgets', function()
         assert.infoview_contents.are [[
           Goals accomplished 🎉
 
-          ▼ suggestion:
-          exact rfl
-
           ▼ 1:62-1:68: information:
-          Try this: exact rfl
+          Try this:
+            exact rfl
         ]]
 
         infoview.go_to()
-        helpers.move_cursor { to = { 4, 1 } }
+        helpers.search 'exact '
         helpers.feed '<CR>'
 
+        assert.current_window.is(lean_window)
         assert.contents.are [[
           example {𝔽 : Type} (x : 𝔽) (_ : 𝔽) (_ : 𝔽) : x = x := by exact rfl
         ]]
@@ -105,14 +107,10 @@ describe('Lean core widgets', function()
         assert.infoview_contents.are [[
           ⊢ True
 
-          ▼ suggestion:
-          trivial
-          sorry
-
           ▼ 11:3-11:6: information:
           Try these:
-          • trivial
-          • sorry
+            • trivial
+            • sorry
         ]]
       end
     )
@@ -140,17 +138,13 @@ describe('Lean core widgets', function()
         assert.infoview_contents.are [[
           ⊢ 37 = 37
 
-          ▼ suggestion:
-          trivial
-
-          ▼ suggestion:
-          rfl
+          ▼ 10:25-10:39: information:
+          Try this:
+            trivial
 
           ▼ 10:25-10:39: information:
-          Try this: trivial
-
-          ▼ 10:25-10:39: information:
-          Try this: rfl
+          Try this:
+            rfl
 
           ▼ 10:22-10:39: error:
           unsolved goals

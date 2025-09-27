@@ -1,21 +1,18 @@
+---@brief [[
+--- The `Try This` widget on old versions of Lean pre-v4.23.
+---@brief ]]
+
 local Element = require('lean.tui').Element
 
----@alias SuggestionText string
-
----@class Suggestion
----@field suggestion SuggestionText Text to be used as a replacement via a code action.
----@field preInfo? string Optional info to be printed immediately before replacement text in a widget.
----@field postInfo? string Optional info to be printed immediately after replacement text in a widget.
-
----@class TryThisParams
----@field suggestions Suggestion[]
+---@class LegacyTryThisParams
+---@field suggestions TryThis.Suggestion[]
 ---@field range lsp.Range
 ---@field header string
 ---@field isInline boolean
 ---@field style any
 
 ---@param ctx RenderContext
----@param props TryThisParams
+---@param props LegacyTryThisParams
 return function(ctx, props)
   local blocks = vim.iter(ipairs(props.suggestions)):map(function(i, each)
     local children = {
