@@ -15,6 +15,10 @@ LeanClientConfig	lean.txt	/*LeanClientConfig*
 LeanDiagnosticTag	lean.txt	/*LeanDiagnosticTag*
 LeanFileProgressParams	lean.txt	/*LeanFileProgressParams*
 LeanPublishDiagnosticsParams	lean.txt	/*LeanPublishDiagnosticsParams*
+M.byterange_of	lean.txt	/*M.byterange_of*
+M.is_goals_accomplished	lean.txt	/*M.is_goals_accomplished*
+M.is_unsolved_goals	lean.txt	/*M.is_unsolved_goals*
+M.leanls_to_vim	lean.txt	/*M.leanls_to_vim*
 Pin	lean.txt	/*Pin*
 abbreviations.convert	lean.txt	/*abbreviations.convert*
 abbreviations.enable	lean.txt	/*abbreviations.enable*
@@ -54,6 +58,7 @@ lean	lean.txt	/*lean*
 lean.abbreviations	lean.txt	/*lean.abbreviations*
 lean.commands	lean.txt	/*lean.commands*
 lean.current_search_paths	lean.txt	/*lean.current_search_paths*
+lean.diagnostic	lean.txt	/*lean.diagnostic*
 lean.infoview	lean.txt	/*lean.infoview*
 lean.init	lean.txt	/*lean.init*
 lean.lsp	lean.txt	/*lean.lsp*
@@ -65,9 +70,6 @@ lean.use_suggested_mappings	lean.txt	/*lean.use_suggested_mappings*
 lsp.client_for	lean.txt	/*lsp.client_for*
 lsp.enable	lean.txt	/*lsp.enable*
 lsp.goals_accomplished_at	lean.txt	/*lsp.goals_accomplished_at*
-lsp.is_goals_accomplished_diagnostic	lean.txt	/*lsp.is_goals_accomplished_diagnostic*
-lsp.is_unsolved_goals_diagnostic	lean.txt	/*lsp.is_unsolved_goals_diagnostic*
-lsp.range_of	lean.txt	/*lsp.range_of*
 lsp.restart_file	lean.txt	/*lsp.restart_file*
 stderr.enable	lean.txt	/*stderr.enable*
 stderr.show	lean.txt	/*stderr.show*

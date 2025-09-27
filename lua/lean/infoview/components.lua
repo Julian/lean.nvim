@@ -11,6 +11,7 @@ local Element = require('lean.tui').Element
 local Locations = require 'lean.infoview.locations'
 local TaggedTextMsgEmbed = require('lean.widget.interactive_diagnostic').TaggedTextMsgEmbed
 local config = require 'lean.config'
+local diagnostic = require 'lean.diagnostic'
 local goals = require 'lean.goals'
 local interactive_goal = require 'lean.widget.interactive_goal'
 local lsp = require 'lean.lsp'
@@ -37,17 +38,17 @@ function components.interactive_diagnostics(diags, line, sess)
 
   return vim
     .iter(diags)
-    ---@param diagnostic InteractiveDiagnostic
-    :map(function(diagnostic)
-      if diagnostic.range.start.line ~= line then
+    ---@param each InteractiveDiagnostic
+    :map(function(each)
+      if each.range.start.line ~= line then
         return
       end
 
-      local range = lsp.range_of(diagnostic)
+      local range = diagnostic.range_of(each)
       return Element:new {
-        text = ('▼ %s: %s'):format(range_to_string(range), markers[diagnostic.severity]),
+        text = ('▼ %s: %s'):format(range_to_string(range), markers[each.severity]),
         name = 'diagnostic',
-        children = { TaggedTextMsgEmbed(diagnostic.message, sess) },
+        children = { TaggedTextMsgEmbed(each.message, sess) },
       }
     end)
     :totable()
@@ -170,7 +171,7 @@ function components.diagnostics_at(params, sess, use_widgets)
   ---they'll be indicated at the top.
   ---@param each DiagnosticWith<TaggedText.MsgEmbed>
   local filtered = vim.iter(diagnostics):filter(function(each)
-    return not lsp.is_goals_accomplished_diagnostic(each)
+    return not diagnostic.is_goals_accomplished(each)
   end)
   return components.interactive_diagnostics(filtered, line, sess), err
 end

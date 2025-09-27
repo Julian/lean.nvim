@@ -7,6 +7,7 @@ Commands ···································�
 The Infoview ··················································· |lean.infoview|
 Standard error buffers ··········································· |lean.stderr|
 LSP ································································· |lean.lsp|
+Diagnostics ·················································· |lean.diagnostic|
 
 ==============================================================================
 Introduction                                                         *lean.init*
@@ -299,16 +300,33 @@ lsp.client_for({bufnr?})                                        *lsp.client_for*
         {bufnr?}  (number)  @return vim.lsp.Client?
 
 
-LeanDiagnosticTag                                            *LeanDiagnosticTag*
-    Custom diagnostic tags provided by the language server.
-    We use a separate diagnostic field for this to avoid confusing LSP clients with our custom tags.
+lsp.goals_accomplished_at({params})                  *lsp.goals_accomplished_at*
+    Is the given line within a range of a goals accomplished marker?
 
-    Values: ~
-        unsolvedGoals      Diagnostics representing an "unsolved goals" error.
-                           Corresponds to `MessageData.tagged `Tactic.unsolvedGoals ..`.
-        goalsAccomplished  Diagnostics representing a "goals accomplished" silent message.
-                           Corresponds to `MessageData.tagged `goalsAccomplished ..`.
+    Parameters: ~
+        {params}  (lsp.TextDocumentPositionParams)  the document position in question
+                                                    @return boolean? accomplished whether there's a marker at the cursor, or nil if the buffer isn't loaded
 
+
+lsp.enable({opts})                                                  *lsp.enable*
+
+    Parameters: ~
+        {opts}  (LeanClientConfig)
+
+
+lsp.restart_file({bufnr?})                                    *lsp.restart_file*
+    Restart the Lean server for an open Lean 4 file.
+    See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
+
+    Parameters: ~
+        {bufnr?}  (number)
+
+
+==============================================================================
+Diagnostics                                                    *lean.diagnostic*
+
+ Low-level Lean-specific diagnostic support (as in `vim.diagnostic` and its
+ LSP-specific behaviors).
 
 DiagnosticWith                                                  *DiagnosticWith*
     Represents a diagnostic, such as a compiler error or warning.
@@ -345,44 +363,46 @@ LeanPublishDiagnosticsParams : lsp.PublishDiagnosticsParams
         {diagnostics}  (DiagnosticWith)
 
 
-lsp.range_of()                                                    *lsp.range_of*
+LeanDiagnosticTag                                            *LeanDiagnosticTag*
+    Custom diagnostic tags provided by the language server.
+    We use a separate diagnostic field for this to avoid confusing LSP clients with our custom tags.
 
-    Returns: ~
-        (lsp.Range)  range
-
-
-lsp.goals_accomplished_at({params})                  *lsp.goals_accomplished_at*
-    Is the given line within a range of a goals accomplished marker?
-
-    Parameters: ~
-        {params}  (lsp.TextDocumentPositionParams)  the document position in question
-                                                    @return boolean? accomplished whether there's a marker at the cursor, or nil if the buffer isn't loaded
+    Values: ~
+        unsolvedGoals      Diagnostics representing an "unsolved goals" error.
+                           Corresponds to `MessageData.tagged `Tactic.unsolvedGoals ..`.
+        goalsAccomplished  Diagnostics representing a "goals accomplished" silent message.
+                           Corresponds to `MessageData.tagged `goalsAccomplished ..`.
 
 
-lsp.is_unsolved_goals_diagnostic()            *lsp.is_unsolved_goals_diagnostic*
+M.is_unsolved_goals()                                      *M.is_unsolved_goals*
 
     Returns: ~
         (boolean)
 
 
-lsp.is_goals_accomplished_diagnostic()    *lsp.is_goals_accomplished_diagnostic*
+M.is_goals_accomplished()                              *M.is_goals_accomplished*
 
     Returns: ~
         (boolean)
 
 
-lsp.enable({opts})                                                  *lsp.enable*
+M.byterange_of()                                                *M.byterange_of*
+
+    Returns: ~
+        (integer)  start_row
+        (integer)  start_col
+        (integer)  end_row
+        (integer)  end_col
+
+
+M.leanls_to_vim({bufnr}, {client_id})                          *M.leanls_to_vim*
 
     Parameters: ~
-        {opts}  (LeanClientConfig)
+        {bufnr}      (integer)
+        {client_id}  (integer)
 
-
-lsp.restart_file({bufnr?})                                    *lsp.restart_file*
-    Restart the Lean server for an open Lean 4 file.
-    See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
-
-    Parameters: ~
-        {bufnr?}  (number)
+    Returns: ~
+        (vim.Diagnostic[])
 
 
 vim:tw=78:ts=8:noet:ft=help:norl:

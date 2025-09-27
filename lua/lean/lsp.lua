@@ -10,6 +10,7 @@ local Buffer = require 'std.nvim.buffer'
 local std = require 'std.lsp'
 
 local config = require 'lean.config'
+local diagnostic = require 'lean.diagnostic'
 local log = require 'lean.log'
 
 local lsp = { handlers = {} }
@@ -26,108 +27,6 @@ local lsp = { handlers = {} }
 function lsp.client_for(bufnr)
   local clients = vim.lsp.get_clients { name = 'leanls', bufnr = bufnr or 0 }
   return clients[1]
-end
-
----Custom diagnostic tags provided by the language server.
----We use a separate diagnostic field for this to avoid confusing LSP clients with our custom tags.
----@enum LeanDiagnosticTag
-local LeanDiagnosticTag = {
-  ---Diagnostics representing an "unsolved goals" error.
-  ---Corresponds to `MessageData.tagged `Tactic.unsolvedGoals ..`.
-  unsolvedGoals = 1,
-  ---Diagnostics representing a "goals accomplished" silent message.
-  ---Corresponds to `MessageData.tagged `goalsAccomplished ..`.
-  goalsAccomplished = 2,
-}
-
----Represents a diagnostic, such as a compiler error or warning.
----Diagnostic objects are only valid in the scope of a resource.
----
----LSP accepts a `Diagnostic := DiagnosticWith String`.
----The infoview also accepts `InteractiveDiagnostic := DiagnosticWith (TaggedText MsgEmbed)`.
----[reference](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic)
----@class DiagnosticWith<M>: { message : M }
----@field range lsp.Range The range at which the message applies.
----@field fullRange? lsp.Range Extension: preserve semantic range of errors when truncating them for display purposes.
----@field severity? lsp.DiagnosticSeverity
----@field isSilent? boolean Extension: whether this diagnostic should not be displayed as a regular diagnostic.
----@field code? string|integer The diagnostic's code, which might appear in the user interface.
----@field source? string A human-readable string describing the source of this diagnostic.
----@field tags? lsp.DiagnosticTag[] Additional metadata about the diagnostic.
----@field leanTags? LeanDiagnosticTag[] Additional Lean-specific metadata about the diagnostic.
----@field relatedInformation? DiagnosticRelatedInformation[] An array of related diagnostic information,
----                                                          e.g. when symbol-names within a scope collide all
----                                                          definitions can be marked via this property.
----@field data? any A data entry field that is preserved between a
----                 `textDocument/publishDiagnostics` notification and
----                 `textDocument/codeAction` request.
-
----Represents a related message and source code location for a diagnostic.
----This should be used to point to code locations that cause or are related to
----a diagnostics, e.g when duplicating a symbol in a scope.
----@class DiagnosticRelatedInformation
----@field location lsp.Location
----@field message string
-
----@class LeanFileProgressParams
----@field textDocument lsp.VersionedTextDocumentIdentifier
----@field processing LeanFileProgressProcessingInfo[]
-
----@class LeanPublishDiagnosticsParams: lsp.PublishDiagnosticsParams
----@field diagnostics DiagnosticWith<string>[]
-
----The range of a Lean diagnostic.
----
----Prioritizes `fullRange`, which is the "real" range of the diagnostic, not
----the `range`, which clips to just its first line.
----@param diagnostic DiagnosticWith<any>
----@return lsp.Range range
-function lsp.range_of(diagnostic)
-  return diagnostic.fullRange or diagnostic.range
-end
-
----Convert Lean ranges to byte indices.
----
----Prioritizes `fullRange`, which is the "real" range of the diagnostic, not
----the `range`, which clips to just its first line.
----
----Returned positions are 0-indexed.
----@param bufnr integer
----@param diagnostic DiagnosticWith<string>
----@return integer start_row
----@return integer start_col
----@return integer end_row
----@return integer end_col
-local function byterange_of(bufnr, diagnostic)
-  local range = lsp.range_of(diagnostic)
-  local start = std.position_to_byte0(range.start, bufnr)
-  local _end = std.position_to_byte0(range['end'], bufnr)
-  return start[1], start[2], _end[1], _end[2]
-end
-
----@param diagnostics DiagnosticWith<string>[]
----@param bufnr integer
----@param client_id integer
----@return vim.Diagnostic[]
-local function lean_diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
-  ---@param diagnostic DiagnosticWith<string>
-  ---@return vim.Diagnostic
-  return vim.tbl_map(function(diagnostic)
-    local start_row, start_col, end_row, end_col = byterange_of(bufnr, diagnostic)
-    ---@type vim.Diagnostic
-    return {
-      lnum = start_row,
-      col = start_col,
-      end_lnum = end_row,
-      end_col = end_col,
-      severity = std.severity_lsp_to_vim(diagnostic.severity),
-      message = diagnostic.message,
-      source = diagnostic.source,
-      code = diagnostic.code,
-      _tags = std.tags_lsp_to_vim(diagnostic, client_id),
-      user_data = { lsp = diagnostic },
-    }
-  end, diagnostics)
 end
 
 ---A namespace where we put Lean's "silent" diagnostics.
@@ -158,22 +57,6 @@ end
 vim.cmd.highlight [[default link leanUnsolvedGoals DiagnosticInfo]]
 vim.cmd.highlight [[default link leanGoalsAccomplishedSign DiagnosticInfo]]
 
----Is this a goals accomplished diagnostic?
----@generic T
----@param diagnostic DiagnosticWith<T>
----@return boolean
-function lsp.is_unsolved_goals_diagnostic(diagnostic)
-  return vim.deep_equal(diagnostic.leanTags, { LeanDiagnosticTag.unsolvedGoals })
-end
-
----Is this a goals accomplished diagnostic?
----@generic T
----@param diagnostic DiagnosticWith<T>
----@return boolean
-function lsp.is_goals_accomplished_diagnostic(diagnostic)
-  return vim.deep_equal(diagnostic.leanTags, { LeanDiagnosticTag.goalsAccomplished })
-end
-
 ---A replacement handler for diagnostic publishing for Lean-specific behavior.
 ---
 ---Publishes all "silent" Lean diagnostics to a separate namespace, and creates
@@ -195,15 +78,15 @@ local function on_publish_diagnostics(_, result, ctx)
     .iter(result.diagnostics)
     ---@param each DiagnosticWith<string>
     :filter(function(each)
-      local range = lsp.range_of(each)
+      local range = diagnostic.range_of(each)
       -- Protect setting markers with a pcall, which seems like it can happen
       -- if we're still processing diagnostics but the buffer has already
       -- changed, which can give out of range errors when setting the extmarks.
       local succeeded = pcall(function()
-        if markers.unsolved ~= '' and lsp.is_unsolved_goals_diagnostic(each) then
+        if markers.unsolved ~= '' and diagnostic.is_unsolved_goals(each) then
           table.insert(unsolved, std.position_to_byte0(range['end'], buffer.bufnr))
-        elseif markers.accomplished ~= '' and lsp.is_goals_accomplished_diagnostic(each) then
-          local start_row, start_col, end_row, end_col = byterange_of(buffer.bufnr, each)
+        elseif markers.accomplished ~= '' and diagnostic.is_goals_accomplished(each) then
+          local start_row, start_col, end_row, end_col = diagnostic.byterange_of(buffer.bufnr, each)
           buffer:set_extmark(goals_ns, start_row, start_col, {
             sign_text = markers.accomplished,
             sign_hl_group = 'leanGoalsAccomplishedSign',
@@ -266,7 +149,7 @@ local function on_publish_diagnostics(_, result, ctx)
   vim.diagnostic.set(
     silent_ns,
     buffer.bufnr,
-    lean_diagnostic_lsp_to_vim(other_silent, buffer.bufnr, ctx.client_id),
+    diagnostic.leanls_to_vim(other_silent, buffer.bufnr, ctx.client_id),
     {
       underline = false,
       virtual_text = false,
