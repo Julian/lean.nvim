@@ -143,7 +143,7 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 > My (Julian's) `<Leader>` is set to `<Space>`, and my `<LocalLeader>` to `<Space><Space>`, which may be a good choice for you if you have no other preference.
 
 > [!TIP]
-> If you are also looking for a way to restart the Lean server entirely (rather than just refresh the current file), you can use the `:LspRestart` command which comes from `nvim-lspconfig`, or Neovim's builtin API, `vim.lsp.stop_client(vim.lsp.get_clients())`.
+> If you are also looking for a way to restart the Lean server entirely (rather than just refresh the current file), the current Neovim way to do so is to run `vim.lsp.enable('leanls', false)` followed by `vim.lsp.enable('leanls')`, which stops the LSP client and then restarts it respectively.
 > You may wish to bind one of these to a key if you find yourself doing it often; these operations work for any language server and any language, not just Lean.
 
 ### In Infoview Windows
@@ -178,9 +178,7 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
     --
     -- false to disable, otherwise should be a table of options to pass to `leanls`
     --
-    -- See https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#leanls for details.
-    -- In particular ensure you have followed instructions setting up a callback
-    -- for `LspAttach` which sets your key bindings!
+    -- See :help vim.lsp.Config for details.
     lsp = {
       init_options = {
         -- See Lean.Lsp.InitializationOptions for details and further options.
