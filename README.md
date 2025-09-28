@@ -186,7 +186,7 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
         -- Time (in milliseconds) which must pass since latest edit until elaboration begins.
         -- Lower values may make editing feel faster at the cost of higher CPU usage.
         -- Note that lean.nvim changes the Lean default for this value!
-        editDelay = 0,
+        editDelay = 10,
 
         -- Whether to signal that widgets are supported.
         hasWidgets = true,
