@@ -24,7 +24,7 @@ jobs:
         uses: rhysd/action-setup-vim@89f3345bcde053529463583418779d83ee6dfb33
         with:
           neovim: true
-      - uses: actions-rust-lang/setup-rust-toolchain@2fcdc490d667999e01ddbbf0f2823181beef6b39
+      - uses: actions-rust-lang/setup-rust-toolchain@02be93da58aa71fb456aa9c43b301149248829d8
       - name: Install vimcats
         run: cargo install vimcats --features=cli --force
 
