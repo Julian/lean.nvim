@@ -3,7 +3,6 @@ return {
     'Julian/lean.nvim',
     dependencies = {
       'nvim-lua/plenary.nvim',
-      'neovim/nvim-lspconfig',
     },
     ---@module 'lean'
     ---@type lean.Config

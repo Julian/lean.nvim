@@ -117,7 +117,17 @@ function lean.setup(opts)
 
   opts.lsp = opts.lsp or {}
   if opts.lsp.enable ~= false then
-    require('lean.lsp').enable(opts.lsp)
+    vim.lsp.enable 'leanls'
+    if not vim.tbl_isempty(opts.lsp) then
+      vim.deprecate(
+        'lean.setup { lsp = { ... } }',
+        "call vim.lsp.config('leanls', { ... }) directly",
+        'v2025.12.1',
+        'lean.nvim',
+        false
+      )
+      vim.lsp.config('leanls', opts.lsp)
+    end
   end
 
   opts.progress_bars = opts.progress_bars or {}

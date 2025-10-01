@@ -13,7 +13,6 @@ description = {
 }
 
 dependencies = {
-  'nvim-lspconfig',
   'plenary.nvim',
 }
 

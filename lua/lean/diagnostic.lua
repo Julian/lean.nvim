@@ -67,6 +67,9 @@ local M = {
   end,
 }
 
+vim.cmd.highlight [[default link leanUnsolvedGoals DiagnosticInfo]]
+vim.cmd.highlight [[default link leanGoalsAccomplishedSign DiagnosticInfo]]
+
 ---Is this a goals accomplished diagnostic?
 ---@generic T
 ---@param diagnostic DiagnosticWith<T>
