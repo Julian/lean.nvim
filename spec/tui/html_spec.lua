@@ -39,16 +39,16 @@ describe('tui.html', function()
   end)
 
   describe('<summary>', function()
-    it('renders summary as passthrough', function()
+    it('renders summary with marker', function()
       local el = Tag.summary { Element:new { text = 'sum' } }
-      assert.is.equal('sum', el:to_string())
+      assert.is.equal('▼ sum', el:to_string())
     end)
   end)
 
   describe('<details>', function()
     it('renders details as titled block', function()
       local el = Tag.details { Element:new { text = 'body' } }
-      assert.is.equal('▼ body', el:to_string())
+      assert.is.equal('body', el:to_string())
     end)
   end)
 

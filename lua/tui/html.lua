@@ -3,6 +3,7 @@ local Element = require('lean.tui').Element
 local html = {}
 
 vim.api.nvim_set_hl(0, 'tui.html.b', { bold = true })
+vim.api.nvim_set_hl(0, 'tui.html.summary', { link = 'Title' })
 vim.api.nvim_set_hl(0, 'tui.html.unsupported', { link = 'ErrorMsg' })
 
 html.Tag = vim.defaulttable(function(tag)
@@ -17,18 +18,16 @@ end)
 
 ---A `<details>` tag.
 function html.Tag.details(children)
-  -- TODO: foldable, when it exists, and this should maybe go search for the
-  --       summary child and assemble it here so we have a "real" title.
-  return Element:titled {
-    title = '▼ ',
-    margin = 0,
-    body = children,
-  }
+  return Element:new { children = children }
 end
 
 ---A `<summary>` tag (within `details`).
 function html.Tag.summary(children)
-  return Element:new { children = children }
+  return Element:new {
+    text = '▼ ',
+    hlgroup = 'tui.html.summary',
+    children = children,
+  }
 end
 
 ---Just render the children, as we don't (yet?) support passing through styles.
