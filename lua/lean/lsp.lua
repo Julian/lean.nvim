@@ -225,7 +225,8 @@ function lsp.enable(opts)
         or 'Goals accomplished 🎉'
     end,
   })
-  require('lspconfig').leanls.setup(opts)
+  vim.lsp.enable 'leanls'
+  vim.lsp.config('leanls', opts)
 end
 
 ---Restart the Lean server for an open Lean 4 file.
