@@ -225,7 +225,11 @@ function lsp.enable(opts)
         or 'Goals accomplished 🎉'
     end,
   })
+
+  local original = vim.deprecate
+  vim.deprecate = function() end
   require('lspconfig').leanls.setup(opts)
+  vim.deprecate = original
 end
 
 ---Restart the Lean server for an open Lean 4 file.
