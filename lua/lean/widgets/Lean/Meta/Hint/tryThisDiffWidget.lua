@@ -1,5 +1,5 @@
 ---@brief [[
---- The `Try This` widget on versions of Lean v4.24+.
+--- The `Try This` widget on versions of Lean v4.24 (only).
 ---@brief ]]
 
 local Element = require('lean.tui').Element
