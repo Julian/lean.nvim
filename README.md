@@ -33,7 +33,7 @@ It is undoubtedly the case that `lean.nvim` would not be as featureful without t
 Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
-{
+return {
   'Julian/lean.nvim',
   event = { 'BufReadPre *.lean', 'BufNewFile *.lean' },
 
