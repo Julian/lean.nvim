@@ -37,7 +37,7 @@
 ---@field nomodifiable string[] globs to prevent accidental modification
 
 ---@class lean.ft.MergedConfig: lean.ft.Config
----@field private should_modify fun(self, path:string): boolean
+---@field private should_modify fun(self, path?:string): boolean
 
 ---@class lean.goal_markers.Config
 ---@field unsolved? string a character which will be placed on buffer lines where there is an unsolved goal
@@ -81,7 +81,7 @@ local DEFAULTS = {
 
     ---Check whether a given path should be modifiable.
     ---@param self lean.ft.MergedConfig
-    ---@param path string
+    ---@param path? string
     ---@return boolean
     should_modify = function(self, path)
       path = path or vim.api.nvim_buf_get_name(0)
