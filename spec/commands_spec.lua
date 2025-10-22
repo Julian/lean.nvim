@@ -8,7 +8,7 @@ describe('LeanGoal', function()
   it(
     'shows a popup with the goal',
     helpers.clean_buffer('example : 2 = 2 := by sorry', function()
-      helpers.move_cursor { to = { 1, 20 } }
+      helpers.search 'sorry'
       helpers.wait_for_processing()
 
       local initial_window = Window:current()
@@ -28,7 +28,7 @@ describe('LeanTermGoal', function()
   it(
     'shows a popup with the term goal',
     helpers.clean_buffer('def n : Nat := 37', function()
-      helpers.move_cursor { to = { 1, 16 } }
+      helpers.search '37'
       helpers.wait_for_processing()
 
       local initial_window = Window:current()

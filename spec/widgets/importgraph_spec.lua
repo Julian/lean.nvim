@@ -21,14 +21,14 @@ describe('ImportGraph widgets', function()
       function()
         local initial = Buffer:current()
 
-        helpers.move_cursor { to = { 2, 2 } }
+        helpers.search 'find_home'
         assert.infoview_contents.are [[
           ▼ 2:1-2:11: information:
           [Init.Prelude]
         ]]
 
         infoview.go_to()
-        helpers.move_cursor { to = { 2, 2 } }
+        helpers.search 'Init'
         helpers.feed 'gd'
 
         assert.is_truthy(vim.wait(15000, function()

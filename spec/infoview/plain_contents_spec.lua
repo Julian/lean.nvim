@@ -13,7 +13,7 @@ describe('plain infoviews', function()
   it(
     'shows goals accomplished on the first line of a solved goal',
     helpers.clean_buffer([[example : 37 = 37 := by rfl]], function()
-      helpers.move_cursor { to = { 1, 26 } }
+      helpers.search 'rfl'
       assert.infoview_contents.are 'Goals accomplished 🎉'
     end)
   )
@@ -28,7 +28,7 @@ describe('plain infoviews', function()
           · sorry
       ]],
       function()
-        helpers.move_cursor { to = { 2, 3 } }
+        helpers.search 'ases n'
         assert.infoview_contents.are [[
           ▼ 2 goals
           case zero
@@ -367,7 +367,7 @@ describe('plain infoviews', function()
             #knownWidget
           ]],
           function()
-            helpers.move_cursor { to = { 20, 2 } }
+            helpers.search '^#knownWidget'
             assert.infoview_contents.are [[
               ▼ 20:1-20:13: information:
               This will be in the hover.
@@ -395,7 +395,7 @@ describe('plain infoviews', function()
             #unknownWidget
           ]],
           function()
-            helpers.move_cursor { to = { 13, 2 } }
+            helpers.search '^#unknownWidget'
             assert.infoview_contents.are [[
               ▼ 13:1-13:15: information:
               You're gonna see this alternate text.

@@ -16,13 +16,13 @@ describe(
   'filter_hypothesis',
   helpers.clean_buffer(
     [[
-  example {A : Type} (n : Nat) (b : 3 = 3) (c : 4 = 4) : n = n ∨ n = 37 := by
-    left
-    sorry
-  ]],
+      example {A : Type} (n : Nat) (b : 3 = 3) (c : 4 = 4) : n = n ∨ n = 37 := by
+        left
+        sorry
+    ]],
     function()
       it('filters hypotheses', function()
-        helpers.move_cursor { to = { 2, 4 } }
+        helpers.search 'eft'
 
         assert.infoview_contents.are [[
           case h

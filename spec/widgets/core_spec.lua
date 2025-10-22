@@ -33,7 +33,7 @@ describe('Lean core widgets', function()
           apply?
       ]],
       function()
-        helpers.move_cursor { to = { 2, 2 } }
+        helpers.search 'apply'
         assert.infoview_contents.are [[
           Goals accomplished 🎉
 
@@ -65,7 +65,7 @@ describe('Lean core widgets', function()
         example {𝔽 : Type} (x : 𝔽) (_ : 𝔽) (_ : 𝔽) : x = x := by exact?
       ]],
       function()
-        helpers.move_cursor { to = { 1, 100 } }
+        helpers.search 'xact'
         assert.infoview_contents.are [[
           Goals accomplished 🎉
 
@@ -103,7 +103,7 @@ describe('Lean core widgets', function()
           foo
       ]],
       function()
-        helpers.move_cursor { to = { 11, 2 } }
+        helpers.search [[  \zsfoo]]
         assert.infoview_contents.are [[
           ⊢ True
 
@@ -134,7 +134,7 @@ describe('Lean core widgets', function()
         end Lean.Meta.Tactic.TryThis
       ]],
       function()
-        helpers.move_cursor { to = { 10, 28 } }
+        helpers.search [[by \zstwoSuggestions]]
         assert.infoview_contents.are [[
           ⊢ 37 = 37
 

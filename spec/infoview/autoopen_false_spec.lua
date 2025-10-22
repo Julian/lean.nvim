@@ -30,7 +30,7 @@ describe('infoview', function()
 
   it('allows infoviews to be manually opened', function()
     assert.windows.are { lean_window }
-    helpers.move_cursor { to = { 3, 27 } }
+    helpers.search 'square 4'
     infoview.open()
     assert.windows.are { lean_window, infoview.get_current_infoview().window }
     assert.infoview_contents.are [[
