@@ -376,4 +376,20 @@ describe('Buffer', function()
       buffer:force_delete()
     end)
   end)
+
+  describe('call', function()
+    it('calls a callback with the buffer as current buffer', function()
+      local new = Buffer.create {}
+      local current = vim.api.nvim_get_current_buf()
+      assert.is_not.equal(current, new.bufnr)
+
+      local result = new:call(function()
+        current = vim.api.nvim_get_current_buf()
+        return 37
+      end)
+
+      assert.is.equal(current, new.bufnr)
+      assert.is.equal(37, result)
+    end)
+  end)
 end)
