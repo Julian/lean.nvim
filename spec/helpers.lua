@@ -10,7 +10,7 @@ local lsp = require 'lean.lsp'
 local progress = require 'lean.progress'
 local util = require 'lean._util'
 
-local helpers = { _clean_buffer_counter = 1 }
+local helpers = {}
 
 ---Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(contents, feed_opts)
@@ -121,14 +121,14 @@ function helpers.wait_for_new_window(known)
   return Window:from_id(new_window)
 end
 
--- Even though we can delete a buffer, so should be able to reuse names,
--- we do this to ensure if a test fails, future ones still get new "files".
-local function set_unique_name_so_we_have_a_separate_fake_file(bufnr, project)
+local _counter = 0
+---Even though we can delete a buffer, so should be able to reuse names,
+---we do this to ensure if a test fails, future ones still get new "files".
+local function unique_name_so_we_have_a_separate_fake_file(project)
   project = project or fixtures.example
-  local counter = helpers._clean_buffer_counter
-  helpers._clean_buffer_counter = helpers._clean_buffer_counter + 1
-  local unique_name = project:child(('unittest-%d.lean'):format(counter))
-  vim.api.nvim_buf_set_name(bufnr, unique_name)
+  _counter = _counter + 1
+  local unique_name = project:child(('unittest-%d.lean'):format(_counter))
+  return unique_name
 end
 
 ---Create a clean Lean buffer with the given contents.
@@ -148,24 +148,26 @@ function helpers.clean_buffer(contents, callback, project)
   end
 
   return function()
-    local bufnr = vim.api.nvim_create_buf(false, false)
-    set_unique_name_so_we_have_a_separate_fake_file(bufnr, project)
-
-    vim.bo[bufnr].swapfile = false
-    vim.bo[bufnr].filetype = 'lean'
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+    local name = unique_name_so_we_have_a_separate_fake_file(project)
+    local buffer = Buffer.create {
+      listed = false,
+      name = name,
+      options = { swapfile = false },
+    }
+    buffer.o.filetype = 'lean'
+    buffer:set_lines(lines)
 
     -- isn't it fun how fragile the order of the below lines is, and how
     -- BufWinEnter seems automatically called by `nvim_set_current_buf`, but
     -- `BufEnter` seems not automatically called by `nvim_buf_call` so we
     -- manually trigger it?
-    vim.api.nvim_set_current_buf(bufnr)
-    vim.api.nvim_exec_autocmds('BufEnter', { buffer = bufnr })
-    vim.api.nvim_buf_call(bufnr, callback)
+    buffer:make_current()
+    vim.api.nvim_exec_autocmds('BufEnter', { buffer = buffer.bufnr })
+    buffer:call(callback)
 
     -- FIXME: Deleting buffers seems good for keeping our tests clean, but is
     --        broken on 0.11 with impossible to diagnose invalid buffer errors.
-    -- vim.api.nvim_buf_delete(bufnr, { force = true })
+    -- vim.api.nvim_buf_delete(buffer.bufnr, { force = true })
   end
 end
 
