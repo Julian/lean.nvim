@@ -42,6 +42,8 @@
 ---@class lean.goal_markers.Config
 ---@field unsolved? string a character which will be placed on buffer lines where there is an unsolved goal
 ---@field accomplished? string a character which will be placed in the sign column of successful proofs
+---@field goals_accomplished? string a string to display in the infoview when the proof is successful
+---@field no_goals? string a string to display in the infoview when there are no active goals
 
 ---@class lean.infoview.Config
 ---@field mappings? { [string]: ElementEvent }
@@ -95,6 +97,8 @@ local DEFAULTS = {
   goal_markers = {
     unsolved = ' ⚒ ',
     accomplished = '🎉',
+    goals_accomplished = 'Goals accomplished 🎉',
+    no_goals = 'No goals.',
   },
 
   ---@type Log
