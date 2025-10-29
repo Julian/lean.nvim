@@ -308,12 +308,6 @@ lsp.goals_accomplished_at({params})                  *lsp.goals_accomplished_at*
                                                     @return boolean? accomplished whether there's a marker at the cursor, or nil if the buffer isn't loaded
 
 
-lsp.enable({opts})                                                  *lsp.enable*
-
-    Parameters: ~
-        {opts}  (LeanClientConfig)
-
-
 lsp.restart_file({bufnr?})                                    *lsp.restart_file*
     Restart the Lean server for an open Lean 4 file.
     See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
