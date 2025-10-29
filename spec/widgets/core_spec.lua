@@ -41,11 +41,11 @@ describe('Lean core widgets', function()
 
           ▼ 2:3-2:9: information:
           Try this:
-            exact rfl
+            [apply] exact rfl
         ]]
 
         infoview.go_to()
-        helpers.search 'exact '
+        helpers.search 'apply] '
         helpers.feed '<CR>'
 
         -- the buffer contents have changed but we also jumped to the lean win
@@ -71,11 +71,11 @@ describe('Lean core widgets', function()
 
           ▼ 1:62-1:68: information:
           Try this:
-            exact rfl
+            [apply] exact rfl
         ]]
 
         infoview.go_to()
-        helpers.search 'exact '
+        helpers.search 'apply] '
         helpers.feed '<CR>'
 
         assert.current_window.is(lean_window)
@@ -109,8 +109,8 @@ describe('Lean core widgets', function()
 
           ▼ 11:3-11:6: information:
           Try these:
-            • trivial
-            • sorry
+            [apply] trivial
+            [apply] sorry
         ]]
       end
     )
@@ -140,11 +140,11 @@ describe('Lean core widgets', function()
 
           ▼ 10:25-10:39: information:
           Try this:
-            trivial
+            [apply] trivial
 
           ▼ 10:25-10:39: information:
           Try this:
-            rfl
+            [apply] rfl
 
           ▼ 10:22-10:39: error:
           unsolved goals
