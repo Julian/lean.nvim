@@ -12,12 +12,14 @@ describe('LSP', function()
 
   it('is attached to .lean files within projects', function()
     vim.cmd.edit(fixtures.project.some_existing_file)
+    helpers.wait_for_ready_lsp()
     assert.is.same(1, #vim.lsp.get_clients { bufnr = 0, name = 'leanls', _uninitialized = true })
   end)
 
   it(
     'is attached to single .lean files',
     helpers.clean_buffer(function()
+      helpers.wait_for_ready_lsp()
       assert.is.same(1, #vim.lsp.get_clients { bufnr = 0, name = 'leanls', _uninitialized = true })
     end)
   )

@@ -144,6 +144,8 @@ describe('sorry', function()
       ]],
       function()
         vim.cmd.normal { '2gg$', bang = true }
+        helpers.wait_for_ready_lsp()
+
         require('lean.sorry').fill()
         assert.contents.are [[
           def foo (n : Nat) : n = n := by
