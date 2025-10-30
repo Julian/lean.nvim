@@ -3,6 +3,7 @@ local Element = require('lean.tui').Element
 local html = {}
 
 vim.api.nvim_set_hl(0, 'tui.html.b', { bold = true })
+vim.api.nvim_set_hl(0, 'tui.html.i', { italic = true })
 vim.api.nvim_set_hl(0, 'tui.html.summary', { link = 'Title' })
 vim.api.nvim_set_hl(0, 'tui.html.unsupported', { link = 'ErrorMsg' })
 
@@ -15,6 +16,11 @@ html.Tag = vim.defaulttable(function(tag)
     }
   end
 end)
+
+---A `<br>` tag.
+function html.Tag.br(children)
+  return Element:new { text = '\n', chidlren = children }
+end
 
 ---A `<details>` tag.
 function html.Tag.details(children)
@@ -55,6 +61,17 @@ end
 function html.Tag.b(children)
   return Element:new { hlgroup = 'tui.html.b', children = children }
 end
+
+---Render italic text.
+function html.Tag.i(children)
+  return Element:new { hlgroup = 'tui.html.i', children = children }
+end
+
+---An alias for `<b>`.
+html.Tag.strong = html.Tag.b
+
+---An alias for `<i>`.
+html.Tag.em = html.Tag.i
 
 ---Render an unordered list.
 function html.Tag.ul(children)

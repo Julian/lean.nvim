@@ -10,6 +10,30 @@ describe('tui.html', function()
     end)
   end)
 
+  describe('<i>', function()
+    it('renders italic text and applies italic highlight', function()
+      local el = Tag.i { Element:new { text = 'italic' } }
+      assert.is.equal('italic', el:to_string())
+      assert.is.equal('tui.html.i', el.hlgroup)
+    end)
+  end)
+
+  describe('<strong>', function()
+    it('renders strong text as bold', function()
+      local el = Tag.strong { Element:new { text = 'bold' } }
+      assert.is.equal('bold', el:to_string())
+      assert.is.equal('tui.html.b', el.hlgroup)
+    end)
+  end)
+
+  describe('<em>', function()
+    it('renders emphasized text as italic', function()
+      local el = Tag.em { Element:new { text = 'italic' } }
+      assert.is.equal('italic', el:to_string())
+      assert.is.equal('tui.html.i', el.hlgroup)
+    end)
+  end)
+
   describe('<span>', function()
     it('renders span as plain container', function()
       local el = Tag.span { Element:new { text = 'span' } }
@@ -21,6 +45,13 @@ describe('tui.html', function()
     it('renders paragraph as plain container', function()
       local el = Tag.p { Element:new { text = 'para' } }
       assert.is.equal('para', el:to_string())
+    end)
+  end)
+
+  describe('<br>', function()
+    it('renders a line break', function()
+      local el = Tag.br {}
+      assert.is.equal('\n', el:to_string())
     end)
   end)
 
