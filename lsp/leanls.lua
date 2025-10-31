@@ -146,13 +146,15 @@ end
 
 return {
   filetypes = { 'lean' },
+  ---@param dispatchers vim.lsp.rpc.Dispatchers
+  ---@param config vim.lsp.ClientConfig
   cmd = function(dispatchers, config)
     -- Lean's language server does not use workspace folders, it strictly
     -- relies on the working directory that lake serve is started in.
     -- lspconfig historically had this same behavior (of using rootDir as cwd)
     -- when starting lake serve.
     local cmd_cwd = config.cmd_cwd
-    if not cmd_cwd and vim.uv.fs_realpath(config.root_dir) then
+    if not cmd_cwd and config.root_dir and vim.uv.fs_realpath(config.root_dir) then
       cmd_cwd = config.root_dir
     end
 
