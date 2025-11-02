@@ -20,7 +20,7 @@ local plain = {}
 ---@param params lsp.TextDocumentPositionParams
 ---@return string[]? goals the current plain goals
 ---@return Element[]? children the rendered goals
----@return lsp.ResponseError? err
+---@return lsp.ResponseError|string? err
 function plain.goal(params)
   local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
@@ -36,7 +36,7 @@ function plain.goal(params)
   -- Shift forward by 1, since in vim it's easier to reach word
   -- boundaries in normal mode.
   params.position.character = params.position.character + 1
-  local response = client.request_sync('$/lean/plainGoal', params, 1000, bufnr)
+  local response = client:request_sync('$/lean/plainGoal', params, 1000, bufnr)
   local err = not response and 'no response' or response.err
   if err then
     return nil, nil, err
@@ -76,7 +76,7 @@ function plain.term_goal(params)
     return nil, 'LSP server not connected'
   end
 
-  local response = client.request_sync('$/lean/plainTermGoal', params, 1000, bufnr)
+  local response = client:request_sync('$/lean/plainTermGoal', params, 1000, bufnr)
   local err = not response and 'no response' or response.err
   if err then
     return nil, err
