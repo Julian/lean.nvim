@@ -27,7 +27,7 @@ jobs:
           just profile-test --show-output --export-json output/results.json --export-markdown "$GITHUB_STEP_SUMMARY"
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profile-test
           path: output/results.json
