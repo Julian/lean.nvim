@@ -58,7 +58,7 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
 }
 ```
 
-`lean.nvim` supports the latest stable neovim release (currently `0.11.x`) as well as the latest nightly.
+`lean.nvim` supports the latest stable neovim release (currently `>=0.11.5`) as well as the latest nightly.
 If you are on an earlier version of neovim, e.g. `0.10.2`, you can have your plugin manager install the [`nvim-0.10` tag](https://github.com/Julian/lean.nvim/releases/tag/nvim-0.10) until you upgrade.
 
 ## Features
