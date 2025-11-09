@@ -6,7 +6,7 @@
 
 local check_output = require('std.subprocess').check_output
 
-local MIN_SUPPORTED_NVIM = '0.11'
+local MIN_SUPPORTED_NVIM = '0.11.5'
 
 local function neovim_is_new_enough()
   local version = vim.version()
