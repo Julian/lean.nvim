@@ -19,12 +19,12 @@ repos:
     hooks:
       - id: luacheck
   - repo: https://github.com/JohnnyMorganz/StyLua
-    rev: v2.3.0
+    rev: v2.3.1
     hooks:
       - id: stylua
         exclude: lua/lean/tui.lua
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.18.1
+    rev: v0.19.0
     hooks:
       - id: markdownlint-cli2
   - repo: https://github.com/woodruffw/zizmor
