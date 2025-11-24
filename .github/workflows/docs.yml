@@ -21,7 +21,7 @@ jobs:
 
       - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Neovim
-        uses: rhysd/action-setup-vim@1bba848d81cbce6e9d5d2b39fb7aaba7cdf0dd33
+        uses: rhysd/action-setup-vim@19e3dd31a84dbc2c5445d65e9b363f616cab96c1
         with:
           neovim: true
       - uses: actions-rust-lang/setup-rust-toolchain@1780873c7b576612439a134613cc4cc74ce5538c
