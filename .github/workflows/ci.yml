@@ -43,27 +43,26 @@ jobs:
         env:
           TEST_SEQUENTIAL: 1
 
-      - name: Run :checkhealth vim.deprecate
-        if: matrix.nvim-version == 'nightly'
+      - name: Run :checkhealth vim.deprecated
         run: |
           nvim --headless --clean \
-            -c 'checkhealth vim.deprecate' \
-            -c 'write! checkhealth-vim-deprecate.txt' \
+            -c 'checkhealth vim.deprecated' \
+            -c 'write! checkhealth-vim-deprecated.txt' \
             -c 'quitall' 2>&1 || true
 
           {
-            echo '## :checkhealth vim.deprecate'
+            echo '## :checkhealth vim.deprecated'
             echo ''
             echo '```'
-            cat checkhealth-vim-deprecate.txt
+            cat checkhealth-vim-deprecated.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-          cat checkhealth-vim-deprecate.txt
+          cat checkhealth-vim-deprecated.txt
 
           # Neovim's checkhealth output format uses '- ERROR' prefix for errors
-          if grep -q '^- ERROR' checkhealth-vim-deprecate.txt; then
-            echo "::error::checkhealth vim.deprecate reported errors"
+          if grep -q '^- ERROR' checkhealth-vim-deprecated.txt; then
+            echo "::error::checkhealth vim.deprecated reported errors"
             exit 1
           fi
 
