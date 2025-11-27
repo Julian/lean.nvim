@@ -45,7 +45,8 @@ jobs:
 
       - name: Run :checkhealth vim.deprecated
         run: |
-          nvim --headless --clean \
+          nvim --headless --clean -u scripts/minimal_init.lua \
+            -c "lua require('lean').setup(vim.g.lean_config)" \
             -c 'checkhealth vim.deprecated' \
             -c 'write! checkhealth-vim-deprecated.txt' \
             -c 'quitall' 2>&1 || true
