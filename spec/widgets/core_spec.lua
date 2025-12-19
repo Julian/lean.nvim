@@ -41,7 +41,7 @@ describe('Lean core widgets', function()
 
           ▼ 2:3-2:9: information:
           Try this:
-            [apply] exact rfl
+            [apply] exact Nat.eq_of_beq_eq_true rfl
         ]]
 
         infoview.go_to()
@@ -52,7 +52,7 @@ describe('Lean core widgets', function()
         assert.current_window.is(lean_window)
         assert.contents.are [[
           example : 2 = 2 := by
-            exact rfl
+            exact Nat.eq_of_beq_eq_true rfl
         ]]
       end
     )
@@ -71,7 +71,7 @@ describe('Lean core widgets', function()
 
           ▼ 1:62-1:68: information:
           Try this:
-            [apply] exact rfl
+            [apply] exact ((fun a => a) ∘ fun a => a) rfl
         ]]
 
         infoview.go_to()
@@ -80,7 +80,8 @@ describe('Lean core widgets', function()
 
         assert.current_window.is(lean_window)
         assert.contents.are [[
-          example {𝔽 : Type} (x : 𝔽) (_ : 𝔽) (_ : 𝔽) : x = x := by exact rfl
+          example {𝔽 : Type} (x : 𝔽) (_ : 𝔽) (_ : 𝔽) : x = x := by exact
+            ((fun a => a) ∘ fun a => a) rfl
         ]]
       end
     )
