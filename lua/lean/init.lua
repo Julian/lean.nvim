@@ -94,6 +94,9 @@ vim.filetype.add { extension = { lean = 'lean' } }
 ---@param opts lean.Config Configuration options
 function lean.setup(opts)
   opts = opts or {}
+  if vim.g.lean_config then
+    opts = vim.tbl_deep_extend('force', vim.g.lean_config, opts)
+  end
 
   opts.abbreviations = opts.abbreviations or {}
   if opts.abbreviations.enable ~= false then

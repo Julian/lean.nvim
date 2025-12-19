@@ -46,6 +46,7 @@ function stderr.show(message)
         name = 'lean://stderr',
         listed = false,
         scratch = true,
+        options = { buftype = 'nofile' },
       }
       current.window = nil
     end
@@ -82,8 +83,8 @@ function stderr.enable(config)
         if
           argc == 4
           and select(1, ...) == 'rpc'
+          and select(2, ...) == 'lake'
           and select(3, ...) == 'stderr'
-          and string.match(select(2, ...), 'lean')
         then
           local chunk = select(4, ...)
           on_lines(chunk)

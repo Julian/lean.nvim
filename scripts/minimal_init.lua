@@ -27,6 +27,11 @@ vim.g.lean_config = {
     end
     print(inspect(data), level)
   end,
+  stderr = {
+    on_lines = function(lines)
+      print('error: ' .. lines)
+    end,
+  },
   mappings = true,
 }
 
