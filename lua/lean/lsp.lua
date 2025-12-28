@@ -42,11 +42,9 @@ function lsp.goals_accomplished_at(params)
   end
 
   local pos = { params.position.line, 0 }
-  local hls = vim.api.nvim_buf_get_extmarks(buffer.bufnr, lsp.goals_ns, pos, pos, {
-    details = true,
-    overlap = true,
-    type = 'highlight',
-  })
+
+  local opts = { details = true, overlap = true, type = 'highlight' }
+  local hls = buffer:extmarks(lsp.goals_ns, pos, pos, opts)
   return vim.iter(hls):any(function(hl)
     return hl[4].hl_group == 'leanGoalsAccomplished'
   end)
