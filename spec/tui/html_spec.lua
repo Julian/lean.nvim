@@ -53,6 +53,11 @@ describe('tui.html', function()
       local el = Tag.br {}
       assert.is.equal('\n', el:to_string())
     end)
+
+    it('renders children after the line break', function()
+      local el = Tag.br { Element:new { text = 'after' } }
+      assert.is.equal('\nafter', el:to_string())
+    end)
   end)
 
   describe('<div>', function()

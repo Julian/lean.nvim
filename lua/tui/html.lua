@@ -19,7 +19,7 @@ end)
 
 ---A `<br>` tag.
 function html.Tag.br(children)
-  return Element:new { text = '\n', chidlren = children }
+  return Element:new { text = '\n', children = children }
 end
 
 ---A `<details>` tag.
