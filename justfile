@@ -48,7 +48,7 @@ profile-test *ARGS: _rebuild-test-fixtures _clone-test-dependencies
 # Lint lean.nvim for style and typing issues.
 [group('dev')]
 lint:
-    pre-commit run --all-files
+    prek run --all-files
     @echo
     {{ if `lua-language-server --version 2>&1 >/dev/null; echo $?` != "0" { error('lua-language-server not found') } else { "" } }}
     # Commented out as luals is impossible to configure for finding Neovim's own type declarations
