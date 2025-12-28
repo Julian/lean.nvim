@@ -9,7 +9,18 @@ vim.wo.relativenumber = false
 vim.wo.spell = false
 vim.wo.winfixheight = true
 vim.wo.winfixwidth = true
+
 vim.wo.wrap = true
+vim.wo.linebreak = true
+-- Break only at space or some places likely to be the body of a thing.
+-- In particular don't break at `.`.
+-- Note that `breakat` is a global option so we need local,
+-- and that it doesn't support unicode (neovim#13967) so things like `↦→`
+-- are unfortnately off-limits.
+vim.opt_local.breakat = ' \t,='
+vim.wo.breakindent = true
+vim.wo.breakindentopt = 'shift:2'
+
 if vim.fn.exists '&winfixbuf' ~= 0 then
   local window = vim.api.nvim_get_current_win()
   -- FIXME: This is obviously ridiculous, but there's seemingly some neovim bug
