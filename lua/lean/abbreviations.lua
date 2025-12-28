@@ -94,7 +94,7 @@ local function _clear_abbr_mark()
 end
 
 local function insert_char_pre()
-  local char = vim.api.nvim_get_vvar 'char'
+  local char = vim.v.char
 
   if abbreviations.abbr_mark then
     if char == ' ' then
