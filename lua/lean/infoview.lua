@@ -947,8 +947,7 @@ function Pin:__update_extmark_style(buffer, line, col)
       return
     end
     buffer = self.__extmark_buffer
-    local extmark_pos =
-      vim.api.nvim_buf_get_extmark_by_id(buffer.bufnr, self.__extmark_ns, self.__extmark, {})
+    local extmark_pos = buffer:extmark(self.__extmark_ns, self.__extmark, {})
     if vim.tbl_isempty(extmark_pos) then
       return
     end
@@ -996,8 +995,7 @@ function Pin:update_position()
     return
   end
 
-  local extmark_pos =
-    vim.api.nvim_buf_get_extmark_by_id(buffer.bufnr, self.__extmark_ns, extmark, {})
+  local extmark_pos = buffer:extmark(self.__extmark_ns, extmark, {})
 
   local new_pos = { line = extmark_pos[1] }
 

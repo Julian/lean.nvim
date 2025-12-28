@@ -320,6 +320,23 @@ describe('Buffer', function()
     end)
   end)
 
+  describe('extmark', function()
+    it('gets a specific extmark by id', function()
+      local buffer = Buffer.create {}
+      buffer:set_lines { 'line' }
+      local ns = vim.api.nvim_create_namespace ''
+      local id = buffer:set_extmark(ns, 0, 0, {})
+      assert.are.same({ 0, 0 }, buffer:extmark(ns, id))
+      buffer:force_delete()
+    end)
+
+    it('returns empty table for a non-existent extmark', function()
+      local buffer = Buffer.create {}
+      local ns = vim.api.nvim_create_namespace ''
+      assert.are.same(buffer:extmark(ns, 99999), {})
+    end)
+  end)
+
   describe('clear_namespace', function()
     it('clears all extmarks in a namespace', function()
       local buffer = Buffer.create {}

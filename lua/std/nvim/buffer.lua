@@ -158,11 +158,26 @@ end
 ---See :h nvim_buf_get_extmarks for details.
 ---
 ---@param ns_id? integer
----@param start? integer| { [1]: integer, [2]: integer }
----@param end_? integer| { [1]: integer, [2]: integer }
+---@param start? integer|[integer, integer]
+---@param end_? integer|[integer, integer]
 ---@param opts? table
 function Buffer:extmarks(ns_id, start, end_, opts)
   return vim.api.nvim_buf_get_extmarks(self.bufnr, ns_id or -1, start or 0, end_ or -1, opts or {})
+end
+
+---Get a specific extmark by id from the buffer.
+---
+---See :h nvim_buf_get_extmark_by_id for details.
+---
+---Note in particular that if the extmark doesn't exist, an empty list is
+---returned.
+---
+---@param ns_id integer
+---@param id integer
+---@param opts? table
+---@return [integer, integer]|{}
+function Buffer:extmark(ns_id, id, opts)
+  return vim.api.nvim_buf_get_extmark_by_id(self.bufnr, ns_id, id, opts or {})
 end
 
 ---Set an extmark in the buffer.
