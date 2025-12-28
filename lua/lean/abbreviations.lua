@@ -58,8 +58,8 @@ function abbreviations.show_reverse_lookup()
     lines = {
       string.format('No abbreviation found for %q.', char),
       '',
-      'Add one by modifying your invocation of:',
-      "  require'lean'.setup{ abbreviations = { extra = { ... } } }`",
+      'Add one by modifying your invocation of:\n',
+      "  `require'lean'.setup{ abbreviations = { extra = { ... } } }`",
     }
   else
     lines = {}
