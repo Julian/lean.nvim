@@ -506,7 +506,9 @@ function Infoview:died()
       range = { start = params.position, ['end'] = params.position },
     },
   }
-  self.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
+  if self.window then
+    self.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
+  end
 end
 
 ---Either open or close a diff window for this infoview depending on whether its info has a diff pin.

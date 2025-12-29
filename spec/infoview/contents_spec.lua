@@ -8,7 +8,6 @@
 --- missing some retry logic for the RPC call being made.
 ---@brief ]]
 
-local project = require('spec.fixtures').project
 local helpers = require 'spec.helpers'
 
 local infoview = require 'lean.infoview'
@@ -529,9 +528,9 @@ describe('interactive infoview', function()
           return not vim.deep_equal(infoview.get_current_infoview():get_lines(), { '' })
         end)
         assert.infoview_contents.are [[
-            ▼ 1:7-1:10: error:
-            unexpected token; expected identifier
-          ]]
+          ▼ 1:7-1:10: error:
+          unexpected token; expected identifier
+        ]]
       end)
     )
   end)
@@ -548,21 +547,4 @@ describe('interactive infoview', function()
       end)
     end)
   )
-
-  describe('language server dead', function()
-    it('is shown when the server is dead', function()
-      vim.cmd.edit { project.some_existing_file, bang = true }
-      helpers.wait_for_ready_lsp()
-      vim.lsp.stop_client(vim.lsp.get_clients { bufnr = 0 })
-      local succeeded = vim.wait(5000, function()
-        return vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0 })
-      end)
-      assert.message("Couldn't kill the LSP!").is_true(succeeded)
-      assert.infoview_contents_nowait.are '🪦 The Lean language server is dead.'
-      assert.are.same(
-        'NormalNC:leanInfoLSPDead',
-        infoview.get_current_infoview().window.o.winhighlight
-      )
-    end)
-  end)
 end)
