@@ -15,6 +15,13 @@ vim.api.nvim_set_hl(0, 'leanInfoSelected', { reverse = true, bold = true })
 syntax [[match leanInfoExpectedType "^▼ expected type.*"]]
 vim.api.nvim_set_hl(0, 'leanInfoExpectedType', { link = 'Special' })
 
+-- Infoview state indicators
+
+vim.api.nvim_set_hl(0, 'leanInfoNCWarn', { link = 'Folded' })
+vim.api.nvim_set_hl(0, 'leanInfoNCError', { link = 'NormalFloat' })
+vim.api.nvim_set_hl(0, 'leanInfoPaused', { link = 'leanInfoNCWarn' })
+vim.api.nvim_set_hl(0, 'leanInfoLSPDead', { link = 'leanInfoNCError' })
+
 -- Diagnostics
 
 ---@type table<lsp.Diagnostic, string>

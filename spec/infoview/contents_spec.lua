@@ -559,6 +559,10 @@ describe('interactive infoview', function()
       end)
       assert.message("Couldn't kill the LSP!").is_true(succeeded)
       assert.infoview_contents_nowait.are '🪦 The Lean language server is dead.'
+      assert.are.same(
+        'NormalNC:leanInfoLSPDead',
+        infoview.get_current_infoview().window.o.winhighlight
+      )
     end)
   end)
 end)

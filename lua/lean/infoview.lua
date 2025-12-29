@@ -424,6 +424,19 @@ function Infoview:__open_win(buffer)
   return new_win
 end
 
+---Update the infoview window's winhighlight.
+function Infoview:__update_winhighlight()
+  if not self.window then
+    return
+  end
+
+  if self.info.pin.paused then
+    self.window.o.winhighlight = 'NormalNC:leanInfoPaused'
+  else
+    self.window.o.winhighlight = ''
+  end
+end
+
 function Infoview:__refresh()
   log:debug { message = 'refreshing infoview', window = self.window.id }
 
@@ -493,7 +506,7 @@ function Infoview:died()
       range = { start = params.position, ['end'] = params.position },
     },
   }
-  self.info.pin:update()
+  self.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
 end
 
 ---Either open or close a diff window for this infoview depending on whether its info has a diff pin.
@@ -1039,6 +1052,7 @@ end
 ---Stop updating this pin.
 function Pin:pause()
   self.paused = true
+  self.__info.__infoview:__update_winhighlight()
 end
 
 ---Restart updating this pin.
@@ -1134,7 +1148,10 @@ Pin.update = a.void(function(self)
   --        while it's closed, which if we continued, would end up calling
   --        render. That doesn't seem right, somewhere that should happen
   --        higher up than here.
-  if self.paused or not self.__info.__infoview.window then
+  if not self.__info.__infoview.window then
+    return
+  elseif self.paused then
+    self.__info.__infoview:__update_winhighlight 'paused'
     return
   end
 
@@ -1147,6 +1164,8 @@ Pin.update = a.void(function(self)
     return
   end
 
+  self.__info.__infoview:__update_winhighlight 'normal'
+
   -- FIXME: This tick business is some bizarre way of telling whether
   --        info:render calls back into us to re-render this pin.
   self.__tick = self.__tick + 1
@@ -1157,6 +1176,10 @@ Pin.update = a.void(function(self)
     self.__info:render()
   end
   self.__data_element = contents_for(self.__position_params, self.__use_widgets)
+  -- FIXME: we don't have the right separation here for knowing when we're dead
+  if self.__data_element == components.LSP_HAS_DIED then
+    self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
+  end
 
   if self.__tick == tick and self.__info and self.loading then
     self.loading = false

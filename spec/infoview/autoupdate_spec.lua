@@ -193,6 +193,10 @@ describe('infoview content (auto-)update', function()
       ▼ 1:1-1:6: information:
       1
     ]]
+    assert.are.same(
+      'NormalNC:leanInfoPaused',
+      infoview.get_current_infoview().window.o.winhighlight
+    )
 
     -- Unpausing triggers an update.
     pin:unpause()
@@ -200,6 +204,7 @@ describe('infoview content (auto-)update', function()
       ▼ 3:1-3:6: information:
       9.000000
     ]]
+    assert.are.same('', infoview.get_current_infoview().window.o.winhighlight)
 
     -- And continued movement continues updating.
     helpers.move_cursor { to = { 1, 0 } }
