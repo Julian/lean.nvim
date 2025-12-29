@@ -70,7 +70,7 @@ local M = {
 vim.cmd.highlight [[default link leanUnsolvedGoals DiagnosticInfo]]
 vim.cmd.highlight [[default link leanGoalsAccomplishedSign DiagnosticInfo]]
 
----Is this a goals accomplished diagnostic?
+---Is this an unsolved goals diagnostic?
 ---@generic T
 ---@param diagnostic DiagnosticWith<T>
 ---@return boolean
