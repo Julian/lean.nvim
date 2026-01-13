@@ -9,9 +9,10 @@ end
 vim.b.switch_definitions = {
   vim.g.switch_builtins.true_false,
   { '#check', '#eval', '#reduce' },
-  { 'sorry', 'exact?', 'apply?' },
-  { 'exact ⟨', 'refine ⟨' },
+  { 'sorry', 'exact?', 'try?', 'apply?' },
   { 'aesop', 'aesop?' },
+  { 'grind', 'grind?' },
+  { 'exact ⟨', 'refine ⟨' },
   { 'norm_cast', 'push_cast' },
   vim.fn['switch#Words'] { 'by', 'by?' },
   vim.fn['switch#Words'] { 'tt', 'ff' },
