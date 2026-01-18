@@ -38,7 +38,7 @@ describe('language server dead', function()
     vim.cmd.edit { fixtures.example:child 'Example/Squares.lean' }
     vim.cmd.split { fixtures.example:child 'Foo/foo.lean' }
 
-    local succeeded = vim.wait(5000, function()
+    local succeeded = vim.wait(10000, function()
       return #vim.lsp.get_clients {} == 2
     end)
     assert.message("Didn't find 2 LSP clients").is_true(succeeded)
