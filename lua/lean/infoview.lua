@@ -1088,7 +1088,22 @@ end
 local function contents_for(params, use_widgets)
   local processing = progress.at(params)
   if processing == progress.Kind.processing then
-    return options.show_processing and components.PROCESSING or Element.EMPTY
+    -- When Lean is processing, diagnostics indicate what's building,
+    -- but those diagnostics show up at the top of the file.
+    --
+    -- We explicitly include them here regardless of the cursor position.
+    ---@type lsp.TextDocumentPositionParams
+    local start = {
+      textDocument = params.textDocument,
+      position = { line = 1, character = 0 },
+    }
+    local blocks = vim
+      .iter({
+        { options.show_processing and components.PROCESSING or nil },
+        interactive_goal.diagnostics(start),
+      })
+      :flatten(1)
+    return Element:concat(blocks:totable(), '\n\n') or Element.EMPTY
   end
 
   local blocks
