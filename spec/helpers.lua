@@ -93,11 +93,13 @@ function helpers.wait_for_async_elements(iv)
 end
 
 function helpers.wait_for_ready_lsp()
+  local client
   local succeeded, _ = vim.wait(15000, function()
-    local client = lsp.client_for(0)
+    client = lsp.client_for(0)
     return client and client.initialized or false
   end)
   assert.message('LSP server was never ready.').True(succeeded)
+  return client
 end
 
 ---Wait until a window that isn't one of the known ones shows up.

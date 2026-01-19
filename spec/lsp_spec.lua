@@ -29,4 +29,11 @@ describe('LSP', function()
     assert.is.empty(vim.lsp.get_clients { bufnr = 0, name = 'leanls', _uninitialized = true })
     vim.cmd.close { bang = true }
   end)
+
+  it('uses project root dir for files in .lake/packages', function()
+    vim.cmd.edit(fixtures.with_widgets:child '.lake/packages/Qq/Qq.lean')
+    local client = helpers.wait_for_ready_lsp()
+    local project_root = vim.uv.fs_realpath(fixtures.with_widgets._root)
+    assert.is.same(project_root, vim.uv.fs_realpath(client.config.root_dir))
+  end)
 end)

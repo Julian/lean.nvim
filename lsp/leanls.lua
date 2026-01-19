@@ -169,6 +169,16 @@ return {
   root_dir = function(bufnr, on_dir)
     local fname = vim.api.nvim_buf_get_name(bufnr)
     fname = vim.fs.normalize(fname)
+
+    local packages_dir
+    local packages_suffix = '/.lake/packages/'
+    do
+      local _, endpos = fname:find(packages_suffix)
+      if endpos then
+        packages_dir = fname:sub(1, endpos - packages_suffix:len())
+      end
+    end
+
     -- check if inside lean stdlib
     local stdlib_dir
     do
@@ -185,7 +195,8 @@ return {
     end
 
     on_dir(
-      vim.fs.root(fname, { 'lakefile.toml', 'lakefile.lean', 'lean-toolchain' })
+      packages_dir
+        or vim.fs.root(fname, { 'lakefile.toml', 'lakefile.lean', 'lean-toolchain' })
         or stdlib_dir
         or vim.fs.dirname(vim.fs.find('.git', { path = fname, upward = true })[1])
     )
