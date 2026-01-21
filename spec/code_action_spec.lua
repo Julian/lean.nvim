@@ -10,7 +10,7 @@ describe('code actions', function()
   it(
     'for unknown identifiers add missing imports',
     helpers.clean_buffer('#check codeaction', function()
-      local client = helpers.wait_for_ready_lsp()
+      local client = helpers.wait_for_ileans()
 
       helpers.search 'code'
       assert.infoview_contents.are [[
@@ -33,10 +33,6 @@ describe('code actions', function()
 
       local edit = vim.iter(response.result):next().edit
       vim.lsp.util.apply_workspace_edit(edit, 'utf-16')
-
-      -- it seems non-deterministic whether this is Lean.Lsp.CodeActions
-      -- or Lean.command_code_actions... so just match on `Lean.`
-
       assert.matches('Lean.', vim.api.nvim_get_current_line())
     end)
   )

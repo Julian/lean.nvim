@@ -104,6 +104,23 @@ function helpers.wait_for_ready_lsp()
   return client
 end
 
+---Wait for the Lean server to finish processing ileans.
+---
+---These are loaded asynchronously by Lean so as not to block the server,
+---considering most requests can be answered without them being ready.
+---
+---For go to definition, call hierarchies, etc, we do need them to be ready.
+function helpers.wait_for_ileans()
+  local client = helpers.wait_for_ready_lsp()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local params = {
+    target = vim.uri_from_bufnr(bufnr),
+    version = vim.lsp.util.buf_versions[bufnr],
+  }
+  client:request_sync('$/lean/waitForILeans', params, 10000)
+  return client
+end
+
 ---Wait until a window that isn't one of the known ones shows up.
 ---@param known table
 function helpers.wait_for_new_window(known)
