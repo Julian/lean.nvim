@@ -92,6 +92,8 @@ function helpers.wait_for_async_elements(iv)
   assert.message('Never finished resolving async elements.').True(succeeded)
 end
 
+---Wait for the LSP server to be ready for the current buffer.
+---@return vim.lsp.Client
 function helpers.wait_for_ready_lsp()
   local client
   local succeeded, _ = vim.wait(15000, function()
