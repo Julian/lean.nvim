@@ -226,6 +226,7 @@ function interactive_goal.interactive_term_goal(goal, sess)
   return {
     Element:titled {
       title = ('▼ expected type (%s)'):format(range_to_string(goal.range)),
+      title_hlgroup = 'leanInfoExpectedType',
       body = { interactive_goal.Goal(goal, sess) },
       margin = 1,
     },

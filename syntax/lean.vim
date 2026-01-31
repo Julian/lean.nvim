@@ -79,7 +79,7 @@ syn region leanString start='"' end='"' contains=leanInterpolation,leanStringEsc
 " HACK: Lean supports both interpolated and non-interpolated strings
 " We want "{" to be highlighted as a string (because it often occurs in
 " syntax definitions).
-syn region leanInterpolation contained start='{\(\s*"\)\@!' end='}' contains=TOP keepend
+syn region leanInterpolation contained start='{\(\s*"\)\@!' skip='{[^}]*}' end='}' contains=TOP keepend
 
 syn match leanChar "'[^\\]'"
 syn match leanChar "'\\.'"
