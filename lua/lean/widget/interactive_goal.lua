@@ -18,16 +18,21 @@ end
 ---@param fvar_id FVarId
 ---@param locations? Locations
 local function to_hypothesis_name(name, mvar_id, fvar_id, locations)
-  local highlightable, select, hlgroup
+  local function accessible_hlgroup()
+    return is_accessible(name) and 'leanInfoHypName' or 'leanInfoInaccessibleHypName'
+  end
+
+  local highlightable, select
+  local hlgroup = accessible_hlgroup
+
   if locations and mvar_id and fvar_id then
     highlightable = true
 
     ---@type GoalsLocation
     local location = { mvarId = mvar_id, loc = { hyp = fvar_id } }
 
-    function hlgroup()
-      return locations:is_selected(location) and 'leanInfoSelected'
-        or (is_accessible(name) and 'leanInfoHypName' or 'leanInfoInaccessibleHypName')
+    hlgroup = function()
+      return locations:is_selected(location) and 'leanInfoSelected' or accessible_hlgroup()
     end
 
     select = function()
