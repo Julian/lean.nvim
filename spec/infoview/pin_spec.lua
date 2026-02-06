@@ -194,7 +194,7 @@ describe(
             No goals.
 
             ▼ 1:1-1:8: warning:
-            declaration uses 'sorry'
+            declaration uses `sorry`
 
             -- Example/Squares.lean at 2:1
             ▼ 2:1-2:6: information:
