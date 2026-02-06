@@ -47,7 +47,7 @@ describe('Mathlib widgets', function()
         ]]
 
         -- We've jumped to the Lean window.
-        assert.current_line.is '  conv =>'
+        assert.current_line.is '    skip'
       end,
       with_widgets
     )

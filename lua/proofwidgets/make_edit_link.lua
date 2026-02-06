@@ -30,23 +30,18 @@ return function(props, children, ctx)
         vim.lsp.util.apply_text_document_edit(props.edit, nil, 'utf-16')
         if props.newSelection then
           local start = position_to_byte0(props.newSelection.start, bufnr)
-          if vim.deep_equal(props.newSelection.start, props.newSelection['end']) then
-            local last_window = ctx.get_last_window()
-            if not last_window then
-              return
-            end
-            last_window:make_current()
-            last_window:set_cursor(start)
-          else
-            vim.hl.range(
-              bufnr,
-              hl_ns,
-              'widgetChangedText',
-              start,
-              position_to_byte0(props.newSelection['end'], bufnr),
-              { timeout = 1000 }
-            )
+          local end_ = position_to_byte0(props.newSelection['end'], bufnr)
+
+          if not vim.deep_equal(props.newSelection.start, props.newSelection['end']) then
+            vim.hl.range(bufnr, hl_ns, 'widgetChangedText', start, end_, { timeout = 1000 })
           end
+
+          local last_window = ctx.get_last_window()
+          if not last_window then
+            return
+          end
+          last_window:make_current()
+          last_window:set_cursor { end_[1] + 1, end_[2] }
         end
       end,
     },
