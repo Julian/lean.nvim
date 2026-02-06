@@ -1,4 +1,6 @@
-local syntax = vim.cmd.syntax
+if vim.b.current_syntax == 'leaninfo' then
+  return
+end
 
 local config = require 'lean.config'().infoview
 
@@ -35,11 +37,11 @@ local match, hlgroup
 for i, to_group in vim.iter(ipairs(DIAGNOSTIC_HLGROUPS)) do
   match = config.severity_markers[i]:gsub('\n', [[\_$]])
   hlgroup = 'leanInfo' .. to_group
-  syntax(('match %s "^▼.*: %s.*$"'):format(hlgroup, match))
+  vim.cmd.syntax(('match %s "^▼.*: %s.*$"'):format(hlgroup, match))
   vim.api.nvim_set_hl(0, hlgroup, { link = to_group })
 end
 
-syntax [[match leanInfoComment "--.*"]]
+vim.cmd.syntax [[match leanInfoComment "--.*"]]
 vim.api.nvim_set_hl(0, 'leanInfoComment', { link = 'Comment' })
 
 -- Goal Diffing
@@ -64,7 +66,7 @@ end
 
 vim.api.nvim_set_hl(0, 'widgetSuggestion', { link = 'Title' })
 
-syntax [[match widgetSuggestionSubgoals "^\s*.emaining subgoals:$"]]
+vim.cmd.syntax [[match widgetSuggestionSubgoals "^\s*.emaining subgoals:$"]]
 vim.api.nvim_set_hl(0, 'widgetSuggestionSubgoals', { link = 'Statement' })
 
 vim.api.nvim_set_hl(0, 'widgetChangedText', { link = 'Visual' })
@@ -72,3 +74,5 @@ vim.api.nvim_set_hl(0, 'widgetLink', { link = 'Tag' })
 vim.api.nvim_set_hl(0, 'widgetKbd', { link = 'String' })
 vim.api.nvim_set_hl(0, 'widgetSelect', { link = 'Special' })
 vim.api.nvim_set_hl(0, 'widgetElementHighlight', { link = 'DiffChange' })
+
+vim.b.current_syntax = 'leaninfo'
