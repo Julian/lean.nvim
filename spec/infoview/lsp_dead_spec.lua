@@ -36,8 +36,11 @@ describe('language server dead', function()
 
   it('updates when moving to another window with active LSP', function()
     vim.cmd.edit { fixtures.example:child 'Example/Squares.lean' }
-    vim.cmd.split { fixtures.example:child 'Foo/foo.lean' }
+    vim.wait(10000, function()
+      return #vim.lsp.get_clients {} == 1
+    end)
 
+    vim.cmd.split { fixtures.example:child 'Foo/foo.lean' }
     local succeeded = vim.wait(10000, function()
       return #vim.lsp.get_clients {} == 2
     end)
