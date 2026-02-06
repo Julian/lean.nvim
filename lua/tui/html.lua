@@ -2,10 +2,10 @@ local Element = require('lean.tui').Element
 
 local html = {}
 
-vim.api.nvim_set_hl(0, 'tui.html.b', { bold = true })
-vim.api.nvim_set_hl(0, 'tui.html.i', { italic = true })
-vim.api.nvim_set_hl(0, 'tui.html.summary', { link = 'Title' })
-vim.api.nvim_set_hl(0, 'tui.html.unsupported', { link = 'ErrorMsg' })
+vim.api.nvim_set_hl(0, 'tui.html.b', { default = true, bold = true })
+vim.api.nvim_set_hl(0, 'tui.html.i', { default = true, italic = true })
+vim.api.nvim_set_hl(0, 'tui.html.summary', { default = true, link = 'Title' })
+vim.api.nvim_set_hl(0, 'tui.html.unsupported', { default = true, link = 'ErrorMsg' })
 
 html.Tag = vim.defaulttable(function(tag)
   return function(children)
