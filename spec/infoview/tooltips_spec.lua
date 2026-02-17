@@ -235,7 +235,7 @@ describe(
         helpers.feed '<CR>'
         local tooltip = helpers.wait_for_new_window(known_windows)
         assert.contents.are {
-          'a : Nat\n\n',
+          'a : Nat',
           buffer = tooltip:buffer(),
         }
 

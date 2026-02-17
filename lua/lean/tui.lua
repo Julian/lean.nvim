@@ -325,9 +325,7 @@ function Element:_get_highlights()
       })
     end
 
-    if element.text ~= vim.NIL then
-      pos = pos + #element.text
-    end
+    pos = pos + #element.text
     for _, child in ipairs(element.__children) do
       go(child, pos)
       pos = pos + child._size
@@ -357,17 +355,13 @@ function Element:to_string(renderer)
       element.__async_init = nil -- only run once
     end
 
-    if element.text == vim.NIL then
-      element._size = 0
-    else
-      table.insert(pieces, element.text)
-      local size = #element.text
-      for _, child in ipairs(element.__children) do
-        go(child)
-        size = size + child._size
-      end
-      element._size = size
+    table.insert(pieces, element.text)
+    local size = #element.text
+    for _, child in ipairs(element.__children) do
+      go(child)
+      size = size + child._size
     end
+    element._size = size
   end
   go(self)
   return table.concat(pieces)
