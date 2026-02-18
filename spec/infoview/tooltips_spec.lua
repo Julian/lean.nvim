@@ -211,9 +211,7 @@ describe(
 describe(
   'infoview widgets tooltips for symbols',
   helpers.clean_buffer(
-    [[
-    example (h: ∃ a:Nat, a = 3) := by apply h
-  ]],
+    [[example (h: ∃ a:Nat, a = 3) := by apply h]],
     function()
       local lean_window = Window:current()
       local current_infoview = infoview.get_current_infoview()
@@ -243,6 +241,160 @@ describe(
         helpers.feed '<Esc>'
         assert.windows.are(known_windows)
       end)
+    end
+  )
+)
+
+--- Update client.request to handle designated methods by returning fake_result.
+local function mock_client_request_rpc(client, orig_request_fn, fake_result)
+  client.request = function(self, method, params, handler, ...)
+    -- special case this method
+    if params.method == "Lean.Widget.InteractiveDiagnostics.infoToInteractive" then
+      vim.schedule(function()
+        local ctx = {}
+        handler(nil, fake_result, ctx)
+      end)
+
+      return true
+    end
+
+    -- forward all the others
+    return orig_request_fn(self, method, params,
+      function(err,res,ctx,cfg)
+        -- wrap this to make a placeholder for extra test helpers
+        return handler(err,res,ctx,cfg)
+      end),
+      ...
+  end
+end
+
+--- Inject errors and check for proper handling.
+describe(
+  'infoview widgets tooltips for symbols, with errors',
+  helpers.clean_buffer(
+    [[example (h: ∃ a:Nat, a = 3) := by apply h]],
+    function()
+      local lean_window = Window:current()
+      local current_infoview = infoview.get_current_infoview()
+
+      local saved_request_fn
+      local this_client
+
+      -- Call within it() after current_infoview:enter(), to save the active
+      -- client and its request method in this_client and saved_request_fn
+      -- for mock_client_request_rpc to use.
+      local function save_client_stuff()
+        local bn = lean_window:bufnr()
+        local clients = vim.lsp.get_clients({ bufnr = bn })
+        if #clients == 0 then return end
+        this_client = clients[1]
+        saved_request_fn = this_client.request
+      end
+
+      after_each(function()
+        if this_client and saved_request_fn then
+          this_client.request = saved_request_fn
+        end
+      end)
+
+      it('shows widget tooltips, missing type', function()
+        helpers.move_cursor { to = { 1, 9 } }
+        assert.infoview_contents.are [[
+        Goals accomplished 🎉
+
+        ▼ expected type (1:10-1:11)
+        ⊢ ∃ a, a = 3]]
+
+        current_infoview:enter()
+        helpers.move_cursor { to = { 4, 8 } } -- `a`
+
+        local known_windows = { lean_window, current_infoview.window }
+        assert.windows.are(known_windows)
+
+        save_client_stuff()
+        local fake_result = {
+          doc = vim.NIL,
+          exprExplicit = { text = "a" },
+          type = vim.NIL,
+        }
+        -- standard result:
+        --  doc = vim.NIL,
+        --  exprExplicit = { text = "a" },
+        --  type = { tag = { { info = { p = "14" }, subexprPos = "/" }, { text = "Nat" } } }
+        mock_client_request_rpc(this_client, saved_request_fn, fake_result)
+
+        helpers.feed '<CR>'
+        local tooltip = helpers.wait_for_new_window(known_windows)
+        assert.contents.are {
+          'a',
+          buffer = tooltip:buffer(),
+        }
+
+        -- Close the tooltip.
+        helpers.feed '<Esc>'
+        assert.windows.are(known_windows)
+      end)
+
+      it('shows widget tooltips, no exprExplicit', function()
+        helpers.move_cursor { to = { 1, 9 } }
+        assert.infoview_contents.are [[
+        Goals accomplished 🎉
+
+        ▼ expected type (1:10-1:11)
+        ⊢ ∃ a, a = 3]]
+
+        current_infoview:enter()
+        helpers.move_cursor { to = { 4, 8 } } -- `a`
+
+        local known_windows = { lean_window, current_infoview.window }
+        assert.windows.are(known_windows)
+
+        save_client_stuff()
+        local fake_result = {
+          doc = vim.NIL,
+          exprExplicit = vim.NIL,
+          type = { tag = { { info = { p = "14" }, subexprPos = "/" }, { text = "Nat" } } }
+        }
+        mock_client_request_rpc(this_client, saved_request_fn, fake_result)
+
+        helpers.feed '<CR>'
+        local tooltip = helpers.wait_for_new_window(known_windows)
+        assert.contents.are {
+          'Nat',
+          buffer = tooltip:buffer(),
+        }
+
+        -- Close the tooltip.
+        helpers.feed '<Esc>'
+        assert.windows.are(known_windows)
+      end)
+
+      it('shows widget tooltips nomock', function()
+        helpers.move_cursor { to = { 1, 9 } }
+        assert.infoview_contents.are [[
+        Goals accomplished 🎉
+
+        ▼ expected type (1:10-1:11)
+        ⊢ ∃ a, a = 3]]
+
+        current_infoview:enter()
+        helpers.move_cursor { to = { 4, 8 } } -- `a`
+
+        local known_windows = { lean_window, current_infoview.window }
+        assert.windows.are(known_windows)
+
+        helpers.feed '<CR>'
+        local tooltip = helpers.wait_for_new_window(known_windows)
+        assert.contents.are {
+          'a : Nat',
+          buffer = tooltip:buffer(),
+        }
+
+        -- Close the tooltip.
+        helpers.feed '<Esc>'
+        assert.windows.are(known_windows)
+      end)
+
     end
   )
 )
