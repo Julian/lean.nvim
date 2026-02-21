@@ -112,12 +112,16 @@ end
 ---For go to definition, call hierarchies, etc, we do need them to be ready.
 function helpers.wait_for_ileans()
   local client = helpers.wait_for_ready_lsp()
-  local bufnr = vim.api.nvim_get_current_buf()
-  local params = {
-    target = vim.uri_from_bufnr(bufnr),
-    version = vim.lsp.util.buf_versions[bufnr],
-  }
+  local params = lsp.make_wait_for_ileans_params()
   client:request_sync('$/lean/waitForILeans', params, 10000)
+  return client
+end
+
+---Wait for the Lean server to finish sending diagnostics.
+function helpers.wait_for_diagnostics()
+  local client = helpers.wait_for_ready_lsp()
+  local params = lsp.make_wait_for_diagnostics_params()
+  client:request_sync('textDocument/waitForDiagnostics', params, 10000)
   return client
 end
 

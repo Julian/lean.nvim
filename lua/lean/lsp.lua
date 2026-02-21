@@ -84,4 +84,27 @@ function lsp.restart_file(bufnr)
   client:notify(ms.textDocument_didOpen, params)
 end
 
+---@class WaitForDiagnosticsParams
+---@field uri lsp.DocumentUri
+---@field version number
+
+---@class WaitForILeansParams
+---@field uri? lsp.DocumentUri
+---@field version? number
+
+---@param bufnr? number
+local function uri_and_version_params(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  return {
+    uri = vim.uri_from_bufnr(bufnr),
+    version = vim.lsp.util.buf_versions[bufnr],
+  }
+end
+
+---@type fun(number?): WaitForDiagnosticsParams
+lsp.make_wait_for_diagnostics_params = uri_and_version_params
+
+---@type fun(number?): WaitForILeansParams
+lsp.make_wait_for_ileans_params = uri_and_version_params
+
 return lsp
