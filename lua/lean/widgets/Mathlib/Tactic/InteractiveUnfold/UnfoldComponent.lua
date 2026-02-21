@@ -1,18 +1,16 @@
-local Element = require('lean.tui').Element
+---@brief [[
+---  The `unfold?` Mathlib widget.
+---@brief ]]
+
 local Html = require 'proofwidgets.html'
-local call_cancellable = require 'proofwidgets.call_cancellable'
 local widgets = require 'lean.widgets'
 
 ---@param ctx RenderContext
 ---@param params PanelWidgetProps
 return widgets.panel(function(ctx, params)
-  local element, on_result = Element.async 'unfold?'
-
-  -- What could go wrong?
-  local method =
-    '_private.Mathlib.Tactic.Widget.InteractiveUnfold.0.Mathlib.Tactic.InteractiveUnfold.rpc'
-  local _ = call_cancellable(ctx:subsession(), method, params, function(result)
-    on_result(Html(result, ctx))
-  end)
-  return element
+  local response, err = ctx:rpc_call('Mathlib.Tactic.InteractiveUnfold.rpc', params)
+  if err then
+    return err
+  end
+  return Html(response, ctx)
 end)
