@@ -40,7 +40,7 @@ describe('language server dead', function()
       return #vim.lsp.get_clients {} == 1
     end)
 
-    vim.cmd.split { fixtures.example:child 'Foo/foo.lean' }
+    vim.cmd.split { fixtures.example:child 'foo/Foo.lean' }
     local succeeded = vim.wait(10000, function()
       return #vim.lsp.get_clients {} == 2
     end)
