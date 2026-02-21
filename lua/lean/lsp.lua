@@ -50,6 +50,13 @@ function lsp.goals_accomplished_at(params)
   end)
 end
 
+---@class LeanDidOpenTextDocumentParams: lsp.DidOpenTextDocumentParams
+---@field textDocument LeanTextDocumentItem
+---@field dependencyBuildMode 'always'|'never'|'once'
+
+---@class LeanTextDocumentItem: lsp.TextDocumentItem
+---@field languageId 'lean'
+
 ---Restart the Lean server for an open Lean 4 file.
 ---See e.g. https://github.com/leanprover/lean4/blob/master/src/Lean/Server/README.md#recompilation-of-opened-files
 ---@param bufnr? number
@@ -66,14 +73,15 @@ function lsp.restart_file(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
 
   client:notify(ms.textDocument_didClose, { textDocument = { uri = uri } })
-  client:notify(ms.textDocument_didOpen, {
+  local params = { ---@type LeanDidOpenTextDocumentParams
     textDocument = {
       version = 0,
       uri = uri,
       languageId = 'lean',
       text = std.buf_get_full_text(bufnr),
     },
-  })
+  }
+  client:notify(ms.textDocument_didOpen, params)
 end
 
 return lsp
