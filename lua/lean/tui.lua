@@ -607,9 +607,11 @@ function BufRenderer:new(obj)
   )
 
   for key, event in pairs(obj.keymaps or {}) do
-    vim.keymap.set('n', key, function()
-      new_renderer:event(event)
-    end, { buffer = obj.buffer.bufnr, desc = ('Fire a %s event.'):format(event) })
+    if vim.fn['mapcheck'](key, 'n') == '' then
+      vim.keymap.set('n', key, function()
+        new_renderer:event(event)
+      end, { buffer = obj.buffer.bufnr, desc = ('Fire a %s event.'):format(event) })
+    end
   end
 
   return new_renderer
