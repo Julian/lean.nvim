@@ -204,7 +204,9 @@ function lean.use_suggested_mappings(bufnr)
   local opts = { buffer = bufnr or 0 }
   for _, each in ipairs(lean.mappings) do
     local lhs, rhs, more_opts = unpack(each)
-    vim.keymap.set(each.mode or 'n', lhs, rhs, vim.tbl_extend('error', opts, more_opts))
+    if vim.fn['mapcheck'](lhs, each.mode or 'n') == '' then
+      vim.keymap.set(each.mode or 'n', lhs, rhs, vim.tbl_extend('error', opts, more_opts))
+    end
   end
 end
 
