@@ -217,15 +217,16 @@ return {
   },
   on_init = function(_, response)
     local version = response.serverInfo.version
+    local markers = CONFIG.goal_markers
     ---Lean 4.19 introduces silent diagnostics, which we use to differentiate
-    ---between "No goals." and "Goals accomplished. For older versions, we
+    ---between "No goals." and "Goals accomplished". For older versions, we
     ---always say the latter (which is consistent with `lean.nvim`'s historic
     ---behavior, albeit not with VSCode's).
     ---
     ---Technically this being a global is wrong, and will mean we start
     ---showing the wrong message if someone opens an older Lean buffer in the
     ---same session as a newer one...
-    vim.g.lean_no_goals_message = vim.version.ge(version, '0.3.0') and 'No goals.'
-      or 'Goals accomplished 🎉'
+    vim.g.lean_no_goals_message = vim.version.ge(version, '0.3.0') and markers.no_goals
+      or markers.goals_accomplished
   end,
 }
