@@ -47,18 +47,21 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations)
   local mk_tooltip = function(info_popup)
     local tooltip_element = Element.noop()
 
-    if info_popup.exprExplicit ~= nil then
+    -- Recent versions of nvim translate JSON null to vim.NIL instead of
+    -- lua nil, so we have to check for both in rpc results.
+
+    if info_popup.exprExplicit ~= nil and info_popup.exprExplicit ~= vim.NIL then
       tooltip_element:add_child(InteractiveCode(info_popup.exprExplicit, sess, locations))
-      if info_popup.type ~= nil then
+      if info_popup.type ~= nil and info_popup.type ~= vim.NIL then
         tooltip_element:add_child(Element:new { text = ' : ' })
       end
     end
 
-    if info_popup.type ~= nil then
+    if info_popup.type ~= nil and info_popup.type ~= vim.NIL then
       tooltip_element:add_child(InteractiveCode(info_popup.type, sess, locations))
     end
 
-    if info_popup.doc ~= nil then
+    if info_popup.doc ~= nil and info_popup.doc ~= vim.NIL then
       tooltip_element:add_child(Element:new { text = '\n\n' })
       tooltip_element:add_child(Element:new { text = info_popup.doc }) -- TODO: markdown
     end
