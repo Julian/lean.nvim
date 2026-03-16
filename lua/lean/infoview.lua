@@ -886,6 +886,7 @@ function Pin:new(obj)
     vim.tbl_extend('keep', obj, {
       paused = paused,
       __data_element = Element.EMPTY,
+      __data_element_uri = nil,
       __element = Element:new { name = 'pin' },
       __info = obj.parent,
       __tick = 0,
@@ -1196,17 +1197,21 @@ Pin.update = a.void(function(self)
     self.loading = true
     self.__info:render()
   end
+  local current_uri = self.__position_params.textDocument.uri
   local new_element = contents_for(self.__position_params, self.__use_widgets)
   if new_element == nil then
-    if self.__data_element == Element.EMPTY then
-      -- First open: nothing stale to preserve, show "Processing file...".
-      self.__data_element = components.PROCESSING
-      self.__element:set_children { self.__data_element }
-    else
-      -- Subsequent: preserve stale goal, indicate staleness visually.
+    local has_stale = self.__data_element ~= Element.EMPTY
+      and self.__data_element_uri == current_uri
+    if has_stale then
+      -- Preserve stale goal, indicate staleness visually.
       if self.__info.__infoview.window then
         self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoProcessing'
       end
+    else
+      -- No stale state for this file, show "Processing file...".
+      self.__data_element = components.PROCESSING
+      self.__data_element_uri = current_uri
+      self.__element:set_children { self.__data_element }
     end
     if self.__tick == tick and self.__info and self.loading then
       self.loading = false
@@ -1215,6 +1220,7 @@ Pin.update = a.void(function(self)
     return
   end
   self.__data_element = new_element
+  self.__data_element_uri = current_uri
   -- FIXME: we don't have the right separation here for knowing when we're dead
   if self.__data_element == components.LSP_HAS_DIED then
     self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
