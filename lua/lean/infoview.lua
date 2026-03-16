@@ -40,6 +40,7 @@ local options = {
   autopause = false,
   indicators = 'auto',
   show_processing = true,
+  keep_stale_goal = true,
   show_no_info_message = false,
   show_term_goals = true,
   use_widgets = true,
@@ -1084,10 +1085,13 @@ end
 ---
 ---@param params lsp.TextDocumentPositionParams
 ---@param use_widgets boolean
----@return Element
+---@return Element?
 local function contents_for(params, use_widgets)
   local processing = progress.at(params)
   if processing == progress.Kind.processing then
+    if options.keep_stale_goal then
+      return nil
+    end
     -- When Lean is processing, diagnostics indicate what's building,
     -- but those diagnostics show up at the top of the file.
     --
@@ -1192,7 +1196,25 @@ Pin.update = a.void(function(self)
     self.loading = true
     self.__info:render()
   end
-  self.__data_element = contents_for(self.__position_params, self.__use_widgets)
+  local new_element = contents_for(self.__position_params, self.__use_widgets)
+  if new_element == nil then
+    if self.__data_element == Element.EMPTY then
+      -- First open: nothing stale to preserve, show "Processing file...".
+      self.__data_element = components.PROCESSING
+      self.__element:set_children { self.__data_element }
+    else
+      -- Subsequent: preserve stale goal, indicate staleness visually.
+      if self.__info.__infoview.window then
+        self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoProcessing'
+      end
+    end
+    if self.__tick == tick and self.__info and self.loading then
+      self.loading = false
+      self.__info:render()
+    end
+    return
+  end
+  self.__data_element = new_element
   -- FIXME: we don't have the right separation here for knowing when we're dead
   if self.__data_element == components.LSP_HAS_DIED then
     self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
