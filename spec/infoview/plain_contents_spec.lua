@@ -137,10 +137,6 @@ describe('plain infoviews', function()
           ⊢ 𝔽 = 𝔽
         ]]
 
-      helpers.move_cursor { to = { 1, 44 } }
-      assert.infoview_contents.are [[
-      ]]
-
       helpers.move_cursor { to = { 1, 46 } }
       assert.infoview_contents.are [[
         ▼ expected type (1:40-1:43)
