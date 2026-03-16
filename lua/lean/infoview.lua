@@ -1140,7 +1140,7 @@ local function contents_for(params, use_widgets)
     elseif options.show_no_info_message then
       return components.NO_INFO
     else
-      return components.EMPTY
+      return Element.EMPTY
     end
   end
 
@@ -1201,6 +1201,8 @@ Pin.update = a.void(function(self)
   local new_element = contents_for(self.__position_params, self.__use_widgets)
   if new_element == nil then
     local has_stale = self.__data_element ~= Element.EMPTY
+      and self.__data_element ~= components.NO_INFO
+      and self.__data_element ~= components.PROCESSING
       and self.__data_element_uri == current_uri
     if has_stale then
       -- Preserve stale goal, indicate staleness visually.
