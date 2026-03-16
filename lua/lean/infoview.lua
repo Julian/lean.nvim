@@ -1207,15 +1207,19 @@ Pin.update = a.void(function(self)
       if self.__info.__infoview.window then
         self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoProcessing'
       end
+      if self.__tick == tick and self.__info and self.loading then
+        self.loading = false
+        self.__info:render()
+      end
     else
-      -- No stale state for this file, show "Processing file...".
+      -- No stale state for this file, show "Processing file..." but keep
+      -- loading so that wait_for_loading_pins continues to wait for real content.
       self.__data_element = components.PROCESSING
       self.__data_element_uri = current_uri
       self.__element:set_children { self.__data_element }
-    end
-    if self.__tick == tick and self.__info and self.loading then
-      self.loading = false
-      self.__info:render()
+      if self.__tick == tick and self.__info then
+        self.__info:render()
+      end
     end
     return
   end
