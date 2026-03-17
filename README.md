@@ -271,6 +271,13 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
       priority = 10,
     },
 
+    -- Customize the goal markers in the sign column and virtual text
+    -- Can be set to an empty string to disable.
+    goal_markers = {
+      unsolved = ' ⚒ ',    -- shown inline in incomplete proofs
+      accomplished = '🎉', -- shown in the sign column for completed proofs
+    },
+
     -- Redirect Lean's stderr messages somewhere (to a buffer by default)
     stderr = {
       enable = true,

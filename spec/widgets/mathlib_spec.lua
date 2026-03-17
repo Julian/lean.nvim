@@ -34,7 +34,7 @@ describe('Mathlib widgets', function()
           n : Nat
           ⊢ n = n
 
-          ▼ Conv 🔍
+          ▼ Conv 🔍️
           Generate conv
         ]]
 

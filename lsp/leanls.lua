@@ -5,7 +5,7 @@ local diagnostic = require 'lean.diagnostic'
 local log = require 'lean.log'
 local lsp = require 'lean.lsp'
 
-local CONFIG = require 'lean.config'()
+local CONFIG = require 'lean.config'
 
 ---A replacement handler for diagnostic publishing for Lean-specific behavior.
 ---
@@ -18,7 +18,7 @@ local function on_publish_diagnostics(_, result, ctx)
   vim.diagnostic.reset(lsp.silent_ns, buffer.bufnr)
   buffer:clear_namespace(lsp.goals_ns)
 
-  local markers = CONFIG.goal_markers
+  local markers = CONFIG().goal_markers
 
   ---@type { [1]: integer, [2]: integer }[]
   local unsolved = {}
