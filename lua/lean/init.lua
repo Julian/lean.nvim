@@ -101,34 +101,12 @@ function lean.setup(opts)
     require('lean.abbreviations').enable('*.lean', opts.abbreviations)
   end
 
-  if opts.infoview and opts.infoview.goal_markers then
-    vim.deprecate(
-      'lean.setup { infoview = { goal_markers = { ... } } }',
-      'lean.setup { goal_markers = { ... } }',
-      'v2025.10.1',
-      'lean.nvim',
-      false
-    )
-    opts.goal_markers = opts.infoview.goal_markers
-    opts.infoview.goal_markers = nil
-  end
-
   opts.infoview = opts.infoview or {}
   require('lean.infoview').enable(opts.infoview)
 
   opts.lsp = opts.lsp or {}
   if opts.lsp.enable ~= false then
     vim.lsp.enable 'leanls'
-    if not vim.tbl_isempty(opts.lsp) then
-      vim.deprecate(
-        'lean.setup { lsp = { ... } }',
-        "call vim.lsp.config('leanls', { ... }) directly",
-        'v2025.12.1',
-        'lean.nvim',
-        false
-      )
-      vim.lsp.config('leanls', opts.lsp)
-    end
   end
 
   opts.progress_bars = opts.progress_bars or {}
