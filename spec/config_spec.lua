@@ -16,7 +16,7 @@ describe('config', function()
   end)
 
   it('demonstrate proper instantiation of lean.config', function()
-    require('lean').setup { goal_markers = { accomplished = "✓", }, }
+    require('lean').setup { goal_markers = { accomplished = '✓' } }
 
     -- after setup(), vim.g.lean_config has been updated with opts.
     assert.are.same(vim.g.lean_config.goal_markers.accomplished, '✓')
