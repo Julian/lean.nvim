@@ -102,8 +102,6 @@ describe('Window', function()
         col = 2,
       }
       local config = float:config()
-      -- nvim after 0.11.6 explicitly includes style, so elide it for this test
-      config.style = config.style ~= '' and config.style or nil
       assert.are.same({
         width = 15,
         height = 2,
@@ -117,6 +115,7 @@ describe('Window', function()
         border = config.border,
         focusable = config.focusable,
         mouse = config.mouse,
+        style = config.style,
         zindex = config.zindex,
       }, config)
       float:close()
