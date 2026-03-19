@@ -115,6 +115,7 @@ describe('Window', function()
         border = config.border,
         focusable = config.focusable,
         mouse = config.mouse,
+        style = config.style,
         zindex = config.zindex,
       }, config)
       float:close()
