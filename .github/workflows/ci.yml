@@ -48,6 +48,7 @@ jobs:
 
     needs: ci
     runs-on: ubuntu-latest
+    environment: release
 
     permissions:
       attestations: write
@@ -62,6 +63,6 @@ jobs:
         env:
           LUAROCKS_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
       - name: Create a GitHub Release
-        run: gh release create "${{ github.ref_name }}" --generate-notes
+        run: gh release create "${GITHUB_REF_NAME}" --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
