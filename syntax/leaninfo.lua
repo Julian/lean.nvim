@@ -20,6 +20,7 @@ vim.api.nvim_set_hl(0, 'leanInfoExpectedType', { default = true, link = 'Special
 vim.api.nvim_set_hl(0, 'leanInfoNCWarn', { default = true, link = 'Folded' })
 vim.api.nvim_set_hl(0, 'leanInfoNCError', { default = true, link = 'NormalFloat' })
 vim.api.nvim_set_hl(0, 'leanInfoPaused', { default = true, link = 'leanInfoNCWarn' })
+vim.api.nvim_set_hl(0, 'leanInfoProcessing', { default = true, link = 'leanInfoNCWarn' })
 vim.api.nvim_set_hl(0, 'leanInfoLSPDead', { default = true, link = 'leanInfoNCError' })
 
 -- Diagnostics

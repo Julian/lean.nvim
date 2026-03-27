@@ -76,6 +76,7 @@ describe('Lean core widgets', function()
         ]]
 
         infoview.go_to()
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
         helpers.search 'apply] '
         helpers.feed '<CR>'
 

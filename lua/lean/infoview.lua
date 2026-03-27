@@ -40,6 +40,7 @@ local options = {
   autopause = false,
   indicators = 'auto',
   show_processing = true,
+  keep_stale_goal = true,
   show_no_info_message = false,
   show_term_goals = true,
   use_widgets = true,
@@ -885,6 +886,7 @@ function Pin:new(obj)
     vim.tbl_extend('keep', obj, {
       paused = paused,
       __data_element = Element.EMPTY,
+      __data_element_uri = nil,
       __element = Element:new { name = 'pin' },
       __info = obj.parent,
       __tick = 0,
@@ -1084,10 +1086,13 @@ end
 ---
 ---@param params lsp.TextDocumentPositionParams
 ---@param use_widgets boolean
----@return Element
+---@return Element?
 local function contents_for(params, use_widgets)
   local processing = progress.at(params)
   if processing == progress.Kind.processing then
+    if options.keep_stale_goal then
+      return nil
+    end
     -- When Lean is processing, diagnostics indicate what's building,
     -- but those diagnostics show up at the top of the file.
     --
@@ -1135,7 +1140,7 @@ local function contents_for(params, use_widgets)
     elseif options.show_no_info_message then
       return components.NO_INFO
     else
-      return components.EMPTY
+      return Element.EMPTY
     end
   end
 
@@ -1192,7 +1197,36 @@ Pin.update = a.void(function(self)
     self.loading = true
     self.__info:render()
   end
-  self.__data_element = contents_for(self.__position_params, self.__use_widgets)
+  local current_uri = self.__position_params.textDocument.uri
+  local new_element = contents_for(self.__position_params, self.__use_widgets)
+  if new_element == nil then
+    local has_stale = self.__data_element ~= Element.EMPTY
+      and self.__data_element ~= components.NO_INFO
+      and self.__data_element ~= components.PROCESSING
+      and self.__data_element_uri == current_uri
+    if has_stale then
+      -- Preserve stale goal, indicate staleness visually.
+      if self.__info.__infoview.window then
+        self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoProcessing'
+      end
+      if self.__tick == tick and self.__info and self.loading then
+        self.loading = false
+        self.__info:render()
+      end
+    else
+      -- No stale state for this file, show "Processing file..." but keep
+      -- loading so that wait_for_loading_pins continues to wait for real content.
+      self.__data_element = components.PROCESSING
+      self.__data_element_uri = current_uri
+      self.__element:set_children { self.__data_element }
+      if self.__tick == tick and self.__info then
+        self.__info:render()
+      end
+    end
+    return
+  end
+  self.__data_element = new_element
+  self.__data_element_uri = current_uri
   -- FIXME: we don't have the right separation here for knowing when we're dead
   if self.__data_element == components.LSP_HAS_DIED then
     self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'

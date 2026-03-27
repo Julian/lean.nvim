@@ -46,6 +46,7 @@
 ---@class lean.infoview.Config
 ---@field mappings? { [string]: ElementEvent }
 ---@field orientation? "auto"|"vertical"|"horizontal" what orientation to use for opened infoviews
+---@field keep_stale_goal? boolean preserve the last goal state while Lean is processing instead of clearing it
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
 
