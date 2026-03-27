@@ -19,7 +19,7 @@ describe(
     local current_infoview = infoview.get_current_infoview()
 
     it('shows widget tooltips', function()
-      helpers.move_cursor { to = { 1, 8 } }
+      helpers.search 'Nat'
       assert.infoview_contents.are [[
         ▼ expected type (1:8-1:11)
         ⊢ Type
@@ -29,7 +29,7 @@ describe(
       ]]
 
       current_infoview:enter()
-      helpers.move_cursor { to = { 2, 5 } } -- `Type`
+      helpers.search 'Type'
 
       local known_windows = { lean_window, current_infoview.window }
       assert.windows.are(known_windows)

@@ -188,7 +188,7 @@ describe('plain infoviews', function()
           #infoMessage
         ]],
         function()
-          helpers.move_cursor { to = { 3, 2 } }
+          helpers.search '^#infoMessage'
           assert.infoview_contents.are [[
             ▼ 3:1-3:13: information:
             Hello
@@ -206,7 +206,7 @@ describe('plain infoviews', function()
           #warningMessage
         ]],
         function()
-          helpers.move_cursor { to = { 3, 2 } }
+          helpers.search '^#warningMessage'
           assert.infoview_contents.are [[
             ▼ 3:1-3:16: warning:
             Hmm...
@@ -224,7 +224,7 @@ describe('plain infoviews', function()
           #errorMessage
         ]],
         function()
-          helpers.move_cursor { to = { 3, 2 } }
+          helpers.search '^#errorMessage'
           assert.infoview_contents.are [[
             ▼ 3:1-3:14: error:
             Uh oh!
@@ -245,7 +245,7 @@ describe('plain infoviews', function()
                 37)
         ]],
         function()
-          helpers.move_cursor { to = { 2, 3 } }
+          helpers.search 'exact'
           assert.infoview_contents.are [[
             ⊢ 2 = 2
 
@@ -272,7 +272,7 @@ describe('plain infoviews', function()
           #multilineNoNewline
         ]],
         function()
-          helpers.move_cursor { to = { 5, 2 } }
+          helpers.search '^#multilineNoNewline'
           assert.infoview_contents.are [[
             ▼ 5:1-5:20: information:
             Multiple
@@ -297,7 +297,7 @@ describe('plain infoviews', function()
           #multilineWithNewline
         ]],
         function()
-          helpers.move_cursor { to = { 5, 2 } }
+          helpers.search '^#multilineWithNewline'
           assert.infoview_contents.are [[
             ▼ 5:1-5:22: information:
             Multiple
@@ -322,7 +322,7 @@ describe('plain infoviews', function()
           #multipleMessages
         ]],
         function()
-          helpers.move_cursor { to = { 6, 1 } }
+          helpers.search '^#multipleMessages'
           assert.infoview_contents.are [[
             ▼ 6:1-6:18: information:
             So

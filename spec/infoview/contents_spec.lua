@@ -31,7 +31,7 @@ describe('interactive infoview', function()
           sorry
       ]],
       function()
-        helpers.move_cursor { to = { 2, 0 } }
+        helpers.search 'sorry'
         assert.infoview_contents.are '⊢ 37 = 37'
       end
     )
@@ -45,7 +45,7 @@ describe('interactive infoview', function()
           sorry
       ]],
       function()
-        helpers.move_cursor { to = { 2, 0 } }
+        helpers.search 'sorry'
         assert.infoview_contents.are [[
           h : 73 = 73
           ⊢ 37 = 37
@@ -62,7 +62,7 @@ describe('interactive infoview', function()
           sorry
       ]],
       function()
-        helpers.move_cursor { to = { 2, 0 } }
+        helpers.search 'sorry'
         assert.infoview_contents.are [[
           A : Type
           a : A
@@ -83,7 +83,7 @@ describe('interactive infoview', function()
           · sorry
       ]],
       function()
-        helpers.move_cursor { to = { 3, 3 } }
+        helpers.search 'sorry'
         assert.infoview_contents.are [[
           case zero
           ⊢ 0 = 0
@@ -277,7 +277,7 @@ describe('interactive infoview', function()
           #infoMessage
         ]],
         function()
-          helpers.move_cursor { to = { 3, 2 } }
+          helpers.search '^#infoMessage'
           assert.infoview_contents.are [[
             ▼ 3:1-3:13: information:
             Hello
@@ -295,7 +295,7 @@ describe('interactive infoview', function()
           #warningMessage
         ]],
         function()
-          helpers.move_cursor { to = { 3, 2 } }
+          helpers.search '^#warningMessage'
           assert.infoview_contents.are [[
             ▼ 3:1-3:16: warning:
             Hmm...
@@ -313,7 +313,7 @@ describe('interactive infoview', function()
           #errorMessage
         ]],
         function()
-          helpers.move_cursor { to = { 3, 2 } }
+          helpers.search '^#errorMessage'
           assert.infoview_contents.are [[
             ▼ 3:1-3:14: error:
             Uh oh!
@@ -334,7 +334,7 @@ describe('interactive infoview', function()
                 37)
         ]],
         function()
-          helpers.move_cursor { to = { 2, 3 } }
+          helpers.search 'exact'
           assert.infoview_contents.are [[
             ⊢ 2 = 2
 
@@ -361,7 +361,7 @@ describe('interactive infoview', function()
           #multilineNoNewline
         ]],
         function()
-          helpers.move_cursor { to = { 5, 2 } }
+          helpers.search '^#multilineNoNewline'
           assert.infoview_contents.are [[
             ▼ 5:1-5:20: information:
             Multiple
@@ -386,7 +386,7 @@ describe('interactive infoview', function()
           #multilineWithNewline
         ]],
         function()
-          helpers.move_cursor { to = { 5, 2 } }
+          helpers.search '^#multilineWithNewline'
           assert.infoview_contents.are [[
             ▼ 5:1-5:22: information:
             Multiple
@@ -412,7 +412,7 @@ describe('interactive infoview', function()
           #multipleMessages
         ]],
         function()
-          helpers.move_cursor { to = { 6, 1 } }
+          helpers.search '^#multipleMessages'
           assert.infoview_contents.are [[
             ▼ 6:1-6:18: information:
             So
@@ -457,7 +457,7 @@ describe('interactive infoview', function()
             #knownWidget
           ]],
           function()
-            helpers.move_cursor { to = { 20, 2 } }
+            helpers.search '^#knownWidget'
             assert.infoview_contents.are [[
               ▼ 20:1-20:13: information:
               veryImportantStuff
@@ -485,7 +485,7 @@ describe('interactive infoview', function()
             #unknownWidget
           ]],
           function()
-            helpers.move_cursor { to = { 13, 2 } }
+            helpers.search '^#unknownWidget'
             assert.infoview_contents.are [[
               ▼ 13:1-13:15: information:
               You're gonna see this alternate text.
