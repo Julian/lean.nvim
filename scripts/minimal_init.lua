@@ -55,6 +55,16 @@ if vim.env.LEAN_NVIM_COVERAGE then
   require 'luacov'
 end
 
+-- Force-kill LSP servers on exit so they don't linger as orphans.
+-- Neovim's default VimLeavePre sends a graceful shutdown,
+-- but Lean servers can take awhile to wind down.
+-- Let's just be sure they don't stick around by force stopping.
+vim.api.nvim_create_autocmd('VimLeavePre', {
+  callback = function()
+    vim.lsp.stop_client(vim.lsp.get_clients(), true)
+  end,
+})
+
 if vim.env.LEAN_NVIM_DEBUG then
   local port = 8088
   if vim.env.LEAN_NVIM_DEBUG ~= '' and vim.env.LEAN_NVIM_DEBUG ~= '1' then
