@@ -1,4 +1,4 @@
-local a = require 'plenary.async'
+local async = require 'std.async'
 
 local Element = require('lean.tui').Element
 local InteractiveCode = require 'lean.widget.interactive_code'
@@ -11,12 +11,14 @@ local InteractiveCode = require 'lean.widget.interactive_code'
 return function(ctx, expr)
   local element
   element = Element:new {}
-  vim.schedule(a.void(function()
-    local response, err = ctx:rpc_call('ProofWidgets.ppExprTagged', { expr = expr })
-    if err then
-      return err
-    end
-    element:set_children { InteractiveCode(response, ctx:subsession()) }
-  end))
+  vim.schedule(function()
+    async.run(function()
+      local response, err = ctx:rpc_call('ProofWidgets.ppExprTagged', { expr = expr })
+      if err then
+        return err
+      end
+      element:set_children { InteractiveCode(response, ctx:subsession()) }
+    end)
+  end)
   return element
 end

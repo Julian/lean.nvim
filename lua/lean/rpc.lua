@@ -8,8 +8,7 @@
 ---@brief ]]
 
 local Buffer = require 'std.nvim.buffer'
-local a = require 'plenary.async'
-local control = require 'plenary.async.control'
+local async = require 'std.async'
 
 local log = require 'lean.log'
 local lsp = require 'lean.lsp'
@@ -19,8 +18,8 @@ local lsp = require 'lean.lsp'
 ---@param params table LSP request parameters
 ---@return any error
 ---@return any result
-local function client_a_request(client, request, params)
-  return a.wrap(function(handler)
+local function client_request(client, request, params)
+  return async.wrap(function(handler)
     return client:request(request, params, handler)
   end, 1)()
 end
@@ -35,7 +34,7 @@ local rpc = {}
 ---@field connected? boolean
 ---@field session_id? integer
 ---@field connect_err? string
----@field on_connected Condvar
+---@field on_connected std.async.Event
 ---@field keepalive_timer? uv_timer_t
 ---@field to_release RpcRef[]
 ---@field release_timer? table
@@ -63,7 +62,7 @@ function Session:new(client, buffer, uri)
     session_id = nil,
     connected = nil,
     connect_err = nil,
-    on_connected = control.Condvar.new(),
+    on_connected = async.event(),
     to_release = {},
     release_timer = nil,
   }, self)
@@ -165,8 +164,7 @@ end
 ---@return LspError error
 function Session:call(pos, method, params)
   while not self.connected do
-    ---@diagnostic disable-next-line: undefined-field
-    self.on_connected:wait()
+    self.on_connected.wait()
   end
   if self.connect_err ~= nil then
     return nil, self.connect_err
@@ -180,7 +178,7 @@ function Session:call(pos, method, params)
     return nil, { code = -32900, message = 'LSP server disconnected' }
   end
   log:trace { message = 'calling RPC method', method = method, params = params }
-  local err, result = client_a_request(
+  local err, result = client_request(
     self.client,
     '$/lean/rpc/call',
     vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params })
@@ -236,9 +234,9 @@ local function connect(uri)
     sess.connect_err = err
     return err
   end
-  a.void(function()
+  async.run(function()
     log:trace { message = 'connecting to RPC', uri = uri }
-    local err, result = client_a_request(client, '$/lean/rpc/connect', { uri = uri })
+    local err, result = client_request(client, '$/lean/rpc/connect', { uri = uri })
     sess.connected = true
     if err ~= nil then
       sess.connect_err = err
@@ -246,10 +244,9 @@ local function connect(uri)
       sess.session_id = result.sessionId
       sess.connect_err = nil
     end
-    ---@diagnostic disable-next-line: undefined-field
-    sess.on_connected:notify_all()
+    sess.on_connected.set()
     return err
-  end)()
+  end)
 end
 
 ---@class Subsession

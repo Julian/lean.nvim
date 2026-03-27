@@ -4,8 +4,6 @@
 --- Support for interacting with the Loogle search engine.
 ---@brief ]]
 
-local curl = require 'plenary.curl'
-
 local loogle = {}
 
 ---@class LoogleResult
@@ -19,18 +17,21 @@ local loogle = {}
 ---@return LoogleResult[]|nil results Loogle hits in the JSON API format
 ---@return string|nil err An error message from Loogle, in which case no results are returned
 function loogle.search(type)
-  local res = curl.get {
-    url = 'https://loogle.lean-lang.org/json',
-    query = { q = type },
-    headers = { ['User-Agent'] = 'lean+nvim' },
-    accept = 'application/json',
-  }
+  local url = 'https://loogle.lean-lang.org/json?q=' .. vim.uri_encode(type)
+  local result = vim.system({
+    'curl', '-s',
+    '-w', '%{stderr}%{http_code}',
+    '-H', 'User-Agent: lean+nvim',
+    '-H', 'Accept: application/json',
+    url,
+  }):wait()
 
-  if res.status ~= 200 then
-    error('Loogle returned status code: ' .. res.status)
+  local status = tonumber(result.stderr)
+  if status ~= 200 then
+    error('Loogle returned status code: ' .. (status or 'unknown'))
   end
 
-  local body = vim.json.decode(res.body)
+  local body = vim.json.decode(result.stdout)
   if body.error then
     return nil, body.error
   end

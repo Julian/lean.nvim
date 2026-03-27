@@ -8,7 +8,7 @@ local packpath = vim.fs.joinpath(lean_nvim_dir, 'packpath/*')
 vim.opt.runtimepath:append(packpath)
 
 -- Doing this unconditionally seems to fail a random indent test?!?!
--- Inanis/Plenary will automatically set rtp+. (which seems wrong, but OK)
+-- Inanis will automatically set rtp+. (which seems wrong, but OK)
 -- so really we need this just for `just nvim`...
 if #vim.api.nvim_list_uis() ~= 0 then
   vim.opt.runtimepath:append(lean_nvim_dir)
@@ -37,12 +37,11 @@ vim.g.lean_config = {
 
 vim.cmd [[
   runtime! plugin/matchit.vim
-  runtime! plugin/plenary.vim
   runtime! plugin/switch.vim
   runtime! plugin/tcomment.vim
 ]]
 
--- plenary forks subprocesses, so enable coverage here when appropriate
+-- The test runner forks subprocesses, so enable coverage here when appropriate
 if vim.env.LEAN_NVIM_COVERAGE then
   local luapath = vim.fs.joinpath(lean_nvim_dir, 'luapath')
   package.path = package.path

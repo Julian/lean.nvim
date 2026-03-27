@@ -38,8 +38,6 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
   event = { 'BufReadPre *.lean', 'BufNewFile *.lean' },
 
   dependencies = {
-    'nvim-lua/plenary.nvim',
-
     -- optional dependencies:
 
     -- a completion engine

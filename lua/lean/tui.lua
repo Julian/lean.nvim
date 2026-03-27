@@ -1,4 +1,4 @@
-local async = require 'plenary.async'
+local async = require 'std.async'
 
 local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
@@ -521,9 +521,9 @@ function Element:event(path, event, ...)
 
   local args = { ... }
 
-  async.void(function()
+  async.run(function()
     return event_element.events[event](unpack(args))
-  end)()
+  end)
   return true
 end
 
