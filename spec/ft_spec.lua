@@ -30,9 +30,9 @@ describe('ft.detect', function()
     vim.bo[bufnr].buflisted = true
     vim.api.nvim_win_set_buf(0, bufnr)
 
-    assert.message('definition did not jump to a different file').is_truthy(
-      vim.api.nvim_buf_get_name(0) ~= initial_path
-    )
+    assert
+      .message('definition did not jump to a different file')
+      .is_truthy(vim.api.nvim_buf_get_name(0) ~= initial_path)
 
     helpers.wait_for_filetype()
     assert.are.equal('lean', vim.bo.filetype)
