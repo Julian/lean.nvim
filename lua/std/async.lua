@@ -72,7 +72,9 @@ function async.event()
       waiters = {}
     end,
     wait = function()
-      if is_set then return end
+      if is_set then
+        return
+      end
       local co = coroutine.running()
       assert(co, 'event.wait: must be called from a coroutine')
       table.insert(waiters, co)

@@ -18,13 +18,19 @@ local loogle = {}
 ---@return string|nil err An error message from Loogle, in which case no results are returned
 function loogle.search(type)
   local url = 'https://loogle.lean-lang.org/json?q=' .. vim.uri_encode(type)
-  local result = vim.system({
-    'curl', '-s',
-    '-w', '%{stderr}%{http_code}',
-    '-H', 'User-Agent: lean+nvim',
-    '-H', 'Accept: application/json',
-    url,
-  }):wait()
+  local result = vim
+    .system({
+      'curl',
+      '-s',
+      '-w',
+      '%{stderr}%{http_code}',
+      '-H',
+      'User-Agent: lean+nvim',
+      '-H',
+      'Accept: application/json',
+      url,
+    })
+    :wait()
 
   local status = tonumber(result.stderr)
   if status ~= 200 then
