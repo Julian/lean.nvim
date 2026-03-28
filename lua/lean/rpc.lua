@@ -28,9 +28,27 @@ local rpc = {}
 
 ---@class RpcRef
 
+---The JSON key used to encode RPC references.
+---In wire format v0, this is `"p"`; in v1, it is `"__rpcref"`.
+---@alias RpcRefKey '"p"' | '"__rpcref"'
+
+---Determine the RPC reference field name from the server's capabilities.
+---@param client vim.lsp.Client?
+---@return string ref_key
+local function ref_key_for(client)
+  local rpc_provider =
+    vim.tbl_get(client and client.server_capabilities or {}, 'experimental', 'rpcProvider')
+  local wire_format = rpc_provider and rpc_provider.rpcWireFormat
+  if wire_format == 'v1' then
+    return '__rpcref'
+  end
+  return 'p'
+end
+
 ---@class Session
 ---@field client vim.lsp.Client
 ---@field uri string
+---@field ref_key string the JSON key for RPC references (`"p"` or `"__rpcref"`)
 ---@field connected? boolean
 ---@field session_id? integer
 ---@field connect_err? string
@@ -59,6 +77,7 @@ function Session:new(client, buffer, uri)
   self = setmetatable({
     client = client,
     uri = uri,
+    ref_key = ref_key_for(client),
     session_id = nil,
     connected = nil,
     connect_err = nil,
@@ -189,12 +208,13 @@ function Session:call(pos, method, params)
   local function register(obj)
     if type(obj) == 'table' then
       for k, v in pairs(obj) do
-        if k == 'p' and type(v) ~= 'table' then
+        if k == self.ref_key and type(v) ~= 'table' then
           -- Lua 5.1 workaround for unsupported __gc on tables
           -- luacheck: ignore
           local prox = newproxy(true)
+          local release_ref = { [self.ref_key] = v }
           getmetatable(prox).__gc = function()
-            self:release_deferred { { p = v } }
+            self:release_deferred { release_ref }
           end
           setmetatable(obj, { [prox] = true })
         else

@@ -205,6 +205,7 @@ return {
   capabilities = {
     lean = {
       silentDiagnosticSupport = true,
+      rpcWireFormat = 'v1',
     },
   },
   handlers = {
