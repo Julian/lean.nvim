@@ -72,18 +72,18 @@ vim.cmd.highlight [[default link leanGoalsAccomplishedSign DiagnosticInfo]]
 
 ---Is this an unsolved goals diagnostic?
 ---@generic T
----@param diagnostic DiagnosticWith<T>
+---@param diag DiagnosticWith<T>
 ---@return boolean
-function diagnostic.is_unsolved_goals(diagnostic)
-  return vim.deep_equal(diagnostic.leanTags, { diagnostic.LeanDiagnosticTag.unsolvedGoals })
+function diagnostic.is_unsolved_goals(diag)
+  return vim.deep_equal(diag.leanTags, { diagnostic.LeanDiagnosticTag.unsolvedGoals })
 end
 
 ---Is this a goals accomplished diagnostic?
 ---@generic T
----@param diagnostic DiagnosticWith<T>
+---@param diag DiagnosticWith<T>
 ---@return boolean
-function diagnostic.is_goals_accomplished(diagnostic)
-  return vim.deep_equal(diagnostic.leanTags, { diagnostic.LeanDiagnosticTag.goalsAccomplished })
+function diagnostic.is_goals_accomplished(diag)
+  return vim.deep_equal(diag.leanTags, { diagnostic.LeanDiagnosticTag.goalsAccomplished })
 end
 
 ---Convert Lean ranges to byte indices.
@@ -93,13 +93,13 @@ end
 ---
 ---Returned positions are 0-indexed.
 ---@param bufnr integer
----@param diagnostic DiagnosticWith<string>
+---@param diag DiagnosticWith<string>
 ---@return integer start_row
 ---@return integer start_col
 ---@return integer end_row
 ---@return integer end_col
-function diagnostic.byterange_of(bufnr, diagnostic)
-  local range = diagnostic.range_of(diagnostic)
+function diagnostic.byterange_of(bufnr, diag)
+  local range = diagnostic.range_of(diag)
   local start = std.position_to_byte0(range.start, bufnr)
   local _end = std.position_to_byte0(range['end'], bufnr)
   return start[1], start[2], _end[1], _end[2]
@@ -110,22 +110,22 @@ end
 ---@param client_id integer
 ---@return vim.Diagnostic[]
 function diagnostic.leanls_to_vim(diagnostics, bufnr, client_id)
-  ---@param diagnostic DiagnosticWith<string>
+  ---@param diag DiagnosticWith<string>
   ---@return vim.Diagnostic
-  return vim.tbl_map(function(diagnostic)
-    local start_row, start_col, end_row, end_col = diagnostic.byterange_of(bufnr, diagnostic)
+  return vim.tbl_map(function(diag)
+    local start_row, start_col, end_row, end_col = diagnostic.byterange_of(bufnr, diag)
     ---@type vim.Diagnostic
     return {
       lnum = start_row,
       col = start_col,
       end_lnum = end_row,
       end_col = end_col,
-      severity = std.severity_lsp_to_vim(diagnostic.severity),
-      message = diagnostic.message,
-      source = diagnostic.source,
-      code = diagnostic.code,
-      _tags = std.tags_lsp_to_vim(diagnostic, client_id),
-      user_data = { lsp = diagnostic },
+      severity = std.severity_lsp_to_vim(diag.severity),
+      message = diag.message,
+      source = diag.source,
+      code = diag.code,
+      _tags = std.tags_lsp_to_vim(diag, client_id),
+      user_data = { lsp = diag },
     }
   end, diagnostics)
 end
