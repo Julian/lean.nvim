@@ -1,5 +1,6 @@
 ---@mod lean.diagnostic Diagnostics
 
+local log = require 'lean.log'
 local std = require 'std.lsp'
 
 ---@brief [[
@@ -44,6 +45,9 @@ local std = require 'std.lsp'
 ---@field diagnostics DiagnosticWith<string>[]
 
 local diagnostic = {
+  ---A namespace for our diagnostic signs (replacing vim.diagnostic's built-in signs).
+  signs_ns = vim.api.nvim_create_namespace 'lean.diagnostic.signs',
+
   ---Custom diagnostic tags provided by the language server.
   ---We use a separate diagnostic field for this to avoid confusing LSP clients with our custom tags.
   ---@enum LeanDiagnosticTag
@@ -69,6 +73,50 @@ local diagnostic = {
 
 vim.cmd.highlight [[default link leanUnsolvedGoals DiagnosticInfo]]
 vim.cmd.highlight [[default link leanGoalsAccomplishedSign DiagnosticInfo]]
+
+---Get the sign character for a given severity.
+---
+---Respects the user's `vim.diagnostic.config().signs.text` if set,
+---so that lean.nvim's custom sign rendering honours the same configuration
+---as Neovim's built-in handler would.
+---Falls back to Neovim's own default: the first letter of the severity name,
+---uppercased (E/W/I/H).
+---@param severity vim.diagnostic.Severity
+---@param signs_text? table<vim.diagnostic.Severity, string> pre-fetched from vim.diagnostic.config().signs.text
+---@return string
+local function severity_sign(severity, signs_text)
+  if signs_text then
+    local text = signs_text[severity]
+    if text then
+      return text
+    end
+  end
+  local name = vim.diagnostic.severity[severity]
+  return name and name:sub(1, 1) or 'E'
+end
+
+---Characters used for multi-line full-range indicators.
+local full_range_chars = {
+  top = '┌',
+  mid = '│',
+  bot = '└',
+}
+
+---@type table<vim.diagnostic.Severity, string>
+local severity_sign_hl = {
+  [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
+  [vim.diagnostic.severity.WARN] = 'DiagnosticSignWarn',
+  [vim.diagnostic.severity.INFO] = 'DiagnosticSignInfo',
+  [vim.diagnostic.severity.HINT] = 'DiagnosticSignHint',
+}
+
+---Extmark priority per severity (higher severity = higher priority).
+local severity_priority = {
+  [vim.diagnostic.severity.ERROR] = 14,
+  [vim.diagnostic.severity.WARN] = 13,
+  [vim.diagnostic.severity.INFO] = 12,
+  [vim.diagnostic.severity.HINT] = 11,
+}
 
 ---Is this an unsolved goals diagnostic?
 ---@generic T
@@ -128,6 +176,117 @@ function diagnostic.leanls_to_vim(diagnostics, bufnr, client_id)
       user_data = { lsp = diag },
     }
   end, diagnostics)
+end
+
+---@type table<integer, true>
+local disabled_builtin_signs = {}
+
+---Disable vim.diagnostic's built-in signs for a given LSP client.
+---
+---This calls `vim.diagnostic.config({ signs = false }, ns)` on the client's
+---diagnostic namespace. Called once per client; idempotent thereafter.
+---@param client_id integer
+function diagnostic.disable_builtin_signs(client_id)
+  if disabled_builtin_signs[client_id] then
+    return
+  end
+  local ns = vim.lsp.diagnostic.get_namespace(client_id)
+  vim.diagnostic.config({ signs = false }, ns)
+  disabled_builtin_signs[client_id] = true
+end
+
+---Render diagnostic signs for all diagnostics.
+---
+---Replaces vim.diagnostic's built-in sign column display. For diagnostics
+---whose `fullRange` extends past the clipped `range`, draws `┌│└` guide
+---characters. For single-line diagnostics, draws the standard severity sign.
+---All signs are colored by severity, and higher severities take priority.
+---
+---@param buffer Buffer the buffer to render in
+---@param diagnostics DiagnosticWith<string>[] the raw LSP diagnostics
+function diagnostic.render_signs(buffer, diagnostics)
+  local signs_config = vim.diagnostic.config() or {}
+  local signs_text = type(signs_config.signs) == 'table' and signs_config.signs.text or nil
+
+  for _, diag in ipairs(diagnostics) do
+    local severity = std.severity_lsp_to_vim(diag.severity)
+    local hl = severity_sign_hl[severity] or severity_sign_hl[vim.diagnostic.severity.ERROR]
+    local priority = severity_priority[severity] or severity_priority[vim.diagnostic.severity.ERROR]
+
+    -- Does this diagnostic have a multi-line fullRange that differs from range?
+    local has_full_range = diag.fullRange
+      and diag.fullRange['end'].line > diag.range['end'].line
+      and not (
+        diag.fullRange.start.line == 0
+        and diag.fullRange['end'].line >= buffer:line_count() - 1
+      )
+
+    local ok = pcall(function()
+      if has_full_range then
+        local start_pos = std.position_to_byte0(diag.fullRange.start, buffer.bufnr)
+        local end_pos = std.position_to_byte0(diag.fullRange['end'], buffer.bufnr)
+
+        local start_line = start_pos[1]
+        local end_line = end_pos[1]
+
+        if end_line <= start_line then
+          return
+        end
+
+        -- If the end is at column 0, the range actually ends at the
+        -- end of the previous line.
+        if end_pos[2] == 0 then
+          end_line = end_line - 1
+        end
+
+        if end_line <= start_line then
+          return
+        end
+
+        buffer:set_extmark(diagnostic.signs_ns, start_line, 0, {
+          sign_text = full_range_chars.top,
+          sign_hl_group = hl,
+          priority = priority,
+        })
+
+        for line = start_line + 1, end_line - 1 do
+          buffer:set_extmark(diagnostic.signs_ns, line, 0, {
+            sign_text = full_range_chars.mid,
+            sign_hl_group = hl,
+            priority = priority,
+          })
+        end
+
+        buffer:set_extmark(diagnostic.signs_ns, end_line, 0, {
+          sign_text = full_range_chars.bot,
+          sign_hl_group = hl,
+          priority = priority,
+        })
+      else
+        local start_pos = std.position_to_byte0(diag.range.start, buffer.bufnr)
+
+        buffer:set_extmark(diagnostic.signs_ns, start_pos[1], 0, {
+          sign_text = severity_sign(severity, signs_text),
+          sign_hl_group = hl,
+          priority = priority,
+        })
+      end
+    end)
+
+    if not ok then
+      log:debug {
+        message = 'Failed to set diagnostic sign',
+        diagnostic = diag,
+        bufnr = buffer.bufnr,
+      }
+    end
+  end
+end
+
+---Clear all diagnostic signs from a buffer.
+---@param buffer Buffer
+function diagnostic.clear_signs(buffer)
+  buffer:clear_namespace(diagnostic.signs_ns)
 end
 
 return diagnostic

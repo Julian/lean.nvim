@@ -30,6 +30,32 @@ function helpers.insert(contents, feed_opts)
   helpers.feed('i' .. contents, feed_opts)
 end
 
+---Get all sign extmarks in the diagnostic signs namespace for a buffer.
+---@param bufnr? integer defaults to current buffer
+---@return table[]
+function helpers.get_diagnostic_signs(bufnr)
+  local diagnostic = require 'lean.diagnostic'
+  return vim.api.nvim_buf_get_extmarks(bufnr or 0, diagnostic.signs_ns, 0, -1, { details = true })
+end
+
+---Get the sign text at a given 0-indexed line in the current buffer, or nil if none.
+---@param line integer
+---@return string?
+function helpers.sign_text_at(line)
+  local diagnostic = require 'lean.diagnostic'
+  local marks = vim.api.nvim_buf_get_extmarks(
+    0,
+    diagnostic.signs_ns,
+    { line, 0 },
+    { line, 0 },
+    { details = true }
+  )
+  if #marks == 0 then
+    return nil
+  end
+  return vim.trim(marks[1][4].sign_text)
+end
+
 function helpers.all_lean_extmarks(buffer, start, end_)
   local extmarks = {}
   for namespace, ns_id in pairs(vim.api.nvim_get_namespaces()) do
