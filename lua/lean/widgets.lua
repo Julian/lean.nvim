@@ -150,7 +150,7 @@ end
 ---The goals at the current infoview position.
 ---@return InteractiveGoal[]? goals
 function RenderContext:get_goals()
-  return goals.at(self.params, self:subsession())
+  return goals.at(self:subsession())
 end
 
 ---Get the goal with the given MVar ID.
@@ -169,7 +169,7 @@ end
 ---@param hash string the Javascript hash of the widget
 ---@return string source
 function RenderContext:source_of(hash)
-  local response = self:subsession():getWidgetSource(self.params.position, hash)
+  local response = self:subsession():getWidgetSource(hash)
   return response and response.sourcetext
 end
 
@@ -239,9 +239,6 @@ return {
     -- This is used in one place at the minute (in the infoview) and it's not
     -- clear whether it should be done in a different way yet.
 
-    -- TODO: Is sess.pos the right position??
-    --       I still don't really understand why we have positions on sessions,
-    --       as we essentially never use this attribute (other than now here).
     local ctx = RenderContext:new(sess.pos)
     return render(widget, ctx)
   end,

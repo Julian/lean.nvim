@@ -64,9 +64,9 @@ function components.goal_at(params, sess, use_widgets)
   if use_widgets == false then
     goal, children = plain.goal(params)
   else
-    goal, err = goals.at(params, sess)
+    goal, err = goals.at(sess)
     if err then
-      goal, err = goals.at(params, rpc.open(params))
+      goal, err = goals.at(rpc.open(params))
       -- FIXME: This is again our need for general retrying and/or flakiness
       --        which happens if we make RPC calls too quickly in our tests.
       if err then
@@ -116,7 +116,7 @@ function components.term_goal_at(params, sess, use_widgets)
     return plain.term_goal(params)
   end
 
-  local term_goal, err = sess:getInteractiveTermGoal(params)
+  local term_goal, err = sess:getInteractiveTermGoal()
   term_goal = term_goal and interactive_goal.interactive_term_goal(term_goal, sess)
   return term_goal, err
 end
@@ -187,7 +187,7 @@ function components.user_widgets_at(params, sess, use_widgets)
   elseif sess == nil then
     sess = rpc.open(params)
   end
-  local response, err = sess:getWidgets(params.position)
+  local response, err = sess:getWidgets()
   -- luacheck: max_comment_line_length 200
   -- GENERALIZEME: This retry logic helps us pass a test, but belongs higher up
   --               in a way which parallels this VSCode retrying logic:
@@ -195,7 +195,7 @@ function components.user_widgets_at(params, sess, use_widgets)
   --               and/or generically retries RPC calls
   if not response then
     sess = rpc.open(params)
-    response, err = sess:getWidgets(params.position)
+    response, err = sess:getWidgets()
   end
   return widgets.render_response(response, params), err
 end

@@ -353,18 +353,16 @@ end
 ---@class InteractiveGoals
 ---@field goals InteractiveGoal[]
 
----@param pos lsp.TextDocumentPositionParams
 ---@return InteractiveGoals goals
 ---@return LspError error
-function Subsession:getInteractiveGoals(pos)
-  return self:call('Lean.Widget.getInteractiveGoals', pos)
+function Subsession:getInteractiveGoals()
+  return self:call('Lean.Widget.getInteractiveGoals', self.pos)
 end
 
----@param pos lsp.TextDocumentPositionParams
 ---@return InteractiveTermGoal
 ---@return LspError error
-function Subsession:getInteractiveTermGoal(pos)
-  return self:call('Lean.Widget.getInteractiveTermGoal', pos)
+function Subsession:getInteractiveTermGoal()
+  return self:call('Lean.Widget.getInteractiveTermGoal', self.pos)
 end
 
 ---@class StrictTraceChildrenEmbed
@@ -447,11 +445,10 @@ end
 ---@class UserWidgets
 ---@field widgets UserWidgetInstance[]
 
----@param pos lsp.Position
 ---@return UserWidgets
 ---@return LspError error
-function Subsession:getWidgets(pos)
-  return self:call('Lean.Widget.getWidgets', pos)
+function Subsession:getWidgets()
+  return self:call('Lean.Widget.getWidgets', self.pos.position)
 end
 
 ---@class WidgetSource
@@ -460,12 +457,11 @@ end
 ---                         export is the component to render.
 
 ---Get the static JS source for a widget.
----@param pos lsp.Position
 ---@param hash string
 ---@return WidgetSource
 ---@return LspError error
-function Subsession:getWidgetSource(pos, hash)
-  return self:call('Lean.Widget.getWidgetSource', { pos = pos, hash = hash })
+function Subsession:getWidgetSource(hash)
+  return self:call('Lean.Widget.getWidgetSource', { pos = self.pos.position, hash = hash })
 end
 
 ---@class rpc.GoalLocationHyp
