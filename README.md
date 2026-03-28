@@ -148,7 +148,7 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 | Key                  | Function                                                          |
 | -------------------- | ----------------------------------------------------------------- |
 | `<CR>`               | click a widget or interactive area of the infoview                |
-| `K`                  | click a widget or interactive area of the infoview (same as `<CR>`) |
+| `K`                  | same as `<CR>`                                                    |
 | `gK`                 | "select" a widget or interactive area ("shift+click")             |
 | `<Tab>`              | jump into a tooltip (from a widget click)                         |
 | `<S-Tab>`            | jump out of a tooltip and back to its parent                      |
