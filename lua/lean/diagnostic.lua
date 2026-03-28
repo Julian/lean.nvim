@@ -43,7 +43,7 @@ local std = require 'std.lsp'
 ---@class LeanPublishDiagnosticsParams: lsp.PublishDiagnosticsParams
 ---@field diagnostics DiagnosticWith<string>[]
 
-local M = {
+local diagnostic = {
   ---Custom diagnostic tags provided by the language server.
   ---We use a separate diagnostic field for this to avoid confusing LSP clients with our custom tags.
   ---@enum LeanDiagnosticTag
@@ -74,16 +74,16 @@ vim.cmd.highlight [[default link leanGoalsAccomplishedSign DiagnosticInfo]]
 ---@generic T
 ---@param diagnostic DiagnosticWith<T>
 ---@return boolean
-function M.is_unsolved_goals(diagnostic)
-  return vim.deep_equal(diagnostic.leanTags, { M.LeanDiagnosticTag.unsolvedGoals })
+function diagnostic.is_unsolved_goals(diagnostic)
+  return vim.deep_equal(diagnostic.leanTags, { diagnostic.LeanDiagnosticTag.unsolvedGoals })
 end
 
 ---Is this a goals accomplished diagnostic?
 ---@generic T
 ---@param diagnostic DiagnosticWith<T>
 ---@return boolean
-function M.is_goals_accomplished(diagnostic)
-  return vim.deep_equal(diagnostic.leanTags, { M.LeanDiagnosticTag.goalsAccomplished })
+function diagnostic.is_goals_accomplished(diagnostic)
+  return vim.deep_equal(diagnostic.leanTags, { diagnostic.LeanDiagnosticTag.goalsAccomplished })
 end
 
 ---Convert Lean ranges to byte indices.
@@ -98,8 +98,8 @@ end
 ---@return integer start_col
 ---@return integer end_row
 ---@return integer end_col
-function M.byterange_of(bufnr, diagnostic)
-  local range = M.range_of(diagnostic)
+function diagnostic.byterange_of(bufnr, diagnostic)
+  local range = diagnostic.range_of(diagnostic)
   local start = std.position_to_byte0(range.start, bufnr)
   local _end = std.position_to_byte0(range['end'], bufnr)
   return start[1], start[2], _end[1], _end[2]
@@ -109,11 +109,11 @@ end
 ---@param bufnr integer
 ---@param client_id integer
 ---@return vim.Diagnostic[]
-function M.leanls_to_vim(diagnostics, bufnr, client_id)
+function diagnostic.leanls_to_vim(diagnostics, bufnr, client_id)
   ---@param diagnostic DiagnosticWith<string>
   ---@return vim.Diagnostic
   return vim.tbl_map(function(diagnostic)
-    local start_row, start_col, end_row, end_col = M.byterange_of(bufnr, diagnostic)
+    local start_row, start_col, end_row, end_col = diagnostic.byterange_of(bufnr, diagnostic)
     ---@type vim.Diagnostic
     return {
       lnum = start_row,
@@ -130,4 +130,4 @@ function M.leanls_to_vim(diagnostics, bufnr, client_id)
   end, diagnostics)
 end
 
-return M
+return diagnostic
