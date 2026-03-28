@@ -29,6 +29,8 @@ describe(
       local first_pin_position
 
       it('can be placed', function()
+        helpers.wait_for_processing()
+
         local filename = vim.fs.basename(vim.api.nvim_buf_get_name(0))
 
         first_pin_position = { 7, 5 }

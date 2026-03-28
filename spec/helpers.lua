@@ -12,6 +12,11 @@ local util = require 'lean._util'
 
 local helpers = {}
 
+--- Timeout (in ms) for operations that wait on the Lean server.
+--- When tests run in parallel, many Lean servers compete for resources,
+--- so this needs to be generous. Set LEAN_TEST_TIMEOUT to override.
+local TIMEOUT = tonumber(vim.env.LEAN_TEST_TIMEOUT) or 30000
+
 ---Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(contents, feed_opts)
   feed_opts = feed_opts or 'mtx'
@@ -72,7 +77,7 @@ function helpers.wait_for_loading_pins(iv)
   if not iv then
     error 'Infoview is not open!'
   end
-  iv:wait(20000)
+  iv:wait(TIMEOUT)
 end
 
 ---Wait for all async elements to be resolved in the given infoview.
@@ -83,10 +88,10 @@ function helpers.wait_for_async_elements(iv)
     error 'Infoview is not open!'
   end
   local renderer = iv.info.__renderer -- FIXME
-  vim.wait(5000, function()
+  vim.wait(TIMEOUT, function()
     return not vim.tbl_isempty(renderer.pending_elements)
   end)
-  local succeeded, _ = vim.wait(20000, function()
+  local succeeded, _ = vim.wait(TIMEOUT, function()
     return vim.tbl_isempty(renderer.pending_elements)
   end)
   assert.message('Never finished resolving async elements.').True(succeeded)
@@ -96,7 +101,7 @@ end
 ---@return vim.lsp.Client
 function helpers.wait_for_ready_lsp()
   local client
-  local succeeded, _ = vim.wait(15000, function()
+  local succeeded, _ = vim.wait(TIMEOUT, function()
     client = lsp.client_for(0)
     return client and client.initialized or false
   end)
@@ -113,7 +118,7 @@ end
 function helpers.wait_for_ileans()
   local client = helpers.wait_for_ready_lsp()
   local params = lsp.make_wait_for_ileans_params()
-  client:request_sync('$/lean/waitForILeans', params, 10000)
+  client:request_sync('$/lean/waitForILeans', params, TIMEOUT)
   return client
 end
 
@@ -121,7 +126,7 @@ end
 function helpers.wait_for_diagnostics()
   local client = helpers.wait_for_ready_lsp()
   local params = lsp.make_wait_for_diagnostics_params()
-  client:request_sync('textDocument/waitForDiagnostics', params, 10000)
+  client:request_sync('textDocument/waitForDiagnostics', params, TIMEOUT)
   return client
 end
 
@@ -199,10 +204,10 @@ end
 ---Wait until we are not processing at the current cursor position.
 function helpers.wait_for_processing()
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
-  vim.wait(5000, function()
+  vim.wait(TIMEOUT, function()
     return progress.at(params) == progress.Kind.processing
   end)
-  local succeeded, _ = vim.wait(15000, function()
+  local succeeded, _ = vim.wait(TIMEOUT, function()
     return progress.at(params) == nil
   end)
   assert.message('Never finished processing').True(succeeded)
@@ -211,7 +216,7 @@ end
 ---Wait a few seconds for line diagnostics, erroring if none arrive.
 function helpers.wait_for_line_diagnostics()
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
-  local succeeded, _ = vim.wait(15000, function()
+  local succeeded, _ = vim.wait(TIMEOUT, function()
     if progress.at(params) == progress.Kind.processing then
       return false
     end
@@ -222,7 +227,7 @@ function helpers.wait_for_line_diagnostics()
 end
 
 function helpers.wait_for_filetype()
-  local result, _ = vim.wait(15000, function()
+  local result, _ = vim.wait(TIMEOUT, function()
     return vim.bo.filetype == 'lean'
   end)
   assert.message('filetype was never set').is_truthy(result)
