@@ -4,11 +4,11 @@ local Window = require 'std.nvim.window'
 local assert = require 'luassert'
 local text = require 'std.text'
 
+local diagnostic = require 'lean.diagnostic'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 local lsp = require 'lean.lsp'
 local progress = require 'lean.progress'
-local diagnostic = require 'lean.diagnostic'
 
 local helpers = {}
 
