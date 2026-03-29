@@ -28,7 +28,7 @@ local relpath = vim.fs.relpath
 ---Convert LSP document params inside the current buffer to a human-readable (1, 1)-indexed string.
 ---
 ---Takes the workspace into account in order to return a relative path.
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function lsp.text_document_position_to_string(params)
   local workspace = vim.lsp.buf.list_workspace_folders()[1] or vim.uv.cwd()
   local filename = vim.uri_to_fname(params.textDocument.uri)

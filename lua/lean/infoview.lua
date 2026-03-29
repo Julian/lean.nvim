@@ -17,7 +17,6 @@ local interactive_goal = require 'lean.widget.interactive_goal'
 local log = require 'lean.log'
 local progress = require 'lean.progress'
 local rpc = require 'lean.rpc'
-local util = require 'lean._util'
 
 local infoview = {
   -- mapping from infoview IDs to infoviews
@@ -81,7 +80,6 @@ local FOCUS_AUGROUP = vim.api.nvim_create_augroup('LeanInfoviewFocus', {})
 ---@field private __extmark_virt_text table
 ---@field private __tick integer
 ---@field private __info Info
----@field private __ui_position_params UIParams
 ---@field private __use_widgets boolean
 local Pin = { __extmark_ns = vim.api.nvim_create_namespace 'lean.pins' }
 Pin.__index = Pin
@@ -493,13 +491,13 @@ function Infoview:__update()
     return
   end
   info:update_last_window()
-  info:move_pin(util.make_position_params())
+  info:move_pin(vim.lsp.util.make_position_params(0, 'utf-8'))
 end
 
 ---Directly mark that the infoview has died. What a shame.
 function Infoview:died()
   self.info.pin.__data_element = components.LSP_HAS_DIED
-  local params = self.info.pin.__ui_position_params
+  local params = self.info.pin:__byte_position_params() or self.info.pin.__position_params
   progress.proc_infos[params.textDocument.uri] = {
     {
       kind = progress.Kind.fatal_error,
@@ -713,7 +711,7 @@ function Info:new(opts)
 end
 
 function Info:add_pin()
-  local new_params = vim.deepcopy(self.pin.__ui_position_params)
+  local new_params = self.pin:__byte_position_params()
   table.insert(self.pins, self.pin)
   self:__maybe_show_pin_extmark(self.pin.id)
   self.pin = Pin:new {
@@ -726,7 +724,7 @@ function Info:add_pin()
   self:render()
 end
 
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Info:__set_diff_pin(params)
   if not self.__diff_pin then
     self.__diff_pin = Pin:new {
@@ -830,13 +828,12 @@ end
 
 ---Update the diff pin to use the current pin's positon params if they are valid,
 ---and the provided params if they are not.
----@param params? UIParams
+---@param params? lsp.TextDocumentPositionParams
 function Info:__update_auto_diff_pin(params)
-  if
-    self.pin.__ui_position_params and util.position_params_valid(self.pin.__ui_position_params)
-  then
+  local prev = self.pin:__byte_position_params()
+  if prev then
     -- update diff pin to previous position
-    self:__set_diff_pin(self.pin.__ui_position_params)
+    self:__set_diff_pin(prev)
   elseif params then
     -- if previous position invalid, use current position
     self:__set_diff_pin(params)
@@ -844,7 +841,7 @@ function Info:__update_auto_diff_pin(params)
 end
 
 ---Move the current pin to the specified location.
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Info:move_pin(params)
   if self.__auto_diff_pin then
     self:__update_auto_diff_pin(params)
@@ -916,9 +913,9 @@ end
 
 ---Render a pin with an extra header indicating its location.
 ---
----@param click_header fun(params:UIParams):fun():nil
+---@param click_header fun(params:lsp.TextDocumentPositionParams):fun():nil
 function Pin:render_with_header(click_header)
-  local params = self.__ui_position_params
+  local params = self:__byte_position_params()
   local header_element = Element:new {
     name = 'pin-header',
     text = ('-- %s\n'):format(text_document_position_to_string(params)),
@@ -936,7 +933,7 @@ function Pin:__teardown()
 end
 
 ---Update pin extmark based on position, used when resetting pin position.
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Pin:__update_extmark(params)
   if not params then
     return
@@ -1029,9 +1026,26 @@ function Pin:update_position()
   local uri = buffer:uri()
   ---@type lsp.TextDocumentPositionParams
   self.__position_params = { textDocument = { uri = uri }, position = new_pos }
-  self.__ui_position_params = {
-    textDocument = { uri = uri },
-    position = { line = extmark_pos[1], character = extmark_pos[2] },
+end
+
+---Return the current pin position read directly from the extmark, with a byte-offset character
+---position. Returns nil if the pin has no extmark or the buffer is unloaded.
+---@return lsp.TextDocumentPositionParams?
+function Pin:__byte_position_params()
+  if not self.__extmark then
+    return
+  end
+  local buffer = self.__extmark_buffer
+  if not buffer:is_loaded() then
+    return
+  end
+  local pos = buffer:extmark(self.__extmark_ns, self.__extmark, {})
+  if vim.tbl_isempty(pos) then
+    return
+  end
+  return {
+    textDocument = { uri = buffer:uri() },
+    position = { line = pos[1], character = pos[2] },
   }
 end
 
@@ -1074,7 +1088,7 @@ function Pin:toggle_pause()
   end
 end
 
----@param params UIParams
+---@param params lsp.TextDocumentPositionParams
 function Pin:move(params)
   self:__update_extmark(params)
   self:update()
@@ -1413,7 +1427,7 @@ function infoview.set_diff_pin()
   end
   local current_infoview = infoview.open()
   current_infoview.info:update_last_window()
-  current_infoview.info:__set_diff_pin(util.make_position_params())
+  current_infoview.info:__set_diff_pin(vim.lsp.util.make_position_params(0, 'utf-8'))
 end
 
 ---Clear any pins in the current infoview.
