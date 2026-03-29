@@ -2,7 +2,7 @@ local InteractiveCode = require 'lean.widget.interactive_code'
 local Element = require('lean.tui').Element
 local config = require 'lean.config'
 local range_to_string = require('std.lsp').range_to_string
-local util = require 'lean._util'
+local diagnostic = require 'lean.diagnostic'
 
 local interactive_goal = {}
 
@@ -152,7 +152,7 @@ function interactive_goal.diagnostics(params)
       },
       margin = 0,
     }
-  end, util.lean_lsp_diagnostics({ lnum = params.position.line }, bufnr))
+  end, diagnostic.lsp_diagnostics({ lnum = params.position.line }, bufnr))
 end
 
 ---@param goal InteractiveGoal | InteractiveTermGoal

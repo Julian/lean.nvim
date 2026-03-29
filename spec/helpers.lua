@@ -8,7 +8,7 @@ local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 local lsp = require 'lean.lsp'
 local progress = require 'lean.progress'
-local util = require 'lean._util'
+local diagnostic = require 'lean.diagnostic'
 
 local helpers = {}
 
@@ -246,7 +246,7 @@ function helpers.wait_for_line_diagnostics()
     if progress.at(params) == progress.Kind.processing then
       return false
     end
-    local diagnostics = util.lean_lsp_diagnostics { lnum = params.position.line }
+    local diagnostics = diagnostic.lsp_diagnostics { lnum = params.position.line }
     return #diagnostics > 0
   end)
   assert.message('Waited for line diagnostics but none came.').True(succeeded)

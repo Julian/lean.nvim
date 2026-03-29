@@ -16,7 +16,7 @@ describe('diagnostic signs when disabled', function()
     'still provides diagnostics via vim.diagnostic',
     clean_buffer('#check (1 : String)', function()
       helpers.wait_for_line_diagnostics()
-      local diags = require('lean._util').lean_lsp_diagnostics()
+      local diags = require('lean.diagnostic').lsp_diagnostics()
       assert.is_truthy(#diags > 0)
     end)
   )
