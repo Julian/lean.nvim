@@ -16,7 +16,11 @@ local async = require 'std.async'
 local function position_to_string(buffer, pos)
   local workspace = vim.lsp.buf.list_workspace_folders()[1] or vim.uv.cwd()
   local filename = vim.uri_to_fname(buffer:uri())
-  return ('%s at %d:%d'):format(vim.fs.relpath(workspace, filename) or filename, pos[1] + 1, pos[2] + 1)
+  return ('%s at %d:%d'):format(
+    vim.fs.relpath(workspace, filename) or filename,
+    pos[1] + 1,
+    pos[2] + 1
+  )
 end
 
 local Element = require('lean.tui').Element
@@ -730,7 +734,9 @@ function Info:add_pin()
     use_widgets = options.use_widgets,
     parent = self,
   }
-  if buffer then self.pin:move(buffer, pos) end
+  if buffer then
+    self.pin:move(buffer, pos)
+  end
   self:render()
 end
 
