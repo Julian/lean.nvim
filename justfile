@@ -19,7 +19,7 @@ test: _rebuild-test-fixtures _clone-test-dependencies
 # Run the test suite without rebuilding or recloning any dependencies.
 [group('testing')]
 retest *test_files=spec:
-    XDG_CONFIG_HOME="{{ clean_config }}" nvim --headless --clean -u {{ init_lua }} -c 'lua require("inanis").run{ specs = vim.split("{{ test_files }}", " "), minimal_init = "{{ init_lua }}", sequential = vim.env.TEST_SEQUENTIAL ~= nil }'
+    XDG_CONFIG_HOME="{{ clean_config }}" nvim --headless --clean -u {{ init_lua }} -c 'lua require("inanis").run{ specs = vim.split("{{ test_files }}", " "), minimal_init = "{{ init_lua }}", sequential = vim.env.TEST_SEQUENTIAL ~= nil, timeout = 180000 }'
 
 # Run an instance of neovim with the same minimal init used to run tests.
 [group('dev')]
@@ -103,7 +103,7 @@ _clean-dependencies:
 
 # Clone any neovim dependencies required for the plugin.
 _clone-dependencies: _clean-dependencies
-    for dependency in AndrewRadev/switch.vim andymass/vim-matchup nvim-lua/plenary.nvim tomtom/tcomment_vim lewis6991/satellite.nvim; do \
+    for dependency in AndrewRadev/switch.vim andymass/vim-matchup tomtom/tcomment_vim lewis6991/satellite.nvim; do \
         git clone --quiet --filter=blob:none "https://github.com/$dependency" "{{ packpath }}/$(basename $dependency)"; \
     done
 

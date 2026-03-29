@@ -8,7 +8,7 @@ local packpath = vim.fs.joinpath(lean_nvim_dir, 'packpath/*')
 vim.opt.runtimepath:append(packpath)
 
 -- Doing this unconditionally seems to fail a random indent test?!?!
--- Inanis/Plenary will automatically set rtp+. (which seems wrong, but OK)
+-- Inanis will automatically set rtp+. (which seems wrong, but OK)
 -- so really we need this just for `just nvim`...
 if #vim.api.nvim_list_uis() ~= 0 then
   vim.opt.runtimepath:append(lean_nvim_dir)
@@ -37,12 +37,11 @@ vim.g.lean_config = {
 
 vim.cmd [[
   runtime! plugin/matchit.vim
-  runtime! plugin/plenary.vim
   runtime! plugin/switch.vim
   runtime! plugin/tcomment.vim
 ]]
 
--- plenary forks subprocesses, so enable coverage here when appropriate
+-- The test runner forks subprocesses, so enable coverage here when appropriate
 if vim.env.LEAN_NVIM_COVERAGE then
   local luapath = vim.fs.joinpath(lean_nvim_dir, 'luapath')
   package.path = package.path
@@ -54,6 +53,16 @@ if vim.env.LEAN_NVIM_COVERAGE then
   package.cpath = package.cpath .. ';' .. luapath .. '/lib/lua/5.1/?.so;'
   require 'luacov'
 end
+
+-- Force-kill LSP servers on exit so they don't linger as orphans.
+-- Neovim's default VimLeavePre sends a graceful shutdown,
+-- but Lean servers can take awhile to wind down.
+-- Let's just be sure they don't stick around by force stopping.
+vim.api.nvim_create_autocmd('VimLeavePre', {
+  callback = function()
+    vim.lsp.stop_client(vim.lsp.get_clients(), true)
+  end,
+})
 
 if vim.env.LEAN_NVIM_DEBUG then
   local port = 8088

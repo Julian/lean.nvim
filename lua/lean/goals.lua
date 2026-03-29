@@ -8,11 +8,11 @@ local goals = {}
 local cache = {}
 
 ---Return the interactive goals at the given position, caching them for access.
----@param params lsp.TextDocumentPositionParams
 ---@param sess Subsession
 ---@return InteractiveGoal[]? goals
 ---@return LspError? err
-function goals.at(params, sess)
+function goals.at(sess)
+  local params = sess.pos
   local buffer = Buffer:from_uri(params.textDocument.uri)
   if not buffer:is_loaded() then
     return nil, ('%s is not not loaded'):format(buffer.bufnr)
@@ -26,7 +26,7 @@ function goals.at(params, sess)
     return cached[3]
   end
 
-  local result, err = sess:getInteractiveGoals(params)
+  local result, err = sess:getInteractiveGoals()
   if err or not result then
     return nil, err
   end

@@ -17,6 +17,7 @@ local function on_publish_diagnostics(_, result, ctx)
   local buffer = Buffer:from_uri(result.uri)
   vim.diagnostic.reset(lsp.silent_ns, buffer.bufnr)
   buffer:clear_namespace(lsp.goals_ns)
+  diagnostic.clear_signs(buffer)
 
   local markers = CONFIG().goal_markers
 
@@ -62,6 +63,13 @@ local function on_publish_diagnostics(_, result, ctx)
     :totable()
 
   vim.lsp.diagnostic.on_publish_diagnostics(_, result, ctx)
+
+  -- Render our own diagnostic signs, replacing vim.diagnostic's built-in ones.
+  -- This lets us show full-range guides (┌│└) for multi-line diagnostics.
+  if CONFIG().signs.enabled then
+    diagnostic.disable_builtin_signs(ctx.client_id)
+    diagnostic.render_signs(buffer, result.diagnostics)
+  end
 
   if #unsolved ~= 0 then
     local function place_marker(pos)
@@ -205,6 +213,7 @@ return {
   capabilities = {
     lean = {
       silentDiagnosticSupport = true,
+      rpcWireFormat = 'v1',
     },
   },
   handlers = {

@@ -90,9 +90,11 @@ abbreviations.show_reverse_lookup()          *abbreviations.show_reverse_lookup*
 
 
 abbreviations.convert()                                  *abbreviations.convert*
+    Convert any abbreviation currently being typed at the cursor.
 
 
 abbreviations.enable()                                    *abbreviations.enable*
+    Enable abbreviation expansion for buffers matching the given pattern.
 
 
 ==============================================================================
@@ -152,17 +154,6 @@ FilterSelection                                                *FilterSelection*
 
 infoview.close_all()                                        *infoview.close_all*
     Close all open infoviews (across all tabs).
-
-
-infoview.__update_pin_by_uri({uri})               *infoview.__update_pin_by_uri*
-    Update pins corresponding to the given URI.
-
-    Parameters: ~
-        {uri}  (string)
-
-
-infoview.__update_pin_positions()              *infoview.__update_pin_positions*
-    on_lines callback to update pins position according to the given textDocument/didChange parameters.
 
 
 infoview.enable({opts})                                        *infoview.enable*
@@ -234,7 +225,7 @@ infoview.disable_widgets()                            *infoview.disable_widgets*
 infoview.go_to()                                                *infoview.go_to*
     Move the cursor to the infoview window.
 
-    -If the infoview is not open, it will be opened.
+    If the infoview is not open, it will be opened.
 
 
 infoview.reposition()                                      *infoview.reposition*
@@ -250,13 +241,12 @@ infoview.select_view_options()                    *infoview.select_view_options*
     which hypotheses are shown, set them in your lean.nvim configuration.
 
 
-goals.at({params}, {sess})                                            *goals.at*
+goals.at({sess})                                                      *goals.at*
     Return the interactive goals at the given position, caching them for access.
 
     Parameters: ~
-        {params}  (lsp.TextDocumentPositionParams)
-        {sess}    (Subsession)                      @return InteractiveGoal[]? goals
-                                                    @return LspError? err
+        {sess}  (Subsession)  @return InteractiveGoal[]? goals
+                              @return LspError? err
 
 
 ==============================================================================
@@ -409,19 +399,19 @@ LeanDiagnosticTag                                            *LeanDiagnosticTag*
                            Corresponds to `MessageData.tagged `goalsAccomplished ..`.
 
 
-M.is_unsolved_goals()                                      *M.is_unsolved_goals*
+diagnostic.is_unsolved_goals()                    *diagnostic.is_unsolved_goals*
 
     Returns: ~
         (boolean)
 
 
-M.is_goals_accomplished()                              *M.is_goals_accomplished*
+diagnostic.is_goals_accomplished()            *diagnostic.is_goals_accomplished*
 
     Returns: ~
         (boolean)
 
 
-M.byterange_of()                                                *M.byterange_of*
+diagnostic.byterange_of()                              *diagnostic.byterange_of*
 
     Returns: ~
         (integer)  start_row
@@ -430,7 +420,8 @@ M.byterange_of()                                                *M.byterange_of*
         (integer)  end_col
 
 
-M.leanls_to_vim({bufnr}, {client_id})                          *M.leanls_to_vim*
+                                                      *diagnostic.leanls_to_vim*
+diagnostic.leanls_to_vim({bufnr}, {client_id})
 
     Parameters: ~
         {bufnr}      (integer)
@@ -438,6 +429,27 @@ M.leanls_to_vim({bufnr}, {client_id})                          *M.leanls_to_vim*
 
     Returns: ~
         (vim.Diagnostic[])
+
+
+                                              *diagnostic.disable_builtin_signs*
+diagnostic.disable_builtin_signs({client_id})
+    Disable vim.diagnostic's built-in signs for a given LSP client.
+
+    This calls `vim.diagnostic.config({ signs = false }, ns)` on the client's
+    diagnostic namespace. Called once per client; idempotent thereafter.
+
+    Parameters: ~
+        {client_id}  (integer)
+
+
+diagnostic.render_signs()                              *diagnostic.render_signs*
+
+
+diagnostic.clear_signs({buffer})                        *diagnostic.clear_signs*
+    Clear all diagnostic signs from a buffer.
+
+    Parameters: ~
+        {buffer}  (Buffer)
 
 
 vim:tw=78:ts=8:noet:ft=help:norl:

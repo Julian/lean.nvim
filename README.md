@@ -38,8 +38,6 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
   event = { 'BufReadPre *.lean', 'BufNewFile *.lean' },
 
   dependencies = {
-    'nvim-lua/plenary.nvim',
-
     -- optional dependencies:
 
     -- a completion engine
@@ -150,10 +148,10 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 | Key                  | Function                                                          |
 | -------------------- | ----------------------------------------------------------------- |
 | `<CR>`               | click a widget or interactive area of the infoview                |
-| `K`                  | click a widget or interactive area of the infoview                |
+| `K`                  | same as `<CR>`                                                    |
 | `gK`                 | "select" a widget or interactive area ("shift+click")             |
 | `<Tab>`              | jump into a tooltip (from a widget click)                         |
-| `<Shift-Tab>`        | jump out of a tooltip and back to its parent                      |
+| `<S-Tab>`            | jump out of a tooltip and back to its parent                      |
 | `<Esc>`              | clear all open tooltips                                           |
 | `J`                  | jump into a tooltip (from a widget click)                         |
 | `C`                  | clear all open tooltips                                           |
@@ -327,7 +325,7 @@ After running the test suite once, you can save some time re-cloning dependencie
 You can also run single test files by running:
 
 ```sh
-  just retest lua/tests/ft_spec.lua
+  just retest spec/ft_spec.lua
 ```
 
 Some linting and style checking is done via [`pre-commit`](https://pre-commit.com/#install), which once installed (via the linked instructions) is run via:

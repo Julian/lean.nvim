@@ -235,6 +235,7 @@ local function convert_abbrev(abbrev)
   return repl .. convert_abbrev(abbrev:sub(matchlen + 1))
 end
 
+---Convert any abbreviation currently being typed at the cursor.
 function abbreviations.convert()
   if not abbreviations.abbr_mark then
     return
@@ -269,6 +270,7 @@ function abbreviations.convert()
   vim.api.nvim_win_set_cursor(0, { row1 + 1, col1 + new_cursor_col_shift })
 end
 
+---Enable abbreviation expansion for buffers matching the given pattern.
 function abbreviations.enable(pattern, opts)
   opts = vim.tbl_extend('keep', opts or {}, { leader = '\\', extra = {} })
 

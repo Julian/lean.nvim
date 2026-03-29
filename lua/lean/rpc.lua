@@ -8,8 +8,7 @@
 ---@brief ]]
 
 local Buffer = require 'std.nvim.buffer'
-local a = require 'plenary.async'
-local control = require 'plenary.async.control'
+local async = require 'std.async'
 
 local log = require 'lean.log'
 local lsp = require 'lean.lsp'
@@ -19,8 +18,8 @@ local lsp = require 'lean.lsp'
 ---@param params table LSP request parameters
 ---@return any error
 ---@return any result
-local function client_a_request(client, request, params)
-  return a.wrap(function(handler)
+local function client_request(client, request, params)
+  return async.wrap(function(handler)
     return client:request(request, params, handler)
   end, 1)()
 end
@@ -29,13 +28,31 @@ local rpc = {}
 
 ---@class RpcRef
 
+---The JSON key used to encode RPC references.
+---In wire format v0, this is `"p"`; in v1, it is `"__rpcref"`.
+---@alias RpcRefKey '"p"' | '"__rpcref"'
+
+---Determine the RPC reference field name from the server's capabilities.
+---@param client vim.lsp.Client?
+---@return string ref_key
+local function ref_key_for(client)
+  local rpc_provider =
+    vim.tbl_get(client and client.server_capabilities or {}, 'experimental', 'rpcProvider')
+  local wire_format = rpc_provider and rpc_provider.rpcWireFormat
+  if wire_format == 'v1' then
+    return '__rpcref'
+  end
+  return 'p'
+end
+
 ---@class Session
 ---@field client vim.lsp.Client
 ---@field uri string
+---@field ref_key string the JSON key for RPC references (`"p"` or `"__rpcref"`)
 ---@field connected? boolean
 ---@field session_id? integer
 ---@field connect_err? string
----@field on_connected Condvar
+---@field on_connected std.async.Event
 ---@field keepalive_timer? uv_timer_t
 ---@field to_release RpcRef[]
 ---@field release_timer? table
@@ -60,10 +77,11 @@ function Session:new(client, buffer, uri)
   self = setmetatable({
     client = client,
     uri = uri,
+    ref_key = ref_key_for(client),
     session_id = nil,
     connected = nil,
     connect_err = nil,
-    on_connected = control.Condvar.new(),
+    on_connected = async.event(),
     to_release = {},
     release_timer = nil,
   }, self)
@@ -165,8 +183,7 @@ end
 ---@return LspError error
 function Session:call(pos, method, params)
   while not self.connected do
-    ---@diagnostic disable-next-line: undefined-field
-    self.on_connected:wait()
+    self.on_connected.wait()
   end
   if self.connect_err ~= nil then
     return nil, self.connect_err
@@ -180,7 +197,7 @@ function Session:call(pos, method, params)
     return nil, { code = -32900, message = 'LSP server disconnected' }
   end
   log:trace { message = 'calling RPC method', method = method, params = params }
-  local err, result = client_a_request(
+  local err, result = client_request(
     self.client,
     '$/lean/rpc/call',
     vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params })
@@ -191,12 +208,13 @@ function Session:call(pos, method, params)
   local function register(obj)
     if type(obj) == 'table' then
       for k, v in pairs(obj) do
-        if k == 'p' and type(v) ~= 'table' then
+        if k == self.ref_key and type(v) ~= 'table' then
           -- Lua 5.1 workaround for unsupported __gc on tables
           -- luacheck: ignore
           local prox = newproxy(true)
+          local release_ref = { [self.ref_key] = v }
           getmetatable(prox).__gc = function()
-            self:release_deferred { { p = v } }
+            self:release_deferred { release_ref }
           end
           setmetatable(obj, { [prox] = true })
         else
@@ -236,9 +254,9 @@ local function connect(uri)
     sess.connect_err = err
     return err
   end
-  a.void(function()
+  async.run(function()
     log:trace { message = 'connecting to RPC', uri = uri }
-    local err, result = client_a_request(client, '$/lean/rpc/connect', { uri = uri })
+    local err, result = client_request(client, '$/lean/rpc/connect', { uri = uri })
     sess.connected = true
     if err ~= nil then
       sess.connect_err = err
@@ -246,10 +264,9 @@ local function connect(uri)
       sess.session_id = result.sessionId
       sess.connect_err = nil
     end
-    ---@diagnostic disable-next-line: undefined-field
-    sess.on_connected:notify_all()
+    sess.on_connected.set()
     return err
-  end)()
+  end)
 end
 
 ---@class Subsession
@@ -336,18 +353,16 @@ end
 ---@class InteractiveGoals
 ---@field goals InteractiveGoal[]
 
----@param pos lsp.TextDocumentPositionParams
 ---@return InteractiveGoals goals
 ---@return LspError error
-function Subsession:getInteractiveGoals(pos)
-  return self:call('Lean.Widget.getInteractiveGoals', pos)
+function Subsession:getInteractiveGoals()
+  return self:call('Lean.Widget.getInteractiveGoals', self.pos)
 end
 
----@param pos lsp.TextDocumentPositionParams
 ---@return InteractiveTermGoal
 ---@return LspError error
-function Subsession:getInteractiveTermGoal(pos)
-  return self:call('Lean.Widget.getInteractiveTermGoal', pos)
+function Subsession:getInteractiveTermGoal()
+  return self:call('Lean.Widget.getInteractiveTermGoal', self.pos)
 end
 
 ---@class StrictTraceChildrenEmbed
@@ -430,11 +445,10 @@ end
 ---@class UserWidgets
 ---@field widgets UserWidgetInstance[]
 
----@param pos lsp.Position
 ---@return UserWidgets
 ---@return LspError error
-function Subsession:getWidgets(pos)
-  return self:call('Lean.Widget.getWidgets', pos)
+function Subsession:getWidgets()
+  return self:call('Lean.Widget.getWidgets', self.pos.position)
 end
 
 ---@class WidgetSource
@@ -443,12 +457,11 @@ end
 ---                         export is the component to render.
 
 ---Get the static JS source for a widget.
----@param pos lsp.Position
 ---@param hash string
 ---@return WidgetSource
 ---@return LspError error
-function Subsession:getWidgetSource(pos, hash)
-  return self:call('Lean.Widget.getWidgetSource', { pos = pos, hash = hash })
+function Subsession:getWidgetSource(hash)
+  return self:call('Lean.Widget.getWidgetSource', { pos = self.pos.position, hash = hash })
 end
 
 ---@class rpc.GoalLocationHyp

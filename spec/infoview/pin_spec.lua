@@ -29,6 +29,8 @@ describe(
       local first_pin_position
 
       it('can be placed', function()
+        helpers.wait_for_processing()
+
         local filename = vim.fs.basename(vim.api.nvim_buf_get_name(0))
 
         first_pin_position = { 7, 5 }
@@ -157,8 +159,7 @@ describe(
         assert.is.equal(0, #infoview.get_current_infoview().info.pins)
       end)
 
-      -- FIXME: This seems to fail with errors saying it's misusing vim.schedule.
-      pending('can be re-placed after being cleared', function()
+      it('can be re-placed after being cleared', function()
         helpers.move_cursor { to = { 4, 5 } }
         infoview.add_pin()
         infoview.clear_pins()
@@ -171,12 +172,22 @@ describe(
           h1 : p
           ⊢ q ∨ p
 
+          ▼ expected type (4:5-4:8)
+          ⊢ ∀ {a b : Prop}, a → a ∨ b
+
           -- %s at 4:6
+          Goals accomplished 🎉
+
           case inl
           p q : Prop
           h1 : p
           ⊢ q ∨ p
+
+          ▼ expected type (4:5-4:8)
+          ⊢ ∀ {a b : Prop}, a → a ∨ b
           ]]):format(vim.fs.basename(vim.api.nvim_buf_get_name(0))))
+
+        infoview.clear_pins()
       end)
 
       describe('click', function()

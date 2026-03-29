@@ -7,7 +7,7 @@
 
 local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
-local a = require 'plenary.async'
+local async = require 'std.async'
 local text_document_position_to_string = require('std.lsp').text_document_position_to_string
 
 local Element = require('lean.tui').Element
@@ -1159,51 +1159,53 @@ local function contents_for(params, use_widgets)
   return new_data_element
 end
 
-Pin.update = a.void(function(self)
-  log:trace { message = 'updating pin', id = self.id, paused = self.paused, loading = self.loading }
-  -- FIXME: For one, we're guarding here against the infoview being updated
-  --        while it's closed, which if we continued, would end up calling
-  --        render. That doesn't seem right, somewhere that should happen
-  --        higher up than here.
-  if not self.__info.__infoview.window then
-    return
-  elseif self.paused then
-    self.__info.__infoview:__update_winhighlight 'paused'
-    return
-  end
+function Pin:update()
+  async.run(function()
+    log:trace { message = 'updating pin', id = self.id, paused = self.paused, loading = self.loading }
+    -- FIXME: For one, we're guarding here against the infoview being updated
+    --        while it's closed, which if we continued, would end up calling
+    --        render. That doesn't seem right, somewhere that should happen
+    --        higher up than here.
+    if not self.__info.__infoview.window then
+      return
+    elseif self.paused then
+      self.__info.__infoview:__update_winhighlight 'paused'
+      return
+    end
 
-  local params = self.__position_params
-  if not params then
-    return
-  end
+    local params = self.__position_params
+    if not params then
+      return
+    end
 
-  if not Buffer:from_uri(params.textDocument.uri):is_loaded() then
-    return
-  end
+    if not Buffer:from_uri(params.textDocument.uri):is_loaded() then
+      return
+    end
 
-  self.__info.__infoview:__update_winhighlight 'normal'
+    self.__info.__infoview:__update_winhighlight 'normal'
 
-  -- FIXME: This tick business is some bizarre way of telling whether
-  --        info:render calls back into us to re-render this pin.
-  self.__tick = self.__tick + 1
-  local tick = self.__tick
+    -- FIXME: This tick business is some bizarre way of telling whether
+    --        info:render calls back into us to re-render this pin.
+    self.__tick = self.__tick + 1
+    local tick = self.__tick
 
-  if not self.loading then
-    self.loading = true
-    self.__info:render()
-  end
-  self.__data_element = contents_for(self.__position_params, self.__use_widgets)
-  -- FIXME: we don't have the right separation here for knowing when we're dead
-  if self.__data_element == components.LSP_HAS_DIED then
-    self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
-  end
+    if not self.loading then
+      self.loading = true
+      self.__info:render()
+    end
+    self.__data_element = contents_for(self.__position_params, self.__use_widgets)
+    -- FIXME: we don't have the right separation here for knowing when we're dead
+    if self.__data_element == components.LSP_HAS_DIED then
+      self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
+    end
 
-  if self.__tick == tick and self.__info and self.loading then
-    self.loading = false
-    self.__element:set_children { self.__data_element }
-    self.__info:render()
-  end
-end)
+    if self.__tick == tick and self.__info and self.loading then
+      self.loading = false
+      self.__element:set_children { self.__data_element }
+      self.__info:render()
+    end
+  end)
+end
 
 ---Close all open infoviews (across all tabs).
 function infoview.close_all()
@@ -1212,8 +1214,7 @@ function infoview.close_all()
   end
 end
 
----Update pins corresponding to the given URI.
----@param uri string
+---@private
 function infoview.__update_pin_by_uri(uri)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
@@ -1227,7 +1228,7 @@ function infoview.__update_pin_by_uri(uri)
   end
 end
 
----on_lines callback to update pins position according to the given textDocument/didChange parameters.
+---@private
 function infoview.__update_pin_positions(_, bufnr, tick, _, _, _, _, _, _)
   log:debug { message = 'updating pin positions', bufnr = bufnr, tick = tick }
   local uri = vim.uri_from_bufnr(bufnr)
@@ -1458,7 +1459,7 @@ end
 
 ---Move the cursor to the infoview window.
 ---
-----If the infoview is not open, it will be opened.
+---If the infoview is not open, it will be opened.
 function infoview.go_to()
   infoview.open():enter()
 end

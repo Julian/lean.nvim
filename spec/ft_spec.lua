@@ -18,11 +18,21 @@ describe('ft.detect', function()
 
     vim.cmd.normal 'G$'
     helpers.wait_for_loading_pins()
+    local client = helpers.wait_for_ileans()
 
-    vim.lsp.buf.definition()
-    assert.is_truthy(vim.wait(15000, function()
-      return vim.api.nvim_buf_get_name(0) ~= initial_path
-    end))
+    local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
+    local result = client:request_sync('textDocument/definition', params, 30000)
+    assert.message('go-to-definition request failed').is_truthy(result and result.result)
+    local locations = vim.islist(result.result) and result.result or { result.result }
+    assert.message('no definition locations returned').is_truthy(#locations > 0)
+    local uri = locations[1].uri or locations[1].targetUri
+    local bufnr = vim.fn.bufadd(vim.uri_to_fname(uri))
+    vim.bo[bufnr].buflisted = true
+    vim.api.nvim_win_set_buf(0, bufnr)
+
+    assert
+      .message('definition did not jump to a different file')
+      .is_truthy(vim.api.nvim_buf_get_name(0) ~= initial_path)
 
     helpers.wait_for_filetype()
     assert.are.equal('lean', vim.bo.filetype)

@@ -15,6 +15,7 @@
 ---@field inlay_hint? lean.inlay_hint.Config inlay hint configuration
 ---@field lsp? table language server configuration
 ---@field progress_bars? table progress bar configuration
+---@field signs? lean.diagnostic.SignsConfig diagnostic sign column configuration
 ---@field stderr? table stderr window configuration
 ---
 ---Developer options.
@@ -52,6 +53,20 @@
 ---@class lean.infoview.MergedConfig: lean.infoview.Config
 ---@field view_options InfoviewViewOptions
 ---@field severity_markers table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
+
+---Configuration for diagnostic signs in the sign column.
+---
+---When enabled, lean.nvim disables `vim.diagnostic`'s built-in sign
+---rendering for the leanls LSP namespace (via
+---`vim.diagnostic.config({ signs = false }, ns)`) and renders its own signs
+---instead. Single-line diagnostics show the standard severity sign (E/W/I/H).
+---Multi-line diagnostics whose `fullRange` extends past the clipped `range`
+---show `┌│└` guide characters instead, making their full extent visible.
+---
+---If this interferes with another plugin's diagnostic sign handling, it can
+---be disabled, which restores `vim.diagnostic`'s default sign behavior.
+---@class lean.diagnostic.SignsConfig
+---@field enabled? boolean whether to render our own diagnostic signs (default true)
 
 ---Lean uses inlay hints to surface things like auto-implicits of a function.
 ---
@@ -121,6 +136,9 @@ local DEFAULTS = {
 
   ---@type lean.inlay_hint.Config
   inlay_hint = { enabled = true },
+
+  ---@type lean.diagnostic.SignsConfig
+  signs = { enabled = true },
 }
 
 ---Load our merged configuration merging user configuration with any defaults.

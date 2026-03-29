@@ -5,7 +5,7 @@
 ---@brief ]]
 
 local Buffer = require 'std.nvim.buffer'
-local a = require 'plenary.async'
+local async = require 'std.async'
 
 local Element = require('lean.tui').Element
 local components = require 'lean.infoview.components'
@@ -51,10 +51,10 @@ end
 function commands.show_goal(use_widgets)
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
 
-  a.void(function()
+  async.run(function()
     local goal, err = components.goal_at(params, rpc.open(params), use_widgets)
     show_popup_or_error(goal, err)
-  end)()
+  end)
 end
 
 ---Show the term goal for the current cursor position in a popup.
@@ -62,10 +62,10 @@ end
 function commands.show_term_goal(use_widgets)
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
 
-  a.void(function()
+  async.run(function()
     local goal, err = components.term_goal_at(params, rpc.open(params), use_widgets)
     show_popup_or_error(goal, err)
-  end)()
+  end)
 end
 
 ---Show diagnostics for the current cursor position in a popup.
@@ -73,7 +73,7 @@ end
 function commands.show_line_diagnostics(use_widgets)
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
 
-  a.void(function()
+  async.run(function()
     local diagnostics, err
     if progress.at(params) == progress.Kind.processing then
       err = 'Processing...'
@@ -81,7 +81,7 @@ function commands.show_line_diagnostics(use_widgets)
       diagnostics, err = components.diagnostics_at(params, nil, use_widgets)
     end
     show_popup_or_error(diagnostics, err)
-  end)()
+  end)
 end
 
 return commands

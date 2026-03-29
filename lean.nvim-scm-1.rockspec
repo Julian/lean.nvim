@@ -12,9 +12,7 @@ description = {
   license = 'MIT',
 }
 
-dependencies = {
-  'plenary.nvim',
-}
+dependencies = {}
 
 source = {
   url = 'https://github.com/Julian/lean.nvim',
