@@ -34,7 +34,6 @@ end
 ---@param bufnr? integer defaults to current buffer
 ---@return table[]
 function helpers.get_diagnostic_signs(bufnr)
-  local diagnostic = require 'lean.diagnostic'
   return vim.api.nvim_buf_get_extmarks(bufnr or 0, diagnostic.signs_ns, 0, -1, { details = true })
 end
 
@@ -42,7 +41,6 @@ end
 ---@param line integer
 ---@return string?
 function helpers.sign_text_at(line)
-  local diagnostic = require 'lean.diagnostic'
   local marks = vim.api.nvim_buf_get_extmarks(
     0,
     diagnostic.signs_ns,
