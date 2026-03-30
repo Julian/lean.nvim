@@ -23,7 +23,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
         nvim-version:
-          - "0.11.5" # MIN_SUPPORTED_NVIM
+          - v0.11.5 # MIN_SUPPORTED_NVIM
           - stable
           - nightly
 
