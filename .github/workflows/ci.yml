@@ -31,7 +31,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Neovim
-        uses: rhysd/action-setup-vim@19e3dd31a84dbc2c5445d65e9b363f616cab96c1
+        uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7
         with:
           neovim: true
           version: ${{ matrix.nvim-version }}
