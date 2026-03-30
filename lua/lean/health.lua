@@ -6,11 +6,11 @@
 
 local check_output = require('std.subprocess').check_output
 
-local MIN_SUPPORTED_NVIM = '0.11.5'
+local MIN_SUPPORTED_NVIM = require('lean').MIN_SUPPORTED_NVIM
 
 local function neovim_is_new_enough()
   local version = vim.version()
-  if vim.version.lt(vim.version(), MIN_SUPPORTED_NVIM) then
+  if vim.version.lt(version, MIN_SUPPORTED_NVIM) then
     local message = 'Neovim is too old. %s is the earliest supported version.'
     vim.health.error(message:format(MIN_SUPPORTED_NVIM))
   else

@@ -13,7 +13,22 @@
 
 local check_output = require('std.subprocess').check_output
 
+--- The minimum Neovim version supported by lean.nvim.
+local MIN_SUPPORTED_NVIM = '0.11.5'
+
+local nvim_version = vim.version()
+if vim.version.lt(nvim_version, MIN_SUPPORTED_NVIM) then
+  vim.notify(
+    ('lean.nvim requires Neovim %s or later (you have %s).'):format(
+      MIN_SUPPORTED_NVIM,
+      nvim_version
+    ),
+    vim.log.levels.WARN
+  )
+end
+
 local lean = {
+  MIN_SUPPORTED_NVIM = MIN_SUPPORTED_NVIM,
   mappings = {
     {
       '<LocalLeader>i',
@@ -92,6 +107,7 @@ local lean = {
 ---@param opts lean.Config Configuration options
 function lean.setup(opts)
   opts = opts or {}
+
   if vim.g.lean_config then
     opts = vim.tbl_deep_extend('force', vim.g.lean_config, opts)
   end

@@ -452,4 +452,16 @@ diagnostic.clear_signs({buffer})                        *diagnostic.clear_signs*
         {buffer}  (Buffer)
 
 
+                                                    *diagnostic.lsp_diagnostics*
+diagnostic.lsp_diagnostics({opts?}, {bufnr?})
+    Fetch the diagnostics for all Lean LSP clients from the current buffer.
+
+    Parameters: ~
+        {opts?}   (table)
+        {bufnr?}  (number)  buffer handle or 0 for current, defaults to current
+
+    Returns: ~
+        (vim.Diagnostic[])  the relevant Lean diagnostics
+
+
 vim:tw=78:ts=8:noet:ft=help:norl:

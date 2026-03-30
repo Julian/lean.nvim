@@ -1,5 +1,5 @@
 local helpers = require 'spec.helpers'
-local lean_lsp_diagnostics = require('lean._util').lean_lsp_diagnostics
+local lean_lsp_diagnostics = require('lean.diagnostic').lsp_diagnostics
 
 require('lean').setup {}
 

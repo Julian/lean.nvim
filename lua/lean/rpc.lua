@@ -156,7 +156,7 @@ function Session:release_now(refs)
     sessionId = self.session_id,
     refs = self.to_release,
   }
-  local succeeded = pcall(self.client.notify, '$/lean/rpc/release', params)
+  local succeeded = pcall(self.client.notify, self.client, '$/lean/rpc/release', params)
   if not succeeded then
     log:warning {
       message = 'unable to release RPC session, which leaks a bit of memory',

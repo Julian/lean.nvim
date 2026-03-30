@@ -60,7 +60,9 @@ end
 -- Let's just be sure they don't stick around by force stopping.
 vim.api.nvim_create_autocmd('VimLeavePre', {
   callback = function()
-    vim.lsp.stop_client(vim.lsp.get_clients(), true)
+    for _, client in ipairs(vim.lsp.get_clients()) do
+      client:stop(true)
+    end
   end,
 })
 

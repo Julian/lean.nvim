@@ -8,7 +8,20 @@
 local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
 local async = require 'std.async'
-local text_document_position_to_string = require('std.lsp').text_document_position_to_string
+---Convert a buffer position to a human-readable (1, 1)-indexed string.
+---Takes the workspace into account in order to return a relative path.
+---@param buffer Buffer
+---@param pos {integer, integer} 0-indexed { row, col } byte position
+---@return string
+local function position_to_string(buffer, pos)
+  local workspace = vim.lsp.buf.list_workspace_folders()[1] or vim.uv.cwd()
+  local filename = vim.uri_to_fname(buffer:uri())
+  return ('%s at %d:%d'):format(
+    vim.fs.relpath(workspace, filename) or filename,
+    pos[1] + 1,
+    pos[2] + 1
+  )
+end
 
 local Element = require('lean.tui').Element
 local Locations = require 'lean.infoview.locations'
@@ -17,7 +30,6 @@ local interactive_goal = require 'lean.widget.interactive_goal'
 local log = require 'lean.log'
 local progress = require 'lean.progress'
 local rpc = require 'lean.rpc'
-local util = require 'lean._util'
 
 local infoview = {
   -- mapping from infoview IDs to infoviews
@@ -81,7 +93,6 @@ local FOCUS_AUGROUP = vim.api.nvim_create_augroup('LeanInfoviewFocus', {})
 ---@field private __extmark_virt_text table
 ---@field private __tick integer
 ---@field private __info Info
----@field private __ui_position_params UIParams
 ---@field private __use_widgets boolean
 local Pin = { __extmark_ns = vim.api.nvim_create_namespace 'lean.pins' }
 Pin.__index = Pin
@@ -493,13 +504,14 @@ function Infoview:__update()
     return
   end
   info:update_last_window()
-  info:move_pin(util.make_position_params())
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  info:move_pin(Buffer:current(), { cursor[1] - 1, cursor[2] })
 end
 
 ---Directly mark that the infoview has died. What a shame.
 function Infoview:died()
   self.info.pin.__data_element = components.LSP_HAS_DIED
-  local params = self.info.pin.__ui_position_params
+  local params = self.info.pin.__position_params
   progress.proc_infos[params.textDocument.uri] = {
     {
       kind = progress.Kind.fatal_error,
@@ -713,7 +725,7 @@ function Info:new(opts)
 end
 
 function Info:add_pin()
-  local new_params = vim.deepcopy(self.pin.__ui_position_params)
+  local buffer, pos = self.pin:__extmark_pos()
   table.insert(self.pins, self.pin)
   self:__maybe_show_pin_extmark(self.pin.id)
   self.pin = Pin:new {
@@ -722,12 +734,15 @@ function Info:add_pin()
     use_widgets = options.use_widgets,
     parent = self,
   }
-  self.pin:move(new_params)
+  if buffer then
+    self.pin:move(buffer, pos)
+  end
   self:render()
 end
 
----@param params UIParams
-function Info:__set_diff_pin(params)
+---@param buffer Buffer
+---@param pos {integer, integer} 0-indexed { row, col } byte position
+function Info:__set_diff_pin(buffer, pos)
   if not self.__diff_pin then
     self.__diff_pin = Pin:new {
       id = 'diff',
@@ -739,7 +754,7 @@ function Info:__set_diff_pin(params)
     self.__diff_pin:__show_extmark(nil, 'leanDiffPinned')
   end
 
-  self.__diff_pin:move(params)
+  self.__diff_pin:move(buffer, pos)
 
   self:render()
 end
@@ -794,7 +809,7 @@ function Info:render()
     message = 'rendering infoview info',
     infoview_id = self.__infoview.window and self.__infoview.window.id or nil,
   }
-  local function click_header(params)
+  local function click_header(buffer, pos)
     return function()
       local start_window = Window:current()
       self:jump_to_last_window()
@@ -803,9 +818,8 @@ function Info:render()
         return
       end
 
-      local buffer = Buffer:from_uri(params.textDocument.uri)
       buffer:make_current()
-      Window:current():set_cursor { params.position.line + 1, params.position.character }
+      Window:current():set_cursor { pos[1] + 1, pos[2] }
     end
   end
 
@@ -828,28 +842,29 @@ function Info:render()
   self.__infoview:__refresh_diff()
 end
 
----Update the diff pin to use the current pin's positon params if they are valid,
----and the provided params if they are not.
----@param params? UIParams
-function Info:__update_auto_diff_pin(params)
-  if
-    self.pin.__ui_position_params and util.position_params_valid(self.pin.__ui_position_params)
-  then
+---Update the diff pin to use the current pin's position if it has one,
+---and the provided position if it does not.
+---@param buffer? Buffer
+---@param pos? {integer, integer}
+function Info:__update_auto_diff_pin(buffer, pos)
+  local prev_buffer, prev_pos = self.pin:__extmark_pos()
+  if prev_buffer then
     -- update diff pin to previous position
-    self:__set_diff_pin(self.pin.__ui_position_params)
-  elseif params then
-    -- if previous position invalid, use current position
-    self:__set_diff_pin(params)
+    self:__set_diff_pin(prev_buffer, prev_pos)
+  elseif buffer then
+    -- if no previous position, use current position
+    self:__set_diff_pin(buffer, pos)
   end
 end
 
 ---Move the current pin to the specified location.
----@param params UIParams
-function Info:move_pin(params)
+---@param buffer Buffer
+---@param pos {integer, integer} 0-indexed { row, col } byte position
+function Info:move_pin(buffer, pos)
   if self.__auto_diff_pin then
-    self:__update_auto_diff_pin(params)
+    self:__update_auto_diff_pin(buffer, pos)
   end
-  self.pin:move(params)
+  self.pin:move(buffer, pos)
 end
 
 ---Toggle auto diff pin mode.
@@ -916,14 +931,14 @@ end
 
 ---Render a pin with an extra header indicating its location.
 ---
----@param click_header fun(params:UIParams):fun():nil
+---@param click_header fun(buffer: Buffer, pos: {integer, integer}):fun():nil
 function Pin:render_with_header(click_header)
-  local params = self.__ui_position_params
+  local buffer, pos = self:__extmark_pos()
   local header_element = Element:new {
     name = 'pin-header',
-    text = ('-- %s\n'):format(text_document_position_to_string(params)),
+    text = ('-- %s\n'):format(position_to_string(buffer, pos)),
     highlightable = true,
-    events = { click = click_header(params) },
+    events = { click = click_header(buffer, pos) },
   }
   return Element:new { children = { header_element, self.__element } }
 end
@@ -936,17 +951,14 @@ function Pin:__teardown()
 end
 
 ---Update pin extmark based on position, used when resetting pin position.
----@param params UIParams
-function Pin:__update_extmark(params)
-  if not params then
-    return
-  end
-  local buffer = Buffer:from_uri(params.textDocument.uri)
+---@param buffer Buffer
+---@param pos {integer, integer} 0-indexed { row, col } byte position
+function Pin:__update_extmark(buffer, pos)
   if not buffer:is_loaded() then
     return
   end
 
-  self:__update_extmark_style(buffer, params.position.line, params.position.character)
+  self:__update_extmark_style(buffer, pos[1], pos[2])
 
   self:update_position()
 end
@@ -1029,10 +1041,25 @@ function Pin:update_position()
   local uri = buffer:uri()
   ---@type lsp.TextDocumentPositionParams
   self.__position_params = { textDocument = { uri = uri }, position = new_pos }
-  self.__ui_position_params = {
-    textDocument = { uri = uri },
-    position = { line = extmark_pos[1], character = extmark_pos[2] },
-  }
+end
+
+---Return the current pin position read directly from the extmark.
+---Returns nil if the pin has no extmark or the buffer is unloaded.
+---@return Buffer? buffer
+---@return {integer, integer}? pos 0-indexed { row, col } byte position
+function Pin:__extmark_pos()
+  if not self.__extmark then
+    return
+  end
+  local buffer = self.__extmark_buffer
+  if not buffer:is_loaded() then
+    return
+  end
+  local pos = buffer:extmark(self.__extmark_ns, self.__extmark, {})
+  if vim.tbl_isempty(pos) then
+    return
+  end
+  return buffer, pos
 end
 
 function Pin:__show_extmark(name, hlgroup)
@@ -1074,9 +1101,10 @@ function Pin:toggle_pause()
   end
 end
 
----@param params UIParams
-function Pin:move(params)
-  self:__update_extmark(params)
+---@param buffer Buffer
+---@param pos {integer, integer} 0-indexed { row, col } byte position
+function Pin:move(buffer, pos)
+  self:__update_extmark(buffer, pos)
   self:update()
 end
 
@@ -1413,7 +1441,8 @@ function infoview.set_diff_pin()
   end
   local current_infoview = infoview.open()
   current_infoview.info:update_last_window()
-  current_infoview.info:__set_diff_pin(util.make_position_params())
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  current_infoview.info:__set_diff_pin(Buffer:current(), { cursor[1] - 1, cursor[2] })
 end
 
 ---Clear any pins in the current infoview.

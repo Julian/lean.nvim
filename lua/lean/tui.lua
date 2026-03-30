@@ -131,12 +131,7 @@ end
 ---@return Element?
 function Element:concat(elements, sep, opts)
   if #elements == 0 then
-    -- sigh, polyfill nonsense
-    if vim.version.lt(vim.version(), { 0, 11, 0 }) then
-      vim.validate { opts = { opts, 'nil' } }
-    else
-      vim.validate('opts', opts, 'nil')
-    end
+    vim.validate('opts', opts, 'nil')
     return
   elseif #elements == 1 then
     return opts
@@ -661,7 +656,7 @@ function BufRenderer:render()
   for _, hl in ipairs(self.element:_get_highlights()) do
     local start_pos = raw_pos_to_pos(hl.start, lines)
     local end_pos = raw_pos_to_pos(hl['end'], lines)
-    vim.highlight.range(self.buffer.bufnr, self.__tui_ns, hl.hlgroup, start_pos, end_pos)
+    vim.hl.range(self.buffer.bufnr, self.__tui_ns, hl.hlgroup, start_pos, end_pos)
   end
 
   if self.path then
@@ -838,7 +833,7 @@ function BufRenderer:hover(force_update_highlight)
     self.buffer:clear_namespace(self.__hl_ns)
     local hlgroup = 'widgetElementHighlight'
     if self.hover_range then
-      vim.highlight.range(self.buffer.bufnr, self.__hl_ns, hlgroup, self.hover_range[1], self.hover_range[2])
+      vim.hl.range(self.buffer.bufnr, self.__hl_ns, hlgroup, self.hover_range[1], self.hover_range[2])
     end
   end
 end

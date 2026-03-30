@@ -4,11 +4,11 @@ local Window = require 'std.nvim.window'
 local assert = require 'luassert'
 local text = require 'std.text'
 
+local diagnostic = require 'lean.diagnostic'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 local lsp = require 'lean.lsp'
 local progress = require 'lean.progress'
-local util = require 'lean._util'
 
 local helpers = {}
 
@@ -34,7 +34,6 @@ end
 ---@param bufnr? integer defaults to current buffer
 ---@return table[]
 function helpers.get_diagnostic_signs(bufnr)
-  local diagnostic = require 'lean.diagnostic'
   return vim.api.nvim_buf_get_extmarks(bufnr or 0, diagnostic.signs_ns, 0, -1, { details = true })
 end
 
@@ -42,7 +41,6 @@ end
 ---@param line integer
 ---@return string?
 function helpers.sign_text_at(line)
-  local diagnostic = require 'lean.diagnostic'
   local marks = vim.api.nvim_buf_get_extmarks(
     0,
     diagnostic.signs_ns,
@@ -246,7 +244,7 @@ function helpers.wait_for_line_diagnostics()
     if progress.at(params) == progress.Kind.processing then
       return false
     end
-    local diagnostics = util.lean_lsp_diagnostics { lnum = params.position.line }
+    local diagnostics = diagnostic.lsp_diagnostics { lnum = params.position.line }
     return #diagnostics > 0
   end)
   assert.message('Waited for line diagnostics but none came.').True(succeeded)
