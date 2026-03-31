@@ -987,9 +987,9 @@ function Pin:__update_extmark_style(buffer, line, col)
     if col < #buf_line then
       -- vim.str_utfindex rounds up to the next UTF16 index if in the middle of a UTF8 sequence;
       -- so convert next byte to UTF16 and back to get UTF8 index of next codepoint
-      local succeeded, _, next_utf16 = pcall(vim.str_utfindex, buf_line, col + 1)
+      local succeeded, next_utf16 = pcall(vim.str_utfindex, buf_line, 'utf-16', col + 1)
       if succeeded then
-        end_col = vim.str_byteindex(buf_line, next_utf16, true)
+        end_col = vim.str_byteindex(buf_line, 'utf-16', next_utf16)
       else
         log:debug { message = 'str_utfindex failed', buf_line = buf_line, col = col }
         end_col = col
@@ -1027,7 +1027,7 @@ function Pin:update_position()
 
   local buf_line = buffer:line(new_pos.line, false)
   if buf_line then
-    local succeeded, _, utf16 = pcall(vim.str_utfindex, buf_line, extmark_pos[2])
+    local succeeded, utf16 = pcall(vim.str_utfindex, buf_line, 'utf-16', extmark_pos[2])
     if succeeded then
       new_pos.character = utf16
     else
