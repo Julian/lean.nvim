@@ -285,7 +285,6 @@ end
 ---@return any result
 ---@return LspError error
 function Subsession:call(method, params)
-  log:trace { message = method, params = params }
   return self.sess:call(self.pos, method, params)
 end
 
