@@ -1,5 +1,5 @@
-local lean = require 'lean'
 local infoview = require 'lean.infoview'
+local lean = require 'lean'
 local clean_buffer = require('spec.helpers').clean_buffer
 
 vim.g.lean_config = { mappings = true }
@@ -7,9 +7,9 @@ vim.g.lean_config = { mappings = true }
 describe('mappings', function()
   describe('for lean buffers', function()
     local any_lean_lhs = '<LocalLeader>i'
-    local its_plug = ('<Plug>(%s)'):format(
-      vim.iter(lean.mappings):find(function(e) return e[1] == any_lean_lhs end)[2]
-    )
+    local its_plug = ('<Plug>(%s)'):format(vim.iter(lean.mappings):find(function(e)
+      return e[1] == any_lean_lhs
+    end)[2])
 
     it(
       'are bound in lean buffers',
@@ -51,9 +51,9 @@ describe('mappings', function()
       clean_buffer(function()
         for _, each in ipairs(lean.mappings) do
           local plug = ('<Plug>(%s)'):format(each[2])
-          assert.message(('buffer-local <Plug> missing in lean buffer: %s'):format(plug)).is_not.empty(
-            vim.fn.maparg(plug, 'n')
-          )
+          assert
+            .message(('buffer-local <Plug> missing in lean buffer: %s'):format(plug)).is_not
+            .empty(vim.fn.maparg(plug, 'n'))
         end
       end)
     )
@@ -66,11 +66,11 @@ describe('mappings', function()
           local plug = ('<Plug>(%s)'):format(cmd)
           local mapping = vim.fn.maparg(plug, 'n', false, true)
           assert
-            .message(('buffer-local <Plug> for %s has no callback'):format(plug))
-            .is.same('function', type(mapping.callback))
+            .message(('buffer-local <Plug> for %s has no callback'):format(plug)).is
+            .same('function', type(mapping.callback))
           assert
-            .message(('buffer-local <Plug> desc for %s does not match mapping desc'):format(plug))
-            .is.same(opts.desc, mapping.desc)
+            .message(('buffer-local <Plug> desc for %s does not match mapping desc'):format(plug)).is
+            .same(opts.desc, mapping.desc)
         end
       end)
     )
@@ -80,8 +80,8 @@ describe('mappings', function()
       for _, each in ipairs(lean.mappings) do
         local plug = ('<Plug>(%s)'):format(each[2])
         assert
-          .message(('lean buffer <Plug> should not be in other buffers: %s'):format(plug))
-          .is.empty(vim.fn.maparg(plug, 'n'))
+          .message(('lean buffer <Plug> should not be in other buffers: %s'):format(plug)).is
+          .empty(vim.fn.maparg(plug, 'n'))
       end
       vim.cmd.bwipeout()
     end)
@@ -128,15 +128,14 @@ describe('mappings', function()
       'are registered as buffer-local maps in infoviews',
       clean_buffer(function()
         infoview.go_to()
-        local plug_maps = vim.tbl_filter(
-          function(m) return m.lhs:match('^<Plug>') end,
-          vim.api.nvim_buf_get_keymap(0, 'n')
-        )
+        local plug_maps = vim.tbl_filter(function(m)
+          return m.lhs:match '^<Plug>'
+        end, vim.api.nvim_buf_get_keymap(0, 'n'))
         assert.message('no <Plug> mappings found in infoview').is_not_empty(plug_maps)
         for _, m in ipairs(plug_maps) do
           assert
-            .message(('buffer-local <Plug> has no desc in infoview: %s'):format(m.lhs))
-            .is_not.empty(m.desc)
+            .message(('buffer-local <Plug> has no desc in infoview: %s'):format(m.lhs)).is_not
+            .empty(m.desc)
         end
       end)
     )
@@ -145,15 +144,14 @@ describe('mappings', function()
       'are not bound in unrelated buffers',
       clean_buffer(function()
         infoview.go_to()
-        local plug_maps = vim.tbl_filter(
-          function(m) return m.lhs:match('^<Plug>') end,
-          vim.api.nvim_buf_get_keymap(0, 'n')
-        )
+        local plug_maps = vim.tbl_filter(function(m)
+          return m.lhs:match '^<Plug>'
+        end, vim.api.nvim_buf_get_keymap(0, 'n'))
         vim.cmd.new()
         for _, m in ipairs(plug_maps) do
           assert
-            .message(('infoview <Plug> should not be global: %s'):format(m.lhs))
-            .is.empty(vim.fn.maparg(m.lhs, 'n'))
+            .message(('infoview <Plug> should not be global: %s'):format(m.lhs)).is
+            .empty(vim.fn.maparg(m.lhs, 'n'))
         end
         vim.cmd.bwipeout()
       end)
