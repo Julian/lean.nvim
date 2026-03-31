@@ -567,6 +567,18 @@ function Element:renderer(obj)
   return BufRenderer:new(vim.tbl_extend('error', obj, { element = self }))
 end
 
+---Convert an ElementEvent name to its `<Plug>` name.
+---
+---E.g. `'go_to_def'` → `'<Plug>(LeanInfoviewGoToDef)'`.
+---@param event ElementEvent
+---@return string
+local function event_plug_name(event)
+  local pascal = event
+    :gsub('(%a)([^_]*)', function(a, b) return a:upper() .. b end)
+    :gsub('_', '')
+  return ('<Plug>(LeanInfoview%s)'):format(pascal)
+end
+
 ---Create a new BufRenderer.
 function BufRenderer:new(obj)
   obj = obj or {}
@@ -581,30 +593,55 @@ function BufRenderer:new(obj)
     end,
   })
 
+  local bufnr = obj.buffer.bufnr
+
   -- Note that only closures work here, we can't go storing this on vim.b due
   -- to neovim/neovim#12544 wherein the metatable would be lost on retrieval.
   -- In other words, if we do vim.b[..].foo = new_renderer, when we come back
   -- to look at it, it's not a BufRenderer anymore. Surprise!
-  vim.keymap.set('n', '<Tab>', function()
+  --
+  -- We define buffer-local <Plug> mappings alongside the default keys so that
+  -- any of them can be used as a remapping destination.
+  vim.keymap.set('n', '<Plug>(LeanInfoviewEnterTooltip)', function()
     new_renderer:enter_tooltip()
-  end, { buffer = obj.buffer.bufnr, desc = 'Enter a tooltip.' })
-  vim.keymap.set('n', 'J', function()
-    new_renderer:enter_tooltip()
-  end, { buffer = obj.buffer.bufnr, desc = 'Enter a tooltip.' })
-  vim.keymap.set('n', '<S-Tab>', function()
+  end, { buffer = bufnr, desc = 'Enter a tooltip.' })
+  vim.keymap.set('n', '<Plug>(LeanInfoviewParentTooltip)', function()
     new_renderer:goto_parent_tooltip()
-  end, { buffer = obj.buffer.bufnr, desc = 'Go to the "parent" tooltip.' })
+  end, { buffer = bufnr, desc = 'Go to the "parent" tooltip.' })
   vim.keymap.set(
     'n',
-    '<LocalLeader>\\',
+    '<Plug>(LeanAbbreviationsReverseLookup)',
     require'lean.abbreviations'.show_reverse_lookup,
-    { buffer = obj.buffer.bufnr, desc = 'Show how to type the unicode character under the cursor.' }
+    { buffer = bufnr, desc = 'Show how to type the unicode character under the cursor.' }
   )
 
-  for key, event in pairs(obj.keymaps or {}) do
-    vim.keymap.set('n', key, function()
+  -- Register a <Plug> for every public ElementEvent so any of them can be
+  -- rebound to a different key.
+  local element_events = {
+    'click', 'select', 'clear', 'clear_all',
+    'goto_last_window', 'go_to_def', 'go_to_decl', 'go_to_type',
+  }
+  local element_event_set = {}
+  for _, event in ipairs(element_events) do
+    vim.keymap.set('n', event_plug_name(event), function()
       new_renderer:event(event)
-    end, { buffer = obj.buffer.bufnr, desc = ('Fire a %s event.'):format(event) })
+    end, { buffer = bufnr, desc = ('Fire a %s event.'):format(event) })
+    element_event_set[event] = true
+  end
+
+  -- Default key bindings point at <Plug> names so they can be remapped freely.
+  vim.keymap.set('n', '<Tab>',   '<Plug>(LeanInfoviewEnterTooltip)',  { buffer = bufnr, remap = true, desc = 'Enter a tooltip.' })
+  vim.keymap.set('n', 'J',       '<Plug>(LeanInfoviewEnterTooltip)',  { buffer = bufnr, remap = true, desc = 'Enter a tooltip.' })
+  vim.keymap.set('n', '<S-Tab>', '<Plug>(LeanInfoviewParentTooltip)', { buffer = bufnr, remap = true, desc = 'Go to the "parent" tooltip.' })
+  vim.keymap.set('n', '<LocalLeader>\\', '<Plug>(LeanAbbreviationsReverseLookup)',
+    { buffer = bufnr, remap = true, desc = 'Show how to type the unicode character under the cursor.' })
+
+  for key, event in pairs(obj.keymaps or {}) do
+    local rhs = element_event_set[event] and event_plug_name(event) or function()
+      new_renderer:event(event)
+    end
+    vim.keymap.set('n', key, rhs,
+      { buffer = bufnr, remap = element_event_set[event], desc = ('Fire a %s event.'):format(event) })
   end
 
   return new_renderer

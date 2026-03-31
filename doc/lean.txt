@@ -35,7 +35,10 @@ lean.plugin_version()                                      *lean.plugin_version*
 
 
 lean.use_suggested_mappings({bufnr?})              *lean.use_suggested_mappings*
-    Enable mappings for a given buffer
+    Enable mappings for a given buffer.
+
+    Each suggested mapping's RHS is a `<Plug>` name (e.g. `<Plug>(LeanInfoviewToggle)`).
+    To prefer different keys, map your own LHS to the same `<Plug>` name.
 
     Parameters: ~
         {bufnr?}  (number)  the bufnr to enable mappings in, defaulting to 0
