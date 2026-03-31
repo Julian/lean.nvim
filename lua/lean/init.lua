@@ -203,7 +203,12 @@ function lean.use_suggested_mappings(bufnr)
     local lhs, cmd, more_opts = unpack(each)
     local mode = each.mode or 'n'
     local plug = ('<Plug>(%s)'):format(cmd)
-    vim.keymap.set(mode, plug, vim.cmd[cmd], vim.tbl_extend('error', buf, { desc = more_opts.desc }))
+    vim.keymap.set(
+      mode,
+      plug,
+      vim.cmd[cmd],
+      vim.tbl_extend('error', buf, { desc = more_opts.desc })
+    )
     vim.keymap.set(mode, lhs, plug, vim.tbl_extend('error', buf, more_opts, { remap = true }))
   end
 end

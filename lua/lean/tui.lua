@@ -618,8 +618,14 @@ function BufRenderer:new(obj)
   -- Register a <Plug> for every public ElementEvent so any of them can be
   -- rebound to a different key.
   local element_events = {
-    'click', 'select', 'clear', 'clear_all',
-    'goto_last_window', 'go_to_def', 'go_to_decl', 'go_to_type',
+    'click',
+    'select',
+    'clear',
+    'clear_all',
+    'goto_last_window',
+    'go_to_def',
+    'go_to_decl',
+    'go_to_type',
   }
   local element_event_set = {}
   for _, event in ipairs(element_events) do
@@ -629,12 +635,30 @@ function BufRenderer:new(obj)
     element_event_set[event] = true
   end
 
-  -- Default key bindings point at <Plug> names so they can be remapped freely.
-  vim.keymap.set('n', '<Tab>',   '<Plug>(LeanInfoviewEnterTooltip)',  { buffer = bufnr, remap = true, desc = 'Enter a tooltip.' })
-  vim.keymap.set('n', 'J',       '<Plug>(LeanInfoviewEnterTooltip)',  { buffer = bufnr, remap = true, desc = 'Enter a tooltip.' })
-  vim.keymap.set('n', '<S-Tab>', '<Plug>(LeanInfoviewParentTooltip)', { buffer = bufnr, remap = true, desc = 'Go to the "parent" tooltip.' })
-  vim.keymap.set('n', '<LocalLeader>\\', '<Plug>(LeanAbbreviationsReverseLookup)',
-    { buffer = bufnr, remap = true, desc = 'Show how to type the unicode character under the cursor.' })
+  vim.keymap.set(
+    'n',
+    '<Tab>',
+    '<Plug>(LeanInfoviewEnterTooltip)',
+    { buffer = bufnr, remap = true, desc = 'Enter a tooltip.' }
+  )
+  vim.keymap.set(
+    'n',
+    'J',
+    '<Plug>(LeanInfoviewEnterTooltip)',
+    { buffer = bufnr, remap = true, desc = 'Enter a tooltip.' }
+  )
+  vim.keymap.set(
+    'n',
+    '<S-Tab>',
+    '<Plug>(LeanInfoviewParentTooltip)',
+    { buffer = bufnr, remap = true, desc = 'Go to the "parent" tooltip.' }
+  )
+  vim.keymap.set(
+    'n',
+    '<LocalLeader>\\',
+    '<Plug>(LeanAbbreviationsReverseLookup)',
+    { buffer = bufnr, remap = true, desc = 'Show how to type the unicode character under the cursor.' }
+  )
 
   for key, event in pairs(obj.keymaps or {}) do
     local rhs = element_event_set[event] and event_plug_name(event) or function()
