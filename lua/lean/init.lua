@@ -11,6 +11,7 @@
 
 ---@tag lean.nvim
 
+local Buffer = require 'std.nvim.buffer'
 local check_output = require('std.subprocess').check_output
 
 --- The minimum Neovim version supported by lean.nvim.
@@ -198,18 +199,13 @@ end
 ---To prefer different keys, map your own LHS to the same `<Plug>` name.
 ---@param bufnr? number the bufnr to enable mappings in, defaulting to 0
 function lean.use_suggested_mappings(bufnr)
-  local buf = { buffer = bufnr or 0 }
+  local buf = Buffer:from_bufnr(bufnr or 0)
   for _, each in ipairs(lean.mappings) do
     local lhs, cmd, more_opts = unpack(each)
     local mode = each.mode or 'n'
     local plug = ('<Plug>(%s)'):format(cmd)
-    vim.keymap.set(
-      mode,
-      plug,
-      vim.cmd[cmd],
-      vim.tbl_extend('error', buf, { desc = more_opts.desc })
-    )
-    vim.keymap.set(mode, lhs, plug, vim.tbl_extend('error', buf, more_opts, { remap = true }))
+    buf.keymaps:set(mode, plug, vim.cmd[cmd], { desc = more_opts.desc })
+    buf.keymaps:set(mode, lhs, plug, vim.tbl_extend('error', more_opts, { remap = true }))
   end
 end
 

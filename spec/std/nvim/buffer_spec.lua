@@ -394,6 +394,120 @@ describe('Buffer', function()
     end)
   end)
 
+  describe('keymaps:get', function()
+    it('returns buffer-local keymaps for a mode', function()
+      local buffer = Buffer.create {}
+      buffer.keymaps:set('n', 'gz', '<cmd>echo 1<CR>')
+      buffer.keymaps:set('i', 'jk', '<Esc>')
+
+      local nmaps = buffer.keymaps:get('n')
+      assert.is_true(vim.iter(nmaps):any(function(m)
+        return m.lhs == 'gz'
+      end))
+      assert.is_false(vim.iter(nmaps):any(function(m)
+        return m.lhs == 'jk'
+      end))
+
+      buffer:force_delete()
+    end)
+
+    it('returns an empty table when there are no keymaps', function()
+      local buffer = Buffer.create {}
+      assert.are.same({}, buffer.keymaps:get('n'))
+      buffer:force_delete()
+    end)
+  end)
+
+  describe('keymaps:set', function()
+    it('sets a buffer-local keymap with a function rhs', function()
+      local buffer = Buffer.create {}
+      buffer.keymaps:set('n', 'gz', function() end)
+
+      local maps = buffer.keymaps:get('n')
+      local found = vim.iter(maps):any(function(m)
+        return m.lhs == 'gz'
+      end)
+      assert.is_true(found)
+      buffer:force_delete()
+    end)
+
+    it('sets a keymap with a string rhs', function()
+      local buffer = Buffer.create {}
+      buffer.keymaps:set('n', 'gx', '<cmd>echo 1<CR>')
+
+      local maps = buffer.keymaps:get('n')
+      local found = vim.iter(maps):any(function(m)
+        return m.lhs == 'gx'
+      end)
+      assert.is_true(found)
+      buffer:force_delete()
+    end)
+
+    it('passes additional options', function()
+      local buffer = Buffer.create {}
+      buffer.keymaps:set('n', 'gd', '<cmd>echo 1<CR>', { desc = 'test desc' })
+
+      local maps = buffer.keymaps:get('n')
+      local map = vim.iter(maps):find(function(m)
+        return m.lhs == 'gd'
+      end)
+      assert.is_not_nil(map)
+      assert.are.equal('test desc', map.desc)
+      buffer:force_delete()
+    end)
+
+    it('errors if buffer is provided in opts', function()
+      local buffer = Buffer.create {}
+      assert.has_error(function()
+        buffer.keymaps:set('n', 'gz', '<cmd>echo 1<CR>', { buffer = 0 })
+      end)
+      buffer:force_delete()
+    end)
+
+    it('does not affect other buffers', function()
+      local buffer = Buffer.create {}
+      local other = Buffer.create {}
+      buffer.keymaps:set('n', 'gz', '<cmd>echo 1<CR>')
+
+      local maps = other.keymaps:get('n')
+      local found = vim.iter(maps):any(function(m)
+        return m.lhs == 'gz'
+      end)
+      assert.is_false(found)
+      other:force_delete()
+      buffer:force_delete()
+    end)
+  end)
+
+  describe('keymaps:del', function()
+    it('errors if buffer is provided in opts', function()
+      local buffer = Buffer.create {}
+      buffer.keymaps:set('n', 'gz', '<cmd>echo 1<CR>')
+      assert.has_error(function()
+        buffer.keymaps:del('n', 'gz', { buffer = 0 })
+      end)
+      buffer:force_delete()
+    end)
+
+    it('deletes a buffer-local keymap', function()
+      local buffer = Buffer.create {}
+      buffer.keymaps:set('n', 'gz', '<cmd>echo 1<CR>')
+
+      local maps = buffer.keymaps:get('n')
+      assert.is_true(vim.iter(maps):any(function(m)
+        return m.lhs == 'gz'
+      end))
+
+      buffer.keymaps:del('n', 'gz')
+
+      maps = buffer.keymaps:get('n')
+      assert.is_false(vim.iter(maps):any(function(m)
+        return m.lhs == 'gz'
+      end))
+      buffer:force_delete()
+    end)
+  end)
+
   describe('call', function()
     it('calls a callback with the buffer as current buffer', function()
       local new = Buffer.create {}

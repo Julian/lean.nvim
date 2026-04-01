@@ -4,6 +4,8 @@
 --- Support for abbreviations (unicode character replacement).
 ---@brief ]]
 
+local Buffer = require 'std.nvim.buffer'
+
 local abbreviations = {}
 
 local _MEMOIZED = nil
@@ -146,19 +148,19 @@ local function insert_char_pre()
       ['<Tab>'] = [[<Cmd>lua require'lean.abbreviations'.convert()<CR>]],
     }
 
-    local opts = { buffer = 0 }
+    local buf = Buffer:current()
     local cleanups = vim.defaulttable(function(key)
       return function()
-        vim.keymap.del('i', key, opts)
+        buf.keymaps:del('i', key)
       end
     end)
 
-    for imap in vim.iter(vim.api.nvim_buf_get_keymap(0, 'i')) do
+    for imap in vim.iter(buf.keymaps:get('i')) do
       local lhs = imap.lhs
       local rhs = imap.rhs or ''
       if mappings[lhs] then
         cleanups[lhs] = function()
-          vim.api.nvim_buf_set_keymap(0, 'i', lhs, rhs, {
+          vim.api.nvim_buf_set_keymap(buf.bufnr, 'i', lhs, rhs, {
             nowait = imap.nowait,
             silent = imap.silent,
             script = imap.script,
@@ -172,7 +174,7 @@ local function insert_char_pre()
     end
 
     for key, to in vim.iter(mappings) do
-      vim.keymap.set('i', key, to, opts)
+      buf.keymaps:set('i', key, to)
     end
 
     vim.b.cleanup_imaps = function()
