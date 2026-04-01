@@ -269,35 +269,57 @@ local function connect(uri)
   end)
 end
 
----@class Subsession
+---An RPC session bound to a specific position within a document.
+---
+---If the underlying connection has died or failed to connect, each call
+---will automatically reconnect, retrying up to `max_attempts` times.
+---@class ReconnectingSubsession
 ---@field pos lsp.TextDocumentPositionParams
----@field sess Session
-local Subsession = {}
-Subsession.__index = Subsession
+---@field private sess Session
+---@field private max_attempts integer
+local ReconnectingSubsession = {}
+ReconnectingSubsession.__index = ReconnectingSubsession
 
 ---@param sess Session
 ---@param pos lsp.TextDocumentPositionParams
-function Subsession:new(sess, pos)
-  return setmetatable({ sess = sess, pos = pos }, self)
+---@param max_attempts? integer maximum reconnection attempts per call (default 3)
+function ReconnectingSubsession:new(sess, pos, max_attempts)
+  return setmetatable({ sess = sess, pos = pos, max_attempts = max_attempts or 3 }, self)
 end
 
 ---@param method string
 ---@param params any
 ---@return any result
 ---@return LspError error
-function Subsession:call(method, params)
-  return self.sess:call(self.pos, method, params)
+function ReconnectingSubsession:call(method, params)
+  local result, err
+  for _ = 1, self.max_attempts do
+    result, err = self.sess:call(self.pos, method, params)
+    if not err then
+      return result
+    end
+    -- Reconnect if the session is dead or failed to connect.
+    local uri = self.pos.textDocument.uri
+    if self.sess:is_closed() or self.sess.connect_err then
+      log:debug { message = 'reconnecting RPC session', uri = uri, method = method, error = err }
+      connect(uri)
+      self.sess = sessions[uri]
+    else
+      break
+    end
+  end
+  return result, err
 end
 
 ---Open an RPC session.
 ---@param params lsp.TextDocumentPositionParams
----@return Subsession
+---@return ReconnectingSubsession
 function rpc.open(params)
   local uri = params.textDocument.uri
   if sessions[uri] == nil or sessions[uri].connect_err or sessions[uri]:is_closed() then
     connect(uri)
   end
-  return Subsession:new(sessions[uri], params)
+  return ReconnectingSubsession:new(sessions[uri], params)
 end
 
 ---This type is for internal use in the infoview/LSP. It should not be used in user widgets.
@@ -355,13 +377,13 @@ end
 
 ---@return InteractiveGoals goals
 ---@return LspError error
-function Subsession:getInteractiveGoals()
+function ReconnectingSubsession:getInteractiveGoals()
   return self:call('Lean.Widget.getInteractiveGoals', self.pos)
 end
 
 ---@return InteractiveTermGoal
 ---@return LspError error
-function Subsession:getInteractiveTermGoal()
+function ReconnectingSubsession:getInteractiveTermGoal()
   return self:call('Lean.Widget.getInteractiveTermGoal', self.pos)
 end
 
@@ -395,7 +417,7 @@ end
 ---@param lineRange? LineRange
 ---@return InteractiveDiagnostic[]
 ---@return LspError error
-function Subsession:getInteractiveDiagnostics(lineRange)
+function ReconnectingSubsession:getInteractiveDiagnostics(lineRange)
   return self:call('Lean.Widget.getInteractiveDiagnostics', { lineRange = lineRange })
 end
 
@@ -403,7 +425,7 @@ end
 ---@param indent number
 ---@return TaggedText.MsgEmbed
 ---@return LspError error
-function Subsession:msgToInteractive(msg, indent)
+function ReconnectingSubsession:msgToInteractive(msg, indent)
   return self:call(
     'Lean.Widget.InteractiveDiagnostics.msgToInteractive',
     { msg = msg, indent = indent }
@@ -413,14 +435,14 @@ end
 ---@param children LazyTraceChildren
 ---@return TaggedText.MsgEmbed[]
 ---@return LspError error
-function Subsession:lazyTraceChildrenToInteractive(children)
+function ReconnectingSubsession:lazyTraceChildrenToInteractive(children)
   return self:call('Lean.Widget.lazyTraceChildrenToInteractive', children)
 end
 
 ---@param info InfoWithCtx
 ---@return InfoPopup
 ---@return LspError error
-function Subsession:infoToInteractive(info)
+function ReconnectingSubsession:infoToInteractive(info)
   return self:call('Lean.Widget.InteractiveDiagnostics.infoToInteractive', info)
 end
 
@@ -430,7 +452,7 @@ end
 ---@param info InfoWithCtx
 ---@return lsp.LocationLink[]
 ---@return LspError error
-function Subsession:getGoToLocation(kind, info)
+function ReconnectingSubsession:getGoToLocation(kind, info)
   return self:call('Lean.Widget.getGoToLocation', { kind = kind, info = info })
 end
 
@@ -447,7 +469,7 @@ end
 
 ---@return UserWidgets
 ---@return LspError error
-function Subsession:getWidgets()
+function ReconnectingSubsession:getWidgets()
   return self:call('Lean.Widget.getWidgets', self.pos.position)
 end
 
@@ -460,7 +482,7 @@ end
 ---@param hash string
 ---@return WidgetSource
 ---@return LspError error
-function Subsession:getWidgetSource(hash)
+function ReconnectingSubsession:getWidgetSource(hash)
   return self:call('Lean.Widget.getWidgetSource', { pos = self.pos.position, hash = hash })
 end
 

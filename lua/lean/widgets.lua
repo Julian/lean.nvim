@@ -88,7 +88,7 @@ end
 ---Open an RPC session for the current position.
 ---
 ---Prefer using a higher level API (or adding one) over calling this!
----@return Subsession
+---@return ReconnectingSubsession
 function RenderContext:subsession()
   return rpc.open(self.params)
 end
@@ -233,7 +233,7 @@ return {
 
   ---A version of widget rendering that constructs a one-time render context.
   ---@param widget UserWidgetInstance
-  ---@param sess Subsession
+  ---@param sess ReconnectingSubsession
   ---@return Element?
   render = function(widget, sess)
     -- This is used in one place at the minute (in the infoview) and it's not

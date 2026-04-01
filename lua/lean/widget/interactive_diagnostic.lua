@@ -47,7 +47,7 @@ interactive_diagnostic.MsgEmbed = inductive('MsgEmbed', {
   end,
 
   ---@param embed WidgetEmbed
-  ---@param sess Subsession
+  ---@param sess ReconnectingSubsession
   widget = function(_, embed, sess)
     local widget = widgets.render(embed.wi, sess)
     if widget then
@@ -62,7 +62,7 @@ interactive_diagnostic.MsgEmbed = inductive('MsgEmbed', {
   end,
 
   ---@param trace TraceEmbed
-  ---@param sess Subsession
+  ---@param sess ReconnectingSubsession
   trace = function(_, trace, sess, parent_cls)
     local element = Element:new {}
 

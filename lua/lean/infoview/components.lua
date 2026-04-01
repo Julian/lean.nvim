@@ -31,7 +31,7 @@ local components = {
 ---Diagnostic information for the current line from the Lean server.
 ---@param line number
 ---@param diags InteractiveDiagnostic[]
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@return Element[]
 function components.interactive_diagnostics(diags, line, sess)
   local markers = config().infoview.severity_markers
@@ -55,7 +55,7 @@ function components.interactive_diagnostics(diags, line, sess)
 end
 
 ---@param params lsp.TextDocumentPositionParams
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@param use_widgets? boolean
 ---@return Element[]? goal
 ---@return LspError? error
@@ -66,12 +66,7 @@ function components.goal_at(params, sess, use_widgets)
   else
     goal, err = goals.at(sess)
     if err then
-      goal, err = goals.at(rpc.open(params))
-      -- FIXME: This is again our need for general retrying and/or flakiness
-      --        which happens if we make RPC calls too quickly in our tests.
-      if err then
-        return nil, err
-      end
+      return nil, err
     end
     children = goal and interactive_goal.Goals(goal, sess, Locations.at(params))
   end
@@ -105,7 +100,7 @@ function components.goal_at(params, sess, use_widgets)
 end
 
 ---@param params lsp.TextDocumentPositionParams
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@param use_widgets? boolean
 ---@return Element[]?
 ---@return LspError?
@@ -124,7 +119,7 @@ end
 ---Retrieve the interactive diagnostics at the given line.
 ---
 ---Filters out silent diagnostics which we show elsewhere.
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@param line number
 ---@return DiagnosticWith<TaggedText.MsgEmbed>[]
 ---@return LspError
@@ -139,7 +134,7 @@ local function interactive_diagnostics_for(sess, line)
 end
 
 ---@param params lsp.TextDocumentPositionParams
----@param sess? Subsession
+---@param sess? ReconnectingSubsession
 ---@param use_widgets? boolean
 ---@return Element[]?
 ---@return LspError?
@@ -155,16 +150,7 @@ function components.diagnostics_at(params, sess, use_widgets)
   local line = params.position.line
   local diagnostics, err = interactive_diagnostics_for(sess, line)
   if err then
-    -- GENERALIZEME: This is the same kind of code as below for widgets, where
-    --               we seem to need some higher-level retry logic.
-    --               The difference here clearly is that we want to at some
-    --               point fallback to non-interactive diagnostics if we see
-    --               repeated failure I think, though maybe that should happen
-    --               at the caller.
-    diagnostics, err = interactive_diagnostics_for(rpc.open(params), line)
-    if err then
-      return interactive_goal.diagnostics(params), err
-    end
+    return interactive_goal.diagnostics(params), err
   end
 
   ---We filter goals accomplished diagnostics from showing in the infoview, as
@@ -177,7 +163,7 @@ function components.diagnostics_at(params, sess, use_widgets)
 end
 
 ---@param params lsp.TextDocumentPositionParams
----@param sess? Subsession
+---@param sess? ReconnectingSubsession
 ---@param use_widgets? boolean
 ---@return Element[]? widgets
 ---@return LspError? error
@@ -188,15 +174,6 @@ function components.user_widgets_at(params, sess, use_widgets)
     sess = rpc.open(params)
   end
   local response, err = sess:getWidgets()
-  -- luacheck: max_comment_line_length 200
-  -- GENERALIZEME: This retry logic helps us pass a test, but belongs higher up
-  --               in a way which parallels this VSCode retrying logic:
-  --               https://github.com/leanprover/vscode-lean4/blob/33e54067d5fefcdf7f28e4993324fd486a53421c/lean4-infoview/src/infoview/info.tsx#L465-L470
-  --               and/or generically retries RPC calls
-  if not response then
-    sess = rpc.open(params)
-    response, err = sess:getWidgets()
-  end
   return widgets.render_response(response, params), err
 end
 

@@ -26,7 +26,7 @@ local InteractiveCode
 
 ---@param subexpr_info SubexprInfo
 ---@param tag TaggedText.SubExprInfo
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@param locations? Locations
 local function render_subexpr_info(subexpr_info, tag, sess, locations)
   local element = Element:new { highlightable = true }

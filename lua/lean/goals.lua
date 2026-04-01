@@ -8,7 +8,7 @@ local goals = {}
 local cache = {}
 
 ---Return the interactive goals at the given position, caching them for access.
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@return InteractiveGoal[]? goals
 ---@return LspError? err
 function goals.at(sess)

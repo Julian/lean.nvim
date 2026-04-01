@@ -10,7 +10,7 @@ local async = require 'std.async'
 
 ---@generic T
 ---@generic S
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@param name string the method to call
 ---@param params T
 ---@param callback fun(result: S):nil
