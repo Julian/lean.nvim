@@ -217,6 +217,41 @@ function Element.kbd(key)
   return Element:new { text = key, hlgroups = { 'widgetKbd' } }
 end
 
+---@class ElementLinkArgs
+---@field action? fun(ctx: ElementEventContext):boolean? a single action, wired to click
+---@field events? EventCallbacks explicit event callbacks (mutually exclusive with action)
+---@field text? string the text to show when rendering this element
+---@field name? string a named handle for this element, used when path-searching
+---@field children? Element[] this element's children
+
+---Create an Element styled as an interactive link.
+---
+---Use for any element the user can activate (navigate, apply edits, open a
+---URL, etc.).  Styling is always enforced — callers specify content and
+---behavior, not appearance.
+---
+---Provide either `action` (wired to click) or `events` (explicit map), not both.
+---@param args ElementLinkArgs
+---@return Element
+function Element.link(args)
+  vim.validate('action', args.action, 'function', true)
+  vim.validate('events', args.events, 'table', true)
+  if args.action and args.events then
+    error('Element.link: provide action or events, not both', 2)
+  end
+  if not args.action and not args.events then
+    error('Element.link: one of action or events is required', 2)
+  end
+  return Element:new {
+    text = args.text,
+    name = args.name,
+    children = args.children,
+    events = args.events or { click = args.action },
+    highlightable = true,
+    hlgroups = { 'widgetLink' },
+  }
+end
+
 ---Create an Element whose click event does nothing.
 ---@param text? string the text to show when rendering this element
 ---@return Element

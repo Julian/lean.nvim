@@ -508,6 +508,71 @@ describe('Element', function()
     end)
   end)
 
+  describe('link', function()
+    it('wires action to the click event', function()
+      local called = false
+      local element = Element.link {
+        text = 'click me',
+        action = function() called = true end,
+      }
+      element.events.click(NULL_CONTEXT)
+      assert.is_true(called)
+    end)
+
+    it('uses explicit events when provided', function()
+      local def_called = false
+      local decl_called = false
+      local element = Element.link {
+        text = 'go',
+        events = {
+          go_to_def = function() def_called = true end,
+          go_to_decl = function() decl_called = true end,
+        },
+      }
+      element.events.go_to_def(NULL_CONTEXT)
+      element.events.go_to_decl(NULL_CONTEXT)
+      assert.is_true(def_called)
+      assert.is_true(decl_called)
+    end)
+
+    it('errors when both action and events are provided', function()
+      assert.has_error(function()
+        Element.link {
+          text = 'bad',
+          action = function() end,
+          events = { click = function() end },
+        }
+      end, 'Element.link: provide action or events, not both')
+    end)
+
+    it('errors when neither action nor events is provided', function()
+      assert.has_error(function()
+        Element.link { text = 'inert' }
+      end, 'Element.link: one of action or events is required')
+    end)
+
+    it('enforces link styling', function()
+      local element = Element.link {
+        text = 'styled',
+        action = function() end,
+      }
+      assert.is_true(element.highlightable)
+      assert.are.same({ 'widgetLink' }, element.hlgroups)
+    end)
+
+    it('passes through text, name, and children', function()
+      local child = Element:new { text = 'child' }
+      local element = Element.link {
+        text = 'link',
+        name = 'my-link',
+        children = { child },
+        action = function() end,
+      }
+      assert.are.same('my-link', element.name)
+      assert.are.same('linkchild', element:to_string())
+    end)
+  end)
+
   describe('kbd', function()
     it('creates an element representing a keyboard input sequence', function()
       assert.are.same(Element:new { text = 'Ctrl', hlgroups = { 'widgetKbd' } }, Element.kbd 'Ctrl')

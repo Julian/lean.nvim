@@ -114,27 +114,34 @@ function RenderContext:rpc_call(method, params)
   return response
 end
 
----Apply text edits to the Lean source buffer whose widgets we are rendering.
+---Create a link that applies a text edit to the Lean source buffer.
 ---
----Jumps to the Lean window afterwards if it was the last window.
----@param edits lsp.TextEdit[]
-function RenderContext:apply_edits(edits)
-  local bufnr = vim.uri_to_bufnr(self.params.textDocument.uri)
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
-    log:warning {
-      message = 'Cannot apply edits to unloaded buffer',
-      bufnr = bufnr,
-      edits = edits,
-    }
-    return
-  end
+---Applies the edit and jumps to the Lean window afterwards.
+---@param text string the display text for the link
+---@param range lsp.Range the range to replace
+---@param new_text string the replacement text
+---@return Element
+function RenderContext:edit_link(text, range, new_text)
+  return Element.link {
+    text = text,
+    action = function()
+      local bufnr = vim.uri_to_bufnr(self.params.textDocument.uri)
+      if not vim.api.nvim_buf_is_loaded(bufnr) then
+        log:warning {
+          message = 'Cannot apply edits to unloaded buffer',
+          bufnr = bufnr,
+        }
+        return
+      end
 
-  vim.lsp.util.apply_text_edits(edits, bufnr, 'utf-16')
+      vim.lsp.util.apply_text_edits({ { range = range, newText = new_text } }, bufnr, 'utf-16')
 
-  local last_window = self.get_last_window()
-  if last_window and last_window:bufnr() == bufnr then
-    last_window:make_current()
-  end
+      local last_window = self.get_last_window()
+      if last_window and last_window:bufnr() == bufnr then
+        last_window:make_current()
+      end
+    end,
+  }
 end
 
 ---The last window before the user visited the infoview.

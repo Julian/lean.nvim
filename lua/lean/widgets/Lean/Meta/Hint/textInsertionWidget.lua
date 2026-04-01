@@ -4,8 +4,6 @@
 --- In particular, used by the `Try This` widget on versions of Lean v4.25+.
 ---@brief ]]
 
-local Element = require('lean.tui').Element
-
 ---@class AcceptSuggestionText
 ---@field kind 'text'
 ---@field hoverText string Displayed on hover
@@ -28,17 +26,5 @@ local Element = require('lean.tui').Element
 ---@param props TextInsertionParams
 return function(ctx, props)
   -- TODO: hoverText
-  return Element:new {
-    text = props.acceptSuggestionProps.linkText,
-    children = Element:new { text = props.suggestion },
-    highlightable = true,
-    hlgroups = { 'widgetLink' },
-    events = {
-      click = function()
-        ctx:apply_edits {
-          { range = props.range, newText = props.suggestion },
-        }
-      end,
-    },
-  }
+  return ctx:edit_link(props.acceptSuggestionProps.linkText, props.range, props.suggestion)
 end

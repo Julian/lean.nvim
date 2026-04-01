@@ -20,21 +20,7 @@ return function(ctx, props)
     local children = {
       i ~= 1 and Element:new { text = '\n' } or nil,
     }
-    table.insert(
-      children,
-      Element:new {
-        text = each[1],
-        highlightable = true,
-        hlgroups = { 'widgetLink' },
-        events = {
-          click = function()
-            ctx:apply_edits {
-              { range = props.range, newText = each[1] },
-            }
-          end,
-        },
-      }
-    )
+    table.insert(children, ctx:edit_link(each[1], props.range, each[1]))
     if each.info and each.info ~= '' then
       table.insert(children, Element:new { text = each.info })
     end
