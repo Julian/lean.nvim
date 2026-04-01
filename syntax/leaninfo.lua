@@ -48,6 +48,8 @@ vim.api.nvim_set_hl(0, 'leanInfoComment', { default = true, link = 'Comment' })
 
 vim.api.nvim_set_hl(0, 'leanInfoHypNameInserted', { default = true, link = 'DiffAdd' })
 vim.api.nvim_set_hl(0, 'leanInfoHypNameRemoved', { default = true, link = 'DiffDelete' })
+vim.api.nvim_set_hl(0, 'leanInfoGoalInserted', { default = true, link = 'DiffAdd' })
+vim.api.nvim_set_hl(0, 'leanInfoGoalRemoved', { default = true, link = 'DiffDelete' })
 
 ---@type table<DiffTag, string>
 local DIFF_TAG_HLGROUPS = {
