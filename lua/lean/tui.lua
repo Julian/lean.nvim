@@ -42,7 +42,7 @@ local log = require 'lean.log'
 ---@field events EventCallbacks functions to fire for events which this element responds to
 ---@field text string the text to show when rendering this element
 ---@field name string a named handle for this element, used when path-searching
----@field hlgroup? string|fun(string):string? the highlight group for this element's text, or a function that returns it
+---@field hlgroups? string[]|fun():string[]|nil the highlight group(s) for this element's text, or a function that returns them
 ---@field tooltip? Element? tooltip
 ---@field highlightable boolean (for buffer rendering) whether to highlight this element when hovering over it
 ---@field _size? integer Computed size of this element, updated by `Element:to_string`
@@ -73,7 +73,7 @@ BufRenderer.__index = BufRenderer
 ---@field events? EventCallbacks event function map
 ---@field text? string the text to show when rendering this element
 ---@field name? string a named handle for this element, used when path-searching
----@field hlgroup? string|fun():string? the highlight group for this element's text, or a function that returns it
+---@field hlgroups? string[]|fun():string[]|nil the highlight group(s) for this element's text, or a function that returns them
 ---@field highlightable boolean? (for buffer rendering) whether to highlight this element when hovering over it
 ---@field children? Element[] this element's children
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
@@ -86,7 +86,7 @@ function Element:new(args)
   local obj = {
     text = args.text or '',
     name = args.name or '',
-    hlgroup = args.hlgroup,
+    hlgroups = args.hlgroups,
     highlightable = args.highlightable or false,
     events = args.events or {},
     __children = args.children or {},
@@ -114,7 +114,7 @@ function Element:titled(opts)
     return body
   end
 
-  local title = self:new { text = opts.title, hlgroup = opts.title_hlgroup }
+  local title = self:new { text = opts.title, hlgroups = opts.title_hlgroup and { opts.title_hlgroup } or nil }
 
   if not body then
     return title
@@ -189,7 +189,7 @@ function Element.select(choices, opts, on_choice)
       Element:new { text =  ' ▾' },
     },
     highlightable = true,
-    hlgroup = 'widgetSelect',
+    hlgroups = { 'widgetSelect' },
     events = {
       click = function(ctx)
         vim.ui.select(choices, {
@@ -214,7 +214,7 @@ end
 ---@param key string
 ---@return Element
 function Element.kbd(key)
-  return Element:new { text = key, hlgroup = 'widgetKbd' }
+  return Element:new { text = key, hlgroups = { 'widgetKbd' } }
 end
 
 ---Create an Element whose click event does nothing.
@@ -308,16 +308,18 @@ function Element:_get_highlights()
   ---@param element Element
   ---@param pos integer
   local function go(element, pos)
-    local hlgroup = element.hlgroup
-    if type(hlgroup) == 'function' then
-      hlgroup = hlgroup(element)
+    local hlgroups = element.hlgroups
+    if type(hlgroups) == 'function' then
+      hlgroups = hlgroups(element)
     end
-    if hlgroup then
-      table.insert(hls, {
-        start = pos,
-        ['end'] = pos + element._size,
-        hlgroup = hlgroup,
-      })
+    if hlgroups then
+      for _, hg in ipairs(hlgroups) do
+        table.insert(hls, {
+          start = pos,
+          ['end'] = pos + element._size,
+          hlgroup = hg,
+        })
+      end
     end
 
     pos = pos + #element.text

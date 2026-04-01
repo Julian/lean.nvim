@@ -32,7 +32,7 @@ return function(ctx, props)
     text = props.acceptSuggestionProps.linkText,
     children = Element:new { text = props.suggestion },
     highlightable = true,
-    hlgroup = 'widgetLink',
+    hlgroups = { 'widgetLink' },
     events = {
       click = function()
         ctx:apply_edits {

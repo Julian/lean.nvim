@@ -13,7 +13,7 @@ return function(_, props)
       Element:new {
         text = 'View explanation',
         highlightable = true,
-        hlgroup = 'widgetLink',
+        hlgroups = { 'widgetLink' },
         events = {
           click = function()
             vim.ui.open(props.explanationUrl)

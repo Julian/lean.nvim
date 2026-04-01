@@ -25,7 +25,7 @@ return function(ctx, props)
       Element:new {
         text = each[1],
         highlightable = true,
-        hlgroup = 'widgetLink',
+        hlgroups = { 'widgetLink' },
         events = {
           click = function()
             ctx:apply_edits {

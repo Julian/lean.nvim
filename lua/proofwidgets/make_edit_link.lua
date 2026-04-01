@@ -20,7 +20,7 @@ return function(props, children, ctx)
   return Element:new {
     children = children,
     highlightable = true,
-    hlgroup = 'widgetLink',
+    hlgroups = { 'widgetLink' },
     events = {
       click = function()
         local bufnr = vim.uri_to_bufnr(props.edit.textDocument.uri)

@@ -176,7 +176,7 @@ function Locations:toggle_subexpr_selection(pos)
   self:toggle_selection(self:template_with_subexpr_pos(pos))
 end
 
---TODO: have Locations handle constructing hlgroup()
+--TODO: have Locations handle constructing hlgroups()
 ---@param pos SubexprPos
 function Locations:is_subexpr_selected(pos)
   return self:is_selected(self:template_with_subexpr_pos(pos))

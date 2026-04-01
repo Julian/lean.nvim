@@ -28,7 +28,7 @@ return function(ctx, props)
   return Element:new {
     text = props.suggestion,
     highlightable = true,
-    hlgroup = 'widgetLink',
+    hlgroups = { 'widgetLink' },
     events = {
       click = function()
         ctx:apply_edits {
