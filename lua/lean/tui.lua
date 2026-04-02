@@ -56,7 +56,6 @@ Element.__index = Element
 ---@class BufRenderer
 ---@field buffer Buffer Buffer the element renders to
 ---@field element Element the element rendered by this renderer
----@field lines? string[] Rendered lines.
 ---@field width? integer Width of the rendered content.
 ---@field height? integer Height of the rendered content.
 ---@field path? PathNode[] Current cursor path
@@ -407,39 +406,6 @@ local function pos_before(a, b)
   return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
 end
 
----Get the (0-indexed) {line, col} position of the element arrived at by following the given path.
----@param path PathNode[] the path to follow
----@return integer[]? the {line, col} position if the path was valid, nil otherwise
-function Element:pos_from_path(path)
-  for i, p in ipairs(path) do
-    if i == 1 then -- first path node encodes root
-      if p.name ~= self.name then
-        return nil
-      end
-    else
-      if #self.__children < p.idx then
-        return nil
-      end
-      self = self.__children[p.idx]
-    end
-  end
-
-  if self._start_pos == nil then
-    return nil
-  end
-
-  -- Use the stored cursor position if it's still within the element's range.
-  local position = path[#path].position
-  if position
-    and not pos_before(position, self._start_pos)
-    and pos_before(position, self._end_pos)
-  then
-    return position
-  end
-
-  return self._start_pos
-end
-
 ---Get the element stack and element arrived at by following the given path.
 ---@param path PathNode[] the path to follow
 ---@return Element[]? the stack of elements at this path, or nil if the path is invalid
@@ -462,7 +428,28 @@ function Element:div_from_path(path)
   return stack, self
 end
 
----Find the innermost element satisfying a predicate.
+---Get the (0-indexed) {line, col} position of the element arrived at by following the given path.
+---@param path PathNode[] the path to follow
+---@return integer[]? the {line, col} position if the path was valid, nil otherwise
+function Element:pos_from_path(path)
+  local _, element = self:div_from_path(path)
+  if not element or element._start_pos == nil then
+    return nil
+  end
+
+  -- Use the stored cursor position if it's still within the element's range.
+  local position = path[#path].position
+  if position
+    and not pos_before(position, element._start_pos)
+    and pos_before(position, element._end_pos)
+  then
+    return position
+  end
+
+  return element._start_pos
+end
+
+---Find the innermost element along a path satisfying a predicate.
 ---@param path PathNode[]
 ---@param check fun(_, element:Element):any
 ---@return Element found The element satisfying check
@@ -719,7 +706,6 @@ function BufRenderer:render()
   self.buffer:clear_namespace(self.__tui_ns)
 
   local result = self.element:render_lines(self)
-  self.lines = result.lines
   self.width = result.width
   self.height = result.height
 
@@ -742,14 +728,17 @@ function BufRenderer:render()
 
   if self.path then
     -- on a rerender any previously existing paths may be invalid
-    -- TODO: cache div_from_path() return value to use in hover()
-    if not self.element:div_from_path(self.path) then
+    local _, leaf = self.element:div_from_path(self.path)
+    if not leaf then
       self.path = nil
-    elseif self:last_window_valid() then
-      local pos = self.element:pos_from_path(self.path)
-      if pos then
-        self.last_window:set_cursor { pos[1] + 1, pos[2] }
-      end
+    elseif self:last_window_valid() and leaf._start_pos then
+      local position = self.path[#self.path].position
+      local pos = (position
+        and not pos_before(position, leaf._start_pos)
+        and pos_before(position, leaf._end_pos))
+        and position
+        or leaf._start_pos
+      self.last_window:set_cursor { pos[1] + 1, pos[2] }
     end
   end
 
@@ -837,21 +826,26 @@ function BufRenderer:hover(force_update_highlight)
     return
   end
 
-  local hover_element, _, hover_element_path = self.element:find_innermost_along(
-    path,
-    ---@param element Element
-    function(_, element)
-      return element.highlightable
-    end
-  )
+  local stack = self.element:div_from_path(path)
+  if not stack then
+    return
+  end
 
-  local tt_parent_element, _, tt_parent_element_path = self.element:find_innermost_along(
-    path,
-    ---@param element Element
-    function(_, element)
-      return element.tooltip
+  -- Find innermost highlightable and tooltip-bearing elements in one pass.
+  local hover_element, tt_parent_element
+  local tt_parent_element_path
+  for i = #stack, 1, -1 do
+    if not hover_element and stack[i].highlightable then
+      hover_element = stack[i]
     end
-  )
+    if not tt_parent_element and stack[i].tooltip then
+      tt_parent_element = stack[i]
+      tt_parent_element_path = vim.list_slice(path, 1, i)
+    end
+    if hover_element and tt_parent_element then
+      break
+    end
+  end
 
   local new_tooltip_element = tt_parent_element and tt_parent_element.tooltip
 
@@ -896,7 +890,7 @@ function BufRenderer:hover(force_update_highlight)
     end
   end
 
-  if hover_element_path and hover_element then
+  if hover_element then
     self.hover_range = { hover_element._start_pos, hover_element._end_pos }
   else
     self.hover_range = nil
