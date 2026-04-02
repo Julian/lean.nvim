@@ -46,16 +46,16 @@ local function ref_key_for(client)
 end
 
 ---@class Session
----@field client vim.lsp.Client
+---@field client? vim.lsp.Client
 ---@field uri string
----@field ref_key string the JSON key for RPC references (`"p"` or `"__rpcref"`)
+---@field ref_key RpcRefKey the JSON key for RPC references (`"p"` or `"__rpcref"`)
 ---@field connected? boolean
 ---@field session_id? integer
----@field connect_err? string
+---@field connect_err? LspError
 ---@field on_connected std.async.Event
 ---@field keepalive_timer? uv_timer_t
 ---@field to_release RpcRef[]
----@field release_timer? table
+---@field release_timer? uv_timer_t
 local Session = {}
 Session.__index = Session
 
@@ -110,6 +110,7 @@ function Session:new(client, buffer, uri)
   return self
 end
 
+---NOTE: has the side effect of closing the session if the client has stopped.
 function Session:is_closed()
   if self.client and self.client:is_stopped() then
     self:close_without_releasing()
@@ -147,7 +148,7 @@ function Session:release_now(refs)
   log:debug {
     message = 'releasing RPC refs',
     uri = self.uri,
-    refs = refs,
+    refs = self.to_release,
   }
 
   ---@type RpcReleaseParams
@@ -159,7 +160,7 @@ function Session:release_now(refs)
   local succeeded = pcall(self.client.notify, self.client, '$/lean/rpc/release', params)
   if not succeeded then
     log:warning {
-      message = 'unable to release RPC session, which leaks a bit of memory',
+      message = 'unable to release RPC refs, which leaks a bit of memory',
       params = params,
     }
   end
@@ -179,6 +180,7 @@ end
 
 ---@param pos lsp.TextDocumentPositionParams
 ---@param method string
+---@param params any
 ---@return any result
 ---@return LspError error
 function Session:call(pos, method, params)
@@ -227,7 +229,7 @@ function Session:call(pos, method, params)
 
   if err then
     log:error {
-      message = 'RPC error.',
+      message = 'RPC error',
       method = method,
       params = params,
       error = err,
@@ -242,7 +244,6 @@ end
 local sessions = {}
 
 ---@param uri string
----@result string error
 local function connect(uri)
   local buffer = Buffer:from_uri(uri)
   local client = lsp.client_for(buffer.bufnr)
@@ -250,9 +251,9 @@ local function connect(uri)
   sessions[uri] = sess
   if client == nil then
     sess.connected = true
-    local err = 'Lean 4 LSP server not found'
-    sess.connect_err = err
-    return err
+    sess.connect_err = 'Lean 4 LSP server not found'
+    sess:close_without_releasing()
+    return
   end
   async.run(function()
     log:trace { message = 'connecting to RPC', uri = uri }
@@ -265,7 +266,6 @@ local function connect(uri)
       sess.connect_err = nil
     end
     sess.on_connected.set()
-    return err
   end)
 end
 
@@ -278,14 +278,14 @@ Subsession.__index = Subsession
 ---@param sess Session
 ---@param pos lsp.TextDocumentPositionParams
 function Subsession:new(sess, pos)
-  return setmetatable({ sess = sess, pos = pos, refs = {} }, self)
+  return setmetatable({ sess = sess, pos = pos }, self)
 end
 
 ---@param method string
+---@param params any
 ---@return any result
 ---@return LspError error
 function Subsession:call(method, params)
-  log:trace { message = method, params = params }
   return self.sess:call(self.pos, method, params)
 end
 
@@ -439,7 +439,7 @@ end
 ---@field javascriptHash string Hash of the JS source of the widget module.
 
 ---@class UserWidgetInstance: UserWidget
----@field props any SON object to be passed as props to the component
+---@field props any JSON object to be passed as props to the component
 ---@field range lsp.Range
 
 ---@class UserWidgets
@@ -486,10 +486,10 @@ end
 ---@field mvarId MVarId
 ---@field loc rpc.GoalLocation
 
-return rpc
-
 ---@class LspErrorCodeMessage
 ---@field code lsp.ErrorCodes
 ---@field message? string
 
 ---@alias LspError LspErrorCodeMessage|string
+
+return rpc

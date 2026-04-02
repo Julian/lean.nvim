@@ -16,7 +16,7 @@ return function(ctx, props)
   return Element:new {
     text = props.modName,
     highlightable = true,
-    hlgroup = 'widgetLink',
+    hlgroups = { 'widgetLink' },
     events = {
       go_to_def = function(_)
         local last_window = ctx.get_last_window()

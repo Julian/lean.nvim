@@ -42,7 +42,7 @@ local log = require 'lean.log'
 ---@field events EventCallbacks functions to fire for events which this element responds to
 ---@field text string the text to show when rendering this element
 ---@field name string a named handle for this element, used when path-searching
----@field hlgroup? string|fun(string):string? the highlight group for this element's text, or a function that returns it
+---@field hlgroups? string[]|fun():string[]|nil the highlight group(s) for this element's text, or a function that returns them
 ---@field tooltip? Element? tooltip
 ---@field highlightable boolean (for buffer rendering) whether to highlight this element when hovering over it
 ---@field _size? integer Computed size of this element, updated by `Element:to_string`
@@ -73,7 +73,7 @@ BufRenderer.__index = BufRenderer
 ---@field events? EventCallbacks event function map
 ---@field text? string the text to show when rendering this element
 ---@field name? string a named handle for this element, used when path-searching
----@field hlgroup? string|fun():string? the highlight group for this element's text, or a function that returns it
+---@field hlgroups? string[]|fun():string[]|nil the highlight group(s) for this element's text, or a function that returns them
 ---@field highlightable boolean? (for buffer rendering) whether to highlight this element when hovering over it
 ---@field children? Element[] this element's children
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
@@ -86,7 +86,7 @@ function Element:new(args)
   local obj = {
     text = args.text or '',
     name = args.name or '',
-    hlgroup = args.hlgroup,
+    hlgroups = args.hlgroups,
     highlightable = args.highlightable or false,
     events = args.events or {},
     __children = args.children or {},
@@ -114,7 +114,7 @@ function Element:titled(opts)
     return body
   end
 
-  local title = self:new { text = opts.title, hlgroup = opts.title_hlgroup }
+  local title = self:new { text = opts.title, hlgroups = opts.title_hlgroup and { opts.title_hlgroup } or nil }
 
   if not body then
     return title
@@ -189,7 +189,7 @@ function Element.select(choices, opts, on_choice)
       Element:new { text =  ' ▾' },
     },
     highlightable = true,
-    hlgroup = 'widgetSelect',
+    hlgroups = { 'widgetSelect' },
     events = {
       click = function(ctx)
         vim.ui.select(choices, {
@@ -214,7 +214,7 @@ end
 ---@param key string
 ---@return Element
 function Element.kbd(key)
-  return Element:new { text = key, hlgroup = 'widgetKbd' }
+  return Element:new { text = key, hlgroups = { 'widgetKbd' } }
 end
 
 ---Create an Element whose click event does nothing.
@@ -308,16 +308,18 @@ function Element:_get_highlights()
   ---@param element Element
   ---@param pos integer
   local function go(element, pos)
-    local hlgroup = element.hlgroup
-    if type(hlgroup) == 'function' then
-      hlgroup = hlgroup(element)
+    local hlgroups = element.hlgroups
+    if type(hlgroups) == 'function' then
+      hlgroups = hlgroups(element)
     end
-    if hlgroup then
-      table.insert(hls, {
-        start = pos,
-        ['end'] = pos + element._size,
-        hlgroup = hlgroup,
-      })
+    if hlgroups then
+      for _, hg in ipairs(hlgroups) do
+        table.insert(hls, {
+          start = pos,
+          ['end'] = pos + element._size,
+          hlgroup = hg,
+        })
+      end
     end
 
     pos = pos + #element.text
@@ -567,6 +569,18 @@ function Element:renderer(obj)
   return BufRenderer:new(vim.tbl_extend('error', obj, { element = self }))
 end
 
+---Convert an ElementEvent name to its `<Plug>` name.
+---
+---E.g. `'go_to_def'` → `'<Plug>(LeanInfoviewGoToDef)'`.
+---@param event ElementEvent
+---@return string
+local function event_plug_name(event)
+  local pascal = event
+    :gsub('(%a)([^_]*)', function(a, b) return a:upper() .. b end)
+    :gsub('_', '')
+  return ('<Plug>(LeanInfoview%s)'):format(pascal)
+end
+
 ---Create a new BufRenderer.
 function BufRenderer:new(obj)
   obj = obj or {}
@@ -581,30 +595,79 @@ function BufRenderer:new(obj)
     end,
   })
 
+  local bufnr = obj.buffer.bufnr
+
   -- Note that only closures work here, we can't go storing this on vim.b due
   -- to neovim/neovim#12544 wherein the metatable would be lost on retrieval.
   -- In other words, if we do vim.b[..].foo = new_renderer, when we come back
   -- to look at it, it's not a BufRenderer anymore. Surprise!
-  vim.keymap.set('n', '<Tab>', function()
+  --
+  -- We define buffer-local <Plug> mappings alongside the default keys so that
+  -- any of them can be used as a remapping destination.
+  vim.keymap.set('n', '<Plug>(LeanInfoviewEnterTooltip)', function()
     new_renderer:enter_tooltip()
-  end, { buffer = obj.buffer.bufnr, desc = 'Enter a tooltip.' })
-  vim.keymap.set('n', 'J', function()
-    new_renderer:enter_tooltip()
-  end, { buffer = obj.buffer.bufnr, desc = 'Enter a tooltip.' })
-  vim.keymap.set('n', '<S-Tab>', function()
+  end, { buffer = bufnr, desc = 'Enter a tooltip.' })
+  vim.keymap.set('n', '<Plug>(LeanInfoviewParentTooltip)', function()
     new_renderer:goto_parent_tooltip()
-  end, { buffer = obj.buffer.bufnr, desc = 'Go to the "parent" tooltip.' })
+  end, { buffer = bufnr, desc = 'Go to the "parent" tooltip.' })
+  vim.keymap.set(
+    'n',
+    '<Plug>(LeanAbbreviationsReverseLookup)',
+    require'lean.abbreviations'.show_reverse_lookup,
+    { buffer = bufnr, desc = 'Show how to type the unicode character under the cursor.' }
+  )
+
+  -- Register a <Plug> for every public ElementEvent so any of them can be
+  -- rebound to a different key.
+  local element_events = {
+    'click',
+    'select',
+    'clear',
+    'clear_all',
+    'goto_last_window',
+    'go_to_def',
+    'go_to_decl',
+    'go_to_type',
+  }
+  local element_event_set = {}
+  for _, event in ipairs(element_events) do
+    vim.keymap.set('n', event_plug_name(event), function()
+      new_renderer:event(event)
+    end, { buffer = bufnr, desc = ('Fire a %s event.'):format(event) })
+    element_event_set[event] = true
+  end
+
+  vim.keymap.set(
+    'n',
+    '<Tab>',
+    '<Plug>(LeanInfoviewEnterTooltip)',
+    { buffer = bufnr, remap = true, desc = 'Enter a tooltip.' }
+  )
+  vim.keymap.set(
+    'n',
+    'J',
+    '<Plug>(LeanInfoviewEnterTooltip)',
+    { buffer = bufnr, remap = true, desc = 'Enter a tooltip.' }
+  )
+  vim.keymap.set(
+    'n',
+    '<S-Tab>',
+    '<Plug>(LeanInfoviewParentTooltip)',
+    { buffer = bufnr, remap = true, desc = 'Go to the "parent" tooltip.' }
+  )
   vim.keymap.set(
     'n',
     '<LocalLeader>\\',
-    require'lean.abbreviations'.show_reverse_lookup,
-    { buffer = obj.buffer.bufnr, desc = 'Show how to type the unicode character under the cursor.' }
+    '<Plug>(LeanAbbreviationsReverseLookup)',
+    { buffer = bufnr, remap = true, desc = 'Show how to type the unicode character under the cursor.' }
   )
 
   for key, event in pairs(obj.keymaps or {}) do
-    vim.keymap.set('n', key, function()
+    local rhs = element_event_set[event] and event_plug_name(event) or function()
       new_renderer:event(event)
-    end, { buffer = obj.buffer.bufnr, desc = ('Fire a %s event.'):format(event) })
+    end
+    vim.keymap.set('n', key, rhs,
+      { buffer = bufnr, remap = element_event_set[event], desc = ('Fire a %s event.'):format(event) })
   end
 
   return new_renderer

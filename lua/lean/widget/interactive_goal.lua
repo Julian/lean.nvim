@@ -19,12 +19,12 @@ end
 ---@param fvar_id FVarId
 ---@param locations? Locations
 local function to_hypothesis_name(name, mvar_id, fvar_id, locations)
-  local function accessible_hlgroup()
-    return is_accessible(name) and 'leanInfoHypName' or 'leanInfoInaccessibleHypName'
+  local function accessible_hlgroups()
+    return { is_accessible(name) and 'leanInfoHypName' or 'leanInfoInaccessibleHypName' }
   end
 
   local highlightable, select
-  local hlgroup = accessible_hlgroup
+  local hlgroups = accessible_hlgroups
 
   if locations and mvar_id and fvar_id then
     highlightable = true
@@ -32,8 +32,8 @@ local function to_hypothesis_name(name, mvar_id, fvar_id, locations)
     ---@type GoalsLocation
     local location = { mvarId = mvar_id, loc = { hyp = fvar_id } }
 
-    hlgroup = function()
-      return locations:is_selected(location) and 'leanInfoSelected' or accessible_hlgroup()
+    hlgroups = function()
+      return locations:is_selected(location) and { 'leanInfoSelected' } or accessible_hlgroups()
     end
 
     select = function()
@@ -44,7 +44,7 @@ local function to_hypothesis_name(name, mvar_id, fvar_id, locations)
   return Element:new {
     text = name,
     highlightable = highlightable,
-    hlgroup = hlgroup,
+    hlgroups = hlgroups,
     events = { select = select },
   }
 end
@@ -84,8 +84,8 @@ local function to_hypothesis_element(hyp, mvar_id, opts, sess, locations)
     name = 'hyp',
     children = {
       Element:concat(names, ' ', {
-        hlgroup = hyp.isInserted and 'leanInfoHypNameInserted'
-          or hyp.isRemoved and 'leanInfoHypNameRemoved'
+        hlgroups = hyp.isInserted and { 'leanInfoHypNameInserted' }
+          or hyp.isRemoved and { 'leanInfoHypNameRemoved' }
           or nil,
       }),
       Element:new { text = ' : ' },
@@ -166,7 +166,7 @@ function interactive_goal.Goal(goal, sess, locations)
   if goal.userName then
     case = Element:new {
       children = {
-        Element:new { text = 'case ', hlgroup = 'leanInfoGoalCase' },
+        Element:new { text = 'case ', hlgroups = { 'leanInfoGoalCase' } },
         Element:new { text = goal.userName .. '\n' },
       },
     }
@@ -182,7 +182,7 @@ function interactive_goal.Goal(goal, sess, locations)
   local goal_element = Element:new {
     name = 'goal',
     children = {
-      Element:new { text = goal.goalPrefix or '⊢ ', hlgroup = 'leanInfoGoalPrefix' },
+      Element:new { text = goal.goalPrefix or '⊢ ', hlgroups = { 'leanInfoGoalPrefix' } },
       InteractiveCode(goal.type, sess, goal_locations),
     },
   }

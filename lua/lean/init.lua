@@ -32,72 +32,72 @@ local lean = {
   mappings = {
     {
       '<LocalLeader>i',
-      '<Cmd>LeanInfoviewToggle<CR>',
+      'LeanInfoviewToggle',
       { desc = 'Toggle showing the infoview.' },
     },
     {
       '<LocalLeader>p',
-      '<Cmd>LeanInfoviewPinTogglePause<CR>',
+      'LeanInfoviewPinTogglePause',
       { desc = 'Toggle pausing infoview pins.' },
     },
     {
       '<LocalLeader>x',
-      '<Cmd>LeanInfoviewAddPin<CR>',
+      'LeanInfoviewAddPin',
       { desc = 'Add an infoview pin.' },
     },
     {
       '<LocalLeader>c',
-      '<Cmd>LeanInfoviewClearPins<CR>',
+      'LeanInfoviewClearPins',
       { desc = 'Clear all infoview pins.' },
     },
     {
       '<LocalLeader>dx',
-      '<Cmd>LeanInfoviewSetDiffPin<CR>',
+      'LeanInfoviewSetDiffPin',
       { desc = 'Set an infoview diff pin.' },
     },
     {
       '<LocalLeader>dc',
-      '<Cmd>LeanInfoviewClearDiffPin<CR>',
+      'LeanInfoviewClearDiffPin',
       { desc = 'Clear all infoview diff pins.' },
     },
     {
       '<LocalLeader>dd',
-      '<Cmd>LeanInfoviewToggleAutoDiffPin<CR>',
+      'LeanInfoviewToggleAutoDiffPin',
       { desc = 'Toggle "auto-diff" mode in the infoview.' },
     },
     {
       '<LocalLeader>dt',
-      '<Cmd>LeanInfoviewToggleNoClearAutoDiffPin<CR>',
+      'LeanInfoviewToggleNoClearAutoDiffPin',
       { desc = 'Toggle "auto-diff" mode and clear any existing pins.' },
     },
     {
       '<LocalLeader>w',
-      '<Cmd>LeanInfoviewEnableWidgets<CR>',
+      'LeanInfoviewEnableWidgets',
       { desc = 'Enable infoview widgets.' },
     },
     {
       '<LocalLeader>W',
-      '<Cmd>LeanInfoviewDisableWidgets<CR>',
+      'LeanInfoviewDisableWidgets',
       { desc = 'Disable infoview widgets.' },
     },
     {
       '<LocalLeader>v',
-      '<Cmd>LeanInfoviewViewOptions<CR>',
+      'LeanInfoviewViewOptions',
       { desc = 'Change the infoview view options.' },
     },
     {
       '<LocalLeader><Tab>',
-      '<Cmd>LeanGotoInfoview<CR>',
+      'LeanGotoInfoview',
       { desc = 'Jump to the current infoview.' },
     },
     {
       '<LocalLeader>\\',
-      '<Cmd>LeanAbbreviationsReverseLookup<CR>',
+      'LeanAbbreviationsReverseLookup',
       { desc = 'Show how to type the unicode character under the cursor.' },
     },
     {
       '<LocalLeader>r',
-      '<Cmd>LeanRestartFile<CR>',
+      'LeanRestartFile',
       { desc = 'Restart the Lean server for the current file.' },
     },
   },
@@ -192,13 +192,24 @@ function lean.plugin_version()
   end
 end
 
----Enable mappings for a given buffer
+---Enable mappings for a given buffer.
+---
+---Each suggested mapping's RHS is a `<Plug>` name (e.g. `<Plug>(LeanInfoviewToggle)`).
+---To prefer different keys, map your own LHS to the same `<Plug>` name.
 ---@param bufnr? number the bufnr to enable mappings in, defaulting to 0
 function lean.use_suggested_mappings(bufnr)
-  local opts = { buffer = bufnr or 0 }
+  local buf = { buffer = bufnr or 0 }
   for _, each in ipairs(lean.mappings) do
-    local lhs, rhs, more_opts = unpack(each)
-    vim.keymap.set(each.mode or 'n', lhs, rhs, vim.tbl_extend('error', opts, more_opts))
+    local lhs, cmd, more_opts = unpack(each)
+    local mode = each.mode or 'n'
+    local plug = ('<Plug>(%s)'):format(cmd)
+    vim.keymap.set(
+      mode,
+      plug,
+      vim.cmd[cmd],
+      vim.tbl_extend('error', buf, { desc = more_opts.desc })
+    )
+    vim.keymap.set(mode, lhs, plug, vim.tbl_extend('error', buf, more_opts, { remap = true }))
   end
 end
 

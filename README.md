@@ -110,7 +110,24 @@ For a sample setup, see [the wiki](https://github.com/Julian/lean.nvim/wiki/Conf
 
 ## Mappings
 
-If you've set `mappings = true` in your configuration (or have called `lean.use_suggested_mappings()` explicitly), a number of keys will be mapped either within Lean source files or within Infoview windows:
+If you've set `mappings = true` in your configuration (or have called `lean.use_suggested_mappings()` explicitly), a number of keys will be mapped either within Lean source files or within Infoview windows.
+
+Each mapping's RHS is a `<Plug>` name, so any of them can be rebound to a different key.
+For example, to bind an additional key for toggling the infoview, add this to `after/ftplugin/lean.lua` (or `after/ftplugin/leaninfo.lua` for infoview mappings):
+
+```lua
+vim.keymap.set('n', '<leader>li', '<Plug>(LeanInfoviewToggle)', { buffer = true })
+```
+
+To replace a default key entirely, also delete the original using `vim.keymap.del`:
+
+```lua
+vim.keymap.del('n', '<LocalLeader>i', { buffer = true })
+vim.keymap.set('n', '<leader>li', '<Plug>(LeanInfoviewToggle)', { buffer = true })
+```
+
+> [!TIP]
+> `<Plug>` is a Neovim convention for named, remappable plugin actions. See `:help <Plug>` for more.
 
 ### In Lean Files
 
@@ -119,20 +136,22 @@ You can check what this key is set to within neovim by running the command `:ech
 An error like `E121: Undefined variable: maplocalleader` indicates that it may not be set to any key.
 This can be configured by putting a line at the top of your `~/.config/nvim/init.lua` of the form `vim.g.maplocalleader = '  '` (in this example, mapping `<LocalLeader>` to hitting the space key twice).
 
-| Key                  | Function                                                            |
-| -------------------- | ------------------------------------------------------------------- |
-| `<LocalLeader>i`     | toggle the infoview open or closed                                  |
-| `<LocalLeader>p`     | pause the current infoview                                          |
-| `<LocalLeader>r`     | Restart the Lean server for the current file.                       |
-| `<LocalLeader>v`     | interactively configure infoview view options                       |
-| `<LocalLeader>x`     | place an infoview pin                                               |
-| `<LocalLeader>c`     | clear all current infoview pins                                     |
-| `<LocalLeader>dx`    | place an infoview diff pin                                          |
-| `<LocalLeader>dc`    | clear current infoview diff pin                                     |
-| `<LocalLeader>dd`    | toggle auto diff pin mode                                           |
-| `<LocalLeader>dt`    | toggle auto diff pin mode without clearing diff pin                 |
-| `<LocalLeader><Tab>` | jump into the infoview window associated with the current lean file |
-| `<LocalLeader>\\`    | show what abbreviation produces the symbol under the cursor         |
+| Key                  | `<Plug>` name                                      | Function                                                            |
+| -------------------- | -------------------------------------------------- | ------------------------------------------------------------------- |
+| `<LocalLeader>i`     | `<Plug>(LeanInfoviewToggle)`                       | toggle the infoview open or closed                                  |
+| `<LocalLeader>p`     | `<Plug>(LeanInfoviewPinTogglePause)`               | pause the current infoview                                          |
+| `<LocalLeader>r`     | `<Plug>(LeanRestartFile)`                          | restart the Lean server for the current file                        |
+| `<LocalLeader>v`     | `<Plug>(LeanInfoviewViewOptions)`                  | interactively configure infoview view options                       |
+| `<LocalLeader>x`     | `<Plug>(LeanInfoviewAddPin)`                       | place an infoview pin                                               |
+| `<LocalLeader>c`     | `<Plug>(LeanInfoviewClearPins)`                    | clear all current infoview pins                                     |
+| `<LocalLeader>dx`    | `<Plug>(LeanInfoviewSetDiffPin)`                   | place an infoview diff pin                                          |
+| `<LocalLeader>dc`    | `<Plug>(LeanInfoviewClearDiffPin)`                 | clear current infoview diff pin                                     |
+| `<LocalLeader>dd`    | `<Plug>(LeanInfoviewToggleAutoDiffPin)`            | toggle auto diff pin mode                                           |
+| `<LocalLeader>dt`    | `<Plug>(LeanInfoviewToggleNoClearAutoDiffPin)`     | toggle auto diff pin mode without clearing diff pin                 |
+| `<LocalLeader>w`     | `<Plug>(LeanInfoviewEnableWidgets)`                | enable infoview widgets                                             |
+| `<LocalLeader>W`     | `<Plug>(LeanInfoviewDisableWidgets)`               | disable infoview widgets                                            |
+| `<LocalLeader><Tab>` | `<Plug>(LeanGotoInfoview)`                         | jump into the infoview window associated with the current lean file |
+| `<LocalLeader>\\`    | `<Plug>(LeanAbbreviationsReverseLookup)`           | show what abbreviation produces the symbol under the cursor         |
 
 > [!TIP]
 > See `:help <LocalLeader>` if you haven't previously interacted with the local leader key.
@@ -145,20 +164,21 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 
 ### In Infoview Windows
 
-| Key                  | Function                                                          |
-| -------------------- | ----------------------------------------------------------------- |
-| `<CR>`               | click a widget or interactive area of the infoview                |
-| `K`                  | same as `<CR>`                                                    |
-| `gK`                 | "select" a widget or interactive area ("shift+click")             |
-| `<Tab>`              | jump into a tooltip (from a widget click)                         |
-| `<S-Tab>`            | jump out of a tooltip and back to its parent                      |
-| `<Esc>`              | clear all open tooltips                                           |
-| `J`                  | jump into a tooltip (from a widget click)                         |
-| `C`                  | clear all open tooltips                                           |
-| `gd`                 | go-to-definition of what is under the cursor                      |
-| `gD`                 | go-to-declaration of what is under the cursor                     |
-| `gy`                 | go-to-type of what is under the cursor                            |
-| `<LocalLeader><Tab>` | jump to the lean file associated with the current infoview window |
+| Key                  | `<Plug>` name                               | Function                                                          |
+| -------------------- | ------------------------------------------- | ----------------------------------------------------------------- |
+| `<CR>`               | `<Plug>(LeanInfoviewClick)`                 | click a widget or interactive area of the infoview                |
+| `K`                  | `<Plug>(LeanInfoviewClick)`                 | same as `<CR>`                                                    |
+| `gK`                 | `<Plug>(LeanInfoviewSelect)`                | "select" a widget or interactive area ("shift+click")             |
+| `<Tab>`              | `<Plug>(LeanInfoviewEnterTooltip)`          | jump into a tooltip (from a widget click)                         |
+| `<S-Tab>`            | `<Plug>(LeanInfoviewParentTooltip)`         | jump out of a tooltip and back to its parent                      |
+| `<Esc>`              | `<Plug>(LeanInfoviewClearAll)`              | clear all open tooltips                                           |
+| `J`                  | `<Plug>(LeanInfoviewEnterTooltip)`          | jump into a tooltip (from a widget click)                         |
+| `C`                  | `<Plug>(LeanInfoviewClearAll)`              | clear all open tooltips                                           |
+| `gd`                 | `<Plug>(LeanInfoviewGoToDef)`               | go-to-definition of what is under the cursor                      |
+| `gD`                 | `<Plug>(LeanInfoviewGoToDecl)`              | go-to-declaration of what is under the cursor                     |
+| `gy`                 | `<Plug>(LeanInfoviewGoToType)`              | go-to-type of what is under the cursor                            |
+| `<LocalLeader><Tab>` | `<Plug>(LeanInfoviewGotoLastWindow)`        | jump to the lean file associated with the current infoview window |
+| `<LocalLeader>\\`    | `<Plug>(LeanAbbreviationsReverseLookup)`    | show what abbreviation produces the symbol under the cursor       |
 
 ## Full Configuration & Settings Information
 

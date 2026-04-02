@@ -34,6 +34,7 @@ diagnostic.disable_builtin_signs	lean.txt	/*diagnostic.disable_builtin_signs*
 diagnostic.is_goals_accomplished	lean.txt	/*diagnostic.is_goals_accomplished*
 diagnostic.is_unsolved_goals	lean.txt	/*diagnostic.is_unsolved_goals*
 diagnostic.leanls_to_vim	lean.txt	/*diagnostic.leanls_to_vim*
+diagnostic.lsp_diagnostics	lean.txt	/*diagnostic.lsp_diagnostics*
 diagnostic.render_signs	lean.txt	/*diagnostic.render_signs*
 elan	elan.txt	/*elan*
 elan.init	elan.txt	/*elan.init*

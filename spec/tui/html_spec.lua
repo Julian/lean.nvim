@@ -6,7 +6,7 @@ describe('tui.html', function()
     it('renders bold text and applies bold highlight', function()
       local el = Tag.b { Element:new { text = 'bold' } }
       assert.is.equal('bold', el:to_string())
-      assert.is.equal('tui.html.b', el.hlgroup)
+      assert.are.same({ 'tui.html.b' }, el.hlgroups)
     end)
   end)
 
@@ -14,7 +14,7 @@ describe('tui.html', function()
     it('renders italic text and applies italic highlight', function()
       local el = Tag.i { Element:new { text = 'italic' } }
       assert.is.equal('italic', el:to_string())
-      assert.is.equal('tui.html.i', el.hlgroup)
+      assert.are.same({ 'tui.html.i' }, el.hlgroups)
     end)
   end)
 
@@ -22,7 +22,7 @@ describe('tui.html', function()
     it('renders strong text as bold', function()
       local el = Tag.strong { Element:new { text = 'bold' } }
       assert.is.equal('bold', el:to_string())
-      assert.is.equal('tui.html.b', el.hlgroup)
+      assert.are.same({ 'tui.html.b' }, el.hlgroups)
     end)
   end)
 
@@ -30,7 +30,7 @@ describe('tui.html', function()
     it('renders emphasized text as italic', function()
       local el = Tag.em { Element:new { text = 'italic' } }
       assert.is.equal('italic', el:to_string())
-      assert.is.equal('tui.html.i', el.hlgroup)
+      assert.are.same({ 'tui.html.i' }, el.hlgroups)
     end)
   end)
 

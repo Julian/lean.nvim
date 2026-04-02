@@ -31,7 +31,7 @@ local InteractiveCode
 local function render_subexpr_info(subexpr_info, tag, sess, locations)
   local element = Element:new { highlightable = true }
   if subexpr_info.diffStatus then
-    element.hlgroup = 'leanInfoDiff' .. subexpr_info.diffStatus
+    element.hlgroups = { 'leanInfoDiff' .. subexpr_info.diffStatus }
   end
 
   local info_open = false
@@ -69,7 +69,7 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations)
     if subexpr_info.diffStatus then
       tooltip_element:add_child(Element:new { text = '\n\n' })
       tooltip_element:add_child(Element:new {
-        hlgroup = 'Comment',
+        hlgroups = { 'Comment' },
         text = DIFF_TAG_TO_EXPLANATION[subexpr_info.diffStatus],
       })
     end
@@ -149,8 +149,16 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations)
   }
 
   if locations then
-    function element.hlgroup()
-      return locations:is_subexpr_selected(subexpr_info.subexprPos) and 'leanInfoSelected' or nil
+    local diff_hl = element.hlgroups ---@type string[]?
+    function element.hlgroups()
+      local selected = locations:is_subexpr_selected(subexpr_info.subexprPos)
+      if diff_hl and selected then
+        return vim.iter({ diff_hl, { 'leanInfoSelected' } }):flatten():totable()
+      elseif selected then
+        return { 'leanInfoSelected' }
+      else
+        return diff_hl
+      end
     end
     element.events.select = function()
       locations:toggle_subexpr_selection(subexpr_info.subexprPos)

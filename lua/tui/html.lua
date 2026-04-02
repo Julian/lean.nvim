@@ -10,7 +10,7 @@ vim.api.nvim_set_hl(0, 'tui.html.unsupported', { default = true, link = 'ErrorMs
 html.Tag = vim.defaulttable(function(tag)
   return function(children)
     return Element:new {
-      hlgroup = 'tui.html.unsupported',
+      hlgroups = { 'tui.html.unsupported' },
       text = ('<%s>'):format(tag),
       children = children,
     }
@@ -31,7 +31,7 @@ end
 function html.Tag.summary(children)
   return Element:new {
     text = '▼ ',
-    hlgroup = 'tui.html.summary',
+    hlgroups = { 'tui.html.summary' },
     children = children,
   }
 end
@@ -59,12 +59,12 @@ end
 
 ---Render bold text.
 function html.Tag.b(children)
-  return Element:new { hlgroup = 'tui.html.b', children = children }
+  return Element:new { hlgroups = { 'tui.html.b' }, children = children }
 end
 
 ---Render italic text.
 function html.Tag.i(children)
-  return Element:new { hlgroup = 'tui.html.i', children = children }
+  return Element:new { hlgroups = { 'tui.html.i' }, children = children }
 end
 
 ---An alias for `<b>`.

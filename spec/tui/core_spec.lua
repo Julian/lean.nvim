@@ -40,6 +40,67 @@ describe('Element', function()
     end)
   end)
 
+  describe('hlgroups', function()
+    ---Render element into a scratch buffer and return the applied highlights
+    ---as `{ hl_group, text }` pairs, sorted for determinism.
+    ---@param element Element
+    ---@return { [1]: string, [2]: string }[]
+    local function rendered_highlights(element)
+      local buffer = Buffer.create { name = 'test-hlgroups' }
+      element:renderer { buffer = buffer }:render()
+      local marks = buffer:extmarks(vim.api.nvim_create_namespace 'lean.tui', 0, -1, { details = true })
+      local highlights = vim.iter(marks):map(function(m)
+        local text = vim.api.nvim_buf_get_text(buffer.bufnr, m[2], m[3], m[4].end_row, m[4].end_col, {})
+        return { m[4].hl_group, table.concat(text, '\n') }
+      end):totable()
+      buffer:force_delete()
+      table.sort(highlights, function(a, b) return a[1] < b[1] end)
+      return highlights
+    end
+
+    it('applies a single highlight group', function()
+      local element = Element:new { text = 'foo', hlgroups = { 'String' } }
+      assert.are.same({ { 'String', 'foo' } }, rendered_highlights(element))
+    end)
+
+    it('applies multiple highlight groups to the same text', function()
+      local element = Element:new { text = 'foo', hlgroups = { 'String', 'Comment' } }
+      assert.are.same({ { 'Comment', 'foo' }, { 'String', 'foo' } }, rendered_highlights(element))
+    end)
+
+    it('applies highlight groups returned by a function', function()
+      local element = Element:new {
+        text = 'foo',
+        hlgroups = function()
+          return { 'String', 'Comment' }
+        end,
+      }
+      assert.are.same({ { 'Comment', 'foo' }, { 'String', 'foo' } }, rendered_highlights(element))
+    end)
+
+    it('applies no highlights when a function returns nil', function()
+      local element = Element:new {
+        text = 'foo',
+        hlgroups = function()
+          return nil
+        end,
+      }
+      assert.are.same({}, rendered_highlights(element))
+    end)
+
+    it('the parent highlight spans child text too', function()
+      local element = Element:new {
+        text = 'foo',
+        hlgroups = { 'String' },
+        children = { Element:new { text = 'bar', hlgroups = { 'Comment' } } },
+      }
+      assert.are.same(
+        { { 'Comment', 'bar' }, { 'String', 'foobar' } },
+        rendered_highlights(element)
+      )
+    end)
+  end)
+
   describe(':titled', function()
     it('creates an Element with a title and children', function()
       local foo = Element:new { text = 'foo', name = 'foo-name' }
@@ -149,7 +210,7 @@ describe('Element', function()
         assert.is.same(
           Element:new {
             children = {
-              Element:new { text = 'quux', hlgroup = 'Title' },
+              Element:new { text = 'quux', hlgroups = { 'Title' } },
               Element:new { text = '\n\n' },
               Element:new { children = { foo, bar } },
             },
@@ -174,14 +235,14 @@ describe('Element', function()
           body = {},
         }
 
-        assert.is.same(Element:new { text = 'quux', hlgroup = 'Another' }, element)
+        assert.is.same(Element:new { text = 'quux', hlgroups = { 'Another' } }, element)
         assert.is.equal('quux', element:to_string())
       end)
 
       it('creates a text Element when children is nil', function()
         local element = Element:titled { title = 'stuff', title_hlgroup = 'Title' }
 
-        assert.is.same(Element:new { text = 'stuff', hlgroup = 'Title' }, element)
+        assert.is.same(Element:new { text = 'stuff', hlgroups = { 'Title' } }, element)
         assert.is.equal('stuff', element:to_string())
       end)
 
@@ -449,7 +510,7 @@ describe('Element', function()
 
   describe('kbd', function()
     it('creates an element representing a keyboard input sequence', function()
-      assert.are.same(Element:new { text = 'Ctrl', hlgroup = 'widgetKbd' }, Element.kbd 'Ctrl')
+      assert.are.same(Element:new { text = 'Ctrl', hlgroups = { 'widgetKbd' } }, Element.kbd 'Ctrl')
     end)
   end)
 

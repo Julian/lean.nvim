@@ -9,7 +9,7 @@ local lsp = {}
 ---@return { [1]: integer, [2]: integer } position
 function lsp.position_to_byte0(position, bufnr)
   local line = vim.api.nvim_buf_get_lines(bufnr, position.line, position.line + 1, false)[1] or ''
-  local ok, col = pcall(vim.str_byteindex, line, position.character, true)
+  local ok, col = pcall(vim.str_byteindex, line, 'utf-16', position.character)
   return { position.line, ok and col or position.character }
 end
 
