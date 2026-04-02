@@ -45,7 +45,8 @@ local log = require 'lean.log'
 ---@field hlgroups? string[]|fun():string[]|nil the highlight group(s) for this element's text, or a function that returns them
 ---@field tooltip? Element? tooltip
 ---@field highlightable boolean (for buffer rendering) whether to highlight this element when hovering over it
----@field _size? integer Computed size of this element, updated during rendering
+---@field _start_pos? integer[] Computed {line, col} start position (0-indexed), updated during rendering
+---@field _end_pos? integer[] Computed {line, col} end position (0-indexed, exclusive), updated during rendering
 ---@field private __children Element[] this element's children
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
 local Element = {}
@@ -141,12 +142,11 @@ function Element:concat(elements, sep, opts)
       or elements[1]
   end
 
-  local separator = Element:new{ text = sep }
   return self:new(
     vim.tbl_extend('error', opts or {}, {
       children = vim.iter(elements):fold(nil, function(acc, k)
         if not acc then return { k } end
-        table.insert(acc, separator)
+        table.insert(acc, Element:new { text = sep })
         table.insert(acc, k)
         return acc
       end)
@@ -349,8 +349,7 @@ function Element:render_lines(renderer)
       element.__async_init = nil -- only run once
     end
 
-    local start_line = line_idx
-    local start_col = col
+    element._start_pos = { line_idx - 1, col }
 
     local text = element.text
     if text ~= '' then
@@ -374,22 +373,19 @@ function Element:render_lines(renderer)
       end
     end
 
-    local size = #text
     for _, child in ipairs(element.__children) do
       go(child)
-      size = size + child._size
     end
-    element._size = size
+
+    element._end_pos = { line_idx - 1, col }
 
     local hlgroups = element.hlgroups
     if type(hlgroups) == 'function' then
       hlgroups = hlgroups(element)
     end
     if hlgroups then
-      local start_pos = { start_line - 1, start_col }
-      local end_pos = { line_idx - 1, col }
       for _, hg in ipairs(hlgroups) do
-        table.insert(highlights, { hlgroup = hg, start_pos = start_pos, end_pos = end_pos })
+        table.insert(highlights, { hlgroup = hg, start_pos = element._start_pos, end_pos = element._end_pos })
       end
     end
   end
@@ -404,14 +400,17 @@ end
 ---@class PathNode
 ---@field idx number the index in the current element's children to follow
 ---@field name string the name that the indexed child should have
----@field offset number? if provided, a byte offset from the beginning of this element
+---@field position? integer[] if provided, the (0-indexed) {line, col} cursor position within this element
 
----Get the raw byte position of the element arrived at by following the given path.
+---Is position a strictly before position b? (both 0-indexed {line, col})
+local function pos_before(a, b)
+  return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
+end
+
+---Get the (0-indexed) {line, col} position of the element arrived at by following the given path.
 ---@param path PathNode[] the path to follow
----@return number? the position if the path was valid, nil otherwise
----@return number? the additional byte offset from the position if the path was valid, nil otherwise
+---@return integer[]? the {line, col} position if the path was valid, nil otherwise
 function Element:pos_from_path(path)
-  local pos = 1
   for i, p in ipairs(path) do
     if i == 1 then -- first path node encodes root
       if p.name ~= self.name then
@@ -421,18 +420,24 @@ function Element:pos_from_path(path)
       if #self.__children < p.idx then
         return nil
       end
-      pos = pos + #self.text
-      for j = 1, p.idx - 1 do
-        pos = pos + self.__children[j]._size
-      end
       self = self.__children[p.idx]
     end
   end
-  local offset = path[#path].offset or 0
-  -- in case this is an invalid or outdated path
-  local maybe_offset = (#self.text - 1 >= offset) and offset
-  offset = maybe_offset or 0
-  return pos, offset
+
+  if self._start_pos == nil then
+    return nil
+  end
+
+  -- Use the stored cursor position if it's still within the element's range.
+  local position = path[#path].position
+  if position
+    and not pos_before(position, self._start_pos)
+    and pos_before(position, self._end_pos)
+  then
+    return position
+  end
+
+  return self._start_pos
 end
 
 ---Get the element stack and element arrived at by following the given path.
@@ -482,68 +487,42 @@ function Element:children()
   return vim.iter(self.__children)
 end
 
-local function pos_to_raw_pos(pos, lines)
-  local raw_pos = 0
-  for i = 1, pos[1] - 1 do
-    if not lines[i] then
-      return
-    end
-    raw_pos = raw_pos + #lines[i] + 1
-  end
-  if
-    not lines[pos[1]]
-    or (#lines[pos[1]] == 0 and pos[2] ~= 0)
-    or (#lines[pos[1]] > 0 and pos[2] + 1 > #lines[pos[1]])
-  then
-    return
-  end
-  raw_pos = raw_pos + pos[2] + 1
-  return raw_pos
-end
-
----Return (0, 0)-indexed cursor position from raw byte position and list of lines
-local function raw_pos_to_pos(raw_pos, lines)
-  local line_num = 0
-  local rem_chars = raw_pos
-
-  for _, line in ipairs(lines) do
-    line_num = line_num + 1
-    if rem_chars <= (#line + 1) then
-      return { line_num - 1, rem_chars - 1 }
-    end
-
-    rem_chars = rem_chars - (#line + 1)
-  end
-end
-
----Get the path at the given raw byte position.
----(requires _size to have been computed, e.g. via to_string or render_lines)
----@param pos integer byte position
+---Get the path at the given (0-indexed) {line, col} position.
+---(requires _start_pos/_end_pos to have been computed, e.g. via to_string or render_lines)
+---@param pos integer[] {line, col} position (0-indexed)
 ---@return PathNode[]? the path at this position
 ---@return Element[]? the stack of elements along this path
 function Element:path_from_pos(pos)
   local path = { { idx = 0, name = self.name } }
   local stack = { self }
-  pos = pos - 1
+
   ::next::
-  if pos < #self.text then
-    path[#path].offset = pos
+  if self._end_pos == nil then
+    return nil
+  end
+
+  -- Where does this element's own text end (i.e. where do children begin)?
+  local text_end = self.__children[1] and self.__children[1]._start_pos or self._end_pos
+
+  -- Is pos within this element's own text?
+  if pos_before(pos, text_end) then
+    path[#path].position = pos
     return path, stack
   end
-  pos = pos - #self.text
+
+  -- Find which child contains pos.
   for idx, child in ipairs(self.__children) do
-    if child._size == nil then
+    if child._end_pos == nil then
       return nil
     end
-    if pos < child._size then
+    if pos_before(pos, child._end_pos) then
       table.insert(path, { idx = idx, name = child.name })
       table.insert(stack, child)
       self = child
       goto next
-    else
-      pos = pos - child._size
     end
   end
+
   return nil
 end
 
@@ -767,9 +746,10 @@ function BufRenderer:render()
     if not self.element:div_from_path(self.path) then
       self.path = nil
     elseif self:last_window_valid() then
-      local raw_pos, offset = self.element:pos_from_path(self.path)
-      local pos = raw_pos_to_pos(raw_pos + offset, self.lines)
-      self.last_window:set_cursor { pos[1] + 1, pos[2] }
+      local pos = self.element:pos_from_path(self.path)
+      if pos then
+        self.last_window:set_cursor { pos[1] + 1, pos[2] }
+      end
     end
   end
 
@@ -832,9 +812,9 @@ function BufRenderer:update_cursor(window)
 
   local path_before = self.path
   local cursor_pos = self.last_window:cursor()
-  local raw_pos = pos_to_raw_pos(cursor_pos, self.lines)
-  if raw_pos then
-    self.path = self.element:path_from_pos(raw_pos)
+  local new_path = self.element:path_from_pos { cursor_pos[1] - 1, cursor_pos[2] }
+  if new_path then
+    self.path = new_path
 
     if not path_equal(path_before, self.path) then
       self:hover()
@@ -902,11 +882,6 @@ function BufRenderer:hover(force_update_highlight)
     self.tooltip:render()
 
     if not self.tooltip:last_window_valid() then
-      local bufpos = raw_pos_to_pos(
-        self.element:pos_from_path(tt_parent_element_path),
-        self.lines
-      )
-
       self.tooltip.last_window = self.last_window:float {
         buffer = self.tooltip.buffer,
         enter = false,
@@ -915,17 +890,14 @@ function BufRenderer:hover(force_update_highlight)
         width = self.tooltip.width,
         height = self.tooltip.height,
         border = 'rounded',
-        bufpos = bufpos,
+        bufpos = tt_parent_element._start_pos,
         zindex = 50 + self.tooltip.buffer.bufnr, -- later tooltips are guaranteed to have greater buffer handles
       }
     end
   end
 
   if hover_element_path and hover_element then
-    local a = self.element:pos_from_path(hover_element_path)
-    local start_pos = raw_pos_to_pos(a, self.lines)
-    local end_pos = raw_pos_to_pos(a + hover_element._size, self.lines)
-    self.hover_range = { start_pos, end_pos }
+    self.hover_range = { hover_element._start_pos, hover_element._end_pos }
   else
     self.hover_range = nil
   end
@@ -987,14 +959,7 @@ end
 ---@param path PathNode[]
 ---@return {[1]: integer, [2]: integer}? pos 1-indexed line, 0-indexed column
 function BufRenderer:buf_position_from_path(path)
-  if not self.lines then
-    return
-  end
-  local raw_pos = self.element:pos_from_path(path)
-  if not raw_pos then
-    return
-  end
-  local pos = raw_pos_to_pos(raw_pos, self.lines)
+  local pos = self.element:pos_from_path(path)
   if pos then
     return { pos[1] + 1, pos[2] }
   end

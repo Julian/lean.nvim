@@ -45,10 +45,10 @@ describe('Element', function()
       local element = Element:new { text = 'hello', name = 'root' }
       element:render_lines()
 
-      local path = element:path_from_pos(1)
+      local path = element:path_from_pos { 0, 0 }
       assert.is_not_nil(path)
       local pos = element:pos_from_path(path)
-      assert.are.equal(1, pos)
+      assert.are.same({ 0, 0 }, pos)
     end)
 
     it('navigates into the correct child', function()
@@ -57,13 +57,11 @@ describe('Element', function()
       local root = Element:new { name = 'root', children = { a, b } }
       root:render_lines()
 
-      -- Position 1 is the start of child a's text
-      local path_a, stack_a = root:path_from_pos(1)
+      local path_a, stack_a = root:path_from_pos { 0, 0 }
       assert.is_not_nil(path_a)
       assert.are.equal('a', stack_a[#stack_a].name)
 
-      -- Position 4 is the start of child b's text
-      local path_b, stack_b = root:path_from_pos(4)
+      local path_b, stack_b = root:path_from_pos { 0, 3 }
       assert.is_not_nil(path_b)
       assert.are.equal('b', stack_b[#stack_b].name)
     end)
@@ -78,14 +76,16 @@ describe('Element', function()
         },
       }
       local result = element:render_lines()
-      local str = table.concat(result.lines, '\n')
-      assert.are.equal('Raabbb', str)
+      assert.are.same({ 'Raabbb' }, result.lines)
 
-      for pos = 1, #str do
-        local path = element:path_from_pos(pos)
-        assert.is_not_nil(path, ('no path at pos %d'):format(pos))
-        local rt_pos, offset = element:pos_from_path(path)
-        assert.are.equal(pos, rt_pos + offset, ('round-trip failed at pos %d'):format(pos))
+      for line_idx, line in ipairs(result.lines) do
+        for col = 0, #line - 1 do
+          local lc = { line_idx - 1, col }
+          local path = element:path_from_pos(lc)
+          assert.is_not_nil(path, ('no path at {%d, %d}'):format(lc[1], lc[2]))
+          local rt = element:pos_from_path(path)
+          assert.are.same(lc, rt, ('round-trip failed at {%d, %d}'):format(lc[1], lc[2]))
+        end
       end
     end)
 
@@ -94,14 +94,16 @@ describe('Element', function()
       local mid = Element:new { text = 'M', name = 'mid', children = { leaf } }
       local root = Element:new { text = 'R', name = 'root', children = { mid } }
       local result = root:render_lines()
-      local str = table.concat(result.lines, '\n')
-      assert.are.equal('RMleaf', str)
+      assert.are.same({ 'RMleaf' }, result.lines)
 
-      for pos = 1, #str do
-        local path = root:path_from_pos(pos)
-        assert.is_not_nil(path, ('no path at pos %d'):format(pos))
-        local rt_pos, offset = root:pos_from_path(path)
-        assert.are.equal(pos, rt_pos + offset, ('round-trip failed at pos %d'):format(pos))
+      for line_idx, line in ipairs(result.lines) do
+        for col = 0, #line - 1 do
+          local lc = { line_idx - 1, col }
+          local path = root:path_from_pos(lc)
+          assert.is_not_nil(path, ('no path at {%d, %d}'):format(lc[1], lc[2]))
+          local rt = root:pos_from_path(path)
+          assert.are.same(lc, rt, ('round-trip failed at {%d, %d}'):format(lc[1], lc[2]))
+        end
       end
     end)
 
@@ -115,21 +117,23 @@ describe('Element', function()
         },
       }
       local result = element:render_lines()
-      local str = table.concat(result.lines, '\n')
-      assert.are.equal('line1\nline2\nline3', str)
+      assert.are.same({ 'line1', 'line2', 'line3' }, result.lines)
 
-      for pos = 1, #str do
-        local path = element:path_from_pos(pos)
-        assert.is_not_nil(path, ('no path at pos %d'):format(pos))
-        local rt_pos, offset = element:pos_from_path(path)
-        assert.are.equal(pos, rt_pos + offset, ('round-trip failed at pos %d'):format(pos))
+      for line_idx, line in ipairs(result.lines) do
+        for col = 0, #line - 1 do
+          local lc = { line_idx - 1, col }
+          local path = element:path_from_pos(lc)
+          assert.is_not_nil(path, ('no path at {%d, %d}'):format(lc[1], lc[2]))
+          local rt = element:pos_from_path(path)
+          assert.are.same(lc, rt, ('round-trip failed at {%d, %d}'):format(lc[1], lc[2]))
+        end
       end
     end)
 
     it('returns nil for out-of-bounds positions', function()
       local element = Element:new { text = 'abc', name = 'root' }
       element:render_lines()
-      assert.is_nil(element:path_from_pos(100))
+      assert.is_nil(element:path_from_pos { 99, 0 })
     end)
 
     it('returns nil for an invalid path', function()
