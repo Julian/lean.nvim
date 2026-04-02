@@ -432,32 +432,7 @@ function Element:div_from_path(path)
   return stack, self
 end
 
----Get the (0-indexed) {line, col} position of the element arrived at by following the given path.
----@param path PathNode[] the path to follow
----@param positions PositionMap element position map
----@return integer[]? the {line, col} position if the path was valid, nil otherwise
-function Element:pos_from_path(path, positions)
-  local _, element = self:div_from_path(path)
-  if not element then
-    return nil
-  end
 
-  local ep = positions[element]
-  if not ep then
-    return nil
-  end
-
-  -- Use the stored cursor position if it's still within the element's range.
-  local position = path[#path].position
-  if position
-    and not pos_before(position, ep.start_pos)
-    and pos_before(position, ep.end_pos)
-  then
-    return position
-  end
-
-  return ep.start_pos
-end
 
 ---Find the innermost element along a path satisfying a predicate.
 ---@param path PathNode[]
@@ -484,47 +459,7 @@ function Element:children()
   return vim.iter(self.__children)
 end
 
----Get the path at the given (0-indexed) {line, col} position.
----@param pos integer[] {line, col} position (0-indexed)
----@param positions PositionMap element position map
----@return PathNode[]? the path at this position
----@return Element[]? the stack of elements along this path
-function Element:path_from_pos(pos, positions)
-  local path = { { idx = 0, name = self.name } }
-  local stack = { self }
 
-  ::next::
-  local ep = positions[self]
-  if not ep then
-    return nil
-  end
-
-  -- Where does this element's own text end (i.e. where do children begin)?
-  local first_child = self.__children[1]
-  local text_end = first_child and positions[first_child].start_pos or ep.end_pos
-
-  -- Is pos within this element's own text?
-  if pos_before(pos, text_end) then
-    path[#path].position = pos
-    return path, stack
-  end
-
-  -- Find which child contains pos.
-  for idx, child in ipairs(self.__children) do
-    local cp = positions[child]
-    if not cp then
-      return nil
-    end
-    if pos_before(pos, cp.end_pos) then
-      table.insert(path, { idx = idx, name = child.name })
-      table.insert(stack, child)
-      self = child
-      goto next
-    end
-  end
-
-  return nil
-end
 
 ---Trigger the given event at the given path
 ---@param path PathNode[] the path to trigger the event at
@@ -816,7 +751,7 @@ function BufRenderer:update_cursor(window)
 
   local path_before = self.path
   local cursor_pos = self.last_window:cursor()
-  local new_path = self.element:path_from_pos({ cursor_pos[1] - 1, cursor_pos[2] }, self.positions)
+  local new_path = self:path_from_pos { cursor_pos[1] - 1, cursor_pos[2] }
   if new_path then
     self.path = new_path
 
@@ -965,14 +900,88 @@ function BufRenderer:make_event_context()
   }
 end
 
+---Get the (0-indexed) {line, col} position of the element arrived at by following the given path.
+---@param path PathNode[] the path to follow
+---@return integer[]? the {line, col} position if the path was valid, nil otherwise
+function BufRenderer:pos_from_path(path)
+  if not self.positions then
+    return nil
+  end
+
+  local _, element = self.element:div_from_path(path)
+  if not element then
+    return nil
+  end
+
+  local ep = self.positions[element]
+  if not ep then
+    return nil
+  end
+
+  -- Use the stored cursor position if it's still within the element's range.
+  local position = path[#path].position
+  if position
+    and not pos_before(position, ep.start_pos)
+    and pos_before(position, ep.end_pos)
+  then
+    return position
+  end
+
+  return ep.start_pos
+end
+
+---Get the path at the given (0-indexed) {line, col} cursor position.
+---@param pos integer[] {line, col} position (0-indexed)
+---@return PathNode[]? the path at this position
+---@return Element[]? the stack of elements along this path
+function BufRenderer:path_from_pos(pos)
+  if not self.positions then
+    return nil
+  end
+
+  local element = self.element
+  local positions = self.positions
+  local path = { { idx = 0, name = element.name } }
+  local stack = { element }
+
+  ::next::
+  local ep = positions[element]
+  if not ep then
+    return nil
+  end
+
+  -- Where does this element's own text end (i.e. where do children begin)?
+  local first_child = element.__children[1]
+  local text_end = first_child and positions[first_child].start_pos or ep.end_pos
+
+  -- Is pos within this element's own text?
+  if pos_before(pos, text_end) then
+    path[#path].position = pos
+    return path, stack
+  end
+
+  -- Find which child contains pos.
+  for idx, child in ipairs(element.__children) do
+    local cp = positions[child]
+    if not cp then
+      return nil
+    end
+    if pos_before(pos, cp.end_pos) then
+      table.insert(path, { idx = idx, name = child.name })
+      table.insert(stack, child)
+      element = child
+      goto next
+    end
+  end
+
+  return nil
+end
+
 ---Convert an element path to a (1,0)-indexed buffer position.
 ---@param path PathNode[]
 ---@return {[1]: integer, [2]: integer}? pos 1-indexed line, 0-indexed column
 function BufRenderer:buf_position_from_path(path)
-  if not self.positions then
-    return
-  end
-  local pos = self.element:pos_from_path(path, self.positions)
+  local pos = self:pos_from_path(path)
   if pos then
     return { pos[1] + 1, pos[2] }
   end
