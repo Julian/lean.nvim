@@ -47,14 +47,21 @@ describe('Element', function()
     ---@return { [1]: string, [2]: string }[]
     local function rendered_highlights(element)
       local buffer = Buffer.create { name = 'test-hlgroups' }
-      element:renderer { buffer = buffer }:render()
-      local marks = buffer:extmarks(vim.api.nvim_create_namespace 'lean.tui', 0, -1, { details = true })
-      local highlights = vim.iter(marks):map(function(m)
-        local text = vim.api.nvim_buf_get_text(buffer.bufnr, m[2], m[3], m[4].end_row, m[4].end_col, {})
-        return { m[4].hl_group, table.concat(text, '\n') }
-      end):totable()
+      element:renderer({ buffer = buffer }):render()
+      local marks =
+        buffer:extmarks(vim.api.nvim_create_namespace 'lean.tui', 0, -1, { details = true })
+      local highlights = vim
+        .iter(marks)
+        :map(function(m)
+          local text =
+            vim.api.nvim_buf_get_text(buffer.bufnr, m[2], m[3], m[4].end_row, m[4].end_col, {})
+          return { m[4].hl_group, table.concat(text, '\n') }
+        end)
+        :totable()
       buffer:force_delete()
-      table.sort(highlights, function(a, b) return a[1] < b[1] end)
+      table.sort(highlights, function(a, b)
+        return a[1] < b[1]
+      end)
       return highlights
     end
 

@@ -84,9 +84,9 @@ local function to_hypothesis_element(hyp, mvar_id, opts, sess, locations)
     name = 'hyp',
     children = {
       Element:concat(names, ' ', {
-        hlgroups = hyp.isInserted and { 'leanInfoHypNameInserted' }
-          or hyp.isRemoved and { 'leanInfoHypNameRemoved' }
-          or nil,
+        hlgroups = hyp.isInserted and { 'leanInfoHypNameInserted' } or hyp.isRemoved and {
+          'leanInfoHypNameRemoved',
+        } or nil,
       }),
       Element:new { text = ' : ' },
       InteractiveCode(hyp.type, sess, type_locations),
