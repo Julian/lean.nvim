@@ -43,11 +43,11 @@ describe('Element', function()
   describe('path navigation', function()
     it('round-trips through a simple element', function()
       local element = Element:new { text = 'hello', name = 'root' }
-      element:render_lines()
+      local result = element:render_lines()
 
-      local path = element:path_from_pos { 0, 0 }
+      local path = element:path_from_pos({ 0, 0 }, result.positions)
       assert.is_not_nil(path)
-      local pos = element:pos_from_path(path)
+      local pos = element:pos_from_path(path, result.positions)
       assert.are.same({ 0, 0 }, pos)
     end)
 
@@ -55,13 +55,13 @@ describe('Element', function()
       local a = Element:new { text = 'aaa', name = 'a' }
       local b = Element:new { text = 'bbb', name = 'b' }
       local root = Element:new { name = 'root', children = { a, b } }
-      root:render_lines()
+      local result = root:render_lines()
 
-      local path_a, stack_a = root:path_from_pos { 0, 0 }
+      local path_a, stack_a = root:path_from_pos({ 0, 0 }, result.positions)
       assert.is_not_nil(path_a)
       assert.are.equal('a', stack_a[#stack_a].name)
 
-      local path_b, stack_b = root:path_from_pos { 0, 3 }
+      local path_b, stack_b = root:path_from_pos({ 0, 3 }, result.positions)
       assert.is_not_nil(path_b)
       assert.are.equal('b', stack_b[#stack_b].name)
     end)
@@ -81,9 +81,9 @@ describe('Element', function()
       for line_idx, line in ipairs(result.lines) do
         for col = 0, #line - 1 do
           local lc = { line_idx - 1, col }
-          local path = element:path_from_pos(lc)
+          local path = element:path_from_pos(lc, result.positions)
           assert.is_not_nil(path, ('no path at {%d, %d}'):format(lc[1], lc[2]))
-          local rt = element:pos_from_path(path)
+          local rt = element:pos_from_path(path, result.positions)
           assert.are.same(lc, rt, ('round-trip failed at {%d, %d}'):format(lc[1], lc[2]))
         end
       end
@@ -99,9 +99,9 @@ describe('Element', function()
       for line_idx, line in ipairs(result.lines) do
         for col = 0, #line - 1 do
           local lc = { line_idx - 1, col }
-          local path = root:path_from_pos(lc)
+          local path = root:path_from_pos(lc, result.positions)
           assert.is_not_nil(path, ('no path at {%d, %d}'):format(lc[1], lc[2]))
-          local rt = root:pos_from_path(path)
+          local rt = root:pos_from_path(path, result.positions)
           assert.are.same(lc, rt, ('round-trip failed at {%d, %d}'):format(lc[1], lc[2]))
         end
       end
@@ -122,9 +122,9 @@ describe('Element', function()
       for line_idx, line in ipairs(result.lines) do
         for col = 0, #line - 1 do
           local lc = { line_idx - 1, col }
-          local path = element:path_from_pos(lc)
+          local path = element:path_from_pos(lc, result.positions)
           assert.is_not_nil(path, ('no path at {%d, %d}'):format(lc[1], lc[2]))
-          local rt = element:pos_from_path(path)
+          local rt = element:pos_from_path(path, result.positions)
           assert.are.same(lc, rt, ('round-trip failed at {%d, %d}'):format(lc[1], lc[2]))
         end
       end
@@ -132,14 +132,14 @@ describe('Element', function()
 
     it('returns nil for out-of-bounds positions', function()
       local element = Element:new { text = 'abc', name = 'root' }
-      element:render_lines()
-      assert.is_nil(element:path_from_pos { 99, 0 })
+      local result = element:render_lines()
+      assert.is_nil(element:path_from_pos({ 99, 0 }, result.positions))
     end)
 
     it('returns nil for an invalid path', function()
       local element = Element:new { text = 'abc', name = 'root' }
-      element:render_lines()
-      assert.is_nil(element:pos_from_path { { idx = 0, name = 'wrong' } })
+      local result = element:render_lines()
+      assert.is_nil(element:pos_from_path({ { idx = 0, name = 'wrong' } }, result.positions))
     end)
   end)
 
