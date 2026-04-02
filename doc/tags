@@ -17,6 +17,7 @@ LeanDidOpenTextDocumentParams	lean.txt	/*LeanDidOpenTextDocumentParams*
 LeanFileProgressParams	lean.txt	/*LeanFileProgressParams*
 LeanPublishDiagnosticsParams	lean.txt	/*LeanPublishDiagnosticsParams*
 LeanTextDocumentItem	lean.txt	/*LeanTextDocumentItem*
+NavigationDirection	lean.txt	/*NavigationDirection*
 Pin	lean.txt	/*Pin*
 WaitForDiagnosticsParams	lean.txt	/*WaitForDiagnosticsParams*
 WaitForILeansParams	lean.txt	/*WaitForILeansParams*
@@ -51,8 +52,17 @@ infoview.enable	lean.txt	/*infoview.enable*
 infoview.enable_widgets	lean.txt	/*infoview.enable_widgets*
 infoview.get_current_infoview	lean.txt	/*infoview.get_current_infoview*
 infoview.go_to	lean.txt	/*infoview.go_to*
+infoview.go_to_goal	lean.txt	/*infoview.go_to_goal*
+infoview.next_goal	lean.txt	/*infoview.next_goal*
+infoview.next_hypothesis	lean.txt	/*infoview.next_hypothesis*
+infoview.next_link	lean.txt	/*infoview.next_link*
+infoview.next_suggestion	lean.txt	/*infoview.next_suggestion*
 infoview.open	lean.txt	/*infoview.open*
 infoview.pin_toggle_pause	lean.txt	/*infoview.pin_toggle_pause*
+infoview.prev_goal	lean.txt	/*infoview.prev_goal*
+infoview.prev_hypothesis	lean.txt	/*infoview.prev_hypothesis*
+infoview.prev_link	lean.txt	/*infoview.prev_link*
+infoview.prev_suggestion	lean.txt	/*infoview.prev_suggestion*
 infoview.reposition	lean.txt	/*infoview.reposition*
 infoview.select_view_options	lean.txt	/*infoview.select_view_options*
 infoview.set_autoopen	lean.txt	/*infoview.set_autoopen*

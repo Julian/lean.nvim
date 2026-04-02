@@ -148,6 +148,12 @@ InfoviewNewArgs                                                *InfoviewNewArgs*
         {orientation?}  ()
 
 
+NavigationDirection                                        *NavigationDirection*
+
+    Type: ~
+        "next"|"prev"
+
+
 FilterSelection                                                *FilterSelection*
 
     Fields: ~
@@ -244,12 +250,51 @@ infoview.select_view_options()                    *infoview.select_view_options*
     which hypotheses are shown, set them in your lean.nvim configuration.
 
 
+infoview.go_to_goal({n?})                                  *infoview.go_to_goal*
+    Move the infoview cursor to the given goal.
+
+    Parameters: ~
+        {n?}  (integer)  the goal number to move to, defaulting to the first
+
+
+infoview.next_goal()                                        *infoview.next_goal*
+    Move the infoview cursor to the next goal.
+
+
+infoview.prev_goal()                                        *infoview.prev_goal*
+    Move the infoview cursor to the previous goal.
+
+
+infoview.next_hypothesis()                            *infoview.next_hypothesis*
+    Move the infoview cursor to the next hypothesis.
+
+
+infoview.prev_hypothesis()                            *infoview.prev_hypothesis*
+    Move the infoview cursor to the previous hypothesis.
+
+
+infoview.next_suggestion()                            *infoview.next_suggestion*
+    Move the infoview cursor to the next suggestion.
+
+
+infoview.prev_suggestion()                            *infoview.prev_suggestion*
+    Move the infoview cursor to the previous suggestion.
+
+
+infoview.next_link()                                        *infoview.next_link*
+    Move the infoview cursor to the next link.
+
+
+infoview.prev_link()                                        *infoview.prev_link*
+    Move the infoview cursor to the previous link.
+
+
 goals.at({sess})                                                      *goals.at*
     Return the interactive goals at the given position, caching them for access.
 
     Parameters: ~
-        {sess}  (Subsession)  @return InteractiveGoal[]? goals
-                              @return LspError? err
+        {sess}  (ReconnectingSubsession)  @return InteractiveGoal[]? goals
+                                          @return LspError? err
 
 
 ==============================================================================

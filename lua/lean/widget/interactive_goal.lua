@@ -184,9 +184,9 @@ function interactive_goal.Goal(goal, sess, locations)
     children = {
       Element:new {
         text = goal.goalPrefix or '⊢ ',
-        hlgroups = goal.isInserted and { 'leanInfoGoalInserted' }
-          or goal.isRemoved and { 'leanInfoGoalRemoved' }
-          or { 'leanInfoGoalPrefix' },
+        hlgroups = goal.isInserted and { 'leanInfoGoalInserted' } or goal.isRemoved and {
+          'leanInfoGoalRemoved',
+        } or { 'leanInfoGoalPrefix' },
       },
       InteractiveCode(goal.type, sess, goal_locations),
     },

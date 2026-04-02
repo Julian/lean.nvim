@@ -155,7 +155,7 @@ local function insert_char_pre()
       end
     end)
 
-    for imap in vim.iter(buf.keymaps:get('i')) do
+    for imap in vim.iter(buf.keymaps:get 'i') do
       local lhs = imap.lhs
       local rhs = imap.rhs or ''
       if mappings[lhs] then

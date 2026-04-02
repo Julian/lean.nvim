@@ -475,6 +475,12 @@ function Element:find_innermost_along(path, check)
   end
 end
 
+---Iterate over this element's direct children.
+---@return Iter iterator yielding child elements (use :enumerate() for indices)
+function Element:children()
+  return vim.iter(self.__children)
+end
+
 local function pos_to_raw_pos(pos, lines)
   local raw_pos = 0
   for i = 1, pos[1] - 1 do
@@ -978,6 +984,23 @@ function BufRenderer:make_event_context()
       end
     end,
   }
+end
+
+---Convert an element path to a (1,0)-indexed buffer position.
+---@param path PathNode[]
+---@return {[1]: integer, [2]: integer}? pos 1-indexed line, 0-indexed column
+function BufRenderer:buf_position_from_path(path)
+  if not self.lines then
+    return
+  end
+  local raw_pos = self.element:pos_from_path(path)
+  if not raw_pos then
+    return
+  end
+  local pos = raw_pos_to_pos(raw_pos, self.lines)
+  if pos then
+    return { pos[1] + 1, pos[2] }
+  end
 end
 
 function BufRenderer:enter_win()

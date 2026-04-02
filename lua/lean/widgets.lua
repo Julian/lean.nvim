@@ -124,6 +124,7 @@ end
 function RenderContext:edit_link(text, range, new_text)
   return Element.link {
     text = text,
+    name = 'suggestion',
     action = function()
       local bufnr = vim.uri_to_bufnr(self.params.textDocument.uri)
       if not vim.api.nvim_buf_is_loaded(bufnr) then

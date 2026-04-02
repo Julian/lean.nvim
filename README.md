@@ -177,6 +177,11 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 | `gd`                 | `<Plug>(LeanInfoviewGoToDef)`               | go-to-definition of what is under the cursor                      |
 | `gD`                 | `<Plug>(LeanInfoviewGoToDecl)`              | go-to-declaration of what is under the cursor                     |
 | `gy`                 | `<Plug>(LeanInfoviewGoToType)`              | go-to-type of what is under the cursor                            |
+| `<LocalLeader>g`     | `<Plug>(LeanInfoviewGoToGoal)`              | jump to the first (or current) goal                               |
+| `]g` / `[g`         | `<Plug>(LeanInfoviewNextGoal)` / `Prev`     | next / previous goal                                              |
+| `]h` / `[h`         | `<Plug>(LeanInfoviewNextHypothesis)` / `Prev` | next / previous hypothesis                                     |
+| `]s` / `[s`         | `<Plug>(LeanInfoviewNextSuggestion)` / `Prev` | next / previous "Try this" suggestion                           |
+| `]l` / `[l`         | `<Plug>(LeanInfoviewNextLink)` / `Prev`     | next / previous interactive link                                  |
 | `<LocalLeader><Tab>` | `<Plug>(LeanInfoviewGotoLastWindow)`        | jump to the lean file associated with the current infoview window |
 | `<LocalLeader>\\`    | `<Plug>(LeanAbbreviationsReverseLookup)`    | show what abbreviation produces the symbol under the cursor       |
 
