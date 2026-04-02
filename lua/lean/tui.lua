@@ -45,7 +45,7 @@ local log = require 'lean.log'
 ---@field hlgroups? string[]|fun():string[]|nil the highlight group(s) for this element's text, or a function that returns them
 ---@field tooltip? Element? tooltip
 ---@field highlightable boolean (for buffer rendering) whether to highlight this element when hovering over it
----@field _size? integer Computed size of this element, updated by `Element:to_string`
+---@field _size? integer Computed size of this element, updated during rendering
 ---@field private __children Element[] this element's children
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
 local Element = {}
@@ -56,6 +56,8 @@ Element.__index = Element
 ---@field buffer Buffer Buffer the element renders to
 ---@field element Element the element rendered by this renderer
 ---@field lines? string[] Rendered lines.
+---@field width? integer Width of the rendered content.
+---@field height? integer Height of the rendered content.
 ---@field path? PathNode[] Current cursor path
 ---@field last_window? Window window of the last event
 ---@field keymaps table Extra keymaps (inherited by tooltips)
@@ -318,68 +320,28 @@ function Element:remove_tooltip()
   self.tooltip = nil
 end
 
----Return the {width, height} of the element as rendered.
----@return integer width
----@return integer height
-function Element:layout()
-  -- Don't add new callers of this function, we want to remove it.
-  local lines = vim.split(self:to_string(), '\n')
-  local width = 0
-  for _, line in ipairs(lines) do
-    width = math.max(width, vim.fn.strdisplaywidth(line))
-  end
-  return width, #lines
-end
-
----@class ElementHighlight
----@field start integer
----@field end integer
----@field hlgroup string
-
----@return ElementHighlight[]
-function Element:_get_highlights()
-  local hls = {} ---@type ElementHighlight[]
-
-  ---@param element Element
-  ---@param pos integer
-  local function go(element, pos)
-    local hlgroups = element.hlgroups
-    if type(hlgroups) == 'function' then
-      hlgroups = hlgroups(element)
-    end
-    if hlgroups then
-      for _, hg in ipairs(hlgroups) do
-        table.insert(hls, {
-          start = pos,
-          ['end'] = pos + element._size,
-          hlgroup = hg,
-        })
-      end
-    end
-
-    pos = pos + #element.text
-    for _, child in ipairs(element.__children) do
-      go(child, pos)
-      pos = pos + child._size
-    end
-  end
-
-  go(self, 1)
-
-  return hls
-end
-
 ---Render the element into a string.
----@param renderer? BufRenderer
 ---@return string
-function Element:to_string(renderer)
-  log:trace { message = 'converting element to string', name = self.name }
-  local pieces = {}
+function Element:to_string()
+  return table.concat(self:render_lines().lines, '\n')
+end
+
+---Render the element into lines, highlights, and dimensions in a single pass.
+---@param renderer? BufRenderer
+---@return { lines: string[], highlights: { hlgroup: string, start_pos: integer[], end_pos: integer[] }[], width: integer, height: integer }
+function Element:render_lines(renderer)
+  log:trace { message = 'rendering element to lines', name = self.name }
+  local lines = { '' }
+  local highlights = {}
+  local line_idx = 1
+  local col = 0
+  local width = 0
+
   ---@param element Element
   local function go(element)
     if element.__async_init and renderer then
       renderer.pending_elements[element] = true
-      element.__async_init(function(resolved_element)  ---@type Element resolved_element
+      element.__async_init(function(resolved_element) ---@type Element resolved_element
         element:set_children { resolved_element }
         renderer.pending_elements[element] = nil
         renderer:render()
@@ -387,16 +349,55 @@ function Element:to_string(renderer)
       element.__async_init = nil -- only run once
     end
 
-    table.insert(pieces, element.text)
-    local size = #element.text
+    local start_line = line_idx
+    local start_col = col
+
+    local text = element.text
+    if text ~= '' then
+      local pos = 1
+      while pos <= #text do
+        local nl = text:find('\n', pos, true)
+        if nl then
+          local chunk = text:sub(pos, nl - 1)
+          lines[line_idx] = lines[line_idx] .. chunk
+          width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
+          line_idx = line_idx + 1
+          lines[line_idx] = ''
+          col = 0
+          pos = nl + 1
+        else
+          local rest = text:sub(pos)
+          lines[line_idx] = lines[line_idx] .. rest
+          col = col + #rest
+          break
+        end
+      end
+    end
+
+    local size = #text
     for _, child in ipairs(element.__children) do
       go(child)
       size = size + child._size
     end
     element._size = size
+
+    local hlgroups = element.hlgroups
+    if type(hlgroups) == 'function' then
+      hlgroups = hlgroups(element)
+    end
+    if hlgroups then
+      local start_pos = { start_line - 1, start_col }
+      local end_pos = { line_idx - 1, col }
+      for _, hg in ipairs(hlgroups) do
+        table.insert(highlights, { hlgroup = hg, start_pos = start_pos, end_pos = end_pos })
+      end
+    end
   end
+
   go(self)
-  return table.concat(pieces)
+  width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
+
+  return { lines = lines, highlights = highlights, width = width, height = line_idx }
 end
 
 ---Represents a node in a path through an element.
@@ -516,7 +517,7 @@ local function raw_pos_to_pos(raw_pos, lines)
 end
 
 ---Get the path at the given raw byte position.
----(requires previous call to Element:to_string)
+---(requires _size to have been computed, e.g. via to_string or render_lines)
 ---@param pos integer byte position
 ---@return PathNode[]? the path at this position
 ---@return Element[]? the stack of elements along this path
@@ -738,16 +739,15 @@ function BufRenderer:render()
 
   self.buffer:clear_namespace(self.__tui_ns)
 
-  local text = self.element:to_string(self)
-  local lines = vim.split(text, '\n')
-
-  self.lines = lines
-
+  local result = self.element:render_lines(self)
+  self.lines = result.lines
+  self.width = result.width
+  self.height = result.height
 
   self.buffer.o.modifiable = true
   -- XXX: Again I do not understand why tests occasionally are flaky,
   --      complaining about invalid buffer names, if we don't have this pcall.
-  local ok, err = pcall(Buffer.set_lines, self.buffer, lines)
+  local ok, err = pcall(Buffer.set_lines, self.buffer, result.lines)
   if not ok then
     log:error {
       message = 'infoview failed to update',
@@ -757,10 +757,8 @@ function BufRenderer:render()
   end
   self.buffer.o.modifiable = false
 
-  for _, hl in ipairs(self.element:_get_highlights()) do
-    local start_pos = raw_pos_to_pos(hl.start, lines)
-    local end_pos = raw_pos_to_pos(hl['end'], lines)
-    vim.hl.range(self.buffer.bufnr, self.__tui_ns, hl.hlgroup, start_pos, end_pos)
+  for _, hl in ipairs(result.highlights) do
+    vim.hl.range(self.buffer.bufnr, self.__tui_ns, hl.hlgroup, hl.start_pos, hl.end_pos)
   end
 
   if self.path then
@@ -770,7 +768,7 @@ function BufRenderer:render()
       self.path = nil
     elseif self:last_window_valid() then
       local raw_pos, offset = self.element:pos_from_path(self.path)
-      local pos = raw_pos_to_pos(raw_pos + offset, lines)
+      local pos = raw_pos_to_pos(raw_pos + offset, self.lines)
       self.last_window:set_cursor { pos[1] + 1, pos[2] }
     end
   end
@@ -901,27 +899,26 @@ function BufRenderer:hover(force_update_highlight)
       }
     end
 
+    self.tooltip:render()
+
     if not self.tooltip:last_window_valid() then
       local bufpos = raw_pos_to_pos(
         self.element:pos_from_path(tt_parent_element_path),
         self.lines
       )
-      local width, height = new_tooltip_element:layout()
 
       self.tooltip.last_window = self.last_window:float {
         buffer = self.tooltip.buffer,
         enter = false,
         noautocmd = true,  -- avoid firing update_cursor by disabling the autocmds
         style = 'minimal',
-        width = width,
-        height = height,
+        width = self.tooltip.width,
+        height = self.tooltip.height,
         border = 'rounded',
         bufpos = bufpos,
         zindex = 50 + self.tooltip.buffer.bufnr, -- later tooltips are guaranteed to have greater buffer handles
       }
     end
-
-    self.tooltip:render()
   end
 
   if hover_element_path and hover_element then

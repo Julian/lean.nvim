@@ -40,6 +40,105 @@ describe('Element', function()
     end)
   end)
 
+  describe('path navigation', function()
+    it('round-trips through a simple element', function()
+      local element = Element:new { text = 'hello', name = 'root' }
+      element:render_lines()
+
+      local path = element:path_from_pos(1)
+      assert.is_not_nil(path)
+      local pos = element:pos_from_path(path)
+      assert.are.equal(1, pos)
+    end)
+
+    it('navigates into the correct child', function()
+      local a = Element:new { text = 'aaa', name = 'a' }
+      local b = Element:new { text = 'bbb', name = 'b' }
+      local root = Element:new { name = 'root', children = { a, b } }
+      root:render_lines()
+
+      -- Position 1 is the start of child a's text
+      local path_a, stack_a = root:path_from_pos(1)
+      assert.is_not_nil(path_a)
+      assert.are.equal('a', stack_a[#stack_a].name)
+
+      -- Position 4 is the start of child b's text
+      local path_b, stack_b = root:path_from_pos(4)
+      assert.is_not_nil(path_b)
+      assert.are.equal('b', stack_b[#stack_b].name)
+    end)
+
+    it('round-trips at every position in a multi-child element', function()
+      local element = Element:new {
+        text = 'R',
+        name = 'root',
+        children = {
+          Element:new { text = 'aa', name = 'a' },
+          Element:new { text = 'bbb', name = 'b' },
+        },
+      }
+      local result = element:render_lines()
+      local str = table.concat(result.lines, '\n')
+      assert.are.equal('Raabbb', str)
+
+      for pos = 1, #str do
+        local path = element:path_from_pos(pos)
+        assert.is_not_nil(path, ('no path at pos %d'):format(pos))
+        local rt_pos, offset = element:pos_from_path(path)
+        assert.are.equal(pos, rt_pos + offset, ('round-trip failed at pos %d'):format(pos))
+      end
+    end)
+
+    it('round-trips through nested children', function()
+      local leaf = Element:new { text = 'leaf', name = 'leaf' }
+      local mid = Element:new { text = 'M', name = 'mid', children = { leaf } }
+      local root = Element:new { text = 'R', name = 'root', children = { mid } }
+      local result = root:render_lines()
+      local str = table.concat(result.lines, '\n')
+      assert.are.equal('RMleaf', str)
+
+      for pos = 1, #str do
+        local path = root:path_from_pos(pos)
+        assert.is_not_nil(path, ('no path at pos %d'):format(pos))
+        local rt_pos, offset = root:pos_from_path(path)
+        assert.are.equal(pos, rt_pos + offset, ('round-trip failed at pos %d'):format(pos))
+      end
+    end)
+
+    it('round-trips through multi-line content', function()
+      local element = Element:new {
+        text = 'line1\n',
+        name = 'root',
+        children = {
+          Element:new { text = 'line2\n', name = 'a' },
+          Element:new { text = 'line3', name = 'b' },
+        },
+      }
+      local result = element:render_lines()
+      local str = table.concat(result.lines, '\n')
+      assert.are.equal('line1\nline2\nline3', str)
+
+      for pos = 1, #str do
+        local path = element:path_from_pos(pos)
+        assert.is_not_nil(path, ('no path at pos %d'):format(pos))
+        local rt_pos, offset = element:pos_from_path(path)
+        assert.are.equal(pos, rt_pos + offset, ('round-trip failed at pos %d'):format(pos))
+      end
+    end)
+
+    it('returns nil for out-of-bounds positions', function()
+      local element = Element:new { text = 'abc', name = 'root' }
+      element:render_lines()
+      assert.is_nil(element:path_from_pos(100))
+    end)
+
+    it('returns nil for an invalid path', function()
+      local element = Element:new { text = 'abc', name = 'root' }
+      element:render_lines()
+      assert.is_nil(element:pos_from_path { { idx = 0, name = 'wrong' } })
+    end)
+  end)
+
   describe('hlgroups', function()
     ---Render element into a scratch buffer and return the applied highlights
     ---as `{ hl_group, text }` pairs, sorted for determinism.
@@ -105,6 +204,47 @@ describe('Element', function()
         { { 'Comment', 'bar' }, { 'String', 'foobar' } },
         rendered_highlights(element)
       )
+    end)
+
+    it('highlights a child on the second line', function()
+      local element = Element:new {
+        text = 'first line\n',
+        children = {
+          Element:new { text = 'second', hlgroups = { 'String' } },
+        },
+      }
+      assert.are.same({ { 'String', 'second' } }, rendered_highlights(element))
+    end)
+
+    it('highlights text spanning multiple lines', function()
+      local element = Element:new {
+        text = 'spans\ntwo lines',
+        hlgroups = { 'Comment' },
+      }
+      assert.are.same({ { 'Comment', 'spans\ntwo lines' } }, rendered_highlights(element))
+    end)
+
+    it('highlights multiple children across lines', function()
+      local element = Element:new {
+        children = {
+          Element:new { text = 'aaa', hlgroups = { 'String' } },
+          Element:new { text = '\n' },
+          Element:new { text = 'bbb', hlgroups = { 'Comment' } },
+        },
+      }
+      local hls = rendered_highlights(element)
+      assert.are.same({ { 'Comment', 'bbb' }, { 'String', 'aaa' } }, hls)
+    end)
+
+    it('highlights a parent spanning children across lines', function()
+      local element = Element:new {
+        text = 'top',
+        hlgroups = { 'Title' },
+        children = {
+          Element:new { text = '\nbottom' },
+        },
+      }
+      assert.are.same({ { 'Title', 'top\nbottom' } }, rendered_highlights(element))
     end)
   end)
 
@@ -601,6 +741,151 @@ describe('Element', function()
         element:renderer { buffer = buffer }
       )
       buffer:delete()
+    end)
+  end)
+end)
+
+describe('BufRenderer', function()
+  describe(':render', function()
+    it('sets buffer lines from the element', function()
+      local buffer = Buffer.create { scratch = true }
+      local element = Element:new {
+        text = 'line1\n',
+        children = {
+          Element:new { text = 'line2\n' },
+          Element:new { text = 'line3' },
+        },
+      }
+      local renderer = element:renderer { buffer = buffer }
+      renderer:render()
+      assert.contents.are { 'line1\nline2\nline3', buffer = buffer }
+      buffer:force_delete()
+    end)
+  end)
+
+  describe(':buf_position_from_path', function()
+    it('returns nil before the first render', function()
+      local buffer = Buffer.create { scratch = true }
+      local element = Element:new { text = 'hello', name = 'root' }
+      local renderer = element:renderer { buffer = buffer }
+      -- lines is nil before render
+      assert.is_nil(renderer:buf_position_from_path { { idx = 0, name = 'root' } })
+      buffer:force_delete()
+    end)
+
+    it('returns the (1,0)-indexed position for the root', function()
+      local buffer = Buffer.create { scratch = true }
+      local element = Element:new { text = 'hello', name = 'root' }
+      local renderer = element:renderer { buffer = buffer }
+      renderer:render()
+
+      local pos = renderer:buf_position_from_path { { idx = 0, name = 'root' } }
+      assert.are.same({ 1, 0 }, pos)
+      buffer:force_delete()
+    end)
+
+    it('returns positions for children on different lines', function()
+      local buffer = Buffer.create { scratch = true }
+      local element = Element:new {
+        text = 'first\n',
+        name = 'root',
+        children = {
+          Element:new { text = 'second\n', name = 'a' },
+          Element:new { text = 'third', name = 'b' },
+        },
+      }
+      local renderer = element:renderer { buffer = buffer }
+      renderer:render()
+
+      local pos_root = renderer:buf_position_from_path { { idx = 0, name = 'root' } }
+      assert.are.same({ 1, 0 }, pos_root)
+
+      local pos_a = renderer:buf_position_from_path {
+        { idx = 0, name = 'root' },
+        { idx = 1, name = 'a' },
+      }
+      assert.are.same({ 2, 0 }, pos_a)
+
+      local pos_b = renderer:buf_position_from_path {
+        { idx = 0, name = 'root' },
+        { idx = 2, name = 'b' },
+      }
+      assert.are.same({ 3, 0 }, pos_b)
+
+      buffer:force_delete()
+    end)
+
+    it('returns correct column for children mid-line', function()
+      local buffer = Buffer.create { scratch = true }
+      local element = Element:new {
+        text = 'AB',
+        name = 'root',
+        children = {
+          Element:new { text = 'CD', name = 'a' },
+          Element:new { text = 'EF', name = 'b' },
+        },
+      }
+      local renderer = element:renderer { buffer = buffer }
+      renderer:render()
+
+      local pos_a = renderer:buf_position_from_path {
+        { idx = 0, name = 'root' },
+        { idx = 1, name = 'a' },
+      }
+      assert.are.same({ 1, 2 }, pos_a)
+
+      local pos_b = renderer:buf_position_from_path {
+        { idx = 0, name = 'root' },
+        { idx = 2, name = 'b' },
+      }
+      assert.are.same({ 1, 4 }, pos_b)
+
+      buffer:force_delete()
+    end)
+  end)
+
+  describe('hover highlighting', function()
+    it('highlights a highlightable element when hovered', function()
+      local buffer = Buffer.create { scratch = true }
+      local element = Element:new {
+        name = 'root',
+        children = {
+          Element:new { text = 'normal ' },
+          Element:new { text = 'clickable', highlightable = true, events = { click = function() end } },
+        },
+      }
+      local renderer = element:renderer { buffer = buffer }
+      renderer:render()
+
+      -- Simulate the cursor being on 'clickable' (starts at column 7)
+      local window = Window:current()
+      vim.api.nvim_set_current_buf(buffer.bufnr)
+      window:set_cursor { 1, 7 }
+      renderer:update_cursor(window)
+
+      assert.is_not_nil(renderer.hover_range)
+      -- hover_range is (0,0)-indexed
+      assert.are.same({ 0, 7 }, renderer.hover_range[1])
+      assert.are.same({ 0, 16 }, renderer.hover_range[2])
+
+      buffer:force_delete()
+    end)
+
+    it('clears hover highlight when path is nil', function()
+      local buffer = Buffer.create { scratch = true }
+      local element = Element:new {
+        name = 'root',
+        text = 'hello',
+      }
+      local renderer = element:renderer { buffer = buffer }
+      renderer:render()
+
+      renderer.path = nil
+      renderer:hover()
+
+      assert.is_nil(renderer.hover_range)
+
+      buffer:force_delete()
     end)
   end)
 end)
