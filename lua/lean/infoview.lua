@@ -326,14 +326,44 @@ function Infoview:move_cursor_to_goal(n)
   end
 
   n = n or 1
-  for i, line in ipairs(self.info.__renderer.buffer:lines()) do
+  local renderer = self.info.__renderer
+  local root = renderer.element
+  local root_path = { { idx = 0, name = root.name } }
+
+  -- Navigate semantically via the element tree when goals are available
+  -- (interactive widgets). This handles any goal prefix, not just '⊢ '.
+  for interactive_goal in root:filter(has_name 'interactive-goal') do
+    local goal = interactive_goal:find(is_goal)
+    if goal then
+      n = n - 1
+      if n == 0 then
+        local goal_path = find_descendant_path(root, function(e) return e == goal end, root_path)
+        if goal_path then
+          -- Navigate past the goal prefix (e.g. '⊢ ') to the goal expression.
+          local expr = goal:children():nth(2)
+          local target_path = expr
+            and find_descendant_path(goal, function(e) return e == expr end, goal_path)
+            or goal_path
+          local pos = renderer:buf_position_from_path(target_path)
+          if pos then
+            self.window:set_cursor(pos)
+            renderer:update_cursor(self.window)
+          end
+        end
+        return
+      end
+    end
+  end
+
+  -- Fallback for plain (non-widget) goals, or when the element tree
+  -- hasn't been fully populated yet (e.g. still loading).
+  for i, line in ipairs(renderer.buffer:lines()) do
     if line:find '^⊢ ' then
       n = n - 1
       if n == 0 then
-        self.window:call(function()
-          vim.cmd.normal { i .. 'z-2l', bang = true }
-        end)
-        break
+        self.window:set_cursor { i, #'⊢ ' }
+        renderer:update_cursor(self.window)
+        return
       end
     end
   end
