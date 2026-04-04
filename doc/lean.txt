@@ -273,6 +273,20 @@ infoview.prev_hypothesis()                            *infoview.prev_hypothesis*
     Move the infoview cursor to the previous hypothesis.
 
 
+infoview.go_to_suggestion({n?})                      *infoview.go_to_suggestion*
+    Move the infoview cursor to the given suggestion.
+
+    Parameters: ~
+        {n?}  (integer)  the suggestion number to move to, defaulting to the first
+
+
+infoview.accept_suggestion({n?})                    *infoview.accept_suggestion*
+    Accept (click) the given suggestion.
+
+    Parameters: ~
+        {n?}  (integer)  the suggestion number to accept, defaulting to the first
+
+
 infoview.next_suggestion()                            *infoview.next_suggestion*
     Move the infoview cursor to the next suggestion.
 
