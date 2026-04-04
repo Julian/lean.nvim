@@ -163,7 +163,7 @@ interactive_diagnostic.is_trace_message = interactive_diagnostic.TaggedTextMsgEm
 ---@alias HighlightedMsgEmbed MsgEmbedExpr | MsgEmbedGoal | MsgEmbedWidget | MsgEmbedTrace | '"highlighted"'
 
 ---Dispatch a MsgEmbed using the highlighted variants of each renderer.
-local renderHighlightedMsgEmbed = interactive_diagnostic.MsgEmbed:match {
+local render_highlighted_msg_embed = interactive_diagnostic.MsgEmbed:match {
   expr = function(expr, sess)
     return InteractiveCode.Highlighted(expr, sess)
   end,
@@ -212,7 +212,7 @@ interactive_diagnostic.TaggedTextHighlightedMsgEmbed = TaggedText(
       return child
     end
 
-    return renderHighlightedMsgEmbed(embed, sess, parent_cls)
+    return render_highlighted_msg_embed(embed, sess, parent_cls)
   end
 )
 

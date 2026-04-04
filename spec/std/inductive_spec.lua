@@ -162,19 +162,22 @@ describe('inductive', function()
         },
         pair = {
           calc = function(self, z)
-            return self.x + self.y + z
+            return self[1].x + self[1].y + z
           end,
         },
       })
 
       local id = { id = {} }
       assert.are.same(id, Foo(id):serialize())
+      assert.are.equal(100, Foo(id):calc(100))
 
       local const = { const = 37 }
       assert.are.same(const, Foo(const):serialize())
+      assert.are.equal(137, Foo(const):calc(100))
 
       local pair = { pair = { x = 37, y = 73 } }
       assert.are.same(pair, Foo(pair):serialize())
+      assert.are.equal(210, Foo(pair):calc(100))
     end)
   end)
 
