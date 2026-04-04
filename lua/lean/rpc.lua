@@ -281,6 +281,7 @@ local function connect(uri)
     sess.connected = true
     if err ~= nil then
       sess.connect_err = err
+      sess:close_without_releasing()
     else
       sess.session_id = result.sessionId
       sess.connect_err = nil
