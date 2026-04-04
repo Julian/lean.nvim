@@ -18,6 +18,11 @@ Set FontSize 14
 Hide
 Type "just nvim demos/lean/Abbreviations.lean" Enter
 Sleep 3s
+Type ":luafile demos/basic.lua" Enter
+Type ":lua DEMO.show_keys()" Enter
+Sleep 500ms
+Ctrl+l
+Sleep 200ms
 Show
 
 # Go to end of file, start typing a definition with unicode
@@ -44,6 +49,13 @@ Type "fℝ"
 Sleep 500ms
 Type "\\\\"
 Sleep 2s
+Escape
+
+# End card
+Hide
+Type@0ms ":lua DEMO.end_card{' In this demo:', '', '  • \\-prefixed abbreviation expansion (e.g. \\forall \\to \\R)', '  • Reverse lookup to find how to type any symbol', '', ' See :h lean.abbreviations for more.'}" Enter
+Show
+Sleep 4s
 
 Type ":qa!" Enter
 Sleep 500ms
