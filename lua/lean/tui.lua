@@ -42,9 +42,9 @@ local log = require 'lean.log'
 ---@field events EventCallbacks functions to fire for events which this element responds to
 ---@field text string the text to show when rendering this element
 ---@field name string a named handle for this element, used when path-searching
----@field hlgroups? string[]|fun():string[]|nil the highlight group(s) for this element's text, or a function that returns them
+---@field hlgroups? string[]|fun():string[]|nil highlight group(s) or a function returning them
 ---@field tooltip? Element? tooltip
----@field highlightable boolean (for buffer rendering) whether to highlight this element when hovering over it
+---@field highlightable boolean (for buffer rendering) highlight this element when hovering
 
 ---@field private __children Element[] this element's children
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
@@ -57,7 +57,7 @@ Element.__index = Element
 ---@field element Element the element rendered by this renderer
 ---@field width? integer Width of the rendered content.
 ---@field height? integer Height of the rendered content.
----@field positions? table<Element, { start_pos: integer[], end_pos: integer[] }> Element position map from the last render.
+---@field positions? table<Element, { start_pos: integer[], end_pos: integer[] }> Element position map.
 ---@field path? PathNode[] Current cursor path
 ---@field last_window? Window window of the last event
 ---@field keymaps table Extra keymaps (inherited by tooltips)
@@ -75,8 +75,8 @@ BufRenderer.__index = BufRenderer
 ---@field events? EventCallbacks event function map
 ---@field text? string the text to show when rendering this element
 ---@field name? string a named handle for this element, used when path-searching
----@field hlgroups? string[]|fun():string[]|nil the highlight group(s) for this element's text, or a function that returns them
----@field highlightable boolean? (for buffer rendering) whether to highlight this element when hovering over it
+---@field hlgroups? string[]|fun():string[]|nil highlight group(s) or a function returning them
+---@field highlightable boolean? (for buffer rendering) highlight this element when hovering
 ---@field children? Element[] this element's children
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
 

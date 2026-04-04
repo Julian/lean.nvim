@@ -336,8 +336,8 @@ function Infoview:move_cursor_to_goal(n)
 
   -- Navigate semantically via the element tree when goals are available
   -- (interactive widgets). This handles any goal prefix, not just '⊢ '.
-  for interactive_goal in root:filter(has_name 'interactive-goal') do
-    local goal = interactive_goal:find(is_goal)
+  for each_goal in root:filter(has_name 'interactive-goal') do
+    local goal = each_goal:find(is_goal)
     if goal then
       n = n - 1
       if n == 0 then

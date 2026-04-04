@@ -1,7 +1,10 @@
 files = {
   ["demos/basic.lua"] = {
     globals = { "DEMO" },
-  }
+  },
+  ["lua/lean/tui.lua"] = {
+    max_line_length = false,
+  },
 }
 globals = {
   "vim",
