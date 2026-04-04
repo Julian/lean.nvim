@@ -67,7 +67,7 @@ return function(name, defs)
   ---Arms are validated once; the returned function only dispatches.
   ---@param arms table<string, function> a handler for each constructor
   ---@return fun(data: table, ...: any): any
-  function Type:match(arms)
+  function Type.match(_, arms)
     for arm_name in pairs(arms) do
       if not constructor_names[arm_name] then
         error(('Extraneous match arm for %s: %s'):format(name, arm_name))
