@@ -871,7 +871,11 @@ describe('BufRenderer', function()
         name = 'root',
         children = {
           Element:new { text = 'normal ' },
-          Element:new { text = 'clickable', highlightable = true, events = { click = function() end } },
+          Element:new {
+            text = 'clickable',
+            highlightable = true,
+            events = { click = function() end },
+          },
         },
       }
       local renderer = element:renderer { buffer = buffer }

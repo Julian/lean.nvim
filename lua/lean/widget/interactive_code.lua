@@ -188,14 +188,17 @@ InteractiveCode = TaggedText('SubexprInfo', render_subexpr_info)
 ---Render a HighlightedCodeWithInfos, i.e. code where some subexpressions
 ---may be tagged with 'highlighted' to indicate trace search matches.
 local HighlightedInteractiveCode
-HighlightedInteractiveCode = TaggedText('HighlightedSubexprInfo', function(info, tag, sess, locations)
-  if info == 'highlighted' then
-    local child = HighlightedInteractiveCode(tag, sess, locations)
-    child.hlgroups = { 'leanInfoHighlighted' }
-    return child
+HighlightedInteractiveCode = TaggedText(
+  'HighlightedSubexprInfo',
+  function(info, tag, sess, locations)
+    if info == 'highlighted' then
+      local child = HighlightedInteractiveCode(tag, sess, locations)
+      child.hlgroups = { 'leanInfoHighlighted' }
+      return child
+    end
+    return render_subexpr_info(info, tag, sess, locations, HighlightedInteractiveCode)
   end
-  return render_subexpr_info(info, tag, sess, locations, HighlightedInteractiveCode)
-end)
+)
 
 -- Exposed as a property to avoid changing the module return value.
 InteractiveCode.Highlighted = HighlightedInteractiveCode

@@ -52,8 +52,6 @@ local function is_trace_diagnostic(element)
   return element.events and element.events.trace_search
 end
 
-
-
 ---Find the path to the first descendant matching a predicate.
 ---@param element Element the element to search within
 ---@param predicate fun(element: Element): boolean?
@@ -343,12 +341,16 @@ function Infoview:move_cursor_to_goal(n)
     if goal then
       n = n - 1
       if n == 0 then
-        local goal_path = find_descendant_path(root, function(e) return e == goal end, root_path)
+        local goal_path = find_descendant_path(root, function(e)
+          return e == goal
+        end, root_path)
         if goal_path then
           -- Navigate past the goal prefix (e.g. '⊢ ') to the goal expression.
           local expr = goal:children():nth(2)
           local target_path = expr
-            and find_descendant_path(goal, function(e) return e == expr end, goal_path)
+              and find_descendant_path(goal, function(e)
+                return e == expr
+              end, goal_path)
             or goal_path
           local pos = renderer:buf_position_from_path(target_path)
           if pos then
@@ -390,7 +392,9 @@ function Infoview:__suggestion_path(n)
   for suggestion in root:filter(is_suggestion) do
     n = n - 1
     if n == 0 then
-      return find_descendant_path(root, function(e) return e == suggestion end, root_path)
+      return find_descendant_path(root, function(e)
+        return e == suggestion
+      end, root_path)
     end
   end
 end
@@ -909,12 +913,24 @@ function Info:new(opts)
     iv:__goto('prev', is_goal)
   end, { desc = 'Move to the previous goal.' })
 
-  pin_buffer.keymaps:set('n', '<LocalLeader>g', '<Plug>(LeanInfoviewGoToGoal)',
-    { remap = true, desc = 'Move to the first goal.' })
-  pin_buffer.keymaps:set('n', ']g', '<Plug>(LeanInfoviewNextGoal)',
-    { remap = true, desc = 'Move to the next goal.' })
-  pin_buffer.keymaps:set('n', '[g', '<Plug>(LeanInfoviewPrevGoal)',
-    { remap = true, desc = 'Move to the previous goal.' })
+  pin_buffer.keymaps:set(
+    'n',
+    '<LocalLeader>g',
+    '<Plug>(LeanInfoviewGoToGoal)',
+    { remap = true, desc = 'Move to the first goal.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    ']g',
+    '<Plug>(LeanInfoviewNextGoal)',
+    { remap = true, desc = 'Move to the next goal.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '[g',
+    '<Plug>(LeanInfoviewPrevGoal)',
+    { remap = true, desc = 'Move to the previous goal.' }
+  )
 
   pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextHypothesis)', function()
     iv:__goto('next', is_hypothesis)
@@ -922,10 +938,18 @@ function Info:new(opts)
   pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevHypothesis)', function()
     iv:__goto('prev', is_hypothesis)
   end, { desc = 'Move to the previous hypothesis.' })
-  pin_buffer.keymaps:set('n', ']h', '<Plug>(LeanInfoviewNextHypothesis)',
-    { remap = true, desc = 'Move to the next hypothesis.' })
-  pin_buffer.keymaps:set('n', '[h', '<Plug>(LeanInfoviewPrevHypothesis)',
-    { remap = true, desc = 'Move to the previous hypothesis.' })
+  pin_buffer.keymaps:set(
+    'n',
+    ']h',
+    '<Plug>(LeanInfoviewNextHypothesis)',
+    { remap = true, desc = 'Move to the next hypothesis.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '[h',
+    '<Plug>(LeanInfoviewPrevHypothesis)',
+    { remap = true, desc = 'Move to the previous hypothesis.' }
+  )
 
   pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewGoToSuggestion)', function()
     iv:move_cursor_to_suggestion()
@@ -940,14 +964,30 @@ function Info:new(opts)
     iv:__goto('prev', is_suggestion)
   end, { desc = 'Move to the previous suggestion.' })
 
-  pin_buffer.keymaps:set('n', '<LocalLeader>S', '<Plug>(LeanInfoviewGoToSuggestion)',
-    { remap = true, desc = 'Move to the first suggestion.' })
-  pin_buffer.keymaps:set('n', '<LocalLeader>s', '<Plug>(LeanInfoviewAcceptSuggestion)',
-    { remap = true, desc = 'Accept the first suggestion.' })
-  pin_buffer.keymaps:set('n', ']s', '<Plug>(LeanInfoviewNextSuggestion)',
-    { remap = true, desc = 'Move to the next suggestion.' })
-  pin_buffer.keymaps:set('n', '[s', '<Plug>(LeanInfoviewPrevSuggestion)',
-    { remap = true, desc = 'Move to the previous suggestion.' })
+  pin_buffer.keymaps:set(
+    'n',
+    '<LocalLeader>S',
+    '<Plug>(LeanInfoviewGoToSuggestion)',
+    { remap = true, desc = 'Move to the first suggestion.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '<LocalLeader>s',
+    '<Plug>(LeanInfoviewAcceptSuggestion)',
+    { remap = true, desc = 'Accept the first suggestion.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    ']s',
+    '<Plug>(LeanInfoviewNextSuggestion)',
+    { remap = true, desc = 'Move to the next suggestion.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '[s',
+    '<Plug>(LeanInfoviewPrevSuggestion)',
+    { remap = true, desc = 'Move to the previous suggestion.' }
+  )
 
   pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextLink)', function()
     iv:__goto('next', is_link)
@@ -955,16 +995,28 @@ function Info:new(opts)
   pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevLink)', function()
     iv:__goto('prev', is_link)
   end, { desc = 'Move to the previous link.' })
-  pin_buffer.keymaps:set('n', ']l', '<Plug>(LeanInfoviewNextLink)',
-    { remap = true, desc = 'Move to the next link.' })
-  pin_buffer.keymaps:set('n', '[l', '<Plug>(LeanInfoviewPrevLink)',
-    { remap = true, desc = 'Move to the previous link.' })
+  pin_buffer.keymaps:set(
+    'n',
+    ']l',
+    '<Plug>(LeanInfoviewNextLink)',
+    { remap = true, desc = 'Move to the next link.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '[l',
+    '<Plug>(LeanInfoviewPrevLink)',
+    { remap = true, desc = 'Move to the previous link.' }
+  )
 
   pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewTraceSearch)', function()
     iv:trace_search()
   end, { desc = 'Search through trace messages in the diagnostic under the cursor.' })
-  pin_buffer.keymaps:set('n', '<LocalLeader>/', '<Plug>(LeanInfoviewTraceSearch)',
-    { remap = true, desc = 'Search through trace messages in the diagnostic under the cursor.' })
+  pin_buffer.keymaps:set(
+    'n',
+    '<LocalLeader>/',
+    '<Plug>(LeanInfoviewTraceSearch)',
+    { remap = true, desc = 'Search through trace messages in the diagnostic under the cursor.' }
+  )
 
   pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextTraceDiagnostic)', function()
     iv:__goto('next', is_trace_diagnostic)
@@ -972,10 +1024,18 @@ function Info:new(opts)
   pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevTraceDiagnostic)', function()
     iv:__goto('prev', is_trace_diagnostic)
   end, { desc = 'Move to the previous trace diagnostic.' })
-  pin_buffer.keymaps:set('n', ']t', '<Plug>(LeanInfoviewNextTraceDiagnostic)',
-    { remap = true, desc = 'Move to the next trace diagnostic.' })
-  pin_buffer.keymaps:set('n', '[t', '<Plug>(LeanInfoviewPrevTraceDiagnostic)',
-    { remap = true, desc = 'Move to the previous trace diagnostic.' })
+  pin_buffer.keymaps:set(
+    'n',
+    ']t',
+    '<Plug>(LeanInfoviewNextTraceDiagnostic)',
+    { remap = true, desc = 'Move to the next trace diagnostic.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '[t',
+    '<Plug>(LeanInfoviewPrevTraceDiagnostic)',
+    { remap = true, desc = 'Move to the previous trace diagnostic.' }
+  )
 
   -- Show/hide current pin extmark when entering/leaving infoview.
   local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })

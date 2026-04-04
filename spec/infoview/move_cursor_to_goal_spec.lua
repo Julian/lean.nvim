@@ -75,10 +75,7 @@ describe(
         local current_infoview = infoview.get_current_infoview()
         helpers.wait_for_loading_pins(current_infoview)
 
-        assert.has_all(
-          table.concat(current_infoview:get_lines(), '\n'),
-          { '| 1 = 1' }
-        )
+        assert.has_all(table.concat(current_infoview:get_lines(), '\n'), { '| 1 = 1' })
 
         current_infoview:move_cursor_to_goal(1)
 
@@ -89,5 +86,3 @@ describe(
     end
   )
 )
-
-

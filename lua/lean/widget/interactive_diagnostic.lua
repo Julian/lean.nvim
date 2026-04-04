@@ -175,33 +175,41 @@ end)
 ---Like TaggedTextMsgEmbed but additionally handles:
 ---  - the 'highlighted' tag variant (renders children with leanInfoHighlighted)
 ---  - expr embeds containing HighlightedCodeWithInfos
-interactive_diagnostic.TaggedTextHighlightedMsgEmbed = TaggedText('HighlightedMsgEmbed', function(embed, tag, sess, parent_cls)
-  if embed == 'highlighted' then
-    local child = interactive_diagnostic.TaggedTextHighlightedMsgEmbed(tag, sess, parent_cls)
-    child.hlgroups = { 'leanInfoHighlighted' }
-    return child
-  end
-
-  if embed.expr then
-    return InteractiveCode.Highlighted(embed.expr, sess)
-  elseif embed.goal then
-    return InteractiveGoal(embed.goal, sess)
-  elseif embed.widget then
-    local widget = widgets.render(embed.widget.wi, sess)
-    if widget then
-      return widget
+interactive_diagnostic.TaggedTextHighlightedMsgEmbed = TaggedText(
+  'HighlightedMsgEmbed',
+  function(embed, tag, sess, parent_cls)
+    if embed == 'highlighted' then
+      local child = interactive_diagnostic.TaggedTextHighlightedMsgEmbed(tag, sess, parent_cls)
+      child.hlgroups = { 'leanInfoHighlighted' }
+      return child
     end
 
-    log:debug {
-      message = 'Widget rendering failed, falling back to the `alt` widget.',
-      widget = embed,
-    }
-    return interactive_diagnostic.TaggedTextHighlightedMsgEmbed(embed.widget.alt, sess)
-  elseif embed.trace then
-    return render_trace(embed.trace, sess, parent_cls, interactive_diagnostic.TaggedTextHighlightedMsgEmbed)
-  else
-    return Element:new { text = 'malformed HighlightedMsgEmbed: ' .. vim.inspect(embed) }
+    if embed.expr then
+      return InteractiveCode.Highlighted(embed.expr, sess)
+    elseif embed.goal then
+      return InteractiveGoal(embed.goal, sess)
+    elseif embed.widget then
+      local widget = widgets.render(embed.widget.wi, sess)
+      if widget then
+        return widget
+      end
+
+      log:debug {
+        message = 'Widget rendering failed, falling back to the `alt` widget.',
+        widget = embed,
+      }
+      return interactive_diagnostic.TaggedTextHighlightedMsgEmbed(embed.widget.alt, sess)
+    elseif embed.trace then
+      return render_trace(
+        embed.trace,
+        sess,
+        parent_cls,
+        interactive_diagnostic.TaggedTextHighlightedMsgEmbed
+      )
+    else
+      return Element:new { text = 'malformed HighlightedMsgEmbed: ' .. vim.inspect(embed) }
+    end
   end
-end)
+)
 
 return interactive_diagnostic

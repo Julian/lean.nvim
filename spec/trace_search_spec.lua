@@ -76,9 +76,9 @@ describe('trace search', function()
 
         vim.cmd.normal { 'gg0', bang = true }
         vim.cmd.normal { 'n', bang = true }
-        assert.message('n should land on a line containing the search term').is_truthy(
-          vim.api.nvim_get_current_line():find 'Nat'
-        )
+        assert
+          .message('n should land on a line containing the search term')
+          .is_truthy(vim.api.nvim_get_current_line():find 'Nat')
       end
     )
   )
@@ -107,7 +107,7 @@ describe('trace search', function()
         vim.wait(10000, has_highlighted_extmarks)
 
         -- Move the cursor in the source buffer to trigger a pin update.
-        helpers.feed('<Plug>(LeanInfoviewGotoLastWindow)')
+        helpers.feed '<Plug>(LeanInfoviewGotoLastWindow)'
         helpers.search 'rfl'
         helpers.wait_for_loading_pins()
 
