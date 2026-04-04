@@ -162,11 +162,47 @@ interactive_diagnostic.is_trace_message = interactive_diagnostic.TaggedTextMsgEm
 
 ---@alias HighlightedMsgEmbed MsgEmbedExpr | MsgEmbedGoal | MsgEmbedWidget | MsgEmbedTrace | '"highlighted"'
 
+---Dispatch a MsgEmbed using the highlighted variants of each renderer.
+local renderHighlightedMsgEmbed = interactive_diagnostic.MsgEmbed:match {
+  expr = function(expr, sess)
+    return InteractiveCode.Highlighted(expr, sess)
+  end,
+
+  goal = function(goal, sess)
+    return InteractiveGoal(goal, sess)
+  end,
+
+  ---@param embed WidgetEmbed
+  ---@param sess ReconnectingSubsession
+  widget = function(embed, sess)
+    local widget = widgets.render(embed.wi, sess)
+    if widget then
+      return widget
+    end
+
+    log:debug {
+      message = 'Widget rendering failed, falling back to the `alt` widget.',
+      widget = embed,
+    }
+    return interactive_diagnostic.TaggedTextHighlightedMsgEmbed(embed.alt, sess)
+  end,
+
+  ---@param trace TraceEmbed
+  ---@param sess ReconnectingSubsession
+  trace = function(trace, sess, parent_cls)
+    return render_trace(
+      trace,
+      sess,
+      parent_cls,
+      interactive_diagnostic.TaggedTextHighlightedMsgEmbed
+    )
+  end,
+}
+
 ---Render a TaggedText<HighlightedMsgEmbed> returned by the trace search RPC.
 ---
----Like TaggedTextMsgEmbed but additionally handles:
----  - the 'highlighted' tag variant (renders children with leanInfoHighlighted)
----  - expr embeds containing HighlightedCodeWithInfos
+---Like TaggedTextMsgEmbed but additionally handles the 'highlighted' tag
+---variant (renders children with leanInfoHighlighted).
 interactive_diagnostic.TaggedTextHighlightedMsgEmbed = TaggedText(
   'HighlightedMsgEmbed',
   function(embed, tag, sess, parent_cls)
@@ -176,31 +212,7 @@ interactive_diagnostic.TaggedTextHighlightedMsgEmbed = TaggedText(
       return child
     end
 
-    if embed.expr then
-      return InteractiveCode.Highlighted(embed.expr, sess)
-    elseif embed.goal then
-      return InteractiveGoal(embed.goal, sess)
-    elseif embed.widget then
-      local widget = widgets.render(embed.widget.wi, sess)
-      if widget then
-        return widget
-      end
-
-      log:debug {
-        message = 'Widget rendering failed, falling back to the `alt` widget.',
-        widget = embed,
-      }
-      return interactive_diagnostic.TaggedTextHighlightedMsgEmbed(embed.widget.alt, sess)
-    elseif embed.trace then
-      return render_trace(
-        embed.trace,
-        sess,
-        parent_cls,
-        interactive_diagnostic.TaggedTextHighlightedMsgEmbed
-      )
-    else
-      return Element:new { text = 'malformed HighlightedMsgEmbed: ' .. vim.inspect(embed) }
-    end
+    return renderHighlightedMsgEmbed(embed, sess, parent_cls)
   end
 )
 
