@@ -514,4 +514,17 @@ end
 
 ---@alias LspError LspErrorCodeMessage|string
 
+---Highlight matches of a query string within a diagnostic message.
+---
+---The input is a regular TaggedText<MsgEmbed> diagnostic message.
+---The result is a TaggedText<HighlightedMsgEmbed> where matching portions
+---are tagged with 'highlighted'.
+---@param query string
+---@param msg TaggedText.MsgEmbed
+---@return TaggedText.HighlightedMsgEmbed
+---@return LspError error
+function ReconnectingSubsession:highlightMatches(query, msg)
+  return self:call('Lean.Widget.highlightMatches', { query = query, msg = msg })
+end
+
 return rpc

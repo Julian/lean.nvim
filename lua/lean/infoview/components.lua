@@ -9,7 +9,9 @@ local range_to_string = require('std.lsp').range_to_string
 
 local Element = require('lean.tui').Element
 local Locations = require 'lean.infoview.locations'
-local TaggedTextMsgEmbed = require('lean.widget.interactive_diagnostic').TaggedTextMsgEmbed
+local interactive_diagnostic = require 'lean.widget.interactive_diagnostic'
+local TaggedTextMsgEmbed = interactive_diagnostic.TaggedTextMsgEmbed
+local TaggedTextHighlightedMsgEmbed = interactive_diagnostic.TaggedTextHighlightedMsgEmbed
 local config = require 'lean.config'
 local diagnostic = require 'lean.diagnostic'
 local goals = require 'lean.goals'
@@ -45,11 +47,28 @@ function components.interactive_diagnostics(diags, line, sess)
       end
 
       local range = diagnostic.range_of(each)
-      return Element:new {
+      local element = Element:new {
         text = ('▼ %s: %s'):format(range_to_string(range), markers[each.severity]),
         name = 'diagnostic',
         children = { TaggedTextMsgEmbed(each.message, sess) },
       }
+      if interactive_diagnostic.is_trace_message(each.message) then
+        local message = each.message
+        element.events.trace_search = function(ctx, query)
+          if query == '' then
+            element:set_children { TaggedTextMsgEmbed(message, sess) }
+          else
+            local result, err = sess:highlightMatches(query, message)
+            if err then
+              vim.notify(('Trace search error: %s'):format(vim.inspect(err)), vim.log.levels.ERROR)
+              return
+            end
+            element:set_children { TaggedTextHighlightedMsgEmbed(result, sess) }
+          end
+          ctx.rerender()
+        end
+      end
+      return element
     end)
     :totable()
 end

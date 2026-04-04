@@ -64,6 +64,10 @@ for diff_tag, to_group in vim.iter(DIFF_TAG_HLGROUPS) do
   vim.api.nvim_set_hl(0, 'leanInfoDiff' .. diff_tag, { default = true, link = to_group })
 end
 
+-- Trace search
+
+vim.api.nvim_set_hl(0, 'leanInfoHighlighted', { default = true, link = 'Search' })
+
 -- Widgets
 
 vim.api.nvim_set_hl(0, 'widgetSuggestion', { default = true, link = 'Title' })

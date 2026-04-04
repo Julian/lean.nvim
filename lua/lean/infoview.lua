@@ -412,6 +412,37 @@ function Infoview:accept_suggestion(n)
   end
 end
 
+---Search through trace messages in the diagnostic under the cursor.
+---
+---Prompts for a search query, then dispatches a `trace_search` event
+---to highlight matching text within the trace. An empty query restores
+---the original (unhighlighted) diagnostic message.
+function Infoview:trace_search()
+  if not self.window then
+    return
+  end
+
+  local renderer = self.info.__renderer
+  if not renderer.path then
+    return
+  end
+
+  local has_handler = renderer.element:find_innermost_along(renderer.path, function(_, element)
+    return element.events and element.events.trace_search
+  end)
+  if not has_handler then
+    vim.notify('No trace diagnostic under cursor.', vim.log.levels.INFO)
+    return
+  end
+
+  vim.ui.input({ prompt = 'Trace search: ' }, function(query)
+    if query == nil then
+      return
+    end
+    renderer:event('trace_search', nil, query)
+  end)
+end
+
 ---@alias NavigationDirection 'next' | 'prev'
 
 ---Move the cursor to the next or previous element matching a predicate.
@@ -916,6 +947,12 @@ function Info:new(opts)
     { remap = true, desc = 'Move to the next link.' })
   pin_buffer.keymaps:set('n', '[l', '<Plug>(LeanInfoviewPrevLink)',
     { remap = true, desc = 'Move to the previous link.' })
+
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewTraceSearch)', function()
+    iv:trace_search()
+  end, { desc = 'Search through trace messages in the diagnostic under the cursor.' })
+  pin_buffer.keymaps:set('n', '<LocalLeader>/', '<Plug>(LeanInfoviewTraceSearch)',
+    { remap = true, desc = 'Search through trace messages in the diagnostic under the cursor.' })
 
   -- Show/hide current pin extmark when entering/leaving infoview.
   local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })
