@@ -26,6 +26,13 @@ end
 
 local rpc = {}
 
+--- Lean LSP/JSON-RPC error codes that indicate the RPC session is dead.
+--- See Lean/Data/JsonRpc.lean for the full set.
+local RPC_NEEDS_RECONNECT = -32900
+local CONTENT_MODIFIED = -32801
+local WORKER_EXITED = -32901
+local WORKER_CRASHED = -32902
+
 ---@class RpcRef
 
 ---The JSON key used to encode RPC references.
@@ -196,7 +203,7 @@ function Session:call(pos, method, params)
   end
 
   if self:is_closed() then
-    return nil, { code = -32900, message = 'LSP server disconnected' }
+    return nil, { code = RPC_NEEDS_RECONNECT, message = 'RPC session is closed' }
   end
   log:trace { message = 'calling RPC method', method = method, params = params }
   local err, result = client_request(
@@ -204,8 +211,16 @@ function Session:call(pos, method, params)
     '$/lean/rpc/call',
     vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params })
   )
-  if err ~= nil and err.code == -32900 then
-    self:close_without_releasing()
+  if err ~= nil then
+    local code = err.code
+    if
+      code == RPC_NEEDS_RECONNECT
+      or code == CONTENT_MODIFIED
+      or code == WORKER_EXITED
+      or code == WORKER_CRASHED
+    then
+      self:close_without_releasing()
+    end
   end
   local function register(obj)
     if type(obj) == 'table' then
@@ -228,13 +243,14 @@ function Session:call(pos, method, params)
   register(result)
 
   if err then
-    log:error {
+    local level = self:is_closed() and 'debug' or 'error'
+    log[level](log, {
       message = 'RPC error',
       method = method,
       params = params,
       error = err,
       result = result,
-    }
+    })
   end
   return result, err
 end
