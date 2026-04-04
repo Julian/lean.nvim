@@ -48,6 +48,12 @@ local function is_link(element)
   return type(hlgroups) == 'table' and vim.tbl_contains(hlgroups, 'widgetLink')
 end
 
+local function is_trace_diagnostic(element)
+  return element.events and element.events.trace_search
+end
+
+
+
 ---Find the path to the first descendant matching a predicate.
 ---@param element Element the element to search within
 ---@param predicate fun(element: Element): boolean?
@@ -417,6 +423,8 @@ end
 ---Prompts for a search query, then dispatches a `trace_search` event
 ---to highlight matching text within the trace. An empty query restores
 ---the original (unhighlighted) diagnostic message.
+---
+---The last query is remembered and pre-filled on the next invocation.
 function Infoview:trace_search()
   if not self.window then
     return
@@ -435,11 +443,15 @@ function Infoview:trace_search()
     return
   end
 
-  vim.ui.input({ prompt = 'Trace search: ' }, function(query)
+  vim.ui.input({ prompt = 'Trace search: ', default = self.__last_trace_query }, function(query)
     if query == nil then
       return
     end
+    self.__last_trace_query = query ~= '' and query or nil
     renderer:event('trace_search', nil, query)
+    if query ~= '' then
+      vim.fn.setreg('/', query)
+    end
   end)
 end
 
@@ -953,6 +965,17 @@ function Info:new(opts)
   end, { desc = 'Search through trace messages in the diagnostic under the cursor.' })
   pin_buffer.keymaps:set('n', '<LocalLeader>/', '<Plug>(LeanInfoviewTraceSearch)',
     { remap = true, desc = 'Search through trace messages in the diagnostic under the cursor.' })
+
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextTraceDiagnostic)', function()
+    iv:__goto('next', is_trace_diagnostic)
+  end, { desc = 'Move to the next trace diagnostic.' })
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevTraceDiagnostic)', function()
+    iv:__goto('prev', is_trace_diagnostic)
+  end, { desc = 'Move to the previous trace diagnostic.' })
+  pin_buffer.keymaps:set('n', ']t', '<Plug>(LeanInfoviewNextTraceDiagnostic)',
+    { remap = true, desc = 'Move to the next trace diagnostic.' })
+  pin_buffer.keymaps:set('n', '[t', '<Plug>(LeanInfoviewPrevTraceDiagnostic)',
+    { remap = true, desc = 'Move to the previous trace diagnostic.' })
 
   -- Show/hide current pin extmark when entering/leaving infoview.
   local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })
@@ -1497,6 +1520,7 @@ function Pin:update()
     if self.__tick == tick and self.__info and self.loading then
       self.loading = false
       self.__element:set_children { self.__data_element }
+      self.__info.__infoview.__last_trace_query = nil
       self.__info:render()
     end
   end)

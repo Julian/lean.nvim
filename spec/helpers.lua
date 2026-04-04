@@ -437,4 +437,18 @@ end
 
 assert:register('assertion', 'windows', has_open_windows)
 
+---Stub vim.ui.input to auto-confirm with the given response, run a function,
+---then restore the original. Returns the opts that were passed to vim.ui.input.
+function helpers.with_input(response, fn)
+  local original = vim.ui.input
+  local seen_opts
+  vim.ui.input = function(opts, on_confirm)
+    seen_opts = opts
+    on_confirm(response)
+  end
+  fn()
+  vim.ui.input = original
+  return seen_opts
+end
+
 return helpers
