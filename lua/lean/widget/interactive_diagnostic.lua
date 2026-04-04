@@ -9,29 +9,6 @@ local widgets = require 'lean.widgets'
 
 local interactive_diagnostic = {}
 
----Check whether a TaggedText<MsgEmbed> contains any trace embeds.
----@param msg TaggedText.MsgEmbed
----@return boolean
-function interactive_diagnostic.is_trace_message(msg)
-  if msg.text then
-    return false
-  elseif msg.append then
-    for _, child in ipairs(msg.append) do
-      if interactive_diagnostic.is_trace_message(child) then
-        return true
-      end
-    end
-    return false
-  elseif msg.tag then
-    local embed = msg.tag[1]
-    if type(embed) == 'table' and embed.trace then
-      return true
-    end
-    return false
-  end
-  return false
-end
-
 local function abbreviate_common_prefix(a, b)
   local i = a:find '[.]'
   local j = b:find '[.]'
@@ -167,6 +144,21 @@ interactive_diagnostic.MsgEmbed = inductive('MsgEmbed', {
 interactive_diagnostic.TaggedTextMsgEmbed = TaggedText('MsgEmbed', function(msg_embed, _, ...)
   return interactive_diagnostic.MsgEmbed(msg_embed, ...)
 end)
+
+---Check whether a TaggedText<MsgEmbed> contains any trace embeds.
+---@param msg TaggedText.MsgEmbed
+---@return boolean
+interactive_diagnostic.is_trace_message = interactive_diagnostic.TaggedTextMsgEmbed:match {
+  text = function()
+    return false
+  end,
+  append = function(children)
+    return vim.iter(children):any(interactive_diagnostic.is_trace_message)
+  end,
+  tag = function(tag)
+    return type(tag[1]) == 'table' and tag[1].trace ~= nil
+  end,
+}
 
 ---@alias HighlightedMsgEmbed MsgEmbedExpr | MsgEmbedGoal | MsgEmbedWidget | MsgEmbedTrace | '"highlighted"'
 

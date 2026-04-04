@@ -177,4 +177,109 @@ describe('inductive', function()
       assert.are.same(pair, Foo(pair):serialize())
     end)
   end)
+
+  describe('match', function()
+    local unwrap = Maybe:match {
+      some = function(value)
+        return value
+      end,
+      nothing = function()
+        return nil
+      end,
+    }
+
+    it('returns a function', function()
+      assert.are.equal('function', type(unwrap))
+    end)
+
+    it('dispatches to the matching arm', function()
+      assert.are.equal(42, unwrap { some = 42 })
+      assert.is_nil(unwrap { nothing = {} })
+    end)
+
+    it('passes the constructor value to the arm', function()
+      assert.are.same({ x = 1, y = 2 }, unwrap { some = { x = 1, y = 2 } })
+    end)
+
+    it('errors on unknown constructors in the data', function()
+      assert.has_error(function()
+        unwrap { bogus = 42 }
+      end, 'Invalid Maybe constructor: bogus')
+    end)
+
+    it('errors on non-exhaustive arms', function()
+      assert.has_error(function()
+        Maybe:match {
+          some = function(value)
+            return value
+          end,
+        }
+      end, 'Non-exhaustive match on Maybe: missing nothing')
+    end)
+
+    it('errors on extraneous arms', function()
+      assert.has_error(function()
+        Maybe:match {
+          some = function() end,
+          nothing = function() end,
+          extra = function() end,
+        }
+      end, 'Extraneous match arm for Maybe: extra')
+    end)
+
+    it('passes along additional arguments', function()
+      local Foo = inductive('Foo', {
+        add = function(_, x, y)
+          return x + y
+        end,
+        const = function()
+          return 37
+        end,
+      })
+
+      local run = Foo:match {
+        add = function(value, extra)
+          return value + extra
+        end,
+        const = function()
+          return 0
+        end,
+      }
+      assert.are.equal(100, run({ add = 10 }, 90))
+    end)
+
+    it('works with method-mode types', function()
+      local Result = inductive('Result', {
+        ok = {
+          unwrap = function(self)
+            return self[1]
+          end,
+        },
+        err = {
+          unwrap = function()
+            error 'unwrap on err'
+          end,
+        },
+      })
+
+      local describe_result = Result:match {
+        ok = function(value)
+          return value
+        end,
+        err = function(msg)
+          return 'error: ' .. msg
+        end,
+      }
+      assert.are.equal(42, describe_result { ok = 42 })
+      assert.are.equal('error: oops', describe_result { err = 'oops' })
+    end)
+
+    it('works with an empty type', function()
+      local Empty = inductive('Empty', {})
+      local f = Empty:match {}
+      assert.has_error(function()
+        f { something = 37 }
+      end, 'Invalid Empty constructor: something')
+    end)
+  end)
 end)
