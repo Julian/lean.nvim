@@ -92,6 +92,11 @@ local lean = {
       { desc = 'Jump to the current infoview.' },
     },
     {
+      '<LocalLeader>s',
+      'LeanInfoviewAcceptSuggestion',
+      { desc = 'Accept the first infoview suggestion.' },
+    },
+    {
       '<LocalLeader>\\',
       'LeanAbbreviationsReverseLookup',
       { desc = 'Show how to type the unicode character under the cursor.' },
@@ -170,6 +175,8 @@ function lean.setup(opts)
 
     command! LeanInfoviewEnableWidgets :lua require'lean.infoview'.enable_widgets()
     command! LeanInfoviewDisableWidgets :lua require'lean.infoview'.disable_widgets()
+
+    command! LeanInfoviewAcceptSuggestion :lua require'lean.infoview'.accept_suggestion()
 
     command! LeanAbbreviationsReverseLookup :lua require'lean.abbreviations'.show_reverse_lookup()
 

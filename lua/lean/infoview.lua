@@ -369,6 +369,49 @@ function Infoview:move_cursor_to_goal(n)
   end
 end
 
+---Find the path to the nth suggestion element.
+---@param n? integer the suggestion number, defaulting to the first
+---@return PathNode[]? path
+function Infoview:__suggestion_path(n)
+  if not self.window then
+    return
+  end
+
+  n = n or 1
+  local root = self.info.__renderer.element
+  local root_path = { { idx = 0, name = root.name } }
+
+  for suggestion in root:filter(is_suggestion) do
+    n = n - 1
+    if n == 0 then
+      return find_descendant_path(root, function(e) return e == suggestion end, root_path)
+    end
+  end
+end
+
+---Move the cursor to the nth suggestion.
+---@param n? integer the suggestion number to move to, defaulting to the first
+function Infoview:move_cursor_to_suggestion(n)
+  local path = self:__suggestion_path(n)
+  if path then
+    local renderer = self.info.__renderer
+    local pos = renderer:buf_position_from_path(path)
+    if pos then
+      self.window:set_cursor(pos)
+      renderer:update_cursor(self.window)
+    end
+  end
+end
+
+---Accept (click) the nth suggestion.
+---@param n? integer the suggestion number to accept, defaulting to the first
+function Infoview:accept_suggestion(n)
+  local path = self:__suggestion_path(n)
+  if path then
+    self.info.__renderer:event('click', path)
+  end
+end
+
 ---@alias NavigationDirection 'next' | 'prev'
 
 ---Move the cursor to the next or previous element matching a predicate.
@@ -841,12 +884,23 @@ function Info:new(opts)
   pin_buffer.keymaps:set('n', '[h', '<Plug>(LeanInfoviewPrevHypothesis)',
     { remap = true, desc = 'Move to the previous hypothesis.' })
 
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewGoToSuggestion)', function()
+    iv:move_cursor_to_suggestion()
+  end, { desc = 'Move to the first suggestion.' })
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewAcceptSuggestion)', function()
+    iv:accept_suggestion()
+  end, { desc = 'Accept the first suggestion.' })
   pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextSuggestion)', function()
     iv:__goto('next', is_suggestion)
   end, { desc = 'Move to the next suggestion.' })
   pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevSuggestion)', function()
     iv:__goto('prev', is_suggestion)
   end, { desc = 'Move to the previous suggestion.' })
+
+  pin_buffer.keymaps:set('n', '<LocalLeader>S', '<Plug>(LeanInfoviewGoToSuggestion)',
+    { remap = true, desc = 'Move to the first suggestion.' })
+  pin_buffer.keymaps:set('n', '<LocalLeader>s', '<Plug>(LeanInfoviewAcceptSuggestion)',
+    { remap = true, desc = 'Accept the first suggestion.' })
   pin_buffer.keymaps:set('n', ']s', '<Plug>(LeanInfoviewNextSuggestion)',
     { remap = true, desc = 'Move to the next suggestion.' })
   pin_buffer.keymaps:set('n', '[s', '<Plug>(LeanInfoviewPrevSuggestion)',
@@ -1725,6 +1779,24 @@ function infoview.prev_hypothesis()
   local iv = infoview.get_current_infoview()
   if iv then
     iv:__goto('prev', is_hypothesis)
+  end
+end
+
+---Move the infoview cursor to the given suggestion.
+---@param n? integer the suggestion number to move to, defaulting to the first
+function infoview.go_to_suggestion(n)
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:move_cursor_to_suggestion(n)
+  end
+end
+
+---Accept (click) the given suggestion.
+---@param n? integer the suggestion number to accept, defaulting to the first
+function infoview.accept_suggestion(n)
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:accept_suggestion(n)
   end
 end
 

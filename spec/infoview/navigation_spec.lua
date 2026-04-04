@@ -185,29 +185,59 @@ describe('infoview navigation', function()
       apply?
     ]],
       function()
-        it('next_suggestion navigates to a suggestion', function()
+        local lean_window
+        local current_infoview
+
+        it('sets up a buffer with suggestions', function()
+          lean_window = Window:current()
           helpers.wait_for_diagnostics()
           helpers.search 'apply'
 
-          local current_infoview = infoview.get_current_infoview()
+          current_infoview = infoview.get_current_infoview()
           helpers.wait_for_loading_pins(current_infoview)
+        end)
 
+        it('next_suggestion navigates to a suggestion', function()
           current_infoview:enter()
 
           helpers.move_cursor { to = { 1, 0 }, window = current_infoview.window }
 
           infoview.next_suggestion()
           assert.matches('exact', vim.api.nvim_get_current_line())
+          lean_window:make_current()
+        end)
+
+        it('go_to_suggestion moves to the first suggestion', function()
+          current_infoview:enter()
+
+          helpers.move_cursor { to = { 1, 0 }, window = current_infoview.window }
+
+          infoview.go_to_suggestion()
+          assert.matches('exact', vim.api.nvim_get_current_line())
+          lean_window:make_current()
+        end)
+
+        it('accept_suggestion does not move the infoview cursor', function()
+          current_infoview:enter()
+
+          helpers.move_cursor { to = { 1, 0 }, window = current_infoview.window }
+          local cursor_before = current_infoview.window:cursor()
+
+          lean_window:make_current()
+          infoview.accept_suggestion()
+
+          local cursor_after = current_infoview.window:cursor()
+          assert.are.same(cursor_before, cursor_after)
         end)
 
         it('next_link navigates to a link', function()
-          local current_infoview = infoview.get_current_infoview()
           current_infoview:enter()
 
           helpers.move_cursor { to = { 1, 0 }, window = current_infoview.window }
 
           infoview.next_link()
           assert.matches('exact', vim.api.nvim_get_current_line())
+          lean_window:make_current()
         end)
       end
     )
