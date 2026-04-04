@@ -10,7 +10,7 @@ DEMO = {}
 ---Show a persistent key press display in the bottom-right corner.
 function DEMO.show_keys()
   local width = 40
-  local buffer = Buffer.create{ listed = false, scratch = true }
+  local buffer = Buffer.create { listed = false, scratch = true }
   buffer.o.modifiable = true
   local win = Window:from_id(vim.api.nvim_open_win(buffer.bufnr, false, {
     relative = 'editor',
@@ -29,24 +29,36 @@ function DEMO.show_keys()
   local timer = vim.uv.new_timer()
 
   vim.on_key(function(_, typed)
-    if typed == '' then return end
+    if typed == '' then
+      return
+    end
     local display = vim.fn.keytrans(typed)
-    if display == '' then return end
+    if display == '' then
+      return
+    end
     table.insert(keys, display)
     -- Keep only the most recent keystrokes that fit.
     while #table.concat(keys, ' ') > width - 2 do
       table.remove(keys, 1)
     end
     vim.schedule(function()
-      if not buffer:is_valid() then return end
-      buffer:set_lines({ ' ' .. table.concat(keys, ' ') })
+      if not buffer:is_valid() then
+        return
+      end
+      buffer:set_lines { ' ' .. table.concat(keys, ' ') }
     end)
     timer:stop()
-    timer:start(1500, 0, vim.schedule_wrap(function()
-      keys = {}
-      if not buffer:is_valid() then return end
-      buffer:set_lines({ '' })
-    end))
+    timer:start(
+      1500,
+      0,
+      vim.schedule_wrap(function()
+        keys = {}
+        if not buffer:is_valid() then
+          return
+        end
+        buffer:set_lines { '' }
+      end)
+    )
   end)
 end
 
@@ -58,7 +70,7 @@ end
 function DEMO.popup(lines)
   local width = 70
   local height = lines and math.max(#lines + 2, 5) or 10
-  local buffer = Buffer.create{ listed = false, scratch = true }
+  local buffer = Buffer.create { listed = false, scratch = true }
   local win = Window:from_id(vim.api.nvim_open_win(buffer.bufnr, true, {
     relative = 'editor',
     width = width,
