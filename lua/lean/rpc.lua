@@ -130,6 +130,10 @@ function Session:close_without_releasing()
     self.keepalive_timer:close()
     self.keepalive_timer = nil
   end
+  if self.release_timer then
+    self.release_timer:close()
+    self.release_timer = nil
+  end
   self.client = nil
 end
 
@@ -317,9 +321,15 @@ function ReconnectingSubsession:call(method, params)
     -- Reconnect if the session is dead or failed to connect.
     local uri = self.pos.textDocument.uri
     if self.sess:is_closed() or self.sess.connect_err then
-      log:debug { message = 'reconnecting RPC session', uri = uri, method = method, error = err }
-      connect(uri)
-      self.sess = sessions[uri]
+      -- Another caller may have already reconnected; adopt the current
+      -- session when it is still alive rather than replacing it.
+      if sessions[uri] ~= self.sess and not sessions[uri]:is_closed() then
+        self.sess = sessions[uri]
+      else
+        log:debug { message = 'reconnecting RPC session', uri = uri, method = method, error = err }
+        connect(uri)
+        self.sess = sessions[uri]
+      end
     else
       break
     end
