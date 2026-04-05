@@ -188,7 +188,10 @@ function interactive_goal.Goal(goal, sess, locations)
           'leanInfoGoalRemoved',
         } or { 'leanInfoGoalPrefix' },
       },
-      InteractiveCode(goal.type, sess, goal_locations),
+      Element:new {
+        name = 'goal-type',
+        children = { InteractiveCode(goal.type, sess, goal_locations) },
+      },
     },
   }
   local hyps = vim.iter(goal.hyps):map(function(hyp)

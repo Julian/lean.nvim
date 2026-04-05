@@ -34,7 +34,7 @@ describe('infoview navigation', function()
           assert.matches('3 goals', current_infoview:get_line(0))
         end)
 
-        it('go_to_goal moves to the first goal', function()
+        it('go_to_goal moves to the first goal type, not the prefix', function()
           helpers.move_cursor {
             to = { 1, 0 },
             window = current_infoview.window,
@@ -43,18 +43,21 @@ describe('infoview navigation', function()
           infoview.go_to_goal()
 
           current_infoview:enter()
-          assert.current_line.is '⊢ n = n'
+          assert.are.equal('n = n', current_infoview.window:rest_of_cursor_line())
           lean_window:make_current()
         end)
 
-        it('next_goal moves from the first goal to the second', function()
+        it('next_goal moves to the goal type, not the prefix', function()
           infoview.go_to_goal(1)
 
           current_infoview:enter()
-          assert.current_line.is '⊢ n = n'
+          assert.are.equal('n = n', current_infoview.window:rest_of_cursor_line())
 
           infoview.next_goal()
-          assert.current_line.is '⊢ n = n ∨ n = 0 ∨ n = n✝ + 1'
+          assert.are.equal(
+            'n = n ∨ n = 0 ∨ n = n✝ + 1',
+            current_infoview.window:rest_of_cursor_line()
+          )
           lean_window:make_current()
         end)
 

@@ -39,7 +39,7 @@ local function has_name(name)
   end
 end
 
-local is_goal = has_name 'goal'
+local is_goal = has_name 'goal-type'
 local is_hypothesis = has_name 'hyp'
 local is_suggestion = has_name 'suggestion'
 
@@ -353,14 +353,7 @@ function Infoview:move_cursor_to_goal(n)
           return e == goal
         end, root_path)
         if goal_path then
-          -- Navigate past the goal prefix (e.g. '⊢ ') to the goal expression.
-          local expr = goal:children():nth(2)
-          local target_path = expr
-              and find_descendant_path(goal, function(e)
-                return e == expr
-              end, goal_path)
-            or goal_path
-          local pos = renderer:buf_position_from_path(target_path)
+          local pos = renderer:buf_position_from_path(goal_path)
           if pos then
             self.window:set_cursor(pos)
             renderer:update_cursor(self.window)
