@@ -25,7 +25,7 @@ Type@50ms " (x : \R" Sleep 200ms Tab
 Type@50ms "), x \ne" Sleep 200ms Tab
 Type@50ms " 0 \to" Sleep 200ms Tab
 Type " True := by" Enter
-Type "  sorry"
+Type "sorry"
 Sleep 1s
 Escape
 
