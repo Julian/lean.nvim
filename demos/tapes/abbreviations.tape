@@ -8,21 +8,14 @@ Require nvim
 Output demos/output/abbreviations.gif
 Output demos/output/abbreviations.mp4
 
-Set Shell "zsh"
-Set FontFamily "Inconsolata"
-Set Padding 20
-Set Width 800
-Set Height 500
-Set FontSize 14
+Source demos/tapes/setup.tape
 
 Hide
-Type "just nvim demos/lean/Abbreviations.lean" Enter
+Type "just nvim" Enter
 Sleep 3s
-Type ":luafile demos/basic.lua" Enter
-Type ":lua DEMO.show_keys()" Enter
+Source demos/tapes/helpers.tape
+Type ":e demos/lean/Abbreviations.lean" Enter
 Sleep 500ms
-Ctrl+l
-Sleep 200ms
 Show
 
 # Go to end of file, start typing a definition with unicode

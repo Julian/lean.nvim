@@ -57,9 +57,9 @@ lint:
     selene {{ src }}
 
 # Rebuild a demo from our VHS script. Requires `vhs` to be installed.
-demo:
-    cd {{ demos }}/project/ && lake build Mathlib.Analysis.SpecialFunctions.Pow.Real Mathlib.Data.Real.Irrational
-    cd {{ justfile_directory() }}; vhs {{ demos }}/basic.tape
+demo TAPE='basic':
+    @if [ "{{ TAPE }}" = "basic" ]; then cd {{ demos }}/project/ && lake build Mathlib.Analysis.SpecialFunctions.Pow.Real Mathlib.Data.Real.Irrational; fi
+    cd {{ justfile_directory() }}; vhs {{ if TAPE == 'basic' { demos / 'basic.tape' } else { demos / 'tapes' / TAPE + '.tape' } }}
 
 # Regenerate the vimdoc help text. Assumes you have already installed https://github.com/mrcjkb/vimcats.
 [group('dev')]

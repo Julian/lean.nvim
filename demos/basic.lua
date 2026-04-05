@@ -94,6 +94,23 @@ function DEMO.popup(lines)
   end
 end
 
+---Wait for the infoview to have content after opening a Lean file.
+---Call after navigating to the target cursor position.
+---@param opts? { timeout?: number }
+function DEMO.wait_for_infoview(opts)
+  opts = opts or {}
+  local timeout = opts.timeout or 30000
+  local infoview = require('lean.infoview')
+  vim.wait(timeout, function()
+    local iv = infoview.get_current_infoview()
+    if not iv then
+      return false
+    end
+    local lines = iv:get_lines()
+    return #lines > 0 and lines[1] ~= ''
+  end, 200)
+end
+
 ---Dismiss all floating windows then show a summary end card.
 ---@param lines string[]
 function DEMO.end_card(lines)

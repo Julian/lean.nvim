@@ -9,11 +9,7 @@ Require nvim
 Output demo.gif
 Output demo.mp4
 
-Set Shell "zsh"
-Set FontFamily Inconsolata
-Set Padding 20
-Set Width 800
-Set Height 500
+Source demos/tapes/setup.tape
 Set FontSize 12
 
 Type "nvim" Sleep 1s Enter
