@@ -178,6 +178,64 @@ describe('infoview navigation', function()
   )
 
   describe(
+    'hypotheses across goals',
+    helpers.clean_buffer(
+      [[
+    example (a : Nat) (b : Nat) (h : a < b) : a ≤ b ∧ a ≠ b := by
+      constructor
+      · sorry
+      · sorry
+    ]],
+      function()
+        local lean_window
+        local current_infoview
+
+        it('sets up a buffer with multiple goals', function()
+          lean_window = Window:current()
+
+          helpers.move_cursor { to = { 2, 3 } }
+          current_infoview = infoview.get_current_infoview()
+          helpers.wait_for_loading_pins(current_infoview)
+
+          assert.matches('2 goals', current_infoview:get_line(0))
+        end)
+
+        it('prev_hypothesis from the second goal lands on the last hyp of the first', function()
+          current_infoview:enter()
+
+          -- Navigate to the first hypothesis of the second goal.
+          helpers.move_cursor { to = { 1, 0 }, window = current_infoview.window }
+          for _ = 1, 3 do
+            infoview.next_hypothesis()
+          end
+
+          -- We should now be on the first hyp of the second goal.
+          local line = vim.api.nvim_get_current_line()
+          assert.matches('^a', line)
+          local pos_second_goal = current_infoview.window:cursor()
+
+          -- Confirm this is really the second goal's hyp, not the first's.
+          local first_hyp_pos = { 1, 0 }
+          helpers.move_cursor { to = first_hyp_pos, window = current_infoview.window }
+          infoview.next_hypothesis()
+          local first_goal_a = current_infoview.window:cursor()
+          assert.are_not.same(first_goal_a, pos_second_goal)
+
+          -- Now go back to the second goal's first hypothesis.
+          helpers.move_cursor { to = pos_second_goal, window = current_infoview.window }
+
+          -- prev_hypothesis should go to h : a < b in the first goal,
+          -- NOT a b : Nat.
+          infoview.prev_hypothesis()
+          assert.matches('^h', vim.api.nvim_get_current_line())
+
+          lean_window:make_current()
+        end)
+      end
+    )
+  )
+
+  describe(
     'suggestions and links',
     helpers.clean_buffer(
       [[

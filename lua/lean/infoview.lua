@@ -52,19 +52,27 @@ local function is_trace_diagnostic(element)
   return element.events and element.events.trace_search
 end
 
----Find the path to the first descendant matching a predicate.
+---Find the path to a descendant matching a predicate.
+---
+---When `reverse` is true, searches children in reverse order and returns
+---the last (deepest, rightmost) match rather than the first.
 ---@param element Element the element to search within
 ---@param predicate fun(element: Element): boolean?
 ---@param path PathNode[] the path to `element` from the root
+---@param reverse? boolean search in reverse order
 ---@return PathNode[]? path to the matching descendant
-local function find_descendant_path(element, predicate, path)
+local function find_descendant_path(element, predicate, path, reverse)
   if predicate(element) then
     return path
   end
-  for idx, child in element:children():enumerate() do
+  local children = element:children():enumerate()
+  if reverse then
+    children = children:rev()
+  end
+  for idx, child in children do
     local child_path = vim.list_slice(path, 1, #path)
     table.insert(child_path, { idx = idx, name = child.name })
-    local result = find_descendant_path(child, predicate, child_path)
+    local result = find_descendant_path(child, predicate, child_path, reverse)
     if result then
       return result
     end
@@ -502,7 +510,7 @@ function Infoview:__goto(direction, predicate)
       :find(function(idx, child)
         local base_path = vim.list_slice(renderer.path, 1, level - 1)
         table.insert(base_path, { idx = idx, name = child.name })
-        target_path = find_descendant_path(child, predicate, base_path)
+        target_path = find_descendant_path(child, predicate, base_path, direction == 'prev')
         return target_path
       end)
 
