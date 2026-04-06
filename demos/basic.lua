@@ -100,7 +100,7 @@ end
 function DEMO.wait_for_infoview(opts)
   opts = opts or {}
   local timeout = opts.timeout or 30000
-  local infoview = require('lean.infoview')
+  local infoview = require 'lean.infoview'
   vim.wait(timeout, function()
     local iv = infoview.get_current_infoview()
     if not iv then
