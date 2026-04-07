@@ -13,10 +13,8 @@ local Element = require('lean.tui').Element
 ---@param ctx RenderContext
 ---@param props GoToModuleLinkParams
 return function(ctx, props)
-  return Element:new {
+  return Element.link {
     text = props.modName,
-    highlightable = true,
-    hlgroups = { 'widgetLink' },
     events = {
       go_to_def = function(_)
         local last_window = ctx.get_last_window()

@@ -10,15 +10,11 @@ return function(_, props)
       Element:new { text = '\n\nError code: ' },
       Element:new { text = props.code },
       Element:new { text = '\n' },
-      Element:new {
+      Element.link {
         text = 'View explanation',
-        highlightable = true,
-        hlgroups = { 'widgetLink' },
-        events = {
-          click = function()
-            vim.ui.open(props.explanationUrl)
-          end,
-        },
+        action = function()
+          vim.ui.open(props.explanationUrl)
+        end,
       },
     },
   }

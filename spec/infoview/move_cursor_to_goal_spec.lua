@@ -60,3 +60,29 @@ describe(
     end
   )
 )
+
+describe(
+  'move_cursor_to_goal with conv',
+  helpers.clean_buffer(
+    [[
+      example : 1 = 1 := by
+        conv =>
+          rfl
+    ]],
+    function()
+      it('moves to conv goals which do not start with ⊢', function()
+        helpers.search 'rfl'
+        local current_infoview = infoview.get_current_infoview()
+        helpers.wait_for_loading_pins(current_infoview)
+
+        assert.has_all(table.concat(current_infoview:get_lines(), '\n'), { '| 1 = 1' })
+
+        current_infoview:move_cursor_to_goal(1)
+
+        current_infoview:enter()
+        assert.current_line.is '| 1 = 1'
+        assert.current_cursor.is { column = #'| ' }
+      end)
+    end
+  )
+)

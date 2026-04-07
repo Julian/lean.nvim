@@ -21,21 +21,7 @@ return function(ctx, props)
     if each.preInfo then
       table.insert(children, Element:new { text = each.preInfo })
     end
-    table.insert(
-      children,
-      Element:new {
-        text = each.suggestion,
-        highlightable = true,
-        hlgroups = { 'widgetLink' },
-        events = {
-          click = function()
-            ctx:apply_edits {
-              { range = props.range, newText = each.suggestion },
-            }
-          end,
-        },
-      }
-    )
+    table.insert(children, ctx:edit_link(each.suggestion, props.range, each.suggestion))
     if each.postInfo then
       table.insert(children, Element:new { text = each.postInfo })
     end

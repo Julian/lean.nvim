@@ -24,11 +24,16 @@ local DIFF_TAG_TO_EXPLANATION = {
 
 local InteractiveCode
 
+---Render a SubexprInfo tag node.
+---
 ---@param subexpr_info SubexprInfo
 ---@param tag TaggedText.SubExprInfo
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@param locations? Locations
-local function render_subexpr_info(subexpr_info, tag, sess, locations)
+---@param self_renderer? function renderer for recursive child code (defaults to InteractiveCode)
+local function render_subexpr_info(subexpr_info, tag, sess, locations, self_renderer)
+  self_renderer = self_renderer or InteractiveCode
+
   local element = Element:new { highlightable = true }
   if subexpr_info.diffStatus then
     element.hlgroups = { 'leanInfoDiff' .. subexpr_info.diffStatus }
@@ -47,10 +52,8 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations)
   local mk_tooltip = function(info_popup)
     local tooltip_element = Element.noop()
 
-    -- Recent versions of nvim translate JSON null to vim.NIL instead of
-    -- lua nil, so we have to check for both in rpc results.
-
     if info_popup.exprExplicit ~= nil and info_popup.exprExplicit ~= vim.NIL then
+      -- Tooltip data from infoToInteractive is always CodeWithInfos.
       tooltip_element:add_child(InteractiveCode(info_popup.exprExplicit, sess, locations))
       if info_popup.type ~= nil and info_popup.type ~= vim.NIL then
         tooltip_element:add_child(Element:new { text = ' : ' })
@@ -165,7 +168,7 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations)
     end
   end
 
-  element:add_child(InteractiveCode(tag, sess, locations))
+  element:add_child(self_renderer(tag, sess, locations))
 
   return element
 end
@@ -178,5 +181,26 @@ end
 
 -- FIXME: make inductive take parameters and really merge with TaggedTextMsgEmbed
 InteractiveCode = TaggedText('SubexprInfo', render_subexpr_info)
+
+---@alias HighlightedSubexprInfo SubexprInfo | '"highlighted"'
+---@alias HighlightedCodeWithInfos TaggedText
+
+---Render a HighlightedCodeWithInfos, i.e. code where some subexpressions
+---may be tagged with 'highlighted' to indicate trace search matches.
+local HighlightedInteractiveCode
+HighlightedInteractiveCode = TaggedText(
+  'HighlightedSubexprInfo',
+  function(info, tag, sess, locations)
+    if info == 'highlighted' then
+      local child = HighlightedInteractiveCode(tag, sess, locations)
+      child.hlgroups = { 'leanInfoHighlighted' }
+      return child
+    end
+    return render_subexpr_info(info, tag, sess, locations, HighlightedInteractiveCode)
+  end
+)
+
+-- Exposed as a property to avoid changing the module return value.
+InteractiveCode.Highlighted = HighlightedInteractiveCode
 
 return InteractiveCode

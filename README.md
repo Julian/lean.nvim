@@ -164,21 +164,28 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 
 ### In Infoview Windows
 
-| Key                  | `<Plug>` name                               | Function                                                          |
-| -------------------- | ------------------------------------------- | ----------------------------------------------------------------- |
-| `<CR>`               | `<Plug>(LeanInfoviewClick)`                 | click a widget or interactive area of the infoview                |
-| `K`                  | `<Plug>(LeanInfoviewClick)`                 | same as `<CR>`                                                    |
-| `gK`                 | `<Plug>(LeanInfoviewSelect)`                | "select" a widget or interactive area ("shift+click")             |
-| `<Tab>`              | `<Plug>(LeanInfoviewEnterTooltip)`          | jump into a tooltip (from a widget click)                         |
-| `<S-Tab>`            | `<Plug>(LeanInfoviewParentTooltip)`         | jump out of a tooltip and back to its parent                      |
-| `<Esc>`              | `<Plug>(LeanInfoviewClearAll)`              | clear all open tooltips                                           |
-| `J`                  | `<Plug>(LeanInfoviewEnterTooltip)`          | jump into a tooltip (from a widget click)                         |
-| `C`                  | `<Plug>(LeanInfoviewClearAll)`              | clear all open tooltips                                           |
-| `gd`                 | `<Plug>(LeanInfoviewGoToDef)`               | go-to-definition of what is under the cursor                      |
-| `gD`                 | `<Plug>(LeanInfoviewGoToDecl)`              | go-to-declaration of what is under the cursor                     |
-| `gy`                 | `<Plug>(LeanInfoviewGoToType)`              | go-to-type of what is under the cursor                            |
-| `<LocalLeader><Tab>` | `<Plug>(LeanInfoviewGotoLastWindow)`        | jump to the lean file associated with the current infoview window |
-| `<LocalLeader>\\`    | `<Plug>(LeanAbbreviationsReverseLookup)`    | show what abbreviation produces the symbol under the cursor       |
+| Key                  | `<Plug>` name                                      | Function                                                          |
+| -------------------- | -------------------------------------------------- | ----------------------------------------------------------------- |
+| `<CR>`               | `<Plug>(LeanInfoviewClick)`                        | click a widget or interactive area of the infoview                |
+| `K`                  | `<Plug>(LeanInfoviewClick)`                        | same as `<CR>`                                                    |
+| `gK`                 | `<Plug>(LeanInfoviewSelect)`                       | "select" a widget or interactive area ("shift+click")             |
+| `<Tab>`              | `<Plug>(LeanInfoviewEnterTooltip)`                 | jump into a tooltip (from a widget click)                         |
+| `<S-Tab>`            | `<Plug>(LeanInfoviewParentTooltip)`                | jump out of a tooltip and back to its parent                      |
+| `<Esc>`              | `<Plug>(LeanInfoviewClearAll)`                     | clear all open tooltips                                           |
+| `J`                  | `<Plug>(LeanInfoviewEnterTooltip)`                 | jump into a tooltip (from a widget click)                         |
+| `C`                  | `<Plug>(LeanInfoviewClearAll)`                     | clear all open tooltips                                           |
+| `gd`                 | `<Plug>(LeanInfoviewGoToDef)`                      | go-to-definition of what is under the cursor                      |
+| `gD`                 | `<Plug>(LeanInfoviewGoToDecl)`                     | go-to-declaration of what is under the cursor                     |
+| `gy`                 | `<Plug>(LeanInfoviewGoToType)`                     | go-to-type of what is under the cursor                            |
+| `<LocalLeader>g`     | `<Plug>(LeanInfoviewGoToGoal)`                     | jump to the first (or current) goal                               |
+| `]g` / `[g`          | `<Plug>(LeanInfoviewNextGoal)` / `Prev`            | next / previous goal                                              |
+| `]h` / `[h`          | `<Plug>(LeanInfoviewNextHypothesis)` / `Prev`      | next / previous hypothesis                                        |
+| `]s` / `[s`          | `<Plug>(LeanInfoviewNextSuggestion)` / `Prev`      | next / previous "Try this" suggestion                             |
+| `]l` / `[l`          | `<Plug>(LeanInfoviewNextLink)` / `Prev`            | next / previous interactive link                                  |
+| `]t` / `[t`          | `<Plug>(LeanInfoviewNextTraceDiagnostic)` / `Prev` | next / previous trace diagnostic                                  |
+| `<LocalLeader>/`     | `<Plug>(LeanInfoviewTraceSearch)`                  | search through trace messages in the diagnostic under the cursor  |
+| `<LocalLeader><Tab>` | `<Plug>(LeanInfoviewGotoLastWindow)`               | jump to the lean file associated with the current infoview window |
+| `<LocalLeader>\\`    | `<Plug>(LeanAbbreviationsReverseLookup)`           | show what abbreviation produces the symbol under the cursor       |
 
 ## Full Configuration & Settings Information
 

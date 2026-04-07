@@ -26,6 +26,13 @@ end
 
 local rpc = {}
 
+--- Lean LSP/JSON-RPC error codes that indicate the RPC session is dead.
+--- See Lean/Data/JsonRpc.lean for the full set.
+local RPC_NEEDS_RECONNECT = -32900
+local CONTENT_MODIFIED = -32801
+local WORKER_EXITED = -32901
+local WORKER_CRASHED = -32902
+
 ---@class RpcRef
 
 ---The JSON key used to encode RPC references.
@@ -123,6 +130,10 @@ function Session:close_without_releasing()
     self.keepalive_timer:close()
     self.keepalive_timer = nil
   end
+  if self.release_timer then
+    self.release_timer:close()
+    self.release_timer = nil
+  end
   self.client = nil
 end
 
@@ -196,7 +207,7 @@ function Session:call(pos, method, params)
   end
 
   if self:is_closed() then
-    return nil, { code = -32900, message = 'LSP server disconnected' }
+    return nil, { code = RPC_NEEDS_RECONNECT, message = 'RPC session is closed' }
   end
   log:trace { message = 'calling RPC method', method = method, params = params }
   local err, result = client_request(
@@ -204,8 +215,16 @@ function Session:call(pos, method, params)
     '$/lean/rpc/call',
     vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params })
   )
-  if err ~= nil and err.code == -32900 then
-    self:close_without_releasing()
+  if err ~= nil then
+    local code = err.code
+    if
+      code == RPC_NEEDS_RECONNECT
+      or code == CONTENT_MODIFIED
+      or code == WORKER_EXITED
+      or code == WORKER_CRASHED
+    then
+      self:close_without_releasing()
+    end
   end
   local function register(obj)
     if type(obj) == 'table' then
@@ -228,13 +247,14 @@ function Session:call(pos, method, params)
   register(result)
 
   if err then
-    log:error {
+    local level = self:is_closed() and 'debug' or 'error'
+    log[level](log, {
       message = 'RPC error',
       method = method,
       params = params,
       error = err,
       result = result,
-    }
+    })
   end
   return result, err
 end
@@ -261,6 +281,7 @@ local function connect(uri)
     sess.connected = true
     if err ~= nil then
       sess.connect_err = err
+      sess:close_without_releasing()
     else
       sess.session_id = result.sessionId
       sess.connect_err = nil
@@ -269,35 +290,63 @@ local function connect(uri)
   end)
 end
 
----@class Subsession
+---An RPC session bound to a specific position within a document.
+---
+---If the underlying connection has died or failed to connect, each call
+---will automatically reconnect, retrying up to `max_attempts` times.
+---@class ReconnectingSubsession
 ---@field pos lsp.TextDocumentPositionParams
----@field sess Session
-local Subsession = {}
-Subsession.__index = Subsession
+---@field private sess Session
+---@field private max_attempts integer
+local ReconnectingSubsession = {}
+ReconnectingSubsession.__index = ReconnectingSubsession
 
 ---@param sess Session
 ---@param pos lsp.TextDocumentPositionParams
-function Subsession:new(sess, pos)
-  return setmetatable({ sess = sess, pos = pos }, self)
+---@param max_attempts? integer maximum reconnection attempts per call (default 3)
+function ReconnectingSubsession:new(sess, pos, max_attempts)
+  return setmetatable({ sess = sess, pos = pos, max_attempts = max_attempts or 3 }, self)
 end
 
 ---@param method string
 ---@param params any
 ---@return any result
 ---@return LspError error
-function Subsession:call(method, params)
-  return self.sess:call(self.pos, method, params)
+function ReconnectingSubsession:call(method, params)
+  local result, err
+  for _ = 1, self.max_attempts do
+    result, err = self.sess:call(self.pos, method, params)
+    if not err then
+      return result
+    end
+    -- Reconnect if the session is dead or failed to connect.
+    local uri = self.pos.textDocument.uri
+    if self.sess:is_closed() or self.sess.connect_err then
+      -- Another caller may have already reconnected; adopt the current
+      -- session when it is still alive rather than replacing it.
+      if sessions[uri] ~= self.sess and not sessions[uri]:is_closed() then
+        self.sess = sessions[uri]
+      else
+        log:debug { message = 'reconnecting RPC session', uri = uri, method = method, error = err }
+        connect(uri)
+        self.sess = sessions[uri]
+      end
+    else
+      break
+    end
+  end
+  return result, err
 end
 
 ---Open an RPC session.
 ---@param params lsp.TextDocumentPositionParams
----@return Subsession
+---@return ReconnectingSubsession
 function rpc.open(params)
   local uri = params.textDocument.uri
   if sessions[uri] == nil or sessions[uri].connect_err or sessions[uri]:is_closed() then
     connect(uri)
   end
-  return Subsession:new(sessions[uri], params)
+  return ReconnectingSubsession:new(sessions[uri], params)
 end
 
 ---This type is for internal use in the infoview/LSP. It should not be used in user widgets.
@@ -355,13 +404,13 @@ end
 
 ---@return InteractiveGoals goals
 ---@return LspError error
-function Subsession:getInteractiveGoals()
+function ReconnectingSubsession:getInteractiveGoals()
   return self:call('Lean.Widget.getInteractiveGoals', self.pos)
 end
 
 ---@return InteractiveTermGoal
 ---@return LspError error
-function Subsession:getInteractiveTermGoal()
+function ReconnectingSubsession:getInteractiveTermGoal()
   return self:call('Lean.Widget.getInteractiveTermGoal', self.pos)
 end
 
@@ -395,7 +444,7 @@ end
 ---@param lineRange? LineRange
 ---@return InteractiveDiagnostic[]
 ---@return LspError error
-function Subsession:getInteractiveDiagnostics(lineRange)
+function ReconnectingSubsession:getInteractiveDiagnostics(lineRange)
   return self:call('Lean.Widget.getInteractiveDiagnostics', { lineRange = lineRange })
 end
 
@@ -403,7 +452,7 @@ end
 ---@param indent number
 ---@return TaggedText.MsgEmbed
 ---@return LspError error
-function Subsession:msgToInteractive(msg, indent)
+function ReconnectingSubsession:msgToInteractive(msg, indent)
   return self:call(
     'Lean.Widget.InteractiveDiagnostics.msgToInteractive',
     { msg = msg, indent = indent }
@@ -413,14 +462,14 @@ end
 ---@param children LazyTraceChildren
 ---@return TaggedText.MsgEmbed[]
 ---@return LspError error
-function Subsession:lazyTraceChildrenToInteractive(children)
+function ReconnectingSubsession:lazyTraceChildrenToInteractive(children)
   return self:call('Lean.Widget.lazyTraceChildrenToInteractive', children)
 end
 
 ---@param info InfoWithCtx
 ---@return InfoPopup
 ---@return LspError error
-function Subsession:infoToInteractive(info)
+function ReconnectingSubsession:infoToInteractive(info)
   return self:call('Lean.Widget.InteractiveDiagnostics.infoToInteractive', info)
 end
 
@@ -430,7 +479,7 @@ end
 ---@param info InfoWithCtx
 ---@return lsp.LocationLink[]
 ---@return LspError error
-function Subsession:getGoToLocation(kind, info)
+function ReconnectingSubsession:getGoToLocation(kind, info)
   return self:call('Lean.Widget.getGoToLocation', { kind = kind, info = info })
 end
 
@@ -447,7 +496,7 @@ end
 
 ---@return UserWidgets
 ---@return LspError error
-function Subsession:getWidgets()
+function ReconnectingSubsession:getWidgets()
   return self:call('Lean.Widget.getWidgets', self.pos.position)
 end
 
@@ -460,7 +509,7 @@ end
 ---@param hash string
 ---@return WidgetSource
 ---@return LspError error
-function Subsession:getWidgetSource(hash)
+function ReconnectingSubsession:getWidgetSource(hash)
   return self:call('Lean.Widget.getWidgetSource', { pos = self.pos.position, hash = hash })
 end
 
@@ -491,5 +540,18 @@ end
 ---@field message? string
 
 ---@alias LspError LspErrorCodeMessage|string
+
+---Highlight matches of a query string within a diagnostic message.
+---
+---The input is a regular TaggedText<MsgEmbed> diagnostic message.
+---The result is a TaggedText<HighlightedMsgEmbed> where matching portions
+---are tagged with 'highlighted'.
+---@param query string
+---@param msg TaggedText.MsgEmbed
+---@return TaggedText.HighlightedMsgEmbed
+---@return LspError error
+function ReconnectingSubsession:highlightMatches(query, msg)
+  return self:call('Lean.Widget.highlightMatches', { query = query, msg = msg })
+end
 
 return rpc

@@ -25,6 +25,7 @@ function Project:child(name)
   return vim.fs.joinpath(self._root, name)
 end
 
+local simple_fake_core_lean = Project:new 'SimpleFakeCoreLean'
 local example = Project:new 'Example'
 local with_widgets = Project:new 'WithWidgets'
 
@@ -51,6 +52,7 @@ local fixtures = {
   end,
   widgets = widgets,
 
+  simple_fake_core_lean = simple_fake_core_lean,
   example = example,
   with_widgets = with_widgets,
 

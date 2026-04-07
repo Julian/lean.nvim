@@ -2,8 +2,6 @@
 --- The `Try This` widget on versions of Lean v4.24 (only).
 ---@brief ]]
 
-local Element = require('lean.tui').Element
-
 ---@alias SuggestionText string
 
 ---@class TryThis.Suggestion
@@ -25,16 +23,5 @@ local Element = require('lean.tui').Element
 ---@param ctx RenderContext
 ---@param props TryThisParams
 return function(ctx, props)
-  return Element:new {
-    text = props.suggestion,
-    highlightable = true,
-    hlgroups = { 'widgetLink' },
-    events = {
-      click = function()
-        ctx:apply_edits {
-          { range = props.range, newText = props.suggestion },
-        }
-      end,
-    },
-  }
+  return ctx:edit_link(props.suggestion, props.range, props.suggestion)
 end

@@ -53,7 +53,7 @@ end
 ---@param hyp InteractiveHypothesisBundle
 ---@param mvar_id MVarId
 ---@param opts InfoviewViewOptions
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@param locations? Locations
 local function to_hypothesis_element(hyp, mvar_id, opts, sess, locations)
   if (not opts.show_instances and hyp.isInstance) or (not opts.show_types and hyp.isType) then
@@ -157,7 +157,7 @@ function interactive_goal.diagnostics(params)
 end
 
 ---@param goal InteractiveGoal | InteractiveTermGoal
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@param locations Locations? nil if we're rendering a term goal
 function interactive_goal.Goal(goal, sess, locations)
   local view_options = config().infoview.view_options or {}
@@ -182,8 +182,16 @@ function interactive_goal.Goal(goal, sess, locations)
   local goal_element = Element:new {
     name = 'goal',
     children = {
-      Element:new { text = goal.goalPrefix or '⊢ ', hlgroups = { 'leanInfoGoalPrefix' } },
-      InteractiveCode(goal.type, sess, goal_locations),
+      Element:new {
+        text = goal.goalPrefix or '⊢ ',
+        hlgroups = goal.isInserted and { 'leanInfoGoalInserted' } or goal.isRemoved and {
+          'leanInfoGoalRemoved',
+        } or { 'leanInfoGoalPrefix' },
+      },
+      Element:new {
+        name = 'goal-type',
+        children = { InteractiveCode(goal.type, sess, goal_locations) },
+      },
     },
   }
   local hyps = vim.iter(goal.hyps):map(function(hyp)
@@ -209,7 +217,7 @@ function interactive_goal.Goal(goal, sess, locations)
 end
 
 ---@param goals InteractiveGoal[]
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@param locations Locations
 ---@return Element[]
 function interactive_goal.Goals(goals, sess, locations)
@@ -222,7 +230,7 @@ end
 
 ---The current (term) goal state.
 ---@param goal InteractiveTermGoal
----@param sess Subsession
+---@param sess ReconnectingSubsession
 ---@return Element[]
 function interactive_goal.interactive_term_goal(goal, sess)
   if not goal then

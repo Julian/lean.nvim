@@ -7,6 +7,46 @@ local lsp = require 'lean.lsp'
 
 local CONFIG = require 'lean.config'
 
+--- Detect whether a directory is the root of the core lean4 repository.
+---
+--- This matches the logic in vscode-lean4's isCoreLean4Directory:
+--- https://github.com/leanprover/vscode-lean4/blob/a453185/vscode-lean4/src/utils/projectInfo.ts#L8-L30
+---@param dir string an absolute directory path
+---@return boolean
+local function is_core_lean4_directory(dir)
+  -- the lean4 src/ directory
+  if
+    vim.uv.fs_stat(vim.fs.joinpath(dir, 'Init.lean'))
+    and vim.uv.fs_stat(vim.fs.joinpath(dir, 'Lean.lean'))
+    and vim.uv.fs_stat(vim.fs.joinpath(dir, 'kernel'))
+    and vim.uv.fs_stat(vim.fs.joinpath(dir, 'runtime'))
+  then
+    return true
+  end
+
+  -- the lean4 repo root
+  if
+    vim.uv.fs_stat(vim.fs.joinpath(dir, 'LICENSE'))
+    and vim.uv.fs_stat(vim.fs.joinpath(dir, 'LICENSES'))
+    and vim.uv.fs_stat(vim.fs.joinpath(dir, 'src'))
+  then
+    return true
+  end
+
+  return false
+end
+
+--- Determine whether a project directory should use `lake serve`.
+---
+--- Returns true when a lakefile.lean or lakefile.toml exists in the directory,
+--- matching vscode-lean4's willUseLakeServer.
+---@param dir string an absolute directory path
+---@return boolean
+local function will_use_lake_server(dir)
+  return vim.uv.fs_stat(vim.fs.joinpath(dir, 'lakefile.lean')) ~= nil
+    or vim.uv.fs_stat(vim.fs.joinpath(dir, 'lakefile.toml')) ~= nil
+end
+
 ---A replacement handler for diagnostic publishing for Lean-specific behavior.
 ---
 ---Publishes all "silent" Lean diagnostics to a separate namespace, and creates
@@ -166,7 +206,14 @@ return {
       cmd_cwd = config.root_dir
     end
 
-    local local_cmd = { 'lake', 'serve', '--', config.root_dir }
+    -- Use `lake serve` for normal projects (those with a lakefile), but
+    -- fall back to `lean --server` for core lean4 or standalone files.
+    local local_cmd
+    if cmd_cwd and will_use_lake_server(cmd_cwd) then
+      local_cmd = { 'lake', 'serve', '--', config.root_dir }
+    else
+      local_cmd = { 'lean', '--server', config.root_dir }
+    end
     return vim.lsp.rpc.start(local_cmd, dispatchers, {
       cwd = cmd_cwd,
       env = config.cmd_env,
@@ -205,6 +252,9 @@ return {
     on_dir(
       packages_dir
         or vim.fs.root(fname, { 'lakefile.toml', 'lakefile.lean', 'lean-toolchain' })
+        -- Only walk parents for core lean4 detection when no Lake project was
+        -- found -- this avoids unnecessary fs_stat calls for the common case.
+        or vim.iter(vim.fs.parents(fname)):find(is_core_lean4_directory)
         or stdlib_dir
         or vim.fs.dirname(vim.fs.find('.git', { path = fname, upward = true })[1])
     )

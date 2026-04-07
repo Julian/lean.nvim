@@ -57,7 +57,7 @@ syn match leanCommandPrefix '@' nextgroup=leanAttributeArgs
 syn keyword leanCommandPrefix attribute skipwhite nextgroup=leanAttributeArgs
 
 " constants
-syn match leanOp "[:=><λ←→↔∀∃∧∨¬≤≥▸·+*-/;$|&%!×]"
+syn match leanOp "[:=≠><λ←→↔∀∃∧∨¬≤≥▸·+*-/^;$|&%!×]"
 syn match leanOp '\([A-Za-z]\)\@<!?'
 
 " delimiters

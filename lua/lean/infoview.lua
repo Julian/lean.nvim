@@ -31,6 +31,54 @@ local log = require 'lean.log'
 local progress = require 'lean.progress'
 local rpc = require 'lean.rpc'
 
+---@param name string
+---@return fun(element: Element): boolean?
+local function has_name(name)
+  return function(element)
+    return element.name == name
+  end
+end
+
+local is_goal = has_name 'goal-type'
+local is_hypothesis = has_name 'hyp'
+local is_suggestion = has_name 'suggestion'
+
+local function is_link(element)
+  local hlgroups = element.hlgroups
+  return type(hlgroups) == 'table' and vim.tbl_contains(hlgroups, 'widgetLink')
+end
+
+local function is_trace_diagnostic(element)
+  return element.events and element.events.trace_search
+end
+
+---Find the path to a descendant matching a predicate.
+---
+---When `reverse` is true, searches children in reverse order and returns
+---the last (deepest, rightmost) match rather than the first.
+---@param element Element the element to search within
+---@param predicate fun(element: Element): boolean?
+---@param path PathNode[] the path to `element` from the root
+---@param reverse? boolean search in reverse order
+---@return PathNode[]? path to the matching descendant
+local function find_descendant_path(element, predicate, path, reverse)
+  if predicate(element) then
+    return path
+  end
+  local children = element:children():enumerate()
+  if reverse then
+    children = children:rev()
+  end
+  for idx, child in children do
+    local child_path = vim.list_slice(path, 1, #path)
+    table.insert(child_path, { idx = idx, name = child.name })
+    local result = find_descendant_path(child, predicate, child_path, reverse)
+    if result then
+      return result
+    end
+  end
+end
+
 local infoview = {
   -- mapping from infoview IDs to infoviews
   ---@type table<number, Infoview>
@@ -290,15 +338,182 @@ function Infoview:move_cursor_to_goal(n)
   end
 
   n = n or 1
-  for i, line in ipairs(self.info.__renderer.buffer:lines()) do
+  local renderer = self.info.__renderer
+  local root = renderer.element
+  local root_path = { { idx = 0, name = root.name } }
+
+  -- Navigate semantically via the element tree when goals are available
+  -- (interactive widgets). This handles any goal prefix, not just '⊢ '.
+  for each_goal in root:filter(has_name 'interactive-goal') do
+    local goal = each_goal:find(is_goal)
+    if goal then
+      n = n - 1
+      if n == 0 then
+        local goal_path = find_descendant_path(root, function(e)
+          return e == goal
+        end, root_path)
+        if goal_path then
+          local pos = renderer:buf_position_from_path(goal_path)
+          if pos then
+            self.window:set_cursor(pos)
+            renderer:update_cursor(self.window)
+          end
+        end
+        return
+      end
+    end
+  end
+
+  -- Fallback for plain (non-widget) goals, or when the element tree
+  -- hasn't been fully populated yet (e.g. still loading).
+  for i, line in ipairs(renderer.buffer:lines()) do
     if line:find '^⊢ ' then
       n = n - 1
       if n == 0 then
-        self.window:call(function()
-          vim.cmd.normal { i .. 'z-2l', bang = true }
-        end)
-        break
+        self.window:set_cursor { i, #'⊢ ' }
+        renderer:update_cursor(self.window)
+        return
       end
+    end
+  end
+end
+
+---Find the path to the nth suggestion element.
+---@param n? integer the suggestion number, defaulting to the first
+---@return PathNode[]? path
+function Infoview:__suggestion_path(n)
+  if not self.window then
+    return
+  end
+
+  n = n or 1
+  local root = self.info.__renderer.element
+  local root_path = { { idx = 0, name = root.name } }
+
+  for suggestion in root:filter(is_suggestion) do
+    n = n - 1
+    if n == 0 then
+      return find_descendant_path(root, function(e)
+        return e == suggestion
+      end, root_path)
+    end
+  end
+end
+
+---Move the cursor to the nth suggestion.
+---@param n? integer the suggestion number to move to, defaulting to the first
+function Infoview:move_cursor_to_suggestion(n)
+  local path = self:__suggestion_path(n)
+  if path then
+    local renderer = self.info.__renderer
+    local pos = renderer:buf_position_from_path(path)
+    if pos then
+      self.window:set_cursor(pos)
+      renderer:update_cursor(self.window)
+    end
+  end
+end
+
+---Accept (click) the nth suggestion.
+---@param n? integer the suggestion number to accept, defaulting to the first
+function Infoview:accept_suggestion(n)
+  local path = self:__suggestion_path(n)
+  if path then
+    self.info.__renderer:event('click', path)
+  end
+end
+
+---Search through trace messages in the diagnostic under the cursor.
+---
+---Prompts for a search query, then dispatches a `trace_search` event
+---to highlight matching text within the trace. An empty query restores
+---the original (unhighlighted) diagnostic message.
+---
+---The last query is remembered and pre-filled on the next invocation.
+function Infoview:trace_search()
+  if not self.window then
+    return
+  end
+
+  local renderer = self.info.__renderer
+  if not renderer.path then
+    return
+  end
+
+  local has_handler = renderer.element:find_innermost_along(renderer.path, function(_, element)
+    return element.events and element.events.trace_search
+  end)
+  if not has_handler then
+    vim.notify('No trace diagnostic under cursor.', vim.log.levels.INFO)
+    return
+  end
+
+  vim.ui.input({ prompt = 'Trace search: ', default = self.__last_trace_query }, function(query)
+    if query == nil then
+      return
+    end
+    self.__last_trace_query = query ~= '' and query or nil
+    renderer:event('trace_search', nil, query)
+    if query ~= '' then
+      vim.fn.setreg('/', query)
+    end
+  end)
+end
+
+---@alias NavigationDirection 'next' | 'prev'
+
+---Move the cursor to the next or previous element matching a predicate.
+---
+---Walks up the element tree from the current cursor position, scanning
+---through siblings at each level. Within each sibling, searches descendants
+---for a match.
+---@param direction NavigationDirection
+---@param predicate fun(element: Element): boolean?
+function Infoview:__goto(direction, predicate)
+  if not self.window then
+    return
+  end
+  local renderer = self.info.__renderer
+  if not renderer.path then
+    return
+  end
+  local stack = renderer.element:div_from_path(renderer.path)
+  if not stack then
+    return
+  end
+
+  for level = #stack, 2, -1 do
+    local parent = stack[level - 1]
+    local current_idx = renderer.path[level].idx
+
+    local children = parent:children():enumerate()
+    if direction == 'prev' then
+      children = children:rev()
+    end
+
+    local target_path
+    children
+      :filter(function(idx, _)
+        if direction == 'next' then
+          return idx > current_idx
+        else
+          return idx < current_idx
+        end
+      end)
+      :find(function(idx, child)
+        local base_path = vim.list_slice(renderer.path, 1, level - 1)
+        table.insert(base_path, { idx = idx, name = child.name })
+        target_path = find_descendant_path(child, predicate, base_path, direction == 'prev')
+        return target_path
+      end)
+
+    if target_path then
+      local pos = renderer:buf_position_from_path(target_path)
+      if pos then
+        self.window:set_cursor(pos)
+        renderer:update_cursor(self.window)
+      end
+      return
     end
   end
 end
@@ -687,6 +902,142 @@ function Info:new(opts)
     buffer = pin_buffer,
     keymaps = options.mappings,
   }
+
+  local iv = new_info.__infoview
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewGoToGoal)', function()
+    iv:move_cursor_to_goal()
+  end, { desc = 'Move to the first goal.' })
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextGoal)', function()
+    iv:__goto('next', is_goal)
+  end, { desc = 'Move to the next goal.' })
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevGoal)', function()
+    iv:__goto('prev', is_goal)
+  end, { desc = 'Move to the previous goal.' })
+
+  pin_buffer.keymaps:set(
+    'n',
+    '<LocalLeader>g',
+    '<Plug>(LeanInfoviewGoToGoal)',
+    { remap = true, desc = 'Move to the first goal.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    ']g',
+    '<Plug>(LeanInfoviewNextGoal)',
+    { remap = true, desc = 'Move to the next goal.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '[g',
+    '<Plug>(LeanInfoviewPrevGoal)',
+    { remap = true, desc = 'Move to the previous goal.' }
+  )
+
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextHypothesis)', function()
+    iv:__goto('next', is_hypothesis)
+  end, { desc = 'Move to the next hypothesis.' })
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevHypothesis)', function()
+    iv:__goto('prev', is_hypothesis)
+  end, { desc = 'Move to the previous hypothesis.' })
+  pin_buffer.keymaps:set(
+    'n',
+    ']h',
+    '<Plug>(LeanInfoviewNextHypothesis)',
+    { remap = true, desc = 'Move to the next hypothesis.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '[h',
+    '<Plug>(LeanInfoviewPrevHypothesis)',
+    { remap = true, desc = 'Move to the previous hypothesis.' }
+  )
+
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewGoToSuggestion)', function()
+    iv:move_cursor_to_suggestion()
+  end, { desc = 'Move to the first suggestion.' })
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewAcceptSuggestion)', function()
+    iv:accept_suggestion()
+  end, { desc = 'Accept the first suggestion.' })
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextSuggestion)', function()
+    iv:__goto('next', is_suggestion)
+  end, { desc = 'Move to the next suggestion.' })
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevSuggestion)', function()
+    iv:__goto('prev', is_suggestion)
+  end, { desc = 'Move to the previous suggestion.' })
+
+  pin_buffer.keymaps:set(
+    'n',
+    '<LocalLeader>S',
+    '<Plug>(LeanInfoviewGoToSuggestion)',
+    { remap = true, desc = 'Move to the first suggestion.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '<LocalLeader>s',
+    '<Plug>(LeanInfoviewAcceptSuggestion)',
+    { remap = true, desc = 'Accept the first suggestion.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    ']s',
+    '<Plug>(LeanInfoviewNextSuggestion)',
+    { remap = true, desc = 'Move to the next suggestion.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '[s',
+    '<Plug>(LeanInfoviewPrevSuggestion)',
+    { remap = true, desc = 'Move to the previous suggestion.' }
+  )
+
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextLink)', function()
+    iv:__goto('next', is_link)
+  end, { desc = 'Move to the next link.' })
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevLink)', function()
+    iv:__goto('prev', is_link)
+  end, { desc = 'Move to the previous link.' })
+  pin_buffer.keymaps:set(
+    'n',
+    ']l',
+    '<Plug>(LeanInfoviewNextLink)',
+    { remap = true, desc = 'Move to the next link.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '[l',
+    '<Plug>(LeanInfoviewPrevLink)',
+    { remap = true, desc = 'Move to the previous link.' }
+  )
+
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewTraceSearch)', function()
+    iv:trace_search()
+  end, { desc = 'Search through trace messages in the diagnostic under the cursor.' })
+  pin_buffer.keymaps:set(
+    'n',
+    '<LocalLeader>/',
+    '<Plug>(LeanInfoviewTraceSearch)',
+    { remap = true, desc = 'Search through trace messages in the diagnostic under the cursor.' }
+  )
+
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextTraceDiagnostic)', function()
+    iv:__goto('next', is_trace_diagnostic)
+  end, { desc = 'Move to the next trace diagnostic.' })
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevTraceDiagnostic)', function()
+    iv:__goto('prev', is_trace_diagnostic)
+  end, { desc = 'Move to the previous trace diagnostic.' })
+  pin_buffer.keymaps:set(
+    'n',
+    ']t',
+    '<Plug>(LeanInfoviewNextTraceDiagnostic)',
+    { remap = true, desc = 'Move to the next trace diagnostic.' }
+  )
+  pin_buffer.keymaps:set(
+    'n',
+    '[t',
+    '<Plug>(LeanInfoviewPrevTraceDiagnostic)',
+    { remap = true, desc = 'Move to the previous trace diagnostic.' }
+  )
+
   -- Show/hide current pin extmark when entering/leaving infoview.
   local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })
   pin_buffer:create_autocmd('WinEnter', {
@@ -1230,6 +1581,7 @@ function Pin:update()
     if self.__tick == tick and self.__info and self.loading then
       self.loading = false
       self.__element:set_children { self.__data_element }
+      self.__info.__infoview.__last_trace_query = nil
       self.__info:render()
     end
   end)
@@ -1509,6 +1861,97 @@ end
 ---which hypotheses are shown, set them in your lean.nvim configuration.
 function infoview.select_view_options()
   infoview.open():select_view_options()
+end
+
+---Move the infoview cursor to the given goal.
+---@param n? integer the goal number to move to, defaulting to the first
+function infoview.go_to_goal(n)
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:move_cursor_to_goal(n)
+  end
+end
+
+---Move the infoview cursor to the next goal.
+function infoview.next_goal()
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:__goto('next', is_goal)
+  end
+end
+
+---Move the infoview cursor to the previous goal.
+function infoview.prev_goal()
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:__goto('prev', is_goal)
+  end
+end
+
+---Move the infoview cursor to the next hypothesis.
+function infoview.next_hypothesis()
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:__goto('next', is_hypothesis)
+  end
+end
+
+---Move the infoview cursor to the previous hypothesis.
+function infoview.prev_hypothesis()
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:__goto('prev', is_hypothesis)
+  end
+end
+
+---Move the infoview cursor to the given suggestion.
+---@param n? integer the suggestion number to move to, defaulting to the first
+function infoview.go_to_suggestion(n)
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:move_cursor_to_suggestion(n)
+  end
+end
+
+---Accept (click) the given suggestion.
+---@param n? integer the suggestion number to accept, defaulting to the first
+function infoview.accept_suggestion(n)
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:accept_suggestion(n)
+  end
+end
+
+---Move the infoview cursor to the next suggestion.
+function infoview.next_suggestion()
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:__goto('next', is_suggestion)
+  end
+end
+
+---Move the infoview cursor to the previous suggestion.
+function infoview.prev_suggestion()
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:__goto('prev', is_suggestion)
+  end
+end
+
+---Move the infoview cursor to the next link.
+function infoview.next_link()
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:__goto('next', is_link)
+  end
+end
+
+---Move the infoview cursor to the previous link.
+function infoview.prev_link()
+  local iv = infoview.get_current_infoview()
+  if iv then
+    iv:__goto('prev', is_link)
+  end
 end
 
 return infoview

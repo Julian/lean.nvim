@@ -42,10 +42,10 @@ local log = require 'lean.log'
 ---@field events EventCallbacks functions to fire for events which this element responds to
 ---@field text string the text to show when rendering this element
 ---@field name string a named handle for this element, used when path-searching
----@field hlgroups? string[]|fun():string[]|nil the highlight group(s) for this element's text, or a function that returns them
+---@field hlgroups? string[]|fun():string[]|nil highlight group(s) or a function returning them
 ---@field tooltip? Element? tooltip
----@field highlightable boolean (for buffer rendering) whether to highlight this element when hovering over it
----@field _size? integer Computed size of this element, updated by `Element:to_string`
+---@field highlightable boolean (for buffer rendering) highlight this element when hovering
+
 ---@field private __children Element[] this element's children
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
 local Element = {}
@@ -55,7 +55,9 @@ Element.__index = Element
 ---@class BufRenderer
 ---@field buffer Buffer Buffer the element renders to
 ---@field element Element the element rendered by this renderer
----@field lines? string[] Rendered lines.
+---@field width? integer Width of the rendered content.
+---@field height? integer Height of the rendered content.
+---@field positions? table<Element, { start_pos: integer[], end_pos: integer[] }> Element position map.
 ---@field path? PathNode[] Current cursor path
 ---@field last_window? Window window of the last event
 ---@field keymaps table Extra keymaps (inherited by tooltips)
@@ -73,8 +75,8 @@ BufRenderer.__index = BufRenderer
 ---@field events? EventCallbacks event function map
 ---@field text? string the text to show when rendering this element
 ---@field name? string a named handle for this element, used when path-searching
----@field hlgroups? string[]|fun():string[]|nil the highlight group(s) for this element's text, or a function that returns them
----@field highlightable boolean? (for buffer rendering) whether to highlight this element when hovering over it
+---@field hlgroups? string[]|fun():string[]|nil highlight group(s) or a function returning them
+---@field highlightable boolean? (for buffer rendering) highlight this element when hovering
 ---@field children? Element[] this element's children
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
 
@@ -139,12 +141,11 @@ function Element:concat(elements, sep, opts)
       or elements[1]
   end
 
-  local separator = Element:new{ text = sep }
   return self:new(
     vim.tbl_extend('error', opts or {}, {
       children = vim.iter(elements):fold(nil, function(acc, k)
         if not acc then return { k } end
-        table.insert(acc, separator)
+        table.insert(acc, Element:new { text = sep })
         table.insert(acc, k)
         return acc
       end)
@@ -217,6 +218,41 @@ function Element.kbd(key)
   return Element:new { text = key, hlgroups = { 'widgetKbd' } }
 end
 
+---@class ElementLinkArgs
+---@field action? fun(ctx: ElementEventContext):boolean? a single action, wired to click
+---@field events? EventCallbacks explicit event callbacks (mutually exclusive with action)
+---@field text? string the text to show when rendering this element
+---@field name? string a named handle for this element, used when path-searching
+---@field children? Element[] this element's children
+
+---Create an Element styled as an interactive link.
+---
+---Use for any element the user can activate (navigate, apply edits, open a
+---URL, etc.).  Styling is always enforced — callers specify content and
+---behavior, not appearance.
+---
+---Provide either `action` (wired to click) or `events` (explicit map), not both.
+---@param args ElementLinkArgs
+---@return Element
+function Element.link(args)
+  vim.validate('action', args.action, 'function', true)
+  vim.validate('events', args.events, 'table', true)
+  if args.action and args.events then
+    error('Element.link: provide action or events, not both', 2)
+  end
+  if not args.action and not args.events then
+    error('Element.link: one of action or events is required', 2)
+  end
+  return Element:new {
+    text = args.text,
+    name = args.name,
+    children = args.children,
+    events = args.events or { click = args.action },
+    highlightable = true,
+    hlgroups = { 'widgetLink' },
+  }
+end
+
 ---Create an Element whose click event does nothing.
 ---@param text? string the text to show when rendering this element
 ---@return Element
@@ -283,68 +319,31 @@ function Element:remove_tooltip()
   self.tooltip = nil
 end
 
----Return the {width, height} of the element as rendered.
----@return integer width
----@return integer height
-function Element:layout()
-  -- Don't add new callers of this function, we want to remove it.
-  local lines = vim.split(self:to_string(), '\n')
-  local width = 0
-  for _, line in ipairs(lines) do
-    width = math.max(width, vim.fn.strdisplaywidth(line))
-  end
-  return width, #lines
-end
-
----@class ElementHighlight
----@field start integer
----@field end integer
----@field hlgroup string
-
----@return ElementHighlight[]
-function Element:_get_highlights()
-  local hls = {} ---@type ElementHighlight[]
-
-  ---@param element Element
-  ---@param pos integer
-  local function go(element, pos)
-    local hlgroups = element.hlgroups
-    if type(hlgroups) == 'function' then
-      hlgroups = hlgroups(element)
-    end
-    if hlgroups then
-      for _, hg in ipairs(hlgroups) do
-        table.insert(hls, {
-          start = pos,
-          ['end'] = pos + element._size,
-          hlgroup = hg,
-        })
-      end
-    end
-
-    pos = pos + #element.text
-    for _, child in ipairs(element.__children) do
-      go(child, pos)
-      pos = pos + child._size
-    end
-  end
-
-  go(self, 1)
-
-  return hls
-end
-
 ---Render the element into a string.
----@param renderer? BufRenderer
 ---@return string
-function Element:to_string(renderer)
-  log:trace { message = 'converting element to string', name = self.name }
-  local pieces = {}
+function Element:to_string()
+  return table.concat(self:render_lines().lines, '\n')
+end
+
+---@alias PositionMap table<Element, { start_pos: integer[], end_pos: integer[] }>
+
+---Render the element into lines, highlights, and dimensions in a single pass.
+---@param renderer? BufRenderer
+---@return { lines: string[], highlights: { hlgroup: string, start_pos: integer[], end_pos: integer[] }[], width: integer, height: integer, positions: PositionMap }
+function Element:render_lines(renderer)
+  log:trace { message = 'rendering element to lines', name = self.name }
+  local lines = { '' }
+  local highlights = {}
+  local positions = {} ---@type PositionMap
+  local line_idx = 1
+  local col = 0
+  local width = 0
+
   ---@param element Element
   local function go(element)
     if element.__async_init and renderer then
       renderer.pending_elements[element] = true
-      element.__async_init(function(resolved_element)  ---@type Element resolved_element
+      element.__async_init(function(resolved_element) ---@type Element resolved_element
         element:set_children { resolved_element }
         renderer.pending_elements[element] = nil
         renderer:render()
@@ -352,51 +351,63 @@ function Element:to_string(renderer)
       element.__async_init = nil -- only run once
     end
 
-    table.insert(pieces, element.text)
-    local size = #element.text
+    local start_pos = { line_idx - 1, col }
+
+    local text = element.text
+    if text ~= '' then
+      local pos = 1
+      while pos <= #text do
+        local nl = text:find('\n', pos, true)
+        if nl then
+          local chunk = text:sub(pos, nl - 1)
+          lines[line_idx] = lines[line_idx] .. chunk
+          width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
+          line_idx = line_idx + 1
+          lines[line_idx] = ''
+          col = 0
+          pos = nl + 1
+        else
+          local rest = text:sub(pos)
+          lines[line_idx] = lines[line_idx] .. rest
+          col = col + #rest
+          break
+        end
+      end
+    end
+
     for _, child in ipairs(element.__children) do
       go(child)
-      size = size + child._size
     end
-    element._size = size
+
+    local end_pos = { line_idx - 1, col }
+    positions[element] = { start_pos = start_pos, end_pos = end_pos }
+
+    local hlgroups = element.hlgroups
+    if type(hlgroups) == 'function' then
+      hlgroups = hlgroups(element)
+    end
+    if hlgroups then
+      for _, hg in ipairs(hlgroups) do
+        table.insert(highlights, { hlgroup = hg, start_pos = start_pos, end_pos = end_pos })
+      end
+    end
   end
+
   go(self)
-  return table.concat(pieces)
+  width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
+
+  return { lines = lines, highlights = highlights, width = width, height = line_idx, positions = positions }
 end
 
 ---Represents a node in a path through an element.
 ---@class PathNode
 ---@field idx number the index in the current element's children to follow
 ---@field name string the name that the indexed child should have
----@field offset number? if provided, a byte offset from the beginning of this element
+---@field position? integer[] if provided, the (0-indexed) {line, col} cursor position within this element
 
----Get the raw byte position of the element arrived at by following the given path.
----@param path PathNode[] the path to follow
----@return number? the position if the path was valid, nil otherwise
----@return number? the additional byte offset from the position if the path was valid, nil otherwise
-function Element:pos_from_path(path)
-  local pos = 1
-  for i, p in ipairs(path) do
-    if i == 1 then -- first path node encodes root
-      if p.name ~= self.name then
-        return nil
-      end
-    else
-      if #self.__children < p.idx then
-        return nil
-      end
-      pos = pos + #self.text
-      for j = 1, p.idx - 1 do
-        pos = pos + self.__children[j]._size
-      end
-      self = self.__children[p.idx]
-    end
-  end
-  local offset = path[#path].offset or 0
-  -- in case this is an invalid or outdated path
-  local maybe_offset = (#self.text - 1 >= offset) and offset
-  offset = maybe_offset or 0
-  return pos, offset
+---Is position a strictly before position b? (both 0-indexed {line, col})
+local function pos_before(a, b)
+  return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
 end
 
 ---Get the element stack and element arrived at by following the given path.
@@ -421,7 +432,9 @@ function Element:div_from_path(path)
   return stack, self
 end
 
----Find the innermost element satisfying a predicate.
+
+
+---Find the innermost element along a path satisfying a predicate.
 ---@param path PathNode[]
 ---@param check fun(_, element:Element):any
 ---@return Element found The element satisfying check
@@ -440,70 +453,13 @@ function Element:find_innermost_along(path, check)
   end
 end
 
-local function pos_to_raw_pos(pos, lines)
-  local raw_pos = 0
-  for i = 1, pos[1] - 1 do
-    if not lines[i] then
-      return
-    end
-    raw_pos = raw_pos + #lines[i] + 1
-  end
-  if
-    not lines[pos[1]]
-    or (#lines[pos[1]] == 0 and pos[2] ~= 0)
-    or (#lines[pos[1]] > 0 and pos[2] + 1 > #lines[pos[1]])
-  then
-    return
-  end
-  raw_pos = raw_pos + pos[2] + 1
-  return raw_pos
+---Iterate over this element's direct children.
+---@return Iter iterator yielding child elements (use :enumerate() for indices)
+function Element:children()
+  return vim.iter(self.__children)
 end
 
----Return (0, 0)-indexed cursor position from raw byte position and list of lines
-local function raw_pos_to_pos(raw_pos, lines)
-  local line_num = 0
-  local rem_chars = raw_pos
 
-  for _, line in ipairs(lines) do
-    line_num = line_num + 1
-    if rem_chars <= (#line + 1) then
-      return { line_num - 1, rem_chars - 1 }
-    end
-
-    rem_chars = rem_chars - (#line + 1)
-  end
-end
-
----Get the path at the given raw byte position.
----(requires previous call to Element:to_string)
----@param pos integer byte position
----@return PathNode[]? the path at this position
----@return Element[]? the stack of elements along this path
-function Element:path_from_pos(pos)
-  local path = { { idx = 0, name = self.name } }
-  local stack = { self }
-  pos = pos - 1
-  ::next::
-  if pos < #self.text then
-    path[#path].offset = pos
-    return path, stack
-  end
-  pos = pos - #self.text
-  for idx, child in ipairs(self.__children) do
-    if child._size == nil then
-      return nil
-    end
-    if pos < child._size then
-      table.insert(path, { idx = idx, name = child.name })
-      table.insert(stack, child)
-      self = child
-      goto next
-    else
-      pos = pos - child._size
-    end
-  end
-  return nil
-end
 
 ---Trigger the given event at the given path
 ---@param path PathNode[] the path to trigger the event at
@@ -595,7 +551,7 @@ function BufRenderer:new(obj)
     end,
   })
 
-  local bufnr = obj.buffer.bufnr
+  local buf = obj.buffer
 
   -- Note that only closures work here, we can't go storing this on vim.b due
   -- to neovim/neovim#12544 wherein the metatable would be lost on retrieval.
@@ -604,17 +560,17 @@ function BufRenderer:new(obj)
   --
   -- We define buffer-local <Plug> mappings alongside the default keys so that
   -- any of them can be used as a remapping destination.
-  vim.keymap.set('n', '<Plug>(LeanInfoviewEnterTooltip)', function()
+  buf.keymaps:set('n', '<Plug>(LeanInfoviewEnterTooltip)', function()
     new_renderer:enter_tooltip()
-  end, { buffer = bufnr, desc = 'Enter a tooltip.' })
-  vim.keymap.set('n', '<Plug>(LeanInfoviewParentTooltip)', function()
+  end, { desc = 'Enter a tooltip.' })
+  buf.keymaps:set('n', '<Plug>(LeanInfoviewParentTooltip)', function()
     new_renderer:goto_parent_tooltip()
-  end, { buffer = bufnr, desc = 'Go to the "parent" tooltip.' })
-  vim.keymap.set(
+  end, { desc = 'Go to the "parent" tooltip.' })
+  buf.keymaps:set(
     'n',
     '<Plug>(LeanAbbreviationsReverseLookup)',
     require'lean.abbreviations'.show_reverse_lookup,
-    { buffer = bufnr, desc = 'Show how to type the unicode character under the cursor.' }
+    { desc = 'Show how to type the unicode character under the cursor.' }
   )
 
   -- Register a <Plug> for every public ElementEvent so any of them can be
@@ -631,43 +587,43 @@ function BufRenderer:new(obj)
   }
   local element_event_set = {}
   for _, event in ipairs(element_events) do
-    vim.keymap.set('n', event_plug_name(event), function()
+    buf.keymaps:set('n', event_plug_name(event), function()
       new_renderer:event(event)
-    end, { buffer = bufnr, desc = ('Fire a %s event.'):format(event) })
+    end, { desc = ('Fire a %s event.'):format(event) })
     element_event_set[event] = true
   end
 
-  vim.keymap.set(
+  buf.keymaps:set(
     'n',
     '<Tab>',
     '<Plug>(LeanInfoviewEnterTooltip)',
-    { buffer = bufnr, remap = true, desc = 'Enter a tooltip.' }
+    { remap = true, desc = 'Enter a tooltip.' }
   )
-  vim.keymap.set(
+  buf.keymaps:set(
     'n',
     'J',
     '<Plug>(LeanInfoviewEnterTooltip)',
-    { buffer = bufnr, remap = true, desc = 'Enter a tooltip.' }
+    { remap = true, desc = 'Enter a tooltip.' }
   )
-  vim.keymap.set(
+  buf.keymaps:set(
     'n',
     '<S-Tab>',
     '<Plug>(LeanInfoviewParentTooltip)',
-    { buffer = bufnr, remap = true, desc = 'Go to the "parent" tooltip.' }
+    { remap = true, desc = 'Go to the "parent" tooltip.' }
   )
-  vim.keymap.set(
+  buf.keymaps:set(
     'n',
     '<LocalLeader>\\',
     '<Plug>(LeanAbbreviationsReverseLookup)',
-    { buffer = bufnr, remap = true, desc = 'Show how to type the unicode character under the cursor.' }
+    { remap = true, desc = 'Show how to type the unicode character under the cursor.' }
   )
 
   for key, event in pairs(obj.keymaps or {}) do
     local rhs = element_event_set[event] and event_plug_name(event) or function()
       new_renderer:event(event)
     end
-    vim.keymap.set('n', key, rhs,
-      { buffer = bufnr, remap = element_event_set[event], desc = ('Fire a %s event.'):format(event) })
+    buf.keymaps:set('n', key, rhs,
+      { remap = element_event_set[event], desc = ('Fire a %s event.'):format(event) })
   end
 
   return new_renderer
@@ -697,16 +653,15 @@ function BufRenderer:render()
 
   self.buffer:clear_namespace(self.__tui_ns)
 
-  local text = self.element:to_string(self)
-  local lines = vim.split(text, '\n')
-
-  self.lines = lines
-
+  local result = self.element:render_lines(self)
+  self.positions = result.positions
+  self.width = result.width
+  self.height = result.height
 
   self.buffer.o.modifiable = true
   -- XXX: Again I do not understand why tests occasionally are flaky,
   --      complaining about invalid buffer names, if we don't have this pcall.
-  local ok, err = pcall(Buffer.set_lines, self.buffer, lines)
+  local ok, err = pcall(Buffer.set_lines, self.buffer, result.lines)
   if not ok then
     log:error {
       message = 'infoview failed to update',
@@ -716,20 +671,23 @@ function BufRenderer:render()
   end
   self.buffer.o.modifiable = false
 
-  for _, hl in ipairs(self.element:_get_highlights()) do
-    local start_pos = raw_pos_to_pos(hl.start, lines)
-    local end_pos = raw_pos_to_pos(hl['end'], lines)
-    vim.hl.range(self.buffer.bufnr, self.__tui_ns, hl.hlgroup, start_pos, end_pos)
+  for _, hl in ipairs(result.highlights) do
+    vim.hl.range(self.buffer.bufnr, self.__tui_ns, hl.hlgroup, hl.start_pos, hl.end_pos)
   end
 
   if self.path then
     -- on a rerender any previously existing paths may be invalid
-    -- TODO: cache div_from_path() return value to use in hover()
-    if not self.element:div_from_path(self.path) then
+    local _, leaf = self.element:div_from_path(self.path)
+    local ep = leaf and self.positions[leaf]
+    if not ep then
       self.path = nil
     elseif self:last_window_valid() then
-      local raw_pos, offset = self.element:pos_from_path(self.path)
-      local pos = raw_pos_to_pos(raw_pos + offset, lines)
+      local position = self.path[#self.path].position
+      local pos = (position
+        and not pos_before(position, ep.start_pos)
+        and pos_before(position, ep.end_pos))
+        and position
+        or ep.start_pos
       self.last_window:set_cursor { pos[1] + 1, pos[2] }
     end
   end
@@ -793,9 +751,9 @@ function BufRenderer:update_cursor(window)
 
   local path_before = self.path
   local cursor_pos = self.last_window:cursor()
-  local raw_pos = pos_to_raw_pos(cursor_pos, self.lines)
-  if raw_pos then
-    self.path = self.element:path_from_pos(raw_pos)
+  local new_path = self:path_from_pos { cursor_pos[1] - 1, cursor_pos[2] }
+  if new_path then
+    self.path = new_path
 
     if not path_equal(path_before, self.path) then
       self:hover()
@@ -818,21 +776,26 @@ function BufRenderer:hover(force_update_highlight)
     return
   end
 
-  local hover_element, _, hover_element_path = self.element:find_innermost_along(
-    path,
-    ---@param element Element
-    function(_, element)
-      return element.highlightable
-    end
-  )
+  local stack = self.element:div_from_path(path)
+  if not stack then
+    return
+  end
 
-  local tt_parent_element, _, tt_parent_element_path = self.element:find_innermost_along(
-    path,
-    ---@param element Element
-    function(_, element)
-      return element.tooltip
+  -- Find innermost highlightable and tooltip-bearing elements in one pass.
+  local hover_element, tt_parent_element
+  local tt_parent_element_path
+  for i = #stack, 1, -1 do
+    if not hover_element and stack[i].highlightable then
+      hover_element = stack[i]
     end
-  )
+    if not tt_parent_element and stack[i].tooltip then
+      tt_parent_element = stack[i]
+      tt_parent_element_path = vim.list_slice(path, 1, i)
+    end
+    if hover_element and tt_parent_element then
+      break
+    end
+  end
 
   local new_tooltip_element = tt_parent_element and tt_parent_element.tooltip
 
@@ -860,34 +823,26 @@ function BufRenderer:hover(force_update_highlight)
       }
     end
 
-    if not self.tooltip:last_window_valid() then
-      local bufpos = raw_pos_to_pos(
-        self.element:pos_from_path(tt_parent_element_path),
-        self.lines
-      )
-      local width, height = new_tooltip_element:layout()
+    self.tooltip:render()
 
+    if not self.tooltip:last_window_valid() then
       self.tooltip.last_window = self.last_window:float {
         buffer = self.tooltip.buffer,
         enter = false,
         noautocmd = true,  -- avoid firing update_cursor by disabling the autocmds
         style = 'minimal',
-        width = width,
-        height = height,
+        width = self.tooltip.width,
+        height = self.tooltip.height,
         border = 'rounded',
-        bufpos = bufpos,
+        bufpos = self.positions[tt_parent_element].start_pos,
         zindex = 50 + self.tooltip.buffer.bufnr, -- later tooltips are guaranteed to have greater buffer handles
       }
     end
-
-    self.tooltip:render()
   end
 
-  if hover_element_path and hover_element then
-    local a = self.element:pos_from_path(hover_element_path)
-    local start_pos = raw_pos_to_pos(a, self.lines)
-    local end_pos = raw_pos_to_pos(a + hover_element._size, self.lines)
-    self.hover_range = { start_pos, end_pos }
+  if hover_element then
+    local hp = self.positions[hover_element]
+    self.hover_range = { hp.start_pos, hp.end_pos }
   else
     self.hover_range = nil
   end
@@ -943,6 +898,93 @@ function BufRenderer:make_event_context()
       end
     end,
   }
+end
+
+---Get the (0-indexed) {line, col} position of the element arrived at by following the given path.
+---@param path PathNode[] the path to follow
+---@return integer[]? the {line, col} position if the path was valid, nil otherwise
+function BufRenderer:pos_from_path(path)
+  if not self.positions then
+    return nil
+  end
+
+  local _, element = self.element:div_from_path(path)
+  if not element then
+    return nil
+  end
+
+  local ep = self.positions[element]
+  if not ep then
+    return nil
+  end
+
+  -- Use the stored cursor position if it's still within the element's range.
+  local position = path[#path].position
+  if position
+    and not pos_before(position, ep.start_pos)
+    and pos_before(position, ep.end_pos)
+  then
+    return position
+  end
+
+  return ep.start_pos
+end
+
+---Get the path at the given (0-indexed) {line, col} cursor position.
+---@param pos integer[] {line, col} position (0-indexed)
+---@return PathNode[]? the path at this position
+---@return Element[]? the stack of elements along this path
+function BufRenderer:path_from_pos(pos)
+  if not self.positions then
+    return nil
+  end
+
+  local element = self.element
+  local positions = self.positions
+  local path = { { idx = 0, name = element.name } }
+  local stack = { element }
+
+  ::next::
+  local ep = positions[element]
+  if not ep then
+    return nil
+  end
+
+  -- Where does this element's own text end (i.e. where do children begin)?
+  local first_child = element.__children[1]
+  local text_end = first_child and positions[first_child].start_pos or ep.end_pos
+
+  -- Is pos within this element's own text?
+  if pos_before(pos, text_end) then
+    path[#path].position = pos
+    return path, stack
+  end
+
+  -- Find which child contains pos.
+  for idx, child in ipairs(element.__children) do
+    local cp = positions[child]
+    if not cp then
+      return nil
+    end
+    if pos_before(pos, cp.end_pos) then
+      table.insert(path, { idx = idx, name = child.name })
+      table.insert(stack, child)
+      element = child
+      goto next
+    end
+  end
+
+  return nil
+end
+
+---Convert an element path to a (1,0)-indexed buffer position.
+---@param path PathNode[]
+---@return {[1]: integer, [2]: integer}? pos 1-indexed line, 0-indexed column
+function BufRenderer:buf_position_from_path(path)
+  local pos = self:pos_from_path(path)
+  if pos then
+    return { pos[1] + 1, pos[2] }
+  end
 end
 
 function BufRenderer:enter_win()

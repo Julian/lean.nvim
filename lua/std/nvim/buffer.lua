@@ -1,14 +1,56 @@
+---Buffer-local keymaps.
+---@class BufferKeymaps
+---@field bufnr integer The buffer number
+local BufferKeymaps = {}
+BufferKeymaps.__index = BufferKeymaps
+
+---Get buffer-local keymaps.
+---
+---See :h nvim_buf_get_keymap for details.
+---
+---@param mode string Mode for which to get keymaps.
+---@return table[] keymaps
+function BufferKeymaps:get(mode)
+  return vim.api.nvim_buf_get_keymap(self.bufnr, mode)
+end
+
+---Set a buffer-local keymap.
+---
+---See :h vim.keymap.set for details.
+---
+---@param mode string|string[] Mode(s) for the keymap.
+---@param lhs string Left-hand side of the mapping.
+---@param rhs string|function Right-hand side of the mapping.
+---@param opts? table Additional options (passed to vim.keymap.set; buffer is set automatically).
+function BufferKeymaps:set(mode, lhs, rhs, opts)
+  vim.keymap.set(mode, lhs, rhs, vim.tbl_extend('error', opts or {}, { buffer = self.bufnr }))
+end
+
+---Delete a buffer-local keymap.
+---
+---See :h vim.keymap.del for details.
+---
+---@param mode string|string[] Mode(s) for the keymap.
+---@param lhs string Left-hand side of the mapping.
+---@param opts? table Additional options (passed to vim.keymap.del; buffer is set automatically).
+function BufferKeymaps:del(mode, lhs, opts)
+  vim.keymap.del(mode, lhs, vim.tbl_extend('error', opts or {}, { buffer = self.bufnr }))
+end
+
 ---A Neovim buffer.
 ---@class Buffer
 ---@field bufnr integer The buffer number
 ---@field b table<string, any> Buffer-local variables (alias for vim.b[bufnr])
 ---@field o table<string, any> Buffer-local options (alias for vim.bo[bufnr])
+---@field keymaps BufferKeymaps Buffer-local keymaps
 local Buffer = {}
 Buffer.__index = function(self, key)
   if key == 'o' then
     return vim.bo[self.bufnr]
   elseif key == 'b' then
     return vim.b[self.bufnr]
+  elseif key == 'keymaps' then
+    return setmetatable({ bufnr = self.bufnr }, BufferKeymaps)
   end
   return Buffer[key]
 end
