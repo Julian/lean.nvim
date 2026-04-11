@@ -215,7 +215,7 @@ local function panel(widget_fn)
       goals = ctx:get_goals(),
       selectedLocations = selected,
     }
-    if props then
+    if type(props) == 'table' then
       params = vim.tbl_extend('error', params, props)
     end
 
