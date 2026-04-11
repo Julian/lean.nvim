@@ -32,6 +32,7 @@ vim.g.lean_config = {
       print('error: ' .. lines)
     end,
   },
+  infoview = { update_cooldown = 0 },
   mappings = true,
 }
 

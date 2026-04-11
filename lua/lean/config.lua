@@ -47,6 +47,7 @@
 ---@class lean.infoview.Config
 ---@field mappings? { [string]: ElementEvent }
 ---@field orientation? "auto"|"vertical"|"horizontal" what orientation to use for opened infoviews
+---@field update_cooldown? integer milliseconds to throttle cursor-move updates (default 50, 0 to disable)
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
 
