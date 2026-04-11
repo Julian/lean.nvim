@@ -21,12 +21,15 @@ local inspect = vim.env.LEAN_NVIM_LOG_INSPECT and vim.inspect
 
 ---@type lean.Config
 vim.g.lean_config = {
-  log = function(level, data)
-    if level < vim.log.levels[vim.env.LEAN_NVIM_MIN_LOG_LEVEL or 'INFO'] then
-      return
-    end
-    print(inspect(data), level)
-  end,
+  debug = {
+    log = function(level, data)
+      if level < vim.log.levels[vim.env.LEAN_NVIM_MIN_LOG_LEVEL or 'INFO'] then
+        return
+      end
+      print(inspect(data), level)
+    end,
+    rpc_history = 50,
+  },
   stderr = {
     on_lines = function(lines)
       print('error: ' .. lines)

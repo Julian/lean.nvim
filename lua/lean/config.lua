@@ -17,17 +17,14 @@
 ---@field progress_bars? table progress bar configuration
 ---@field signs? lean.diagnostic.SignsConfig diagnostic sign column configuration
 ---@field stderr? table stderr window configuration
----
----Developer options.
----
----@field log? Log log any messages from lean.nvim's internals
+---@field debug? lean.debug.Config developer options for debugging and introspection
 
 ---@class lean.MergedConfig: lean.Config
 ---@field ft lean.ft.MergedConfig filetype configuration
 ---@field goal_markers lean.goal_markers.Config characters to use for denoting goal markers
 ---@field infoview lean.infoview.MergedConfig infoview configuration
 ---@field inlay_hint lean.inlay_hint.Config inlay hint configuration
----@field log Log log any messages from lean.nvim's internals
+---@field debug lean.debug.MergedConfig debugging and introspection configuration
 
 ---@class lean.abbreviations.Config
 ---@field enable? boolean whether to automatically enable expansion
@@ -74,6 +71,19 @@
 ---We enable them by default in Lean buffers, but they can be disabled if
 ---desired below. Note that they are not enabled globally in Neovim by default
 ---(as what exactly is shown in inlay hints can vary widely by language).
+---Developer options for debugging lean.nvim internals.
+---
+---`log` receives all internal log messages (connection events, RPC errors,
+---etc.) and defaults to a no-op. Set `rpc_history` to a positive number to
+---keep that many RPC request records per session, queryable via
+---`rpc.sessions()` and `rpc.history()`.
+---@class lean.debug.Config
+---@field log? Log a handler called with (level, data) for internal log messages
+---@field rpc_history? integer enable RPC request history with this many entries (0 or nil to disable)
+
+---@class lean.debug.MergedConfig: lean.debug.Config
+---@field log Log a handler called with (level, data) for internal log messages
+
 ---@class lean.inlay_hint.Config
 ---@field enabled? boolean whether to automatically enable inlay hints
 
@@ -113,8 +123,11 @@ local DEFAULTS = {
     accomplished = '🎉',
   },
 
-  ---@type Log
-  log = function() end,
+  ---@type lean.debug.MergedConfig
+  debug = {
+    log = function() end,
+    rpc_history = 0,
+  },
 
   ---@type lean.infoview.Config
   infoview = {

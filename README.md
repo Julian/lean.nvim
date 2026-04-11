@@ -316,6 +316,16 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
       -- window.
       on_lines = nil,
     },
+
+    -- Debugging and introspection for lean.nvim internals
+    debug = {
+      -- A logging handler called with (log_level, data) for internal log messages
+      log = function() end,
+      -- Keep a ring buffer of this many RPC request records per session,
+      -- queryable via require('lean.rpc').sessions() and .history(uri).
+      -- 0 to disable.
+      rpc_history = 0,
+    },
   }
 ```
 
