@@ -473,6 +473,12 @@ diagnostic.is_goals_accomplished()            *diagnostic.is_goals_accomplished*
         (boolean)
 
 
+diagnostic.is_imports_out_of_date()          *diagnostic.is_imports_out_of_date*
+
+    Returns: ~
+        (boolean)
+
+
 diagnostic.byterange_of()                              *diagnostic.byterange_of*
 
     Returns: ~
