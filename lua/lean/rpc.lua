@@ -26,6 +26,12 @@ end
 
 local rpc = {}
 
+---A ring buffer stand-in that silently discards pushes and iterates to nothing.
+---@type vim.Ringbuf<SessionCallRecord>
+local EMPTY_RINGBUF = setmetatable({ push = function() end }, {
+  __call = function() end,
+})
+
 --- Lean LSP/JSON-RPC error codes that indicate the RPC session is dead.
 --- See Lean/Data/JsonRpc.lean for the full set.
 local RPC_NEEDS_RECONNECT = -32900
@@ -52,6 +58,108 @@ local function ref_key_for(client)
   return 'p'
 end
 
+---A single RPC request record, stored in the session's history ring buffer.
+---@class SessionCallRecord
+---@field method string the RPC method that was called
+---@field start_ns integer hrtime when the call was attempted
+---@field duration_ns integer elapsed nanoseconds (0 for calls that never reached the server)
+---@field error? LspError the error, if the call failed
+
+---Counters and timing for an RPC session, always collected.
+---
+---When `debug.rpc_history` is enabled, `history` additionally contains
+---a bounded ring buffer of individual request records.
+---@class SessionMetrics
+---@field created_at integer hrtime when the session was created
+---@field call_count integer total calls attempted (including errors)
+---@field error_count integer calls that returned an error
+---@field errors_by_code table<integer|"unknown", integer> error counts keyed by LSP error code
+---@field reconnects integer reconnects performed on this session
+---@field total_reconnects integer cumulative reconnects including prior sessions for this URI
+---@field total_duration_ns integer sum of durations for calls that reached the server
+---@field max_duration_ns integer longest call that reached the server
+---@field min_duration_ns integer shortest call that reached the server (0 until the first such call)
+---@field connect_duration_ns? integer time spent in the initial $/lean/rpc/connect handshake
+---@field history vim.Ringbuf<SessionCallRecord> request history (empty when rpc_history is 0)
+local SessionMetrics = {}
+SessionMetrics.__index = SessionMetrics
+
+---@param history_size integer
+---@return SessionMetrics
+function SessionMetrics:new(history_size)
+  return setmetatable({
+    created_at = vim.uv.hrtime(),
+    call_count = 0,
+    error_count = 0,
+    errors_by_code = {},
+    reconnects = 0,
+    total_reconnects = 0,
+    total_duration_ns = 0,
+    max_duration_ns = 0,
+    min_duration_ns = 0,
+    history = history_size > 0 and vim.ringbuf(history_size) or EMPTY_RINGBUF,
+  }, self)
+end
+
+---Record an error for a call that did not reach the server.
+---@param method string
+---@param err LspError
+---@return nil
+---@return LspError
+function SessionMetrics:record_error(method, err)
+  self.call_count = self.call_count + 1
+  self.error_count = self.error_count + 1
+  local code = type(err) == 'table' and err.code
+  local code_key = code or 'unknown'
+  self.errors_by_code[code_key] = (self.errors_by_code[code_key] or 0) + 1
+  self.history:push { method = method, start_ns = vim.uv.hrtime(), duration_ns = 0, error = err }
+  return nil, err
+end
+
+---Record a completed call that reached the server.
+---@param method string
+---@param start_ns integer
+---@param elapsed integer
+---@param err? LspError
+function SessionMetrics:record_call(method, start_ns, elapsed, err)
+  self.call_count = self.call_count + 1
+  self.total_duration_ns = self.total_duration_ns + elapsed
+  if elapsed > self.max_duration_ns then
+    self.max_duration_ns = elapsed
+  end
+  if self.min_duration_ns == 0 or elapsed < self.min_duration_ns then
+    self.min_duration_ns = elapsed
+  end
+
+  if err ~= nil then
+    self.error_count = self.error_count + 1
+    local code = type(err) == 'table' and err.code
+    local code_key = code or 'unknown'
+    self.errors_by_code[code_key] = (self.errors_by_code[code_key] or 0) + 1
+  end
+
+  self.history:push { method = method, start_ns = start_ns, duration_ns = elapsed, error = err }
+end
+
+---Record a successful connection handshake.
+---@param duration_ns integer
+function SessionMetrics:record_connect(duration_ns)
+  self.connect_duration_ns = duration_ns
+end
+
+---Record that this session was reached via a reconnection.
+---@param prev_total integer total_reconnects from the prior session
+function SessionMetrics:record_reconnect(prev_total)
+  self.reconnects = self.reconnects + 1
+  self.total_reconnects = prev_total + 1
+end
+
+---Carry forward the cumulative reconnect count from a prior session.
+---@param prev_total integer total_reconnects from the prior session
+function SessionMetrics:carry_reconnects(prev_total)
+  self.total_reconnects = math.max(self.total_reconnects, prev_total)
+end
+
 ---@class Session
 ---@field client? vim.lsp.Client
 ---@field uri string
@@ -63,6 +171,7 @@ end
 ---@field keepalive_timer? uv_timer_t
 ---@field to_release RpcRef[]
 ---@field release_timer? uv_timer_t
+---@field metrics SessionMetrics
 local Session = {}
 Session.__index = Session
 
@@ -91,6 +200,7 @@ function Session:new(client, buffer, uri)
     on_connected = async.event(),
     to_release = {},
     release_timer = nil,
+    metrics = SessionMetrics:new(require 'lean.config'().debug.rpc_history),
   }, self)
   self.keepalive_timer = vim.uv.new_timer()
   self.keepalive_timer:start(
@@ -199,7 +309,7 @@ function Session:call(pos, method, params)
     self.on_connected.wait()
   end
   if self.connect_err ~= nil then
-    return nil, self.connect_err
+    return self.metrics:record_error(method, self.connect_err)
   end
 
   if not Buffer:from_uri(pos.textDocument.uri):is_loaded() then
@@ -207,16 +317,23 @@ function Session:call(pos, method, params)
   end
 
   if self:is_closed() then
-    return nil, { code = RPC_NEEDS_RECONNECT, message = 'RPC session is closed' }
+    return self.metrics:record_error(
+      method,
+      { code = RPC_NEEDS_RECONNECT, message = 'RPC session is closed' }
+    )
   end
   log:trace { message = 'calling RPC method', method = method, params = params }
+  local start_ns = vim.uv.hrtime()
   local err, result = client_request(
     self.client,
     '$/lean/rpc/call',
     vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params })
   )
+  local elapsed = vim.uv.hrtime() - start_ns
+  self.metrics:record_call(method, start_ns, elapsed, err)
+
   if err ~= nil then
-    local code = err.code
+    local code = type(err) == 'table' and err.code
     if
       code == RPC_NEEDS_RECONNECT
       or code == CONTENT_MODIFIED
@@ -277,7 +394,9 @@ local function connect(uri)
   end
   async.run(function()
     log:trace { message = 'connecting to RPC', uri = uri }
+    local connect_start = vim.uv.hrtime()
     local err, result = client_request(client, '$/lean/rpc/connect', { uri = uri })
+    sess.metrics:record_connect(vim.uv.hrtime() - connect_start)
     sess.connected = true
     if err ~= nil then
       sess.connect_err = err
@@ -322,14 +441,17 @@ function ReconnectingSubsession:call(method, params)
     -- Reconnect if the session is dead or failed to connect.
     local uri = self.pos.textDocument.uri
     if self.sess:is_closed() or self.sess.connect_err then
+      local prev_total = self.sess.metrics.total_reconnects
       -- Another caller may have already reconnected; adopt the current
       -- session when it is still alive rather than replacing it.
       if sessions[uri] ~= self.sess and not sessions[uri]:is_closed() then
         self.sess = sessions[uri]
+        self.sess.metrics:carry_reconnects(prev_total)
       else
         log:debug { message = 'reconnecting RPC session', uri = uri, method = method, error = err }
         connect(uri)
         self.sess = sessions[uri]
+        self.sess.metrics:record_reconnect(prev_total)
       end
     else
       break
@@ -552,6 +674,30 @@ end
 ---@return LspError error
 function ReconnectingSubsession:highlightMatches(query, msg)
   return self:call('Lean.Widget.highlightMatches', { query = query, msg = msg })
+end
+
+---@class rpc.SessionInfo
+---@field metrics SessionMetrics
+---@field alive boolean whether the session is still connected
+
+---Return info for all sessions, keyed by URI.
+---@return table<string, rpc.SessionInfo>
+function rpc.sessions()
+  return vim.iter(sessions):fold({}, function(result, uri, sess)
+    result[uri] = { metrics = sess.metrics, alive = sess.client ~= nil }
+    return result
+  end)
+end
+
+---Return the request history for a URI's session, or nil if unknown.
+---@param uri string
+---@return SessionCallRecord[]?
+function rpc.history(uri)
+  local sess = sessions[uri]
+  if not sess then
+    return nil
+  end
+  return vim.iter(sess.metrics.history):totable()
 end
 
 return rpc

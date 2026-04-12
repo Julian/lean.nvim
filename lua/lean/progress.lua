@@ -21,8 +21,6 @@ local M = {
 ---@type table<lsp.URI, LeanFileProgressProcessingInfo[]>
 M.proc_infos = {}
 
-vim.cmd.hi 'def leanProgressBar guifg=orange ctermfg=215'
-
 ---@param params LeanFileProgressParams
 function M.update(params)
   M.proc_infos[params.textDocument.uri] = params.processing

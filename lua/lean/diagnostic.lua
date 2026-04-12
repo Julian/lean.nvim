@@ -134,6 +134,31 @@ function diagnostic.is_goals_accomplished(diag)
   return vim.deep_equal(diag.leanTags, { diagnostic.LeanDiagnosticTag.goalsAccomplished })
 end
 
+---Is this an "imports out of date and must be rebuilt" diagnostic?
+---
+---This is the Error-severity diagnostic emitted during initial file setup
+---when `lake setup-file --no-build` signals stale imports.
+---
+---The Lean server also emits a softer Information-severity "should be
+---rebuilt" sticky diagnostic when a dependency is rebuilt while the file
+---is open; that variant is not currently detected here.
+---
+---Follows https://github.com/leanprover/vscode-lean4/blob/a45318523691329a325301826e3d20b2c7f6e864/vscode-lean4/src/leanclient.ts#L576
+---
+---Note: vscode-lean4 also checks `range.end` but VS Code's language client
+---clips diagnostic ranges to the document, producing `end = {0, 0}`.
+---Neovim passes through the raw LSP range (which extends to the file end),
+---so we only check the start position here.
+---@generic T
+---@param diag DiagnosticWith<T>
+---@return boolean
+function diagnostic.is_imports_out_of_date(diag)
+  return diag.severity == vim.lsp.protocol.DiagnosticSeverity.Error
+    and vim.startswith(diag.message, 'Imports are out of date and must be rebuilt')
+    and diag.range.start.line == 0
+    and diag.range.start.character == 0
+end
+
 ---Convert Lean ranges to byte indices.
 ---
 ---Prioritizes `fullRange`, which is the "real" range of the diagnostic, not

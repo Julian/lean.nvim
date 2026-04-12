@@ -18,6 +18,7 @@ local hl_ns = vim.api.nvim_create_namespace 'proofwidgets.make_edit_link'
 ---@param ctx RenderContext
 return function(props, children, ctx)
   return Element.link {
+    name = 'suggestion',
     children = children,
     action = function()
       local bufnr = vim.uri_to_bufnr(props.edit.textDocument.uri)

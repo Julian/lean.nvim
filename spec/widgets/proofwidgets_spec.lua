@@ -10,6 +10,8 @@ local infoview = require 'lean.infoview'
 
 require('lean').setup {}
 
+package.path = package.path .. ';' .. fixtures.widgets .. '/?.lua'
+
 ---Open one of the ProofWidgets demos.
 local function in_demo(name, fn)
   local jump = 'import ' .. name
@@ -153,6 +155,51 @@ describe('ProofWidgets widgets', function()
           Nothing selected. You can use gK in the infoview to select expressions in the goal.
         ]]
       end)
+    )
+  end)
+
+  describe('panel widgets with null JSON props', function()
+    -- Some widgets (e.g. Verbose Lean) call savePanelWidgetInfo with
+    -- Json.null props, which Neovim decodes to vim.NIL (truthy userdata).
+    -- This must not crash the panel wrapper's vim.tbl_extend call.
+    it(
+      'renders without crashing when widget props are null',
+      helpers.clean_buffer(
+        [[
+          import WithWidgets.NullPropsWidget
+
+          example (_h : True) : True := by
+            null_props_widget
+            trivial
+        ]],
+        function()
+          helpers.search 'null_props_widget'
+
+          assert.infoview_contents.are [[
+            Goals accomplished 🎉
+
+            _h : True
+            ⊢ True
+
+            Nothing selected. You can use gK in the infoview to select expressions in the goal.
+          ]]
+
+          infoview.go_to()
+
+          helpers.search '_h'
+          helpers.feed 'gK'
+
+          assert.infoview_contents.are [[
+            Goals accomplished 🎉
+
+            _h : True
+            ⊢ True
+
+            PANEL WIDGET WITH 1 SELECTIONS
+          ]]
+        end,
+        fixtures.with_widgets
+      )
     )
   end)
 end)

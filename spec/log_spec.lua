@@ -1,9 +1,11 @@
 local messages
 ---@type lean.Config
 vim.g.lean_config = {
-  log = function(_, message)
-    table.insert(messages, message)
-  end,
+  debug = {
+    log = function(_, message)
+      table.insert(messages, message)
+    end,
+  },
 }
 
 local log = require 'lean.log'

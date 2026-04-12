@@ -80,6 +80,7 @@ function lsp.restart_file(bufnr)
       languageId = 'lean',
       text = std.buf_get_full_text(bufnr),
     },
+    dependencyBuildMode = 'once',
   }
   client:notify(ms.textDocument_didOpen, params)
 end

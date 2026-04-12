@@ -8,6 +8,7 @@
 local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
 local async = require 'std.async'
+local throttle = require 'std.throttle'
 ---Convert a buffer position to a human-readable (1, 1)-indexed string.
 ---Takes the workspace into account in order to return a relative path.
 ---@param buffer Buffer
@@ -98,6 +99,7 @@ local options = {
 
   autoopen = true,
   autopause = false,
+  update_cooldown = 50,
   indicators = 'auto',
   show_processing = true,
   show_no_info_message = false,
@@ -203,6 +205,9 @@ function Infoview:new(obj)
   }, self)
   new_infoview.info = Info:new { infoview = new_infoview }
   new_infoview.info:render()
+  new_infoview.__throttled_pin_update = throttle(options.update_cooldown, function(pin)
+    pin:update()
+  end)
   return new_infoview
 end
 
@@ -659,7 +664,17 @@ function Infoview:__update_winhighlight()
   if self.info.pin.paused then
     self.window.o.winhighlight = 'NormalNC:leanInfoPaused'
   else
-    self.window.o.winhighlight = ''
+    local params = self.info.pin.__position_params
+    if params then
+      local buffer = Buffer:from_uri(params.textDocument.uri)
+      if buffer.b.lean_imports_out_of_date then
+        self.window.o.winhighlight = 'NormalNC:leanInfoImportsOutOfDate'
+      else
+        self.window.o.winhighlight = ''
+      end
+    else
+      self.window.o.winhighlight = ''
+    end
   end
 end
 
@@ -720,7 +735,19 @@ function Infoview:__update()
   end
   info:update_last_window()
   local cursor = vim.api.nvim_win_get_cursor(0)
-  info:move_pin(Buffer:current(), { cursor[1] - 1, cursor[2] })
+  local buffer = Buffer:current()
+  local pos = { cursor[1] - 1, cursor[2] }
+
+  -- Update the diff pin first, while the extmark is still at the old
+  -- position (it reads the extmark to get the "previous" location).
+  if info.__auto_diff_pin then
+    info:__update_auto_diff_pin(buffer, pos)
+  end
+  -- Move the extmark immediately so the pin indicator stays responsive,
+  -- but throttle the LSP request + render so rapid cursor movement
+  -- doesn't flood the server.
+  info.pin:__update_extmark(buffer, pos)
+  self.__throttled_pin_update(info.pin)
 end
 
 ---Directly mark that the infoview has died. What a shame.
