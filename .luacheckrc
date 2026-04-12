@@ -1,9 +1,8 @@
+max_comment_line_length = false
+
 files = {
   ["demos/basic.lua"] = {
     globals = { "DEMO" },
-  },
-  ["lua/lean/tui.lua"] = {
-    max_line_length = false,
   },
 }
 globals = {

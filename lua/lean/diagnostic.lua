@@ -143,7 +143,7 @@ end
 ---rebuilt" sticky diagnostic when a dependency is rebuilt while the file
 ---is open; that variant is not currently detected here.
 ---
----Follows https://github.com/leanprover/vscode-lean4/blob/a45318523691329a325301826e3d20b2c7f6e864/vscode-lean4/src/leanclient.ts#L576  -- luacheck: no max line length
+---Follows https://github.com/leanprover/vscode-lean4/blob/a45318523691329a325301826e3d20b2c7f6e864/vscode-lean4/src/leanclient.ts#L576
 ---
 ---Note: vscode-lean4 also checks `range.end` but VS Code's language client
 ---clips diagnostic ranges to the document, producing `end = {0, 0}`.
