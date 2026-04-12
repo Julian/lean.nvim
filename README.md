@@ -283,6 +283,20 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
       indicators = "auto",
     },
 
+    -- Imports-out-of-date
+    on_imports_out_of_date = function(bufnr)
+      -- A callback which will be called in the event that a file's imports
+      -- have changed and the file must be rebuilt.
+      --
+      -- See https://github.com/leanprover/vscode-lean4/blob/master/vscode-lean4/manual/manual.md#file-restarting
+      -- or the lean.nvim manual for further details.
+      --
+      -- The default will prompt you to confirm you wish to restart the file,
+      -- but you can replace this implementation to customize how to handle
+      -- imports being out of date by being either more or less aggressive with
+      -- automatic restarting by explicitly calling `lean.lsp.restart_file(bufnr)`.
+    end,
+
     -- Progress bar support
     progress_bars = {
       -- Enable the progress bars?

@@ -65,6 +65,8 @@ local function on_publish_diagnostics(_, result, ctx)
   local unsolved = {}
   local other_silent = {}
 
+  buffer.b.lean_imports_out_of_date = false
+
   result.diagnostics = vim
     .iter(result.diagnostics)
     ---@param each DiagnosticWith<string>
@@ -88,6 +90,15 @@ local function on_publish_diagnostics(_, result, ctx)
             hl_group = 'leanGoalsAccomplished',
             hl_mode = 'combine',
           })
+        elseif diagnostic.is_imports_out_of_date(each) then
+          buffer.b.lean_imports_out_of_date = true
+          each.message = each.message:gsub(
+            '; use the "Restart File" command in your editor.',
+            [[. Run require('lean.lsp').restart_file() (or use the :LeanRestartFile command) to restart the file.]]
+          )
+          vim.schedule(function()
+            CONFIG().on_imports_out_of_date(buffer.bufnr)
+          end)
         end
       end)
       if not succeeded then
@@ -274,7 +285,15 @@ return {
     editDelay = 10, -- see #289
     hasWidgets = true,
   },
-  on_init = function(_, response)
+  on_init = function(client, response)
+    local original_notify = client.notify
+    client.notify = function(_, method, params)
+      if method == 'textDocument/didOpen' and not params.dependencyBuildMode then
+        params.dependencyBuildMode = 'never'
+      end
+      original_notify(_, method, params)
+    end
+
     local version = response.serverInfo.version
     ---Lean 4.19 introduces silent diagnostics, which we use to differentiate
     ---between "No goals." and "Goals accomplished. For older versions, we

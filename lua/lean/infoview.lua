@@ -664,7 +664,17 @@ function Infoview:__update_winhighlight()
   if self.info.pin.paused then
     self.window.o.winhighlight = 'NormalNC:leanInfoPaused'
   else
-    self.window.o.winhighlight = ''
+    local params = self.info.pin.__position_params
+    if params then
+      local buffer = Buffer:from_uri(params.textDocument.uri)
+      if buffer.b.lean_imports_out_of_date then
+        self.window.o.winhighlight = 'NormalNC:leanInfoImportsOutOfDate'
+      else
+        self.window.o.winhighlight = ''
+      end
+    else
+      self.window.o.winhighlight = ''
+    end
   end
 end
 

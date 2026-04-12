@@ -17,6 +17,7 @@
 ---@field progress_bars? table progress bar configuration
 ---@field signs? lean.diagnostic.SignsConfig diagnostic sign column configuration
 ---@field stderr? table stderr window configuration
+---@field on_imports_out_of_date? fun(integer):nil a callback called when imports are out of date in a buffer
 ---@field debug? lean.debug.Config developer options for debugging and introspection
 
 ---@class lean.MergedConfig: lean.Config
@@ -25,6 +26,7 @@
 ---@field infoview lean.infoview.MergedConfig infoview configuration
 ---@field inlay_hint lean.inlay_hint.Config inlay hint configuration
 ---@field debug lean.debug.MergedConfig debugging and introspection configuration
+---@field on_imports_out_of_date fun(integer):nil a callback called when imports are out of date in a buffer
 
 ---@class lean.abbreviations.Config
 ---@field enable? boolean whether to automatically enable expansion
@@ -71,6 +73,7 @@
 ---We enable them by default in Lean buffers, but they can be disabled if
 ---desired below. Note that they are not enabled globally in Neovim by default
 ---(as what exactly is shown in inlay hints can vary widely by language).
+
 ---Developer options for debugging lean.nvim internals.
 ---
 ---`log` receives all internal log messages (connection events, RPC errors,
@@ -147,6 +150,17 @@ local DEFAULTS = {
       'hint:\n',
     },
   },
+
+  ---@param bufnr integer
+  on_imports_out_of_date = function(bufnr)
+    vim.ui.select({ 'restart', 'not now' }, {
+      prompt = 'Imports are out of date and must be rebuilt for this file.',
+    }, function(choice)
+      if choice == 'restart' then
+        require('lean.lsp').restart_file(bufnr)
+      end
+    end)
+  end,
 
   ---@type lean.inlay_hint.Config
   inlay_hint = { enabled = true },
