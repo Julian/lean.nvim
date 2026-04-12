@@ -7,3 +7,4 @@ path = "foo"
 
 [[lean_lib]]
 name = "Example"
+globs = ["Example", "Example.Squares", "Example.JumpToStdlib", "Example.RestartFile"]
