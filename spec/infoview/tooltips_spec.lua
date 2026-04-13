@@ -196,8 +196,7 @@ describe(
     it(
       'shows diagnostics',
       helpers.clean_buffer('example : 37 = 37 := by', function()
-        helpers.move_cursor { to = { 1, 19 } }
-        assert.infoview_contents.are [[
+        assert.infoview_contents_at({ 1, 19 }).are [[
           ▼ 1:22-1:24: error:
           unsolved goals
           ⊢ 37 = 37

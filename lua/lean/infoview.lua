@@ -2023,4 +2023,96 @@ function infoview.prev_link()
   end
 end
 
+---@class infoview.ContentsAtOpts
+---@field buf? integer buffer handle, defaulting to the current buffer
+---@field callback? fun(element: Element) called with the result for async use
+---@field timeout? integer timeout in ms for the synchronous case (default: 10000)
+
+---Return the infoview contents at the given position.
+---
+---When called with a callback, runs asynchronously and passes the Element to
+---the callback. When called without one, blocks until the result is ready
+---(waiting for the file to finish processing at the given position).
+---
+---@param position { [1]: integer, [2]: integer } a (1, 0)-indexed cursor position (as in `nvim_win_set_cursor`)
+---@param opts? infoview.ContentsAtOpts
+---@return Element? element the result, only when called synchronously
+function infoview.contents_at(position, opts)
+  vim.validate('position', position, 'table')
+  opts = opts or {}
+  vim.validate('opts', opts, 'table')
+
+  local buf = Buffer:from_bufnr(opts.buf or 0)
+  local callback = opts.callback
+
+  local line = position[1] - 1
+  local col = position[2]
+
+  local buf_line = buf:line(line, false)
+  local character = 0
+  if buf_line then
+    local succeeded, utf16 = pcall(vim.str_utfindex, buf_line, 'utf-16', col)
+    if succeeded then
+      character = utf16
+    end
+  end
+
+  ---@type lsp.TextDocumentPositionParams
+  local position_params = {
+    textDocument = { uri = buf:uri() },
+    position = { line = line, character = character },
+  }
+
+  local iv = infoview.get_current_infoview()
+  if not iv then
+    error 'infoview.contents_at: no infoview is open'
+  end
+
+  ---Wait for processing to finish at the given position, then fetch contents.
+  local function fetch()
+    while progress.at(position_params) do
+      local event = async.event()
+      local autocmd
+      autocmd = vim.api.nvim_create_autocmd('User', {
+        pattern = progress.AUTOCMD,
+        once = true,
+        callback = function()
+          autocmd = nil
+          event.set()
+        end,
+      })
+      -- Check again in case processing finished between the while check and
+      -- the autocmd registration.
+      if not progress.at(position_params) then
+        if autocmd then
+          vim.api.nvim_del_autocmd(autocmd)
+        end
+        break
+      end
+      event.wait()
+    end
+    return iv:render_contents(position_params)
+  end
+
+  if callback then
+    async.run(function()
+      callback(fetch())
+    end)
+    return
+  end
+
+  local timeout = opts.timeout or 10000
+  local result
+  async.run(function()
+    result = fetch()
+  end)
+  local succeeded = vim.wait(timeout, function()
+    return result ~= nil
+  end)
+  if not succeeded then
+    error(('infoview.contents_at: timed out after %dms waiting for contents'):format(timeout))
+  end
+  return result
+end
+
 return infoview

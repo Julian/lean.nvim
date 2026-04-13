@@ -22,9 +22,7 @@ describe(
     ]],
     function()
       it('filters hypotheses', function()
-        helpers.search 'eft'
-
-        assert.infoview_contents.are [[
+        assert.infoview_contents_at('eft').are [[
           case h
           ⊢ n = n
           c : 4 = 4
