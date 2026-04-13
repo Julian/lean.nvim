@@ -60,12 +60,15 @@ Commands                                                         *lean.commands*
  (Neovim) commands added by lean.nvim for interacting with Lean.
 
 commands.show_goal()                                        *commands.show_goal*
+    Show the goal for the current cursor position in a popup.
 
 
 commands.show_term_goal()                              *commands.show_term_goal*
+    Show the term goal for the current cursor position in a popup.
 
 
 commands.show_line_diagnostics()                *commands.show_line_diagnostics*
+    Show diagnostics for the current cursor position in a popup.
 
 
 ==============================================================================
@@ -109,6 +112,7 @@ The Infoview                                                     *lean.infoview*
 InfoviewViewOptions                                        *InfoviewViewOptions*
 
     Fields: ~
+        {use_widgets}              (boolean)  use interactive widgets (true) or plain text (false)
         {show_types}               (boolean)  show type hypotheses
         {show_instances}           (boolean)  show instance hypotheses
         {show_hidden_assumptions}  (boolean)  show hypothesis names which are inaccessible
@@ -136,8 +140,9 @@ Infoview                                                              *Infoview*
     A "view" on an info (i.e. window).
 
     Fields: ~
-        {info}    (Info)
-        {window}  (Window)
+        {info}          (Info)
+        {view_options}  (InfoviewViewOptions)
+        {window}        (Window)
 
 
 InfoviewNewArgs                                                *InfoviewNewArgs*
