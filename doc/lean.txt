@@ -308,6 +308,20 @@ infoview.prev_link()                                        *infoview.prev_link*
     Move the infoview cursor to the previous link.
 
 
+infoview.ContentsAtOpts                                *infoview.ContentsAtOpts*
+
+    Fields: ~
+        {buf?}       (integer)               buffer handle, defaulting to the current buffer
+        {callback?}  (fun(element:Element))  called with the result for async use
+        {timeout?}   (integer)               timeout in ms for the synchronous case (default: 10000)
+
+
+infoview.contents_at({opts?})                             *infoview.contents_at*
+
+    Parameters: ~
+        {opts?}  (infoview.ContentsAtOpts)  @return Element? element the result, only when called synchronously
+
+
 goals.at({sess})                                                      *goals.at*
     Return the interactive goals at the given position, caching them for access.
 
