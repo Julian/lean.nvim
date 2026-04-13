@@ -21,16 +21,19 @@ local stderr_height
 local function open_window(stderr_buffer)
   local initial_window = Window:current()
 
+  local stderr_window
   -- split the infoview window if open
   local iv = infoview.get_current_infoview()
-  if iv then
-    iv:enter()
-    vim.cmd(('rightbelow sbuffer %d'):format(stderr_buffer.bufnr))
+  if iv and iv.window and iv.window:is_valid() then
+    stderr_window = iv.window:split {
+      buffer = stderr_buffer,
+      direction = 'below',
+      enter = true,
+    }
   else
     vim.cmd(('botright sbuffer %d'):format(stderr_buffer.bufnr))
+    stderr_window = Window:current()
   end
-
-  local stderr_window = Window:current()
   stderr_window:set_height(stderr_height)
   stderr_buffer.o.filetype = 'leanstderr'
   initial_window:make_current()

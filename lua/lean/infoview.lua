@@ -649,16 +649,17 @@ function Infoview:__open_win(buffer)
 
   if self.__orientation == 'vertical' then
     vim.cmd('leftabove ' .. self.__width .. 'vsplit')
-    vim.cmd('vertical resize ' .. self.__width)
+  elseif self.__separate_tab then
+    vim.cmd.tabnew()
   else
-    if self.__separate_tab then
-      vim.cmd.tabnew()
-    else
-      vim.cmd('leftabove ' .. self.__height .. 'split')
-      vim.cmd('resize ' .. self.__height)
-    end
+    vim.cmd('leftabove ' .. self.__height .. 'split')
   end
   local new_win = Window:current()
+  if self.__orientation == 'vertical' then
+    new_win:set_width(self.__width)
+  elseif not self.__separate_tab then
+    new_win:set_height(self.__height)
+  end
   new_win:set_buffer(buffer)
   buffer.o.filetype = 'leaninfo'
 
@@ -707,15 +708,11 @@ function Infoview:__refresh()
   end
 
   for _, win in pairs(valid_windows) do
-    win:call(function()
-      if self.__orientation == 'vertical' then
-        vim.cmd('vertical resize ' .. self.__width)
-      else
-        if not self.__separate_tab then
-          vim.cmd('resize ' .. self.__height)
-        end
-      end
-    end)
+    if self.__orientation == 'vertical' then
+      win:set_width(self.__width)
+    elseif not self.__separate_tab then
+      win:set_height(self.__height)
+    end
   end
 end
 
@@ -797,11 +794,9 @@ function Infoview:__refresh_diff()
   end
 
   for _, win in pairs { self.__diff_win, self.window } do
-    win:call(function()
-      vim.cmd.diffthis()
-      vim.wo.foldmethod = 'manual'
-      vim.wo.wrap = true
-    end)
+    win:call(vim.cmd.diffthis)
+    win.o.foldmethod = 'manual'
+    win.o.wrap = true
   end
 
   self:__refresh()
