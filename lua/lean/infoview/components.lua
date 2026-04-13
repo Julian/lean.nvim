@@ -17,7 +17,6 @@ local diagnostic = require 'lean.diagnostic'
 local goals = require 'lean.goals'
 local interactive_goal = require 'lean.widget.interactive_goal'
 local lsp = require 'lean.lsp'
-local plain = require 'lean.infoview.plain'
 local rpc = require 'lean.rpc'
 local widgets = require 'lean.widgets'
 
@@ -28,6 +27,7 @@ local components = {
   },
   NO_INFO = Element:new { text = 'No info.', name = 'no-info' },
   PROCESSING = Element:new { text = 'Processing file...', name = 'processing' },
+  EMPTY = Element.EMPTY,
 }
 
 ---Diagnostic information for the current line from the Lean server.
@@ -73,23 +73,12 @@ function components.interactive_diagnostics(diags, line, sess)
     :totable()
 end
 
+---Wrap raw goal children with multi-goal headers and accomplished/no-goals titles.
 ---@param params lsp.TextDocumentPositionParams
----@param sess ReconnectingSubsession
----@param use_widgets? boolean
----@return Element[]? goal
----@return LspError? error
-function components.goal_at(params, sess, use_widgets)
-  local children, goal, err
-  if use_widgets == false then
-    goal, children = plain.goal(params)
-  else
-    goal, err = goals.at(sess)
-    if err then
-      return nil, err
-    end
-    children = goal and interactive_goal.Goals(goal, sess, Locations.at(params))
-  end
-
+---@param goal string[]|InteractiveGoal[]|nil the list of goals
+---@param children Element[]? rendered goal elements
+---@return Element[]? wrapped
+local function wrap_goals(params, goal, children)
   if goal and #goal > 1 then
     children = {
       Element:titled {
@@ -107,31 +96,48 @@ function components.goal_at(params, sess, use_widgets)
   elseif goal and #goal == 0 then -- between goals / Lean <4.19 with no markers
     title = vim.g.lean_no_goals_message or 'No goals.'
   else
-    return children, err
+    return children
   end
 
-  local element = Element:titled {
-    title = title,
-    body = children,
-    title_hlgroup = 'leanInfoGoals',
+  return {
+    Element:titled {
+      title = title,
+      body = children,
+      title_hlgroup = 'leanInfoGoals',
+    },
   }
-  return { element }, err
 end
 
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess ReconnectingSubsession
----@param use_widgets? boolean
+---@param view_options InfoviewViewOptions
+---@return Element[]? goal
+---@return LspError? error
+function components.goal_at(params, sess, view_options)
+  local goal, err = goals.at(sess)
+  if err then
+    return nil, err
+  end
+  local children = goal and interactive_goal.Goals(goal, sess, Locations.at(params), view_options)
+  return wrap_goals(params, goal, children), err
+end
+
+---@param params lsp.TextDocumentPositionParams
+---@return Element[]? goal
+---@return LspError? error
+function components.plain_goal_at(params)
+  local plain = require 'lean.infoview.plain'
+  local goal, children = plain.goal(params)
+  return wrap_goals(params, goal, children)
+end
+
+---@param sess ReconnectingSubsession
+---@param view_options InfoviewViewOptions
 ---@return Element[]?
 ---@return LspError?
-function components.term_goal_at(params, sess, use_widgets)
-  -- Term goals, even in VSCode, seem to not support selecting subexpression
-  -- locations / "shift-click"ing, so there's no `locations` parameter here.
-  if use_widgets == false then
-    return plain.term_goal(params)
-  end
-
+function components.term_goal_at(sess, view_options)
   local term_goal, err = sess:getInteractiveTermGoal()
-  term_goal = term_goal and interactive_goal.interactive_term_goal(term_goal, sess)
+  term_goal = term_goal and interactive_goal.interactive_term_goal(term_goal, sess, view_options)
   return term_goal, err
 end
 
@@ -154,14 +160,9 @@ end
 
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? ReconnectingSubsession
----@param use_widgets? boolean
 ---@return Element[]?
 ---@return LspError?
-function components.diagnostics_at(params, sess, use_widgets)
-  if use_widgets == false then
-    return interactive_goal.diagnostics(params)
-  end
-
+function components.diagnostics_at(params, sess)
   if sess == nil then
     sess = rpc.open(params)
   end
@@ -183,13 +184,10 @@ end
 
 ---@param params lsp.TextDocumentPositionParams
 ---@param sess? ReconnectingSubsession
----@param use_widgets? boolean
 ---@return Element[]? widgets
 ---@return LspError? error
-function components.user_widgets_at(params, sess, use_widgets)
-  if not use_widgets then
-    return {}
-  elseif sess == nil then
+function components.user_widgets_at(params, sess)
+  if sess == nil then
     sess = rpc.open(params)
   end
   local response, err = sess:getWidgets()

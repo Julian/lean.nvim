@@ -80,6 +80,8 @@ local function find_descendant_path(element, predicate, path, reverse)
   end
 end
 
+local contents_for_interactive, contents_for_plain
+
 local infoview = {
   -- mapping from infoview IDs to infoviews
   ---@type table<number, Infoview>
@@ -103,8 +105,6 @@ local options = {
   indicators = 'auto',
   show_processing = true,
   show_no_info_message = false,
-  show_term_goals = true,
-  use_widgets = true,
 
   mappings = {
     ['K'] = 'click',
@@ -123,8 +123,8 @@ options._DEFAULTS = vim.deepcopy(options)
 
 local FOCUS_AUGROUP = vim.api.nvim_create_augroup('LeanInfoviewFocus', {})
 
---TODO: Move use_widgets here, if not delete it.
 ---@class InfoviewViewOptions
+---@field use_widgets boolean use interactive widgets (true) or plain text (false)
 ---@field show_types boolean show type hypotheses
 ---@field show_instances boolean show instance hypotheses
 ---@field show_hidden_assumptions boolean show hypothesis names which are inaccessible
@@ -143,7 +143,6 @@ local FOCUS_AUGROUP = vim.api.nvim_create_augroup('LeanInfoviewFocus', {})
 ---@field private __extmark_virt_text table
 ---@field private __tick integer
 ---@field private __info Info
----@field private __use_widgets boolean
 local Pin = { __extmark_ns = vim.api.nvim_create_namespace 'lean.pins' }
 Pin.__index = Pin
 
@@ -165,6 +164,8 @@ Info.__index = Info
 ---A "view" on an info (i.e. window).
 ---@class Infoview
 ---@field info Info
+---@field view_options InfoviewViewOptions
+---@field private __contents_for fun(params: lsp.TextDocumentPositionParams, view_options: InfoviewViewOptions): Element
 ---@field window Window
 ---@field private __orientation "vertical"|"horizontal"
 ---@field private __orientation_pref "auto"|"vertical"|"horizontal"
@@ -196,7 +197,12 @@ end
 function Infoview:new(obj)
   obj = obj or {}
   log:trace { message = 'creating new infoview', obj = obj }
+  local config = require 'lean.config'
+  local view_options = vim.deepcopy(config().infoview.view_options)
   local new_infoview = setmetatable({
+    view_options = view_options,
+    __contents_for = view_options.use_widgets == false and contents_for_plain
+      or contents_for_interactive,
     __orientation_pref = obj.orientation or options.orientation,
     __width = res_dim(obj.width or options.width, vim.o.columns),
     __height = res_dim(obj.height or options.height, vim.o.lines),
@@ -568,9 +574,13 @@ function Infoview:select_view_options()
       description = 'Show hypotheses from bottom-to-top rather than top-to-bottom?',
       option = 'reverse',
     },
+    {
+      name = 'use widgets',
+      description = 'Use interactive widgets or plain text goals?',
+      option = 'use_widgets',
+    },
   }
 
-  local previous = require 'lean.config'().infoview.view_options or {}
   require('lean.tui').select_many(choices, {
     format_item = function(item)
       return item.name
@@ -579,24 +589,27 @@ function Infoview:select_view_options()
       return item.description
     end,
     start_selected = function(choice)
-      return previous[choice.option]
+      return self.view_options[choice.option]
     end,
     title = 'View Options',
     relative_window = self.window,
   }, function(selected, unselected)
-    -- XXX: This needs fixing when there are multiple infoviews.
-    local view_options = {}
     for each in vim.iter(selected) do
-      view_options[each.option] = true
+      self.view_options[each.option] = true
     end
     for each in vim.iter(unselected) do
-      view_options[each.option] = false
+      self.view_options[each.option] = false
     end
-
-    local config = vim.g.lean_config
-    config.infoview.view_options = view_options
-    vim.g.lean_config = config
+    self.__contents_for = self.view_options.use_widgets and contents_for_interactive
+      or contents_for_plain
   end)
+end
+
+---Render the infoview contents for the given position.
+---@param params lsp.TextDocumentPositionParams
+---@return Element
+function Infoview:render_contents(params)
+  return self.__contents_for(params, self.view_options)
 end
 
 ---Wait until the infoview has finished processing.
@@ -914,7 +927,6 @@ function Info:new(opts)
   new_info.pin = Pin:new {
     id = '1',
     paused = options.autopause,
-    use_widgets = options.use_widgets,
     parent = new_info,
   }
 
@@ -1109,7 +1121,6 @@ function Info:add_pin()
   self.pin = Pin:new {
     id = tostring(#self.pins + 1),
     paused = options.autopause,
-    use_widgets = options.use_widgets,
     parent = self,
   }
   if buffer then
@@ -1125,7 +1136,6 @@ function Info:__set_diff_pin(buffer, pos)
     self.__diff_pin = Pin:new {
       id = 'diff',
       paused = options.autopause,
-      use_widgets = options.use_widgets,
       parent = self,
     }
     self.__diff_pin_element:set_children { self.__diff_pin.__element }
@@ -1267,12 +1277,7 @@ function Pin:new(obj)
   obj = obj or {}
 
   local paused = obj.paused or false
-  local use_widgets = obj.use_widgets
-  if use_widgets == nil then
-    use_widgets = true
-  end
   obj.paused = nil
-  obj.use_widgets = nil
 
   return setmetatable(
     vim.tbl_extend('keep', obj, {
@@ -1281,7 +1286,6 @@ function Pin:new(obj)
       __element = Element:new { name = 'pin' },
       __info = obj.parent,
       __tick = 0,
-      __use_widgets = use_widgets,
     }),
     self
   )
@@ -1293,18 +1297,6 @@ function Pin:selectable()
   return self.__data_element:filter(function(element)
     return element.events.select ~= nil
   end)
-end
-
----Enable widgets for this pin.
-function Pin:enable_widgets()
-  self.__use_widgets = true
-  self:update()
-end
-
----Disable widgets (in favor of plaintext goals) for this pin.
-function Pin:disable_widgets()
-  self.__use_widgets = false
-  self:update()
 end
 
 ---Render a pin with an extra header indicating its location.
@@ -1486,54 +1478,12 @@ function Pin:move(buffer, pos)
   self:update()
 end
 
----Render the combined contents of the infoview for the given parameters.
+---Wrap content blocks with a clear_all event handler.
 ---
+---@param blocks Element[]
 ---@param params lsp.TextDocumentPositionParams
----@param use_widgets boolean
 ---@return Element
-local function contents_for(params, use_widgets)
-  local processing = progress.at(params)
-  if processing == progress.Kind.processing then
-    -- When Lean is processing, diagnostics indicate what's building,
-    -- but those diagnostics show up at the top of the file.
-    --
-    -- We explicitly include them here regardless of the cursor position.
-    ---@type lsp.TextDocumentPositionParams
-    local start = {
-      textDocument = params.textDocument,
-      position = { line = 1, character = 0 },
-    }
-    local blocks = vim
-      .iter({
-        { options.show_processing and components.PROCESSING or nil },
-        interactive_goal.diagnostics(start),
-      })
-      :flatten(1)
-    return Element:concat(blocks:totable(), '\n\n') or Element.EMPTY
-  end
-
-  local blocks
-  if processing == progress.Kind.fatal_error then
-    log:debug {
-      message = 'progress.Kind.fatal_error diagnostics',
-      params = params,
-    }
-    blocks = interactive_goal.diagnostics(params)
-  else
-    local view_options = require 'lean.config'().infoview.view_options
-    local sess = rpc.open(params)
-
-    blocks = vim
-      .iter({
-        components.goal_at(params, sess, use_widgets) or {},
-        view_options.show_term_goals and components.term_goal_at(params, sess, use_widgets) or {},
-        components.user_widgets_at(params, sess, use_widgets) or {},
-        components.diagnostics_at(params, sess, use_widgets) or {},
-      })
-      :flatten(1)
-      :totable()
-  end
-
+local function wrap_content_blocks(blocks, params)
   if vim.tbl_isempty(blocks) then
     local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
     if vim.tbl_isempty(vim.lsp.get_clients { bufnr = bufnr, name = 'leanls' }) then
@@ -1563,6 +1513,89 @@ local function contents_for(params, use_widgets)
     },
   }) or Element.EMPTY
   return new_data_element
+end
+
+---Handle the processing and fatal_error states, returning an element if
+---applicable. When Lean is still working, we show a processing indicator
+---and top-of-file diagnostics; on fatal error, we show line diagnostics.
+---
+---@param params lsp.TextDocumentPositionParams
+---@return Element? element if processing state was handled
+local function contents_for_processing(params)
+  local processing = progress.at(params)
+  if processing == progress.Kind.processing then
+    ---@type lsp.TextDocumentPositionParams
+    local start = {
+      textDocument = params.textDocument,
+      position = { line = 1, character = 0 },
+    }
+    local blocks = vim
+      .iter({
+        { options.show_processing and components.PROCESSING or nil },
+        interactive_goal.diagnostics(start),
+      })
+      :flatten(1)
+    return Element:concat(blocks:totable(), '\n\n') or Element.EMPTY
+  end
+
+  if processing == progress.Kind.fatal_error then
+    log:debug {
+      message = 'progress.Kind.fatal_error diagnostics',
+      params = params,
+    }
+    return wrap_content_blocks(interactive_goal.diagnostics(params), params)
+  end
+end
+
+---Render the combined contents of the infoview using interactive widgets.
+---
+---@param params lsp.TextDocumentPositionParams
+---@param view_options InfoviewViewOptions
+---@return Element
+function contents_for_interactive(params, view_options)
+  local element = contents_for_processing(params)
+  if element then
+    return element
+  end
+
+  local sess = rpc.open(params)
+
+  local blocks = vim
+    .iter({
+      components.goal_at(params, sess, view_options) or {},
+      view_options.show_term_goals and components.term_goal_at(sess, view_options) or {},
+      components.user_widgets_at(params, sess) or {},
+      components.diagnostics_at(params, sess) or {},
+    })
+    :flatten(1)
+    :totable()
+
+  return wrap_content_blocks(blocks, params)
+end
+
+---Render the combined contents of the infoview using plain text.
+---
+---@param params lsp.TextDocumentPositionParams
+---@param view_options InfoviewViewOptions
+---@return Element
+function contents_for_plain(params, view_options)
+  local element = contents_for_processing(params)
+  if element then
+    return element
+  end
+
+  local plain = require 'lean.infoview.plain'
+
+  local blocks = vim
+    .iter({
+      components.plain_goal_at(params) or {},
+      view_options.show_term_goals and plain.term_goal(params) or {},
+      interactive_goal.diagnostics(params) or {},
+    })
+    :flatten(1)
+    :totable()
+
+  return wrap_content_blocks(blocks, params)
 end
 
 function Pin:update()
@@ -1599,7 +1632,7 @@ function Pin:update()
       self.loading = true
       self.__info:render()
     end
-    self.__data_element = contents_for(self.__position_params, self.__use_widgets)
+    self.__data_element = self.__info.__infoview:render_contents(self.__position_params)
     -- FIXME: we don't have the right separation here for knowing when we're dead
     if self.__data_element == components.LSP_HAS_DIED then
       self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
@@ -1853,7 +1886,9 @@ end
 function infoview.enable_widgets()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then
-    iv.info.pin:enable_widgets()
+    iv.view_options.use_widgets = true
+    iv.__contents_for = contents_for_interactive
+    iv.info.pin:update()
   end
 end
 
@@ -1861,7 +1896,9 @@ end
 function infoview.disable_widgets()
   local iv = infoview.get_current_infoview()
   if iv ~= nil then
-    iv.info.pin:disable_widgets()
+    iv.view_options.use_widgets = false
+    iv.__contents_for = contents_for_plain
+    iv.info.pin:update()
   end
 end
 

@@ -159,8 +159,9 @@ end
 ---@param goal InteractiveGoal | InteractiveTermGoal
 ---@param sess ReconnectingSubsession
 ---@param locations Locations? nil if we're rendering a term goal
-function interactive_goal.Goal(goal, sess, locations)
-  local view_options = config().infoview.view_options or {}
+---@param view_options? InfoviewViewOptions
+function interactive_goal.Goal(goal, sess, locations, view_options)
+  view_options = view_options or config().infoview.view_options or {}
 
   local case
   if goal.userName then
@@ -219,11 +220,12 @@ end
 ---@param goals InteractiveGoal[]
 ---@param sess ReconnectingSubsession
 ---@param locations Locations
+---@param view_options InfoviewViewOptions
 ---@return Element[]
-function interactive_goal.Goals(goals, sess, locations)
+function interactive_goal.Goals(goals, sess, locations, view_options)
   ---@param goal InteractiveGoal
   local children = vim.iter(goals):map(function(goal)
-    return interactive_goal.Goal(goal, sess, locations)
+    return interactive_goal.Goal(goal, sess, locations, view_options)
   end)
   return { Element:concat(children:totable(), '\n\n') }
 end
@@ -231,8 +233,9 @@ end
 ---The current (term) goal state.
 ---@param goal InteractiveTermGoal
 ---@param sess ReconnectingSubsession
+---@param view_options InfoviewViewOptions
 ---@return Element[]
-function interactive_goal.interactive_term_goal(goal, sess)
+function interactive_goal.interactive_term_goal(goal, sess, view_options)
   if not goal then
     return {}
   end
@@ -241,7 +244,7 @@ function interactive_goal.interactive_term_goal(goal, sess)
     Element:titled {
       title = ('▼ expected type (%s)'):format(range_to_string(goal.range)),
       title_hlgroup = 'leanInfoExpectedType',
-      body = { interactive_goal.Goal(goal, sess) },
+      body = { interactive_goal.Goal(goal, sess, nil, view_options) },
       margin = 1,
     },
   }
