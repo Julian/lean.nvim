@@ -17,7 +17,6 @@ local diagnostic = require 'lean.diagnostic'
 local goals = require 'lean.goals'
 local interactive_goal = require 'lean.widget.interactive_goal'
 local lsp = require 'lean.lsp'
-local rpc = require 'lean.rpc'
 local widgets = require 'lean.widgets'
 
 local components = {
@@ -108,18 +107,17 @@ local function wrap_goals(params, goal, children)
   }
 end
 
----@param params lsp.TextDocumentPositionParams
 ---@param sess ReconnectingSubsession
 ---@param view_options InfoviewViewOptions
 ---@return Element[]? goal
 ---@return LspError? error
-function components.goal_at(params, sess, view_options)
+function components.goal_at(sess, view_options)
   local goal, err = goals.at(sess)
   if err then
     return nil, err
   end
-  local children = goal and interactive_goal.Goals(goal, sess, Locations.at(params), view_options)
-  return wrap_goals(params, goal, children), err
+  local children = goal and interactive_goal.Goals(goal, sess, Locations.at(sess.pos), view_options)
+  return wrap_goals(sess.pos, goal, children), err
 end
 
 ---@param params lsp.TextDocumentPositionParams
@@ -158,19 +156,14 @@ local function interactive_diagnostics_for(sess, line)
   return diagnostics, err
 end
 
----@param params lsp.TextDocumentPositionParams
----@param sess? ReconnectingSubsession
+---@param sess ReconnectingSubsession
 ---@return Element[]?
 ---@return LspError?
-function components.diagnostics_at(params, sess)
-  if sess == nil then
-    sess = rpc.open(params)
-  end
-
-  local line = params.position.line
+function components.diagnostics_at(sess)
+  local line = sess.pos.position.line
   local diagnostics, err = interactive_diagnostics_for(sess, line)
   if err then
-    return interactive_goal.diagnostics(params), err
+    return interactive_goal.diagnostics(sess.pos), err
   end
 
   ---We filter goals accomplished diagnostics from showing in the infoview, as
@@ -182,16 +175,12 @@ function components.diagnostics_at(params, sess)
   return components.interactive_diagnostics(filtered, line, sess), err
 end
 
----@param params lsp.TextDocumentPositionParams
----@param sess? ReconnectingSubsession
+---@param sess ReconnectingSubsession
 ---@return Element[]? widgets
 ---@return LspError? error
-function components.user_widgets_at(params, sess)
-  if sess == nil then
-    sess = rpc.open(params)
-  end
+function components.user_widgets_at(sess)
   local response, err = sess:getWidgets()
-  return widgets.render_response(response, params), err
+  return widgets.render_response(response, sess.pos), err
 end
 
 return components

@@ -1562,10 +1562,10 @@ function contents_for_interactive(params, view_options)
 
   local blocks = vim
     .iter({
-      components.goal_at(params, sess, view_options) or {},
+      components.goal_at(sess, view_options) or {},
       view_options.show_term_goals and components.term_goal_at(sess, view_options) or {},
-      components.user_widgets_at(params, sess) or {},
-      components.diagnostics_at(params, sess) or {},
+      components.user_widgets_at(sess) or {},
+      components.diagnostics_at(sess) or {},
     })
     :flatten(1)
     :totable()

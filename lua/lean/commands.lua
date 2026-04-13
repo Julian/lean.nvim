@@ -61,7 +61,7 @@ function commands.show_goal()
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
 
   async.run(function()
-    local goal, err = components.goal_at(params, rpc.open(params), current_view_options())
+    local goal, err = components.goal_at(rpc.open(params), current_view_options())
     show_popup_or_error(goal, err)
   end)
 end
@@ -85,7 +85,7 @@ function commands.show_line_diagnostics()
     if progress.at(params) == progress.Kind.processing then
       err = 'Processing...'
     else
-      diagnostics, err = components.diagnostics_at(params)
+      diagnostics, err = components.diagnostics_at(rpc.open(params))
     end
     show_popup_or_error(diagnostics, err)
   end)
