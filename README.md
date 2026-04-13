@@ -73,6 +73,7 @@ If you are on an earlier version of neovim, e.g. `0.10.2`, you can have your plu
 - [vim-matchup](https://github.com/andymass/vim-matchup) definitions for Lean
 - [switch.vim](https://github.com/AndrewRadev/switch.vim/) base definitions for Lean
 - If [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) is present, a `:Telescope loogle` command is available as a frontend for the [Loogle](https://loogle.lean-lang.org) JSON API.
+- [Semantic highlighting](https://leanprover.github.io/lean4/doc/semantic_highlighting.html) support -- see the [manual](https://github.com/Julian/lean.nvim/wiki/The-lean.nvim-Manual#syntax-highlighting) for full details and the [wiki](https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#semantic-highlighting) for a sample color scheme setup
 - Simple snippets (in [VSCode-compatible format](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax), usable with e.g. [vim-vsnip](https://github.com/hrsh7th/vim-vsnip))
 - Lean library search path access via `lean.current_search_path()`, which you might find useful as a set of paths to grep (or live grep) within
   See the wiki for [a sample configuration](https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#live-grep).
@@ -96,14 +97,6 @@ require('lean').setup{ mappings = true }
 For more detail on the full list of supported configuration options, key mappings, and commands, see [the manual](https://github.com/Julian/lean.nvim/wiki/The-lean.nvim-Manual).
 
 (If you find you can't modify your source files due to the nvim `E21` error, this might be due to lean.nvim's effort prevent users from accidentally shooting themselves in the foot by modifying the Lean standard library. See the `nomodifiable` option in the [full configuration](https://github.com/Julian/lean.nvim/wiki/The-lean.nvim-Manual#full-configuration--settings).)
-
-## Semantic Highlighting
-
-Lean supports [semantic highlighting](https://leanprover.github.io/lean4/doc/semantic_highlighting.html), in which the Lean server itself will signal how to highlight terms and symbols within the editor using information available to it.
-See the [manual's syntax highlighting section](https://github.com/Julian/lean.nvim/wiki/The-lean.nvim-Manual#syntax-highlighting) for full details on how highlighting works in `lean.nvim`.
-
-Note that even though neovim supports this highlighting, you still will want to map the semantic highlighting groups to your color scheme appropriately.
-For a sample setup, see [the wiki](https://github.com/Julian/lean.nvim/wiki/Configuring-&-Extending#semantic-highlighting).
 
 ## Other Useful Plugins
 
