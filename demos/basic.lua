@@ -12,7 +12,7 @@ function DEMO.show_keys()
   local width = 40
   local buffer = Buffer.create { listed = false, scratch = true }
   buffer.o.modifiable = true
-  local win = Window:from_id(vim.api.nvim_open_win(buffer.bufnr, false, {
+  local win = vim.api.nvim_open_win(buffer.bufnr, false, {
     relative = 'editor',
     width = width,
     height = 1,
@@ -22,13 +22,17 @@ function DEMO.show_keys()
     style = 'minimal',
     border = 'rounded',
     focusable = false,
-  }))
-  win.o.winhighlight = 'Normal:Normal,FloatBorder:FloatBorder'
+  })
+  Window:from_id(win).o.winhighlight = 'Normal:Normal,FloatBorder:FloatBorder'
+  DEMO._keys_win = win
 
   local keys = {}
   local timer = vim.uv.new_timer()
 
   vim.on_key(function(_, typed)
+    if DEMO._keys_paused then
+      return
+    end
     if typed == '' then
       return
     end
@@ -62,6 +66,22 @@ function DEMO.show_keys()
   end)
 end
 
+---Hide the keystroke overlay.
+function DEMO.hide_keys()
+  DEMO._keys_paused = true
+  if DEMO._keys_win and vim.api.nvim_win_is_valid(DEMO._keys_win) then
+    vim.api.nvim_win_set_config(DEMO._keys_win, { hide = true })
+  end
+end
+
+---Restore the keystroke overlay.
+function DEMO.restore_keys()
+  DEMO._keys_paused = false
+  if DEMO._keys_win and vim.api.nvim_win_is_valid(DEMO._keys_win) then
+    vim.api.nvim_win_set_config(DEMO._keys_win, { hide = false })
+  end
+end
+
 ---Show a centered overlay popup.
 ---
 ---If lines are given, they are displayed read-only.
@@ -86,11 +106,23 @@ function DEMO.popup(lines)
   win.o.winhighlight = 'Normal:Normal,FloatBorder:FloatBorder'
   buffer.o.filetype = 'markdown'
   buffer.b.completion = false -- disable blink, completion popping up is noisy
+  DEMO._popup_win = win.id
   if lines then
-    buffer:set_lines(lines)
+    local content = { unpack(lines) }
+    content[#content + 1] = ''
+    buffer:set_lines(content)
     buffer.o.modifiable = false
+    vim.api.nvim_win_set_cursor(win.id, { #content, 0 })
   else
     vim.cmd.startinsert()
+  end
+end
+
+---Close the current popup window.
+function DEMO.close_popup()
+  if DEMO._popup_win and vim.api.nvim_win_is_valid(DEMO._popup_win) then
+    vim.api.nvim_win_close(DEMO._popup_win, true)
+    DEMO._popup_win = nil
   end
 end
 
@@ -120,5 +152,6 @@ function DEMO.end_card(lines)
       win:force_close()
     end
   end
+  vim.o.guicursor = 'a:ver1-Normal'
   DEMO.popup(lines)
 end

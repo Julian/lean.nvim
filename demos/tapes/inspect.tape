@@ -9,6 +9,7 @@ Output demos/output/inspect.gif
 Output demos/output/inspect.mp4
 
 Source demos/tapes/setup.tape
+Set TypingSpeed 40ms
 
 Hide
 Type "just nvim" Enter

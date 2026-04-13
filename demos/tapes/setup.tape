@@ -4,6 +4,6 @@
 Set Shell "zsh"
 Set FontFamily "Inconsolata"
 Set Padding 20
-Set Width 800
+Set Width 1024
 Set Height 500
 Set FontSize 14
