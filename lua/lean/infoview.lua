@@ -1077,6 +1077,16 @@ function Info:new(opts)
     { remap = true, desc = 'Move to the previous trace diagnostic.' }
   )
 
+  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewViewOptions)', function()
+    iv:select_view_options()
+  end, { desc = 'Change the infoview view options.' })
+  pin_buffer.keymaps:set(
+    'n',
+    '<LocalLeader>v',
+    '<Plug>(LeanInfoviewViewOptions)',
+    { remap = true, desc = 'Change the infoview view options.' }
+  )
+
   -- Show/hide current pin extmark when entering/leaving infoview.
   local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })
   pin_buffer:create_autocmd('WinEnter', {

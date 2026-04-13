@@ -184,6 +184,7 @@ This can be configured by putting a line at the top of your `~/.config/nvim/init
 | `]l` / `[l`          | `<Plug>(LeanInfoviewNextLink)` / `Prev`            | next / previous interactive link                                  |
 | `]t` / `[t`          | `<Plug>(LeanInfoviewNextTraceDiagnostic)` / `Prev` | next / previous trace diagnostic                                  |
 | `<LocalLeader>/`     | `<Plug>(LeanInfoviewTraceSearch)`                  | search through trace messages in the diagnostic under the cursor  |
+| `<LocalLeader>v`     | `<Plug>(LeanInfoviewViewOptions)`                  | interactively configure infoview view options                     |
 | `<LocalLeader><Tab>` | `<Plug>(LeanInfoviewGotoLastWindow)`               | jump to the lean file associated with the current infoview window |
 | `<LocalLeader>\\`    | `<Plug>(LeanAbbreviationsReverseLookup)`           | show what abbreviation produces the symbol under the cursor       |
 

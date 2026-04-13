@@ -2,6 +2,8 @@
 --- Tests for infoview view_options, including use_widgets toggling.
 ---@brief ]]
 
+local Tab = require 'std.nvim.tab'
+
 local helpers = require 'spec.helpers'
 
 local infoview = require 'lean.infoview'
@@ -50,6 +52,39 @@ describe('infoview view_options', function()
       )
     )
   end)
+
+  it(
+    'can be selected interactively via <LocalLeader>v from a Lean buffer',
+    helpers.clean_buffer(
+      [[
+        example : 37 = 37 := by
+          sorry
+      ]],
+      function()
+        local known_windows = Tab:current():windows()
+        helpers.feed '<LocalLeader>v'
+        local popup = helpers.wait_for_new_window(known_windows)
+        popup:close()
+      end
+    )
+  )
+
+  it(
+    'can be selected interactively via <LocalLeader>v from the infoview',
+    helpers.clean_buffer(
+      [[
+        example : 37 = 37 := by
+          sorry
+      ]],
+      function()
+        vim.cmd.LeanGotoInfoview()
+        local known_windows = Tab:current():windows()
+        helpers.feed '<LocalLeader>v'
+        local popup = helpers.wait_for_new_window(known_windows)
+        popup:close()
+      end
+    )
+  )
 
   it(
     'are initialized from config defaults on the infoview object',
