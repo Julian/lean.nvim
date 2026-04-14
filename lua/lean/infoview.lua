@@ -1660,15 +1660,26 @@ function infoview.close_all()
 end
 
 ---@private
+---Throttled update of all pins for a URI.
 function infoview.__update_pin_by_uri(uri)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
-      log:debug {
-        message = 'updating pin',
-        uri = uri,
-        window = pin.__info.__infoview.window.id,
-      }
-      pin:update()
+      each.__throttled_pin_update(pin)
+    end
+  end
+end
+
+---@private
+---Called by the $/lean/fileProgress handler.
+---Only updates pins whose processing state at their position has changed.
+function infoview.__on_file_progress(uri)
+  for _, each in pairs(infoview._by_tabpage) do
+    for _, pin in pairs(each:pins_for(uri)) do
+      local current = progress.at(pin.__position_params)
+      if current ~= pin.__last_processing then
+        pin.__last_processing = current
+        each.__throttled_pin_update(pin)
+      end
     end
   end
 end
