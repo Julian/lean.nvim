@@ -298,7 +298,7 @@ function abbreviations.enable(pattern, opts)
 
   vim.api.nvim_create_autocmd('CmdwinEnter', { group = augroup, callback = cmdwin_enter })
   vim.api.nvim_create_autocmd('CmdwinLeave', { group = augroup, callback = cmdwin_leave })
-  vim.cmd [[hi def leanAbbreviationMark cterm=underline gui=underline guisp=Gray]]
+  vim.api.nvim_set_hl(0, 'leanAbbreviationMark', { default = true, underline = true, sp = 'Gray' })
 end
 
 return abbreviations

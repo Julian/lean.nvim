@@ -9,6 +9,7 @@ Output demos/output/trace-search.gif
 Output demos/output/trace-search.mp4
 
 Source demos/tapes/setup.tape
+Set TypingSpeed 40ms
 
 Hide
 Type "just nvim" Enter
@@ -16,12 +17,27 @@ Sleep 3s
 Source demos/tapes/helpers.tape
 Type ":e demos/lean/Demos/TraceSearch.lean" Enter
 Sleep 500ms
-Type "4G0frl"
+Type "6G0frl"
 Sleep 30s
 Ctrl+l
 Sleep 2s
+
+# Intro popup (typed)
+Type@0ms ":lua DEMO.hide_keys() DEMO.popup()" Enter
+Sleep 500ms
 Show
+Type@30ms "You can search through trace output"
+Enter
+Type@30ms "in the infoview."
+Enter
+Type@30ms "First, let's jump to a trace with `]t`."
 Sleep 3s
+Escape
+Hide
+Type@0ms ":lua DEMO.close_popup() DEMO.restore_keys()" Enter
+Ctrl+l
+Sleep 2s
+Show
 
 # Jump to the infoview with <LocalLeader><Tab>
 Type "\"
@@ -31,6 +47,26 @@ Sleep 1s
 # Navigate to a trace diagnostic with ]t
 Type "]t"
 Sleep 2s
+
+# Search popup (typed)
+Hide
+Type@0ms ":lua DEMO.hide_keys() DEMO.popup()" Enter
+Sleep 500ms
+Show
+Type@30ms "Now press `<LocalLeader>/` to search."
+Enter
+Type@30ms "Matching traces are highlighted"
+Enter
+Type@30ms "and uncollapsed."
+Enter
+Type@30ms "`n` and `N` move between matches."
+Sleep 3s
+Escape
+Hide
+Type@0ms ":lua DEMO.close_popup() DEMO.restore_keys()" Enter
+Ctrl+l
+Sleep 2s
+Show
 
 # Search for "Nat" in the traces
 Type "\/"

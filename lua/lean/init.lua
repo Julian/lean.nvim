@@ -147,41 +147,80 @@ function lean.setup(opts)
     telescope.load_extension 'loogle'
   end
 
-  vim.cmd [[
-    command! LeanRestartFile :lua require'lean.lsp'.restart_file()
-    command! LeanRefreshFileDependencies :lua require'lean.lsp'.restart_file()
+  local commands = {
+    LeanRestartFile = function()
+      require('lean.lsp').restart_file()
+    end,
+    LeanRefreshFileDependencies = function()
+      require('lean.lsp').restart_file()
+    end,
 
-    command! LeanGoal :lua require'lean.commands'.show_goal()
-    command! LeanTermGoal :lua require'lean.commands'.show_term_goal()
-    command! LeanLineDiagnostics :lua require'lean.commands'.show_line_diagnostics()
+    LeanGoal = function()
+      require('lean.commands').show_goal()
+    end,
+    LeanTermGoal = function()
+      require('lean.commands').show_term_goal()
+    end,
+    LeanLineDiagnostics = function()
+      require('lean.commands').show_line_diagnostics()
+    end,
 
-    command! LeanPlainGoal :lua require'lean.commands'.show_goal(false)
-    command! LeanPlainTermGoal :lua require'lean.commands'.show_term_goal(false)
-    command! LeanPlainDiagnostics :lua require'lean.commands'.show_line_diagnostics(false)
+    LeanGotoInfoview = function()
+      require('lean.infoview').go_to()
+    end,
+    LeanInfoviewToggle = function()
+      require('lean.infoview').toggle()
+    end,
 
-    command! LeanGotoInfoview :lua require'lean.infoview'.go_to()
-    command! LeanInfoviewToggle :lua require'lean.infoview'.toggle()
+    LeanInfoviewViewOptions = function()
+      require('lean.infoview').select_view_options()
+    end,
 
-    command! LeanInfoviewViewOptions :lua require'lean.infoview'.select_view_options()
+    LeanInfoviewPinTogglePause = function()
+      require('lean.infoview').pin_toggle_pause()
+    end,
+    LeanInfoviewAddPin = function()
+      require('lean.infoview').add_pin()
+    end,
+    LeanInfoviewClearPins = function()
+      require('lean.infoview').clear_pins()
+    end,
 
-    command! LeanInfoviewPinTogglePause :lua require'lean.infoview'.pin_toggle_pause()
-    command! LeanInfoviewAddPin :lua require'lean.infoview'.add_pin()
-    command! LeanInfoviewClearPins :lua require'lean.infoview'.clear_pins()
+    LeanInfoviewSetDiffPin = function()
+      require('lean.infoview').set_diff_pin()
+    end,
+    LeanInfoviewClearDiffPin = function()
+      require('lean.infoview').clear_diff_pin()
+    end,
+    LeanInfoviewToggleAutoDiffPin = function()
+      require('lean.infoview').toggle_auto_diff_pin(true)
+    end,
+    LeanInfoviewToggleNoClearAutoDiffPin = function()
+      require('lean.infoview').toggle_auto_diff_pin(false)
+    end,
 
-    command! LeanInfoviewSetDiffPin :lua require'lean.infoview'.set_diff_pin()
-    command! LeanInfoviewClearDiffPin :lua require'lean.infoview'.clear_diff_pin()
-    command! LeanInfoviewToggleAutoDiffPin :lua require'lean.infoview'.toggle_auto_diff_pin(true)
-    command! LeanInfoviewToggleNoClearAutoDiffPin :lua require'lean.infoview'.toggle_auto_diff_pin(false)
+    LeanInfoviewEnableWidgets = function()
+      require('lean.infoview').enable_widgets()
+    end,
+    LeanInfoviewDisableWidgets = function()
+      require('lean.infoview').disable_widgets()
+    end,
 
-    command! LeanInfoviewEnableWidgets :lua require'lean.infoview'.enable_widgets()
-    command! LeanInfoviewDisableWidgets :lua require'lean.infoview'.disable_widgets()
+    LeanInfoviewAcceptSuggestion = function()
+      require('lean.infoview').accept_suggestion()
+    end,
 
-    command! LeanInfoviewAcceptSuggestion :lua require'lean.infoview'.accept_suggestion()
+    LeanAbbreviationsReverseLookup = function()
+      require('lean.abbreviations').show_reverse_lookup()
+    end,
 
-    command! LeanAbbreviationsReverseLookup :lua require'lean.abbreviations'.show_reverse_lookup()
-
-    command! LeanSorryFill :lua require'lean.sorry'.fill()
-  ]]
+    LeanSorryFill = function()
+      require('lean.sorry').fill()
+    end,
+  }
+  for name, fn in pairs(commands) do
+    vim.api.nvim_create_user_command(name, fn, {})
+  end
 
   vim.g.lean_config = opts
 end

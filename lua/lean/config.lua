@@ -136,6 +136,7 @@ local DEFAULTS = {
   infoview = {
     ---@type InfoviewViewOptions
     view_options = {
+      use_widgets = true,
       show_types = true,
       show_instances = true,
       show_hidden_assumptions = true,

@@ -7,14 +7,13 @@ local helpers = require 'spec.helpers'
 
 local infoview = require 'lean.infoview'
 
-require('lean').setup { infoview = { use_widgets = false } }
+require('lean').setup { infoview = { view_options = { use_widgets = false } } }
 
 describe('plain infoviews', function()
   it(
     'shows goals accomplished on the first line of a solved goal',
     helpers.clean_buffer([[example : 37 = 37 := by rfl]], function()
-      helpers.search 'rfl'
-      assert.infoview_contents.are 'Goals accomplished 🎉'
+      assert.infoview_contents_at('rfl').are 'Goals accomplished 🎉'
     end)
   )
 
@@ -28,8 +27,7 @@ describe('plain infoviews', function()
           · sorry
       ]],
       function()
-        helpers.search 'ases n'
-        assert.infoview_contents.are [[
+        assert.infoview_contents_at('ases n').are [[
           ▼ 2 goals
           case zero
           ⊢ 0 = 0
@@ -45,8 +43,7 @@ describe('plain infoviews', function()
   it(
     'shows a term goal with no hypotheses',
     helpers.clean_buffer([[def n : Nat := 37]], function()
-      helpers.move_cursor { to = { 1, 17 } }
-      assert.infoview_contents.are [[
+      assert.infoview_contents_at({ 1, 17 }).are [[
         ▼ expected type (1:16-1:18)
         ⊢ Nat
       ]]
@@ -56,8 +53,7 @@ describe('plain infoviews', function()
   it(
     'shows a term goal with one hypothesis',
     helpers.clean_buffer([[def n (x : Nat) : Nat := x]], function()
-      helpers.move_cursor { to = { 1, 26 } }
-      assert.infoview_contents.are [[
+      assert.infoview_contents_at({ 1, 26 }).are [[
         ▼ expected type (1:26-1:27)
         x : Nat
         ⊢ Nat
@@ -68,8 +64,7 @@ describe('plain infoviews', function()
   it(
     'shows a term goal with multiple hypotheses',
     helpers.clean_buffer([[def n (A : Type) (a : A) : A := a]], function()
-      helpers.move_cursor { to = { 1, 34 } }
-      assert.infoview_contents.are [[
+      assert.infoview_contents_at({ 1, 33 }).are [[
           ▼ expected type (1:33-1:34)
           A : Type
           a : A
@@ -87,8 +82,7 @@ describe('plain infoviews', function()
           sorry
       ]],
       function()
-        helpers.move_cursor { to = { 2, 18 } }
-        assert.infoview_contents.are [[
+        assert.infoview_contents_at({ 2, 18 }).are [[
           this : Nat
           ⊢ 37 = 37
 
@@ -109,8 +103,7 @@ describe('plain infoviews', function()
           · sorry
       ]],
       function()
-        helpers.move_cursor { to = { 2, 9 } }
-        assert.infoview_contents.are [[
+        assert.infoview_contents_at({ 2, 9 }).are [[
           ▼ 2 goals
           case zero
           ⊢ 0 = 0
@@ -130,19 +123,16 @@ describe('plain infoviews', function()
   it(
     'shows goals with multibyte characters',
     helpers.clean_buffer([[def multibyte {𝔽 : Type} : 𝔽 = 𝔽 := rfl]], function()
-      helpers.move_cursor { to = { 1, 48 } }
-      assert.infoview_contents.are [[
+      assert.infoview_contents_at({ 1, 48 }).are [[
           ▼ expected type (1:40-1:43)
           𝔽 : Type
           ⊢ 𝔽 = 𝔽
         ]]
 
-      helpers.move_cursor { to = { 1, 44 } }
-      assert.infoview_contents.are [[
+      assert.infoview_contents_at({ 1, 44 }).are [[
       ]]
 
-      helpers.move_cursor { to = { 1, 46 } }
-      assert.infoview_contents.are [[
+      assert.infoview_contents_at({ 1, 46 }).are [[
         ▼ expected type (1:40-1:43)
         𝔽 : Type
         ⊢ 𝔽 = 𝔽
@@ -153,8 +143,7 @@ describe('plain infoviews', function()
   it(
     'shows goals accomplished on lines with multiple declarations',
     helpers.clean_buffer([[example : 2 = 2 := rfl example : 3 = 3 := by]], function()
-      helpers.move_cursor { to = { 1, 20 } }
-      assert.infoview_contents.are [[
+      assert.infoview_contents_at({ 1, 20 }).are [[
         Goals accomplished 🎉
 
         ▼ expected type (1:20-1:23)
@@ -165,8 +154,7 @@ describe('plain infoviews', function()
         ⊢ 3 = 3
       ]]
 
-      helpers.move_cursor { to = { 1, 43 } }
-      assert.infoview_contents.are [[
+      assert.infoview_contents_at({ 1, 43 }).are [[
         Goals accomplished 🎉
 
         ⊢ 3 = 3
@@ -188,8 +176,7 @@ describe('plain infoviews', function()
           #infoMessage
         ]],
         function()
-          helpers.search '^#infoMessage'
-          assert.infoview_contents.are [[
+          assert.infoview_contents_at('^#infoMessage').are [[
             ▼ 3:1-3:13: information:
             Hello
           ]]
@@ -206,8 +193,7 @@ describe('plain infoviews', function()
           #warningMessage
         ]],
         function()
-          helpers.search '^#warningMessage'
-          assert.infoview_contents.are [[
+          assert.infoview_contents_at('^#warningMessage').are [[
             ▼ 3:1-3:16: warning:
             Hmm...
           ]]
@@ -224,8 +210,7 @@ describe('plain infoviews', function()
           #errorMessage
         ]],
         function()
-          helpers.search '^#errorMessage'
-          assert.infoview_contents.are [[
+          assert.infoview_contents_at('^#errorMessage').are [[
             ▼ 3:1-3:14: error:
             Uh oh!
           ]]
@@ -245,8 +230,7 @@ describe('plain infoviews', function()
                 37)
         ]],
         function()
-          helpers.search 'exact'
-          assert.infoview_contents.are [[
+          assert.infoview_contents_at('exact').are [[
             ⊢ 2 = 2
 
             ▼ 2:3-6:10: error:
@@ -272,8 +256,7 @@ describe('plain infoviews', function()
           #multilineNoNewline
         ]],
         function()
-          helpers.search '^#multilineNoNewline'
-          assert.infoview_contents.are [[
+          assert.infoview_contents_at('^#multilineNoNewline').are [[
             ▼ 5:1-5:20: information:
             Multiple
             Line
@@ -297,8 +280,7 @@ describe('plain infoviews', function()
           #multilineWithNewline
         ]],
         function()
-          helpers.search '^#multilineWithNewline'
-          assert.infoview_contents.are [[
+          assert.infoview_contents_at('^#multilineWithNewline').are [[
             ▼ 5:1-5:22: information:
             Multiple
             Lines
@@ -322,8 +304,7 @@ describe('plain infoviews', function()
           #multipleMessages
         ]],
         function()
-          helpers.search '^#multipleMessages'
-          assert.infoview_contents.are [[
+          assert.infoview_contents_at('^#multipleMessages').are [[
             ▼ 6:1-6:18: information:
             So
 
@@ -367,8 +348,7 @@ describe('plain infoviews', function()
             #knownWidget
           ]],
           function()
-            helpers.search '^#knownWidget'
-            assert.infoview_contents.are [[
+            assert.infoview_contents_at('^#knownWidget').are [[
               ▼ 20:1-20:13: information:
               This will be in the hover.
             ]]
@@ -395,8 +375,7 @@ describe('plain infoviews', function()
             #unknownWidget
           ]],
           function()
-            helpers.search '^#unknownWidget'
-            assert.infoview_contents.are [[
+            assert.infoview_contents_at('^#unknownWidget').are [[
               ▼ 13:1-13:15: information:
               You're gonna see this alternate text.
             ]]

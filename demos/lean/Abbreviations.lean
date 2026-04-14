@@ -1,3 +1,6 @@
--- Unicode abbreviations in lean.nvim
+-- Type \ followed by a name to expand Unicode abbreviations.
+-- You can also look up how to type any symbol with reverse lookup.
 
-example (n : Nat) : n = n := rfl
+abbrev ℕ := Nat
+
+example (n : ℕ) : n = n := rfl

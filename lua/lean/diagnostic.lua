@@ -71,8 +71,8 @@ local diagnostic = {
   end,
 }
 
-vim.cmd.highlight [[default link leanUnsolvedGoals DiagnosticInfo]]
-vim.cmd.highlight [[default link leanGoalsAccomplishedSign DiagnosticInfo]]
+vim.api.nvim_set_hl(0, 'leanUnsolvedGoals', { default = true, link = 'DiagnosticInfo' })
+vim.api.nvim_set_hl(0, 'leanGoalsAccomplishedSign', { default = true, link = 'DiagnosticInfo' })
 
 ---Get the sign character for a given severity.
 ---

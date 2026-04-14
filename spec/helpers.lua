@@ -374,6 +374,40 @@ assert:register('assertion', 'infoview_contents', has_infoview_contents)
 assert:register('assertion', 'infoview_contents_nowait', has_infoview_contents_nowait)
 assert:register('assertion', 'diff_contents', has_diff_contents)
 
+---Assert about the infoview contents at a given position without moving the cursor.
+---
+---The position can be a (1, 0)-indexed cursor position or a Lua pattern
+---string to find in the current buffer.
+---
+---Usage: assert.infoview_contents_at({ 1, 0 }).are 'expected text'
+---   or: assert.infoview_contents_at('sorry').are [[expected text]]
+function assert.infoview_contents_at(position)
+  if type(position) == 'string' then
+    local pattern = position
+    local buffer = Buffer:current()
+    local found
+    for i, line in ipairs(buffer:lines()) do
+      found = line:find(pattern)
+      if found then
+        position = { i, found - 1 }
+        break
+      end
+    end
+    if not found then
+      error(("'%s' not found in buffer"):format(pattern))
+    end
+  end
+
+  return {
+    are = function(expected)
+      expected = _expected { expected }
+      local element = infoview.contents_at(position)
+      local got = element:to_string()
+      assert.is.equal(expected, got)
+    end,
+  }
+end
+
 local function has_highlighted_text(_, arguments)
   local inspected = vim.inspect_pos(0)
   local highlight = vim.iter(inspected.extmarks):find(function(mark)

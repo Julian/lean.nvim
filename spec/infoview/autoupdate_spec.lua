@@ -28,7 +28,7 @@ local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
 -- We turn widgets off here, but that shouldn't really be affecting updating.
-require('lean').setup { infoview = { use_widgets = false } }
+require('lean').setup { infoview = { view_options = { use_widgets = false } } }
 
 describe('infoview content (auto-)update', function()
   local lean_window

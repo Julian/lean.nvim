@@ -9,6 +9,7 @@ Output demos/output/navigation.gif
 Output demos/output/navigation.mp4
 
 Source demos/tapes/setup.tape
+Set TypingSpeed 40ms
 
 Hide
 Type "just nvim" Enter
@@ -17,19 +18,22 @@ Source demos/tapes/helpers.tape
 Type ":e demos/lean/Demos/Navigation.lean" Enter
 Sleep 500ms
 # Position on `constructor` for goal/hypothesis navigation
-Type "3G0fcl"
+Type "6G0fcl"
 Sleep 30s
 Ctrl+l
 Sleep 2s
 
-# --- Goal navigation popup ---
-Type@0ms ":lua DEMO.popup{'  Goal navigation:  ]g / [g'}" Enter
-Ctrl+l
-Sleep 2s
+# --- Goal navigation popup (typed) ---
+Type@0ms ":lua DEMO.hide_keys() DEMO.popup()" Enter
+Sleep 500ms
 Show
-Sleep 2.5s
+Type@30ms "You can jump between goals"
+Enter
+Type@30ms "with `]g` and `[g`."
+Sleep 3s
+Escape
 Hide
-Type ":q" Enter
+Type@0ms ":lua DEMO.close_popup() DEMO.restore_keys()" Enter
 Ctrl+l
 Sleep 2s
 Show
@@ -45,15 +49,18 @@ Sleep 2s
 Type "[g"
 Sleep 2s
 
-# --- Hypothesis navigation popup ---
+# --- Hypothesis navigation popup (typed) ---
 Hide
-Type@0ms ":lua DEMO.popup{'  Hypothesis navigation:  ]h / [h'}" Enter
-Ctrl+l
-Sleep 2s
+Type@0ms ":lua DEMO.hide_keys() DEMO.popup()" Enter
+Sleep 500ms
 Show
-Sleep 2.5s
+Type@30ms "Similarly, `]h` and `[h` move"
+Enter
+Type@30ms "between hypotheses."
+Sleep 3s
+Escape
 Hide
-Type ":q" Enter
+Type@0ms ":lua DEMO.close_popup() DEMO.restore_keys()" Enter
 Ctrl+l
 Sleep 2s
 Show
@@ -82,18 +89,20 @@ Hide
 Type "\"
 Tab
 Sleep 500ms
-Type "8G0fal"
+Type "10G0fal"
 Sleep 8s
 Ctrl+l
 Sleep 2s
-# Suggestion navigation popup
-Type@0ms ":lua DEMO.popup{'  Suggestion navigation:  ]s / [s'}" Enter
-Ctrl+l
-Sleep 2s
+Type@0ms ":lua DEMO.hide_keys() DEMO.popup()" Enter
+Sleep 500ms
 Show
-Sleep 2.5s
+Type@30ms "`]s` and `[s` jump between suggestions,"
+Enter
+Type@30ms "like the ones from `apply?`."
+Sleep 3s
+Escape
 Hide
-Type ":q" Enter
+Type@0ms ":lua DEMO.close_popup() DEMO.restore_keys()" Enter
 Ctrl+l
 Sleep 2s
 Show

@@ -22,8 +22,7 @@ describe('widgets', function()
       ]],
       function()
         -- (see the testing widget directory for the trivial implementation)
-        helpers.move_cursor { to = { 5, 9 } }
-        assert.infoview_contents.are [[
+        assert.infoview_contents_at({ 5, 9 }).are [[
           ▼ expected type (5:9-5:20)
           ⊢ Lean.Widget.Module
 

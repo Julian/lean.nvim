@@ -46,31 +46,38 @@ local function show_popup_or_error(elements, err)
   end
 end
 
+---Return the current infoview's view_options, or the config defaults.
+---@return InfoviewViewOptions
+local function current_view_options()
+  local iv = infoview.get_current_infoview()
+  if iv then
+    return iv.view_options
+  end
+  return require 'lean.config'().infoview.view_options
+end
+
 ---Show the goal for the current cursor position in a popup.
----@param use_widgets boolean? enable widgets in the popup?
-function commands.show_goal(use_widgets)
+function commands.show_goal()
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
 
   async.run(function()
-    local goal, err = components.goal_at(params, rpc.open(params), use_widgets)
+    local goal, err = components.goal_at(rpc.open(params), current_view_options())
     show_popup_or_error(goal, err)
   end)
 end
 
 ---Show the term goal for the current cursor position in a popup.
----@param use_widgets boolean? enable widgets in the popup?
-function commands.show_term_goal(use_widgets)
+function commands.show_term_goal()
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
 
   async.run(function()
-    local goal, err = components.term_goal_at(params, rpc.open(params), use_widgets)
+    local goal, err = components.term_goal_at(rpc.open(params), current_view_options())
     show_popup_or_error(goal, err)
   end)
 end
 
 ---Show diagnostics for the current cursor position in a popup.
----@param use_widgets boolean? enable widgets in the popup?
-function commands.show_line_diagnostics(use_widgets)
+function commands.show_line_diagnostics()
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
 
   async.run(function()
@@ -78,7 +85,7 @@ function commands.show_line_diagnostics(use_widgets)
     if progress.at(params) == progress.Kind.processing then
       err = 'Processing...'
     else
-      diagnostics, err = components.diagnostics_at(params, nil, use_widgets)
+      diagnostics, err = components.diagnostics_at(rpc.open(params))
     end
     show_popup_or_error(diagnostics, err)
   end)
