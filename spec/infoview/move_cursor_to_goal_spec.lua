@@ -28,7 +28,7 @@ describe(
         helpers.move_cursor { to = { 4, 3 } }
         local current_infoview = infoview.get_current_infoview()
 
-        helpers.wait_for_loading_pins(current_infoview)
+        helpers.wait:for_ready_infoview(current_infoview)
         assert.matches('3 goals', current_infoview:get_line(0))
 
         -- Move the cursor anywhere else.
@@ -73,7 +73,7 @@ describe(
       it('moves to conv goals which do not start with ⊢', function()
         helpers.search 'rfl'
         local current_infoview = infoview.get_current_infoview()
-        helpers.wait_for_loading_pins(current_infoview)
+        helpers.wait:for_ready_infoview(current_infoview)
 
         assert.has_all(table.concat(current_infoview:get_lines(), '\n'), { '| 1 = 1' })
 

@@ -477,7 +477,7 @@ describe('interactive infoview', function()
         -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
         -- something isn't waiting properly, and nondeterministically we don't
         -- end up with the right contents in tests :/
-        helpers.wait_for_loading_pins()
+        helpers.wait:for_ready_infoview()
         vim.wait(10000, function()
           return infoview.get_current_infoview():get_line(1) ~= nil
         end)
@@ -497,7 +497,7 @@ describe('interactive infoview', function()
         -- called by `assert.infoview_contents`) -- something isn't waiting
         -- properly, and nondeterministically we don't end up with the right
         -- contents in tests :/
-        helpers.wait_for_loading_pins()
+        helpers.wait:for_ready_infoview()
         vim.wait(10000, function()
           return not vim.deep_equal(infoview.get_current_infoview():get_lines(), { '' })
         end)

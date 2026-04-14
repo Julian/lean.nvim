@@ -87,7 +87,7 @@ describe(
       local tab2_window = Window:current()
       local tab2_infoview = infoview.get_current_infoview()
       helpers.move_cursor { to = { 1, 9 } }
-      helpers.wait_for_loading_pins()
+      helpers.wait:for_ready_infoview()
       tab2_infoview:enter()
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
       helpers.feed '<CR>'
@@ -109,7 +109,7 @@ describe(
       local tab2_window = Window:current()
       local tab2_infoview = infoview.get_current_infoview()
       helpers.move_cursor { to = { 1, 8 } }
-      helpers.wait_for_loading_pins()
+      helpers.wait:for_ready_infoview()
       tab2_infoview:enter()
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
       helpers.feed '<CR>'

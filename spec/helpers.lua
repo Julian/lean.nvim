@@ -7,15 +7,16 @@ local text = require 'std.text'
 local diagnostic = require 'lean.diagnostic'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
-local lsp = require 'lean.lsp'
 local progress = require 'lean.progress'
-
-local helpers = {}
 
 --- Timeout (in ms) for operations that wait on the Lean server.
 --- When tests run in parallel, many Lean servers compete for resources,
 --- so this needs to be generous. Set LEAN_TEST_TIMEOUT to override.
 local TIMEOUT = tonumber(vim.env.LEAN_TEST_TIMEOUT) or 30000
+
+local wait = require('lean.wait'):with_timeout(TIMEOUT)
+
+local helpers = { wait = wait }
 
 ---Feed some keystrokes into the current buffer, replacing termcodes.
 function helpers.feed(contents, feed_opts)
@@ -94,16 +95,6 @@ end
 ---@field window? Window the window handle. Defaults to the current window.
 ---@field to { [1]: integer, [2]: integer } the new cursor position (1-row indexed, as in nvim_win_set_cursor)
 
----Wait for all of the pins associated with the given infoview to finish loading/processing.
----@param iv? Infoview
-function helpers.wait_for_loading_pins(iv)
-  iv = iv or infoview.get_current_infoview()
-  if not iv then
-    error 'Infoview is not open!'
-  end
-  iv:wait(TIMEOUT)
-end
-
 ---Wait for all async elements to be resolved in the given infoview.
 ---@param iv? Infoview
 function helpers.wait_for_async_elements(iv)
@@ -119,39 +110,6 @@ function helpers.wait_for_async_elements(iv)
     return vim.tbl_isempty(renderer.pending_elements)
   end)
   assert.message('Never finished resolving async elements.').True(succeeded)
-end
-
----Wait for the LSP server to be ready for the current buffer.
----@return vim.lsp.Client
-function helpers.wait_for_ready_lsp()
-  local client
-  local succeeded, _ = vim.wait(TIMEOUT, function()
-    client = lsp.client_for(0)
-    return client and client.initialized or false
-  end)
-  assert.message('LSP server was never ready.').True(succeeded)
-  return client
-end
-
----Wait for the Lean server to finish processing ileans.
----
----These are loaded asynchronously by Lean so as not to block the server,
----considering most requests can be answered without them being ready.
----
----For go to definition, call hierarchies, etc, we do need them to be ready.
-function helpers.wait_for_ileans()
-  local client = helpers.wait_for_ready_lsp()
-  local params = lsp.make_wait_for_ileans_params()
-  client:request_sync('$/lean/waitForILeans', params, TIMEOUT)
-  return client
-end
-
----Wait for the Lean server to finish sending diagnostics.
-function helpers.wait_for_diagnostics()
-  local client = helpers.wait_for_ready_lsp()
-  local params = lsp.make_wait_for_diagnostics_params()
-  client:request_sync('textDocument/waitForDiagnostics', params, TIMEOUT)
-  return client
 end
 
 ---Wait until a window that isn't one of the known ones shows up.
@@ -223,18 +181,6 @@ function helpers.clean_buffer(contents, callback, project)
     --        broken on 0.11 with impossible to diagnose invalid buffer errors.
     -- vim.api.nvim_buf_delete(buffer.bufnr, { force = true })
   end
-end
-
----Wait until we are not processing at the current cursor position.
-function helpers.wait_for_processing()
-  local params = vim.lsp.util.make_position_params(0, 'utf-16')
-  vim.wait(TIMEOUT, function()
-    return progress.at(params) == progress.Kind.processing
-  end)
-  local succeeded, _ = vim.wait(TIMEOUT, function()
-    return progress.at(params) == nil
-  end)
-  assert.message('Never finished processing').True(succeeded)
 end
 
 ---Wait a few seconds for line diagnostics, erroring if none arrive.
@@ -326,7 +272,7 @@ assert:register('assertion', 'contents', has_buf_contents)
 local function has_infoview_contents(_, arguments)
   local expected = _expected(arguments)
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
-  helpers.wait_for_loading_pins(target_infoview)
+  helpers.wait:for_ready_infoview(target_infoview)
   local lines = target_infoview:get_lines()
 
   -- FIXME: We should probably tweak things so that this mistake doesn't

@@ -33,7 +33,7 @@ describe('Lean core widgets', function()
           apply?
       ]],
       function()
-        helpers.wait_for_diagnostics()
+        helpers.wait:for_diagnostics()
         helpers.search 'apply'
         assert.infoview_contents.are [[
           Goals accomplished 🎉

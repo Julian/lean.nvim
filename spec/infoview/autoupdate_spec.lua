@@ -164,7 +164,7 @@ describe('infoview content (auto-)update', function()
 
   it('can pause and unpause updates', function()
     vim.cmd.edit { fixtures.project.child 'Example/Squares.lean', bang = true }
-    helpers.wait_for_ready_lsp()
+    helpers.wait:for_lsp()
 
     helpers.move_cursor { to = { 2, 0 } }
     assert.infoview_contents.are [[
@@ -295,7 +295,7 @@ describe('infoview content (auto-)update', function()
 
         vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
         helpers.move_cursor { to = { #lines, 1 } }
-        helpers.wait_for_loading_pins()
+        helpers.wait:for_ready_infoview()
 
         infoview.get_current_infoview():enter()
 

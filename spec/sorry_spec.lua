@@ -144,7 +144,7 @@ describe('sorry', function()
       ]],
       function()
         vim.cmd.normal { '2gg$', bang = true }
-        helpers.wait_for_ready_lsp()
+        helpers.wait:for_lsp()
 
         require('lean.sorry').fill()
         assert.contents.are [[

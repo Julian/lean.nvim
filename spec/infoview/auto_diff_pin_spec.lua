@@ -37,7 +37,7 @@ describe(
 
       it('shows previous position in diff when cursor moves', function()
         lean_window = Window:current()
-        helpers.wait_for_processing()
+        helpers.wait:for_processing()
 
         helpers.move_cursor { to = pos_inl }
         assert.infoview_contents.are [[
@@ -53,7 +53,7 @@ describe(
         -- Enable auto-diff. The diff pin is immediately set to the current position.
         infoview.toggle_auto_diff_pin(true)
         helpers.wait_for_new_window { lean_window, infoview.get_current_infoview().window }
-        helpers.wait_for_loading_pins()
+        helpers.wait:for_ready_infoview()
 
         assert.diff_contents.are [[
           case inl
@@ -165,7 +165,7 @@ describe(
         -- Currently at pos_inl with auto-diff off and diff showing pos_inl.
         -- Re-enable: diff should immediately capture pos_inl (current position).
         infoview.toggle_auto_diff_pin(false)
-        helpers.wait_for_loading_pins()
+        helpers.wait:for_ready_infoview()
 
         -- Move to pos_inl_h: diff should update to pos_inl.
         helpers.move_cursor { to = pos_inl_h }

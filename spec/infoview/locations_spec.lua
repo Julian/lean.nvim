@@ -14,7 +14,7 @@ describe('Pin.selectable', function()
     ]],
       function()
         helpers.search 'rfl'
-        helpers.wait_for_loading_pins()
+        helpers.wait:for_ready_infoview()
 
         local pin = infoview.get_current_infoview().info.pin
         assert.are.same(
