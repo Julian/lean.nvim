@@ -250,7 +250,7 @@ function Infoview:open()
       -- FIXME: If vim is first starting and we're creating a new topmost
       --        window neovim seems to want to put the cursor in it. This seems
       --        to be the case even if we set enter=false, and even though
-      --        below below we call `:make_current` immediately.
+      --        below we call `:make_current` immediately.
       --        It seems pretty likely there's some Neovim bug here which needs
       --        minimizing.
       if vim.fn.has 'vim_starting' == 1 then
