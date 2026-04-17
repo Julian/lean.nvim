@@ -692,8 +692,8 @@ function Infoview:__update_winhighlight()
   end
 end
 
-function Infoview:__refresh()
-  log:debug { message = 'refreshing infoview', window = self.window.id }
+function Infoview:__resize_windows()
+  log:debug { message = 'resizing infoview windows', window = self.window.id }
 
   local valid_windows = {}
 
@@ -735,7 +735,6 @@ function Infoview:pins_for(uri)
     :totable()
 end
 
---FIXME: We shouldn't have both __refresh and __update
 function Infoview:__update()
   log:debug { message = 'updating infoview', window = self.window and self.window.id or nil }
 
@@ -799,7 +798,7 @@ function Infoview:__refresh_diff()
     win.o.wrap = true
   end
 
-  self:__refresh()
+  self:__resize_windows()
 end
 
 ---Close this infoview's diff window.
@@ -821,7 +820,7 @@ function Infoview:__close_diff()
 
   self.__diff_win = nil
 
-  self:__refresh()
+  self:__resize_windows()
 end
 
 ---Close this infoview.
