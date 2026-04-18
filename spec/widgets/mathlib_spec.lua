@@ -76,7 +76,6 @@ describe('Mathlib widgets', function()
 
         helpers.search 'Uninteresting'
         helpers.feed 'gK'
-        helpers.wait_for_async_elements()
 
         assert.infoview_contents.are [[
           ⊢ isUninteresting 73
