@@ -351,7 +351,7 @@ function assert.infoview_contents_at(position)
   return {
     are = function(expected)
       expected = _expected { expected }
-      local element = infoview.contents_at(position)
+      local element = infoview.contents_at(position, { timeout = TIMEOUT })
       local got = element:to_string()
       assert.is.equal(expected, got)
     end,

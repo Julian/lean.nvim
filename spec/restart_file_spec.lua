@@ -69,6 +69,7 @@ describe('restart file', function()
     helpers.wait:for_lsp()
 
     dependent_win:move_cursor { 2, 8 }
+    helpers.wait:for_processing()
     assert.infoview_contents.are [[
       ▼ 2:8-2:19: error:
       Unknown identifier `addedByTest`
