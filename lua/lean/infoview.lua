@@ -168,14 +168,15 @@ Pin.__index = Pin
 ---@field private __pins_element Element
 ---@field private __diff_pin_element Element
 ---@field private __infoview Infoview the infoview this info is attached to
----@field private __win_event_disable boolean
 local Info = {}
 Info.__index = Info
 
 ---A "view" on an info (i.e. window).
 ---@class Infoview
 ---@field info Info
+---@field last_window Window
 ---@field view_options InfoviewViewOptions
+---@field private __win_event_disable boolean
 ---@field private __contents_for fun(params: lsp.TextDocumentPositionParams, view_options: InfoviewViewOptions): Element
 ---@field window Window
 ---@field private __orientation "vertical"|"horizontal"
@@ -360,6 +361,7 @@ function Infoview:new(obj)
   local config = require 'lean.config'
   local view_options = vim.deepcopy(config().infoview.view_options)
   local new_infoview = setmetatable({
+    __win_event_disable = false,
     view_options = view_options,
     __contents_for = view_options.use_widgets == false and contents_for_plain
       or contents_for_interactive,
@@ -794,7 +796,7 @@ function Infoview:__open_win(buffer)
     return
   end
 
-  self.info.__win_event_disable = true
+  self.__win_event_disable = true
   local window_before_split = Window:current()
   self:enter()
 
@@ -815,7 +817,7 @@ function Infoview:__open_win(buffer)
   buffer.o.filetype = 'leaninfo'
 
   window_before_split:make_current()
-  self.info.__win_event_disable = false
+  self.__win_event_disable = false
 
   return new_win
 end
@@ -890,10 +892,10 @@ function Infoview:__update()
   log:debug { message = 'updating infoview', window = self.window and self.window.id or nil }
 
   local info = self.info
-  if info.__win_event_disable then
+  if self.__win_event_disable then
     return
   end
-  info:update_last_window()
+  self:update_last_window()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local buffer = Buffer:current()
   local pos = { cursor[1] - 1, cursor[2] }
@@ -1060,12 +1062,11 @@ function Info:new(opts)
     __infoview = opts.infoview,
     __pins_element = Element:new { name = 'info' },
     __diff_pin_element = Element:new { name = 'diff' },
-    __win_event_disable = false, -- FIXME: This too is really confusing
   }, self)
 
   new_info.__pins_element.events = {
     goto_last_window = function()
-      new_info:jump_to_last_window()
+      new_info.__infoview:jump_to_last_window()
     end,
   }
 
@@ -1175,13 +1176,13 @@ function Info:__maybe_show_pin_extmark(...)
   self.pin:__show_extmark(...)
 end
 
----Set the current window as the last window used to update this Info.
-function Info:update_last_window()
+---Set the current window as the last window used to update this infoview.
+function Infoview:update_last_window()
   self.last_window = Window:current()
 end
 
----Jump to the last window used to update this Info, if any.
-function Info:jump_to_last_window()
+---Jump to the last window used to update this infoview, if any.
+function Infoview:jump_to_last_window()
   if not self.last_window then
     return
   end
@@ -1197,7 +1198,7 @@ function Info:render()
   local function click_header(buffer, pos)
     return function()
       local start_window = Window:current()
-      self:jump_to_last_window()
+      self.__infoview:jump_to_last_window()
 
       if start_window:is_current() then
         return
@@ -1815,7 +1816,7 @@ local function open_for_current_lean_buffer()
     return
   end
   local iv = infoview.open()
-  iv.info:update_last_window()
+  iv:update_last_window()
   return iv
 end
 

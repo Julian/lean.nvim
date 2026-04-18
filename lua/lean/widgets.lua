@@ -151,8 +151,7 @@ end
 ---@return Window? window
 function RenderContext.get_last_window()
   local this_infoview = require('lean.infoview').get_current_infoview()
-  local this_info = this_infoview and this_infoview.info
-  return this_info and this_info.last_window
+  return this_infoview and this_infoview.last_window
 end
 
 ---The goals at the current infoview position.
