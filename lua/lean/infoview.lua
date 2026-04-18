@@ -1258,16 +1258,6 @@ function Info:__update_auto_diff_pin(buffer, pos)
   end
 end
 
----Move the current pin to the specified location.
----@param buffer Buffer
----@param pos {integer, integer} 0-indexed { row, col } byte position
-function Info:move_pin(buffer, pos)
-  if self.__auto_diff_pin then
-    self:__update_auto_diff_pin(buffer, pos)
-  end
-  self.pin:move(buffer, pos)
-end
-
 ---Toggle auto diff pin mode.
 ---@param clear boolean clear the pin when disabling auto diff pin mode?
 function Info:__toggle_auto_diff_pin(clear)
@@ -1448,7 +1438,7 @@ end
 function Pin:__show_extmark(name, hlgroup)
   self.__extmark_hl_group = hlgroup or 'leanPinned'
   if name then
-    self.__extmark_virt_text = { { '← ' .. (name or self.id), 'Comment' } }
+    self.__extmark_virt_text = { { '← ' .. name, 'Comment' } }
   else
     self.__extmark_virt_text = nil
   end
@@ -1621,7 +1611,7 @@ function Pin:update()
     if not self.__info.__infoview.window then
       return
     elseif self.paused then
-      self.__info.__infoview:__update_winhighlight 'paused'
+      self.__info.__infoview:__update_winhighlight()
       return
     end
 
@@ -1634,7 +1624,7 @@ function Pin:update()
       return
     end
 
-    self.__info.__infoview:__update_winhighlight 'normal'
+    self.__info.__infoview:__update_winhighlight()
 
     -- FIXME: This tick business is some bizarre way of telling whether
     --        info:render calls back into us to re-render this pin.
