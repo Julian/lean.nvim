@@ -1657,7 +1657,7 @@ end
 function infoview.__on_file_progress(uri)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
-      local current = progress.at(pin.__position_params)
+      local current = progress.at_or_file(pin.__position_params)
       if current ~= pin.__last_processing then
         pin.__last_processing = current
         pin:request_update()
