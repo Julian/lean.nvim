@@ -9,6 +9,14 @@ local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
 local async = require 'std.async'
 local throttle = require 'std.throttle'
+local Element = require('lean.tui').Element
+local Locations = require 'lean.infoview.locations'
+local components = require 'lean.infoview.components'
+local interactive_goal = require 'lean.widget.interactive_goal'
+local log = require 'lean.log'
+local progress = require 'lean.progress'
+local rpc = require 'lean.rpc'
+
 ---Convert a buffer position to a human-readable (1, 1)-indexed string.
 ---Takes the workspace into account in order to return a relative path.
 ---@param buffer Buffer
@@ -23,14 +31,6 @@ local function position_to_string(buffer, pos)
     pos[2] + 1
   )
 end
-
-local Element = require('lean.tui').Element
-local Locations = require 'lean.infoview.locations'
-local components = require 'lean.infoview.components'
-local interactive_goal = require 'lean.widget.interactive_goal'
-local log = require 'lean.log'
-local progress = require 'lean.progress'
-local rpc = require 'lean.rpc'
 
 ---@param name string
 ---@return fun(element: Element): boolean?
