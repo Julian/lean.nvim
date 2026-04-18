@@ -179,7 +179,7 @@ describe('infoview content (auto-)update', function()
     ]]
 
     -- FIXME: Demeter is angry.
-    local pin = infoview.get_current_infoview().info.pin
+    local pin = infoview.get_current_infoview().pin
     pin:pause()
 
     helpers.move_cursor { to = { 3, 0 } }

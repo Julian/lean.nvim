@@ -113,11 +113,11 @@ describe(
           filename
         ))
 
-        assert.is.equal(2, #infoview.get_current_infoview().info.pins)
+        assert.is.equal(2, #infoview.get_current_infoview().pins)
       end)
 
       it('shows pin locations via extmarks', function()
-        assert.is_not.equal(0, #infoview.get_current_infoview().info.pins)
+        assert.is_not.equal(0, #infoview.get_current_infoview().pins)
         local before_pin = { first_pin_position[1] - 1, 0 }
         local after_pin = { first_pin_position[1] + 1, 0 }
         -- Something here changed in nvim 0.10+ apparently, who knows if intentionally -- hence the filter.
@@ -130,7 +130,7 @@ describe(
       end)
 
       it('can be cleared', function()
-        assert.is_true(#infoview.get_current_infoview().info.pins > 0)
+        assert.is_true(#infoview.get_current_infoview().pins > 0)
 
         infoview.clear_pins()
         assert.infoview_contents.are [[
@@ -156,7 +156,7 @@ describe(
           ⊢ ∀ {a b : Prop}, b → a ∨ b
         ]]
 
-        assert.is.equal(0, #infoview.get_current_infoview().info.pins)
+        assert.is.equal(0, #infoview.get_current_infoview().pins)
       end)
 
       it('can be re-placed after being cleared', function()
