@@ -103,9 +103,10 @@ function helpers.wait_for_async_elements(iv)
     error 'Infoview is not open!'
   end
   local renderer = iv.pin.__renderer -- FIXME
-  vim.wait(TIMEOUT, function()
+  local appeared, _ = vim.wait(TIMEOUT, function()
     return not vim.tbl_isempty(renderer.pending_elements)
   end)
+  assert.message('No async elements ever appeared.').True(appeared)
   local succeeded, _ = vim.wait(TIMEOUT, function()
     return vim.tbl_isempty(renderer.pending_elements)
   end)
