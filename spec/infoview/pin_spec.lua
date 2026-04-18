@@ -176,8 +176,6 @@ describe(
 
       describe('click', function()
         it('jumps to the pin position', function()
-          local lean_window = Window:current()
-
           vim.cmd.edit { fixtures.project.child 'Example/Squares.lean', bang = true }
           local pin_position = { 2, 0 }
           helpers.move_cursor { to = pin_position }

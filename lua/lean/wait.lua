@@ -46,6 +46,13 @@ function Wait:for_processing()
   end)
 end
 
+---Wait until the server begins processing the current buffer.
+function Wait:for_file_processing()
+  self:_wait('file processing', function()
+    return progress.percentage() < 100
+  end)
+end
+
 ---Wait for all pins in the infoview to finish loading.
 ---@param iv? Infoview
 function Wait:for_ready_infoview(iv)
