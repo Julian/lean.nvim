@@ -125,25 +125,19 @@ Pin                                                                        *Pin*
     An individual pin.
 
     Fields: ~
-        {id}  (string)  a label to identify the pin
-
-
-Info                                                                      *Info*
-    An individual info.
-
-    Fields: ~
-        {pin}   (Pin)
-        {pins}  (Pin[])
+        {id}      (string)  a label to identify the pin
+        {buffer}  (Buffer)  the buffer for this pin's output
+        {window}  (Window)  the window showing this pin's buffer
 
 
 Infoview                                                              *Infoview*
-    A "view" on an info (i.e. window).
+    A "view" on Lean goal state.
 
     Fields: ~
-        {info}          (Info)
+        {pin}           (Pin)                  the main pin
+        {pins}          (Pin[])                additional pins
         {last_window}   (Window)
         {view_options}  (InfoviewViewOptions)
-        {window}        (Window)
 
 
 InfoviewNewArgs                                                *InfoviewNewArgs*
