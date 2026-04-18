@@ -102,7 +102,7 @@ function helpers.wait_for_async_elements(iv)
   if not iv then
     error 'Infoview is not open!'
   end
-  local renderer = iv.__renderer -- FIXME
+  local renderer = iv.pin.__renderer -- FIXME
   vim.wait(TIMEOUT, function()
     return not vim.tbl_isempty(renderer.pending_elements)
   end)
@@ -272,8 +272,12 @@ assert:register('assertion', 'contents', has_buf_contents)
 local function has_infoview_contents(_, arguments)
   local expected = _expected(arguments)
   local target_infoview = arguments[1].infoview or infoview.get_current_infoview()
+  local pin = arguments[1].pin
+  if type(pin) == 'number' then
+    pin = target_infoview.pins[pin]
+  end
   helpers.wait:for_ready_infoview(target_infoview)
-  local lines = target_infoview:get_lines()
+  local lines = pin and pin:get_lines() or target_infoview:get_lines()
 
   -- FIXME: We should probably tweak things so that this mistake doesn't
   --        happen and this separate check isn't needed, where you can
