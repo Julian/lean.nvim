@@ -13,6 +13,30 @@ function lsp.position_to_byte0(position, bufnr)
   return { position.line, ok and col or position.character }
 end
 
+---Convert a 0-indexed byte column to a 0-indexed UTF-16 column.
+---
+---LSP uses UTF-16 for character offsets; this is the inverse of the
+---byte-column conversion done in `position_to_byte0`.
+---Returns 0 if the line is nil or the conversion fails.
+---@param buf_line? string the line text
+---@param byte_col integer 0-indexed byte offset
+---@return integer utf16_col 0-indexed UTF-16 offset
+function lsp.byte_col_to_utf16(buf_line, byte_col)
+  if not buf_line then
+    return 0
+  end
+  local ok, utf16 = pcall(vim.str_utfindex, buf_line, 'utf-16', byte_col)
+  if ok then
+    return utf16
+  end
+  require('lean.log'):debug {
+    message = 'str_utfindex failed',
+    buf_line = buf_line,
+    byte_col = byte_col,
+  }
+  return 0
+end
+
 ---Convert an LSP range to a human-readable (1, 1)-indexed string.
 ---
 ---We use 1-based indexing here as the `gg` and `|` motions are 1-indexed,

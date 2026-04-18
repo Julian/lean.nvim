@@ -9,6 +9,8 @@ local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
 local async = require 'std.async'
 local throttle = require 'std.throttle'
+local byte_col_to_utf16 = require('std.lsp').byte_col_to_utf16
+
 local Element = require('lean.tui').Element
 local Locations = require 'lean.infoview.locations'
 local components = require 'lean.infoview.components'
@@ -200,6 +202,155 @@ local function res_dim(x, max)
   return (x < 1) and math.ceil(x * max) or x
 end
 
+---Set up infoview navigation keymaps on a pin buffer.
+---@param buffer Buffer
+---@param info Info the info that owns the pin
+function Infoview:__setup_pin_keymaps(buffer, info)
+  local mappings = {
+    {
+      'GoToGoal',
+      function()
+        self:move_cursor_to_goal()
+      end,
+      '<LocalLeader>g',
+      'Move to the first goal.',
+    },
+    {
+      'NextGoal',
+      function()
+        self:__goto('next', is_goal)
+      end,
+      ']g',
+      'Move to the next goal.',
+    },
+    {
+      'PrevGoal',
+      function()
+        self:__goto('prev', is_goal)
+      end,
+      '[g',
+      'Move to the previous goal.',
+    },
+    {
+      'NextHypothesis',
+      function()
+        self:__goto('next', is_hypothesis)
+      end,
+      ']h',
+      'Move to the next hypothesis.',
+    },
+    {
+      'PrevHypothesis',
+      function()
+        self:__goto('prev', is_hypothesis)
+      end,
+      '[h',
+      'Move to the previous hypothesis.',
+    },
+    {
+      'GoToSuggestion',
+      function()
+        self:move_cursor_to_suggestion()
+      end,
+      '<LocalLeader>S',
+      'Move to the first suggestion.',
+    },
+    {
+      'AcceptSuggestion',
+      function()
+        self:accept_suggestion()
+      end,
+      '<LocalLeader>s',
+      'Accept the first suggestion.',
+    },
+    {
+      'NextSuggestion',
+      function()
+        self:__goto('next', is_suggestion)
+      end,
+      ']s',
+      'Move to the next suggestion.',
+    },
+    {
+      'PrevSuggestion',
+      function()
+        self:__goto('prev', is_suggestion)
+      end,
+      '[s',
+      'Move to the previous suggestion.',
+    },
+    {
+      'NextLink',
+      function()
+        self:__goto('next', is_link)
+      end,
+      ']l',
+      'Move to the next link.',
+    },
+    {
+      'PrevLink',
+      function()
+        self:__goto('prev', is_link)
+      end,
+      '[l',
+      'Move to the previous link.',
+    },
+    {
+      'TraceSearch',
+      function()
+        self:trace_search()
+      end,
+      '<LocalLeader>/',
+      'Search through trace messages in the diagnostic under the cursor.',
+    },
+    {
+      'NextTraceDiagnostic',
+      function()
+        self:__goto('next', is_trace_diagnostic)
+      end,
+      ']t',
+      'Move to the next trace diagnostic.',
+    },
+    {
+      'PrevTraceDiagnostic',
+      function()
+        self:__goto('prev', is_trace_diagnostic)
+      end,
+      '[t',
+      'Move to the previous trace diagnostic.',
+    },
+    {
+      'ViewOptions',
+      function()
+        self:select_view_options()
+      end,
+      '<LocalLeader>v',
+      'Change the infoview view options.',
+    },
+  }
+
+  for _, m in ipairs(mappings) do
+    local plug = '<Plug>(LeanInfoview' .. m[1] .. ')'
+    buffer.keymaps:set('n', plug, m[2], { desc = m[4] })
+    buffer.keymaps:set('n', m[3], plug, { remap = true, desc = m[4] })
+  end
+
+  -- Show/hide current pin extmark when entering/leaving this pin's window.
+  local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })
+  buffer:create_autocmd('WinEnter', {
+    group = pin_augroup,
+    callback = function()
+      info:__maybe_show_pin_extmark 'current'
+    end,
+  })
+  buffer:create_autocmd('WinLeave', {
+    group = pin_augroup,
+    callback = function()
+      info.pin:__hide_extmark()
+    end,
+  })
+end
+
 ---Create a new infoview.
 ---@param obj InfoviewNewArgs
 ---@return Infoview
@@ -349,6 +500,38 @@ function Infoview:reposition()
   end
 end
 
+---Jump to the given path in the current pin's renderer.
+---@param path PathNode[]?
+function Infoview:__jump_to_path(path)
+  if not path then
+    return
+  end
+  local renderer = self.info.__renderer
+  local pos = renderer:buf_position_from_path(path)
+  if pos then
+    self.window:set_cursor(pos)
+    renderer:update_cursor(self.window)
+  end
+end
+
+---Find the path to the nth element matching predicate.
+---@param predicate fun(element: Element): boolean?
+---@param n? integer defaults to 1
+---@return PathNode[]?
+function Infoview:__nth_path(predicate, n)
+  if not self.window then
+    return
+  end
+  local root = self.info.__renderer.element
+  local root_path = { { idx = 0, name = root.name } }
+  local match = root:filter(predicate):nth(n or 1)
+  if match then
+    return find_descendant_path(root, function(e)
+      return e == match
+    end, root_path)
+  end
+end
+
 ---Move the cursor to the given (1-indexed) goal.
 ---@param n? integer the goal number to move to, defaulting to the first
 function Infoview:move_cursor_to_goal(n)
@@ -369,16 +552,9 @@ function Infoview:move_cursor_to_goal(n)
     if goal then
       n = n - 1
       if n == 0 then
-        local goal_path = find_descendant_path(root, function(e)
+        self:__jump_to_path(find_descendant_path(root, function(e)
           return e == goal
-        end, root_path)
-        if goal_path then
-          local pos = renderer:buf_position_from_path(goal_path)
-          if pos then
-            self.window:set_cursor(pos)
-            renderer:update_cursor(self.window)
-          end
-        end
+        end, root_path))
         return
       end
     end
@@ -398,46 +574,16 @@ function Infoview:move_cursor_to_goal(n)
   end
 end
 
----Find the path to the nth suggestion element.
----@param n? integer the suggestion number, defaulting to the first
----@return PathNode[]? path
-function Infoview:__suggestion_path(n)
-  if not self.window then
-    return
-  end
-
-  n = n or 1
-  local root = self.info.__renderer.element
-  local root_path = { { idx = 0, name = root.name } }
-
-  for suggestion in root:filter(is_suggestion) do
-    n = n - 1
-    if n == 0 then
-      return find_descendant_path(root, function(e)
-        return e == suggestion
-      end, root_path)
-    end
-  end
-end
-
 ---Move the cursor to the nth suggestion.
 ---@param n? integer the suggestion number to move to, defaulting to the first
 function Infoview:move_cursor_to_suggestion(n)
-  local path = self:__suggestion_path(n)
-  if path then
-    local renderer = self.info.__renderer
-    local pos = renderer:buf_position_from_path(path)
-    if pos then
-      self.window:set_cursor(pos)
-      renderer:update_cursor(self.window)
-    end
-  end
+  self:__jump_to_path(self:__nth_path(is_suggestion, n))
 end
 
 ---Accept (click) the nth suggestion.
 ---@param n? integer the suggestion number to accept, defaulting to the first
 function Infoview:accept_suggestion(n)
-  local path = self:__suggestion_path(n)
+  local path = self:__nth_path(is_suggestion, n)
   if path then
     self.info.__renderer:event('click', path)
   end
@@ -528,11 +674,7 @@ function Infoview:__goto(direction, predicate)
       end)
 
     if target_path then
-      local pos = renderer:buf_position_from_path(target_path)
-      if pos then
-        self.window:set_cursor(pos)
-        renderer:update_cursor(self.window)
-      end
+      self:__jump_to_path(target_path)
       return
     end
   end
@@ -945,165 +1087,7 @@ function Info:new(opts)
     keymaps = options.mappings,
   }
 
-  local iv = new_info.__infoview
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewGoToGoal)', function()
-    iv:move_cursor_to_goal()
-  end, { desc = 'Move to the first goal.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextGoal)', function()
-    iv:__goto('next', is_goal)
-  end, { desc = 'Move to the next goal.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevGoal)', function()
-    iv:__goto('prev', is_goal)
-  end, { desc = 'Move to the previous goal.' })
-
-  pin_buffer.keymaps:set(
-    'n',
-    '<LocalLeader>g',
-    '<Plug>(LeanInfoviewGoToGoal)',
-    { remap = true, desc = 'Move to the first goal.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    ']g',
-    '<Plug>(LeanInfoviewNextGoal)',
-    { remap = true, desc = 'Move to the next goal.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '[g',
-    '<Plug>(LeanInfoviewPrevGoal)',
-    { remap = true, desc = 'Move to the previous goal.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextHypothesis)', function()
-    iv:__goto('next', is_hypothesis)
-  end, { desc = 'Move to the next hypothesis.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevHypothesis)', function()
-    iv:__goto('prev', is_hypothesis)
-  end, { desc = 'Move to the previous hypothesis.' })
-  pin_buffer.keymaps:set(
-    'n',
-    ']h',
-    '<Plug>(LeanInfoviewNextHypothesis)',
-    { remap = true, desc = 'Move to the next hypothesis.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '[h',
-    '<Plug>(LeanInfoviewPrevHypothesis)',
-    { remap = true, desc = 'Move to the previous hypothesis.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewGoToSuggestion)', function()
-    iv:move_cursor_to_suggestion()
-  end, { desc = 'Move to the first suggestion.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewAcceptSuggestion)', function()
-    iv:accept_suggestion()
-  end, { desc = 'Accept the first suggestion.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextSuggestion)', function()
-    iv:__goto('next', is_suggestion)
-  end, { desc = 'Move to the next suggestion.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevSuggestion)', function()
-    iv:__goto('prev', is_suggestion)
-  end, { desc = 'Move to the previous suggestion.' })
-
-  pin_buffer.keymaps:set(
-    'n',
-    '<LocalLeader>S',
-    '<Plug>(LeanInfoviewGoToSuggestion)',
-    { remap = true, desc = 'Move to the first suggestion.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '<LocalLeader>s',
-    '<Plug>(LeanInfoviewAcceptSuggestion)',
-    { remap = true, desc = 'Accept the first suggestion.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    ']s',
-    '<Plug>(LeanInfoviewNextSuggestion)',
-    { remap = true, desc = 'Move to the next suggestion.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '[s',
-    '<Plug>(LeanInfoviewPrevSuggestion)',
-    { remap = true, desc = 'Move to the previous suggestion.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextLink)', function()
-    iv:__goto('next', is_link)
-  end, { desc = 'Move to the next link.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevLink)', function()
-    iv:__goto('prev', is_link)
-  end, { desc = 'Move to the previous link.' })
-  pin_buffer.keymaps:set(
-    'n',
-    ']l',
-    '<Plug>(LeanInfoviewNextLink)',
-    { remap = true, desc = 'Move to the next link.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '[l',
-    '<Plug>(LeanInfoviewPrevLink)',
-    { remap = true, desc = 'Move to the previous link.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewTraceSearch)', function()
-    iv:trace_search()
-  end, { desc = 'Search through trace messages in the diagnostic under the cursor.' })
-  pin_buffer.keymaps:set(
-    'n',
-    '<LocalLeader>/',
-    '<Plug>(LeanInfoviewTraceSearch)',
-    { remap = true, desc = 'Search through trace messages in the diagnostic under the cursor.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextTraceDiagnostic)', function()
-    iv:__goto('next', is_trace_diagnostic)
-  end, { desc = 'Move to the next trace diagnostic.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevTraceDiagnostic)', function()
-    iv:__goto('prev', is_trace_diagnostic)
-  end, { desc = 'Move to the previous trace diagnostic.' })
-  pin_buffer.keymaps:set(
-    'n',
-    ']t',
-    '<Plug>(LeanInfoviewNextTraceDiagnostic)',
-    { remap = true, desc = 'Move to the next trace diagnostic.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '[t',
-    '<Plug>(LeanInfoviewPrevTraceDiagnostic)',
-    { remap = true, desc = 'Move to the previous trace diagnostic.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewViewOptions)', function()
-    iv:select_view_options()
-  end, { desc = 'Change the infoview view options.' })
-  pin_buffer.keymaps:set(
-    'n',
-    '<LocalLeader>v',
-    '<Plug>(LeanInfoviewViewOptions)',
-    { remap = true, desc = 'Change the infoview view options.' }
-  )
-
-  -- Show/hide current pin extmark when entering/leaving infoview.
-  local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })
-  pin_buffer:create_autocmd('WinEnter', {
-    group = pin_augroup,
-    callback = function()
-      new_info:__maybe_show_pin_extmark 'current'
-    end,
-  })
-  pin_buffer:create_autocmd('WinLeave', {
-    group = pin_augroup,
-    callback = function()
-      new_info.pin:__hide_extmark()
-    end,
-  })
+  new_info.__infoview:__setup_pin_keymaps(pin_buffer, new_info)
 
   local diff_buffer = Buffer.create {
     name = 'lean://info/' .. id .. '/diff',
@@ -1354,22 +1338,16 @@ function Pin:__update_extmark_style(buffer, line, col)
     col = extmark_pos[2]
   end
 
+  -- Highlight exactly one character: find the byte position of the next
+  -- codepoint after `col`. vim.str_utfindex rounds up if `col` is in the
+  -- middle of a UTF-8 sequence, so converting col+1 → UTF-16 → byte gives
+  -- us the start of the *next* codepoint.
   local buf_line = buffer:line(line, false)
-  local end_col = 0
-  if buf_line then
-    if col < #buf_line then
-      -- vim.str_utfindex rounds up to the next UTF16 index if in the middle of a UTF8 sequence;
-      -- so convert next byte to UTF16 and back to get UTF8 index of next codepoint
-      local succeeded, next_utf16 = pcall(vim.str_utfindex, buf_line, 'utf-16', col + 1)
-      if succeeded then
-        end_col = vim.str_byteindex(buf_line, 'utf-16', next_utf16)
-      else
-        log:debug { message = 'str_utfindex failed', buf_line = buf_line, col = col }
-        end_col = col
-      end
-    else
-      end_col = col
-    end
+  local end_col = col
+  if not buf_line then
+    end_col = 0
+  elseif col < #buf_line then
+    end_col = vim.str_byteindex(buf_line, 'utf-16', byte_col_to_utf16(buf_line, col + 1))
   end
 
   self.__extmark = buffer:set_extmark(self.__extmark_ns, line, col, {
@@ -1395,22 +1373,10 @@ function Pin:update_position()
   end
 
   local extmark_pos = buffer:extmark(self.__extmark_ns, extmark, {})
-
-  local new_pos = { line = extmark_pos[1] }
-
-  local buf_line = buffer:line(new_pos.line, false)
-  if buf_line then
-    local succeeded, utf16 = pcall(vim.str_utfindex, buf_line, 'utf-16', extmark_pos[2])
-    if succeeded then
-      new_pos.character = utf16
-    else
-      log:debug { message = 'str_utfindex failed', buf_line = buf_line, extmark_pos = extmark_pos }
-      new_pos.character = 0
-    end
-  else
-    new_pos.character = 0
-  end
-
+  local new_pos = {
+    line = extmark_pos[1],
+    character = byte_col_to_utf16(buffer:line(extmark_pos[1], false), extmark_pos[2]),
+  }
   local uri = buffer:uri()
   ---@type lsp.TextDocumentPositionParams
   self.__position_params = { textDocument = { uri = uri }, position = new_pos }
@@ -1836,38 +1802,52 @@ end
 
 ---Toggle whether the current pin receives updates.
 function infoview.pin_toggle_pause()
-  with_current(function(iv) iv.info.pin:toggle_pause() end)
+  with_current(function(iv)
+    iv.info.pin:toggle_pause()
+  end)
+end
+
+---Open the infoview from the current Lean buffer, recording the buffer's
+---window so the infoview can later jump back.
+---@return Infoview?
+local function open_for_current_lean_buffer()
+  if vim.bo.filetype ~= 'lean' then
+    return
+  end
+  local iv = infoview.open()
+  iv.info:update_last_window()
+  return iv
 end
 
 ---Add a pin to the current cursor location.
 function infoview.add_pin()
-  if vim.bo.filetype ~= 'lean' then
-    return
+  local iv = open_for_current_lean_buffer()
+  if iv then
+    iv.info:add_pin()
   end
-  local current_infoview = infoview.open()
-  current_infoview.info:update_last_window()
-  current_infoview.info:add_pin()
 end
 
 ---Set the location for a diff pin to the current cursor location.
 function infoview.set_diff_pin()
-  if vim.bo.filetype ~= 'lean' then
-    return
+  local iv = open_for_current_lean_buffer()
+  if iv then
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    iv.info:__set_diff_pin(Buffer:current(), { cursor[1] - 1, cursor[2] })
   end
-  local current_infoview = infoview.open()
-  current_infoview.info:update_last_window()
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  current_infoview.info:__set_diff_pin(Buffer:current(), { cursor[1] - 1, cursor[2] })
 end
 
 ---Clear any pins in the current infoview.
 function infoview.clear_pins()
-  with_current(function(iv) iv.info:clear_pins() end)
+  with_current(function(iv)
+    iv.info:clear_pins()
+  end)
 end
 
 ---Clear a diff pin in the current infoview.
 function infoview.clear_diff_pin()
-  with_current(function(iv) iv.info:__clear_diff_pin() end)
+  with_current(function(iv)
+    iv.info:__clear_diff_pin()
+  end)
 end
 
 ---Toggle whether "auto-diff" mode is active for the current infoview.
@@ -1879,22 +1859,22 @@ function infoview.toggle_auto_diff_pin(clear)
   current_infoview.info:__toggle_auto_diff_pin(clear)
 end
 
----Enable widgets in the current infoview.
-function infoview.enable_widgets()
+local function set_renderer(contents_for, use_widgets)
   with_current(function(iv)
-    iv.view_options.use_widgets = true
-    iv.__contents_for = contents_for_interactive
+    iv.view_options.use_widgets = use_widgets
+    iv.__contents_for = contents_for
     iv.info.pin:update()
   end)
 end
 
+---Enable widgets in the current infoview.
+function infoview.enable_widgets()
+  set_renderer(contents_for_interactive, true)
+end
+
 ---Disable widgets in the current infoview.
 function infoview.disable_widgets()
-  with_current(function(iv)
-    iv.view_options.use_widgets = false
-    iv.__contents_for = contents_for_plain
-    iv.info.pin:update()
-  end)
+  set_renderer(contents_for_plain, false)
 end
 
 ---Move the cursor to the infoview window.
@@ -1985,19 +1965,13 @@ function infoview.contents_at(position, opts)
   local line = position[1] - 1
   local col = position[2]
 
-  local buf_line = buf:line(line, false)
-  local character = 0
-  if buf_line then
-    local succeeded, utf16 = pcall(vim.str_utfindex, buf_line, 'utf-16', col)
-    if succeeded then
-      character = utf16
-    end
-  end
-
   ---@type lsp.TextDocumentPositionParams
   local position_params = {
     textDocument = { uri = buf:uri() },
-    position = { line = line, character = character },
+    position = {
+      line = line,
+      character = byte_col_to_utf16(buf:line(line, false), col),
+    },
   }
 
   local iv = infoview.get_current_infoview()
