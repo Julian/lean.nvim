@@ -141,6 +141,7 @@ Infoview                                                              *Infoview*
 
     Fields: ~
         {info}          (Info)
+        {last_window}   (Window)
         {view_options}  (InfoviewViewOptions)
         {window}        (Window)
 
@@ -179,10 +180,6 @@ infoview.enable({opts})                                        *infoview.enable*
 
 infoview.set_autoopen()                                  *infoview.set_autoopen*
     Set whether a new infoview is automatically opened when entering Lean buffers.
-
-
-infoview.set_autopause()                                *infoview.set_autopause*
-    Set whether a new pin is automatically paused.
 
 
 infoview.get_current_infoview()                  *infoview.get_current_infoview*
@@ -262,22 +259,6 @@ infoview.go_to_goal({n?})                                  *infoview.go_to_goal*
         {n?}  (integer)  the goal number to move to, defaulting to the first
 
 
-infoview.next_goal()                                        *infoview.next_goal*
-    Move the infoview cursor to the next goal.
-
-
-infoview.prev_goal()                                        *infoview.prev_goal*
-    Move the infoview cursor to the previous goal.
-
-
-infoview.next_hypothesis()                            *infoview.next_hypothesis*
-    Move the infoview cursor to the next hypothesis.
-
-
-infoview.prev_hypothesis()                            *infoview.prev_hypothesis*
-    Move the infoview cursor to the previous hypothesis.
-
-
 infoview.go_to_suggestion({n?})                      *infoview.go_to_suggestion*
     Move the infoview cursor to the given suggestion.
 
@@ -290,22 +271,6 @@ infoview.accept_suggestion({n?})                    *infoview.accept_suggestion*
 
     Parameters: ~
         {n?}  (integer)  the suggestion number to accept, defaulting to the first
-
-
-infoview.next_suggestion()                            *infoview.next_suggestion*
-    Move the infoview cursor to the next suggestion.
-
-
-infoview.prev_suggestion()                            *infoview.prev_suggestion*
-    Move the infoview cursor to the previous suggestion.
-
-
-infoview.next_link()                                        *infoview.next_link*
-    Move the infoview cursor to the next link.
-
-
-infoview.prev_link()                                        *infoview.prev_link*
-    Move the infoview cursor to the previous link.
 
 
 infoview.ContentsAtOpts                                *infoview.ContentsAtOpts*
