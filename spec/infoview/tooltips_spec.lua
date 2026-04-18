@@ -83,7 +83,8 @@ describe(
     end)
 
     it('does not abandon tooltips when the infoview is closed', function()
-      vim.cmd.tabnew '#'
+      local tab2 = Tab:new()
+      Window:current():set_buffer(lean_window:buffer())
       local tab2_window = Window:current()
       local tab2_infoview = infoview.get_current_infoview()
       helpers.move_cursor { to = { 1, 9 } }
@@ -105,7 +106,8 @@ describe(
     end)
 
     it('does not abandon tooltips when windows are closed', function()
-      vim.cmd.tabnew '#'
+      local tab2 = Tab:new()
+      Window:current():set_buffer(lean_window:buffer())
       local tab2_window = Window:current()
       local tab2_infoview = infoview.get_current_infoview()
       helpers.move_cursor { to = { 1, 8 } }
