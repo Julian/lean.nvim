@@ -91,6 +91,16 @@ local infoview = {
   ---@type boolean
   debug = false,
 }
+
+---Run `fn(iv, ...)` if there's a current infoview; otherwise do nothing.
+---@param fn fun(iv: Infoview, ...): any
+local function with_current(fn, ...)
+  local iv = infoview.get_current_infoview()
+  if iv then
+    return fn(iv, ...)
+  end
+end
+
 ---@type lean.infoview.Config
 local options = {
   width = 1 / 3,
@@ -1827,10 +1837,7 @@ end
 
 ---Close the current infoview (or ensure it is already closed).
 function infoview.close()
-  local current_infoview = infoview.get_current_infoview()
-  if current_infoview then
-    current_infoview:close()
-  end
+  with_current(Infoview.close)
 end
 
 ---Toggle whether the current infoview is opened or closed.
@@ -1845,10 +1852,7 @@ end
 
 ---Toggle whether the current pin receives updates.
 function infoview.pin_toggle_pause()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv.info.pin:toggle_pause()
-  end
+  with_current(function(iv) iv.info.pin:toggle_pause() end)
 end
 
 ---Add a pin to the current cursor location.
@@ -1874,18 +1878,12 @@ end
 
 ---Clear any pins in the current infoview.
 function infoview.clear_pins()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv.info:clear_pins()
-  end
+  with_current(function(iv) iv.info:clear_pins() end)
 end
 
 ---Clear a diff pin in the current infoview.
 function infoview.clear_diff_pin()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv.info:__clear_diff_pin()
-  end
+  with_current(function(iv) iv.info:__clear_diff_pin() end)
 end
 
 ---Toggle whether "auto-diff" mode is active for the current infoview.
@@ -1899,22 +1897,20 @@ end
 
 ---Enable widgets in the current infoview.
 function infoview.enable_widgets()
-  local iv = infoview.get_current_infoview()
-  if iv ~= nil then
+  with_current(function(iv)
     iv.view_options.use_widgets = true
     iv.__contents_for = contents_for_interactive
     iv.info.pin:update()
-  end
+  end)
 end
 
 ---Disable widgets in the current infoview.
 function infoview.disable_widgets()
-  local iv = infoview.get_current_infoview()
-  if iv ~= nil then
+  with_current(function(iv)
     iv.view_options.use_widgets = false
     iv.__contents_for = contents_for_plain
     iv.info.pin:update()
-  end
+  end)
 end
 
 ---Move the cursor to the infoview window.
@@ -1928,10 +1924,7 @@ end
 ---current screen dimensions.
 ---Does nothing if there are more than 2 open windows.
 function infoview.reposition()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:reposition()
-  end
+  with_current(Infoview.reposition)
 end
 
 ---Interactively set some view options for the infoview.
@@ -1945,93 +1938,43 @@ end
 ---Move the infoview cursor to the given goal.
 ---@param n? integer the goal number to move to, defaulting to the first
 function infoview.go_to_goal(n)
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:move_cursor_to_goal(n)
-  end
-end
-
----Move the infoview cursor to the next goal.
-function infoview.next_goal()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('next', is_goal)
-  end
-end
-
----Move the infoview cursor to the previous goal.
-function infoview.prev_goal()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('prev', is_goal)
-  end
-end
-
----Move the infoview cursor to the next hypothesis.
-function infoview.next_hypothesis()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('next', is_hypothesis)
-  end
-end
-
----Move the infoview cursor to the previous hypothesis.
-function infoview.prev_hypothesis()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('prev', is_hypothesis)
-  end
+  with_current(Infoview.move_cursor_to_goal, n)
 end
 
 ---Move the infoview cursor to the given suggestion.
 ---@param n? integer the suggestion number to move to, defaulting to the first
 function infoview.go_to_suggestion(n)
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:move_cursor_to_suggestion(n)
-  end
+  with_current(Infoview.move_cursor_to_suggestion, n)
 end
 
 ---Accept (click) the given suggestion.
 ---@param n? integer the suggestion number to accept, defaulting to the first
 function infoview.accept_suggestion(n)
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:accept_suggestion(n)
+  with_current(Infoview.accept_suggestion, n)
+end
+
+local function goto_step(direction, predicate)
+  return function()
+    with_current(Infoview.__goto, direction, predicate)
   end
 end
 
+---Move the infoview cursor to the next goal.
+infoview.next_goal = goto_step('next', is_goal)
+---Move the infoview cursor to the previous goal.
+infoview.prev_goal = goto_step('prev', is_goal)
+---Move the infoview cursor to the next hypothesis.
+infoview.next_hypothesis = goto_step('next', is_hypothesis)
+---Move the infoview cursor to the previous hypothesis.
+infoview.prev_hypothesis = goto_step('prev', is_hypothesis)
 ---Move the infoview cursor to the next suggestion.
-function infoview.next_suggestion()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('next', is_suggestion)
-  end
-end
-
+infoview.next_suggestion = goto_step('next', is_suggestion)
 ---Move the infoview cursor to the previous suggestion.
-function infoview.prev_suggestion()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('prev', is_suggestion)
-  end
-end
-
+infoview.prev_suggestion = goto_step('prev', is_suggestion)
 ---Move the infoview cursor to the next link.
-function infoview.next_link()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('next', is_link)
-  end
-end
-
+infoview.next_link = goto_step('next', is_link)
 ---Move the infoview cursor to the previous link.
-function infoview.prev_link()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('prev', is_link)
-  end
-end
+infoview.prev_link = goto_step('prev', is_link)
 
 ---@class infoview.ContentsAtOpts
 ---@field buf? integer buffer handle, defaulting to the current buffer
