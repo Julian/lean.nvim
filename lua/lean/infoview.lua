@@ -110,7 +110,6 @@ local options = {
   separate_tab = false,
 
   autoopen = true,
-  autopause = false,
   update_cooldown = 50,
   indicators = 'auto',
   show_processing = true,
@@ -930,7 +929,7 @@ function Info:new(opts)
 
   new_info.pin = Pin:new {
     id = '1',
-    paused = options.autopause,
+    paused = false,
     parent = new_info,
   }
 
@@ -1134,7 +1133,7 @@ function Info:add_pin()
   self:__maybe_show_pin_extmark(self.pin.id)
   self.pin = Pin:new {
     id = tostring(#self.pins + 1),
-    paused = options.autopause,
+    paused = false,
     parent = self,
   }
   if buffer then
@@ -1149,7 +1148,7 @@ function Info:__set_diff_pin(buffer, pos)
   if not self.__diff_pin then
     self.__diff_pin = Pin:new {
       id = 'diff',
-      paused = options.autopause,
+      paused = false,
       parent = self,
     }
     self.__diff_pin_element:set_children { self.__diff_pin.__element }
@@ -1810,11 +1809,6 @@ function infoview.set_autoopen(autoopen)
     end
   end
   options.autoopen = autoopen
-end
-
----Set whether a new pin is automatically paused.
-function infoview.set_autopause(autopause)
-  options.autopause = autopause
 end
 
 ---Get the infoview corresponding to the current window.
