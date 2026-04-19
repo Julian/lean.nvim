@@ -200,7 +200,7 @@ local function file_progress_handler(err, params)
     return
   end
 
-  require('lean.infoview').__update_pin_by_uri(params.textDocument.uri)
+  require('lean.infoview').__on_file_progress(params.textDocument.uri)
 end
 
 return {

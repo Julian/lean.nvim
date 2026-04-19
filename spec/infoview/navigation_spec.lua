@@ -29,7 +29,7 @@ describe('infoview navigation', function()
 
           helpers.move_cursor { to = { 4, 3 } }
           current_infoview = infoview.get_current_infoview()
-          helpers.wait_for_loading_pins(current_infoview)
+          helpers.wait:for_ready_infoview(current_infoview)
 
           assert.matches('3 goals', current_infoview:get_line(0))
         end)
@@ -143,7 +143,7 @@ describe('infoview navigation', function()
 
           helpers.search 'sorry'
           current_infoview = infoview.get_current_infoview()
-          helpers.wait_for_loading_pins(current_infoview)
+          helpers.wait:for_ready_infoview(current_infoview)
         end)
 
         it('navigates forward through hypotheses then back', function()
@@ -198,7 +198,7 @@ describe('infoview navigation', function()
 
           helpers.move_cursor { to = { 2, 3 } }
           current_infoview = infoview.get_current_infoview()
-          helpers.wait_for_loading_pins(current_infoview)
+          helpers.wait:for_ready_infoview(current_infoview)
 
           assert.matches('2 goals', current_infoview:get_line(0))
         end)
@@ -251,11 +251,11 @@ describe('infoview navigation', function()
 
         it('sets up a buffer with suggestions', function()
           lean_window = Window:current()
-          helpers.wait_for_diagnostics()
+          helpers.wait:for_diagnostics()
           helpers.search 'apply'
 
           current_infoview = infoview.get_current_infoview()
-          helpers.wait_for_loading_pins(current_infoview)
+          helpers.wait:for_ready_infoview(current_infoview)
         end)
 
         it('next_suggestion navigates to a suggestion', function()

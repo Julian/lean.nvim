@@ -39,6 +39,11 @@ vim.g.lean_config = {
   mappings = true,
 }
 
+-- Crash immediately if anything tries to prompt interactively during tests.
+vim.ui.select = function(_, opts, _)
+  error('Unexpected vim.ui.select during tests: ' .. (opts and opts.prompt or '(no prompt)'))
+end
+
 vim.cmd [[
   runtime! plugin/matchit.vim
   runtime! plugin/switch.vim

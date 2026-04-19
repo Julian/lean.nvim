@@ -14,9 +14,9 @@ describe('Pin.selectable', function()
     ]],
       function()
         helpers.search 'rfl'
-        helpers.wait_for_loading_pins()
+        helpers.wait:for_ready_infoview()
 
-        local pin = infoview.get_current_infoview().info.pin
+        local pin = infoview.get_current_infoview().pin
         assert.are.same(
           { 'h', '37 < 73', '37', '73', '1 + 2 = 3', '1 + 2', '1', '2', '3' },
           pin:selectable():map(Element.to_string):totable()

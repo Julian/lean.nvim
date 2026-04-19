@@ -17,8 +17,8 @@ describe('ft.detect', function()
     local initial_path = vim.api.nvim_buf_get_name(0)
 
     vim.cmd.normal 'G$'
-    helpers.wait_for_loading_pins()
-    local client = helpers.wait_for_ileans()
+    helpers.wait:for_ready_infoview()
+    local client = helpers.wait:for_ileans()
 
     local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
     local result = client:request_sync('textDocument/definition', params, 30000)

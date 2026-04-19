@@ -116,4 +116,4 @@ _clone-test-dependencies: _clone-dependencies
 # Rebuild some test fixtures used in the test suite.
 _rebuild-test-fixtures:
     cd "{{ fixture_projects}}/Example/" && lake build
-    cd "{{ fixture_projects }}/WithWidgets/" && lake build ProofWidgets Mathlib.Tactic.Widget.Conv Mathlib.Tactic.Widget.InteractiveUnfold
+    cd "{{ fixture_projects }}/WithWidgets/" && lake build WithWidgets.NullPropsWidget ProofWidgets.Demos ImportGraph.Meta Mathlib.Tactic.Widget.Conv Mathlib.Tactic.Widget.InteractiveUnfold

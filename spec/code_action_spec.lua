@@ -10,7 +10,7 @@ describe('code actions', function()
   it(
     'for unknown identifiers add missing imports',
     helpers.clean_buffer('#check codeaction', function()
-      local client = helpers.wait_for_ileans()
+      local client = helpers.wait:for_ileans()
 
       helpers.search 'code'
       assert.infoview_contents.are [[

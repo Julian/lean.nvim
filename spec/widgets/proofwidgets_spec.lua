@@ -18,7 +18,7 @@ local function in_demo(name, fn)
   return helpers.clean_buffer(jump, function()
     local initial_path = vim.api.nvim_buf_get_name(0)
     Window:current():set_cursor { 1, #jump }
-    helpers.wait_for_loading_pins()
+    helpers.wait:for_ready_infoview()
     vim.lsp.buf.definition()
     assert.is_truthy(vim.wait(5000, function()
       return vim.api.nvim_buf_get_name(0) ~= initial_path

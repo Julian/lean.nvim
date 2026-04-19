@@ -87,7 +87,7 @@ describe('trace', function()
         function()
           helpers.search 'example'
           helpers.wait_for_line_diagnostics()
-          helpers.wait_for_loading_pins()
+          helpers.wait:for_ready_infoview()
 
           local iv = infoview.get_current_infoview()
           local lines = table.concat(iv:get_lines(), '\n')
@@ -128,7 +128,7 @@ describe('trace', function()
         function()
           helpers.search 'example'
           helpers.wait_for_line_diagnostics()
-          helpers.wait_for_loading_pins()
+          helpers.wait:for_ready_infoview()
 
           local iv = infoview.get_current_infoview()
           infoview.go_to()
@@ -159,7 +159,7 @@ describe('trace', function()
         function()
           helpers.search 'example'
           helpers.wait_for_line_diagnostics()
-          helpers.wait_for_loading_pins()
+          helpers.wait:for_ready_infoview()
 
           local iv = infoview.get_current_infoview()
           infoview.go_to()
@@ -174,7 +174,7 @@ describe('trace', function()
           -- Move the cursor in the source buffer to trigger a pin update.
           helpers.feed '<Plug>(LeanInfoviewGotoLastWindow)'
           helpers.search 'rfl'
-          helpers.wait_for_loading_pins()
+          helpers.wait:for_ready_infoview()
 
           -- The pre-filled query should be gone.
           infoview.go_to()

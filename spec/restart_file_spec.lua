@@ -44,7 +44,7 @@ describe('restart file', function()
     end
 
     vim.cmd.edit { dependent, bang = true }
-    helpers.wait_for_ready_lsp()
+    helpers.wait:for_lsp()
 
     -- Wait for the diagnostic to arrive (the flag is set synchronously
     -- in the diagnostic handler, before the vim.schedule'd callback).
@@ -66,9 +66,10 @@ describe('restart file', function()
     -- doesn't exist yet, but imports themselves are not stale.
     vim.cmd.edit { dependent, bang = true }
     local dependent_win = Window:current()
-    helpers.wait_for_ready_lsp()
+    helpers.wait:for_lsp()
 
     dependent_win:move_cursor { 2, 8 }
+    helpers.wait:for_processing()
     assert.infoview_contents.are [[
       ▼ 2:8-2:19: error:
       Unknown identifier `addedByTest`

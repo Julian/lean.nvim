@@ -9,6 +9,16 @@ local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
 local async = require 'std.async'
 local throttle = require 'std.throttle'
+local byte_col_to_utf16 = require('std.lsp').byte_col_to_utf16
+
+local Element = require('lean.tui').Element
+local Locations = require 'lean.infoview.locations'
+local components = require 'lean.infoview.components'
+local interactive_goal = require 'lean.widget.interactive_goal'
+local log = require 'lean.log'
+local progress = require 'lean.progress'
+local rpc = require 'lean.rpc'
+
 ---Convert a buffer position to a human-readable (1, 1)-indexed string.
 ---Takes the workspace into account in order to return a relative path.
 ---@param buffer Buffer
@@ -23,14 +33,6 @@ local function position_to_string(buffer, pos)
     pos[2] + 1
   )
 end
-
-local Element = require('lean.tui').Element
-local Locations = require 'lean.infoview.locations'
-local components = require 'lean.infoview.components'
-local interactive_goal = require 'lean.widget.interactive_goal'
-local log = require 'lean.log'
-local progress = require 'lean.progress'
-local rpc = require 'lean.rpc'
 
 ---@param name string
 ---@return fun(element: Element): boolean?
@@ -91,6 +93,16 @@ local infoview = {
   ---@type boolean
   debug = false,
 }
+
+---Run `fn(iv, ...)` if there's a current infoview; otherwise do nothing.
+---@param fn fun(iv: Infoview, ...): any
+local function with_current(fn, ...)
+  local iv = infoview.get_current_infoview()
+  if iv then
+    return fn(iv, ...)
+  end
+end
+
 ---@type lean.infoview.Config
 local options = {
   width = 1 / 3,
@@ -100,7 +112,6 @@ local options = {
   separate_tab = false,
 
   autoopen = true,
-  autopause = false,
   update_cooldown = 50,
   indicators = 'auto',
   show_processing = true,
@@ -135,6 +146,8 @@ local FOCUS_AUGROUP = vim.api.nvim_create_augroup('LeanInfoviewFocus', {})
 ---An individual pin.
 ---@class Pin
 ---@field id string a label to identify the pin
+---@field buffer Buffer the buffer for this pin's output
+---@field window Window the window showing this pin's buffer
 ---@field private __data_element Element
 ---@field private __element Element
 ---@field private __extmark number
@@ -142,29 +155,24 @@ local FOCUS_AUGROUP = vim.api.nvim_create_augroup('LeanInfoviewFocus', {})
 ---@field private __extmark_hl_group string
 ---@field private __extmark_virt_text table
 ---@field private __tick integer
----@field private __info Info
+---@field private __infoview Infoview
+---@field private __renderer BufRenderer
+---@field private __request_update fun(pin: Pin)
 local Pin = { __extmark_ns = vim.api.nvim_create_namespace 'lean.pins' }
 Pin.__index = Pin
 
----An individual info.
----@class Info
----@field pin Pin
----@field pins Pin[]
----@field private __auto_diff_pin boolean
----@field private __renderer BufRenderer
----@field private __diff_renderer BufRenderer
----@field private __diff_pin Pin
----@field private __pins_element Element
----@field private __diff_pin_element Element
----@field private __infoview Infoview the infoview this info is attached to
----@field private __win_event_disable boolean
-local Info = {}
-Info.__index = Info
+local __next_buffer_id = 0
 
----A "view" on an info (i.e. window).
+---A "view" on Lean goal state.
 ---@class Infoview
----@field info Info
+---@field pin Pin the main pin
+---@field pins Pin[] additional pins
+---@field last_window Window
 ---@field view_options InfoviewViewOptions
+---@field private __auto_diff_pin boolean
+---@field private __diff_pin Pin
+---@field private __win_event_disable boolean
+---@field private __last_trace_query string?
 ---@field private __contents_for fun(params: lsp.TextDocumentPositionParams, view_options: InfoviewViewOptions): Element
 ---@field window Window
 ---@field private __orientation "vertical"|"horizontal"
@@ -173,7 +181,6 @@ Info.__index = Info
 ---@field private __height number
 ---@field private __horizontal_position "top"|"bottom"
 ---@field private __separate_tab? boolean
----@field private __diff_win? Window
 local Infoview = {}
 Infoview.__index = Infoview
 
@@ -191,6 +198,154 @@ local function res_dim(x, max)
   return (x < 1) and math.ceil(x * max) or x
 end
 
+---Set up infoview navigation keymaps on a pin buffer.
+---@param buffer Buffer
+function Infoview:__setup_pin_keymaps(buffer)
+  local mappings = {
+    {
+      'GoToGoal',
+      function()
+        self:move_cursor_to_goal()
+      end,
+      '<LocalLeader>g',
+      'Move to the first goal.',
+    },
+    {
+      'NextGoal',
+      function()
+        self:__goto('next', is_goal)
+      end,
+      ']g',
+      'Move to the next goal.',
+    },
+    {
+      'PrevGoal',
+      function()
+        self:__goto('prev', is_goal)
+      end,
+      '[g',
+      'Move to the previous goal.',
+    },
+    {
+      'NextHypothesis',
+      function()
+        self:__goto('next', is_hypothesis)
+      end,
+      ']h',
+      'Move to the next hypothesis.',
+    },
+    {
+      'PrevHypothesis',
+      function()
+        self:__goto('prev', is_hypothesis)
+      end,
+      '[h',
+      'Move to the previous hypothesis.',
+    },
+    {
+      'GoToSuggestion',
+      function()
+        self:move_cursor_to_suggestion()
+      end,
+      '<LocalLeader>S',
+      'Move to the first suggestion.',
+    },
+    {
+      'AcceptSuggestion',
+      function()
+        self:accept_suggestion()
+      end,
+      '<LocalLeader>s',
+      'Accept the first suggestion.',
+    },
+    {
+      'NextSuggestion',
+      function()
+        self:__goto('next', is_suggestion)
+      end,
+      ']s',
+      'Move to the next suggestion.',
+    },
+    {
+      'PrevSuggestion',
+      function()
+        self:__goto('prev', is_suggestion)
+      end,
+      '[s',
+      'Move to the previous suggestion.',
+    },
+    {
+      'NextLink',
+      function()
+        self:__goto('next', is_link)
+      end,
+      ']l',
+      'Move to the next link.',
+    },
+    {
+      'PrevLink',
+      function()
+        self:__goto('prev', is_link)
+      end,
+      '[l',
+      'Move to the previous link.',
+    },
+    {
+      'TraceSearch',
+      function()
+        self:trace_search()
+      end,
+      '<LocalLeader>/',
+      'Search through trace messages in the diagnostic under the cursor.',
+    },
+    {
+      'NextTraceDiagnostic',
+      function()
+        self:__goto('next', is_trace_diagnostic)
+      end,
+      ']t',
+      'Move to the next trace diagnostic.',
+    },
+    {
+      'PrevTraceDiagnostic',
+      function()
+        self:__goto('prev', is_trace_diagnostic)
+      end,
+      '[t',
+      'Move to the previous trace diagnostic.',
+    },
+    {
+      'ViewOptions',
+      function()
+        self:select_view_options()
+      end,
+      '<LocalLeader>v',
+      'Change the infoview view options.',
+    },
+  }
+
+  for _, m in ipairs(mappings) do
+    local plug = '<Plug>(LeanInfoview' .. m[1] .. ')'
+    buffer.keymaps:set('n', plug, m[2], { desc = m[4] })
+    buffer.keymaps:set('n', m[3], plug, { remap = true, desc = m[4] })
+  end
+
+  -- Show/hide current pin extmark when entering/leaving this pin's window.
+  local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })
+  buffer:create_autocmd('WinEnter', {
+    group = pin_augroup,
+    callback = function()
+      self:__maybe_show_pin_extmark 'current'
+    end,
+  })
+  buffer:create_autocmd('WinLeave', {
+    group = pin_augroup,
+    callback = function()
+      self.pin:__hide_extmark()
+    end,
+  })
+end
+
 ---Create a new infoview.
 ---@param obj InfoviewNewArgs
 ---@return Infoview
@@ -200,6 +355,8 @@ function Infoview:new(obj)
   local config = require 'lean.config'
   local view_options = vim.deepcopy(config().infoview.view_options)
   local new_infoview = setmetatable({
+    pins = {},
+    __win_event_disable = false,
     view_options = view_options,
     __contents_for = view_options.use_widgets == false and contents_for_plain
       or contents_for_interactive,
@@ -209,12 +366,37 @@ function Infoview:new(obj)
     __horizontal_position = obj.horizontal_position or options.horizontal_position,
     __separate_tab = obj.separate_tab or options.separate_tab,
   }, self)
-  new_infoview.info = Info:new { infoview = new_infoview }
-  new_infoview.info:render()
-  new_infoview.__throttled_pin_update = throttle(options.update_cooldown, function(pin)
-    pin:update()
-  end)
+
+  new_infoview.pin = Pin:new {
+    id = '1',
+    infoview = new_infoview,
+  }
+
+  new_infoview:__show_pin_in_main_window(new_infoview.pin)
+
   return new_infoview
+end
+
+---Show a pin's buffer in the main infoview window.
+---@param pin Pin
+function Infoview:__show_pin_in_main_window(pin)
+  if self.window then
+    self.__win_event_disable = true
+    self.window.o.winfixbuf = false
+    self.window:set_buffer(pin.buffer)
+    pin.buffer.o.filetype = 'leaninfo'
+    pin.window = self.window
+    self.__win_event_disable = false
+  end
+
+  pin.buffer:create_autocmd('BufHidden', {
+    group = vim.api.nvim_create_augroup('LeanInfoviewMainPin', { clear = false }),
+    callback = function()
+      if self.pin == pin then
+        self:__was_closed()
+      end
+    end,
+  })
 end
 
 function Infoview:__should_be_vertical()
@@ -250,7 +432,7 @@ function Infoview:open()
       -- FIXME: If vim is first starting and we're creating a new topmost
       --        window neovim seems to want to put the cursor in it. This seems
       --        to be the case even if we set enter=false, and even though
-      --        below below we call `:make_current` immediately.
+      --        below we call `:make_current` immediately.
       --        It seems pretty likely there's some Neovim bug here which needs
       --        minimizing.
       if vim.fn.has 'vim_starting' == 1 then
@@ -262,20 +444,30 @@ function Infoview:open()
   end
 
   self.window = Window:current()
-  self.window:set_buffer(self.info.__renderer.buffer)
+  self.window:set_buffer(self.pin.buffer)
   -- Set the filetype now. Any earlier, and only buffer-local options will be
   -- properly set in the infoview, since the buffer isn't actually shown in a
-  -- window until we `set_buffer`.
-  self.info.__renderer.buffer.o.filetype = 'leaninfo'
+  -- window until we show it.
+  self.pin.buffer.o.filetype = 'leaninfo'
+  self.pin.window = self.window
 
   window_before_split:make_current()
 
-  self.info.__renderer.buffer:create_autocmd({ 'BufHidden', 'QuitPre' }, {
+  vim.api.nvim_create_autocmd('WinClosed', {
+    pattern = tostring(self.window.id),
     group = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false }),
+    once = true,
     callback = function()
       self:__was_closed()
     end,
   })
+
+  -- Reopen windows for additional pins
+  for _, pin in ipairs(self.pins) do
+    if not pin.window or not pin.window:is_valid() then
+      pin.window = self:__open_win(pin.buffer)
+    end
+  end
 
   self:focus_on_current_buffer()
 
@@ -340,6 +532,38 @@ function Infoview:reposition()
   end
 end
 
+---Jump to the given path in the current pin's renderer.
+---@param path PathNode[]?
+function Infoview:__jump_to_path(path)
+  if not path then
+    return
+  end
+  local renderer = self.pin.__renderer
+  local pos = renderer:buf_position_from_path(path)
+  if pos then
+    self.window:set_cursor(pos)
+    renderer:update_cursor(self.window)
+  end
+end
+
+---Find the path to the nth element matching predicate.
+---@param predicate fun(element: Element): boolean?
+---@param n? integer defaults to 1
+---@return PathNode[]?
+function Infoview:__nth_path(predicate, n)
+  if not self.window then
+    return
+  end
+  local root = self.pin.__renderer.element
+  local root_path = { { idx = 0, name = root.name } }
+  local match = root:filter(predicate):nth(n or 1)
+  if match then
+    return find_descendant_path(root, function(e)
+      return e == match
+    end, root_path)
+  end
+end
+
 ---Move the cursor to the given (1-indexed) goal.
 ---@param n? integer the goal number to move to, defaulting to the first
 function Infoview:move_cursor_to_goal(n)
@@ -349,7 +573,7 @@ function Infoview:move_cursor_to_goal(n)
   end
 
   n = n or 1
-  local renderer = self.info.__renderer
+  local renderer = self.pin.__renderer
   local root = renderer.element
   local root_path = { { idx = 0, name = root.name } }
 
@@ -360,16 +584,9 @@ function Infoview:move_cursor_to_goal(n)
     if goal then
       n = n - 1
       if n == 0 then
-        local goal_path = find_descendant_path(root, function(e)
+        self:__jump_to_path(find_descendant_path(root, function(e)
           return e == goal
-        end, root_path)
-        if goal_path then
-          local pos = renderer:buf_position_from_path(goal_path)
-          if pos then
-            self.window:set_cursor(pos)
-            renderer:update_cursor(self.window)
-          end
-        end
+        end, root_path))
         return
       end
     end
@@ -389,48 +606,18 @@ function Infoview:move_cursor_to_goal(n)
   end
 end
 
----Find the path to the nth suggestion element.
----@param n? integer the suggestion number, defaulting to the first
----@return PathNode[]? path
-function Infoview:__suggestion_path(n)
-  if not self.window then
-    return
-  end
-
-  n = n or 1
-  local root = self.info.__renderer.element
-  local root_path = { { idx = 0, name = root.name } }
-
-  for suggestion in root:filter(is_suggestion) do
-    n = n - 1
-    if n == 0 then
-      return find_descendant_path(root, function(e)
-        return e == suggestion
-      end, root_path)
-    end
-  end
-end
-
 ---Move the cursor to the nth suggestion.
 ---@param n? integer the suggestion number to move to, defaulting to the first
 function Infoview:move_cursor_to_suggestion(n)
-  local path = self:__suggestion_path(n)
-  if path then
-    local renderer = self.info.__renderer
-    local pos = renderer:buf_position_from_path(path)
-    if pos then
-      self.window:set_cursor(pos)
-      renderer:update_cursor(self.window)
-    end
-  end
+  self:__jump_to_path(self:__nth_path(is_suggestion, n))
 end
 
 ---Accept (click) the nth suggestion.
 ---@param n? integer the suggestion number to accept, defaulting to the first
 function Infoview:accept_suggestion(n)
-  local path = self:__suggestion_path(n)
+  local path = self:__nth_path(is_suggestion, n)
   if path then
-    self.info.__renderer:event('click', path)
+    self.pin.__renderer:event('click', path)
   end
 end
 
@@ -446,7 +633,7 @@ function Infoview:trace_search()
     return
   end
 
-  local renderer = self.info.__renderer
+  local renderer = self.pin.__renderer
   if not renderer.path then
     return
   end
@@ -484,7 +671,7 @@ function Infoview:__goto(direction, predicate)
   if not self.window then
     return
   end
-  local renderer = self.info.__renderer
+  local renderer = self.pin.__renderer
   if not renderer.path then
     return
   end
@@ -519,11 +706,7 @@ function Infoview:__goto(direction, predicate)
       end)
 
     if target_path then
-      local pos = renderer:buf_position_from_path(target_path)
-      if pos then
-        self.window:set_cursor(pos)
-        renderer:update_cursor(self.window)
-      end
+      self:__jump_to_path(target_path)
       return
     end
   end
@@ -616,8 +799,7 @@ end
 ---@param timeout_ms? number the maximum time to wait, defaulting to 10s
 function Infoview:wait(timeout_ms)
   timeout_ms = timeout_ms or 10000
-  local info = self.info
-  local pins = vim.list_extend({ info.pin, info.__diff_pin }, info.pins)
+  local pins = vim.list_extend({ self.pin, self.__diff_pin }, self.pins)
   local succeeded, _ = vim.wait(timeout_ms, function()
     pins = vim
       .iter(pins)
@@ -643,7 +825,7 @@ function Infoview:__open_win(buffer)
     return
   end
 
-  self.info.__win_event_disable = true
+  self.__win_event_disable = true
   local window_before_split = Window:current()
   self:enter()
 
@@ -664,7 +846,7 @@ function Infoview:__open_win(buffer)
   buffer.o.filetype = 'leaninfo'
 
   window_before_split:make_current()
-  self.info.__win_event_disable = false
+  self.__win_event_disable = false
 
   return new_win
 end
@@ -675,10 +857,10 @@ function Infoview:__update_winhighlight()
     return
   end
 
-  if self.info.pin.paused then
+  if self.pin.paused then
     self.window.o.winhighlight = 'NormalNC:leanInfoPaused'
   else
-    local params = self.info.pin.__position_params
+    local params = self.pin.__position_params
     if params then
       local buffer = Buffer:from_uri(params.textDocument.uri)
       if buffer.b.lean_imports_out_of_date then
@@ -692,12 +874,12 @@ function Infoview:__update_winhighlight()
   end
 end
 
-function Infoview:__refresh()
-  log:debug { message = 'refreshing infoview', window = self.window.id }
+function Infoview:__resize_windows()
+  log:debug { message = 'resizing infoview windows', window = self.window.id }
 
   local valid_windows = {}
 
-  for _, win in pairs { self.window, self.__diff_win } do
+  for _, win in pairs { self.window, self.__diff_pin and self.__diff_pin.window } do
     if win and win:is_valid() then
       table.insert(valid_windows, win)
     end
@@ -724,8 +906,8 @@ function Infoview:pins_for(uri)
     return {}
   end
 
-  local possible = { self.info.pin }
-  vim.list_extend(possible, self.info.pins)
+  local possible = { self.pin }
+  vim.list_extend(possible, self.pins)
 
   return vim
     .iter(possible)
@@ -735,35 +917,33 @@ function Infoview:pins_for(uri)
     :totable()
 end
 
---FIXME: We shouldn't have both __refresh and __update
 function Infoview:__update()
   log:debug { message = 'updating infoview', window = self.window and self.window.id or nil }
 
-  local info = self.info
-  if info.__win_event_disable then
+  if self.__win_event_disable then
     return
   end
-  info:update_last_window()
+  self:update_last_window()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local buffer = Buffer:current()
   local pos = { cursor[1] - 1, cursor[2] }
 
   -- Update the diff pin first, while the extmark is still at the old
   -- position (it reads the extmark to get the "previous" location).
-  if info.__auto_diff_pin then
-    info:__update_auto_diff_pin(buffer, pos)
+  if self.__auto_diff_pin then
+    self:__update_auto_diff_pin(buffer, pos)
   end
   -- Move the extmark immediately so the pin indicator stays responsive,
   -- but throttle the LSP request + render so rapid cursor movement
   -- doesn't flood the server.
-  info.pin:__update_extmark(buffer, pos)
-  self.__throttled_pin_update(info.pin)
+  self.pin:__update_extmark(buffer, pos)
+  self.pin:request_update()
 end
 
 ---Directly mark that the infoview has died. What a shame.
 function Infoview:died()
-  self.info.pin.__data_element = components.LSP_HAS_DIED
-  local params = self.info.pin.__position_params
+  self.pin.__data_element = components.LSP_HAS_DIED
+  local params = self.pin.__position_params
   progress.proc_infos[params.textDocument.uri] = {
     {
       kind = progress.Kind.fatal_error,
@@ -775,36 +955,36 @@ function Infoview:died()
   end
 end
 
----Either open or close a diff window for this infoview depending on whether its info has a diff pin.
+---Either open or close a diff window for this infoview depending on whether it has a diff pin.
 function Infoview:__refresh_diff()
   if not self.window then
     return
   end
 
-  if not self.info.__diff_pin then
+  if not self.__diff_pin then
     self:__close_diff()
     return
   end
 
-  local diff_renderer = self.info.__diff_renderer
-
-  if not self.__diff_win then
-    ---@diagnostic disable-next-line: assign-type-mismatch
-    self.__diff_win = self:__open_win(diff_renderer.buffer)
+  if not self.__diff_pin.window then
+    self.__diff_pin.window = self:__open_win(self.__diff_pin.buffer)
   end
 
-  for _, win in pairs { self.__diff_win, self.window } do
+  for _, win in pairs { self.__diff_pin.window, self.window } do
     win:call(vim.cmd.diffthis)
     win.o.foldmethod = 'manual'
     win.o.wrap = true
   end
 
-  self:__refresh()
+  self:__resize_windows()
 end
 
 ---Close this infoview's diff window.
 function Infoview:__close_diff()
-  if not self.window or not self.__diff_win then
+  if not self.window then
+    return
+  end
+  if not self.__diff_pin or not self.__diff_pin.window then
     return
   end
 
@@ -812,16 +992,19 @@ function Infoview:__close_diff()
     vim.cmd.diffoff()
   end)
 
-  if self.__diff_win:is_valid() then
-    self.__diff_win:call(function()
+  local diff_win = self.__diff_pin.window
+  self.__diff_pin.window = nil
+
+  if diff_win:is_valid() then
+    diff_win:call(function()
       vim.cmd.diffoff()
     end)
-    self.__diff_win:force_close()
+    self.__win_event_disable = true
+    diff_win:force_close()
+    self.__win_event_disable = false
   end
 
-  self.__diff_win = nil
-
-  self:__refresh()
+  self:__resize_windows()
 end
 
 ---Close this infoview.
@@ -830,13 +1013,20 @@ function Infoview:close()
     return
   end
   self:__close_diff()
+  for _, pin in ipairs(self.pins) do
+    pin:__close_window()
+  end
   self.window:force_close()
   self:__was_closed()
 end
 
 function Infoview:__was_closed()
+  if not self.window then
+    return
+  end
   self.window = nil
-  self.info.__renderer:event 'clear_all' -- Ensure tooltips close.
+  self.pin.window = nil
+  self.pin.__renderer:event 'clear_all' -- Ensure tooltips close.
 end
 
 ---Retrieve the contents of the infoview as a table.
@@ -846,7 +1036,7 @@ function Infoview:get_lines(start_line, end_line)
   if not self.window then
     error 'infoview is not open'
   end
-  return self.info.__renderer.buffer:lines(start_line, end_line)
+  return self.pin:get_lines(start_line, end_line)
 end
 
 ---Retrieve a specific line from the infoview window.
@@ -856,17 +1046,17 @@ function Infoview:get_line(line)
   if not self.window then
     error 'infoview is not open'
   end
-  return self.info.__renderer.buffer:line(line, false)
+  return self.pin:get_line(line)
 end
 
 ---Retrieve the contents of the diff window as a table.
 ---@param start_line? number
 ---@param end_line? number
 function Infoview:get_diff_lines(start_line, end_line)
-  if not self.__diff_win then
+  if not self.__diff_pin or not self.__diff_pin.window then
     error 'diff window is not open'
   end
-  return self.info.__diff_renderer.buffer:lines(start_line, end_line)
+  return self.__diff_pin:get_lines(start_line, end_line)
 end
 
 ---Toggle this infoview being open.
@@ -903,276 +1093,70 @@ function Infoview:focus_on_current_buffer()
   end
 end
 
----@return Info
-function Info:new(opts)
-  local new_info = setmetatable({
-    pins = {},
-    __infoview = opts.infoview,
-    __pins_element = Element:new { name = 'info' },
-    __diff_pin_element = Element:new { name = 'diff' },
-    __win_event_disable = false, -- FIXME: This too is really confusing
-  }, self)
-
-  new_info.__pins_element.events = {
-    goto_last_window = function()
-      new_info:jump_to_last_window()
-    end,
-  }
-
-  new_info.pin = Pin:new {
-    id = '1',
-    paused = options.autopause,
-    parent = new_info,
-  }
-
-  local id = vim.api.nvim_get_current_tabpage()
-
-  local pin_buffer = Buffer.create {
-    name = 'lean://info/' .. id .. '/curr',
-    options = { bufhidden = 'hide' },
-    scratch = true,
-  }
-  new_info.__renderer = new_info.__pins_element:renderer {
-    buffer = pin_buffer,
-    keymaps = options.mappings,
-  }
-
-  local iv = new_info.__infoview
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewGoToGoal)', function()
-    iv:move_cursor_to_goal()
-  end, { desc = 'Move to the first goal.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextGoal)', function()
-    iv:__goto('next', is_goal)
-  end, { desc = 'Move to the next goal.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevGoal)', function()
-    iv:__goto('prev', is_goal)
-  end, { desc = 'Move to the previous goal.' })
-
-  pin_buffer.keymaps:set(
-    'n',
-    '<LocalLeader>g',
-    '<Plug>(LeanInfoviewGoToGoal)',
-    { remap = true, desc = 'Move to the first goal.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    ']g',
-    '<Plug>(LeanInfoviewNextGoal)',
-    { remap = true, desc = 'Move to the next goal.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '[g',
-    '<Plug>(LeanInfoviewPrevGoal)',
-    { remap = true, desc = 'Move to the previous goal.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextHypothesis)', function()
-    iv:__goto('next', is_hypothesis)
-  end, { desc = 'Move to the next hypothesis.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevHypothesis)', function()
-    iv:__goto('prev', is_hypothesis)
-  end, { desc = 'Move to the previous hypothesis.' })
-  pin_buffer.keymaps:set(
-    'n',
-    ']h',
-    '<Plug>(LeanInfoviewNextHypothesis)',
-    { remap = true, desc = 'Move to the next hypothesis.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '[h',
-    '<Plug>(LeanInfoviewPrevHypothesis)',
-    { remap = true, desc = 'Move to the previous hypothesis.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewGoToSuggestion)', function()
-    iv:move_cursor_to_suggestion()
-  end, { desc = 'Move to the first suggestion.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewAcceptSuggestion)', function()
-    iv:accept_suggestion()
-  end, { desc = 'Accept the first suggestion.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextSuggestion)', function()
-    iv:__goto('next', is_suggestion)
-  end, { desc = 'Move to the next suggestion.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevSuggestion)', function()
-    iv:__goto('prev', is_suggestion)
-  end, { desc = 'Move to the previous suggestion.' })
-
-  pin_buffer.keymaps:set(
-    'n',
-    '<LocalLeader>S',
-    '<Plug>(LeanInfoviewGoToSuggestion)',
-    { remap = true, desc = 'Move to the first suggestion.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '<LocalLeader>s',
-    '<Plug>(LeanInfoviewAcceptSuggestion)',
-    { remap = true, desc = 'Accept the first suggestion.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    ']s',
-    '<Plug>(LeanInfoviewNextSuggestion)',
-    { remap = true, desc = 'Move to the next suggestion.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '[s',
-    '<Plug>(LeanInfoviewPrevSuggestion)',
-    { remap = true, desc = 'Move to the previous suggestion.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextLink)', function()
-    iv:__goto('next', is_link)
-  end, { desc = 'Move to the next link.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevLink)', function()
-    iv:__goto('prev', is_link)
-  end, { desc = 'Move to the previous link.' })
-  pin_buffer.keymaps:set(
-    'n',
-    ']l',
-    '<Plug>(LeanInfoviewNextLink)',
-    { remap = true, desc = 'Move to the next link.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '[l',
-    '<Plug>(LeanInfoviewPrevLink)',
-    { remap = true, desc = 'Move to the previous link.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewTraceSearch)', function()
-    iv:trace_search()
-  end, { desc = 'Search through trace messages in the diagnostic under the cursor.' })
-  pin_buffer.keymaps:set(
-    'n',
-    '<LocalLeader>/',
-    '<Plug>(LeanInfoviewTraceSearch)',
-    { remap = true, desc = 'Search through trace messages in the diagnostic under the cursor.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewNextTraceDiagnostic)', function()
-    iv:__goto('next', is_trace_diagnostic)
-  end, { desc = 'Move to the next trace diagnostic.' })
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewPrevTraceDiagnostic)', function()
-    iv:__goto('prev', is_trace_diagnostic)
-  end, { desc = 'Move to the previous trace diagnostic.' })
-  pin_buffer.keymaps:set(
-    'n',
-    ']t',
-    '<Plug>(LeanInfoviewNextTraceDiagnostic)',
-    { remap = true, desc = 'Move to the next trace diagnostic.' }
-  )
-  pin_buffer.keymaps:set(
-    'n',
-    '[t',
-    '<Plug>(LeanInfoviewPrevTraceDiagnostic)',
-    { remap = true, desc = 'Move to the previous trace diagnostic.' }
-  )
-
-  pin_buffer.keymaps:set('n', '<Plug>(LeanInfoviewViewOptions)', function()
-    iv:select_view_options()
-  end, { desc = 'Change the infoview view options.' })
-  pin_buffer.keymaps:set(
-    'n',
-    '<LocalLeader>v',
-    '<Plug>(LeanInfoviewViewOptions)',
-    { remap = true, desc = 'Change the infoview view options.' }
-  )
-
-  -- Show/hide current pin extmark when entering/leaving infoview.
-  local pin_augroup = vim.api.nvim_create_augroup('LeanInfoviewShowPin', { clear = false })
-  pin_buffer:create_autocmd('WinEnter', {
-    group = pin_augroup,
-    callback = function()
-      new_info:__maybe_show_pin_extmark 'current'
-    end,
-  })
-  pin_buffer:create_autocmd('WinLeave', {
-    group = pin_augroup,
-    callback = function()
-      new_info.pin:__hide_extmark()
-    end,
-  })
-
-  local diff_buffer = Buffer.create {
-    name = 'lean://info/' .. id .. '/diff',
-    options = { bufhidden = 'hide' },
-    listed = false,
-    scratch = true,
-  }
-  new_info.__diff_renderer = new_info.__diff_pin_element:renderer {
-    buffer = diff_buffer,
-    keymaps = options.mappings,
-  }
-
-  -- Make sure we notice even if someone manually :q's the diff window.
-  diff_buffer:create_autocmd('BufHidden', {
-    group = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false }),
-    callback = function()
-      self:__clear_diff_pin()
-    end,
-  })
-
-  return new_info
-end
-
-function Info:add_pin()
+function Infoview:add_pin()
   local buffer, pos = self.pin:__extmark_pos()
-  table.insert(self.pins, self.pin)
-  self:__maybe_show_pin_extmark(self.pin.id)
+  local old_pin = self.pin
+  table.insert(self.pins, old_pin)
+  old_pin.window = self:__open_win(old_pin.buffer)
   self.pin = Pin:new {
     id = tostring(#self.pins + 1),
-    paused = options.autopause,
-    parent = self,
+    infoview = self,
   }
+  self:__show_pin_in_main_window(self.pin)
+  old_pin:__show_extmark(old_pin.id)
+  self:__maybe_show_pin_extmark(self.pin.id)
   if buffer then
     self.pin:move(buffer, pos)
   end
-  self:render()
 end
 
 ---@param buffer Buffer
 ---@param pos {integer, integer} 0-indexed { row, col } byte position
-function Info:__set_diff_pin(buffer, pos)
+function Infoview:__set_diff_pin(buffer, pos)
   if not self.__diff_pin then
     self.__diff_pin = Pin:new {
       id = 'diff',
-      paused = options.autopause,
-      parent = self,
+      infoview = self,
     }
-    self.__diff_pin_element:set_children { self.__diff_pin.__element }
     self.__diff_pin:__show_extmark(nil, 'leanDiffPinned')
+
+    -- Make sure we notice even if someone manually :q's the diff window.
+    self.__diff_pin.buffer:create_autocmd('BufHidden', {
+      group = vim.api.nvim_create_augroup('LeanInfoviewClose', { clear = false }),
+      callback = function()
+        if not self.__win_event_disable then
+          vim.schedule(function()
+            self:__clear_diff_pin()
+          end)
+        end
+      end,
+    })
   end
 
   self.__diff_pin:move(buffer, pos)
-
-  self:render()
+  self:__refresh_diff()
 end
 
-function Info:clear_pins()
+function Infoview:clear_pins()
   for _, pin in pairs(self.pins) do
     pin:__teardown()
   end
 
   self.pins = {}
-  self:render()
 end
 
-function Info:__clear_diff_pin()
+function Infoview:__clear_diff_pin()
   if not self.__diff_pin then
     return
   end
-  self.__diff_pin:__teardown()
+  self:__close_diff()
+  local pin = self.__diff_pin
   self.__diff_pin = nil
-  self.__diff_pin_element:set_children(nil)
-  self:render()
+  pin:__teardown()
 end
 
 ---Show a pin extmark if it is appropriate based on configuration.
-function Info:__maybe_show_pin_extmark(...)
+function Infoview:__maybe_show_pin_extmark(...)
   if not options.indicators or options.indicators == 'never' then
     return
   end
@@ -1183,63 +1167,24 @@ function Info:__maybe_show_pin_extmark(...)
   self.pin:__show_extmark(...)
 end
 
----Set the current window as the last window used to update this Info.
-function Info:update_last_window()
+---Set the current window as the last window used to update this infoview.
+function Infoview:update_last_window()
   self.last_window = Window:current()
 end
 
----Jump to the last window used to update this Info, if any.
-function Info:jump_to_last_window()
+---Jump to the last window used to update this infoview, if any.
+function Infoview:jump_to_last_window()
   if not self.last_window then
     return
   end
   self.last_window:make_current()
 end
 
----Update this info's physical contents.
-function Info:render()
-  log:trace {
-    message = 'rendering infoview info',
-    infoview_id = self.__infoview.window and self.__infoview.window.id or nil,
-  }
-  local function click_header(buffer, pos)
-    return function()
-      local start_window = Window:current()
-      self:jump_to_last_window()
-
-      if start_window:is_current() then
-        return
-      end
-
-      buffer:make_current()
-      Window:current():set_cursor { pos[1] + 1, pos[2] }
-    end
-  end
-
-  self.__pins_element:set_children { self.pin.__element }
-  for _, pin in ipairs(self.pins) do
-    self.__pins_element:add_child(Element:new { text = '\n\n', name = 'pin_spacing' })
-    self.__pins_element:add_child(pin:render_with_header(click_header))
-  end
-
-  self.__renderer:render()
-  if self.__diff_pin then
-    self.__diff_renderer:render()
-  end
-
-  -- Set the cursor to the line with first goal (just after the marker).
-  if self.__infoview.window and not self.__infoview.window:is_current() then
-    self.__infoview:move_cursor_to_goal()
-  end
-
-  self.__infoview:__refresh_diff()
-end
-
 ---Update the diff pin to use the current pin's position if it has one,
 ---and the provided position if it does not.
 ---@param buffer? Buffer
 ---@param pos? {integer, integer}
-function Info:__update_auto_diff_pin(buffer, pos)
+function Infoview:__update_auto_diff_pin(buffer, pos)
   local prev_buffer, prev_pos = self.pin:__extmark_pos()
   if prev_buffer then
     -- update diff pin to previous position
@@ -1250,19 +1195,9 @@ function Info:__update_auto_diff_pin(buffer, pos)
   end
 end
 
----Move the current pin to the specified location.
----@param buffer Buffer
----@param pos {integer, integer} 0-indexed { row, col } byte position
-function Info:move_pin(buffer, pos)
-  if self.__auto_diff_pin then
-    self:__update_auto_diff_pin(buffer, pos)
-  end
-  self.pin:move(buffer, pos)
-end
-
 ---Toggle auto diff pin mode.
 ---@param clear boolean clear the pin when disabling auto diff pin mode?
-function Info:__toggle_auto_diff_pin(clear)
+function Infoview:__toggle_auto_diff_pin(clear)
   if self.__auto_diff_pin then
     self.__auto_diff_pin = false
     if clear then
@@ -1284,16 +1219,47 @@ function Pin:new(obj)
   local paused = obj.paused or false
   obj.paused = nil
 
-  return setmetatable(
+  __next_buffer_id = __next_buffer_id + 1
+  local pin_buffer = Buffer.create {
+    name = 'lean://infoview/' .. __next_buffer_id,
+    listed = false,
+    scratch = true,
+    options = { bufhidden = 'hide' },
+  }
+
+  local pin_element = Element:new { name = 'pin' }
+  pin_element.events = {
+    goto_last_window = function()
+      obj.infoview:jump_to_last_window()
+    end,
+  }
+
+  local pin_renderer = pin_element:renderer {
+    buffer = pin_buffer,
+    keymaps = options.mappings,
+  }
+
+  local new_pin = setmetatable(
     vim.tbl_extend('keep', obj, {
       paused = paused,
       __data_element = Element.EMPTY,
-      __element = Element:new { name = 'pin' },
-      __info = obj.parent,
+      __element = pin_element,
+      __infoview = obj.infoview,
+      __renderer = pin_renderer,
       __tick = 0,
+      buffer = pin_buffer,
     }),
     self
   )
+  new_pin.infoview = nil -- don't keep reference in this slot
+
+  new_pin.__request_update = throttle(options.update_cooldown, function(pin)
+    pin:update()
+  end)
+
+  new_pin.__infoview:__setup_pin_keymaps(pin_buffer)
+
+  return new_pin
 end
 
 ---Return all selectable elements within this pin.
@@ -1304,25 +1270,44 @@ function Pin:selectable()
   end)
 end
 
----Render a pin with an extra header indicating its location.
----
----@param click_header fun(buffer: Buffer, pos: {integer, integer}):fun():nil
-function Pin:render_with_header(click_header)
-  local buffer, pos = self:__extmark_pos()
-  local header_element = Element:new {
-    name = 'pin-header',
-    text = ('-- %s\n'):format(position_to_string(buffer, pos)),
-    highlightable = true,
-    events = { click = click_header(buffer, pos) },
-  }
-  return Element:new { children = { header_element, self.__element } }
+---Retrieve the contents of the pin as a table.
+---@param start_line? number
+---@param end_line? number
+function Pin:get_lines(start_line, end_line)
+  return self.buffer:lines(start_line, end_line)
+end
+
+---Retrieve a specific line from the pin buffer.
+---@param line number
+---@return string? line
+function Pin:get_line(line)
+  return self.buffer:line(line, false)
+end
+
+---Render this pin's element tree into its buffer.
+function Pin:render()
+  self.__renderer:render()
+end
+
+---Close this pin's window if it has one.
+function Pin:__close_window()
+  if self.window and self.window:is_valid() then
+    self.window:force_close()
+  end
+  self.window = nil
 end
 
 function Pin:__teardown()
-  self.__info = nil
-  if self.__extmark then
-    self.__extmark_buffer:del_extmark(self.__extmark_ns, self.__extmark)
+  self:__close_window()
+  local extmark = self.__extmark
+  local extmark_buffer = self.__extmark_buffer
+  self.__infoview = nil
+  if extmark then
+    pcall(function()
+      extmark_buffer:del_extmark(self.__extmark_ns, extmark)
+    end)
   end
+  self.__renderer:close()
 end
 
 ---Update pin extmark based on position, used when resetting pin position.
@@ -1356,22 +1341,16 @@ function Pin:__update_extmark_style(buffer, line, col)
     col = extmark_pos[2]
   end
 
+  -- Highlight exactly one character: find the byte position of the next
+  -- codepoint after `col`. vim.str_utfindex rounds up if `col` is in the
+  -- middle of a UTF-8 sequence, so converting col+1 → UTF-16 → byte gives
+  -- us the start of the *next* codepoint.
   local buf_line = buffer:line(line, false)
-  local end_col = 0
-  if buf_line then
-    if col < #buf_line then
-      -- vim.str_utfindex rounds up to the next UTF16 index if in the middle of a UTF8 sequence;
-      -- so convert next byte to UTF16 and back to get UTF8 index of next codepoint
-      local succeeded, next_utf16 = pcall(vim.str_utfindex, buf_line, 'utf-16', col + 1)
-      if succeeded then
-        end_col = vim.str_byteindex(buf_line, 'utf-16', next_utf16)
-      else
-        log:debug { message = 'str_utfindex failed', buf_line = buf_line, col = col }
-        end_col = col
-      end
-    else
-      end_col = col
-    end
+  local end_col = col
+  if not buf_line then
+    end_col = 0
+  elseif col < #buf_line then
+    end_col = vim.str_byteindex(buf_line, 'utf-16', byte_col_to_utf16(buf_line, col + 1))
   end
 
   self.__extmark = buffer:set_extmark(self.__extmark_ns, line, col, {
@@ -1397,25 +1376,19 @@ function Pin:update_position()
   end
 
   local extmark_pos = buffer:extmark(self.__extmark_ns, extmark, {})
-
-  local new_pos = { line = extmark_pos[1] }
-
-  local buf_line = buffer:line(new_pos.line, false)
-  if buf_line then
-    local succeeded, utf16 = pcall(vim.str_utfindex, buf_line, 'utf-16', extmark_pos[2])
-    if succeeded then
-      new_pos.character = utf16
-    else
-      log:debug { message = 'str_utfindex failed', buf_line = buf_line, extmark_pos = extmark_pos }
-      new_pos.character = 0
-    end
-  else
-    new_pos.character = 0
-  end
-
+  local new_pos = {
+    line = extmark_pos[1],
+    character = byte_col_to_utf16(buffer:line(extmark_pos[1], false), extmark_pos[2]),
+  }
   local uri = buffer:uri()
   ---@type lsp.TextDocumentPositionParams
   self.__position_params = { textDocument = { uri = uri }, position = new_pos }
+
+  pcall(
+    vim.api.nvim_buf_set_name,
+    self.buffer.bufnr,
+    'lean://infoview/' .. position_to_string(buffer, extmark_pos)
+  )
 end
 
 ---Return the current pin position read directly from the extmark.
@@ -1440,7 +1413,7 @@ end
 function Pin:__show_extmark(name, hlgroup)
   self.__extmark_hl_group = hlgroup or 'leanPinned'
   if name then
-    self.__extmark_virt_text = { { '← ' .. (name or self.id), 'Comment' } }
+    self.__extmark_virt_text = { { '← ' .. name, 'Comment' } }
   else
     self.__extmark_virt_text = nil
   end
@@ -1456,7 +1429,7 @@ end
 ---Stop updating this pin.
 function Pin:pause()
   self.paused = true
-  self.__info.__infoview:__update_winhighlight()
+  self.__infoview:__update_winhighlight()
 end
 
 ---Restart updating this pin.
@@ -1476,11 +1449,20 @@ function Pin:toggle_pause()
   end
 end
 
+---Request a throttled update of this pin.
+function Pin:request_update()
+  if self.paused then
+    self.__infoview:__update_winhighlight()
+    return
+  end
+  self.__request_update(self)
+end
+
 ---@param buffer Buffer
 ---@param pos {integer, integer} 0-indexed { row, col } byte position
 function Pin:move(buffer, pos)
   self:__update_extmark(buffer, pos)
-  self:update()
+  self:request_update()
 end
 
 ---Wrap content blocks with a clear_all event handler.
@@ -1606,49 +1588,49 @@ end
 function Pin:update()
   async.run(function()
     log:trace { message = 'updating pin', id = self.id, paused = self.paused, loading = self.loading }
-    -- FIXME: For one, we're guarding here against the infoview being updated
-    --        while it's closed, which if we continued, would end up calling
-    --        render. That doesn't seem right, somewhere that should happen
-    --        higher up than here.
-    if not self.__info.__infoview.window then
+    local iv = self.__infoview
+    if not iv.window then
       return
-    elseif self.paused then
-      self.__info.__infoview:__update_winhighlight 'paused'
+    end
+    if self.paused then
+      iv:__update_winhighlight()
       return
     end
 
     local params = self.__position_params
-    if not params then
+    if not params or not Buffer:from_uri(params.textDocument.uri):is_loaded() then
       return
     end
 
-    if not Buffer:from_uri(params.textDocument.uri):is_loaded() then
-      return
-    end
-
-    self.__info.__infoview:__update_winhighlight 'normal'
-
-    -- FIXME: This tick business is some bizarre way of telling whether
-    --        info:render calls back into us to re-render this pin.
-    self.__tick = self.__tick + 1
-    local tick = self.__tick
+    iv:__update_winhighlight()
 
     if not self.loading then
       self.loading = true
-      self.__info:render()
-    end
-    self.__data_element = self.__info.__infoview:render_contents(self.__position_params)
-    -- FIXME: we don't have the right separation here for knowing when we're dead
-    if self.__data_element == components.LSP_HAS_DIED then
-      self.__info.__infoview.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
+      self:render()
     end
 
-    if self.__tick == tick and self.__info and self.loading then
-      self.loading = false
-      self.__element:set_children { self.__data_element }
-      self.__info.__infoview.__last_trace_query = nil
-      self.__info:render()
+    self.__tick = self.__tick + 1
+    local tick = self.__tick
+
+    self.__data_element = iv:render_contents(params)
+    if self.__data_element == components.LSP_HAS_DIED then
+      iv.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
     end
+
+    if self.__tick ~= tick or not self.__infoview then
+      return
+    end
+
+    self.loading = false
+    self.__element:set_children { self.__data_element }
+    iv.__last_trace_query = nil
+    self:render()
+
+    if iv.window and not iv.window:is_current() and self == iv.pin then
+      iv:move_cursor_to_goal()
+    end
+
+    iv:__refresh_diff()
   end)
 end
 
@@ -1660,15 +1642,29 @@ function infoview.close_all()
 end
 
 ---@private
+---Throttled update of all pins for a URI.
 function infoview.__update_pin_by_uri(uri)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
-      log:debug {
-        message = 'updating pin',
-        uri = uri,
-        window = pin.__info.__infoview.window.id,
-      }
-      pin:update()
+      pin:request_update()
+    end
+  end
+end
+
+---@private
+---Called by the $/lean/fileProgress handler.
+---Skips updates only when the pin's position is not being processed
+---and was already not being processed on the last notification.
+---During processing, every notification may carry new diagnostics
+---(e.g. lake build output) worth re-rendering.
+function infoview.__on_file_progress(uri)
+  for _, each in pairs(infoview._by_tabpage) do
+    for _, pin in pairs(each:pins_for(uri)) do
+      local current = progress.at(pin.__position_params)
+      if current ~= nil or pin.__last_processing ~= nil then
+        pin.__last_processing = current
+        pin:request_update()
+      end
     end
   end
 end
@@ -1792,11 +1788,6 @@ function infoview.set_autoopen(autoopen)
   options.autoopen = autoopen
 end
 
----Set whether a new pin is automatically paused.
-function infoview.set_autopause(autopause)
-  options.autopause = autopause
-end
-
 ---Get the infoview corresponding to the current window.
 ---@return Infoview
 function infoview.get_current_infoview()
@@ -1817,10 +1808,7 @@ end
 
 ---Close the current infoview (or ensure it is already closed).
 function infoview.close()
-  local current_infoview = infoview.get_current_infoview()
-  if current_infoview then
-    current_infoview:close()
-  end
+  with_current(Infoview.close)
 end
 
 ---Toggle whether the current infoview is opened or closed.
@@ -1835,47 +1823,48 @@ end
 
 ---Toggle whether the current pin receives updates.
 function infoview.pin_toggle_pause()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv.info.pin:toggle_pause()
+  with_current(function(iv)
+    iv.pin:toggle_pause()
+  end)
+end
+
+---Open the infoview from the current Lean buffer, recording the buffer's
+---window so the infoview can later jump back.
+---@return Infoview?
+local function open_for_current_lean_buffer()
+  if vim.bo.filetype ~= 'lean' then
+    return
   end
+  local iv = infoview.open()
+  iv:update_last_window()
+  return iv
 end
 
 ---Add a pin to the current cursor location.
 function infoview.add_pin()
-  if vim.bo.filetype ~= 'lean' then
-    return
+  local iv = open_for_current_lean_buffer()
+  if iv then
+    iv:add_pin()
   end
-  local current_infoview = infoview.open()
-  current_infoview.info:update_last_window()
-  current_infoview.info:add_pin()
 end
 
 ---Set the location for a diff pin to the current cursor location.
 function infoview.set_diff_pin()
-  if vim.bo.filetype ~= 'lean' then
-    return
+  local iv = open_for_current_lean_buffer()
+  if iv then
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    iv:__set_diff_pin(Buffer:current(), { cursor[1] - 1, cursor[2] })
   end
-  local current_infoview = infoview.open()
-  current_infoview.info:update_last_window()
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  current_infoview.info:__set_diff_pin(Buffer:current(), { cursor[1] - 1, cursor[2] })
 end
 
 ---Clear any pins in the current infoview.
 function infoview.clear_pins()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv.info:clear_pins()
-  end
+  with_current(Infoview.clear_pins)
 end
 
 ---Clear a diff pin in the current infoview.
 function infoview.clear_diff_pin()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv.info:__clear_diff_pin()
-  end
+  with_current(Infoview.__clear_diff_pin)
 end
 
 ---Toggle whether "auto-diff" mode is active for the current infoview.
@@ -1884,27 +1873,25 @@ function infoview.toggle_auto_diff_pin(clear)
     return
   end
   local current_infoview = infoview.open()
-  current_infoview.info:__toggle_auto_diff_pin(clear)
+  current_infoview:__toggle_auto_diff_pin(clear)
+end
+
+local function set_renderer(contents_for, use_widgets)
+  with_current(function(iv)
+    iv.view_options.use_widgets = use_widgets
+    iv.__contents_for = contents_for
+    iv.pin:update()
+  end)
 end
 
 ---Enable widgets in the current infoview.
 function infoview.enable_widgets()
-  local iv = infoview.get_current_infoview()
-  if iv ~= nil then
-    iv.view_options.use_widgets = true
-    iv.__contents_for = contents_for_interactive
-    iv.info.pin:update()
-  end
+  set_renderer(contents_for_interactive, true)
 end
 
 ---Disable widgets in the current infoview.
 function infoview.disable_widgets()
-  local iv = infoview.get_current_infoview()
-  if iv ~= nil then
-    iv.view_options.use_widgets = false
-    iv.__contents_for = contents_for_plain
-    iv.info.pin:update()
-  end
+  set_renderer(contents_for_plain, false)
 end
 
 ---Move the cursor to the infoview window.
@@ -1918,10 +1905,7 @@ end
 ---current screen dimensions.
 ---Does nothing if there are more than 2 open windows.
 function infoview.reposition()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:reposition()
-  end
+  with_current(Infoview.reposition)
 end
 
 ---Interactively set some view options for the infoview.
@@ -1935,93 +1919,43 @@ end
 ---Move the infoview cursor to the given goal.
 ---@param n? integer the goal number to move to, defaulting to the first
 function infoview.go_to_goal(n)
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:move_cursor_to_goal(n)
-  end
-end
-
----Move the infoview cursor to the next goal.
-function infoview.next_goal()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('next', is_goal)
-  end
-end
-
----Move the infoview cursor to the previous goal.
-function infoview.prev_goal()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('prev', is_goal)
-  end
-end
-
----Move the infoview cursor to the next hypothesis.
-function infoview.next_hypothesis()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('next', is_hypothesis)
-  end
-end
-
----Move the infoview cursor to the previous hypothesis.
-function infoview.prev_hypothesis()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('prev', is_hypothesis)
-  end
+  with_current(Infoview.move_cursor_to_goal, n)
 end
 
 ---Move the infoview cursor to the given suggestion.
 ---@param n? integer the suggestion number to move to, defaulting to the first
 function infoview.go_to_suggestion(n)
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:move_cursor_to_suggestion(n)
-  end
+  with_current(Infoview.move_cursor_to_suggestion, n)
 end
 
 ---Accept (click) the given suggestion.
 ---@param n? integer the suggestion number to accept, defaulting to the first
 function infoview.accept_suggestion(n)
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:accept_suggestion(n)
+  with_current(Infoview.accept_suggestion, n)
+end
+
+local function goto_step(direction, predicate)
+  return function()
+    with_current(Infoview.__goto, direction, predicate)
   end
 end
 
+---Move the infoview cursor to the next goal.
+infoview.next_goal = goto_step('next', is_goal)
+---Move the infoview cursor to the previous goal.
+infoview.prev_goal = goto_step('prev', is_goal)
+---Move the infoview cursor to the next hypothesis.
+infoview.next_hypothesis = goto_step('next', is_hypothesis)
+---Move the infoview cursor to the previous hypothesis.
+infoview.prev_hypothesis = goto_step('prev', is_hypothesis)
 ---Move the infoview cursor to the next suggestion.
-function infoview.next_suggestion()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('next', is_suggestion)
-  end
-end
-
+infoview.next_suggestion = goto_step('next', is_suggestion)
 ---Move the infoview cursor to the previous suggestion.
-function infoview.prev_suggestion()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('prev', is_suggestion)
-  end
-end
-
+infoview.prev_suggestion = goto_step('prev', is_suggestion)
 ---Move the infoview cursor to the next link.
-function infoview.next_link()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('next', is_link)
-  end
-end
-
+infoview.next_link = goto_step('next', is_link)
 ---Move the infoview cursor to the previous link.
-function infoview.prev_link()
-  local iv = infoview.get_current_infoview()
-  if iv then
-    iv:__goto('prev', is_link)
-  end
-end
+infoview.prev_link = goto_step('prev', is_link)
 
 ---@class infoview.ContentsAtOpts
 ---@field buf? integer buffer handle, defaulting to the current buffer
@@ -2048,19 +1982,13 @@ function infoview.contents_at(position, opts)
   local line = position[1] - 1
   local col = position[2]
 
-  local buf_line = buf:line(line, false)
-  local character = 0
-  if buf_line then
-    local succeeded, utf16 = pcall(vim.str_utfindex, buf_line, 'utf-16', col)
-    if succeeded then
-      character = utf16
-    end
-  end
-
   ---@type lsp.TextDocumentPositionParams
   local position_params = {
     textDocument = { uri = buf:uri() },
-    position = { line = line, character = character },
+    position = {
+      line = line,
+      character = byte_col_to_utf16(buf:line(line, false), col),
+    },
   }
 
   local iv = infoview.get_current_infoview()

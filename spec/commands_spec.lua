@@ -9,7 +9,7 @@ describe('LeanGoal', function()
     'shows a popup with the goal',
     helpers.clean_buffer('example : 2 = 2 := by sorry', function()
       helpers.search 'sorry'
-      helpers.wait_for_processing()
+      helpers.wait:for_processing()
 
       local initial_window = Window:current()
       vim.cmd.LeanGoal()
@@ -29,7 +29,7 @@ describe('LeanTermGoal', function()
     'shows a popup with the term goal',
     helpers.clean_buffer('def n : Nat := 37', function()
       helpers.search '37'
-      helpers.wait_for_processing()
+      helpers.wait:for_processing()
 
       local initial_window = Window:current()
       vim.cmd.LeanTermGoal()

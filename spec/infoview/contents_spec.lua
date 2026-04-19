@@ -477,7 +477,7 @@ describe('interactive infoview', function()
         -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
         -- something isn't waiting properly, and nondeterministically we don't
         -- end up with the right contents in tests :/
-        helpers.wait_for_loading_pins()
+        helpers.wait:for_ready_infoview()
         vim.wait(10000, function()
           return infoview.get_current_infoview():get_line(1) ~= nil
         end)
@@ -497,7 +497,7 @@ describe('interactive infoview', function()
         -- called by `assert.infoview_contents`) -- something isn't waiting
         -- properly, and nondeterministically we don't end up with the right
         -- contents in tests :/
-        helpers.wait_for_loading_pins()
+        helpers.wait:for_ready_infoview()
         vim.wait(10000, function()
           return not vim.deep_equal(infoview.get_current_infoview():get_lines(), { '' })
         end)
@@ -513,11 +513,44 @@ describe('interactive infoview', function()
     'processing message',
     helpers.clean_buffer('#eval IO.sleep 5000', function()
       it('is shown while a file is processing', function()
-        local result = vim.wait(10000, function()
-          return require('lean.progress').percentage() < 100
-        end)
-        assert.message('file was never processing').is_true(result)
+        helpers.wait:for_file_processing()
         assert.infoview_contents_nowait.are 'Processing file...'
+      end)
+    end)
+  )
+
+  describe(
+    'file progress updates',
+    helpers.clean_buffer('#check (37 : Nat)', function()
+      it('does not trigger redundant updates for unchanged progress', function()
+        helpers.wait:for_processing()
+
+        local uri = vim.uri_from_bufnr(0)
+        local pin = infoview.get_current_infoview().pin
+
+        local update_count = 0
+        local original = pin.request_update
+        pin.request_update = function(self)
+          update_count = update_count + 1
+          return original(self)
+        end
+
+        -- Repeated calls with unchanged progress state should not re-update.
+        infoview.__on_file_progress(uri)
+        infoview.__on_file_progress(uri)
+        infoview.__on_file_progress(uri)
+        assert.are.equal(0, update_count)
+
+        -- But a genuine state change does trigger an update.
+        require('lean.progress').proc_infos[uri] = {
+          {
+            range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 0 } },
+          },
+        }
+        infoview.__on_file_progress(uri)
+        assert.are.equal(1, update_count)
+
+        pin.request_update = original
       end)
     end)
   )

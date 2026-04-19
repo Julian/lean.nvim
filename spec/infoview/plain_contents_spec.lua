@@ -392,7 +392,7 @@ describe('plain infoviews', function()
         -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
         -- something isn't waiting properly, and nondeterministically we don't
         -- end up with the right contents in tests :/
-        helpers.wait_for_loading_pins()
+        helpers.wait:for_ready_infoview()
         vim.wait(10000, function()
           return infoview.get_current_infoview():get_line(1) ~= nil
         end)
@@ -412,7 +412,7 @@ describe('plain infoviews', function()
         -- called by `assert.infoview_contents`) -- something isn't waiting
         -- properly, and nondeterministically we don't end up with the right
         -- contents in tests :/
-        helpers.wait_for_loading_pins()
+        helpers.wait:for_ready_infoview()
         vim.wait(10000, function()
           return not vim.deep_equal(infoview.get_current_infoview():get_lines(), { '' })
         end)
@@ -428,10 +428,7 @@ describe('plain infoviews', function()
     'processing message',
     helpers.clean_buffer('#eval IO.sleep 5000', function()
       it('is shown while a file is processing', function()
-        local result = vim.wait(10000, function()
-          return require('lean.progress').percentage() < 100
-        end)
-        assert.message('file was never processing').is_true(result)
+        helpers.wait:for_file_processing()
         assert.infoview_contents_nowait.are 'Processing file...'
       end)
     end)
@@ -440,7 +437,7 @@ describe('plain infoviews', function()
   describe('language server dead', function()
     it('is shown when the server is dead', function()
       vim.cmd.edit { project.some_existing_file, bang = true }
-      helpers.wait_for_ready_lsp()
+      helpers.wait:for_lsp()
       vim.lsp.stop_client(vim.lsp.get_clients { bufnr = 0 })
       local succeeded = vim.wait(5000, function()
         return vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0 })

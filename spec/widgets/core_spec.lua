@@ -29,16 +29,16 @@ describe('Lean core widgets', function()
     'supports try this widgets with one suggestion',
     helpers.clean_buffer(
       [[
-        example : 2 = 2 := by
+        example : 37 = 37 := by
           apply?
       ]],
       function()
-        helpers.wait_for_diagnostics()
+        helpers.wait:for_diagnostics()
         helpers.search 'apply'
         assert.infoview_contents.are [[
           Goals accomplished 🎉
 
-          ⊢ 2 = 2
+          ⊢ 37 = 37
 
           ▼ 2:3-2:9: information:
           Try this:
@@ -52,7 +52,7 @@ describe('Lean core widgets', function()
         -- the buffer contents have changed but we also jumped to the lean win
         assert.current_window.is(lean_window)
         assert.contents.are [[
-          example : 2 = 2 := by
+          example : 37 = 37 := by
             exact Nat.eq_of_beq_eq_true rfl
         ]]
       end

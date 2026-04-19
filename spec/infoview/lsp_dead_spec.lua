@@ -1,5 +1,5 @@
 local fixtures = require 'spec.fixtures'
-local helpers = require 'spec.helpers'
+local wait = require('spec.helpers').wait
 
 local infoview = require 'lean.infoview'
 
@@ -27,7 +27,7 @@ describe('language server dead', function()
 
     -- and comes back alive
     vim.cmd.edit()
-    helpers.wait_for_processing()
+    wait:for_processing()
     assert.infoview_contents.are [[
       ▼ 1:1-1:6: information:
       1

@@ -83,11 +83,12 @@ describe(
     end)
 
     it('does not abandon tooltips when the infoview is closed', function()
-      vim.cmd.tabnew '#'
+      Tab:new()
+      Window:current():set_buffer(lean_window:buffer())
       local tab2_window = Window:current()
       local tab2_infoview = infoview.get_current_infoview()
       helpers.move_cursor { to = { 1, 9 } }
-      helpers.wait_for_loading_pins()
+      helpers.wait:for_ready_infoview()
       tab2_infoview:enter()
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
       helpers.feed '<CR>'
@@ -105,11 +106,12 @@ describe(
     end)
 
     it('does not abandon tooltips when windows are closed', function()
-      vim.cmd.tabnew '#'
+      Tab:new()
+      Window:current():set_buffer(lean_window:buffer())
       local tab2_window = Window:current()
       local tab2_infoview = infoview.get_current_infoview()
       helpers.move_cursor { to = { 1, 8 } }
-      helpers.wait_for_loading_pins()
+      helpers.wait:for_ready_infoview()
       tab2_infoview:enter()
       helpers.move_cursor { to = { 2, 5 } } -- `Type`
       helpers.feed '<CR>'
