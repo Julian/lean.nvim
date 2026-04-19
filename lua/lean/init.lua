@@ -106,6 +106,11 @@ local lean = {
       'LeanRestartFile',
       { desc = 'Restart the Lean server for the current file.' },
     },
+    {
+      'K',
+      'LeanHover',
+      { desc = 'Show interactive hover information.' },
+    },
   },
 }
 
@@ -163,6 +168,14 @@ function lean.setup(opts)
     end,
     LeanLineDiagnostics = function()
       require('lean.commands').show_line_diagnostics()
+    end,
+
+    LeanHover = function()
+      if require('lean.config')().lsp.enhanced_handlers.hover then
+        require('lean.hover')()
+      else
+        vim.lsp.buf.hover()
+      end
     end,
 
     LeanGotoInfoview = function()

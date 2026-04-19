@@ -73,6 +73,7 @@ docs:
         {{ lean }}/health.lua \
         {{ lean }}/infoview.lua \
         {{ lean }}/goals.lua \
+        {{ lean }}/hover.lua \
         {{ lean }}/stderr.lua \
         {{ lean }}/widgets.lua \
         {{ lean }}/lsp.lua \
