@@ -4,6 +4,7 @@ local Window = require 'std.nvim.window'
 -- In case recording crashes.
 vim.o.directory = ''
 vim.o.shada = ''
+vim.o.winborder = 'rounded'
 
 DEMO = {}
 
