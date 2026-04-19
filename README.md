@@ -29,7 +29,15 @@ It is undoubtedly the case that `lean.nvim` would not be as featureful without t
 
 ## Installation
 
-`lean.nvim` can be installed via your favorite plugin manager.
+If you are using neovim 0.12 or later, you can install and configure `lean.nvim` using
+```lua
+vim.pack.add({ "https://github.com/Julian/lean.nvim" })
+
+require("lean").setup({ mappings = true })
+```
+(see [the manual](https://github.com/Julian/lean.nvim/wiki/The-lean.nvim-Manual#key-mappings) for information about the `{ mappings = true }` part).
+
+If you are using an older neovim, or do not wish to use `vim.pack`, `lean.nvim` can be installed via your favorite plugin manager.
 Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
