@@ -22,11 +22,10 @@ describe('ImportGraph widgets', function()
         local initial = Buffer:current()
 
         helpers.search 'find_home'
-        -- ImportGraph.Meta is heavy; give extra time on slow CI runners.
-        assert.infoview_contents.are([[
+        assert.infoview_contents.are [[
           ▼ 2:1-2:11: information:
           [Init.Prelude]
-        ]], { timeout = 120000 })
+        ]]
 
         infoview.go_to()
         helpers.search 'Init'
