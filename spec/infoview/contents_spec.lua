@@ -520,12 +520,11 @@ describe('interactive infoview', function()
   )
 
   describe(
-    'file progress updates when cursor is not on a processing line',
-    helpers.clean_buffer('#eval IO.sleep 5000\n\n#check (37 : Nat)', function()
-      helpers.move_cursor { to = { 3, 0 } }
-      helpers.wait:for_file_processing()
-
+    'file progress updates',
+    helpers.clean_buffer('#check (37 : Nat)', function()
       it('does not trigger redundant updates for unchanged progress', function()
+        helpers.wait:for_processing()
+
         local uri = vim.uri_from_bufnr(0)
         local pin = infoview.get_current_infoview().pin
 
@@ -543,7 +542,11 @@ describe('interactive infoview', function()
         assert.are.equal(0, update_count)
 
         -- But a genuine state change does trigger an update.
-        require('lean.progress').proc_infos[uri] = {}
+        require('lean.progress').proc_infos[uri] = {
+          {
+            range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 0 } },
+          },
+        }
         infoview.__on_file_progress(uri)
         assert.are.equal(1, update_count)
 

@@ -1653,12 +1653,15 @@ end
 
 ---@private
 ---Called by the $/lean/fileProgress handler.
----Only updates pins whose processing state at their position has changed.
+---Skips updates only when the pin's position is not being processed
+---and was already not being processed on the last notification.
+---During processing, every notification may carry new diagnostics
+---(e.g. lake build output) worth re-rendering.
 function infoview.__on_file_progress(uri)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
-      local current = progress.at_or_file(pin.__position_params)
-      if current ~= pin.__last_processing then
+      local current = progress.at(pin.__position_params)
+      if current ~= nil or pin.__last_processing ~= nil then
         pin.__last_processing = current
         pin:request_update()
       end
