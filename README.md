@@ -30,6 +30,7 @@ It is undoubtedly the case that `lean.nvim` would not be as featureful without t
 ## Installation
 
 If you are using neovim 0.12 or later, you can install and configure `lean.nvim` using
+
 ```lua
 vim.pack.add({ "https://github.com/Julian/lean.nvim" })
 
