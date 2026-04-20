@@ -37,9 +37,10 @@ local rpc = require 'lean.rpc'
 ---@return string? signature the expression signature (without the type)
 ---@return string? doc the documentation and import info
 local function extract_hover(result)
-  local value = type(result.contents) == 'string' and result.contents
-    or result.contents.value
-  if not value then return end
+  local value = type(result.contents) == 'string' and result.contents or result.contents.value
+  if not value then
+    return
+  end
 
   -- Extract the expression name from inside the code fence.
   -- The fence contains lines like "Nat.add : Nat → Nat → Nat" or
@@ -50,7 +51,9 @@ local function extract_hover(result)
 
   -- Extract documentation after the first *** separator.
   local doc = value:match '%*%*%*\n(.+)'
-  if doc then doc = vim.trim(doc:gsub('\n%*%*%*\n', '\n---\n')) end
+  if doc then
+    doc = vim.trim(doc:gsub('\n%*%*%*\n', '\n---\n'))
+  end
 
   return signature, doc
 end

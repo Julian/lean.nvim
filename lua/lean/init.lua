@@ -171,8 +171,8 @@ function lean.setup(opts)
     end,
 
     LeanHover = function()
-      if require('lean.config')().lsp.enhanced_handlers.hover then
-        require('lean.hover')()
+      if require 'lean.config'().lsp.enhanced_handlers.hover then
+        require 'lean.hover'()
       else
         vim.lsp.buf.hover()
       end
