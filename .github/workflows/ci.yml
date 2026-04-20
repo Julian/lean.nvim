@@ -41,6 +41,8 @@ jobs:
       - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
       - name: Run tests
         run: just test
+        env:
+          LEAN_TEST_TIMEOUT: 60000
 
   release:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')

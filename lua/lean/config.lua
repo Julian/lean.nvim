@@ -13,7 +13,7 @@
 ---@field goal_markers? lean.goal_markers.Config characters to use for denoting goal markers
 ---@field infoview? lean.infoview.Config infoview configuration
 ---@field inlay_hint? lean.inlay_hint.Config inlay hint configuration
----@field lsp? table language server configuration
+---@field lsp? lean.lsp.Config language server configuration
 ---@field progress_bars? table progress bar configuration
 ---@field signs? lean.diagnostic.SignsConfig diagnostic sign column configuration
 ---@field stderr? table stderr window configuration
@@ -53,6 +53,17 @@
 ---@class lean.infoview.MergedConfig: lean.infoview.Config
 ---@field view_options InfoviewViewOptions
 ---@field severity_markers table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
+
+---Configuration for the language server.
+---@class lean.lsp.Config
+---@field enable? boolean whether to enable the Lean language server (default true)
+---@field enhanced_handlers? lean.lsp.EnhancedHandlers which LSP handlers to replace with enhanced versions
+
+---lean.nvim replaces some default LSP handlers with enhanced versions.
+---These can be individually disabled if they interfere with other plugins.
+---@class lean.lsp.EnhancedHandlers
+---@field hover? boolean replace the default hover with an interactive popup where subexpressions are clickable (default true)
+---@field diagnostics? boolean replace the default diagnostics handler with one which filters silent diagnostics and renders multi-line signs (default true)
 
 ---Configuration for diagnostic signs in the sign column.
 ---
@@ -124,6 +135,14 @@ local DEFAULTS = {
   goal_markers = {
     unsolved = ' ⚒ ',
     accomplished = '🎉',
+  },
+
+  ---@type lean.lsp.Config
+  lsp = {
+    enhanced_handlers = {
+      hover = true,
+      diagnostics = true,
+    },
   },
 
   ---@type lean.debug.MergedConfig

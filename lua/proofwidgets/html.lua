@@ -46,6 +46,9 @@ local Html = inductive('Html', {
       }
     elseif props.edit then
       return MakeEditLink(props, children, ctx)
+    elseif props.state and props.cancelTk then
+      local RefreshComponent = require 'lean.widgets.ProofWidgets.RefreshComponent'
+      return RefreshComponent(ctx, props)
     end
 
     return Element:new {

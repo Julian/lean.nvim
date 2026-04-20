@@ -9,13 +9,47 @@ local async = {}
 ---@field set fun() Signal all waiting coroutines to resume.
 ---@field wait fun() Yield until the event is set. Returns immediately if already set.
 
+---Captured errors from coroutines, when inside a `capture_errors` block.
+---@type string[]?
+local captured_errors
+
 ---Report a coroutine error on the next event loop tick.
 ---@param co thread
 ---@param err string
 local function rethrow(co, err)
+  local traceback = debug.traceback(co, err)
+  if captured_errors then
+    table.insert(captured_errors, traceback)
+    return
+  end
   vim.schedule(function()
-    error(debug.traceback(co, err))
+    error(traceback)
   end)
+end
+
+--- Run a function while capturing any async coroutine errors.
+---
+--- Errors from coroutines that crash during `fn` are captured instead
+--- of being rethrown via `vim.schedule`. The captured error tracebacks
+--- are returned.
+---
+--- Errors if `fn` produces no async errors (since the intent of
+--- calling this is to assert that errors *do* occur).
+---@param fn fun()
+---@return string[] errors
+function async.capture_errors(fn)
+  local previous = captured_errors
+  captured_errors = {}
+  local errors = captured_errors
+  local ok, err = pcall(fn)
+  captured_errors = previous
+  if not ok then
+    error(err, 2)
+  end
+  if #errors == 0 then
+    error('async.capture_errors: expected coroutine errors but none occurred', 2)
+  end
+  return errors
 end
 
 --- Run an async function in a new coroutine.

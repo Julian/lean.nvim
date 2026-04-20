@@ -73,6 +73,7 @@ docs:
         {{ lean }}/health.lua \
         {{ lean }}/infoview.lua \
         {{ lean }}/goals.lua \
+        {{ lean }}/hover.lua \
         {{ lean }}/stderr.lua \
         {{ lean }}/widgets.lua \
         {{ lean }}/lsp.lua \
@@ -116,4 +117,4 @@ _clone-test-dependencies: _clone-dependencies
 # Rebuild some test fixtures used in the test suite.
 _rebuild-test-fixtures:
     cd "{{ fixture_projects}}/Example/" && lake build
-    cd "{{ fixture_projects }}/WithWidgets/" && lake build WithWidgets.NullPropsWidget ProofWidgets.Demos ImportGraph.Meta Mathlib.Tactic.Widget.Conv Mathlib.Tactic.Widget.InteractiveUnfold
+    cd "{{ fixture_projects }}/WithWidgets/" && lake build WithWidgets.NullPropsWidget WithWidgets.RefreshWidget ProofWidgets.Demos ImportGraph.Meta Mathlib.Tactic.Widget.Conv Mathlib.Tactic.Widget.InteractiveUnfold

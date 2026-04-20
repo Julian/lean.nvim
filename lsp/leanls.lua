@@ -277,10 +277,11 @@ return {
       rpcWireFormat = 'v1',
     },
   },
-  handlers = {
+  handlers = vim.tbl_extend('error', {
     ['$/lean/fileProgress'] = file_progress_handler,
+  }, CONFIG().lsp.enhanced_handlers.diagnostics and {
     [vim.lsp.protocol.Methods.textDocument_publishDiagnostics] = on_publish_diagnostics,
-  },
+  } or {}),
   init_options = {
     editDelay = 10, -- see #289
     hasWidgets = true,
