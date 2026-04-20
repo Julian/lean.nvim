@@ -278,8 +278,8 @@ local function has_infoview_contents(_, arguments)
     pin = target_infoview.pins[pin]
   end
   local opts = arguments[2] or {}
-  local wait = opts.timeout and helpers.wait:with_timeout(opts.timeout) or helpers.wait
-  wait:for_ready_infoview(target_infoview)
+  local waiter = opts.timeout and helpers.wait:with_timeout(opts.timeout) or helpers.wait
+  waiter:for_ready_infoview(target_infoview)
   local lines = pin and pin:get_lines() or target_infoview:get_lines()
 
   -- FIXME: We should probably tweak things so that this mistake doesn't

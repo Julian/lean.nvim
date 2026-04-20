@@ -63,6 +63,17 @@ function Wait:for_ready_infoview(iv)
   iv:wait(self.timeout)
 end
 
+---Wait for the infoview to contain the given pattern.
+---@param pattern string a Lua pattern to match against the infoview contents
+---@param iv? Infoview
+function Wait:for_infoview_contents(pattern, iv)
+  iv = iv or infoview.get_current_infoview()
+  self:_wait(('infoview to contain %q'):format(pattern), function()
+    local lines = iv:get_lines()
+    return table.concat(lines, '\n'):match(pattern)
+  end)
+end
+
 ---Wait for the Lean server to finish processing ileans.
 ---@return vim.lsp.Client
 function Wait:for_ileans()

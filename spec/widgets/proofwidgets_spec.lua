@@ -158,6 +158,22 @@ describe('ProofWidgets widgets', function()
     )
   end)
 
+  it(
+    'supports RefreshComponent widgets',
+    helpers.clean_buffer(
+      [[
+        import WithWidgets.RefreshWidget
+
+        #html quickRefresh
+      ]],
+      function()
+        helpers.search '#html quickRefresh'
+        helpers.wait:for_infoview_contents 'refreshed!'
+      end,
+      fixtures.with_widgets
+    )
+  )
+
   describe('panel widgets with null JSON props', function()
     -- Some widgets (e.g. Verbose Lean) call savePanelWidgetInfo with
     -- Json.null props, which Neovim decodes to vim.NIL (truthy userdata).
