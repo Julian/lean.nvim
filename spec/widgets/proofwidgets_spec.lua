@@ -175,6 +175,64 @@ describe('ProofWidgets widgets', function()
   )
 
   it(
+    'supports MarkdownDisplay widgets',
+    helpers.clean_buffer(
+      [[
+        import WithWidgets.MarkdownWidget
+
+        #html quickMarkdown
+      ]],
+      function()
+        helpers.search '#html quickMarkdown'
+        assert.infoview_contents.are [[
+          ▼ HTML Display
+          Hello **markdown**
+        ]]
+      end,
+      fixtures.with_widgets
+    )
+  )
+
+  it(
+    'supports InteractiveExpr widgets',
+    helpers.clean_buffer(
+      [[
+        import WithWidgets.InteractiveExprWidget
+
+        #html quickExpr
+      ]],
+      function()
+        helpers.search '#html quickExpr'
+        assert.infoview_contents.are [[
+          ▼ HTML Display
+          1 + 2
+        ]]
+      end,
+      fixtures.with_widgets
+    )
+  )
+
+  it(
+    'supports FilterDetails widgets',
+    helpers.clean_buffer(
+      [[
+        import WithWidgets.FilterDetailsWidget
+
+        #html quickFilter
+      ]],
+      function()
+        helpers.search '#html quickFilter'
+        assert.infoview_contents.are [[
+          ▼ HTML Display
+          Summary
+          filtered content
+        ]]
+      end,
+      fixtures.with_widgets
+    )
+  )
+
+  it(
     'preserves whitespace inside <pre> but collapses it outside',
     helpers.clean_buffer(
       [[

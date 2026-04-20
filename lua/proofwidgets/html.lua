@@ -55,6 +55,44 @@ local Html = inductive('Html', {
     elseif props.state and props.cancelTk then
       local RefreshComponent = require 'lean.widgets.ProofWidgets.RefreshComponent'
       return RefreshComponent(ctx, props)
+    elseif props.contents and type(props.contents) == 'string' then
+      return Element:new { text = props.contents, children = children }
+    elseif props.expr then
+      local response, rpc_err = ctx:rpc_call('ProofWidgets.ppExprTagged', { expr = props.expr })
+      if rpc_err then
+        return rpc_err
+      end
+      if response then
+        return Element:new {
+          children = {
+            InteractiveCode(response, ctx:subsession()),
+            Element:new { children = children },
+          },
+        }
+      end
+    elseif props.msg then
+      local interactive_diagnostic = require 'lean.widget.interactive_diagnostic'
+      local sess = ctx:subsession()
+      local response, err = sess:msgToInteractive(props.msg, 0)
+      if err then
+        return Element:new { text = vim.inspect(err), children = children }
+      end
+      return Element:new {
+        children = {
+          interactive_diagnostic.TaggedTextMsgEmbed(response, sess),
+          Element:new { children = children },
+        },
+      }
+    elseif props.summary and props.filtered then
+      local content = props.initiallyFiltered ~= false and props.filtered or props.all
+      return Element:new {
+        children = {
+          self(props.summary, ctx, opts),
+          Element:new { text = '\n' },
+          self(content, ctx, opts),
+          Element:new { children = children },
+        },
+      }
     end
 
     return Element:new {
