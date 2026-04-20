@@ -22,20 +22,16 @@
 
 https://github.com/user-attachments/assets/d17554ae-bcce-4f73-ac34-38ae556caf45
 
-## Sponsors
-
-A portion of `lean.nvim`'s development is graciously sponsored by the [Lean FRO](https://lean-fro.org/).
-It is undoubtedly the case that `lean.nvim` would not be as featureful without the support, for which we owe sincere thanks.
-
 ## Installation
 
 If you are using neovim 0.12 or later, you can install and configure `lean.nvim` using
 
 ```lua
-vim.pack.add({ "https://github.com/Julian/lean.nvim" })
+vim.pack.add { "https://github.com/Julian/lean.nvim" }
 
-require("lean").setup({ mappings = true })
+require("lean").setup { mappings = true }
 ```
+
 (see [the manual](https://github.com/Julian/lean.nvim/wiki/The-lean.nvim-Manual#key-mappings) for information about the `{ mappings = true }` part).
 
 If you are using an older neovim, or do not wish to use `vim.pack`, `lean.nvim` can be installed via your favorite plugin manager.
@@ -48,9 +44,6 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
 
   dependencies = {
     -- optional dependencies:
-
-    -- a completion engine
-    --    hrsh7th/nvim-cmp or Saghen/blink.cmp are popular choices
 
     -- 'nvim-telescope/telescope.nvim', -- for Lean-specific pickers
     -- 'andymass/vim-matchup',          -- for enhanced % motion behavior
@@ -67,6 +60,11 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 `lean.nvim` supports the latest stable neovim release (currently `>=0.11.5`) as well as the latest nightly.
 If you are on an earlier version of neovim, e.g. `0.10.2`, you can have your plugin manager install the [`nvim-0.10` tag](https://github.com/Julian/lean.nvim/releases/tag/nvim-0.10) until you upgrade.
+
+## Sponsors
+
+A portion of `lean.nvim`'s development is graciously sponsored by the [Lean FRO](https://lean-fro.org/).
+It is undoubtedly the case that `lean.nvim` would not be as featureful without this support, for which we owe sincere thanks.
 
 ## Features
 
@@ -89,23 +87,7 @@ If you are on an earlier version of neovim, e.g. `0.10.2`, you can have your plu
 
 ## Configuration & Usage
 
-The short version -- if you followed the instructions above for `lazy.nvim`, you likely simply want `opts = { mappings = true }` to call `lean.setup` and enable its default key mappings.
-
-This is all you need if you already have something registered to run on the `LspAttach` `autocmd` which defines any language server key mappings you like, e.g. if you use Neovim with any other language.
-In particular your `LspAttach` handler should likely bind things like `vim.lsp.buf.code_action` (AKA "the lightbulb") to ensure that you have easy access to code actions in Lean buffers.
-Lean uses code actions for replacing "Try this:" suggestions, which you will almost certainly want to be able to perform.
-
-If you do not already have a preferred setup which includes LSP key mappings and (auto)completion, you may find the [fuller example here in the wiki](https://github.com/Julian/lean.nvim/wiki/Getting-Started-From-the-Ground-Up) helpful.
-
-If you are using another plugin manager (such as `vim-plug`), after following the installation instructions, add the below to `~/.config/nvim/plugin/lean.lua` or an equivalent:
-
-```lua
-require('lean').setup{ mappings = true }
-```
-
-For more detail on the full list of supported configuration options, key mappings, and commands, see [the manual](https://github.com/Julian/lean.nvim/wiki/The-lean.nvim-Manual).
-
-(If you find you can't modify your source files due to the nvim `E21` error, this might be due to lean.nvim's effort prevent users from accidentally shooting themselves in the foot by modifying the Lean standard library. See the `nomodifiable` option in the [full configuration](https://github.com/Julian/lean.nvim/wiki/The-lean.nvim-Manual#full-configuration--settings).)
+For detail on the full list of supported configuration options, key mappings, and commands, see [the manual](https://github.com/Julian/lean.nvim/wiki/The-lean.nvim-Manual).
 
 ## Other Useful Plugins
 
@@ -122,4 +104,4 @@ Below is a (hopelessly incomplete) list of a few:
 
 Contributions are most welcome.
 Feel free to send pull requests for anything you'd like to see, or open an issue if you'd like to discuss.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details on running tests, linting, and manual testing.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details on running tests, linting and testing.
