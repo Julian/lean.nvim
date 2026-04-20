@@ -17,15 +17,21 @@ local Tag = require('tui.html').Tag
 ---@alias Html HtmlElement | HtmlText | HtmlComponent
 local Html = inductive('Html', {
   ---@param text string
+  ---@param _ctx RenderContext
+  ---@param opts? { in_pre: boolean }
   ---@return Element
-  text = function(_, text)
+  text = function(_, text, _ctx, opts)
+    if not opts or not opts.in_pre then
+      text = text:gsub('%s+', ' ')
+    end
     return Element:new { text = text }
   end,
 
   ---@param value { [1]: string, [2]: string, [3]:  any, [4]: Html[] }
   ---@param ctx RenderContext
+  ---@param opts? { in_pre: boolean }
   ---@return Element
-  component = function(self, value, ctx)
+  component = function(self, value, ctx, opts)
     local _, _, props, more = unpack(value)
     -- TODO: This should render export through our own bypassing logic,
     --       but we only have a hash here, not the ID...
@@ -33,7 +39,7 @@ local Html = inductive('Html', {
     local children = vim
       .iter(more)
       :map(function(child)
-        return self(child, ctx)
+        return self(child, ctx, opts)
       end)
       :totable()
 
@@ -59,13 +65,17 @@ local Html = inductive('Html', {
 
   ---@param value { [1]: string, [2]: [string, any][], [3]: Html[] }
   ---@param ctx RenderContext
+  ---@param opts? { in_pre: boolean }
   ---@return Element
-  element = function(self, value, ctx)
+  element = function(self, value, ctx, opts)
     local tag, _, children = unpack(value)
+    if tag == 'pre' then
+      opts = { in_pre = true }
+    end
     local elements = vim
       .iter(children)
       :map(function(child)
-        return self(child, ctx)
+        return self(child, ctx, opts)
       end)
       :totable()
     return Tag[tag](elements)

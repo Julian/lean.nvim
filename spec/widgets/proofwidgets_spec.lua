@@ -174,6 +174,29 @@ describe('ProofWidgets widgets', function()
     )
   )
 
+  it(
+    'preserves whitespace inside <pre> but collapses it outside',
+    helpers.clean_buffer(
+      [[
+        import WithWidgets.PreWidget
+
+        #html quickPre
+      ]],
+      function()
+        helpers.search '#html quickPre'
+        assert.infoview_contents.are [[
+          ▼ HTML Display
+
+          hello
+            indented
+              world
+          hello indented world
+        ]]
+      end,
+      fixtures.with_widgets
+    )
+  )
+
   describe('panel widgets with null JSON props', function()
     -- Some widgets (e.g. Verbose Lean) call savePanelWidgetInfo with
     -- Json.null props, which Neovim decodes to vim.NIL (truthy userdata).
