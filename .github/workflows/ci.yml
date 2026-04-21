@@ -12,8 +12,13 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   ci:
+    name: Test (${{ matrix.os }}, ${{ matrix.nvim-version }})
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -69,6 +74,7 @@ jobs:
           LEAN_TEST_TIMEOUT: 60000
 
   release:
+    name: Release
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
 
     needs: ci
@@ -76,8 +82,8 @@ jobs:
     environment: release
 
     permissions:
-      attestations: write
-      contents: write
+      attestations: write # for sigstore attestation
+      contents: write # for creating the GitHub release
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
