@@ -11,6 +11,7 @@ describe('tui.svg', function()
       -- Skip gracefully if not.
       if not svg.available() then
         pending 'libresvg not installed'
+        return
       end
       assert.is_true(svg.available())
     end)

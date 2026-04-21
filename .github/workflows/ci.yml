@@ -44,7 +44,9 @@ jobs:
 
       - name: Install libresvg (macOS)
         if: runner.os == 'macOS'
-        run: brew install resvg
+        run: |
+          brew install resvg
+          echo "DYLD_LIBRARY_PATH=$(brew --prefix)/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" >> "$GITHUB_ENV"
 
       - name: Cache libresvg (Linux)
         if: runner.os == 'Linux'
@@ -53,9 +55,8 @@ jobs:
         with:
           path: /usr/local/lib/libresvg.so
           key: libresvg-linux-v0.47.0
-          lookup-only: true
 
-      - name: Install libresvg (Linux)
+      - name: Build libresvg (Linux)
         if: runner.os == 'Linux' && steps.cache-resvg.outputs.cache-hit != 'true'
         run: |
           curl -sL https://github.com/linebender/resvg/archive/refs/tags/v0.47.0.tar.gz | tar xz -C /tmp
