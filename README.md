@@ -51,15 +51,6 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
     -- 'tomtom/tcomment_vim',           -- for commenting
   },
 
-  -- Optional system dependencies:
-  --
-  --   resvg (https://github.com/RazrFalcon/resvg)
-  --     When installed, SVG content from ProofWidgets is rasterized and
-  --     displayed inline in the infoview via the Kitty graphics protocol.
-  --     Works in terminals that support it (Kitty, WezTerm, Ghostty, etc.).
-  --     Install via e.g. `brew install resvg` or `cargo install resvg`.
-  --     Disable via `graphics = { enabled = false }` in opts if needed.
-
   ---@type lean.Config
   opts = { -- see the manual for full configuration options
     mappings = true,
@@ -69,6 +60,15 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 `lean.nvim` supports the latest stable neovim release (currently `0.12.x`) as well as the latest nightly.
 If you are on an earlier version of neovim, e.g. `0.10.x`, you can have your plugin manager install the [`nvim-0.10` tag](https://github.com/Julian/lean.nvim/releases/tag/nvim-0.10) until you upgrade.
+
+### Optional: Terminal Graphics
+
+In terminals that support the [Kitty graphics protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/) (Kitty, WezTerm, Ghostty, etc.), `lean.nvim` can render images and SVGs from ProofWidgets inline in the infoview.
+
+SVG rendering requires [resvg](https://github.com/RazrFalcon/resvg) (`brew install resvg` or `cargo install resvg`).
+Raster images (`<img>` tags with data URIs) work without any extra dependencies.
+
+To disable all terminal graphics, pass `graphics = { enabled = false }` in your setup options.
 
 ## Sponsors
 
