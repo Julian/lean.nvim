@@ -23,10 +23,7 @@ describe('tui.svg', function()
         { { 'xmlns', 'http://www.w3.org/2000/svg' }, { 'width', '100' } },
         {},
       }
-      assert.are.equal(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="100"/>',
-        svg.serialize(tree)
-      )
+      assert.are.equal('<svg xmlns="http://www.w3.org/2000/svg" width="100"/>', svg.serialize(tree))
     end)
 
     it('serializes nested elements with text', function()
@@ -43,10 +40,7 @@ describe('tui.svg', function()
           },
         },
       }
-      assert.are.equal(
-        '<svg width="100"><text x="10">hello</text></svg>',
-        svg.serialize(tree)
-      )
+      assert.are.equal('<svg width="100"><text x="10">hello</text></svg>', svg.serialize(tree))
     end)
 
     it('escapes XML special characters in attribute values', function()
@@ -55,10 +49,7 @@ describe('tui.svg', function()
         { { 'data', 'a&b"c<d>e' } },
         {},
       }
-      assert.are.equal(
-        '<svg data="a&amp;b&quot;c&lt;d&gt;e"/>',
-        svg.serialize(tree)
-      )
+      assert.are.equal('<svg data="a&amp;b&quot;c&lt;d&gt;e"/>', svg.serialize(tree))
     end)
 
     it('escapes XML special characters in text nodes', function()
@@ -67,10 +58,7 @@ describe('tui.svg', function()
         {},
         { { text = 'a < b & c > d' } },
       }
-      assert.are.equal(
-        '<text>a &lt; b &amp; c &gt; d</text>',
-        svg.serialize(tree)
-      )
+      assert.are.equal('<text>a &lt; b &amp; c &gt; d</text>', svg.serialize(tree))
     end)
 
     it('handles self-closing elements with no children', function()
@@ -82,10 +70,7 @@ describe('tui.svg', function()
           { element = { 'rect', { { 'width', '10' } }, {} } },
         },
       }
-      assert.are.equal(
-        '<g><circle r="5"/><rect width="10"/></g>',
-        svg.serialize(tree)
-      )
+      assert.are.equal('<g><circle r="5"/><rect width="10"/></g>', svg.serialize(tree))
     end)
   end)
 
@@ -95,9 +80,8 @@ describe('tui.svg', function()
         pending 'libresvg not installed'
         return
       end
-      local pixels, w, h = svg.rasterize(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="50" height="30"></svg>'
-      )
+      local pixels, w, h =
+        svg.rasterize '<svg xmlns="http://www.w3.org/2000/svg" width="50" height="30"></svg>'
       assert.are.equal(50, w)
       assert.are.equal(30, h)
       assert.is_not_nil(pixels)
@@ -108,9 +92,8 @@ describe('tui.svg', function()
         pending 'libresvg not installed'
         return
       end
-      local _, w, h = svg.rasterize(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="0.5" height="0.5"></svg>'
-      )
+      local _, w, h =
+        svg.rasterize '<svg xmlns="http://www.w3.org/2000/svg" width="0.5" height="0.5"></svg>'
       assert.is_true(w >= 1)
       assert.is_true(h >= 1)
     end)
@@ -121,9 +104,7 @@ describe('tui.svg', function()
         return
       end
       assert.has_error(function()
-        svg.rasterize(
-          '<svg xmlns="http://www.w3.org/2000/svg" width="5000" height="5000"></svg>'
-        )
+        svg.rasterize '<svg xmlns="http://www.w3.org/2000/svg" width="5000" height="5000"></svg>'
       end, 'SVG too large: 5000x5000')
     end)
 

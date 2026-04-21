@@ -3,7 +3,9 @@ local ffi = require 'ffi'
 
 local svg = {}
 
-pcall(ffi.cdef, [[
+pcall(
+  ffi.cdef,
+  [[
   typedef struct resvg_options resvg_options;
   typedef struct resvg_render_tree resvg_render_tree;
 
@@ -30,7 +32,8 @@ pcall(ffi.cdef, [[
   );
 
   void resvg_tree_destroy(resvg_render_tree *tree);
-]])
+]]
+)
 
 ---@type ffi.namespace*?
 local libresvg
@@ -58,7 +61,7 @@ function svg.rasterize(data)
   assert(libresvg, 'libresvg not loaded')
 
   local opts = libresvg.resvg_options_create()
-  local tree_ptr = ffi.new('resvg_render_tree*[1]')
+  local tree_ptr = ffi.new 'resvg_render_tree*[1]'
 
   local rc = libresvg.resvg_parse_tree_from_data(data, #data, opts, tree_ptr)
   libresvg.resvg_options_destroy(opts)

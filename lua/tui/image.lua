@@ -57,11 +57,11 @@ end
 ---@return { data: string, width: integer?, height: integer?, format: integer }? decoded
 ---@return string? reason on failure
 function image.decode(src)
-  if src:match('^https?://') then
+  if src:match '^https?://' then
     return nil, '[img: remote URLs not supported]'
   end
 
-  local _, payload = src:match('^data:([^;]+);base64,(.+)$')
+  local _, payload = src:match '^data:([^;]+);base64,(.+)$'
   if not payload then
     return nil, '[img: unsupported src format]'
   end
@@ -96,7 +96,8 @@ function image.from_pixels(key, pixels, width, height)
   if cached then
     return cached
   end
-  local overlay = { data = ffi.string(pixels, width * height * 4), width = width, height = height, format = 32 }
+  local overlay =
+    { data = ffi.string(pixels, width * height * 4), width = width, height = height, format = 32 }
   cache_put(key, overlay)
   return overlay
 end

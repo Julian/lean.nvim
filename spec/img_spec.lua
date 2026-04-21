@@ -6,7 +6,8 @@ describe('tui.image', function()
   local img = require 'tui.image'
 
   -- A tiny 1x1 red PNG (67 bytes).
-  local RED_PIXEL_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==' -- luacheck: no max line length
+  local RED_PIXEL_B64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==' -- luacheck: no max line length
   local RED_PIXEL_SRC = 'data:image/png;base64,' .. RED_PIXEL_B64
 
   it('decodes a PNG data URI', function()
@@ -23,21 +24,21 @@ describe('tui.image', function()
   end)
 
   it('rejects remote URLs', function()
-    local decoded, reason = img.decode('https://example.com/image.png')
+    local decoded, reason = img.decode 'https://example.com/image.png'
     assert.is_nil(decoded)
-    assert.is_truthy(reason:find('remote URLs not supported'))
+    assert.is_truthy(reason:find 'remote URLs not supported')
   end)
 
   it('rejects unsupported src formats', function()
-    local decoded, reason = img.decode('file:///path/to/image.png')
+    local decoded, reason = img.decode 'file:///path/to/image.png'
     assert.is_nil(decoded)
-    assert.is_truthy(reason:find('unsupported src format'))
+    assert.is_truthy(reason:find 'unsupported src format')
   end)
 
   it('returns an error for invalid base64 payload', function()
-    local decoded, reason = img.decode('data:image/png;base64,!!INVALID!!')
+    local decoded, reason = img.decode 'data:image/png;base64,!!INVALID!!'
     assert.is_nil(decoded)
-    assert.is_truthy(reason:find('invalid base64'))
+    assert.is_truthy(reason:find 'invalid base64')
   end)
 
   it('caches decoded images by src', function()
@@ -59,7 +60,8 @@ describe('html.Tag.img', function()
   local Tag = require('tui.html').Tag
 
   -- A tiny 1x1 red PNG (67 bytes).
-  local RED_PIXEL_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==' -- luacheck: no max line length
+  local RED_PIXEL_B64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==' -- luacheck: no max line length
   local RED_PIXEL_SRC = 'data:image/png;base64,' .. RED_PIXEL_B64
 
   it('creates an element with an overlay for a data URI', function()
@@ -94,7 +96,7 @@ describe('html.Tag.img', function()
   it('shows fallback for missing src', function()
     local element = Tag.img({}, {})
     assert.is_nil(element.overlay)
-    assert.is_truthy(element.text:find('no src'))
+    assert.is_truthy(element.text:find 'no src')
   end)
 end)
 
@@ -102,7 +104,8 @@ describe('img dispatch', function()
   it('routes img elements through Tag.img', function()
     local Html = require 'proofwidgets.html'
 
-    local RED_PIXEL_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==' -- luacheck: no max line length
+    local RED_PIXEL_B64 =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==' -- luacheck: no max line length
     local html_element = {
       element = {
         'img',
