@@ -37,6 +37,30 @@ jobs:
           neovim: true
           version: ${{ matrix.nvim-version }}
 
+      - name: Install libresvg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install resvg
+
+      - name: Cache libresvg (Linux)
+        if: runner.os == 'Linux'
+        id: cache-resvg
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: /usr/local/lib/libresvg.so
+          key: libresvg-linux-v0.47.0
+          lookup-only: true
+
+      - name: Install libresvg (Linux)
+        if: runner.os == 'Linux' && steps.cache-resvg.outputs.cache-hit != 'true'
+        run: |
+          curl -sL https://github.com/linebender/resvg/archive/refs/tags/v0.47.0.tar.gz | tar xz -C /tmp
+          cargo build --release -p resvg-capi --manifest-path /tmp/resvg-0.47.0/Cargo.toml
+          sudo cp /tmp/resvg-0.47.0/target/release/libresvg.so /usr/local/lib/
+
+      - name: Update ldconfig (Linux)
+        if: runner.os == 'Linux'
+        run: sudo ldconfig
+
       - uses: Julian/setup-lean@c93774d9180849a5b6c4034c3c63d4544bdd943c
       - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
       - name: Run tests
