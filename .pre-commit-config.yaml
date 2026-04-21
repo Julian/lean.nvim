@@ -24,6 +24,6 @@ repos:
     hooks:
       - id: markdownlint-cli2
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.24.0
+    rev: v1.24.1
     hooks:
       - id: zizmor
