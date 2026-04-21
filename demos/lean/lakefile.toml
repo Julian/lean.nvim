@@ -1,5 +1,9 @@
 name = "demos"
 defaultTargets = ["Demos"]
 
+[[require]]
+name = "proofwidgets"
+scope = "leanprover-community"
+
 [[lean_lib]]
 name = "Demos"
