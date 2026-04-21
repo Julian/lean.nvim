@@ -1014,7 +1014,7 @@ function Infoview:close()
   end
   self:__close_diff()
   for _, pin in ipairs(self.pins) do
-    pin:__close_window()
+    pin:__detach_window()
   end
   self.window:force_close()
   self:__was_closed()
@@ -1025,8 +1025,7 @@ function Infoview:__was_closed()
     return
   end
   self.window = nil
-  self.pin.window = nil
-  self.pin.__renderer:event 'clear_all' -- Ensure tooltips close.
+  self.pin:__window_was_closed()
 end
 
 ---Retrieve the contents of the infoview as a table.
@@ -1290,15 +1289,22 @@ function Pin:render()
 end
 
 ---Close this pin's window if it has one.
-function Pin:__close_window()
+---The window was closed externally; clean up without force-closing.
+function Pin:__window_was_closed()
+  self.window = nil
+  self.__renderer:detach_window()
+end
+
+---Close this pin's window and clean up.
+function Pin:__detach_window()
   if self.window and self.window:is_valid() then
     self.window:force_close()
   end
-  self.window = nil
+  self:__window_was_closed()
 end
 
 function Pin:__teardown()
-  self:__close_window()
+  self:__detach_window()
   local extmark = self.__extmark
   local extmark_buffer = self.__extmark_buffer
   self.__infoview = nil
