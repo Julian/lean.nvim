@@ -106,9 +106,13 @@ local Html = inductive('Html', {
   ---@param opts? { in_pre: boolean }
   ---@return Element
   element = function(self, value, ctx, opts)
-    local tag, _, children = unpack(value)
+    local tag, raw_attrs, children = unpack(value)
     if tag == 'pre' then
       opts = { in_pre = true }
+    end
+    local attrs = {}
+    for _, attr in ipairs(raw_attrs) do
+      attrs[attr[1]] = tostring(attr[2])
     end
     local elements = vim
       .iter(children)
@@ -116,7 +120,7 @@ local Html = inductive('Html', {
         return self(child, ctx, opts)
       end)
       :totable()
-    return Tag[tag](elements)
+    return Tag[tag](elements, attrs)
   end,
 })
 
