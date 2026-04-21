@@ -107,4 +107,15 @@ function html.Tag.li(children)
   return Element:new { children = children }
 end
 
+---Render preformatted text as a block element.
+function html.Tag.pre(children)
+  return Element:new {
+    text = '\n',
+    children = {
+      Element:new { children = children },
+      Element:new { text = '\n' },
+    },
+  }
+end
+
 return html
