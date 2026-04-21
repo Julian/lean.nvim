@@ -699,7 +699,7 @@ function OverlayState:close()
 end
 
 ---Check whether the current set of overlay elements has changed and
----invalidate only if so, then (re-)place images.
+---update images with the least flicker possible.
 function OverlayState:update()
   local renderer = self._renderer
   if not renderer.positions then
@@ -732,8 +732,12 @@ function OverlayState:update()
     end
   end
 
+  -- Wrap the delete+rebuild in synchronized output so the terminal
+  -- renders both as one atomic frame, eliminating flicker.
+  vim.api.nvim_chan_send(2, '\x1b[?2026h')
   self:invalidate()
   self:render()
+  vim.api.nvim_chan_send(2, '\x1b[?2026l')
 end
 
 function OverlayState:render()
