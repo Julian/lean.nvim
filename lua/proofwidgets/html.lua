@@ -107,6 +107,9 @@ local Html = inductive('Html', {
   ---@return Element
   element = function(self, value, ctx, opts)
     local tag, raw_attrs, children = unpack(value)
+    if tag == 'svg' then
+      return Tag.svg(value)
+    end
     if tag == 'pre' then
       opts = { in_pre = true }
     end

@@ -54,7 +54,7 @@ end
 ---Results are cached by src string.
 ---
 ---@param src string the src attribute value
----@return ImageOverlay? overlay
+---@return { data: string, width: integer?, height: integer?, format: integer }? decoded
 ---@return string? reason on failure
 function image.decode(src)
   if src:match('^https?://') then

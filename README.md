@@ -51,6 +51,15 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
     -- 'tomtom/tcomment_vim',           -- for commenting
   },
 
+  -- Optional system dependencies:
+  --
+  --   resvg (https://github.com/RazrFalcon/resvg)
+  --     When installed, SVG content from ProofWidgets is rasterized and
+  --     displayed inline in the infoview via the Kitty graphics protocol.
+  --     Works in terminals that support it (Kitty, WezTerm, Ghostty, etc.).
+  --     Install via e.g. `brew install resvg` or `cargo install resvg`.
+  --     Disable via `graphics = { enabled = false }` in opts if needed.
+
   ---@type lean.Config
   opts = { -- see the manual for full configuration options
     mappings = true,
