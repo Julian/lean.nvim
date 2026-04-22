@@ -58,8 +58,17 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
 }
 ```
 
-`lean.nvim` supports the latest stable neovim release (currently `>=0.11.5`) as well as the latest nightly.
-If you are on an earlier version of neovim, e.g. `0.10.2`, you can have your plugin manager install the [`nvim-0.10` tag](https://github.com/Julian/lean.nvim/releases/tag/nvim-0.10) until you upgrade.
+`lean.nvim` supports the latest stable neovim release (currently `0.12.x`) as well as the latest nightly.
+If you are on an earlier version of neovim, e.g. `0.10.x`, you can have your plugin manager install the [`nvim-0.10` tag](https://github.com/Julian/lean.nvim/releases/tag/nvim-0.10) until you upgrade.
+
+### Optional: Terminal Graphics
+
+In terminals that support the [Kitty graphics protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/) (Kitty, WezTerm, Ghostty, etc.), `lean.nvim` can render images and SVGs from ProofWidgets inline in the infoview.
+
+SVG rendering requires [resvg](https://github.com/RazrFalcon/resvg) (`brew install resvg` or `cargo install resvg`).
+Raster images (`<img>` tags with data URIs) work without any extra dependencies.
+
+To disable all terminal graphics, pass `graphics = { enabled = false }` in your setup options.
 
 ## Sponsors
 

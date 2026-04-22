@@ -11,6 +11,7 @@
 ---@field ft? lean.ft.Config filetype configuration
 ---@field abbreviations? lean.abbreviations.Config abbreviaton configuration
 ---@field goal_markers? lean.goal_markers.Config characters to use for denoting goal markers
+---@field graphics? lean.graphics.Config terminal graphics configuration
 ---@field infoview? lean.infoview.Config infoview configuration
 ---@field inlay_hint? lean.inlay_hint.Config inlay hint configuration
 ---@field lsp? lean.lsp.Config language server configuration
@@ -23,6 +24,7 @@
 ---@class lean.MergedConfig: lean.Config
 ---@field ft lean.ft.MergedConfig filetype configuration
 ---@field goal_markers lean.goal_markers.Config characters to use for denoting goal markers
+---@field graphics lean.graphics.Config terminal graphics configuration
 ---@field infoview lean.infoview.MergedConfig infoview configuration
 ---@field inlay_hint lean.inlay_hint.Config inlay hint configuration
 ---@field debug lean.debug.MergedConfig debugging and introspection configuration
@@ -85,6 +87,14 @@
 ---desired below. Note that they are not enabled globally in Neovim by default
 ---(as what exactly is shown in inlay hints can vary widely by language).
 
+---Terminal graphics configuration.
+---
+---When enabled (the default), lean.nvim renders rich content like SVGs via the
+---Kitty graphics protocol in terminals that support it. Disable to suppress
+---all terminal graphics output.
+---@class lean.graphics.Config
+---@field enabled? boolean whether to enable terminal graphics (default true)
+
 ---Developer options for debugging lean.nvim internals.
 ---
 ---`log` receives all internal log messages (connection events, RPC errors,
@@ -144,6 +154,9 @@ local DEFAULTS = {
       diagnostics = true,
     },
   },
+
+  ---@type lean.graphics.Config
+  graphics = { enabled = true },
 
   ---@type lean.debug.MergedConfig
   debug = {

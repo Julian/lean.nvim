@@ -5,6 +5,8 @@ local Window = require 'std.nvim.window'
 
 local log = require 'lean.log'
 
+local OverlayState -- defined after BufRenderer
+
 ---A fire-able event whose behavior is `Element`-specific.
 ---
 ---An element can define how to handle the event, as well as which keyboard
@@ -93,6 +95,7 @@ function Element:new(args)
     events = args.events or {},
     __children = args.children or {},
     __async_init = args.__async_init,
+    overlay = args.overlay,
   }
   return setmetatable(obj, self)
 end
@@ -542,6 +545,7 @@ function BufRenderer:new(obj)
   obj = obj or {}
   obj.pending_elements = {}
   local new_renderer = setmetatable(obj, self)
+  new_renderer.__overlays = OverlayState:new(new_renderer)
   obj.buffer.o.modifiable = false
 
   obj.buffer:create_autocmd({ 'BufEnter', 'CursorMoved' }, {
@@ -629,7 +633,15 @@ function BufRenderer:new(obj)
   return new_renderer
 end
 
+---The window displaying this renderer was closed, but the buffer lives on.
+---Cleans up resources that are tied to the window (e.g. terminal graphics).
+function BufRenderer:detach_window()
+  self:event 'clear_all' -- Ensure tooltips close.
+  self.__overlays:close()
+end
+
 function BufRenderer:close()
+  self:detach_window()
   if self.buffer:is_loaded() then
     self.buffer:force_delete()
   end
@@ -638,6 +650,186 @@ function BufRenderer:close()
     self.tooltip.parent_path = nil
     self.tooltip:close()
     self.tooltip = nil
+  end
+end
+
+---Manages overlay lifecycle for a single BufRenderer.
+---@class OverlayState
+---@field private _renderer BufRenderer
+---@field private _images? ImageSet
+---@field private _handles? table<Element, integer>
+---@field private _autocmd? integer
+---@field private _augroup? integer
+---@field private _id integer
+---@field private _waiting boolean
+OverlayState = {}
+OverlayState.__index = OverlayState
+
+local overlay_id_counter = 0
+
+function OverlayState:new(renderer)
+  overlay_id_counter = overlay_id_counter + 1
+  return setmetatable({
+    _renderer = renderer,
+    _waiting = false,
+    _id = overlay_id_counter,
+  }, self)
+end
+
+function OverlayState:invalidate()
+  if self._images then
+    self._images:clear()
+    self._images = nil
+    self._handles = nil
+  end
+  -- Clear the scroll autocmd so render() re-registers for the (possibly new) window.
+  if self._autocmd then
+    pcall(vim.api.nvim_del_autocmd, self._autocmd)
+    self._autocmd = nil
+  end
+  if self._augroup then
+    pcall(vim.api.nvim_del_augroup_by_id, self._augroup)
+    self._augroup = nil
+  end
+end
+
+function OverlayState:close()
+  self._waiting = false
+  self:invalidate()
+end
+
+---Check whether the current set of overlay elements has changed and
+---update images with the least flicker possible.
+function OverlayState:update()
+  local renderer = self._renderer
+  if not renderer.positions then
+    self:invalidate()
+    return
+  end
+
+  -- Collect the current set of overlay elements.
+  local current = {}
+  for element, _ in pairs(renderer.positions) do
+    if element.overlay then
+      current[#current + 1] = element
+    end
+  end
+
+  -- If the set of overlay elements is identical (by identity) to what
+  -- we already transmitted, skip the expensive invalidate+re-transmit
+  -- and just re-place for the (possibly new) positions.
+  if self._images and self._handles then
+    local dominated = true
+    for _, element in ipairs(current) do
+      if not self._handles[element] then
+        dominated = false
+        break
+      end
+    end
+    if dominated and #current == self._images:count() then
+      self:render()
+      return
+    end
+  end
+
+  -- Wrap the delete+rebuild in synchronized output so the terminal
+  -- renders both as one atomic frame, eliminating flicker.
+  vim.api.nvim_chan_send(2, '\x1b[?2026h')
+  self:invalidate()
+  self:render()
+  vim.api.nvim_chan_send(2, '\x1b[?2026l')
+end
+
+function OverlayState:render()
+  local renderer = self._renderer
+  if not renderer.positions then
+    return
+  end
+
+  local config = require('lean.config')()
+  if config.graphics.enabled == false then
+    return
+  end
+
+  local kitty = require 'kitty'
+  if not kitty.available() then
+    if not self._waiting then
+      self._waiting = true
+      kitty.on_available(function()
+        vim.schedule(function()
+          if self._waiting and renderer.buffer:is_loaded() and renderer.positions then
+            self:render()
+          end
+        end)
+      end)
+    end
+    return
+  end
+
+  -- Find a window showing this buffer (last_window may not be set yet).
+  local win = renderer.last_window and renderer.last_window:is_valid() and renderer.last_window
+  if not win then
+    local wins = vim.fn.win_findbuf(renderer.buffer.bufnr)
+    if #wins == 0 then
+      return
+    end
+    win = Window:from_id(wins[1])
+  end
+
+  ---@type table<integer, { row: integer, col: integer }>
+  local positions = {}
+  local needs_rebuild = not self._images
+
+  if needs_rebuild then
+    self._images = kitty.ImageSet:new()
+    self._handles = {}
+
+    for element, pos in pairs(renderer.positions) do
+      if element.overlay then
+        local handle = self._images:add(
+          element.overlay.data,
+          element.overlay.width,
+          element.overlay.height,
+          element.overlay.format
+        )
+        self._handles[element] = handle
+        positions[handle] = { row = pos.start_pos[1], col = pos.start_pos[2] }
+      end
+    end
+  else
+    for element, pos in pairs(renderer.positions) do
+      local handle = self._handles[element]
+      if handle then
+        positions[handle] = { row = pos.start_pos[1], col = pos.start_pos[2] }
+      end
+    end
+  end
+
+  self._images:place_all(win, positions)
+
+  if next(positions) and not self._autocmd then
+    local winid = win.id
+    local group = vim.api.nvim_create_augroup('LeanOverlay' .. self._id, { clear = true })
+    self._augroup = group
+
+    self._autocmd = vim.api.nvim_create_autocmd('WinScrolled', {
+      group = group,
+      pattern = tostring(winid),
+      callback = function()
+        if renderer.positions then
+          self:render()
+        end
+      end,
+    })
+
+    vim.api.nvim_create_autocmd('VimResized', {
+      group = group,
+      callback = function()
+        if renderer.buffer:is_loaded() then
+          renderer:render()
+        end
+      end,
+    })
   end
 end
 
@@ -693,6 +885,8 @@ function BufRenderer:render()
   end
 
   self:hover(true)
+
+  self.__overlays:update()
 end
 
 function BufRenderer:enter_tooltip()

@@ -146,6 +146,13 @@ function lean.setup(opts)
     require('lean.stderr').enable(opts.stderr or {})
   end
 
+  -- Start the Kitty graphics protocol probe eagerly so it resolves before
+  -- any SVG content arrives from the Lean server.
+  opts.graphics = opts.graphics or {}
+  if opts.graphics.enabled ~= false then
+    require 'kitty'
+  end
+
   local ok, telescope = pcall(require, 'telescope')
   if ok then
     telescope.load_extension 'lean_abbreviations'

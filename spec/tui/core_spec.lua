@@ -756,10 +756,9 @@ describe('Element', function()
     it('creates a BufRenderer rendering the element', function()
       local buffer = Buffer.create { name = 'foo-buffer' }
       local element = Element:new { text = 'foo', name = 'foo-name' }
-      assert.is.same(
-        tui.BufRenderer:new { buffer = buffer, element = element },
-        element:renderer { buffer = buffer }
-      )
+      local renderer = element:renderer { buffer = buffer }
+      assert.are.equal(buffer.bufnr, renderer.buffer.bufnr)
+      assert.are.equal(element, renderer.element)
       buffer:delete()
     end)
   end)

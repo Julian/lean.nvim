@@ -1,4 +1,6 @@
 local Element = require('lean.tui').Element
+local image = require 'tui.image'
+local kitty = require 'kitty'
 
 local html = {}
 
@@ -105,6 +107,70 @@ end
 ---Render a list item.
 function html.Tag.li(children)
   return Element:new { children = children }
+end
+
+---Render an `<img>` element using the Kitty graphics protocol.
+---@param _children Element[] (unused, img is a void element)
+---@param attrs table<string, string>
+function html.Tag.img(_children, attrs)
+  if not attrs.src then
+    return Element:new {
+      hlgroups = { 'Comment' },
+      text = '[img: no src]',
+    }
+  end
+
+  local decoded, reason = image.decode(attrs.src)
+  if not decoded then
+    return Element:new {
+      hlgroups = { 'Comment' },
+      text = reason,
+    }
+  end
+
+  local w = (attrs.width and tonumber(attrs.width)) or decoded.width or 200
+  local h = (attrs.height and tonumber(attrs.height)) or decoded.height or 200
+
+  local rows = kitty.rows_for_height(h)
+  return Element:new {
+    text = string.rep('\n', rows - 1),
+    overlay = { data = decoded.data, width = w, height = h, format = 100 },
+  }
+end
+
+---Render an `<svg>` element via resvg and the Kitty graphics protocol.
+---
+---Unlike other tag handlers, this receives the raw HtmlElement value triple
+---(from the dispatcher), not pre-converted Element children, because we need
+---the original tree to serialize back to an SVG string.
+---@param value { [1]: string, [2]: [string, any][], [3]: table[] }
+function html.Tag.svg(value)
+  local svg = require 'tui.svg'
+  if not svg.available() then
+    return Element:new {
+      hlgroups = { 'Comment' },
+      text = '[SVG: install libresvg to render]',
+    }
+  end
+
+  local ok, result = pcall(function()
+    local svg_string = svg.serialize(value)
+    local pixels, w, h = svg.rasterize(svg_string)
+    local overlay = image.from_pixels(svg_string, pixels, w, h)
+    local rows = kitty.rows_for_height(overlay.height)
+    return Element:new {
+      text = string.rep('\n', rows - 1),
+      overlay = overlay,
+    }
+  end)
+  if ok then
+    return result
+  end
+
+  return Element:new {
+    hlgroups = { 'WarningMsg' },
+    text = '[SVG render failed: ' .. tostring(result) .. ']',
+  }
 end
 
 ---Render preformatted text as a block element.
