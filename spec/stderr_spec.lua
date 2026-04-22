@@ -1,14 +1,55 @@
-local project = require('spec.fixtures').project
+local fixtures = require 'spec.fixtures'
+local helpers = require 'spec.helpers'
+
+local received
+
+require('lean').setup {
+  stderr = {
+    on_lines = function(chunk)
+      table.insert(received, chunk)
+    end,
+  },
+}
 
 describe('lean.stderr', function()
-  it('captures stderr messages from the Lean language server', function()
-    local original = vim.lsp.log.error
-
-    require('lean').setup {}
-    assert.is.equal(original, vim.lsp.log.error)
-
-    vim.cmd.edit { project.some_existing_file, bang = true }
-
-    assert.is_not.equal(original, vim.lsp.log.error)
+  before_each(function()
+    received = {}
   end)
+
+  it(
+    'captures dbg_trace output within a project',
+    helpers.clean_buffer(
+      [[
+        set_option stderrAsMessages false
+        #eval dbg_trace "hello from lake stderr"; (0 : Nat)
+      ]],
+      function()
+        helpers.wait:for_diagnostics()
+        assert
+          .message('never received dbg_trace output on stderr, got: ' .. vim.inspect(received))
+          .True(vim.iter(received):any(function(chunk)
+            return chunk:find 'hello from lake stderr' ~= nil
+          end))
+      end
+    )
+  )
+
+  it(
+    'captures dbg_trace output outside a project',
+    helpers.clean_buffer(
+      [[
+        set_option stderrAsMessages false
+        #eval dbg_trace "hello from lean stderr"; (0 : Nat)
+      ]],
+      function()
+        helpers.wait:for_diagnostics()
+        assert
+          .message('never received dbg_trace output on stderr, got: ' .. vim.inspect(received))
+          .True(vim.iter(received):any(function(chunk)
+            return chunk:find 'hello from lean stderr' ~= nil
+          end))
+      end,
+      fixtures.standalone
+    )
+  )
 end)

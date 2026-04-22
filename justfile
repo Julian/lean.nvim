@@ -92,7 +92,7 @@ export MATHLIB_NO_CACHE_ON_UPDATE := "1"
 [group('testing')]
 bump-test-fixtures:
     gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover-community/Mathlib4/contents/lean-toolchain' | tee "{{ fixture_projects }}"/*/lean-toolchain "{{ demos }}/project/lean-toolchain"
-    for each in "{{ fixture_projects }}"/*; do cd "$each" && lake update; done
+    for each in "{{ fixture_projects }}"/*; do cd "$each" && if [ -f lakefile.lean ] || [ -f lakefile.toml ]; then lake update; fi; done
     cd {{ demos }}/project/ && lake update
     git add {{ justfile_directory() }}/**/lean-toolchain {{ justfile_directory() }}/**/lake-manifest.json
     git commit -m "Bump the Lean versions in CI."
