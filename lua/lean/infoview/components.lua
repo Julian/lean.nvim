@@ -90,10 +90,11 @@ local function wrap_goals(params, goal, children)
   end
 
   local title
+  local markers = config().goal_markers
   if lsp.goals_accomplished_at(params) then
-    title = 'Goals accomplished 🎉'
+    title = markers.goals_accomplished
   elseif goal and #goal == 0 then -- between goals / Lean <4.19 with no markers
-    title = vim.g.lean_no_goals_message or 'No goals.'
+    title = vim.g.lean_no_goals_message or markers.no_goals
   else
     return children
   end
