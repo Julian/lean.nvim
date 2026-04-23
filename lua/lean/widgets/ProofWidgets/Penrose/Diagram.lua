@@ -18,9 +18,8 @@ return function(ctx, props)
     return Element:new { text = '[Penrose diagram]' }
   end
 
-  return Element:titled {
-    title = '▼ Diagram',
-    title_hlgroup = 'Title',
+  return Element:foldable {
+    title = Element.title 'Diagram',
     margin = 1,
     body = { Element:concat(children, '\n') },
   }

@@ -28,27 +28,21 @@ local Tag = tui_html.Tag
 local function render_details(self, value, ctx, opts)
   local _, raw_attrs, children = unpack(value)
 
-  -- Check for the `open` attribute (any value, including bare `open`).
-  local initially_open = false
-  for _, attr in ipairs(raw_attrs) do
-    if attr[1] == 'open' then
-      initially_open = true
-      break
-    end
-  end
+  local initially_open = vim.iter(raw_attrs):any(function(attr)
+    return attr[1] == 'open'
+  end)
 
-  local summary_el
+  local summary_children
   local body_elements = {}
   for _, child in ipairs(children) do
-    if not summary_el and type(child) == 'table' and child.element then
-      local child_tag = child.element[1]
-      if child_tag == 'summary' then
-        summary_el = Tag.summary(vim
+    if not summary_children and type(child) == 'table' and child.element then
+      if child.element[1] == 'summary' then
+        summary_children = vim
           .iter(child.element[3])
           :map(function(c)
             return self(c, ctx, opts)
           end)
-          :totable())
+          :totable()
         goto continue
       end
     end
@@ -56,30 +50,15 @@ local function render_details(self, value, ctx, opts)
     ::continue::
   end
 
-  local open = initially_open
-  local body = Element:new { children = initially_open and body_elements or {} }
-  local container = Element:new { children = { summary_el or Element:new {}, body } }
-
-  local function toggle(event_ctx)
-    open = not open
-    if summary_el then
-      summary_el.text = open and '▼ ' or '▶ '
-    end
-    if open then
-      body:set_children(body_elements)
-    else
-      body:set_children {}
-    end
-    event_ctx:rerender()
-  end
-
-  if summary_el then
-    summary_el.text = open and '▼ ' or '▶ '
-    summary_el.events = { click = toggle }
-    summary_el.highlightable = true
-  end
-
-  return container
+  return Element:foldable {
+    title = Element:new {
+      hlgroups = { 'tui.html.summary' },
+      children = summary_children or {},
+    },
+    body = body_elements,
+    open = initially_open,
+    margin = 0,
+  }
 end
 
 ---Collect rows from a raw Html table tree.

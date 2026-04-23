@@ -32,14 +32,12 @@ function html.Tag.br(children)
   return Element:new { text = '\n', children = children }
 end
 
----A `<summary>` tag (within `details`).
+---A `<summary>` tag rendered outside `<details>`.
 ---
----When rendered outside a `<details>`, this is just a titled block.
----The `<details>` handler in the dispatcher is responsible for making
----summary elements collapsible.
+---Within `<details>`, the dispatcher builds a foldable `Element:foldable`
+---directly, bypassing this handler.
 function html.Tag.summary(children)
   return Element:new {
-    text = '▼ ',
     hlgroups = { 'tui.html.summary' },
     children = children,
   }

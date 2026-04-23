@@ -80,11 +80,10 @@ end
 local function wrap_goals(params, goal, children)
   if goal and #goal > 1 then
     children = {
-      Element:titled {
-        title = ('▼ %d goals'):format(#goal),
+      Element:foldable {
+        title = Element.title(('%d goals'):format(#goal), 'leanInfoMultipleGoals'),
         body = children,
         margin = 1,
-        title_hlgroup = 'leanInfoMultipleGoals',
       },
     }
   end
@@ -100,9 +99,8 @@ local function wrap_goals(params, goal, children)
 
   return {
     Element:titled {
-      title = title,
+      title = Element.title(title, 'leanInfoGoals'),
       body = children,
-      title_hlgroup = 'leanInfoGoals',
     },
   }
 end

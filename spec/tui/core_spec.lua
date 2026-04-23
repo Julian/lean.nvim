@@ -269,23 +269,15 @@ describe('Element', function()
   end)
 
   describe(':titled', function()
-    it('creates an Element with a title and children', function()
+    it('creates an element with a title and body', function()
       local foo = Element:new { text = 'foo', name = 'foo-name' }
       local bar = Element:new { text = 'bar bar\n', name = 'bar-name' }
       local baz = Element:new { name = 'baz-name' }
 
-      local element = Element:titled { title = 'quux', body = { foo, bar, baz } }
-
-      assert.is.same(
-        Element:new {
-          children = {
-            Element:new { text = 'quux' },
-            Element:new { text = '\n\n' },
-            Element:new { children = { foo, bar, baz } },
-          },
-        },
-        element
-      )
+      local element = Element:titled {
+        title = Element:new { text = 'quux' },
+        body = { foo, bar, baz },
+      }
 
       assert.is.equal(
         dedent [[
@@ -297,24 +289,13 @@ describe('Element', function()
       )
     end)
 
-    it('supports arbitrary margin lines between title and body', function()
+    it('supports arbitrary margin', function()
       local foo = Element:new { text = 'foo\nbar\n' }
       local element = Element:titled {
-        title = 'stuff',
+        title = Element:new { text = 'stuff' },
         margin = 3,
         body = { foo },
       }
-
-      assert.is.same(
-        Element:new {
-          children = {
-            Element:new { text = 'stuff' },
-            Element:new { text = '\n\n\n' },
-            Element:new { children = { foo } },
-          },
-        },
-        element
-      )
 
       assert.is.equal(
         dedent [[
@@ -328,113 +309,197 @@ describe('Element', function()
       )
     end)
 
-    it('creates a text Element when children is empty', function()
-      local element = Element:titled { title = 'stuff', body = {} }
-
-      assert.is.same(Element:new { text = 'stuff' }, element)
-
-      assert.is.equal('stuff', element:to_string())
+    it('returns the title element when body is empty', function()
+      local title = Element:new { text = 'stuff' }
+      assert.are.equal(title, Element:titled { title = title, body = {} })
     end)
 
-    it('creates a text Element when children is nil', function()
-      local element = Element:titled { title = 'stuff' }
-
-      assert.is.same(Element:new { text = 'stuff' }, element)
-      assert.is.equal('stuff', element:to_string())
+    it('returns the title element when body is nil', function()
+      local title = Element:new { text = 'stuff' }
+      assert.are.equal(title, Element:titled { title = title })
     end)
 
-    it('returns nil when given only an empty title', function()
-      assert.is_nil(Element:titled { title = '' })
+    it('returns nil when title is omitted and body is empty', function()
+      assert.is_nil(Element:titled { body = {} })
     end)
 
-    it('returns nil when given an empty title and no body', function()
-      assert.is_nil(Element:titled { title = '', body = {} })
+    it('returns nil when both title and body are omitted', function()
+      assert.is_nil(Element:titled {})
     end)
 
-    it('does not add a newline when title is empty', function()
+    it('returns just the body when title is omitted', function()
+      local foo = Element:new { text = 'foo' }
+      local bar = Element:new { text = 'bar' }
+
+      local element = Element:titled { body = { foo, bar } }
+
+      assert.is.equal('foobar', element:to_string())
+    end)
+  end)
+
+  describe(':foldable', function()
+    it('renders with an arrow and body when open', function()
       local foo = Element:new { text = 'foo', name = 'foo-name' }
-      local bar = Element:new { text = 'bar bar', name = 'bar-name' }
+      local bar = Element:new { text = 'bar bar\n', name = 'bar-name' }
       local baz = Element:new { name = 'baz-name' }
 
-      local element = Element:titled { title = '', body = { foo, bar, baz } }
+      local element = Element:foldable {
+        title = Element:new { text = 'quux' },
+        body = { foo, bar, baz },
+      }
 
-      assert.is.same(Element:new { children = { foo, bar, baz } }, element)
+      assert.is.equal(
+        dedent [[
+          ▼ quux
 
-      assert.is.equal('foobar bar', element:to_string())
+          foobar bar
+        ]],
+        element:to_string()
+      )
     end)
 
-    describe('title_hlgroup', function()
-      it('creates an Element with a title and children', function()
-        local foo = Element:new { text = 'foo', name = 'foo-name' }
-        local bar = Element:new { text = 'bar bar\n', name = 'bar-name' }
+    it('supports arbitrary margin lines between title and body', function()
+      local foo = Element:new { text = 'foo\nbar\n' }
+      local element = Element:foldable {
+        title = Element:new { text = 'stuff' },
+        margin = 3,
+        body = { foo },
+      }
 
-        local element = Element:titled {
-          title = 'quux',
-          title_hlgroup = 'Title',
-          body = { foo, bar },
-        }
+      assert.is.equal(
+        dedent [[
+          ▼ stuff
 
-        assert.is.same(
-          Element:new {
-            children = {
-              Element:new { text = 'quux', hlgroups = { 'Title' } },
-              Element:new { text = '\n\n' },
-              Element:new { children = { foo, bar } },
-            },
-          },
-          element
-        )
 
-        assert.is.equal(
-          dedent [[
-            quux
+          foo
+          bar
+        ]],
+        element:to_string()
+      )
+    end)
 
-            foobar bar
-          ]],
-          element:to_string()
-        )
+    it('collapses body on click', function()
+      local foo = Element:new { text = 'foo' }
+      local bar = Element:new { text = 'bar' }
+
+      local element = Element:foldable {
+        title = Element:new { text = 'quux' },
+        body = { foo, bar },
+      }
+
+      assert.is.equal('▼ quux\n\nfoobar', element:to_string())
+
+      local title_row = element:find(function(child)
+        return child.events and child.events.click
       end)
+      title_row.events.click(NULL_CONTEXT)
 
-      it('creates a text Element when children is empty', function()
-        local element = Element:titled {
-          title = 'quux',
-          title_hlgroup = 'Another',
-          body = {},
-        }
+      assert.is.equal('▶ quux', element:to_string())
+    end)
 
-        assert.is.same(Element:new { text = 'quux', hlgroups = { 'Another' } }, element)
-        assert.is.equal('quux', element:to_string())
+    it('expands body on second click', function()
+      local foo = Element:new { text = 'foo' }
+
+      local element = Element:foldable {
+        title = Element:new { text = 'quux' },
+        body = { foo },
+      }
+
+      local title_row = element:find(function(child)
+        return child.events and child.events.click
       end)
+      title_row.events.click(NULL_CONTEXT)
+      assert.is.equal('▶ quux', element:to_string())
 
-      it('creates a text Element when children is nil', function()
-        local element = Element:titled { title = 'stuff', title_hlgroup = 'Title' }
+      title_row.events.click(NULL_CONTEXT)
+      assert.is.equal('▼ quux\n\nfoo', element:to_string())
+    end)
 
-        assert.is.same(Element:new { text = 'stuff', hlgroups = { 'Title' } }, element)
-        assert.is.equal('stuff', element:to_string())
+    it('starts collapsed when open is false', function()
+      local foo = Element:new { text = 'foo' }
+
+      local element = Element:foldable {
+        title = Element:new { text = 'quux' },
+        body = { foo },
+        open = false,
+      }
+
+      assert.is.equal('▶ quux', element:to_string())
+
+      local title_row = element:find(function(child)
+        return child.events and child.events.click
       end)
+      title_row.events.click(NULL_CONTEXT)
 
-      it('returns nil when given only an empty title', function()
-        assert.is_nil(Element:titled { title = '', title_hlgroup = 'Title' })
+      assert.is.equal('▼ quux\n\nfoo', element:to_string())
+    end)
+
+    it('calls on_open when expanding', function()
+      local placeholder = Element:new { text = 'loading...' }
+      local real_content = Element:new { text = 'loaded!' }
+
+      local element = Element:foldable {
+        title = Element:new { text = 'lazy' },
+        body = { placeholder },
+        open = false,
+        on_open = function(body)
+          body:set_children { real_content }
+        end,
+      }
+
+      assert.is.equal('▶ lazy', element:to_string())
+
+      local title_row = element:find(function(child)
+        return child.events and child.events.click
       end)
+      title_row.events.click(NULL_CONTEXT)
 
-      it('returns nil when given an empty title and no body', function()
-        assert.is_nil(Element:titled { title = '', body = {}, title_hlgroup = 'Title' })
+      assert.is.equal('▼ lazy\n\nloaded!', element:to_string())
+    end)
+
+    it('preserves hlgroups from the title element', function()
+      local title = Element:new { text = 'styled', hlgroups = { 'Title' } }
+      local foo = Element:new { text = 'body' }
+
+      local element = Element:foldable { title = title, body = { foo }, margin = 0 }
+
+      assert.is.equal('▼ styledbody', element:to_string())
+
+      local title_row = element:find(function(child)
+        return child.events and child.events.click
       end)
+      title_row.events.click(NULL_CONTEXT)
 
-      it('does not add a newline when title is empty', function()
-        local foo = Element:new { text = 'foo', name = 'foo-name' }
-        local bar = Element:new { text = 'bar bar', name = 'bar-name' }
-        local baz = Element:new { name = 'baz-name' }
+      assert.is.equal('▶ styled', element:to_string())
+    end)
 
-        local element = Element:titled {
-          title = '',
-          title_hlgroup = 'Title',
-          body = { foo, bar, baz },
-        }
+    it('supports rich Element titles', function()
+      local title = Element:new {
+        children = {
+          Element:new { text = 'hello ' },
+          Element:new { text = 'world' },
+        },
+      }
 
-        assert.is.same(Element:new { children = { foo, bar, baz } }, element)
-        assert.is.equal('foobar bar', element:to_string())
-      end)
+      local element = Element:foldable { title = title, body = { Element:new { text = 'body' } } }
+
+      assert.is.equal('▼ hello world\n\nbody', element:to_string())
+    end)
+
+    it('returns the title element when body is empty', function()
+      local title = Element:new { text = 'stuff' }
+      local element = Element:foldable { title = title, body = {} }
+
+      assert.are.equal(title, element)
+      assert.is.equal('stuff', element:to_string())
+    end)
+
+    it('returns the title element when body is nil', function()
+      local title = Element:new { text = 'stuff' }
+      local element = Element:foldable { title = title }
+
+      assert.are.equal(title, element)
+      assert.is.equal('stuff', element:to_string())
     end)
   end)
 

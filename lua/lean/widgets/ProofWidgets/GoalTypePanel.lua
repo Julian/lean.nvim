@@ -12,10 +12,9 @@ return function(ctx, _)
 
   local goal = goals[1]
   local location = { mvarId = goal.mvarId, loc = { target = '/' } } ---@type GoalsLocation
-  return Element:titled {
-    title = '▼ Main goal type',
+  return Element:foldable {
+    title = Element.title 'Main goal type',
     margin = 1,
-    title_hlgroup = 'Title',
     body = { GoalsLocationPresentation(ctx, location) },
   }
 end

@@ -139,8 +139,10 @@ function interactive_goal.diagnostics(params)
           character = diagnostic.end_col,
         },
       }
-    return Element:titled {
-      title = ('▼ %s: %s'):format(range_to_string(range), markers[diagnostic.severity]),
+    return Element:foldable {
+      title = Element.title(
+        ('%s: %s'):format(range_to_string(range), markers[diagnostic.severity])
+      ),
       body = {
         Element:new {
           -- So. #check foo gives back a diagnostic with *no* trailing newline
@@ -241,9 +243,11 @@ function interactive_goal.interactive_term_goal(goal, sess, view_options)
   end
 
   return {
-    Element:titled {
-      title = ('▼ expected type (%s)'):format(range_to_string(goal.range)),
-      title_hlgroup = 'leanInfoExpectedType',
+    Element:foldable {
+      title = Element.title(
+        ('expected type (%s)'):format(range_to_string(goal.range)),
+        'leanInfoExpectedType'
+      ),
       body = { interactive_goal.Goal(goal, sess, nil, view_options) },
       margin = 1,
     },

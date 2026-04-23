@@ -86,8 +86,8 @@ function plain.term_goal(params)
 
   return term_goal
     and {
-      Element:titled {
-        title = ('▼ expected type (%s)'):format(range_to_string(term_goal.range)),
+      Element:foldable {
+        title = Element.title(('expected type (%s)'):format(range_to_string(term_goal.range))),
         body = { Element:new { text = term_goal.goal } },
         margin = 1,
       },

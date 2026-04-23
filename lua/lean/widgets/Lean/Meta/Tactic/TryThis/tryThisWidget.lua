@@ -27,9 +27,8 @@ return function(ctx, props)
     end
     return Element:new { children = children }
   end)
-  return Element:titled {
-    title = '▼ suggestion:',
-    title_hlgroup = 'widgetSuggestion',
+  return Element:foldable {
+    title = Element.title('suggestion:', 'widgetSuggestion'),
     margin = 1,
     body = blocks:totable(),
   }

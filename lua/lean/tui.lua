@@ -101,32 +101,83 @@ function Element:new(args)
 end
 
 ---@class TitledElementArgs
----@field title string
+---@field title? Element the title element
 ---@field margin? integer how many newlines separating the title from body (defaulting to 2)
 ---@field body Element[]?
----@field title_hlgroup? string the hlgroup to use for the element's title
 
----Create an element with optional title and body contents.
+---Create an element with a title and optional body contents.
 ---@param opts TitledElementArgs
 ---@return Element?
 function Element:titled(opts)
-  local body = opts.body
-          and #opts.body > 0
-          and self:new { children = opts.body }
-           or nil
+  local body_elements = opts.body
+  local has_body = body_elements and #body_elements > 0
 
-  if opts.title == '' then
-    return body
+  if not opts.title then
+    return has_body and self:new { children = body_elements } or nil
   end
 
-  local title = self:new { text = opts.title, hlgroups = opts.title_hlgroup and { opts.title_hlgroup } or nil }
-
-  if not body then
-    return title
+  if not has_body then
+    return opts.title
   end
 
   local sep = self:new { text = string.rep('\n', opts.margin or 2) }
-  return self:new { children = { title, sep, body } }
+  return self:new {
+    children = {
+      opts.title,
+      sep,
+      self:new { children = body_elements },
+    },
+  }
+end
+
+---@class FoldableElementArgs: TitledElementArgs
+---@field open? boolean whether initially open (defaults to true)
+---@field on_open? fun(body: Element):nil called with the body element each time the section opens
+
+---Create a foldable element with a title and optional body contents.
+---
+---Wraps `titled` with a toggle arrow (▼/▶) and click-to-collapse behavior.
+---@param opts FoldableElementArgs
+---@return Element
+function Element:foldable(opts)
+  local body_elements = opts.body
+  local has_body = body_elements and #body_elements > 0
+
+  if not has_body and not opts.on_open then
+    return opts.title
+  end
+
+  local open = opts.open ~= false
+  local arrow = self:new { text = open and '▼ ' or '▶ ' }
+  local title_row = self:new {
+    children = { arrow, opts.title },
+    highlightable = true,
+  }
+
+  local body = self:new { children = body_elements }
+
+  local function layout()
+    if open then
+      return self:titled { title = title_row, body = { body }, margin = opts.margin }
+    end
+    return title_row
+  end
+
+  local container = self:new { children = { layout() } }
+
+  title_row.events = {
+    click = function(ctx)
+      open = not open
+      arrow.text = open and '▼ ' or '▶ '
+      if open and opts.on_open then
+        opts.on_open(body)
+      end
+      container:set_children { layout() }
+      ctx.rerender()
+    end,
+  }
+
+  return container
 end
 
 ---Create an element which joins a list-like table of elements with the provided separator.
@@ -219,6 +270,14 @@ end
 ---@return Element
 function Element.kbd(key)
   return Element:new { text = key, hlgroups = { 'widgetKbd' } }
+end
+
+---Create a title element with a highlight group.
+---@param text string
+---@param hlgroup? string the highlight group (defaults to 'Title')
+---@return Element
+function Element.title(text, hlgroup)
+  return Element:new { text = text, hlgroups = { hlgroup or 'Title' } }
 end
 
 ---@class ElementLinkArgs

@@ -79,7 +79,7 @@ describe('tui.html', function()
   describe('<summary>', function()
     it('renders summary with marker', function()
       local el = Tag.summary { Element:new { text = 'sum' } }
-      assert.is.equal('▼ sum', el:to_string())
+      assert.is.equal('sum', el:to_string())
     end)
   end)
 

@@ -31,8 +31,6 @@ end
 ---@param parent_cls? string
 ---@param tagged_text_renderer function the TaggedText renderer for recursive content
 local function render_trace(trace, sess, parent_cls, tagged_text_renderer)
-  local element = Element:new {}
-
   local cls = trace.cls
   local children = trace.children
   local children_err
@@ -42,54 +40,51 @@ local function render_trace(trace, sess, parent_cls, tagged_text_renderer)
     abbr_cls = abbreviate_common_prefix(parent_cls, cls)
   end
 
-  local is_open = not trace.collapsed
+  local title = Element:new {
+    children = {
+      Element:new { text = ('[%s] '):format(abbr_cls) },
+      tagged_text_renderer(trace.msg, sess),
+      Element:new { text = '\n' },
+    },
+  }
 
-  local click
-  local function render()
-    local header = Element:new {
-      text = ('%s[%s] '):format((' '):rep(trace.indent), abbr_cls),
-    }
-    header:add_child(tagged_text_renderer(trace.msg, sess))
-    if children.lazy or #children.strict > 0 then
-      header.highlightable = true
-      header.events = { click = click }
-      header:add_child(Element:new { text = (is_open and ' ▼' or ' ▶') .. '\n' })
-    else
-      header:add_child(Element:new { text = '\n' })
+  local function build_body()
+    if children_err then
+      return { Element:new { text = vim.inspect(children_err) } }
+    elseif children.strict then
+      return vim
+        .iter(children.strict)
+        :map(function(child)
+          return tagged_text_renderer(child, sess, cls)
+        end)
+        :totable()
     end
-
-    element:set_children { header }
-
-    if is_open then
-      if children_err then
-        element:add_child(Element:new { text = vim.inspect(children_err) })
-      elseif children.strict ~= nil then
-        for _, child in ipairs(children.strict) do
-          element:add_child(tagged_text_renderer(child, sess, cls))
-        end
-      end
-    end
-    return true
+    return {}
   end
 
-  click = function(ctx)
-    if is_open then
-      is_open = false
-    else
-      is_open = true
+  local lazy = children.lazy
 
-      if children.lazy ~= nil then
-        local new_kids, err = sess:lazyTraceChildrenToInteractive(children.lazy)
-        children_err = err
-        children = { strict = new_kids }
+  local section = Element:foldable {
+    title = title,
+    body = build_body(),
+    open = not trace.collapsed,
+    margin = 0,
+    on_open = lazy and function(body)
+      if not lazy then
+        return
       end
-    end
-    render()
-    ctx.rerender()
-  end
+      local new_kids, err = sess:lazyTraceChildrenToInteractive(lazy)
+      children_err = err
+      children = { strict = new_kids }
+      lazy = nil
+      body:set_children(build_body())
+    end or nil,
+  }
 
-  render()
-  return element
+  return Element:new {
+    text = (' '):rep(trace.indent),
+    children = { section },
+  }
 end
 
 ---@class MsgEmbedExpr

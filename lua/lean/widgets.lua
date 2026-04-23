@@ -105,8 +105,7 @@ function RenderContext:rpc_call(method, params)
     local kind = vim.lsp.protocol.ErrorCodes[err.code] or tostring(err.code)
     return nil,
       Element:titled {
-        title = 'RPC Error: ' .. kind,
-        title_hlgroup = 'ErrorMsg',
+        title = Element.title('RPC Error: ' .. kind, 'ErrorMsg'),
         margin = 1,
         body = { Element:new { text = err.message } },
       }
