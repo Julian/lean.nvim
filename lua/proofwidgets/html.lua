@@ -35,7 +35,12 @@ local function render_details(self, value, ctx, opts)
   local summary_children
   local body_elements = {}
   for _, child in ipairs(children) do
-    if not summary_children and type(child) == 'table' and child.element and child.element[1] == 'summary' then
+    if
+      not summary_children
+      and type(child) == 'table'
+      and child.element
+      and child.element[1] == 'summary'
+    then
       summary_children = vim
         .iter(child.element[3])
         :map(function(c)
