@@ -35,19 +35,16 @@ local function render_details(self, value, ctx, opts)
   local summary_children
   local body_elements = {}
   for _, child in ipairs(children) do
-    if not summary_children and type(child) == 'table' and child.element then
-      if child.element[1] == 'summary' then
-        summary_children = vim
-          .iter(child.element[3])
-          :map(function(c)
-            return self(c, ctx, opts)
-          end)
-          :totable()
-        goto continue
-      end
+    if not summary_children and type(child) == 'table' and child.element and child.element[1] == 'summary' then
+      summary_children = vim
+        .iter(child.element[3])
+        :map(function(c)
+          return self(c, ctx, opts)
+        end)
+        :totable()
+    else
+      table.insert(body_elements, self(child, ctx, opts))
     end
-    table.insert(body_elements, self(child, ctx, opts))
-    ::continue::
   end
 
   return Element:foldable {
