@@ -3,7 +3,8 @@ local inductive = require 'std.inductive'
 local Element = require('lean.tui').Element
 local InteractiveCode = require 'lean.widget.interactive_code'
 local MakeEditLink = require 'proofwidgets.make_edit_link'
-local Tag = require('tui.html').Tag
+local tui_html = require 'tui.html'
+local Tag = tui_html.Tag
 
 ---@class HtmlElement
 ---@field element { [1]: string, [2]: [string, any][], [3]: Html[] }
@@ -13,6 +14,106 @@ local Tag = require('tui.html').Tag
 
 ---@class HtmlComponent
 ---@field component { [1]: string, [2]: string, [3]:  any, [4]: Html[] }
+
+---Render a `<details>` element with collapsible content.
+---
+---Handled here rather than in Tag because the dispatcher needs to
+---identify the `<summary>` child from the raw Html tree (by tag name)
+---before rendering, rather than relying on injected markers on Elements.
+---@param self fun(html: Html, ctx: RenderContext, opts?: table): Element
+---@param value { [1]: string, [2]: [string, any][], [3]: Html[] }
+---@param ctx RenderContext
+---@param opts? table
+---@return Element
+local function render_details(self, value, ctx, opts)
+  local _, raw_attrs, children = unpack(value)
+
+  -- Check for the `open` attribute (any value, including bare `open`).
+  local initially_open = false
+  for _, attr in ipairs(raw_attrs) do
+    if attr[1] == 'open' then
+      initially_open = true
+      break
+    end
+  end
+
+  local summary_el
+  local body_elements = {}
+  for _, child in ipairs(children) do
+    if not summary_el and type(child) == 'table' and child.element then
+      local child_tag = child.element[1]
+      if child_tag == 'summary' then
+        summary_el = Tag.summary(vim
+          .iter(child.element[3])
+          :map(function(c)
+            return self(c, ctx, opts)
+          end)
+          :totable())
+        goto continue
+      end
+    end
+    table.insert(body_elements, self(child, ctx, opts))
+    ::continue::
+  end
+
+  local open = initially_open
+  local body = Element:new { children = initially_open and body_elements or {} }
+  local container = Element:new { children = { summary_el or Element:new {}, body } }
+
+  local function toggle(event_ctx)
+    open = not open
+    if summary_el then
+      summary_el.text = open and '▼ ' or '▶ '
+    end
+    if open then
+      body:set_children(body_elements)
+    else
+      body:set_children {}
+    end
+    event_ctx:rerender()
+  end
+
+  if summary_el then
+    summary_el.text = open and '▼ ' or '▶ '
+    summary_el.events = { click = toggle }
+    summary_el.highlightable = true
+  end
+
+  return container
+end
+
+---Collect rows from a raw Html table tree.
+---
+---Walks the Html children of a `<table>`, descending through
+---`<thead>`/`<tbody>`/`<tfoot>` wrappers to find `<tr>` elements,
+---then renders each cell. Returns structured row data for
+---`html.render_table`.
+---@param self fun(html: Html, ctx: RenderContext, opts?: table): Element
+---@param table_children Html[]
+---@param ctx RenderContext
+---@param opts? table
+---@param is_header? boolean
+---@return { cells: Element[], is_header: boolean }[]
+local function collect_raw_table_rows(self, table_children, ctx, opts, is_header)
+  local rows = {}
+  for _, child in ipairs(table_children) do
+    if type(child) == 'table' and child.element then
+      local child_tag = child.element[1]
+      if child_tag == 'tr' then
+        local cells = {}
+        for _, cell_html in ipairs(child.element[3]) do
+          table.insert(cells, self(cell_html, ctx, opts))
+        end
+        table.insert(rows, { cells = cells, is_header = is_header or false })
+      elseif child_tag == 'thead' then
+        vim.list_extend(rows, collect_raw_table_rows(self, child.element[3], ctx, opts, true))
+      elseif child_tag == 'tbody' or child_tag == 'tfoot' then
+        vim.list_extend(rows, collect_raw_table_rows(self, child.element[3], ctx, opts, false))
+      end
+    end
+  end
+  return rows
+end
 
 ---@alias Html HtmlElement | HtmlText | HtmlComponent
 local Html = inductive('Html', {
@@ -103,19 +204,38 @@ local Html = inductive('Html', {
 
   ---@param value { [1]: string, [2]: [string, any][], [3]: Html[] }
   ---@param ctx RenderContext
-  ---@param opts? { in_pre: boolean }
+  ---@param opts? { in_pre: boolean, list_depth: integer }
   ---@return Element
   element = function(self, value, ctx, opts)
     local tag, raw_attrs, children = unpack(value)
+
+    -- Structural tags handled here rather than in individual Tag handlers,
+    -- because they need access to the raw Html tree.
     if tag == 'svg' then
       return Tag.svg(value)
     end
+    if tag == 'details' then
+      return render_details(self, value, ctx, opts)
+    end
+    if tag == 'table' then
+      local rows = collect_raw_table_rows(self, children, ctx, opts)
+      return tui_html.render_table(rows)
+    end
+
     if tag == 'pre' then
-      opts = { in_pre = true }
+      opts = vim.tbl_extend('force', opts or {}, { in_pre = true })
+    end
+    local current_opts = opts
+    if tag == 'ul' or tag == 'ol' then
+      -- Children of this list see an incremented depth (for nested lists),
+      -- but the current list's tag handler uses the current depth.
+      opts = vim.tbl_extend('force', opts or {}, {
+        list_depth = ((opts and opts.list_depth) or 0) + 1,
+      })
     end
     local attrs = {}
     for _, attr in ipairs(raw_attrs) do
-      attrs[attr[1]] = tostring(attr[2])
+      attrs[attr[1]] = attr[2]
     end
     local elements = vim
       .iter(children)
@@ -123,7 +243,7 @@ local Html = inductive('Html', {
         return self(child, ctx, opts)
       end)
       :totable()
-    return Tag[tag](elements, attrs)
+    return Tag[tag](elements, attrs, current_opts)
   end,
 })
 
