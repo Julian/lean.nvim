@@ -116,13 +116,17 @@ function html.Tag.blockquote(children)
   }
 end
 
----Render subscript text inline (no subscript font in terminals).
+---Render subscript text with Unicode sub-parentheses: ₍text₎
 function html.Tag.sub(children)
+  table.insert(children, 1, Element:new { text = '₍' })
+  table.insert(children, Element:new { text = '₎' })
   return Element:new { children = children }
 end
 
----Render superscript text inline (no superscript font in terminals).
+---Render superscript text with Unicode super-parentheses: ⁽text⁾
 function html.Tag.sup(children)
+  table.insert(children, 1, Element:new { text = '⁽' })
+  table.insert(children, Element:new { text = '⁾' })
   return Element:new { children = children }
 end
 

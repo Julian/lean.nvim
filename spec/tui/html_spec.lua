@@ -310,14 +310,14 @@ describe('tui.html', function()
   describe('<sub>', function()
     it('renders subscript text inline', function()
       local el = Tag.sub { Element:new { text = '2' } }
-      assert.is.equal('2', el:to_string())
+      assert.is.equal('₍2₎', el:to_string())
     end)
   end)
 
   describe('<sup>', function()
     it('renders superscript text inline', function()
       local el = Tag.sup { Element:new { text = 'n' } }
-      assert.is.equal('n', el:to_string())
+      assert.is.equal('⁽n⁾', el:to_string())
     end)
   end)
 
