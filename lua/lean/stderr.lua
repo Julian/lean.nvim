@@ -83,10 +83,11 @@ function stderr.enable(config)
         if argc == 0 then
           return true
         end -- always enable error messages
+        local cmd = select(2, ...)
         if
           argc == 4
           and select(1, ...) == 'rpc'
-          and select(2, ...) == 'lake'
+          and (cmd == 'lake' or cmd == 'lean')
           and select(3, ...) == 'stderr'
         then
           local chunk = select(4, ...)

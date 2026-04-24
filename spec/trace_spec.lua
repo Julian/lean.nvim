@@ -32,15 +32,15 @@ describe('trace', function()
           ⊢ (fun x => x) 0 = 0
 
           ▼ 3:3-3:6: information:
-          [Meta.isDefEq] ❌️ (fun x => x) 0 = 0 =?= ?m.7 ↔ ?m.7 ▶
-          [Meta.isDefEq] ❌️ ?m.7 ↔ ?m.7 =?= (fun x => x) 0 = 0 ▶
-          [Meta.isDefEq] ❌️ (fun x => x) 0 = 0 =?= ?m.8 ≍ ?m.8 ▶
-          [Meta.isDefEq] ❌️ ?m.8 ≍ ?m.8 =?= (fun x => x) 0 = 0 ▶
-          [Meta.isDefEq] ✅️ (fun x => x) 0 =?= 0 ▶
+          ▶ [Meta.isDefEq] ❌️ (fun x => x) 0 = 0 =?= ?m.7 ↔ ?m.7
+          ▶ [Meta.isDefEq] ❌️ ?m.7 ↔ ?m.7 =?= (fun x => x) 0 = 0
+          ▶ [Meta.isDefEq] ❌️ (fun x => x) 0 = 0 =?= ?m.8 ≍ ?m.8
+          ▶ [Meta.isDefEq] ❌️ ?m.8 ≍ ?m.8 =?= (fun x => x) 0 = 0
+          ▶ [Meta.isDefEq] ✅️ (fun x => x) 0 =?= 0
         ]]
 
         infoview.go_to()
-        helpers.search '▶'
+        helpers.search '▶ [[]'
         helpers.feed 'K'
 
         local iv = infoview.get_current_infoview()
@@ -48,14 +48,14 @@ describe('trace', function()
         vim.wait(15000, function()
           local lines = iv:get_lines()
           expanded = table.concat(lines, '\n')
-          return expanded:find '▼\n'
+          return expanded:find '▼ %['
         end)
-        assert.message('Expected trace node to expand').is_truthy(expanded:find '▼\n')
+        assert.message('Expected trace node to expand').is_truthy(expanded:find '▼ %[')
 
         helpers.feed 'K'
 
         vim.wait(5000, function()
-          return not table.concat(iv:get_lines(), '\n'):find '▼\n'
+          return not table.concat(iv:get_lines(), '\n'):find '▼ %['
         end)
 
         helpers.feed '<Plug>(LeanInfoviewGotoLastWindow)'
@@ -65,11 +65,11 @@ describe('trace', function()
           ⊢ (fun x => x) 0 = 0
 
           ▼ 3:3-3:6: information:
-          [Meta.isDefEq] ❌️ (fun x => x) 0 = 0 =?= ?m.7 ↔ ?m.7 ▶
-          [Meta.isDefEq] ❌️ ?m.7 ↔ ?m.7 =?= (fun x => x) 0 = 0 ▶
-          [Meta.isDefEq] ❌️ (fun x => x) 0 = 0 =?= ?m.8 ≍ ?m.8 ▶
-          [Meta.isDefEq] ❌️ ?m.8 ≍ ?m.8 =?= (fun x => x) 0 = 0 ▶
-          [Meta.isDefEq] ✅️ (fun x => x) 0 =?= 0 ▶
+          ▶ [Meta.isDefEq] ❌️ (fun x => x) 0 = 0 =?= ?m.7 ↔ ?m.7
+          ▶ [Meta.isDefEq] ❌️ ?m.7 ↔ ?m.7 =?= (fun x => x) 0 = 0
+          ▶ [Meta.isDefEq] ❌️ (fun x => x) 0 = 0 =?= ?m.8 ≍ ?m.8
+          ▶ [Meta.isDefEq] ❌️ ?m.8 ≍ ?m.8 =?= (fun x => x) 0 = 0
+          ▶ [Meta.isDefEq] ✅️ (fun x => x) 0 =?= 0
         ]]
       end
     )

@@ -28,9 +28,8 @@ return function(ctx, props)
     end
   end
 
-  return Element:titled {
-    title = '▼ Graph',
-    title_hlgroup = 'Title',
+  return Element:foldable {
+    title = Element.title 'Graph',
     margin = 1,
     body = { Element:concat(children, '\n') },
   }

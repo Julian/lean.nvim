@@ -27,6 +27,7 @@ end
 
 local simple_fake_core_lean = Project:new 'SimpleFakeCoreLean'
 local example = Project:new 'Example'
+local standalone = Project:new 'Standalone'
 local with_widgets = Project:new 'WithWidgets'
 
 local fixtures = {
@@ -54,6 +55,7 @@ local fixtures = {
 
   simple_fake_core_lean = simple_fake_core_lean,
   example = example,
+  standalone = standalone,
   with_widgets = with_widgets,
 
   project = {

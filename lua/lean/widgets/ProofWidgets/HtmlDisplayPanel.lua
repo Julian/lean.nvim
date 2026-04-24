@@ -6,10 +6,9 @@ local Html = require 'proofwidgets.html'
 ---@param props table
 ---@return Element?
 return function(ctx, props)
-  return Element:titled {
-    title = '▼ HTML Display',
+  return Element:foldable {
+    title = Element.title 'HTML Display',
     body = { Html(props.html, ctx) },
-    title_hlgroup = 'Title',
     margin = 1,
   }
 end
