@@ -52,15 +52,15 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations, self_rend
   local mk_tooltip = function(info_popup)
     local tooltip_element = Element.noop()
 
-    if info_popup.exprExplicit ~= nil and info_popup.exprExplicit ~= vim.NIL then
+    if info_popup.exprExplicit ~= nil then
       -- Tooltip data from infoToInteractive is always CodeWithInfos.
       tooltip_element:add_child(InteractiveCode(info_popup.exprExplicit, sess, locations))
-      if info_popup.type ~= nil and info_popup.type ~= vim.NIL then
+      if info_popup.type ~= nil then
         tooltip_element:add_child(Element:new { text = ' : ' })
       end
     end
 
-    if info_popup.type ~= nil and info_popup.type ~= vim.NIL then
+    if info_popup.type ~= nil then
       tooltip_element:add_child(InteractiveCode(info_popup.type, sess, locations))
     end
 
