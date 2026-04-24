@@ -207,3 +207,40 @@ describe(
     )
   end)
 )
+
+--- This checks that CR on a symbol whose infoToInteractive response
+--- has null fields (e.g. doc is null for a local variable) does not
+--- crash on neovim 0.12+ where JSON null becomes vim.NIL.
+describe(
+  'infoview tooltip on local variable',
+  helpers.clean_buffer([[example (h: ∃ a:Nat, a = 3) := by apply h]], function()
+    local lean_window = Window:current()
+    local current_infoview = infoview.get_current_infoview()
+
+    it('shows a tooltip without crashing when doc is null', function()
+      helpers.search 'h:'
+      assert.infoview_contents.are [[
+        Goals accomplished 🎉
+
+        ▼ expected type (1:10-1:11)
+        ⊢ ∃ a, a = 3]]
+
+      current_infoview:enter()
+      helpers.search 'a,' -- the first `a` in `∃ a, a = 3`
+
+      local known_windows = { lean_window, current_infoview.window }
+      assert.windows.are(known_windows)
+
+      helpers.feed '<CR>'
+      local tooltip = helpers.wait_for_new_window(known_windows)
+      assert.contents.are {
+        'a : Nat',
+        buffer = tooltip:buffer(),
+      }
+
+      -- Close the tooltip.
+      helpers.feed '<Esc>'
+      assert.windows.are(known_windows)
+    end)
+  end)
+)
