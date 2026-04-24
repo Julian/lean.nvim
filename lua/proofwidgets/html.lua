@@ -55,7 +55,7 @@ local function render_details(self, value, ctx, opts)
   return Element:foldable {
     title = Element:new {
       hlgroups = { 'tui.html.summary' },
-      children = summary_children or {},
+      children = summary_children or { Element:new { text = 'Details' } },
     },
     body = body_elements,
     open = initially_open,
@@ -190,41 +190,73 @@ local Html = inductive('Html', {
   element = function(self, value, ctx, opts)
     local tag, raw_attrs, children = unpack(value)
 
-    -- Structural tags handled here rather than in individual Tag handlers,
-    -- because they need access to the raw Html tree.
-    if tag == 'svg' then
-      return Tag.svg(value)
-    end
-    if tag == 'details' then
-      return render_details(self, value, ctx, opts)
-    end
-    if tag == 'table' then
-      local rows = collect_raw_table_rows(self, children, ctx, opts)
-      return tui_html.render_table(rows)
-    end
-
-    if tag == 'pre' then
-      opts = vim.tbl_extend('force', opts or {}, { in_pre = true })
-    end
-    local current_opts = opts
-    if tag == 'ul' or tag == 'ol' then
-      -- Children of this list see an incremented depth (for nested lists),
-      -- but the current list's tag handler uses the current depth.
-      opts = vim.tbl_extend('force', opts or {}, {
-        list_depth = ((opts and opts.list_depth) or 0) + 1,
-      })
-    end
     local attrs = {}
     for _, attr in ipairs(raw_attrs) do
       attrs[attr[1]] = attr[2]
     end
-    local elements = vim
-      .iter(children)
-      :map(function(child)
-        return self(child, ctx, opts)
-      end)
-      :totable()
-    return Tag[tag](elements, attrs, current_opts)
+
+    -- Normalize CSS string styles to tables so downstream code only
+    -- handles one format.
+    if type(attrs.style) == 'string' then
+      attrs.style = tui_html.parse_css(attrs.style)
+    end
+
+    -- Elements with display:none or visibility:hidden render as empty.
+    if attrs.style and tui_html.is_hidden(attrs.style) then
+      return Element:new {}
+    end
+
+    local result
+
+    -- Structural tags handled here rather than in individual Tag handlers,
+    -- because they need access to the raw Html tree.
+    if tag == 'svg' then
+      result = Tag.svg(value)
+    elseif tag == 'details' then
+      result = render_details(self, value, ctx, opts)
+    elseif tag == 'table' then
+      local rows = collect_raw_table_rows(self, children, ctx, opts)
+      result = tui_html.render_table(rows)
+    else
+      if tag == 'pre' then
+        opts = vim.tbl_extend('force', opts or {}, { in_pre = true })
+      end
+
+      -- CSS white-space: pre/pre-wrap also preserves whitespace,
+      -- matching how the <pre> tag works.
+      if attrs.style and not (opts and opts.in_pre) then
+        local ws = attrs.style['white-space'] or attrs.style.whiteSpace
+        if ws == 'pre' or ws == 'pre-wrap' or ws == 'pre-line' then
+          opts = vim.tbl_extend('force', opts or {}, { in_pre = true })
+        end
+      end
+
+      local current_opts = opts
+      if tag == 'ul' or tag == 'ol' then
+        -- Children of this list see an incremented depth (for nested lists),
+        -- but the current list's tag handler uses the current depth.
+        opts = vim.tbl_extend('force', opts or {}, {
+          list_depth = ((opts and opts.list_depth) or 0) + 1,
+        })
+      end
+      local elements = vim
+        .iter(children)
+        :map(function(child)
+          return self(child, ctx, opts)
+        end)
+        :totable()
+      result = Tag[tag](elements, attrs, current_opts)
+    end
+
+    -- Apply inline styles from any element's style attribute.
+    result = tui_html._styled(result, attrs)
+
+    -- Wire the title attribute to a tooltip.
+    if attrs.title then
+      result:add_tooltip(Element:new { text = attrs.title })
+    end
+
+    return result
   end,
 })
 

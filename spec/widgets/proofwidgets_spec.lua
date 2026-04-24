@@ -244,7 +244,6 @@ describe('ProofWidgets widgets', function()
         helpers.search '#html quickPre'
         assert.infoview_contents.are [[
           ▼ HTML Display
-
           hello
             indented
               world

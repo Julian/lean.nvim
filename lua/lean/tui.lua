@@ -73,6 +73,10 @@ local BufRenderer = {
 }
 BufRenderer.__index = BufRenderer
 
+---@class LinePrefixSpec
+---@field text string prefix text prepended to every line within this element
+---@field hlgroup? string highlight group for the prefix text
+
 ---@class ElementNewArgs
 ---@field events? EventCallbacks event function map
 ---@field text? string the text to show when rendering this element
@@ -80,6 +84,8 @@ BufRenderer.__index = BufRenderer
 ---@field hlgroups? string[]|fun():string[]|nil highlight group(s) or a function returning them
 ---@field highlightable boolean? (for buffer rendering) highlight this element when hovering
 ---@field children? Element[] this element's children
+---@field is_block? boolean block-level element — starts on a new line when following content
+---@field line_prefix? LinePrefixSpec text prepended to every line within this element
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
 
 ---Create a new Element.
@@ -96,6 +102,8 @@ function Element:new(args)
     __children = args.children or {},
     __async_init = args.__async_init,
     overlay = args.overlay,
+    is_block = args.is_block or false,
+    line_prefix = args.line_prefix,
   }
   return setmetatable(obj, self)
 end
@@ -401,6 +409,30 @@ function Element:render_lines(renderer)
   local col = 0
   local width = 0
 
+  -- Tracks whether the current line has any non-prefix content.
+  -- Block elements only force a new line when there is actual content
+  -- on the current line, implementing CSS-like margin collapsing.
+  local has_content = false
+
+  -- Stack of active line prefixes (e.g. blockquote bars).
+  local prefix_stack = {}
+
+  -- Apply all active line prefixes to the current line.
+  local function apply_prefixes()
+    for _, prefix in ipairs(prefix_stack) do
+      local start_col = col
+      lines[line_idx] = lines[line_idx] .. prefix.text
+      col = col + #prefix.text
+      if prefix.hlgroup then
+        table.insert(highlights, {
+          hlgroup = prefix.hlgroup,
+          start_pos = { line_idx - 1, start_col },
+          end_pos = { line_idx - 1, col },
+        })
+      end
+    end
+  end
+
   ---@param element Element
   local function go(element)
     if element.__async_init and renderer then
@@ -413,6 +445,35 @@ function Element:render_lines(renderer)
       element.__async_init = nil -- only run once
     end
 
+    -- Block elements start on a new line when following content,
+    -- but collapse when already at a block boundary.
+    if element.is_block and has_content then
+      width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
+      line_idx = line_idx + 1
+      lines[line_idx] = ''
+      col = 0
+      has_content = false
+      apply_prefixes()
+    end
+
+    -- Push a line prefix (e.g. blockquote `│ `).
+    local has_prefix = element.line_prefix ~= nil
+    if has_prefix then
+      table.insert(prefix_stack, element.line_prefix)
+      -- Apply just the newly pushed prefix to the current line.
+      local prefix = element.line_prefix
+      local start_col = col
+      lines[line_idx] = lines[line_idx] .. prefix.text
+      col = col + #prefix.text
+      if prefix.hlgroup then
+        table.insert(highlights, {
+          hlgroup = prefix.hlgroup,
+          start_pos = { line_idx - 1, start_col },
+          end_pos = { line_idx - 1, col },
+        })
+      end
+    end
+
     local start_pos = { line_idx - 1, col }
 
     local text = element.text
@@ -423,15 +484,21 @@ function Element:render_lines(renderer)
         if nl then
           local chunk = text:sub(pos, nl - 1)
           lines[line_idx] = lines[line_idx] .. chunk
+          if #chunk > 0 then
+            has_content = true
+          end
           width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
           line_idx = line_idx + 1
           lines[line_idx] = ''
           col = 0
+          has_content = false
+          apply_prefixes()
           pos = nl + 1
         else
           local rest = text:sub(pos)
           lines[line_idx] = lines[line_idx] .. rest
           col = col + #rest
+          has_content = true
           break
         end
       end
@@ -452,6 +519,11 @@ function Element:render_lines(renderer)
       for _, hg in ipairs(hlgroups) do
         table.insert(highlights, { hlgroup = hg, start_pos = start_pos, end_pos = end_pos })
       end
+    end
+
+    -- Pop line prefix when leaving the element.
+    if has_prefix then
+      table.remove(prefix_stack)
     end
   end
 

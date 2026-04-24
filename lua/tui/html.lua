@@ -14,6 +14,10 @@ vim.api.nvim_set_hl(0, 'tui.html.h3', { default = true, link = '@markup.heading.
 vim.api.nvim_set_hl(0, 'tui.html.h4', { default = true, link = '@markup.heading.4' })
 vim.api.nvim_set_hl(0, 'tui.html.h5', { default = true, link = '@markup.heading.5' })
 vim.api.nvim_set_hl(0, 'tui.html.h6', { default = true, link = '@markup.heading.6' })
+vim.api.nvim_set_hl(0, 'tui.html.del', { default = true, strikethrough = true })
+vim.api.nvim_set_hl(0, 'tui.html.u', { default = true, underline = true })
+vim.api.nvim_set_hl(0, 'tui.html.mark', { default = true, link = 'Search' })
+vim.api.nvim_set_hl(0, 'tui.html.blockquote', { default = true, link = 'Comment' })
 vim.api.nvim_set_hl(0, 'tui.html.summary', { default = true, link = 'Title' })
 vim.api.nvim_set_hl(0, 'tui.html.unsupported', { default = true, link = 'ErrorMsg' })
 
@@ -44,30 +48,18 @@ function html.Tag.summary(children)
 end
 
 ---Render a block-level `<div>` element.
-function html.Tag.div(children, attrs)
-  return html._styled(
-    Element:new {
-      text = '\n',
-      children = {
-        Element:new { children = children },
-      },
-    },
-    attrs
-  )
+function html.Tag.div(children)
+  return Element:new { is_block = true, children = children }
 end
 
 ---Render an inline `<span>` element.
-function html.Tag.span(children, attrs)
-  return html._styled(Element:new { children = children }, attrs)
+function html.Tag.span(children)
+  return Element:new { children = children }
 end
 
----Render a `<p>` paragraph.
----
----In a browser, `<p>` is a block element with vertical margin, but in
----practice ProofWidgets wraps list item content in `<p>` tags, so we
----render it as a plain container to avoid unwanted extra whitespace.
-function html.Tag.p(children, attrs)
-  return html._styled(Element:new { children = children }, attrs)
+---Render a `<p>` paragraph as a block element.
+function html.Tag.p(children)
+  return Element:new { is_block = true, children = children }
 end
 
 ---Render bold text.
@@ -91,10 +83,64 @@ function html.Tag.code(children)
   return Element:new { hlgroups = { 'tui.html.code' }, children = children }
 end
 
+---Render deleted/strikethrough text.
+function html.Tag.del(children)
+  return Element:new { hlgroups = { 'tui.html.del' }, children = children }
+end
+
+---An alias for `<del>`.
+html.Tag.s = html.Tag.del
+
+---Render underlined text.
+function html.Tag.u(children)
+  return Element:new { hlgroups = { 'tui.html.u' }, children = children }
+end
+
+---An alias for `<u>`.
+html.Tag.ins = html.Tag.u
+
+---Render highlighted/marked text.
+function html.Tag.mark(children)
+  return Element:new { hlgroups = { 'tui.html.mark' }, children = children }
+end
+
+---Render a blockquote as an indented block.
+---
+---Uses `line_prefix` so every rendered line within the blockquote gets
+---the `│ ` bar, matching how browsers render a left border on the block.
+function html.Tag.blockquote(children)
+  return Element:new {
+    is_block = true,
+    line_prefix = { text = '│ ', hlgroup = 'tui.html.blockquote' },
+    children = children,
+  }
+end
+
+---Render subscript text inline (no subscript font in terminals).
+function html.Tag.sub(children)
+  return Element:new { children = children }
+end
+
+---Render superscript text inline (no superscript font in terminals).
+function html.Tag.sup(children)
+  return Element:new { children = children }
+end
+
+---`<style>` content is CSS for the browser — hide it in the TUI.
+function html.Tag.style()
+  return Element:new {}
+end
+
+---`<script>` content should never be rendered as visible text.
+function html.Tag.script()
+  return Element:new {}
+end
+
 ---Render a horizontal rule.
 function html.Tag.hr()
   return Element:new {
-    text = '\n' .. string.rep('─', 40) .. '\n',
+    is_block = true,
+    text = string.rep('─', 40),
     hlgroups = { 'tui.html.hr' },
   }
 end
@@ -103,12 +149,9 @@ end
 for level = 1, 6 do
   html.Tag['h' .. level] = function(children)
     return Element:new {
-      text = '\n',
+      is_block = true,
       hlgroups = { 'tui.html.h' .. level },
-      children = {
-        Element:new { children = children },
-        Element:new { text = '\n' },
-      },
+      children = children,
     }
   end
 end
@@ -128,6 +171,26 @@ function html.Tag.a(children, attrs)
   return Element:new { children = children }
 end
 
+---Clear `is_block` on the first block element in a tree.
+---
+---In a browser, list bullets sit in the margin and align with the first
+---baseline regardless of block children.  Since our bullets are inline
+---text, a block child would force a newline after the bullet.  Clearing
+---`is_block` on the leading block element chain prevents that.
+---@param element Element
+local function clear_first_block(element)
+  if element.is_block then
+    element.is_block = false
+  end
+  local child = element:children():next()
+  if child then
+    clear_first_block(child)
+  end
+end
+
+-- Browsers cycle bullet markers by list depth: disc → circle → square.
+local ul_markers = { '• ', '◦ ', '▪ ' }
+
 ---Render an unordered list.
 ---@param children Element[]
 ---@param _attrs table<string, any>
@@ -135,34 +198,38 @@ end
 function html.Tag.ul(children, _attrs, opts)
   local depth = (opts and opts.list_depth or 0)
   local indent = string.rep('  ', depth)
+  local marker = ul_markers[depth % #ul_markers + 1]
   local items = vim
     .iter(children)
     :map(function(child)
-      return Element:new { text = indent .. '• ', children = { child } }
+      clear_first_block(child)
+      return Element:new { text = indent .. marker, children = { child } }
     end)
     :totable()
   return Element:new {
-    text = '\n',
+    is_block = true,
     children = { Element:concat(items, '\n') },
   }
 end
 
 ---Render an ordered list.
 ---@param children Element[]
----@param _attrs table<string, any>
+---@param attrs? table<string, any>
 ---@param opts? { list_depth: integer }
-function html.Tag.ol(children, _attrs, opts)
+function html.Tag.ol(children, attrs, opts)
   local depth = (opts and opts.list_depth or 0)
   local indent = string.rep('  ', depth)
+  local start = (attrs and attrs.start and tonumber(attrs.start) or 1) - 1
   local items = vim
     .iter(children)
     :enumerate()
     :map(function(i, child)
-      return Element:new { text = indent .. tostring(i) .. '. ', children = { child } }
+      clear_first_block(child)
+      return Element:new { text = indent .. tostring(start + i) .. '. ', children = { child } }
     end)
     :totable()
   return Element:new {
-    text = '\n',
+    is_block = true,
     children = { Element:concat(items, '\n') },
   }
 end
@@ -231,24 +298,30 @@ function html.render_table(rows)
           table.insert(sep_parts, '─┼─')
         end
       end
-      table.insert(result_rows, Element:new { text = table.concat(sep_parts) })
+      table.insert(
+        result_rows,
+        Element:new { text = table.concat(sep_parts), hlgroups = { 'tui.html.hr' } }
+      )
     end
   end
 
   return Element:new {
-    text = '\n',
+    is_block = true,
     children = { Element:concat(result_rows, '\n') },
   }
 end
 
 ---Render an `<img>` element using the Kitty graphics protocol.
+---
+---Falls back to `alt` text (like a browser) when the image cannot be
+---decoded, or to a placeholder when neither is available.
 ---@param _children Element[] (unused, img is a void element)
 ---@param attrs table<string, any>
 function html.Tag.img(_children, attrs)
   if not attrs.src then
     return Element:new {
       hlgroups = { 'Comment' },
-      text = '[img: no src]',
+      text = attrs.alt or '[img: no src]',
     }
   end
 
@@ -256,7 +329,7 @@ function html.Tag.img(_children, attrs)
   if not decoded then
     return Element:new {
       hlgroups = { 'Comment' },
-      text = reason,
+      text = attrs.alt or reason,
     }
   end
 
@@ -306,9 +379,12 @@ function html.Tag.svg(value)
 end
 
 ---Render preformatted text as a block element.
+---
+---Keeps a trailing newline since `<pre>` may be followed by inline
+---content within the same parent (e.g. `<span><pre>…</pre>text</span>`).
 function html.Tag.pre(children)
   return Element:new {
-    text = '\n',
+    is_block = true,
     children = {
       Element:new { children = children },
       Element:new { text = '\n' },
@@ -332,11 +408,15 @@ local function apply_css_prop(hl, prop, value)
     hl.fg = value
   elseif normalized == 'background-color' or normalized == 'background' then
     hl.bg = value
-  elseif normalized == 'font-weight' and value == 'bold' then
-    hl.bold = true
+  elseif normalized == 'font-weight' then
+    -- CSS bold is the keyword "bold" or a numeric weight >= 700.
+    local n = tonumber(value)
+    if value == 'bold' or value == 'bolder' or (n and n >= 700) then
+      hl.bold = true
+    end
   elseif normalized == 'font-style' and value == 'italic' then
     hl.italic = true
-  elseif normalized == 'text-decoration' then
+  elseif normalized == 'text-decoration' or normalized == 'text-decoration-line' then
     if value:find 'underline' then
       hl.underline = true
     end
@@ -346,24 +426,32 @@ local function apply_css_prop(hl, prop, value)
   end
 end
 
----Parse a style value (CSS string or JSON-style table) into Neovim
----highlight attributes.
----@param style string|table
+---Parse a CSS string into a property table.
+---
+---Normalizes the string format (`"color: red; font-weight: bold"`) into
+---the same table format (`{ color = "red", ["font-weight"] = "bold" }`)
+---that JSON-style attributes already use, so all downstream code only
+---needs to handle tables.
+---@param css string
+---@return table<string, string>
+function html.parse_css(css)
+  local props = {}
+  for prop, value in css:gmatch '([%w-]+)%s*:%s*([^;]+)' do
+    props[vim.trim(prop)] = vim.trim(value)
+  end
+  return props
+end
+
+---Parse a style table into Neovim highlight attributes.
+---@param style table<string, any>
 ---@return table<string, any>?
 local function parse_style(style)
   local hl = {}
-  if type(style) == 'table' then
-    for prop, value in pairs(style) do
-      if type(value) == 'string' then
-        apply_css_prop(hl, prop, value)
-      end
-    end
-  elseif type(style) == 'string' then
-    for prop, value in style:gmatch '([%w-]+)%s*:%s*([^;]+)' do
-      apply_css_prop(hl, vim.trim(prop), vim.trim(value))
+  for prop, value in pairs(style) do
+    if type(value) == 'string' then
+      apply_css_prop(hl, prop, value)
     end
   end
-
   if next(hl) == nil then
     return nil
   end
@@ -375,9 +463,34 @@ end
 local style_hlgroups = {} ---@type table<string, string>
 local style_hl_counter = 0
 
+---Check whether a style table hides the element (`display: none`,
+---`visibility: hidden`, or `opacity: 0`).
+---@param style table<string, any>
+---@return boolean
+function html.is_hidden(style)
+  if style.display == 'none' then
+    return true
+  end
+  if style.visibility == 'hidden' then
+    return true
+  end
+  local opacity = style.opacity
+  if opacity == '0' or opacity == 0 then
+    return true
+  end
+  return false
+end
+
 ---Apply inline style from attrs to an element, returning a possibly-wrapped element.
+---
+---Composes with any highlight groups the element already carries (e.g.
+---from its tag handler), so `<b style="color: red">` gets both bold and
+---the color.
+---
+---Expects `attrs.style` to already be a table (normalized by the
+---dispatcher via `html.parse_css`).
 ---@param element Element
----@param attrs? table<string, any>
+---@param attrs? { style?: table<string, any> }
 ---@return Element
 function html._styled(element, attrs)
   if not attrs or not attrs.style then
@@ -397,7 +510,11 @@ function html._styled(element, attrs)
     vim.api.nvim_set_hl(0, hlgroup, hl)
     style_hlgroups[cache_key] = hlgroup
   end
-  element.hlgroups = { hlgroup }
+  if element.hlgroups then
+    table.insert(element.hlgroups, hlgroup)
+  else
+    element.hlgroups = { hlgroup }
+  end
   return element
 end
 
