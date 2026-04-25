@@ -1,5 +1,5 @@
 local Element = require('lean.tui').Element
-local graphic = require 'tui.graphic'
+local Graphic = require 'tui.graphic'
 local kitty = require 'kitty'
 
 describe('tui.graphic', function()
@@ -10,7 +10,7 @@ describe('tui.graphic', function()
     end
     local graphical_called = false
     local fallback_called = false
-    local el = graphic.render(function()
+    local el = Graphic(function()
       graphical_called = true
       return Element.text 'graphic'
     end, function()
@@ -28,7 +28,7 @@ describe('tui.graphic', function()
       return
     end
     local graphical_called = false
-    local el = graphic.render(function()
+    local el = Graphic(function()
       graphical_called = true
       return Element.text 'graphic'
     end, function()
@@ -43,7 +43,7 @@ describe('tui.graphic', function()
       pending 'kitty is not available in this terminal'
       return
     end
-    local el = graphic.render(function()
+    local el = Graphic(function()
       return nil
     end, function()
       return Element.text 'fallback'

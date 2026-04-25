@@ -7,8 +7,6 @@
 
 local kitty = require 'kitty'
 
-local graphic = {}
-
 ---Render a graphical element if kitty is available, otherwise a text fallback.
 ---
 ---Both arguments are functions called lazily — only the chosen branch
@@ -16,7 +14,7 @@ local graphic = {}
 ---@param graphical fun(): Element? produces the graphical element (may return nil)
 ---@param fallback fun(): Element produces the text fallback
 ---@return Element
-function graphic.render(graphical, fallback)
+return function(graphical, fallback)
   if kitty.available() then
     local el = graphical()
     if el then
@@ -25,5 +23,3 @@ function graphic.render(graphical, fallback)
   end
   return fallback()
 end
-
-return graphic

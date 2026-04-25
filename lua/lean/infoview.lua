@@ -15,8 +15,8 @@ local humanize = require 'std.humanize'
 local throttle = require 'std.throttle'
 local byte_col_to_utf16 = require('std.lsp').byte_col_to_utf16
 
+local Graphic = require 'tui.graphic'
 local Table = require 'tui.table'
-local graphic = require 'tui.graphic'
 local percentile_distribution = require('tui.plot').percentile_distribution
 
 local Element = require('lean.tui').Element
@@ -1200,7 +1200,7 @@ local function debug_timing_element(pin, expanded, histogram)
   local win = pin.window
   table.insert(
     children,
-    graphic.render(function()
+    Graphic(function()
       return percentile_distribution(histogram, {
         columns = win and win:width(),
       })
