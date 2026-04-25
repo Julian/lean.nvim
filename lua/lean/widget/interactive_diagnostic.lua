@@ -44,7 +44,7 @@ local function render_trace(trace, sess, parent_cls, tagged_text_renderer)
     children = {
       Element:new { text = ('[%s] '):format(abbr_cls) },
       tagged_text_renderer(trace.msg, sess),
-      Element:new { text = '\n' },
+      Element.text '\n',
     },
   }
 

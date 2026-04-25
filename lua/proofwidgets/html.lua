@@ -55,7 +55,7 @@ local function render_details(self, value, ctx, opts)
   return Element:foldable {
     title = Element:new {
       hlgroups = { 'tui.html.summary' },
-      children = summary_children or { Element:new { text = 'Details' } },
+      children = summary_children or { Element.text 'Details' },
     },
     body = body_elements,
     open = initially_open,
@@ -170,7 +170,7 @@ local Html = inductive('Html', {
       return Element:new {
         children = {
           self(props.summary, ctx, opts),
-          Element:new { text = '\n' },
+          Element.text '\n',
           self(content, ctx, opts),
           Element:new { children = children },
         },

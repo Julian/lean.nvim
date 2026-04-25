@@ -56,7 +56,7 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations, self_rend
       -- Tooltip data from infoToInteractive is always CodeWithInfos.
       tooltip_element:add_child(InteractiveCode(info_popup.exprExplicit, sess, locations))
       if info_popup.type ~= nil then
-        tooltip_element:add_child(Element:new { text = ' : ' })
+        tooltip_element:add_child(Element.text ' : ')
       end
     end
 
@@ -65,12 +65,12 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations, self_rend
     end
 
     if info_popup.doc ~= nil and info_popup.doc ~= vim.NIL then
-      tooltip_element:add_child(Element:new { text = '\n\n' })
-      tooltip_element:add_child(Element:new { text = info_popup.doc }) -- TODO: markdown
+      tooltip_element:add_child(Element.text '\n\n')
+      tooltip_element:add_child(Element.text(info_popup.doc)) -- TODO: markdown
     end
 
     if subexpr_info.diffStatus then
-      tooltip_element:add_child(Element:new { text = '\n\n' })
+      tooltip_element:add_child(Element.text '\n\n')
       tooltip_element:add_child(Element:new {
         hlgroups = { 'Comment' },
         text = DIFF_TAG_TO_EXPLANATION[subexpr_info.diffStatus],

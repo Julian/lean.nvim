@@ -118,15 +118,15 @@ end
 
 ---Render subscript text with Unicode sub-parentheses: ₍text₎
 function html.Tag.sub(children)
-  table.insert(children, 1, Element:new { text = '₍' })
-  table.insert(children, Element:new { text = '₎' })
+  table.insert(children, 1, Element.text '₍')
+  table.insert(children, Element.text '₎')
   return Element:new { children = children }
 end
 
 ---Render superscript text with Unicode super-parentheses: ⁽text⁾
 function html.Tag.sup(children)
-  table.insert(children, 1, Element:new { text = '⁽' })
-  table.insert(children, Element:new { text = '⁾' })
+  table.insert(children, 1, Element.text '⁽')
+  table.insert(children, Element.text '⁾')
   return Element:new { children = children }
 end
 
@@ -391,7 +391,7 @@ function html.Tag.pre(children)
     is_block = true,
     children = {
       Element:new { children = children },
-      Element:new { text = '\n' },
+      Element.text '\n',
     },
   }
 end

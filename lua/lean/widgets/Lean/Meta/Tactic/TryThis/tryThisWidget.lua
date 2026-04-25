@@ -16,7 +16,7 @@ local Element = require('lean.tui').Element
 return function(ctx, props)
   local blocks = vim.iter(ipairs(props.suggestions)):map(function(i, each)
     local children = {
-      i ~= 1 and Element:new { text = '\n' } or nil,
+      i ~= 1 and Element.text '\n' or nil,
     }
     if each.preInfo then
       table.insert(children, Element:new { text = each.preInfo })

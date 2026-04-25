@@ -60,7 +60,7 @@ return function(ctx, expr)
   return Element:new {
     children = {
       element,
-      Element:new { text = '\t\t\t\t' }, -- FIXME: really we need Element:flex
+      Element.text '\t\t\t\t', -- FIXME: really we need Element:flex
       Element.select(
         presentations,
         { ---@type SelectionOpts<SelectedPresentation>

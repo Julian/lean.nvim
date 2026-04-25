@@ -1456,6 +1456,13 @@ local function select_many(choices, opts, on_choices)
   })
 end
 
+---Create a plain text Element.
+---@param str string
+---@return Element
+function Element.text(str)
+  return Element:new { text = str }
+end
+
 return {
   BufRenderer = BufRenderer,
   Element = Element,

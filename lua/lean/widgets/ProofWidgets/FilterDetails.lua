@@ -14,6 +14,6 @@ return function(ctx, props)
   end
   local content = initially_filtered and props.filtered or props.all
   return Element:new {
-    children = { Html(props.summary, ctx), Element:new { text = '\n' }, Html(content, ctx) },
+    children = { Html(props.summary, ctx), Element.text '\n', Html(content, ctx) },
   }
 end

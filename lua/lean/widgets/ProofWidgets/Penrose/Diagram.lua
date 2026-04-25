@@ -15,7 +15,7 @@ return function(ctx, props)
   end
 
   if #children == 0 then
-    return Element:new { text = '[Penrose diagram]' }
+    return Element.text '[Penrose diagram]'
   end
 
   return Element:foldable {

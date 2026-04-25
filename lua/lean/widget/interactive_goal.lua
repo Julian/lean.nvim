@@ -88,7 +88,7 @@ local function to_hypothesis_element(hyp, mvar_id, opts, sess, locations)
           'leanInfoHypNameRemoved',
         } or nil,
       }),
-      Element:new { text = ' : ' },
+      Element.text ' : ',
       InteractiveCode(hyp.type, sess, type_locations),
     },
   }
@@ -201,7 +201,7 @@ function interactive_goal.Goal(goal, sess, locations, view_options)
     return to_hypothesis_element(hyp, goal.mvarId, view_options, sess, locations)
   end)
 
-  local separator = Element:new { text = '\n' }
+  local separator = Element.text '\n'
   if view_options.reverse then
     table.insert(children, goal_element)
     if hyps:peek() then

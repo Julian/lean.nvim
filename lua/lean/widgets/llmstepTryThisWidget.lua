@@ -18,7 +18,7 @@ local Element = require('lean.tui').Element
 return function(ctx, props)
   local blocks = vim.iter(ipairs(props.suggestions)):map(function(i, each)
     local children = {
-      i ~= 1 and Element:new { text = '\n' } or nil,
+      i ~= 1 and Element.text '\n' or nil,
     }
     table.insert(children, ctx:edit_link(each[1], props.range, each[1]))
     if each.info and each.info ~= '' then

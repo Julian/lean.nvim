@@ -7,9 +7,9 @@ local Element = require('lean.tui').Element
 return function(_, props)
   return Element:new {
     children = {
-      Element:new { text = '\n\nError code: ' },
-      Element:new { text = props.code },
-      Element:new { text = '\n' },
+      Element.text '\n\nError code: ',
+      Element.text(props.code),
+      Element.text '\n',
       Element.link {
         text = 'View explanation',
         action = function()

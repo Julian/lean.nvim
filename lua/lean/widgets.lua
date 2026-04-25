@@ -187,9 +187,9 @@ end
 ---@field selectedLocations GoalsLocation[] Locations currently selected in the goal state.
 
 local NO_SELECTION_HELP = Element:concat({
-  Element:new { text = 'Nothing selected. You can use' },
+  Element.text 'Nothing selected. You can use',
   Element.kbd 'gK',
-  Element:new { text = 'in the infoview to select expressions in the goal.' },
+  Element.text 'in the infoview to select expressions in the goal.',
 }, ' ')
 
 ---A wrapper for widgets which interact with selected locations.

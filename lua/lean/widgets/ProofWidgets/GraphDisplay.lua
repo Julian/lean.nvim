@@ -14,15 +14,14 @@ return function(ctx, props)
     local label = Element:new { text = vertex.id }
     local detail = vertex.details and Html(vertex.details, ctx)
     if detail then
-      children[#children + 1] =
-        Element:new { children = { label, Element:new { text = ': ' }, detail } }
+      children[#children + 1] = Element:new { children = { label, Element.text ': ', detail } }
     else
       children[#children + 1] = Element:new { text = '• ', children = { label } }
     end
   end
 
   if #props.edges > 0 then
-    children[#children + 1] = Element:new { text = '\n' }
+    children[#children + 1] = Element.text '\n'
     for _, edge in ipairs(props.edges) do
       children[#children + 1] = Element:new { text = edge.source .. ' → ' .. edge.target }
     end
