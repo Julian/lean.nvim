@@ -16,6 +16,8 @@ local throttle = require 'std.throttle'
 local byte_col_to_utf16 = require('std.lsp').byte_col_to_utf16
 
 local Table = require 'tui.table'
+local graphic = require 'tui.graphic'
+local percentile_distribution = require('tui.plot').percentile_distribution
 
 local Element = require('lean.tui').Element
 local Locations = require 'lean.infoview.locations'
@@ -1181,19 +1183,31 @@ local function debug_timing_element(pin, expanded, histogram)
 
   -- Aggregate stats from the histogram (never loses data).
   local count = histogram:count()
-  local pct = histogram:percentiles()
 
   local summary_rows = {
     Table.row { Element.text 'min', duration_element(histogram:min()) },
-    Table.row { Element.text 'p50', duration_element(pct[50]) },
-    Table.row { Element.text 'p90', duration_element(pct[90]) },
-    Table.row { Element.text 'p99', duration_element(pct[99]) },
+    Table.row { Element.text 'p50', duration_element(histogram:value_at_quantile(50)) },
+    Table.row { Element.text 'p90', duration_element(histogram:value_at_quantile(90)) },
+    Table.row { Element.text 'p99', duration_element(histogram:value_at_quantile(99)) },
+    Table.row { Element.text 'p99.9', duration_element(histogram:value_at_quantile(99.9)) },
     Table.row { Element.text 'max', duration_element(histogram:max()) },
   }
 
   table.insert(children, Element.EMPTY)
   table.insert(children, Element.text(('Aggregate (%d refreshes)'):format(count)))
-  table.insert(children, Table.render(summary_rows))
+
+  -- Plot the percentile curve when kitty is available, otherwise show a table.
+  local win = pin.window
+  table.insert(
+    children,
+    graphic.render(function()
+      return percentile_distribution(histogram, {
+        columns = win and win:width(),
+      })
+    end, function()
+      return Table.render(summary_rows)
+    end)
+  )
 
   return Element:concat(children, '\n')
 end
