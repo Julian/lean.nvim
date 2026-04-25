@@ -8,6 +8,8 @@
     "<>": "⟨$CURSOR⟩",
     "()": "($CURSOR)",
     "()_": "($CURSOR)_",
+    "^()": "⁽$CURSOR⁾",
+    "_()": "₍$CURSOR₎",
     "([])'": "⟮$CURSOR⟯",
     "(())": "⸨$CURSOR⸩",
     "f<>": "‹$CURSOR›",
