@@ -3,6 +3,7 @@ local inductive = require 'std.inductive'
 local Element = require('lean.tui').Element
 local InteractiveCode = require 'lean.widget.interactive_code'
 local MakeEditLink = require 'proofwidgets.make_edit_link'
+local Table = require 'tui.table'
 local tui_html = require 'tui.html'
 local Tag = tui_html.Tag
 
@@ -63,33 +64,54 @@ local function render_details(self, value, ctx, opts)
   }
 end
 
+local SECTION_ROW_TYPES = {
+  thead = Table.header,
+  tbody = Table.row,
+  tfoot = Table.row,
+}
+
+---Render the cells of a `<tr>` element.
+---@param self fun(html: Html, ctx: RenderContext, opts?: table): Element
+---@param tr_children Html[]
+---@param ctx RenderContext
+---@param opts? table
+---@return Element[]
+local function render_tr_cells(self, tr_children, ctx, opts)
+  local cells = {}
+  for _, cell_html in ipairs(tr_children) do
+    table.insert(cells, self(cell_html, ctx, opts))
+  end
+  return cells
+end
+
 ---Collect rows from a raw Html table tree.
 ---
 ---Walks the Html children of a `<table>`, descending through
 ---`<thead>`/`<tbody>`/`<tfoot>` wrappers to find `<tr>` elements,
----then renders each cell. Returns structured row data for
----`html.render_table`.
+---then renders each cell into `Table.header` or `Table.row` objects.
 ---@param self fun(html: Html, ctx: RenderContext, opts?: table): Element
 ---@param table_children Html[]
 ---@param ctx RenderContext
 ---@param opts? table
----@param is_header? boolean
----@return { cells: Element[], is_header: boolean }[]
-local function collect_raw_table_rows(self, table_children, ctx, opts, is_header)
+---@return (TableRow|TableHeader)[]
+local function collect_table_rows(self, table_children, ctx, opts)
   local rows = {}
   for _, child in ipairs(table_children) do
     if type(child) == 'table' and child.element then
-      local child_tag = child.element[1]
-      if child_tag == 'tr' then
-        local cells = {}
-        for _, cell_html in ipairs(child.element[3]) do
-          table.insert(cells, self(cell_html, ctx, opts))
+      local tag = child.element[1]
+      local RowType = SECTION_ROW_TYPES[tag]
+      if RowType then
+        for _, section_child in ipairs(child.element[3]) do
+          if
+            type(section_child) == 'table'
+            and section_child.element
+            and section_child.element[1] == 'tr'
+          then
+            table.insert(rows, RowType(render_tr_cells(self, section_child.element[3], ctx, opts)))
+          end
         end
-        table.insert(rows, { cells = cells, is_header = is_header or false })
-      elseif child_tag == 'thead' then
-        vim.list_extend(rows, collect_raw_table_rows(self, child.element[3], ctx, opts, true))
-      elseif child_tag == 'tbody' or child_tag == 'tfoot' then
-        vim.list_extend(rows, collect_raw_table_rows(self, child.element[3], ctx, opts, false))
+      elseif tag == 'tr' then
+        table.insert(rows, Table.row(render_tr_cells(self, child.element[3], ctx, opts)))
       end
     end
   end
@@ -215,8 +237,8 @@ local Html = inductive('Html', {
     elseif tag == 'details' then
       result = render_details(self, value, ctx, opts)
     elseif tag == 'table' then
-      local rows = collect_raw_table_rows(self, children, ctx, opts)
-      result = tui_html.render_table(rows)
+      local rows = collect_table_rows(self, children, ctx, opts)
+      result = Table.render(rows)
     else
       if tag == 'pre' then
         opts = vim.tbl_extend('force', opts or {}, { in_pre = true })

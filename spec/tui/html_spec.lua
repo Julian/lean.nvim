@@ -198,55 +198,6 @@ describe('tui.html', function()
     end)
   end)
 
-  describe('render_table', function()
-    it('renders a simple table with column alignment', function()
-      local el = html.render_table {
-        {
-          cells = {
-            Tag.td { Element:new { text = 'a' } },
-            Tag.td { Element:new { text = 'b' } },
-          },
-          is_header = false,
-        },
-        {
-          cells = {
-            Tag.td { Element:new { text = 'cc' } },
-            Tag.td { Element:new { text = 'd' } },
-          },
-          is_header = false,
-        },
-      }
-      assert.is.equal('a  │ b\ncc │ d', el:to_string())
-    end)
-
-    it('renders a table with header separator', function()
-      local el = html.render_table {
-        {
-          cells = {
-            Tag.th { Element:new { text = 'Name' } },
-            Tag.th { Element:new { text = 'N' } },
-          },
-          is_header = true,
-        },
-        {
-          cells = {
-            Tag.td { Element:new { text = 'x' } },
-            Tag.td { Element:new { text = '3' } },
-          },
-          is_header = false,
-        },
-      }
-      -- Col widths: max(4,1)=4, max(1,1)=1.
-      -- Separator: 4 dashes + ─┼─ + 1 dash.
-      assert.is.equal('Name │ N\n─────┼──\nx    │ 3', el:to_string())
-    end)
-
-    it('renders an empty table', function()
-      local el = html.render_table {}
-      assert.is.equal('', el:to_string())
-    end)
-  end)
-
   describe('<del>', function()
     it('renders strikethrough text', function()
       local el = Tag.del { Element:new { text = 'removed' } }
