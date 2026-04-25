@@ -121,6 +121,15 @@ InfoviewViewOptions                                        *InfoviewViewOptions*
         {reverse}                  (boolean)  order hypotheses bottom-to-top
 
 
+PinRefreshRecord                                              *PinRefreshRecord*
+    A single refresh timing record stored in the pin's history ring buffer.
+
+    Fields: ~
+        {timing}  (table<string,integer>)  phase durations from the stopwatch (dotted paths)
+        {uri}     (string)                 the document URI this refresh was for
+        {stale}   (boolean)                whether this update was discarded as stale
+
+
 Pin                                                                        *Pin*
     An individual pin.
 
@@ -225,6 +234,10 @@ infoview.enable_widgets()                              *infoview.enable_widgets*
 
 infoview.disable_widgets()                            *infoview.disable_widgets*
     Disable widgets in the current infoview.
+
+
+infoview.open_debug()                                      *infoview.open_debug*
+    Open a debug timing window for each pin. Close with :q.
 
 
 infoview.go_to()                                                *infoview.go_to*
