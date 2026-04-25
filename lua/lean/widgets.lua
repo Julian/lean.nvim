@@ -8,11 +8,16 @@
 ---
 --- But this module "decompiles" specific widgets into TUI-accessible
 --- components.
+---
+--- For widgets created via `mk_rpc_widget%` in ProofWidgets, we can
+--- generically extract the RPC method name from their JavaScript source
+--- and call it directly, without needing per-widget Lua implementations.
 ---@brief ]]
 
 local dedent = require('std.text').dedent
 
 local Element = require('lean.tui').Element
+local Html = require 'proofwidgets.html'
 local Locations = require 'lean.infoview.locations'
 local goals = require 'lean.goals'
 local log = require 'lean.log'
@@ -52,20 +57,6 @@ function Widget.unsupported(id)
       log:info { message = msg:format(id, title), id = id }
     end,
   }
-end
-
----Parse a supported user widget by bypassing it if it is supported.
----
----Unsupported widgets are ignored after logging a notice.
----@param user_widget UserWidget
----@return Widget
-function Widget.from_user_widget(user_widget)
-  local lua_module = 'lean.widgets.' .. user_widget.id
-  local ok, widget = pcall(require, lua_module)
-  if not ok then
-    return Widget.unsupported(user_widget.id)
-  end
-  return Widget:new { element = widget }
 end
 
 ---Data and common helpers for an actively rendering widget.
@@ -219,6 +210,91 @@ local function panel(widget_fn)
 
     return widget_fn(ctx, params)
   end
+end
+
+---Cache of JS hash → extracted RPC method name (or false if not ofRpcMethod).
+---@type table<string, string|false>
+local rpc_method_cache = {}
+
+---Extract the RPC method name from an ofRpcMethod JavaScript source.
+---@param source string
+---@return string? method the Lean-qualified RPC method name
+local function rpc_method_from_source(source)
+  -- The ofRpcMethod JS template assigns the RPC method to a minified
+  -- variable.  We look for a Lean fully-qualified name (at least two
+  -- dot-separated segments) that isn't one of the known constants
+  -- baked into the template itself.
+  for candidate in source:gmatch '"([%w_]+%.[%w_%.]+)"' do
+    if
+      candidate ~= 'react.jsx'
+      and not candidate:find '^react/'
+      and not candidate:find '^@'
+      and candidate ~= 'ProofWidgets.checkRequest'
+      and candidate ~= 'ProofWidgets.cancelRequest'
+    then
+      -- Strip the cancellable suffix — we call the base method directly.
+      return (candidate:gsub('%._cancellable$', ''))
+    end
+  end
+end
+
+---Try to handle a widget via the `mk_rpc_widget%` / ofRpcMethod pattern.
+---
+---These widgets embed an RPC method name in their JavaScript source.
+---We extract it and call the method directly.
+---
+---Since `getWidgets` only returns `PanelWidgetInstance`s, every widget
+---reaching this path is a panel widget, so we wrap in `panel` for the
+---terminal-appropriate "nothing selected" help text.
+---@param ctx RenderContext
+---@param props any
+---@param hash string
+---@return Element?
+local function of_rpc_method(ctx, props, hash)
+  local method = rpc_method_cache[hash]
+  if method == nil then
+    local source = ctx:source_of(hash)
+    if source then
+      method = rpc_method_from_source(source)
+    end
+    rpc_method_cache[hash] = method or false
+  end
+  if not method then
+    return
+  end
+
+  return panel(function(inner_ctx, params)
+    local response, err = inner_ctx:rpc_call(method, params)
+    if err then
+      return err
+    end
+    return Html(response, inner_ctx)
+  end)(ctx, props)
+end
+
+---Parse a supported user widget by bypassing it if it is supported.
+---
+---Falls back to generic ofRpcMethod handling for `mk_rpc_widget%` widgets,
+---and logs a notice for genuinely unsupported widgets.
+---@param user_widget UserWidget
+---@return Widget
+function Widget.from_user_widget(user_widget)
+  local lua_module = 'lean.widgets.' .. user_widget.id
+  local ok, widget = pcall(require, lua_module)
+  if ok then
+    return Widget:new { element = widget }
+  end
+
+  local id = user_widget.id
+  return Widget:new {
+    element = function(ctx, props, hash)
+      local element = of_rpc_method(ctx, props, hash)
+      if element then
+        return element
+      end
+      Widget.unsupported(id).element()
+    end,
+  }
 end
 
 ---Render a user widget instance into a TUI element.
