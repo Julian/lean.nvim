@@ -70,22 +70,29 @@ function Table.header(cells)
   return { cells = cells, prefix_width = 0, render = render_header }
 end
 
+---@class TableFoldableOpts
+---@field cells Element[] the parent row cells
+---@field children table[] rows to show when expanded (any row type, including nested foldable)
+---@field open? boolean initial state (default false)
+---@field on_open? fun() called when the fold is opened
+---@field on_close? fun() called when the fold is closed
+
 ---A foldable table row with child rows that expand/collapse on click.
 ---Child rows are rendered independently when expanded; they share
 ---column widths with the parent table but are not pre-measured.
----@param cells Element[] the parent row cells
----@param child_rows table[] rows to show when expanded (any row type, including nested foldable)
----@param initially_open? boolean initial state (default false)
-function Table.foldable(cells, child_rows, initially_open)
+---@param opts TableFoldableOpts
+function Table.foldable(opts)
   return {
-    cells = cells,
+    cells = opts.cells,
     prefix_width = FOLD_PREFIX_WIDTH,
-    render = function(elements, col_widths, widths)
+    render = function(elements, col_widths, widths, max_prefix)
       return {
         Element:foldable {
           title = render_cells(elements, col_widths, widths, 0),
-          body = { Table.render(child_rows, col_widths) },
-          open = initially_open or false,
+          body = { Table.render(opts.children, col_widths, max_prefix) },
+          open = opts.open or false,
+          on_open = opts.on_open,
+          on_close = opts.on_close,
           margin = 0,
         },
       }
@@ -100,15 +107,16 @@ end
 ---Columns are padded to align.
 ---@param rows table[]
 ---@param inherited_col_widths? integer[] column widths from a parent table (for nested rendering)
+---@param inherited_prefix? integer minimum prefix width from a parent table
 ---@return Element
-function Table.render(rows, inherited_col_widths)
+function Table.render(rows, inherited_col_widths, inherited_prefix)
   if #rows == 0 then
     return Element:new {}
   end
 
   -- Compute the max prefix width across all rows so non-prefixed
   -- rows can indent to align with prefixed ones (e.g. foldable arrows).
-  local max_prefix = 0
+  local max_prefix = inherited_prefix or 0
   for _, row in ipairs(rows) do
     if row.prefix_width > max_prefix then
       max_prefix = row.prefix_width
