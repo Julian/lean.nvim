@@ -494,6 +494,45 @@ describe('Element', function()
       assert.is.equal('stuff', element:to_string())
     end)
 
+    it('calls on_close when folded', function()
+      local closed = false
+      local element = Element:foldable {
+        title = Element:new { text = 'title' },
+        body = { Element:new { text = 'body' } },
+        on_close = function()
+          closed = true
+        end,
+      }
+
+      local title_row = element:find(function(child)
+        return child.events and child.events.click
+      end)
+      -- Starts open; clicking closes.
+      title_row.events.click(NULL_CONTEXT)
+      assert.is_true(closed)
+    end)
+
+    it('calls on_open and on_close symmetrically', function()
+      local log = {}
+      local function track()
+        table.insert(log, 'toggled')
+      end
+      local element = Element:foldable {
+        title = Element:new { text = 'title' },
+        body = { Element:new { text = 'body' } },
+        on_open = track,
+        on_close = track,
+      }
+
+      local title_row = element:find(function(child)
+        return child.events and child.events.click
+      end)
+      title_row.events.click(NULL_CONTEXT) -- close
+      title_row.events.click(NULL_CONTEXT) -- open
+      title_row.events.click(NULL_CONTEXT) -- close
+      assert.are.same({ 'toggled', 'toggled', 'toggled' }, log)
+    end)
+
     it('returns the title element when body is nil', function()
       local title = Element:new { text = 'stuff' }
       local element = Element:foldable { title = title }

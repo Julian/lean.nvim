@@ -155,6 +155,8 @@ function Element:foldable(opts)
     return opts.title
   end
 
+  local on_open = opts.on_open or function() end
+  local on_close = opts.on_close or function() end
   local open = opts.open ~= false
   local arrow = self:new { text = open and '▼ ' or '▶ ' }
   local title_row = self:new {
@@ -177,8 +179,10 @@ function Element:foldable(opts)
     click = function(ctx)
       open = not open
       arrow.text = open and '▼ ' or '▶ '
-      if open and opts.on_open then
-        opts.on_open(body)
+      if open then
+        on_open(body)
+      else
+        on_close()
       end
       container:set_children { layout() }
       ctx.rerender()
