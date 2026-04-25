@@ -84,10 +84,13 @@ end
 
 ---Record a value.
 ---@param value number
-function Histogram:record(value)
+---@param count? integer number of observations (default 1, must be > 0)
+function Histogram:record(value, count)
+  count = count or 1
+  assert(count > 0, 'count must be positive')
   local idx = bucket_for(math.floor(math.max(0, value)))
-  self._counts[idx] = (self._counts[idx] or 0) + 1
-  self._total = self._total + 1
+  self._counts[idx] = (self._counts[idx] or 0) + count
+  self._total = self._total + count
   if value < self._min then
     self._min = value
   end
@@ -120,9 +123,58 @@ function Histogram:max()
   return self._max
 end
 
+---Return whether two values are equivalent (map to the same bucket).
+---
+---This is the correct way to compare histogram output: two values are
+---"the same" if the histogram can't distinguish them.
+---@param a number
+---@param b number
+---@return boolean
+function Histogram:values_are_equivalent(a, b) -- luacheck: no unused args
+  return bucket_for(math.floor(math.max(0, a))) == bucket_for(math.floor(math.max(0, b)))
+end
+
+---Return the value at a given quantile.
+---
+---Quantile is 0–100 with arbitrary decimal precision (e.g. 99.9, 99.99).
+---Returns the bucket midpoint for the bucket containing that quantile's
+---observation (contrast with Java HdrHistogram which returns the highest
+---equivalent value; midpoint gives ~0.4% average error vs ~0.8% worst-case).
+---Edge cases: p0 returns exact min, p100 returns exact max.
+---Returns nil if the histogram is empty.
+---@param quantile number 0–100
+---@return number?
+function Histogram:value_at_quantile(quantile)
+  if self._total == 0 then
+    return
+  end
+  if self._min == self._max then
+    return self._min
+  end
+  if quantile <= 0 then
+    return self._min
+  end
+  if quantile >= 100 then
+    return self._max
+  end
+  local target = math.ceil(self._total * quantile / 100)
+  local cumulative = 0
+  for idx = 0, BUCKET_COUNT - 1 do
+    local c = self._counts[idx]
+    if c then
+      cumulative = cumulative + c
+      if cumulative >= target then
+        return value_for(idx)
+      end
+    end
+  end
+  return self._max
+end
+
 ---Compute percentiles (1 through 100).
 ---
 ---Returns an array where result[p] is the value at the p-th percentile.
+---For single or fractional percentile queries, use value_at_quantile.
 ---@return number[]
 function Histogram:percentiles()
   if self._total == 0 then
@@ -159,6 +211,58 @@ function Histogram:percentiles()
   end
 
   return result
+end
+
+---Return the cumulative distribution as an array of brackets.
+---
+---Iterates over actual bucket boundaries rather than sampling at fixed
+---percentile intervals, giving the exact shape of the recorded distribution.
+---Each bracket has quantile (0–100), count (cumulative observation count),
+---and value (bucket representative).
+---Matches Go's CumulativeDistribution().
+---@return {quantile: number, count: integer, value: number}[]
+function Histogram:cumulative_distribution()
+  if self._total == 0 then
+    return {}
+  end
+  local result = {}
+  local cumulative = 0
+  for idx = 0, BUCKET_COUNT - 1 do
+    local c = self._counts[idx]
+    if c then
+      cumulative = cumulative + c
+      result[#result + 1] = {
+        quantile = cumulative / self._total * 100,
+        count = cumulative,
+        value = value_for(idx),
+      }
+    end
+  end
+  -- Clamp the final entry to exact max.
+  if #result > 0 then
+    result[#result].value = self._max
+  end
+  return result
+end
+
+---Merge another histogram into this one.
+---
+---Adds all observations from other without losing precision.
+---The two histograms must use the same bucket scheme (same PRECISION).
+---@param other std.Histogram
+function Histogram:merge(other)
+  for idx, c in pairs(other._counts) do
+    self._counts[idx] = (self._counts[idx] or 0) + c
+  end
+  self._total = self._total + other._total
+  if other._total > 0 then
+    if other._min < self._min then
+      self._min = other._min
+    end
+    if other._max > self._max then
+      self._max = other._max
+    end
+  end
 end
 
 ---Create a Stopwatch that records its total duration into this histogram
