@@ -35,7 +35,8 @@ describe('generic mk_rpc_widget%', function()
           n : Nat
           ⊢ n = n
 
-          ▼ Generic RPC WidgetSelected 1 location(s).
+          ▼ Generic RPC Widget
+          Selected 1 location(s).
         ]]
       end,
       with_widgets

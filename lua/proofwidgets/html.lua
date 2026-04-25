@@ -60,7 +60,7 @@ local function render_details(self, value, ctx, opts)
     },
     body = body_elements,
     open = initially_open,
-    margin = 0,
+    margin = 1,
   }
 end
 
