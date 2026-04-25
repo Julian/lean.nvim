@@ -523,4 +523,33 @@ describe('Buffer', function()
       assert.is.equal(37, result)
     end)
   end)
+
+  describe('windows', function()
+    it('yields nothing for a buffer not shown in any window', function()
+      local buffer = Buffer.create { listed = false, scratch = true }
+      assert.is.Nil(buffer:windows():next())
+    end)
+
+    it('yields the window showing the buffer', function()
+      local buffer = Buffer.create { listed = false, scratch = true }
+      vim.cmd 'split'
+      local win = Window:current()
+      win:set_buffer(buffer)
+      assert.is.equal(win.id, buffer:windows():next().id)
+      win:force_close()
+    end)
+
+    it('yields multiple windows when buffer is shown in more than one', function()
+      local buffer = Buffer.create { listed = false, scratch = true }
+      vim.cmd 'split'
+      local win1 = Window:current()
+      win1:set_buffer(buffer)
+      vim.cmd 'vsplit'
+      local win2 = Window:current()
+      win2:set_buffer(buffer)
+      assert.is.equal(2, #buffer:windows():totable())
+      win1:force_close()
+      win2:force_close()
+    end)
+  end)
 end)

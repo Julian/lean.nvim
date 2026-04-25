@@ -281,4 +281,13 @@ function Buffer:create_autocmd(event, opts)
   return vim.api.nvim_create_autocmd(event, opts)
 end
 
+---Iterate over all windows currently showing this buffer.
+---@return Iter
+function Buffer:windows()
+  local Window = require 'std.nvim.window'
+  return vim.iter(vim.fn.win_findbuf(self.bufnr)):map(function(winid)
+    return Window:from_id(winid)
+  end)
+end
+
 return Buffer
