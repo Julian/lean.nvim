@@ -16,6 +16,7 @@
 ---
 ---@class std.Stopwatch
 ---@field private _clock fun(): integer
+---@field private _on_finish fun(result: table<string, integer>)
 ---@field private _result table<string, integer>
 ---@field private _stack string[]
 ---@field private _starts integer[]
@@ -26,13 +27,16 @@ Stopwatch.__index = Stopwatch
 ---Create a new stopwatch. The clock starts immediately.
 ---
 ---An optional `clock` function may be provided for testing;
----it defaults to `vim.uv.hrtime`.
+---it defaults to `vim.uv.hrtime`.  An optional `on_finish`
+---callback is called with the result table when :finish() is called.
 ---@param clock? fun(): integer a function returning monotonic nanoseconds
+---@param on_finish? fun(result: table<string, integer>) called on finish
 ---@return std.Stopwatch
-function Stopwatch:new(clock)
+function Stopwatch:new(clock, on_finish)
   clock = clock or vim.uv.hrtime
   return setmetatable({
     _clock = clock,
+    _on_finish = on_finish or function() end,
     _result = {},
     _stack = {},
     _starts = {},
@@ -71,10 +75,11 @@ end
 ---
 ---Returns a flat table mapping dotted phase paths to durations
 ---in nanoseconds.  Also includes a 'total' key for the wall time
----from creation to finish.
+---from creation to finish.  Calls on_finish if one was provided.
 ---@return table<string, integer>
 function Stopwatch:finish()
   self._result.total = self._clock() - self._birth
+  self._on_finish(self._result)
   return self._result
 end
 
