@@ -225,6 +225,9 @@ function lean.setup(opts)
     LeanInfoviewDisableWidgets = function()
       require('lean.infoview').disable_widgets()
     end,
+    LeanInfoviewOpenDebug = function()
+      require('lean.infoview').open_debug()
+    end,
 
     LeanInfoviewAcceptSuggestion = function()
       require('lean.infoview').accept_suggestion()
