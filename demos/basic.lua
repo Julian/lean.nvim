@@ -1,6 +1,8 @@
 local Buffer = require 'std.nvim.buffer'
 local Window = require 'std.nvim.window'
 
+local Modal = require 'tui.modal'
+
 -- In case recording crashes.
 vim.o.directory = ''
 vim.o.shada = ''
@@ -13,8 +15,8 @@ function DEMO.show_keys()
   local width = 40
   local buffer = Buffer.create { listed = false, scratch = true }
   buffer.o.modifiable = true
-  local win = vim.api.nvim_open_win(buffer.bufnr, false, {
-    relative = 'editor',
+  local window = Window.editor_float {
+    buffer = buffer,
     width = width,
     height = 1,
     col = vim.o.columns - width - 2,
@@ -23,9 +25,9 @@ function DEMO.show_keys()
     style = 'minimal',
     border = 'rounded',
     focusable = false,
-  })
-  Window:from_id(win).o.winhighlight = 'Normal:Normal,FloatBorder:FloatBorder'
-  DEMO._keys_win = win
+  }
+  window.o.winhighlight = 'Normal:Normal,FloatBorder:FloatBorder'
+  DEMO._keys_win = window.id
 
   local keys = {}
   local timer = vim.uv.new_timer()
@@ -91,9 +93,7 @@ end
 function DEMO.popup(lines)
   local width = 70
   local height = lines and math.max(#lines + 2, 5) or 10
-  local buffer = Buffer.create { listed = false, scratch = true }
-  local win = Window:from_id(vim.api.nvim_open_win(buffer.bufnr, true, {
-    relative = 'editor',
+  local modal = Modal.open {
     width = width,
     height = height,
     col = math.floor((vim.o.columns - width) / 2),
@@ -101,19 +101,19 @@ function DEMO.popup(lines)
     zindex = 50,
     style = 'minimal',
     border = 'rounded',
-  }))
-  win.o.wrap = true
-  win.o.winblend = 10
-  win.o.winhighlight = 'Normal:Normal,FloatBorder:FloatBorder'
-  buffer.o.filetype = 'markdown'
-  buffer.b.completion = false -- disable blink, completion popping up is noisy
-  DEMO._popup_win = win.id
+  }
+  modal.window.o.wrap = true
+  modal.window.o.winblend = 10
+  modal.window.o.winhighlight = 'Normal:Normal,FloatBorder:FloatBorder'
+  modal.buffer.o.filetype = 'markdown'
+  modal.buffer.b.completion = false -- disable blink, completion popping up is noisy
+  DEMO._popup = modal
   if lines then
     local content = { unpack(lines) }
     content[#content + 1] = ''
-    buffer:set_lines(content)
-    buffer.o.modifiable = false
-    vim.api.nvim_win_set_cursor(win.id, { #content, 0 })
+    modal.buffer:set_lines(content)
+    modal.buffer.o.modifiable = false
+    modal.window:set_cursor { #content, 0 }
   else
     vim.cmd.startinsert()
   end
@@ -121,9 +121,9 @@ end
 
 ---Close the current popup window.
 function DEMO.close_popup()
-  if DEMO._popup_win and vim.api.nvim_win_is_valid(DEMO._popup_win) then
-    vim.api.nvim_win_close(DEMO._popup_win, true)
-    DEMO._popup_win = nil
+  if DEMO._popup then
+    DEMO._popup:dismiss()
+    DEMO._popup = nil
   end
 end
 
