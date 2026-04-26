@@ -92,6 +92,59 @@ describe('Window', function()
     end)
   end)
 
+  describe('editor_float', function()
+    it('opens an editor-relative float', function()
+      local float = Window.editor_float { width = 5, height = 2, row = 0, col = 0 }
+      assert.are.equal('editor', float:config().relative)
+      float:close()
+    end)
+
+    it('does not focus the new window by default', function()
+      local current = Window:current()
+      local float = Window.editor_float { width = 5, height = 2, row = 0, col = 0 }
+      assert.is_true(current:is_current())
+      float:close()
+    end)
+
+    it('focuses the new window when enter=true', function()
+      local float = Window.editor_float {
+        enter = true,
+        width = 5,
+        height = 2,
+        row = 0,
+        col = 0,
+      }
+      assert.is_true(float:is_current())
+      float:close()
+    end)
+
+    it('shows the supplied buffer', function()
+      local buffer = Buffer.create { listed = false, scratch = true }
+      local float = Window.editor_float {
+        buffer = buffer,
+        width = 5,
+        height = 2,
+        row = 0,
+        col = 0,
+      }
+      assert.are.equal(buffer.bufnr, float:buffer().bufnr)
+      float:close()
+      buffer:force_delete()
+    end)
+
+    it('errors if the caller tries to set `relative`', function()
+      assert.has_error(function()
+        Window.editor_float {
+          relative = 'cursor',
+          width = 5,
+          height = 2,
+          row = 0,
+          col = 0,
+        }
+      end)
+    end)
+  end)
+
   describe('float', function()
     it('opens a floating window relative to the window', function()
       local current = Window:current()

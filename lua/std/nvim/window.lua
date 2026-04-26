@@ -66,31 +66,35 @@ function Window:split(opts)
   return Window:from_id(id)
 end
 
+---Open a new floating window with the given anchor configuration.
+---
+---Opts are passed through to `nvim_open_win`, except for:
+---  * `buffer` — a `Buffer` to display (default: the current buffer).
+---  * `enter` — whether to focus the new window (default: `false`).
+---@param opts table
+---@param anchor table the `relative` (and `win`, if win-relative) configuration
+---@return Window
+local function open_float(opts, anchor)
+  opts = opts or {}
+  local bufnr = opts.buffer and opts.buffer.bufnr or 0
+  local config = vim.tbl_extend('error', anchor, opts)
+  config.buffer, config.enter = nil, nil
+  local id = vim.api.nvim_open_win(bufnr, opts.enter or false, config)
+  return Window:from_id(id)
+end
+
+---Open a new editor-relative floating window.
+---@param opts? table
+---@return Window
+function Window.editor_float(opts)
+  return open_float(opts or {}, { relative = 'editor' })
+end
+
 ---Open a new floating window relative to this one.
----@param opts?
+---@param opts? table
 ---@return Window
 function Window:float(opts)
-  opts = opts or {}
-
-  local bufnr, enter
-  if opts.enter ~= nil then
-    enter, opts.enter = opts.enter, nil
-  else
-    enter = false
-  end
-
-  if opts.buffer ~= nil then
-    bufnr, opts.buffer = opts.buffer.bufnr, nil
-  else
-    bufnr = 0
-  end
-
-  local config = vim.tbl_extend('error', opts, {
-    win = self.id,
-    relative = 'win',
-  })
-  local id = vim.api.nvim_open_win(bufnr, enter, config)
-  return Window:from_id(id)
+  return open_float(opts or {}, { relative = 'win', win = self.id })
 end
 
 ---Return the window's current cursor position.
