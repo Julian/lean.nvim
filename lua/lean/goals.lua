@@ -2,9 +2,18 @@ local Buffer = require 'std.nvim.buffer'
 
 local goals = {}
 
+---@class GoalsCacheEntry
+---@field session Session the RPC session whose refs the goals embed
+---@field tick integer the buffer's changedtick when the goals were fetched
+---@field position lsp.Position
+---@field goals InteractiveGoal[]
+
 ---The most recently fetched goals for a position within a buffer.
----@type table<integer, { [1]: integer, [2]: lsp.Position, [3]: InteractiveGoal[] }>
----                        changedtick           position             goals
+---
+---Cache entries are invalidated on a session change because the embedded
+---RPC references are scoped to the session that issued them; sending them
+---back through a different session yields "RPC reference is not valid".
+---@type table<integer, GoalsCacheEntry>
 local cache = {}
 
 ---Return the interactive goals at the given position, caching them for access.
@@ -19,11 +28,15 @@ function goals.at(sess)
   end
 
   local tick = buffer.b.changedtick
+  local current_session = sess.sess
 
   local cached = cache[buffer.bufnr]
-  local cache_hit = cached and cached[1] == tick and vim.deep_equal(cached[2], params.position)
+  local cache_hit = cached
+    and cached.session == current_session
+    and cached.tick == tick
+    and vim.deep_equal(cached.position, params.position)
   if cache_hit then
-    return cached[3]
+    return cached.goals
   end
 
   local result, err = sess:getInteractiveGoals()
@@ -31,7 +44,15 @@ function goals.at(sess)
     return nil, err
   end
 
-  cache[buffer.bufnr] = { tick, params.position, result.goals }
+  -- Re-read `sess.sess` after the call: `ReconnectingSubsession:call`
+  -- may have swapped to a new session on retry, in which case the refs
+  -- in `result` are from the new one, not from `current_session`.
+  cache[buffer.bufnr] = {
+    session = sess.sess,
+    tick = tick,
+    position = params.position,
+    goals = result.goals,
+  }
   return result.goals, err
 end
 

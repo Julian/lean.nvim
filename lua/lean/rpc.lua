@@ -415,7 +415,7 @@ end
 ---will automatically reconnect, retrying up to `max_attempts` times.
 ---@class ReconnectingSubsession
 ---@field pos lsp.TextDocumentPositionParams
----@field private sess Session
+---@field sess Session the underlying session; may be swapped on reconnect
 ---@field private max_attempts integer
 local ReconnectingSubsession = {}
 ReconnectingSubsession.__index = ReconnectingSubsession
