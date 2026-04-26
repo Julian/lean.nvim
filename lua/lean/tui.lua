@@ -1192,11 +1192,10 @@ end
 function BufRenderer:event(event, path, ...)
   local args = { ... }
 
-  path = path or self.path
-
-  if not path then
-    return
-  end
+  -- Without a path we can still dispatch to handlers on the root element. This
+  -- matters for cleanup events (e.g. `clear`) fired from autocmds before the
+  -- cursor has ever moved into the buffer, when self.path is still nil.
+  path = path or self.path or {}
 
   if
     not self.element:event(path, event, self:make_event_context(), unpack(args)) and self.parent

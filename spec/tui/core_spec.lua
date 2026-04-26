@@ -1015,6 +1015,56 @@ describe('BufRenderer', function()
       buffer:force_delete()
     end)
   end)
+
+  describe(':event', function()
+    it('dispatches root-level handlers when no cursor path has been set', function()
+      local fired = false
+      local buffer = Buffer.create { scratch = true }
+      local element = Element:new {
+        name = 'root',
+        text = 'hello',
+        events = {
+          clear = function()
+            fired = true
+          end,
+        },
+      }
+      local renderer = element:renderer { buffer = buffer }
+      renderer:render()
+      assert.is_nil(renderer.path)
+
+      renderer:event 'clear'
+
+      assert.is_true(fired)
+      buffer:force_delete()
+    end)
+
+    it('does not fire child handlers when no path has been set', function()
+      local fired = false
+      local buffer = Buffer.create { scratch = true }
+      local element = Element:new {
+        name = 'root',
+        children = {
+          Element:new {
+            text = 'child',
+            events = {
+              click = function()
+                fired = true
+              end,
+            },
+          },
+        },
+      }
+      local renderer = element:renderer { buffer = buffer }
+      renderer:render()
+      assert.is_nil(renderer.path)
+
+      renderer:event 'click'
+
+      assert.is_false(fired)
+      buffer:force_delete()
+    end)
+  end)
 end)
 
 describe(
