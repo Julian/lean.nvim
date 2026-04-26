@@ -1240,9 +1240,6 @@ describe(
 
       helpers.feed '<Esc>'
 
-      -- FIXME: Are we abandoning tooltip windows?
-      -- Why is clear_all so hard to define?
-      tooltip:close()
       assert.windows.are { initial_window }
     end)
 
@@ -1276,11 +1273,9 @@ describe(
       local selection_window = helpers.wait_for_new_window { initial_window }
       assert.windows.are { initial_window, selection_window }
 
-      vim.cmd.wincmd '%'
+      vim.cmd.wincmd 'p'
 
-      -- FIXME: Here too we don't actually end up with just the initial window
-      -- in tests...
-      -- assert.windows.are{ initial_window }
+      assert.windows.are { initial_window }
     end)
   end)
 )

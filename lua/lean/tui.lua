@@ -1348,10 +1348,7 @@ local function select_many(choices, opts, on_choices)
     title = 'Select one or more of:',
   })
 
-  local buffer = Buffer.create { listed = false, scratch = true }
-  local relative = opts.relative_window or Window:current()
-  local modal = relative:float {
-    buffer = buffer,
+  local modal = (opts.relative_window or Window:current()):modal {
     enter = true,
     style = 'minimal',
     border = 'rounded',
@@ -1363,7 +1360,7 @@ local function select_many(choices, opts, on_choices)
     height = #choices + 2,
     zindex = 50,
   }
-  modal.o.winfixbuf = true
+  modal.window.o.winfixbuf = true
 
   local selected = vim.iter(choices):map(opts.start_selected):totable()
 
@@ -1410,7 +1407,7 @@ local function select_many(choices, opts, on_choices)
 
     events = {
       make_selection = function(_)
-        modal:force_close()
+        modal:dismiss()
         local chosen = {}
         local unchosen = {}
         vim.iter(ipairs(choices)):each(function(i, choice)
@@ -1420,13 +1417,13 @@ local function select_many(choices, opts, on_choices)
         on_choices(chosen, unchosen)
       end,
       clear = function(_)
-        modal:force_close()
+        modal:dismiss()
       end,
     },
   }
 
   local renderer = element:renderer {
-    buffer = buffer,
+    buffer = modal.buffer,
     keymaps = {
       ['K'] = 'click',
       ['<Tab>'] = 'toggle',
@@ -1435,26 +1432,21 @@ local function select_many(choices, opts, on_choices)
     }
   }
   renderer:render()
+  modal:attach(renderer):dismiss_on_leave()
 
   -- the 'real' editable region where entries are
   local start_line = 2
   local end_line = #choices + 1
   local first_column = 5
 
-  modal:set_cursor { start_line, first_column }
+  modal.window:set_cursor { start_line, first_column }
 
-  local group = vim.api.nvim_create_augroup('LeanSelectManyWindow', { clear = false })
-  buffer:create_autocmd('WinLeave', {
-    group = group,
-    callback = function() renderer:event 'clear' end
-  })
-  buffer:create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-    group = group,
+  modal.buffer:create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
     callback = function()  -- clip the cursor to the real editable region
-      local row, column = unpack(modal:cursor())
+      local row, column = unpack(modal.window:cursor())
       row = math.max(math.min(row, end_line), start_line)
       column = math.max(column, first_column)
-      modal:set_cursor { row, column }
+      modal.window:set_cursor { row, column }
     end,
   })
 end
