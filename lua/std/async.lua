@@ -86,6 +86,60 @@ function async.wrap(fn, argc)
   end
 end
 
+--- Run multiple async functions concurrently and wait for all to finish.
+---
+--- Each function runs in its own coroutine. The caller yields until all
+--- functions have completed, then resumes with a list of result tables
+--- (one per function, holding that function's return values).
+---
+--- If any function errors, the first error is re-raised in the caller
+--- after all the others have finished. This is closer to `asyncio.gather`
+--- than to a Trio nursery — there's no cancellation, so siblings of an
+--- erroring child still run to completion before the error surfaces.
+---@param fns (fun(): ...)[]
+---@return any[][] results one entry per fn, holding its return values
+function async.join(fns)
+  local n = #fns
+  local results = {}
+  if n == 0 then
+    return results
+  end
+
+  local co = coroutine.running()
+  assert(co, 'async.join: must be called from a coroutine')
+
+  local remaining = n
+  local first_err = nil
+  for i, fn in ipairs(fns) do
+    async.run(function()
+      local ok, ret = xpcall(function()
+        return { fn() }
+      end, debug.traceback)
+      if ok then
+        results[i] = ret
+      else
+        results[i] = {}
+        first_err = first_err or ret
+      end
+      remaining = remaining - 1
+      if remaining == 0 and coroutine.status(co) == 'suspended' then
+        local rok, rerr = coroutine.resume(co)
+        if not rok then
+          rethrow(co, rerr)
+        end
+      end
+    end)
+  end
+
+  if remaining > 0 then
+    coroutine.yield()
+  end
+  if first_err then
+    error(first_err, 0)
+  end
+  return results
+end
+
 --- Create an event that async code can wait on.
 ---
 --- Multiple coroutines can wait on the same event.

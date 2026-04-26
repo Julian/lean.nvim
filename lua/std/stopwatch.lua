@@ -59,6 +59,42 @@ function Stopwatch:close()
   self._result[key] = elapsed
 end
 
+---Run named async functions concurrently, recording each individually as a
+---sibling phase under the currently-open phase, plus a wall-clock duration
+---of the parallel section under `wall_name`.
+---
+---Each function runs in its own coroutine via `std.async.join`, so the
+---caller must itself be inside a coroutine. The open/close stack is not
+---used for the children (it would interleave under concurrency); each
+---child's key is computed as `<current path>.<child name>`, alongside
+---`<current path>.<wall_name>`.
+---
+---@param wall_name string  phase name under which to record wall-clock time
+---@param phases { [1]: string, [2]: fun(): ... }[]  ordered (name, fn) pairs
+---@return any[][] results  one result tuple per phase, in input order
+function Stopwatch:concurrent(wall_name, phases)
+  local async = require 'std.async'
+
+  local prefix = #self._stack > 0 and table.concat(self._stack, '.') .. '.' or ''
+
+  local fns = {}
+  for i, phase in ipairs(phases) do
+    local child_name, child_fn = phase[1], phase[2]
+    fns[i] = function()
+      local start = self._clock()
+      local result = { child_fn() }
+      self._result[prefix .. child_name] = self._clock() - start
+      return unpack(result)
+    end
+  end
+
+  local outer_start = self._clock()
+  local results = async.join(fns)
+  self._result[prefix .. wall_name] = self._clock() - outer_start
+
+  return results
+end
+
 ---Time a function call as a named phase.
 ---Opens the phase, calls fn, closes the phase, and returns fn's results.
 ---@param name string

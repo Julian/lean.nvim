@@ -1834,6 +1834,10 @@ end
 
 ---Render the combined contents of the infoview using interactive widgets.
 ---
+---The component RPC calls (goals, term goals, user widgets, diagnostics)
+---are dispatched concurrently so wall time is the slowest call rather
+---than their sum.
+---
 ---@param params lsp.TextDocumentPositionParams
 ---@param view_options InfoviewViewOptions
 ---@param sw std.Stopwatch
@@ -1846,14 +1850,41 @@ function contents_for_interactive(params, view_options, sw)
 
   local sess = sw:time('rpc_open', rpc.open, params)
 
-  local goals = sw:time('goals', components.goal_at, sess, view_options) or {}
-  local term_goals = view_options.show_term_goals
-      and sw:time('term_goals', components.term_goal_at, sess, view_options)
-    or {}
-  local user_widgets = sw:time('user_widgets', components.user_widgets_at, sess) or {}
-  local diagnostics = sw:time('diagnostics', components.diagnostics_at, sess) or {}
+  local phases = {
+    {
+      'goals',
+      function()
+        return components.goal_at(sess, view_options)
+      end,
+    },
+  }
+  if view_options.show_term_goals then
+    phases[#phases + 1] = {
+      'term_goals',
+      function()
+        return components.term_goal_at(sess, view_options)
+      end,
+    }
+  end
+  phases[#phases + 1] = {
+    'user_widgets',
+    function()
+      return components.user_widgets_at(sess)
+    end,
+  }
+  phases[#phases + 1] = {
+    'diagnostics',
+    function()
+      return components.diagnostics_at(sess)
+    end,
+  }
 
-  local blocks = vim.iter({ goals, term_goals, user_widgets, diagnostics }):flatten(1):totable()
+  local results = sw:concurrent('rpcs', phases)
+
+  local blocks = {}
+  for _, result in ipairs(results) do
+    vim.list_extend(blocks, result[1] or {})
+  end
 
   return wrap_content_blocks(blocks, params)
 end

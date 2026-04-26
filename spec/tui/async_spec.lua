@@ -85,3 +85,126 @@ describe('async.capture_errors', function()
     assert.is_truthy(outer[1]:match 'outer')
   end)
 end)
+
+describe('async.join', function()
+  it('returns each function`s results in order', function()
+    local out
+    async.run(function()
+      out = async.join {
+        function()
+          return 1
+        end,
+        function()
+          return 'a', 'b'
+        end,
+        function()
+          return true
+        end,
+      }
+    end)
+    assert.are.same({ { 1 }, { 'a', 'b' }, { true } }, out)
+  end)
+
+  it('returns an empty list when given no functions', function()
+    local out
+    async.run(function()
+      out = async.join {}
+    end)
+    assert.are.same({}, out)
+  end)
+
+  it('runs functions concurrently — all start before any completes', function()
+    local started = 0
+    local complete_a = async.event()
+    local complete_b = async.event()
+    local done = false
+
+    async.run(function()
+      async.join {
+        function()
+          started = started + 1
+          complete_a.wait()
+        end,
+        function()
+          started = started + 1
+          complete_b.wait()
+        end,
+      }
+      done = true
+    end)
+
+    assert.are.equal(2, started)
+    assert.is_false(done)
+    complete_a.set()
+    assert.is_false(done)
+    complete_b.set()
+    assert.is_true(done)
+  end)
+
+  it('completes synchronously when no function yields', function()
+    local done = false
+    async.run(function()
+      async.join {
+        function() end,
+        function() end,
+      }
+      done = true
+    end)
+    assert.is_true(done)
+  end)
+
+  it('propagates an error from a synchronous child to the parent', function()
+    local errs = async.capture_errors(function()
+      async.run(function()
+        async.join {
+          function()
+            error 'boom'
+          end,
+          function() end,
+        }
+      end)
+    end)
+    assert.are.equal(1, #errs)
+    assert.is_truthy(errs[1]:match 'boom')
+  end)
+
+  it('propagates an error from an async child after siblings finish', function()
+    local sibling_done = false
+    local complete = async.event()
+    local errs = async.capture_errors(function()
+      async.run(function()
+        async.join {
+          function()
+            complete.wait()
+            error 'boom'
+          end,
+          function()
+            sibling_done = true
+          end,
+        }
+      end)
+      assert.is_true(sibling_done)
+      complete.set()
+    end)
+    assert.are.equal(1, #errs)
+    assert.is_truthy(errs[1]:match 'boom')
+  end)
+
+  it('surfaces only the first error when multiple children error', function()
+    local errs = async.capture_errors(function()
+      async.run(function()
+        async.join {
+          function()
+            error 'first'
+          end,
+          function()
+            error 'second'
+          end,
+        }
+      end)
+    end)
+    assert.are.equal(1, #errs)
+    assert.is_truthy(errs[1]:match 'first')
+    assert.is_falsy(errs[1]:match 'second')
+  end)
+end)

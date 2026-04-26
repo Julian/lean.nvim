@@ -1,4 +1,5 @@
 local Stopwatch = require 'std.stopwatch'
+local async = require 'std.async'
 
 ---Create a fake clock that returns successive values from a list.
 ---@param ticks integer[]
@@ -86,5 +87,88 @@ describe('std.stopwatch', function()
     local times = sw:finish()
     assert.is_truthy(times.phase >= 0)
     assert.is_truthy(times.total >= 0)
+  end)
+
+  describe('concurrent', function()
+    it('records each child plus a wall-time at the top level', function()
+      -- birth=0; outer_start=10; a_start=20, a_end=30; b_start=40, b_end=80;
+      -- wall_end=90; finish=100
+      local sw = Stopwatch:new(fake_clock { 0, 10, 20, 30, 40, 80, 90, 100 })
+      local results
+      async.run(function()
+        results = sw:concurrent('parallel', {
+          {
+            'a',
+            function()
+              return 1
+            end,
+          },
+          {
+            'b',
+            function()
+              return 'x', 'y'
+            end,
+          },
+        })
+      end)
+      assert.are.same({ { 1 }, { 'x', 'y' } }, results)
+      local times = sw:finish()
+      assert.are.same({
+        a = 10,
+        b = 40,
+        parallel = 80,
+        total = 100,
+      }, times)
+    end)
+
+    it('records under the currently-open phase as a prefix', function()
+      -- birth=0; open content=10; outer_start=20; a_start=30, a_end=40;
+      -- wall_end=50; close content=60; finish=70
+      local sw = Stopwatch:new(fake_clock { 0, 10, 20, 30, 40, 50, 60, 70 })
+      async.run(function()
+        sw:open 'content'
+        sw:concurrent('parallel', {
+          { 'a', function() end },
+        })
+        sw:close()
+      end)
+      local times = sw:finish()
+      assert.are.same({
+        content = 50,
+        ['content.a'] = 10,
+        ['content.parallel'] = 30,
+        total = 70,
+      }, times)
+    end)
+
+    it('runs phases concurrently — all start before any completes', function()
+      local started = 0
+      local complete_a = async.event()
+      local complete_b = async.event()
+
+      async.run(function()
+        local sw = Stopwatch:new()
+        sw:concurrent('parallel', {
+          {
+            'a',
+            function()
+              started = started + 1
+              complete_a.wait()
+            end,
+          },
+          {
+            'b',
+            function()
+              started = started + 1
+              complete_b.wait()
+            end,
+          },
+        })
+      end)
+
+      assert.are.equal(2, started)
+      complete_a.set()
+      complete_b.set()
+    end)
   end)
 end)
