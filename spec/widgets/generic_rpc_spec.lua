@@ -25,7 +25,7 @@ describe('generic mk_rpc_widget%', function()
           n : Nat
           ⊢ n = n
 
-          Nothing selected. You can use gK in the infoview to select expressions in the goal.
+          Nothing selected. You can use gK or <C-LeftMouse> in the infoview to select expressions in the goal.
         ]]
 
         infoview.go_to()

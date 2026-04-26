@@ -10,8 +10,7 @@ local OverlayState -- defined after BufRenderer
 ---A fire-able event whose behavior is `Element`-specific.
 ---
 ---An element can define how to handle the event, as well as which keyboard
----keys trigger it (or theoretically mouse events, though we don't do so in
----practice at the moment).
+---keys (or mouse buttons) trigger it.
 ---
 ---In general, resist the temptation to add new event types here, as this
 ---entire concept feels slightly like "misdirection" that could be redesigned
@@ -26,7 +25,7 @@ local OverlayState -- defined after BufRenderer
 ---somehow).
 ---@alias ElementEvent
 ---| '"click"'     # Click on the element.
----| '"select"'    # Select or unselect ("shift+click") an element
+---| '"select"'    # Select or unselect (ctrl+click) an element
 ---
 ---| '"clear"'     # Clear the element.
 ---| '"clear_all"' # Clear the element and all "related" ones.
@@ -798,6 +797,36 @@ function BufRenderer:new(obj)
     '<Plug>(LeanAbbreviationsReverseLookup)',
     { remap = true, desc = 'Show how to type the unicode character under the cursor.' }
   )
+
+  -- Ctrl+click rather than shift+click for the alternate action because
+  -- most terminals (notably Kitty) reserve shift+click for native text
+  -- selection.
+  local function dispatch_mouse(event)
+    local pos = vim.fn.getmousepos()
+    if pos.winid == 0 or pos.line == 0 then
+      return
+    end
+    if vim.api.nvim_win_get_buf(pos.winid) ~= buf.bufnr then
+      return
+    end
+    local line_len = #buf:line(pos.line - 1)
+    local col = math.max(0, math.min(pos.column - 1, line_len))
+    local path = new_renderer:path_from_pos { pos.line - 1, col }
+    Window:from_id(pos.winid):move_cursor { pos.line, col }
+    if path then
+      new_renderer:event(event, path)
+    end
+  end
+  buf.keymaps:set('n', '<Plug>(LeanInfoviewMouseClick)', function()
+    dispatch_mouse 'click'
+  end, { desc = 'Fire a click event at the mouse position.' })
+  buf.keymaps:set('n', '<Plug>(LeanInfoviewMouseSelect)', function()
+    dispatch_mouse 'select'
+  end, { desc = 'Fire a select event at the mouse position.' })
+  buf.keymaps:set('n', '<LeftMouse>', '<Plug>(LeanInfoviewMouseClick)',
+    { remap = true, desc = 'Click on the element under the mouse.' })
+  buf.keymaps:set('n', '<C-LeftMouse>', '<Plug>(LeanInfoviewMouseSelect)',
+    { remap = true, desc = 'Select the element under the mouse.' })
 
   for key, event in pairs(obj.keymaps or {}) do
     local rhs = element_event_set[event] and event_plug_name(event) or function()

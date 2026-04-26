@@ -24,7 +24,7 @@ describe('Mathlib widgets', function()
           n : Nat
           ⊢ n = n
 
-          Nothing selected. You can use gK in the infoview to select expressions in the goal.
+          Nothing selected. You can use gK or <C-LeftMouse> in the infoview to select expressions in the goal.
         ]]
 
         infoview.go_to()
@@ -69,7 +69,7 @@ describe('Mathlib widgets', function()
         assert.infoview_contents.are [[
           ⊢ isUninteresting 73
 
-          Nothing selected. You can use gK in the infoview to select expressions in the goal.
+          Nothing selected. You can use gK or <C-LeftMouse> in the infoview to select expressions in the goal.
         ]]
 
         infoview.go_to()

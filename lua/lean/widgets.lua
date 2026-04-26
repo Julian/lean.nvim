@@ -177,11 +177,46 @@ end
 ---@field termGoal? InteractiveTermGoal The current term-mode goal, if any.
 ---@field selectedLocations GoalsLocation[] Locations currently selected in the goal state.
 
-local NO_SELECTION_HELP = Element:concat({
-  Element.text 'Nothing selected. You can use',
-  Element.kbd 'gK',
-  Element.text 'in the infoview to select expressions in the goal.',
-}, ' ')
+---The key bound to the given `<Plug>` mapping, or `nil` if none is found.
+---
+---Checks the current InfoView buffer's local mappings first, then global
+---mappings.
+---@param plug string the `<Plug>` name to look up
+---@return string?
+local function key_for_plug(plug)
+  local iv = require('lean.infoview').get_current_infoview()
+  local bufnr = iv and iv.pin and iv.pin.buffer and iv.pin.buffer.bufnr
+  if bufnr then
+    for _, m in ipairs(vim.api.nvim_buf_get_keymap(bufnr, 'n')) do
+      if m.rhs == plug then
+        return m.lhs
+      end
+    end
+  end
+  for _, m in ipairs(vim.api.nvim_get_keymap 'n') do
+    if m.rhs == plug then
+      return m.lhs
+    end
+  end
+end
+
+---Help shown when the user hasn't selected any subexpressions yet.
+---@return Element
+local function no_selection_help()
+  local parts = {
+    Element.text 'Nothing selected. You can use',
+    Element.kbd(key_for_plug '<Plug>(LeanInfoviewSelect)' or 'gK'),
+  }
+  if vim.o.mouse:find '[na]' then
+    table.insert(parts, Element.text 'or')
+    table.insert(
+      parts,
+      Element.kbd(key_for_plug '<Plug>(LeanInfoviewMouseSelect)' or '<C-LeftMouse>')
+    )
+  end
+  table.insert(parts, Element.text 'in the infoview to select expressions in the goal.')
+  return Element:concat(parts, ' ')
+end
 
 ---A wrapper for widgets which interact with selected locations.
 ---
@@ -195,7 +230,7 @@ local function panel(widget_fn)
   return function(ctx, props)
     local selected = Locations.selected_at(ctx.params)
     if #selected == 0 then
-      return NO_SELECTION_HELP
+      return no_selection_help()
     end
 
     ---@type PanelWidgetProps

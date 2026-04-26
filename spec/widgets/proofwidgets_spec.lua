@@ -80,7 +80,7 @@ describe('ProofWidgets widgets', function()
           _h : 2 + 2 = 5
           ⊢ 2 + 2 = 4
 
-          Nothing selected. You can use gK in the infoview to select expressions in the goal.
+          Nothing selected. You can use gK or <C-LeftMouse> in the infoview to select expressions in the goal.
         ]]
       end)
     )
@@ -95,7 +95,7 @@ describe('ProofWidgets widgets', function()
           _h : 2 + 2 = 5
           ⊢ 2 + 2 = 4
 
-          Nothing selected. You can use gK in the infoview to select expressions in the goal.
+          Nothing selected. You can use gK or <C-LeftMouse> in the infoview to select expressions in the goal.
         ]]
 
         infoview.go_to()
@@ -152,7 +152,7 @@ describe('ProofWidgets widgets', function()
           _h : 2 + 2 = 5
           ⊢ 2 + 2 = 4
 
-          Nothing selected. You can use gK in the infoview to select expressions in the goal.
+          Nothing selected. You can use gK or <C-LeftMouse> in the infoview to select expressions in the goal.
         ]]
       end)
     )
@@ -277,7 +277,7 @@ describe('ProofWidgets widgets', function()
             _h : True
             ⊢ True
 
-            Nothing selected. You can use gK in the infoview to select expressions in the goal.
+            Nothing selected. You can use gK or <C-LeftMouse> in the infoview to select expressions in the goal.
           ]]
 
           infoview.go_to()
