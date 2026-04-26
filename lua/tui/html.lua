@@ -321,17 +321,8 @@ function html.Tag.svg(value)
 end
 
 ---Render preformatted text as a block element.
----
----Keeps a trailing newline since `<pre>` may be followed by inline
----content within the same parent (e.g. `<span><pre>…</pre>text</span>`).
 function html.Tag.pre(children)
-  return Element:new {
-    is_block = true,
-    children = {
-      Element:new { children = children },
-      Element.text '\n',
-    },
-  }
+  return Element:new { is_block = true, children = children }
 end
 
 ---Apply a single CSS property to a Neovim highlight attribute table.

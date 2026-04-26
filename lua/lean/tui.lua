@@ -418,6 +418,12 @@ function Element:render_lines(renderer)
   -- on the current line, implementing CSS-like margin collapsing.
   local has_content = false
 
+  -- Set when a block element finishes rendering content; the next non-empty
+  -- content (block or inline) starts on a new line.  Pure-whitespace text
+  -- between block siblings is dropped without flushing, matching how
+  -- browsers strip whitespace at block boundaries.
+  local pending_block_break = false
+
   -- Stack of active line prefixes (e.g. blockquote bars).
   local prefix_stack = {}
 
@@ -451,7 +457,7 @@ function Element:render_lines(renderer)
 
     -- Block elements start on a new line when following content,
     -- but collapse when already at a block boundary.
-    if element.is_block and has_content then
+    if element.is_block and (has_content or pending_block_break) then
       width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
       line_idx = line_idx + 1
       lines[line_idx] = ''
@@ -459,6 +465,16 @@ function Element:render_lines(renderer)
       has_content = false
       apply_prefixes()
     end
+    -- Entering a block consumes any pending break — the block's own
+    -- preceding-newline behavior covers it.
+    if element.is_block then
+      pending_block_break = false
+    end
+
+    -- Snapshot position so we can tell whether this element rendered
+    -- anything (used to decide whether a closing block sets a pending break).
+    local pre_render_line = line_idx
+    local pre_render_col = col
 
     -- Push a line prefix (e.g. blockquote `│ `).
     local has_prefix = element.line_prefix ~= nil
@@ -481,6 +497,25 @@ function Element:render_lines(renderer)
     local start_pos = { line_idx - 1, col }
 
     local text = element.text
+    if text ~= '' and pending_block_break then
+      if text:match '^%s*$' then
+        -- Whitespace-only text between block siblings is decorative
+        -- (source-formatting indentation).  Drop it without flushing so
+        -- the pending break still applies to whatever comes next.
+        text = ''
+      else
+        -- Real content arrives after a block: flush the deferred newline
+        -- and strip leading whitespace, matching CSS at a block boundary.
+        width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
+        line_idx = line_idx + 1
+        lines[line_idx] = ''
+        col = 0
+        has_content = false
+        apply_prefixes()
+        pending_block_break = false
+        text = text:gsub('^%s+', '')
+      end
+    end
     if text ~= '' then
       local pos = 1
       while pos <= #text do
@@ -528,6 +563,13 @@ function Element:render_lines(renderer)
     -- Pop line prefix when leaving the element.
     if has_prefix then
       table.remove(prefix_stack)
+    end
+
+    -- A block that actually rendered something defers a newline so the
+    -- next sibling (block or inline) starts on its own line.  Empty
+    -- blocks contribute no break.
+    if element.is_block and (line_idx ~= pre_render_line or col ~= pre_render_col) then
+      pending_block_break = true
     end
   end
 

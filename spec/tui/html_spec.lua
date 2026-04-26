@@ -63,6 +63,37 @@ describe('tui.html', function()
       local el = Tag.div { Tag.p { Element:new { text = 'nested' } } }
       assert.is.equal('nested', el:to_string())
     end)
+
+    it('forces inline siblings onto a new line', function()
+      local el = Element:new {
+        children = {
+          Tag.p { Element:new { text = 'block' } },
+          Tag.span { Element:new { text = 'after' } },
+        },
+      }
+      assert.is.equal('block\nafter', el:to_string())
+    end)
+
+    it('drops whitespace-only text between block siblings', function()
+      local el = Element:new {
+        children = {
+          Tag.p { Element:new { text = 'first' } },
+          Element:new { text = ' ' },
+          Tag.p { Element:new { text = 'second' } },
+        },
+      }
+      assert.is.equal('first\nsecond', el:to_string())
+    end)
+
+    it('strips leading whitespace from inline text following a block', function()
+      local el = Element:new {
+        children = {
+          Tag.p { Element:new { text = 'block' } },
+          Element:new { text = ' more text' },
+        },
+      }
+      assert.is.equal('block\nmore text', el:to_string())
+    end)
   end)
 
   describe('<br>', function()
