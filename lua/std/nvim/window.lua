@@ -97,6 +97,17 @@ function Window:float(opts)
   return open_float(opts or {}, { relative = 'win', win = self.id })
 end
 
+---Open a `Modal` anchored to this window.
+---
+---Spells `Modal.open { relative_to = self, ... }`. Required lazily so
+---`std.nvim.window` doesn't pull in `tui.modal` at load time.
+---@param opts? ModalOpts
+---@return Modal
+function Window:modal(opts)
+  opts = vim.tbl_extend('error', { relative_to = self }, opts or {})
+  return require('tui.modal').open(opts)
+end
+
 ---Return the window's current cursor position.
 ---
 ---(1, 0)-indexed, like `nvim_win_get_cursor()`.
