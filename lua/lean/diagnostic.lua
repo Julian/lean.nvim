@@ -64,10 +64,10 @@ local diagnostic = {
   ---
   ---Prioritizes `fullRange`, which is the "real" range of the diagnostic, not
   ---the `range`, which clips to just its first line.
-  ---@param diagnostic DiagnosticWith<any>
+  ---@param diag DiagnosticWith<any>
   ---@return lsp.Range range
-  range_of = function(diagnostic)
-    return diagnostic.fullRange or diagnostic.range
+  range_of = function(diag)
+    return diag.fullRange or diag.range
   end,
 }
 

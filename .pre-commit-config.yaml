@@ -18,7 +18,6 @@ repos:
     rev: v2.4.1
     hooks:
       - id: stylua
-        exclude: lua/lean/tui.lua
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.22.0
     hooks:

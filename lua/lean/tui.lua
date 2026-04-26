@@ -201,21 +201,20 @@ function Element:concat(elements, sep, opts)
     vim.validate('opts', opts, 'nil')
     return
   elseif #elements == 1 then
-    return opts
-      and self:new(vim.tbl_extend('error', opts, { children = { elements[1] } }))
+    return opts and self:new(vim.tbl_extend('error', opts, { children = { elements[1] } }))
       or elements[1]
   end
 
-  return self:new(
-    vim.tbl_extend('error', opts or {}, {
-      children = vim.iter(elements):fold(nil, function(acc, k)
-        if not acc then return { k } end
-        table.insert(acc, Element:new { text = sep })
-        table.insert(acc, k)
-        return acc
-      end)
-    })
-  )
+  return self:new(vim.tbl_extend('error', opts or {}, {
+    children = vim.iter(elements):fold(nil, function(acc, k)
+      if not acc then
+        return { k }
+      end
+      table.insert(acc, Element:new { text = sep })
+      table.insert(acc, k)
+      return acc
+    end),
+  }))
 end
 
 ---@generic T
@@ -252,7 +251,7 @@ function Element.select(choices, opts, on_choice)
   return Element:new {
     children = {
       selected,
-      Element:new { text =  ' ▾' },
+      Element:new { text = ' ▾' },
     },
     highlightable = true,
     hlgroups = { 'widgetSelect' },
@@ -575,7 +574,13 @@ function Element:render_lines(renderer)
   go(self)
   width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
 
-  return { lines = lines, highlights = highlights, width = width, height = line_idx, positions = positions }
+  return {
+    lines = lines,
+    highlights = highlights,
+    width = width,
+    height = line_idx,
+    positions = positions,
+  }
 end
 
 ---Represents a node in a path through an element.
@@ -611,8 +616,6 @@ function Element:div_from_path(path)
   return stack, self
 end
 
-
-
 ---Find the innermost element along a path satisfying a predicate.
 ---@param path PathNode[]
 ---@param check fun(_, element:Element):any
@@ -637,8 +640,6 @@ end
 function Element:children()
   return vim.iter(self.__children)
 end
-
-
 
 ---Trigger the given event at the given path
 ---@param path PathNode[] the path to trigger the event at
@@ -711,7 +712,9 @@ end
 ---@return string
 local function event_plug_name(event)
   local pascal = event
-    :gsub('(%a)([^_]*)', function(a, b) return a:upper() .. b end)
+    :gsub('(%a)([^_]*)', function(a, b)
+      return a:upper() .. b
+    end)
     :gsub('_', '')
   return ('<Plug>(LeanInfoview%s)'):format(pascal)
 end
@@ -749,7 +752,7 @@ function BufRenderer:new(obj)
   buf.keymaps:set(
     'n',
     '<Plug>(LeanAbbreviationsReverseLookup)',
-    require'lean.abbreviations'.show_reverse_lookup,
+    require('lean.abbreviations').show_reverse_lookup,
     { desc = 'Show how to type the unicode character under the cursor.' }
   )
 
@@ -823,17 +826,30 @@ function BufRenderer:new(obj)
   buf.keymaps:set('n', '<Plug>(LeanInfoviewMouseSelect)', function()
     dispatch_mouse 'select'
   end, { desc = 'Fire a select event at the mouse position.' })
-  buf.keymaps:set('n', '<LeftMouse>', '<Plug>(LeanInfoviewMouseClick)',
-    { remap = true, desc = 'Click on the element under the mouse.' })
-  buf.keymaps:set('n', '<C-LeftMouse>', '<Plug>(LeanInfoviewMouseSelect)',
-    { remap = true, desc = 'Select the element under the mouse.' })
+  buf.keymaps:set(
+    'n',
+    '<LeftMouse>',
+    '<Plug>(LeanInfoviewMouseClick)',
+    { remap = true, desc = 'Click on the element under the mouse.' }
+  )
+  buf.keymaps:set(
+    'n',
+    '<C-LeftMouse>',
+    '<Plug>(LeanInfoviewMouseSelect)',
+    { remap = true, desc = 'Select the element under the mouse.' }
+  )
 
   for key, event in pairs(obj.keymaps or {}) do
-    local rhs = element_event_set[event] and event_plug_name(event) or function()
-      new_renderer:event(event)
-    end
-    buf.keymaps:set('n', key, rhs,
-      { remap = element_event_set[event], desc = ('Fire a %s event.'):format(event) })
+    local rhs = element_event_set[event] and event_plug_name(event)
+      or function()
+        new_renderer:event(event)
+      end
+    buf.keymaps:set(
+      'n',
+      key,
+      rhs,
+      { remap = element_event_set[event], desc = ('Fire a %s event.'):format(event) }
+    )
   end
 
   return new_renderer
@@ -952,7 +968,7 @@ function OverlayState:render()
     return
   end
 
-  local config = require('lean.config')()
+  local config = require 'lean.config'()
   if config.graphics.enabled == false then
     return
   end
@@ -1081,10 +1097,12 @@ function BufRenderer:render()
       self.path = nil
     elseif self:last_window_valid() then
       local position = self.path[#self.path].position
-      local pos = (position
+      local pos = (
+        position
         and not pos_before(position, ep.start_pos)
-        and pos_before(position, ep.end_pos))
-        and position
+        and pos_before(position, ep.end_pos)
+      )
+          and position
         or ep.start_pos
       self.last_window:set_cursor { pos[1] + 1, pos[2] }
     end
@@ -1229,7 +1247,7 @@ function BufRenderer:hover(force_update_highlight)
       self.tooltip.last_window = self.last_window:float {
         buffer = self.tooltip.buffer,
         enter = false,
-        noautocmd = true,  -- avoid firing update_cursor by disabling the autocmds
+        noautocmd = true, -- avoid firing update_cursor by disabling the autocmds
         style = 'minimal',
         width = self.tooltip.width,
         height = self.tooltip.height,
@@ -1251,7 +1269,13 @@ function BufRenderer:hover(force_update_highlight)
     self.buffer:clear_namespace(self.__hl_ns)
     local hlgroup = 'widgetElementHighlight'
     if self.hover_range then
-      vim.hl.range(self.buffer.bufnr, self.__hl_ns, hlgroup, self.hover_range[1], self.hover_range[2])
+      vim.hl.range(
+        self.buffer.bufnr,
+        self.__hl_ns,
+        hlgroup,
+        self.hover_range[1],
+        self.hover_range[2]
+      )
     end
   end
 end
@@ -1319,10 +1343,7 @@ function BufRenderer:pos_from_path(path)
 
   -- Use the stored cursor position if it's still within the element's range.
   local position = path[#path].position
-  if position
-    and not pos_before(position, ep.start_pos)
-    and pos_before(position, ep.end_pos)
-  then
+  if position and not pos_before(position, ep.start_pos) and pos_before(position, ep.end_pos) then
     return position
   end
 
@@ -1343,37 +1364,42 @@ function BufRenderer:path_from_pos(pos)
   local path = { { idx = 0, name = element.name } }
   local stack = { element }
 
-  ::next::
-  local ep = positions[element]
-  if not ep then
-    return nil
-  end
-
-  -- Where does this element's own text end (i.e. where do children begin)?
-  local first_child = element.__children[1]
-  local text_end = first_child and positions[first_child].start_pos or ep.end_pos
-
-  -- Is pos within this element's own text?
-  if pos_before(pos, text_end) then
-    path[#path].position = pos
-    return path, stack
-  end
-
-  -- Find which child contains pos.
-  for idx, child in ipairs(element.__children) do
-    local cp = positions[child]
-    if not cp then
+  while true do
+    local ep = positions[element]
+    if not ep then
       return nil
     end
-    if pos_before(pos, cp.end_pos) then
-      table.insert(path, { idx = idx, name = child.name })
-      table.insert(stack, child)
-      element = child
-      goto next
+
+    -- Where does this element's own text end (i.e. where do children begin)?
+    local first_child = element.__children[1]
+    local text_end = first_child and positions[first_child].start_pos or ep.end_pos
+
+    -- Is pos within this element's own text?
+    if pos_before(pos, text_end) then
+      path[#path].position = pos
+      return path, stack
+    end
+
+    -- Find which child contains pos.
+    local descended = false
+    for idx, child in ipairs(element.__children) do
+      local cp = positions[child]
+      if not cp then
+        return nil
+      end
+      if pos_before(pos, cp.end_pos) then
+        table.insert(path, { idx = idx, name = child.name })
+        table.insert(stack, child)
+        element = child
+        descended = true
+        break
+      end
+    end
+
+    if not descended then
+      return nil
     end
   end
-
-  return nil
 end
 
 ---Convert an element path to a (1,0)-indexed buffer position.
@@ -1415,7 +1441,9 @@ local function select_many(choices, opts, on_choices)
   -- though the PR is essentially stale/abandoned.
   opts = vim.tbl_extend('keep', opts or {}, {
     format_item = tostring,
-    start_selected = function(_) return true end,
+    start_selected = function(_)
+      return true
+    end,
     title = 'Select one or more of:',
   })
 
@@ -1424,7 +1452,7 @@ local function select_many(choices, opts, on_choices)
     style = 'minimal',
     border = 'rounded',
     title = opts.title,
-    footer =  '<Tab>: toggle, <CR>: confirm, <Esc>: cancel',
+    footer = '<Tab>: toggle, <CR>: confirm, <Esc>: cancel',
     footer_pos = 'center',
     bufpos = { 100, 10 },
     width = 50,
@@ -1446,35 +1474,38 @@ local function select_many(choices, opts, on_choices)
 
   local element = Element:new {
     text = '\n',
-    children = vim.iter(ipairs(choices)):map(function(i, choice)
-      local self
-      self = Element:new {
-        text = totext(selected[i], choice),
-        events = {
-          click = function(ctx)
-            -- TODO: This seems like maybe it could/should be a default handler
-            --       in our TUI framework for when we have tooltips to show?
-            if self.tooltip then
-              self:remove_tooltip()
-            elseif opts.tooltip_for then
-              local tooltip_text = opts.tooltip_for(choice)
-              self:add_tooltip(Element.noop(tooltip_text))
-            end
-            ctx.rehover()
-          end,
-          toggle = function(ctx)
-            selected[i] = not selected[i]
-            self.text = totext(selected[i], choice)
-            ctx.rerender()
-          end,
-        },
-        keymaps = {
-          ['K'] = 'click',
-          ['<Tab>'] = 'toggle',
+    children = vim
+      .iter(ipairs(choices))
+      :map(function(i, choice)
+        local self
+        self = Element:new {
+          text = totext(selected[i], choice),
+          events = {
+            click = function(ctx)
+              -- TODO: This seems like maybe it could/should be a default handler
+              --       in our TUI framework for when we have tooltips to show?
+              if self.tooltip then
+                self:remove_tooltip()
+              elseif opts.tooltip_for then
+                local tooltip_text = opts.tooltip_for(choice)
+                self:add_tooltip(Element.noop(tooltip_text))
+              end
+              ctx.rehover()
+            end,
+            toggle = function(ctx)
+              selected[i] = not selected[i]
+              self.text = totext(selected[i], choice)
+              ctx.rerender()
+            end,
+          },
+          keymaps = {
+            ['K'] = 'click',
+            ['<Tab>'] = 'toggle',
+          },
         }
-      }
-      return self
-    end):totable(),
+        return self
+      end)
+      :totable(),
 
     events = {
       make_selection = function(_)
@@ -1500,7 +1531,7 @@ local function select_many(choices, opts, on_choices)
       ['<Tab>'] = 'toggle',
       ['<CR>'] = 'make_selection',
       ['<Esc>'] = 'clear',
-    }
+    },
   }
   renderer:render()
   modal:attach(renderer):dismiss_on_leave()
@@ -1513,7 +1544,7 @@ local function select_many(choices, opts, on_choices)
   modal.window:set_cursor { start_line, first_column }
 
   modal.buffer:create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-    callback = function()  -- clip the cursor to the real editable region
+    callback = function() -- clip the cursor to the real editable region
       local row, column = unpack(modal.window:cursor())
       row = math.max(math.min(row, end_line), start_line)
       column = math.max(column, first_column)
