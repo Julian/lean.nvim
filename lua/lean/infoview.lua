@@ -6,20 +6,14 @@
 ---@brief ]]
 
 local Buffer = require 'std.nvim.buffer'
-local Histogram = require 'std.histogram'
-local Ringbuf = require 'std.ringbuf'
 local Stopwatch = require 'std.stopwatch'
 local Window = require 'std.nvim.window'
 local async = require 'std.async'
-local humanize = require 'std.humanize'
 local throttle = require 'std.throttle'
 local byte_col_to_utf16 = require('std.lsp').byte_col_to_utf16
 
-local Graphic = require 'tui.graphic'
-local Table = require 'tui.table'
-local percentile_distribution = require('tui.plot').percentile_distribution
-
 local Element = require('lean.tui').Element
+local Instrumentation = require 'lean.infoview.instrumentation'
 local Locations = require 'lean.infoview.locations'
 local components = require 'lean.infoview.components'
 local interactive_goal = require 'lean.widget.interactive_goal'
@@ -147,14 +141,6 @@ local FOCUS_AUGROUP = vim.api.nvim_create_augroup('LeanInfoviewFocus', {})
 ---@field show_term_goals boolean show expected types?
 ---@field reverse boolean order hypotheses bottom-to-top
 
----A single refresh timing record stored in the pin's history ring buffer.
----@class PinRefreshRecord
----@field timing table<string, integer> phase durations from the stopwatch (dotted paths)
----@field uri string the document URI this refresh was for
----@field stale boolean whether this update was discarded as stale
-
-local REFRESH_HISTORY_SIZE = 128
-
 ---An individual pin.
 ---@class Pin
 ---@field id string a label to identify the pin
@@ -170,11 +156,12 @@ local REFRESH_HISTORY_SIZE = 128
 ---@field private __infoview Infoview
 ---@field private __renderer BufRenderer
 ---@field private __request_update fun(pin: Pin)
----@field private __refresh_history std.Ringbuf<PinRefreshRecord>
----@field private __histogram std.Histogram
+---@field private __instrumentation PinInstrumentation
 ---@field private __debug? BufRenderer
 ---@field private __debug_autocmd? integer
 ---@field private __debug_expanded table<string, boolean>
+---@field private __debug_active_tab integer index of the currently selected debug tab
+---@field private __debug_timer? uv.uv_timer_t periodic redraw timer for live charts
 local Pin = { __extmark_ns = vim.api.nvim_create_namespace 'lean.pins' }
 Pin.__index = Pin
 
@@ -1025,193 +1012,6 @@ function Infoview:__close_diff()
   self:__resize_windows()
 end
 
-vim.api.nvim_set_hl(0, 'leanDebugTimingTrivial', { default = true, link = 'Comment' })
-vim.api.nvim_set_hl(0, 'leanDebugTimingDominant', { default = true, link = 'DiagnosticWarn' })
-
----Format a duration as an Element, dimmed if trivial relative to a total.
----@param ns number the phase duration
----@param total? number the reference total (omit to skip relative coloring)
----@return Element
-local function duration_element(ns, total)
-  local formatted = humanize.duration(ns)
-  if total and total > 0 then
-    local fraction = ns / total
-    if fraction < 0.05 then
-      return Element:new { text = formatted, hlgroups = { 'leanDebugTimingTrivial' } }
-    elseif fraction > 0.7 then
-      return Element:new { text = formatted, hlgroups = { 'leanDebugTimingDominant' } }
-    end
-  end
-  return Element.text(formatted)
-end
-
----Split a list of {name, ns} entries into significant and trivial
----based on a 1% threshold relative to the reference value.
----@param phases { name: string, ns: number }[]
----@param reference number
----@return { name: string, ns: number }[] significant
----@return { name: string, ns: number }[] trivial
-local function partition_phases(phases, reference)
-  local threshold = reference * 0.01
-  local significant, trivial = {}, {}
-  for _, entry in ipairs(phases) do
-    if entry.ns >= threshold then
-      table.insert(significant, entry)
-    else
-      table.insert(trivial, entry)
-    end
-  end
-  return significant, trivial
-end
-
----Build a debug Element summarizing recent refresh timings for a pin.
----@param pin Pin
----@param expanded table<string, boolean> tracks which phases are expanded across rebuilds
----@param histogram std.Histogram
----@return Element
-local function debug_timing_element(pin, expanded, histogram)
-  local records = pin.__refresh_history:items()
-  local latest = records[#records]
-  local children = {}
-
-  -- Last refresh table: top-level phases are rows, phases with
-  -- children (like content) become foldable rows.
-  local total_ns = latest.timing.total
-  local top_phases = {}
-  local sub_phase_data = {}
-  for phase, ns in vim.spairs(latest.timing) do
-    local dot = phase:find('.', 1, true)
-    if dot then
-      local parent = phase:sub(1, dot - 1)
-      sub_phase_data[parent] = sub_phase_data[parent] or {}
-      table.insert(sub_phase_data[parent], { name = phase:sub(dot + 1), ns = ns })
-    else
-      table.insert(top_phases, { name = phase, ns = ns })
-    end
-  end
-
-  local detail_rows = {}
-  local significant_top, trivial_top = partition_phases(top_phases, total_ns)
-  for _, entry in ipairs(significant_top) do
-    local subs = sub_phase_data[entry.name]
-    -- Color phases relative to total, but not total itself.
-    local reference = entry.name ~= 'total' and total_ns or nil
-    if subs then
-      local sig_subs, triv_subs = partition_phases(subs, entry.ns)
-      local child_rows = {}
-      for _, sub in ipairs(sig_subs) do
-        table.insert(
-          child_rows,
-          Table.row { Element.text(sub.name), duration_element(sub.ns, entry.ns) }
-        )
-      end
-      if #triv_subs > 0 then
-        local triv_rows = {}
-        for _, sub in ipairs(triv_subs) do
-          table.insert(
-            triv_rows,
-            Table.row { Element.text(sub.name), duration_element(sub.ns, entry.ns) }
-          )
-        end
-        table.insert(
-          child_rows,
-          Table.foldable {
-            cells = {
-              Element:new {
-                text = ('%d trivial'):format(#triv_subs),
-                hlgroups = { 'leanDebugTimingTrivial' },
-              },
-              Element.text '',
-            },
-            children = triv_rows,
-          }
-        )
-      end
-      local phase_name = entry.name
-      local function track_expanded()
-        expanded[phase_name] = not expanded[phase_name]
-      end
-      table.insert(
-        detail_rows,
-        Table.foldable {
-          cells = { Element.text(phase_name), duration_element(entry.ns, reference) },
-          children = child_rows,
-          open = expanded[phase_name],
-          on_open = track_expanded,
-          on_close = track_expanded,
-        }
-      )
-    else
-      table.insert(
-        detail_rows,
-        Table.row { Element.text(entry.name), duration_element(entry.ns, reference) }
-      )
-    end
-  end
-  if #trivial_top > 0 then
-    local triv_rows = {}
-    for _, entry in ipairs(trivial_top) do
-      table.insert(triv_rows, Table.row { Element.text(entry.name), duration_element(entry.ns) })
-    end
-    table.insert(
-      detail_rows,
-      Table.foldable {
-        cells = {
-          Element:new {
-            text = ('%d trivial'):format(#trivial_top),
-            hlgroups = { 'leanDebugTimingTrivial' },
-          },
-          Element.text '',
-        },
-        children = triv_rows,
-      }
-    )
-  end
-  if latest.stale then
-    table.insert(detail_rows, Table.row { Element.text '(stale)', Element.text '—' })
-  end
-
-  local params = pin.__position_params
-  local position = params
-      and position_to_string(
-        Buffer:from_uri(params.textDocument.uri),
-        { params.position.line, params.position.character }
-      )
-    or '(unknown)'
-  table.insert(children, Element.text(('Last refresh at %s'):format(position)))
-  table.insert(children, Table.render(detail_rows))
-
-  -- Aggregate stats from the histogram (never loses data).
-  local count = histogram:count()
-
-  local summary_rows = {
-    Table.row { Element.text 'min', duration_element(histogram:min()) },
-    Table.row { Element.text 'p50', duration_element(histogram:value_at_quantile(50)) },
-    Table.row { Element.text 'p90', duration_element(histogram:value_at_quantile(90)) },
-    Table.row { Element.text 'p99', duration_element(histogram:value_at_quantile(99)) },
-    Table.row { Element.text 'p99.9', duration_element(histogram:value_at_quantile(99.9)) },
-    Table.row { Element.text 'max', duration_element(histogram:max()) },
-  }
-
-  table.insert(children, Element.EMPTY)
-  table.insert(children, Element.text(('Aggregate (%d refreshes)'):format(count)))
-
-  -- Plot the percentile curve when kitty is available, otherwise show a table.
-  local win = pin.window
-  table.insert(
-    children,
-    Graphic(function()
-      return percentile_distribution(histogram, {
-        columns = win and win:width(),
-      })
-    end, function()
-      return Table.render(summary_rows)
-    end)
-  )
-
-  return Element:concat(children, '\n')
-end
-
 ---Close this infoview.
 function Infoview:close()
   if not self.window then
@@ -1451,8 +1251,7 @@ function Pin:new(obj)
       __infoview = obj.infoview,
       __renderer = pin_renderer,
       __tick = 0,
-      __refresh_history = Ringbuf:new(REFRESH_HISTORY_SIZE),
-      __histogram = Histogram:new(),
+      __instrumentation = Instrumentation:new(),
       buffer = pin_buffer,
     }),
     self
@@ -1522,6 +1321,7 @@ function Pin:__open_debug()
     local element = Element:new { name = 'debug-timing' }
     self.__debug = element:renderer { buffer = buffer, keymaps = options.mappings }
     self.__debug_expanded = {}
+    self.__debug_active_tab = self.__debug_active_tab or 1
   end
 
   -- Open the window if not already visible (must happen before
@@ -1548,32 +1348,69 @@ function Pin:__open_debug()
           vim.api.nvim_del_autocmd(pin.__debug_autocmd)
           pin.__debug_autocmd = nil
         end
+        if pin.__debug_timer then
+          pin.__debug_timer:stop()
+          pin.__debug_timer:close()
+          pin.__debug_timer = nil
+        end
       end,
     })
   end
 
+  local function build_debug_element()
+    local params = self.__position_params
+    local position = params
+        and position_to_string(
+          Buffer:from_uri(params.textDocument.uri),
+          { params.position.line, params.position.character }
+        )
+      or '(unknown)'
+    return self.__instrumentation:debug_element {
+      expanded = self.__debug_expanded,
+      active_tab = self.__debug_active_tab,
+      on_tab_change = function(i)
+        self.__debug_active_tab = i
+      end,
+      position = position,
+      text_columns = self.window and self.window:text_width(),
+    }
+  end
+
   -- Render current state.
-  self.__debug.element:set_children {
-    debug_timing_element(self, self.__debug_expanded, self.__histogram),
-  }
+  self.__debug.element:set_children { build_debug_element() }
   self.__debug:render()
 
-  -- Listen for future refreshes (idempotent).
-  if self.__debug_autocmd then
-    return
+  -- Re-render either on refresh or on a periodic tick so the time-based
+  -- charts (refresh-rate wave) keep sliding even when nothing is happening.
+  -- Skip while the user has a visual selection so we don't yank the
+  -- selection out from under them as the buffer rewrites.
+  local function rerender()
+    if not self.__debug or not self:__debug_window() then
+      return
+    end
+    -- Skip while the user has any kind of selection (visual or select mode)
+    -- so we don't yank the selection out from under them as we rewrite the
+    -- buffer.
+    if vim.fn.mode():match '^[vV\22sS\19]' then
+      return
+    end
+    self.__debug.element:set_children { build_debug_element() }
+    self.__debug:render()
   end
-  self.__debug_autocmd = vim.api.nvim_create_autocmd('User', {
-    pattern = 'LeanPinRefreshed',
-    callback = function()
-      if not self.__debug or not self:__debug_window() then
-        return
-      end
-      self.__debug.element:set_children {
-        debug_timing_element(self, self.__debug_expanded, self.__histogram),
-      }
-      self.__debug:render()
-    end,
-  })
+
+  -- Listen for future refreshes (idempotent).
+  if not self.__debug_autocmd then
+    self.__debug_autocmd = vim.api.nvim_create_autocmd('User', {
+      pattern = 'LeanPinRefreshed',
+      callback = rerender,
+    })
+  end
+
+  -- Periodic redraw so the time-bucketed chart slides smoothly.
+  if not self.__debug_timer then
+    self.__debug_timer = vim.uv.new_timer()
+    self.__debug_timer:start(250, 250, vim.schedule_wrap(rerender))
+  end
 end
 
 ---Close this pin's window if it has one.
@@ -1930,7 +1767,7 @@ function Pin:update()
       return
     end
 
-    local sw = self.__histogram:stopwatch()
+    local sw = self.__instrumentation:stopwatch()
     local uri = params.textDocument.uri
 
     sw:open 'setup'
@@ -1952,11 +1789,7 @@ function Pin:update()
     end
 
     if self.__tick ~= tick or not self.__infoview then
-      self.__refresh_history:push {
-        timing = sw:finish(),
-        uri = uri,
-        stale = true,
-      }
+      self.__instrumentation:record(sw:finish(), uri, true)
       vim.api.nvim_exec_autocmds('User', { pattern = 'LeanPinRefreshed' })
       return
     end
@@ -1969,11 +1802,7 @@ function Pin:update()
 
     sw:time('render', self.render, self)
 
-    self.__refresh_history:push {
-      timing = sw:finish(),
-      uri = uri,
-      stale = false,
-    }
+    self.__instrumentation:record(sw:finish(), uri, false)
 
     vim.api.nvim_exec_autocmds('User', { pattern = 'LeanPinRefreshed' })
 
