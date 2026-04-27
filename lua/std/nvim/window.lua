@@ -152,6 +152,14 @@ function Window:width()
   return vim.api.nvim_win_get_width(self.id)
 end
 
+---Return the width of the window's text area: total width minus any
+---gutters (signcolumn, foldcolumn, line numbers). This is what a single
+---unwrapped line of text can use without overflowing.
+---@return integer
+function Window:text_width()
+  return self:width() - vim.fn.getwininfo(self.id)[1].textoff
+end
+
 ---Set the window's width.
 ---@param width integer
 function Window:set_width(width)

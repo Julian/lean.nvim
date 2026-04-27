@@ -394,6 +394,42 @@ describe('Window', function()
         window:close()
       end)
     end)
+
+    describe('text_width', function()
+      it('equals width when there are no gutters', function()
+        local window = Window:split()
+        window.o.signcolumn = 'no'
+        window.o.foldcolumn = '0'
+        window.o.number = false
+        window.o.relativenumber = false
+        assert.are.same(window:width(), window:text_width())
+        window:close()
+      end)
+
+      it('subtracts a number column', function()
+        local window = Window:split()
+        window.o.signcolumn = 'no'
+        window.o.foldcolumn = '0'
+        window.o.relativenumber = false
+        window.o.number = false
+        local without = window:text_width()
+        window.o.number = true
+        assert.is_true(window:text_width() < without)
+        window:close()
+      end)
+
+      it('subtracts the signcolumn', function()
+        local window = Window:split()
+        window.o.signcolumn = 'no'
+        window.o.foldcolumn = '0'
+        window.o.number = false
+        window.o.relativenumber = false
+        local without = window:text_width()
+        window.o.signcolumn = 'yes:2'
+        assert.is_true(window:text_width() < without)
+        window:close()
+      end)
+    end)
   end)
 
   describe('call', function()
