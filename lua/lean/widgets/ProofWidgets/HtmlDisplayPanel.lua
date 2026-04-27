@@ -9,6 +9,6 @@ return function(ctx, props)
   return Element:foldable {
     title = Element.title 'HTML Display',
     body = { Html(props.html, ctx) },
-    margin = 1,
+    gap = 1,
   }
 end

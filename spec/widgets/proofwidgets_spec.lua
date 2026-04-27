@@ -247,6 +247,7 @@ describe('ProofWidgets widgets', function()
           hello
             indented
               world
+
           hello indented world
         ]]
       end,

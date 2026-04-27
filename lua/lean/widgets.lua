@@ -97,7 +97,7 @@ function RenderContext:rpc_call(method, params)
     return nil,
       Element:titled {
         title = Element.title('RPC Error: ' .. kind, 'ErrorMsg'),
-        margin = 1,
+        gap = 1,
         body = { Element:new { text = err.message } },
       }
   end

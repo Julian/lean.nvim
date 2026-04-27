@@ -60,7 +60,7 @@ local function render_details(self, value, ctx, opts)
     },
     body = body_elements,
     open = initially_open,
-    margin = 1,
+    gap = 1,
   }
 end
 
@@ -235,10 +235,18 @@ local Html = inductive('Html', {
     if tag == 'svg' then
       result = Tag.svg(value)
     elseif tag == 'details' then
-      result = render_details(self, value, ctx, opts)
+      result = Element:new {
+        is_block = true,
+        margin = 1,
+        children = { render_details(self, value, ctx, opts) },
+      }
     elseif tag == 'table' then
       local rows = collect_table_rows(self, children, ctx, opts)
-      result = Table.render(rows)
+      result = Element:new {
+        is_block = true,
+        margin = 1,
+        children = { Table.render(rows) },
+      }
     else
       if tag == 'pre' then
         opts = vim.tbl_extend('force', opts or {}, { in_pre = true })

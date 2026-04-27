@@ -93,7 +93,7 @@ function Table.foldable(opts)
           open = opts.open or false,
           on_open = opts.on_open,
           on_close = opts.on_close,
-          margin = 0,
+          gap = 0,
         },
       }
     end,

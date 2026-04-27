@@ -20,7 +20,7 @@ return function(ctx, props)
 
   return Element:foldable {
     title = Element.title 'Diagram',
-    margin = 1,
+    gap = 1,
     body = { Element:concat(children, '\n') },
   }
 end

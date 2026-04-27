@@ -59,7 +59,7 @@ end
 
 ---Render a `<p>` paragraph as a block element.
 function html.Tag.p(children)
-  return Element:new { is_block = true, children = children }
+  return Element:new { is_block = true, margin = 1, children = children }
 end
 
 ---Render bold text.
@@ -111,6 +111,7 @@ end
 function html.Tag.blockquote(children)
   return Element:new {
     is_block = true,
+    margin = 1,
     line_prefix = { text = '│ ', hlgroup = 'tui.html.blockquote' },
     children = children,
   }
@@ -144,6 +145,7 @@ end
 function html.Tag.hr()
   return Element:new {
     is_block = true,
+    margin = 1,
     text = string.rep('─', 40),
     hlgroups = { 'tui.html.hr' },
   }
@@ -154,6 +156,7 @@ for level = 1, 6 do
   html.Tag['h' .. level] = function(children)
     return Element:new {
       is_block = true,
+      margin = 1,
       hlgroups = { 'tui.html.h' .. level },
       children = children,
     }
@@ -212,6 +215,7 @@ function html.Tag.ul(children, _attrs, opts)
     :totable()
   return Element:new {
     is_block = true,
+    margin = depth == 0 and 1 or 0,
     children = { Element:concat(items, '\n') },
   }
 end
@@ -234,6 +238,7 @@ function html.Tag.ol(children, attrs, opts)
     :totable()
   return Element:new {
     is_block = true,
+    margin = depth == 0 and 1 or 0,
     children = { Element:concat(items, '\n') },
   }
 end
@@ -322,7 +327,7 @@ end
 
 ---Render preformatted text as a block element.
 function html.Tag.pre(children)
-  return Element:new { is_block = true, children = children }
+  return Element:new { is_block = true, margin = 1, children = children }
 end
 
 ---Apply a single CSS property to a Neovim highlight attribute table.

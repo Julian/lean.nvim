@@ -68,7 +68,7 @@ local function render_trace(trace, sess, parent_cls, tagged_text_renderer)
     title = title,
     body = build_body(),
     open = not trace.collapsed,
-    margin = 0,
+    gap = 0,
     on_open = lazy and function(body)
       if not lazy then
         return

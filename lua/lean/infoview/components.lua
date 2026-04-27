@@ -83,7 +83,7 @@ local function wrap_goals(params, goal, children)
       Element:foldable {
         title = Element.title(('%d goals'):format(#goal), 'leanInfoMultipleGoals'),
         body = children,
-        margin = 1,
+        gap = 1,
       },
     }
   end

@@ -29,7 +29,7 @@ return function(ctx, props)
   end)
   return Element:foldable {
     title = Element.title('suggestion:', 'widgetSuggestion'),
-    margin = 1,
+    gap = 1,
     body = blocks:totable(),
   }
 end

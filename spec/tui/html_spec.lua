@@ -56,7 +56,7 @@ describe('tui.html', function()
           Tag.p { Element:new { text = 'block' } },
         },
       }
-      assert.is.equal('before\nblock', el:to_string())
+      assert.is.equal('before\n\nblock', el:to_string())
     end)
 
     it('collapses margins with parent block elements', function()
@@ -71,7 +71,7 @@ describe('tui.html', function()
           Tag.span { Element:new { text = 'after' } },
         },
       }
-      assert.is.equal('block\nafter', el:to_string())
+      assert.is.equal('block\n\nafter', el:to_string())
     end)
 
     it('drops whitespace-only text between block siblings', function()
@@ -82,7 +82,7 @@ describe('tui.html', function()
           Tag.p { Element:new { text = 'second' } },
         },
       }
-      assert.is.equal('first\nsecond', el:to_string())
+      assert.is.equal('first\n\nsecond', el:to_string())
     end)
 
     it('strips leading whitespace from inline text following a block', function()
@@ -92,7 +92,7 @@ describe('tui.html', function()
           Element:new { text = ' more text' },
         },
       }
-      assert.is.equal('block\nmore text', el:to_string())
+      assert.is.equal('block\n\nmore text', el:to_string())
     end)
   end)
 
@@ -465,6 +465,94 @@ describe('tui.html', function()
     it('renders unsupported tags as visible fallback', function()
       local el = Tag.unknown { Element:new { text = 'child' } }
       assert.is.equal('<unknown>child', el:to_string())
+    end)
+  end)
+
+  describe('margin', function()
+    it('puts a blank line between margined siblings', function()
+      local el = Element:new {
+        children = {
+          Tag.h2 { Element:new { text = 'A' } },
+          Tag.h2 { Element:new { text = 'B' } },
+        },
+      }
+      assert.is.equal('A\n\nB', el:to_string())
+    end)
+
+    it('collapses adjacent margins to a single blank line', function()
+      local el = Element:new {
+        children = {
+          Tag.p { Element:new { text = 'A' } },
+          Tag.p { Element:new { text = 'B' } },
+          Tag.p { Element:new { text = 'C' } },
+        },
+      }
+      assert.is.equal('A\n\nB\n\nC', el:to_string())
+    end)
+
+    it('joins a margined block to a non-margined block with one blank line', function()
+      local el = Element:new {
+        children = {
+          Tag.h2 { Element:new { text = 'heading' } },
+          Tag.div { Element:new { text = 'body' } },
+        },
+      }
+      assert.is.equal('heading\n\nbody', el:to_string())
+    end)
+
+    it('joins two non-margined block siblings with no blank line', function()
+      local el = Element:new {
+        children = {
+          Tag.div { Element:new { text = 'A' } },
+          Tag.div { Element:new { text = 'B' } },
+        },
+      }
+      assert.is.equal('A\nB', el:to_string())
+    end)
+
+    it('preserves margin when leaving a non-margined parent', function()
+      local el = Element:new {
+        children = {
+          Tag.div { Tag.h2 { Element:new { text = 'inside' } } },
+          Tag.div { Element:new { text = 'after' } },
+        },
+      }
+      assert.is.equal('inside\n\nafter', el:to_string())
+    end)
+
+    it('puts a blank line before inline text following a margined block', function()
+      local el = Element:new {
+        children = {
+          Tag.h2 { Element:new { text = 'heading' } },
+          Element:new { text = 'tail' },
+        },
+      }
+      assert.is.equal('heading\n\ntail', el:to_string())
+    end)
+
+    it('does not add a leading blank line at the start of content', function()
+      local el = Tag.h2 { Element:new { text = 'first' } }
+      assert.is.equal('first', el:to_string())
+    end)
+
+    it('honors margin > 1 by emitting that many blank lines', function()
+      local el = Element:new {
+        children = {
+          Element:new { is_block = true, margin = 2, text = 'A' },
+          Element:new { is_block = true, margin = 2, text = 'B' },
+        },
+      }
+      assert.is.equal('A\n\n\nB', el:to_string())
+    end)
+
+    it('takes the larger margin when collapsing siblings', function()
+      local el = Element:new {
+        children = {
+          Element:new { is_block = true, margin = 1, text = 'A' },
+          Element:new { is_block = true, margin = 3, text = 'B' },
+        },
+      }
+      assert.is.equal('A\n\n\n\nB', el:to_string())
     end)
   end)
 end)

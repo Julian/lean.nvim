@@ -289,11 +289,11 @@ describe('Element', function()
       )
     end)
 
-    it('supports arbitrary margin', function()
+    it('supports arbitrary gap', function()
       local foo = Element:new { text = 'foo\nbar\n' }
       local element = Element:titled {
         title = Element:new { text = 'stuff' },
-        margin = 3,
+        gap = 3,
         body = { foo },
       }
 
@@ -358,11 +358,11 @@ describe('Element', function()
       )
     end)
 
-    it('supports arbitrary margin lines between title and body', function()
+    it('supports arbitrary gap lines between title and body', function()
       local foo = Element:new { text = 'foo\nbar\n' }
       local element = Element:foldable {
         title = Element:new { text = 'stuff' },
-        margin = 3,
+        gap = 3,
         body = { foo },
       }
 
@@ -461,7 +461,7 @@ describe('Element', function()
       local title = Element:new { text = 'styled', hlgroups = { 'Title' } }
       local foo = Element:new { text = 'body' }
 
-      local element = Element:foldable { title = title, body = { foo }, margin = 0 }
+      local element = Element:foldable { title = title, body = { foo }, gap = 0 }
 
       assert.is.equal('▼ styledbody', element:to_string())
 

@@ -46,7 +46,9 @@ local OverlayState -- defined after BufRenderer
 ---@field hlgroups? string[]|fun():string[]|nil highlight group(s) or a function returning them
 ---@field tooltip? Element? tooltip
 ---@field highlightable boolean (for buffer rendering) highlight this element when hovering
-
+---@field is_block boolean block-level element — starts on a new line when following content
+---@field margin integer extra blank lines above and below this block (CSS-like margin; collapses with adjacent margins)
+---@field line_prefix? LinePrefixSpec text prepended to every line within this element
 ---@field private __children Element[] this element's children
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
 local Element = {}
@@ -84,6 +86,7 @@ BufRenderer.__index = BufRenderer
 ---@field highlightable boolean? (for buffer rendering) highlight this element when hovering
 ---@field children? Element[] this element's children
 ---@field is_block? boolean block-level element — starts on a new line when following content
+---@field margin? integer extra blank lines above and below this block (CSS-like margin; collapses with adjacent margins)
 ---@field line_prefix? LinePrefixSpec text prepended to every line within this element
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
 
@@ -102,6 +105,7 @@ function Element:new(args)
     __async_init = args.__async_init,
     overlay = args.overlay,
     is_block = args.is_block or false,
+    margin = args.margin or 0,
     line_prefix = args.line_prefix,
   }
   return setmetatable(obj, self)
@@ -109,7 +113,7 @@ end
 
 ---@class TitledElementArgs
 ---@field title? Element the title element
----@field margin? integer how many newlines separating the title from body (defaulting to 2)
+---@field gap? integer how many newlines separating the title from body (defaulting to 2)
 ---@field body Element[]?
 
 ---Create an element with a title and optional body contents.
@@ -127,7 +131,7 @@ function Element:titled(opts)
     return opts.title
   end
 
-  local sep = self:new { text = string.rep('\n', opts.margin or 2) }
+  local sep = self:new { text = string.rep('\n', opts.gap or 2) }
   return self:new {
     children = {
       opts.title,
@@ -167,7 +171,7 @@ function Element:foldable(opts)
 
   local function layout()
     if open then
-      return self:titled { title = title_row, body = { body }, margin = opts.margin }
+      return self:titled { title = title_row, body = { body }, gap = opts.gap }
     end
     return title_row
   end
@@ -416,11 +420,14 @@ function Element:render_lines(renderer)
   -- on the current line, implementing CSS-like margin collapsing.
   local has_content = false
 
-  -- Set when a block element finishes rendering content; the next non-empty
-  -- content (block or inline) starts on a new line.  Pure-whitespace text
-  -- between block siblings is dropped without flushing, matching how
-  -- browsers strip whitespace at block boundaries.
-  local pending_block_break = false
+  -- Number of newlines pending before the next non-empty content.  Set when
+  -- a block element finishes rendering: `1 + element.margin` (a plain block
+  -- contributes 1; a block with `margin = N` contributes `1 + N`, leaving
+  -- N blank lines above and below itself, like CSS margin).  Margins between
+  -- adjacent blocks collapse to the larger of the two.  Pure-whitespace text
+  -- between block siblings is dropped without flushing, matching how browsers
+  -- strip whitespace at block boundaries.
+  local pending_break = 0
 
   -- Stack of active line prefixes (e.g. blockquote bars).
   local prefix_stack = {}
@@ -441,6 +448,19 @@ function Element:render_lines(renderer)
     end
   end
 
+  -- Advance `n` lines, finalizing each line's width and reapplying any
+  -- active prefixes (e.g. blockquote bars) to the freshly opened line.
+  local function emit_newlines(n)
+    for _ = 1, n do
+      width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
+      line_idx = line_idx + 1
+      lines[line_idx] = ''
+      col = 0
+      has_content = false
+      apply_prefixes()
+    end
+  end
+
   ---@param element Element
   local function go(element)
     if element.__async_init and renderer then
@@ -453,20 +473,12 @@ function Element:render_lines(renderer)
       element.__async_init = nil -- only run once
     end
 
-    -- Block elements start on a new line when following content,
-    -- but collapse when already at a block boundary.
-    if element.is_block and (has_content or pending_block_break) then
-      width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
-      line_idx = line_idx + 1
-      lines[line_idx] = ''
-      col = 0
-      has_content = false
-      apply_prefixes()
-    end
-    -- Entering a block consumes any pending break — the block's own
-    -- preceding-newline behavior covers it.
-    if element.is_block then
-      pending_block_break = false
+    -- Block elements start on a new line when following content; margined
+    -- blocks add blank line(s) above (collapsing with the previous block's
+    -- pending margin, like CSS).
+    if element.is_block and (has_content or pending_break > 0) then
+      emit_newlines(math.max(pending_break, has_content and 1 or 0, 1 + element.margin))
+      pending_break = 0
     end
 
     -- Snapshot position so we can tell whether this element rendered
@@ -495,22 +507,17 @@ function Element:render_lines(renderer)
     local start_pos = { line_idx - 1, col }
 
     local text = element.text
-    if text ~= '' and pending_block_break then
+    if text ~= '' and pending_break > 0 then
       if text:match '^%s*$' then
         -- Whitespace-only text between block siblings is decorative
         -- (source-formatting indentation).  Drop it without flushing so
         -- the pending break still applies to whatever comes next.
         text = ''
       else
-        -- Real content arrives after a block: flush the deferred newline
+        -- Real content arrives after a block: flush the deferred newline(s)
         -- and strip leading whitespace, matching CSS at a block boundary.
-        width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
-        line_idx = line_idx + 1
-        lines[line_idx] = ''
-        col = 0
-        has_content = false
-        apply_prefixes()
-        pending_block_break = false
+        emit_newlines(pending_break)
+        pending_break = 0
         text = text:gsub('^%s+', '')
       end
     end
@@ -524,12 +531,7 @@ function Element:render_lines(renderer)
           if #chunk > 0 then
             has_content = true
           end
-          width = math.max(width, vim.fn.strdisplaywidth(lines[line_idx]))
-          line_idx = line_idx + 1
-          lines[line_idx] = ''
-          col = 0
-          has_content = false
-          apply_prefixes()
+          emit_newlines(1)
           pos = nl + 1
         else
           local rest = text:sub(pos)
@@ -563,11 +565,14 @@ function Element:render_lines(renderer)
       table.remove(prefix_stack)
     end
 
-    -- A block that actually rendered something defers a newline so the
-    -- next sibling (block or inline) starts on its own line.  Empty
-    -- blocks contribute no break.
+    -- A block that actually rendered something defers newline(s) so the
+    -- next sibling (block or inline) starts on its own line — `1 + margin`
+    -- newlines, leaving `margin` blank lines below.  We take the max with
+    -- the existing pending_break so an inner margined block's margin
+    -- survives leaving a non-margined parent (CSS margin collapse through
+    -- edges).  Empty blocks contribute no break.
     if element.is_block and (line_idx ~= pre_render_line or col ~= pre_render_col) then
-      pending_block_break = true
+      pending_break = math.max(pending_break, 1 + element.margin)
     end
   end
 

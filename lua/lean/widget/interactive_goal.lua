@@ -153,7 +153,7 @@ function interactive_goal.diagnostics(params)
           text = diagnostic.message:gsub('\n$', ''),
         },
       },
-      margin = 0,
+      gap = 0,
     }
   end, lsp_diagnostics({ lnum = params.position.line }, bufnr))
 end
@@ -249,7 +249,7 @@ function interactive_goal.interactive_term_goal(goal, sess, view_options)
         'leanInfoExpectedType'
       ),
       body = { interactive_goal.Goal(goal, sess, nil, view_options) },
-      margin = 1,
+      gap = 1,
     },
   }
 end

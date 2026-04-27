@@ -89,7 +89,7 @@ function plain.term_goal(params)
       Element:foldable {
         title = Element.title(('expected type (%s)'):format(range_to_string(term_goal.range))),
         body = { Element:new { text = term_goal.goal } },
-        margin = 1,
+        gap = 1,
       },
     }
 end
