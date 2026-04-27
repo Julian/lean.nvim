@@ -19,7 +19,7 @@ repos:
     hooks:
       - id: stylua
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.22.0
+    rev: v0.22.1
     hooks:
       - id: markdownlint-cli2
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
