@@ -32,12 +32,15 @@ describe('tui.tabs', function()
       },
       active = 1,
     }
+    -- The trailing pad after `visibility` is invisible but load-bearing:
+    -- it keeps the inactive label aligned with the baseline below it.
     assert.is.equal(
-      dedent [[
-        ╭────────────╮
-        │ percentile │  visibility
-        ╰────────────┴──────────────
-        P]],
+      table.concat({
+        '╭────────────╮',
+        '│ percentile │  visibility  ',
+        '╰────────────┴──────────────',
+        'P',
+      }, '\n'),
       el:to_string()
     )
   end)
@@ -69,12 +72,15 @@ describe('tui.tabs', function()
       },
       active = 2,
     }
+    -- Trailing pad on the rightmost inactive label is preserved on purpose
+    -- so the baseline below stays aligned.
     assert.is.equal(
-      dedent [[
-             ╭───╮
-          a  │ b │  c
-        ─────┴───┴─────
-        B]],
+      table.concat({
+        '     ╭───╮',
+        '  a  │ b │  c  ',
+        '─────┴───┴─────',
+        'B',
+      }, '\n'),
       el:to_string()
     )
   end)
