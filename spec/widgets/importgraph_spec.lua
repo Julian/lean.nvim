@@ -15,7 +15,7 @@ describe('ImportGraph widgets', function()
     'supports GoToModule links',
     helpers.clean_buffer(
       [[
-        import ImportGraph.Meta
+        import ImportGraph.Tools
         #find_home Nat.add_one
       ]],
       function()
