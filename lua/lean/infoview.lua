@@ -1894,6 +1894,14 @@ end
 ---Enable and open the infoview across all Lean buffers.
 ---@param opts lean.infoview.Config
 function infoview.enable(opts)
+  if opts.mappings ~= nil then
+    vim.deprecate(
+      "lean.nvim's `infoview.mappings` configuration option",
+      'buffer-local `<Plug>(LeanInfoview*)` mappings',
+      'v2026.9.1',
+      'lean.nvim'
+    )
+  end
   ---@type lean.infoview.MergedConfig
   options = vim.tbl_extend('force', options, opts)
   infoview.mappings = options.mappings

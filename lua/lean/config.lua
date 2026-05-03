@@ -46,7 +46,7 @@
 ---@field accomplished? string a character which will be placed in the sign column of successful proofs
 
 ---@class lean.infoview.Config
----@field mappings? { [string]: ElementEvent }
+---@field mappings? { [string]: ElementEvent } deprecated, will be removed in v2026.9.1; use `<Plug>(LeanInfoview*)` mappings instead
 ---@field orientation? "auto"|"vertical"|"horizontal" what orientation to use for opened infoviews
 ---@field update_cooldown? integer milliseconds to throttle cursor-move updates (default 50, 0 to disable)
 ---@field view_options? InfoviewViewOptions
