@@ -17,7 +17,7 @@ describe('log', function()
 
   it('logs messages', function()
     log:trace { message = 'test 123' }
-    vim.wait(0, function()
+    vim.wait(100, function()
       return not vim.tbl_isempty(messages)
     end)
     assert.are.same({ { message = 'test 123' } }, messages)
