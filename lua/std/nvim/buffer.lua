@@ -37,6 +37,32 @@ function BufferKeymaps:del(mode, lhs, opts)
   vim.keymap.del(mode, lhs, vim.tbl_extend('error', opts or {}, { buffer = self.bufnr }))
 end
 
+---Set a buffer-local keymap, but only if `lhs` isn't already mapped.
+---
+---Useful for "suggested" mappings which shouldn't clobber a user's existing
+---ones. Mappings (whether buffer-local or global) which would conflict with
+---`lhs` -- including ones whose `lhs` is a prefix of, or prefixed by, ours --
+---cause the call to be a no-op.
+---
+---@param mode string|string[] Mode(s) for the keymap.
+---@param lhs string Left-hand side of the mapping.
+---@param rhs string|function Right-hand side of the mapping.
+---@param opts? table Additional options (passed to vim.keymap.set; buffer is set automatically).
+function BufferKeymaps:set_unless_mapped(mode, lhs, rhs, opts)
+  local modes = type(mode) == 'table' and mode or { mode }
+  local already_mapped = vim.api.nvim_buf_call(self.bufnr, function()
+    for _, m in ipairs(modes) do
+      if vim.fn.mapcheck(lhs, m) ~= '' then
+        return true
+      end
+    end
+    return false
+  end)
+  if not already_mapped then
+    self:set(mode, lhs, rhs, opts)
+  end
+end
+
 ---A Neovim buffer.
 ---@class Buffer
 ---@field bufnr integer The buffer number

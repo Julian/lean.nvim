@@ -479,6 +479,62 @@ describe('Buffer', function()
     end)
   end)
 
+  describe('keymaps:set_unless_mapped', function()
+    it('sets the mapping when nothing else is bound', function()
+      local buffer = Buffer.create {}
+      buffer.keymaps:set_unless_mapped('n', 'gz', '<cmd>echo 1<CR>', { desc = 'set me' })
+
+      local maps = buffer.keymaps:get 'n'
+      local map = vim.iter(maps):find(function(m)
+        return m.lhs == 'gz'
+      end)
+      assert.is_not_nil(map)
+      assert.are.equal('set me', map.desc)
+      buffer:force_delete()
+    end)
+
+    it('skips the mapping when an existing buffer-local mapping conflicts', function()
+      local buffer = Buffer.create {}
+      buffer.keymaps:set('n', 'gz', '<cmd>echo "yours"<CR>', { desc = 'pre-existing' })
+      buffer.keymaps:set_unless_mapped('n', 'gz', '<cmd>echo "ours"<CR>', { desc = 'ours' })
+
+      local maps = buffer.keymaps:get 'n'
+      local map = vim.iter(maps):find(function(m)
+        return m.lhs == 'gz'
+      end)
+      assert.is_not_nil(map)
+      assert.are.equal('pre-existing', map.desc)
+      buffer:force_delete()
+    end)
+
+    it('skips the mapping when an existing global mapping conflicts', function()
+      vim.keymap.set('n', 'gz', '<cmd>echo "global"<CR>', { desc = 'pre-existing' })
+      local buffer = Buffer.create {}
+      buffer.keymaps:set_unless_mapped('n', 'gz', '<cmd>echo "ours"<CR>', { desc = 'ours' })
+
+      local maps = buffer.keymaps:get 'n'
+      assert.is_false(vim.iter(maps):any(function(m)
+        return m.lhs == 'gz'
+      end))
+      vim.keymap.del('n', 'gz')
+      buffer:force_delete()
+    end)
+
+    it('checks each mode in turn when given several', function()
+      local buffer = Buffer.create {}
+      buffer.keymaps:set('i', 'jk', '<Esc>')
+      buffer.keymaps:set_unless_mapped({ 'n', 'i' }, 'jk', '<cmd>echo 1<CR>')
+
+      assert.is_false(vim.iter(buffer.keymaps:get 'n'):any(function(m)
+        return m.lhs == 'jk'
+      end))
+      assert.is_false(vim.iter(buffer.keymaps:get 'i'):any(function(m)
+        return m.lhs == 'jk' and m.rhs == '<cmd>echo 1<CR>'
+      end))
+      buffer:force_delete()
+    end)
+  end)
+
   describe('keymaps:del', function()
     it('errors if buffer is provided in opts', function()
       local buffer = Buffer.create {}
