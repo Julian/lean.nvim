@@ -171,7 +171,12 @@ local function wait_for_quiescence(timeout)
   local last_seen = snapshot()
   wait_for(function()
     local current = snapshot()
-    if not vim.deep_equal(current, last_seen) or pin.loading or pin.__update_running or pin.__update_pending then
+    if
+      not vim.deep_equal(current, last_seen)
+      or pin.loading
+      or pin.__update_running
+      or pin.__update_pending
+    then
       last_change = uv.hrtime()
       last_seen = current
       return false
