@@ -3,7 +3,10 @@ local range_to_string = require('std.lsp').range_to_string
 local Element = require('lean.tui').Element
 local InteractiveCode = require 'lean.widget.interactive_code'
 local config = require 'lean.config'
-local lsp_diagnostics = require('lean.diagnostic').lsp_diagnostics
+
+local function lsp_diagnostics(...)
+  return require('lean.diagnostic').lsp_diagnostics(...)
+end
 
 local interactive_goal = {}
 

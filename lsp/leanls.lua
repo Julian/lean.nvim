@@ -1,11 +1,18 @@
 local Buffer = require 'std.nvim.buffer'
 local std = require 'std.lsp'
 
-local diagnostic = require 'lean.diagnostic'
 local log = require 'lean.log'
 local lsp = require 'lean.lsp'
 
 local CONFIG = require 'lean.config'
+
+local function DIAGNOSTIC()
+  return require 'lean.diagnostic'
+end
+
+local function INFOVIEW()
+  return require 'lean.infoview'
+end
 
 --- Detect whether a directory is the root of the core lean4 repository.
 ---
@@ -54,6 +61,7 @@ end
 ---@param result LeanPublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
 local function on_publish_diagnostics(_, result, ctx)
+  local diagnostic = DIAGNOSTIC()
   local buffer = Buffer:from_uri(result.uri)
   vim.diagnostic.reset(lsp.silent_ns, buffer.bufnr)
   buffer:clear_namespace(lsp.goals_ns)
@@ -200,7 +208,7 @@ local function file_progress_handler(err, params)
     return
   end
 
-  require('lean.infoview').__on_file_progress(params.textDocument.uri)
+  INFOVIEW().__on_file_progress(params.textDocument.uri)
 end
 
 return {

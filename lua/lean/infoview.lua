@@ -157,6 +157,8 @@ local FOCUS_AUGROUP = vim.api.nvim_create_augroup('LeanInfoviewFocus', {})
 ---@field private __renderer BufRenderer
 ---@field private __request_update fun(pin: Pin)
 ---@field private __instrumentation PinInstrumentation
+---@field private __update_running boolean
+---@field private __update_pending boolean
 ---@field private __debug? BufRenderer
 ---@field private __debug_autocmd? integer
 ---@field private __debug_expanded table<string, boolean>
@@ -1252,6 +1254,8 @@ function Pin:new(obj)
       __renderer = pin_renderer,
       __tick = 0,
       __instrumentation = Instrumentation:new(),
+      __update_running = false,
+      __update_pending = false,
       buffer = pin_buffer,
     }),
     self
@@ -1593,6 +1597,31 @@ function Pin:request_update()
   self.__request_update(self)
 end
 
+---Process queued pin updates, coalescing multiple requests into the latest one.
+function Pin:__drain_update_queue()
+  if self.__update_running then
+    return
+  end
+
+  self.__update_running = true
+  async.run(function()
+    while self.__update_pending do
+      self.__update_pending = false
+      self:__update_now()
+    end
+    self.__update_running = false
+    if self.__update_pending then
+      self:__drain_update_queue()
+    end
+  end)
+end
+
+---Queue a pin update, collapsing older queued requests.
+function Pin:queue_update()
+  self.__update_pending = true
+  self:__drain_update_queue()
+end
+
 ---@param buffer Buffer
 ---@param pos {integer, integer} 0-indexed { row, col } byte position
 function Pin:move(buffer, pos)
@@ -1750,68 +1779,70 @@ function contents_for_plain(params, view_options, sw)
   return wrap_content_blocks(blocks, params)
 end
 
-function Pin:update()
-  async.run(function()
-    log:trace { message = 'updating pin', id = self.id, paused = self.paused, loading = self.loading }
-    local iv = self.__infoview
-    if not iv.window then
-      return
-    end
-    if self.paused then
-      iv:__update_winhighlight()
-      return
-    end
-
-    local params = self.__position_params
-    if not params or not Buffer:from_uri(params.textDocument.uri):is_loaded() then
-      return
-    end
-
-    local sw = self.__instrumentation:stopwatch()
-    local uri = params.textDocument.uri
-
-    sw:open 'setup'
+function Pin:__update_now()
+  log:trace { message = 'updating pin', id = self.id, paused = self.paused, loading = self.loading }
+  local iv = self.__infoview
+  if not iv.window then
+    return
+  end
+  if self.paused then
     iv:__update_winhighlight()
+    return
+  end
 
-    if not self.loading then
-      self.loading = true
-      self:render()
-    end
+  local params = self.__position_params
+  if not params or not Buffer:from_uri(params.textDocument.uri):is_loaded() then
+    return
+  end
 
-    self.__tick = self.__tick + 1
-    local tick = self.__tick
-    sw:close()
+  local sw = self.__instrumentation:stopwatch()
+  local uri = params.textDocument.uri
 
-    self.__data_element = sw:time('content', iv.render_contents, iv, params, sw)
+  sw:open 'setup'
+  iv:__update_winhighlight()
 
-    if self.__data_element == components.LSP_HAS_DIED then
-      iv.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
-    end
+  if not self.loading then
+    self.loading = true
+    self:render()
+  end
 
-    if self.__tick ~= tick or not self.__infoview then
-      self.__instrumentation:record(sw:finish(), uri, true)
-      vim.api.nvim_exec_autocmds('User', { pattern = 'LeanPinRefreshed' })
-      return
-    end
+  self.__tick = self.__tick + 1
+  local tick = self.__tick
+  sw:close()
 
-    sw:open 'commit'
-    self.loading = false
-    self.__element:set_children { self.__data_element }
-    iv.__last_trace_query = nil
-    sw:close()
+  self.__data_element = sw:time('content', iv.render_contents, iv, params, sw)
 
-    sw:time('render', self.render, self)
+  if self.__data_element == components.LSP_HAS_DIED then
+    iv.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
+  end
 
-    self.__instrumentation:record(sw:finish(), uri, false)
-
+  if self.__tick ~= tick or not self.__infoview then
+    self.__instrumentation:record(sw:finish(), uri, true)
     vim.api.nvim_exec_autocmds('User', { pattern = 'LeanPinRefreshed' })
+    return
+  end
 
-    if iv.window and not iv.window:is_current() and self == iv.pin then
-      iv:move_cursor_to_goal()
-    end
+  sw:open 'commit'
+  self.loading = false
+  self.__element:set_children { self.__data_element }
+  iv.__last_trace_query = nil
+  sw:close()
 
-    iv:__refresh_diff()
-  end)
+  sw:time('render', self.render, self)
+
+  self.__instrumentation:record(sw:finish(), uri, false)
+
+  vim.api.nvim_exec_autocmds('User', { pattern = 'LeanPinRefreshed' })
+
+  if iv.window and not iv.window:is_current() and self == iv.pin then
+    iv:move_cursor_to_goal()
+  end
+
+  iv:__refresh_diff()
+end
+
+function Pin:update()
+  self:queue_update()
 end
 
 ---Close all open infoviews (across all tabs).
@@ -1857,9 +1888,7 @@ function infoview.__update_pin_positions(_, bufnr, tick, _, _, _, _, _, _)
     for _, pin in pairs(each:pins_for(uri)) do
       pin.loading = true
       pin:update_position()
-      vim.schedule(function()
-        pin:update()
-      end)
+      pin:request_update()
     end
   end
 end

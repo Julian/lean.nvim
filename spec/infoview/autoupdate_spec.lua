@@ -22,6 +22,7 @@
 
 local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
+local async = require 'std.async'
 
 local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
@@ -280,6 +281,71 @@ describe('infoview content (auto-)update', function()
     assert.infoview_contents.are [[
       ⊢ 2 = 2
     ]]
+  end)
+
+  it('coalesces overlapping pin refresh requests to the latest one', function()
+    vim.cmd.edit { fixtures.project.child 'Example/Squares.lean', bang = true }
+    helpers.wait:for_lsp()
+    local pin = infoview.get_current_infoview().pin
+
+    local started = 0
+    local finished = 0
+    local release = async.event()
+    local original = pin.__update_now
+
+    pin.__update_now = function(self)
+      started = started + 1
+      if started == 1 then
+        release.wait()
+      end
+      finished = finished + 1
+    end
+
+    pin:queue_update()
+    assert.is_truthy(vim.wait(1000, function()
+      return started == 1 and pin.__update_running
+    end))
+
+    pin:queue_update()
+    pin:queue_update()
+    pin:queue_update()
+
+    release.set()
+
+    assert.is_truthy(vim.wait(1000, function()
+      return finished == 2 and not pin.__update_running and not pin.__update_pending
+    end))
+    assert.are.equal(2, started)
+
+    pin.__update_now = original
+  end)
+
+  it('routes buffer edit refreshes through throttled request scheduling', function()
+    vim.cmd.edit { fixtures.project.child 'Example/Squares.lean', bang = true }
+    helpers.wait:for_lsp()
+    local pin = infoview.get_current_infoview().pin
+
+    local requested = 0
+    local updated = 0
+    local original_request = pin.request_update
+    local original_update = pin.update
+
+    pin.request_update = function(self)
+      requested = requested + 1
+      return original_request(self)
+    end
+    pin.update = function(self)
+      updated = updated + 1
+      return original_update(self)
+    end
+
+    infoview.__update_pin_positions(nil, vim.api.nvim_get_current_buf(), 0)
+
+    assert.are.equal(1, requested)
+    assert.are.equal(0, updated)
+
+    pin.request_update = original_request
+    pin.update = original_update
   end)
 
   describe(

@@ -74,6 +74,10 @@ local BufRenderer = {
 }
 BufRenderer.__index = BufRenderer
 
+local function is_textlock_error(err)
+  return type(err) == 'string' and err:match 'E565:'
+end
+
 ---@class LinePrefixSpec
 ---@field text string prefix text prepended to every line within this element
 ---@field hlgroup? string highlight group for the prefix text
@@ -728,6 +732,7 @@ end
 function BufRenderer:new(obj)
   obj = obj or {}
   obj.pending_elements = {}
+  obj.__render_retry_pending = false
   local new_renderer = setmetatable(obj, self)
   new_renderer.__overlays = OverlayState:new(new_renderer)
   obj.buffer.o.modifiable = false
@@ -1082,6 +1087,19 @@ function BufRenderer:render()
   --      complaining about invalid buffer names, if we don't have this pcall.
   local ok, err = pcall(Buffer.set_lines, self.buffer, result.lines)
   if not ok then
+    if is_textlock_error(err) then
+      if not self.__render_retry_pending then
+        self.__render_retry_pending = true
+        vim.schedule(function()
+          self.__render_retry_pending = false
+          if self.buffer:is_loaded() then
+            self:render()
+          end
+        end)
+      end
+      self.buffer.o.modifiable = false
+      return
+    end
     log:error {
       message = 'infoview failed to update',
       bufnr = self.buffer.bufnr,

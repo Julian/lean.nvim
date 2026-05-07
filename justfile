@@ -45,6 +45,18 @@ scratch *ARGS='':
 profile-test *ARGS: _rebuild-test-fixtures _clone-test-dependencies
     hyperfine --warmup 2 {{ ARGS }} "just retest"
 
+# Measure infoview typing/update scheduling behavior and write JSON results.
+[group('testing')]
+benchmark-typing out='typing-benchmark.json' text='veryLongPropositionNameWithManySegmentsAndArguments' repetitions='4' cooldown='0' mode='full': _rebuild-benchmark-fixture
+    XDG_CONFIG_HOME="{{ clean_config }}" \
+    LEAN_NVIM_USE_WORKTREE=1 \
+    LEAN_NVIM_BENCH_OUT="{{ out }}" \
+    LEAN_NVIM_BENCH_TEXT="{{ text }}" \
+    LEAN_NVIM_BENCH_REPETITIONS="{{ repetitions }}" \
+    LEAN_NVIM_BENCH_COOLDOWN="{{ cooldown }}" \
+    LEAN_NVIM_BENCH_MODE="{{ mode }}" \
+    nvim --headless --clean -u {{ init_lua }} -l {{ scripts }}/benchmark_typing_updates.lua
+
 # Lint lean.nvim for style and typing issues.
 [group('dev')]
 lint:
@@ -118,3 +130,6 @@ _clone-test-dependencies: _clone-dependencies
 _rebuild-test-fixtures:
     cd "{{ fixture_projects}}/Example/" && lake build
     cd "{{ fixture_projects }}/WithWidgets/" && lake build && lake build ProofWidgets.Demos ImportGraph.Tools Mathlib.Tactic.Widget.Conv Mathlib.Tactic.Widget.InteractiveUnfold
+
+_rebuild-benchmark-fixture:
+    cd "{{ fixture_projects}}/Example/" && lake build

@@ -10,8 +10,8 @@ vim.opt.runtimepath:append(packpath)
 -- Doing this unconditionally seems to fail a random indent test?!?!
 -- Inanis will automatically set rtp+. (which seems wrong, but OK)
 -- so really we need this just for `just nvim`...
-if #vim.api.nvim_list_uis() ~= 0 then
-  vim.opt.runtimepath:append(lean_nvim_dir)
+if #vim.api.nvim_list_uis() ~= 0 or vim.env.LEAN_NVIM_USE_WORKTREE then
+  vim.opt.runtimepath:prepend(lean_nvim_dir)
 end
 
 local inspect = vim.env.LEAN_NVIM_LOG_INSPECT and vim.inspect

@@ -13,11 +13,14 @@ local interactive_diagnostic = require 'lean.widget.interactive_diagnostic'
 local TaggedTextMsgEmbed = interactive_diagnostic.TaggedTextMsgEmbed
 local TaggedTextHighlightedMsgEmbed = interactive_diagnostic.TaggedTextHighlightedMsgEmbed
 local config = require 'lean.config'
-local diagnostic = require 'lean.diagnostic'
 local goals = require 'lean.goals'
 local interactive_goal = require 'lean.widget.interactive_goal'
 local lsp = require 'lean.lsp'
 local widgets = require 'lean.widgets'
+
+local function DIAGNOSTIC()
+  return require 'lean.diagnostic'
+end
 
 local components = {
   LSP_HAS_DIED = Element:new {
@@ -45,7 +48,7 @@ function components.interactive_diagnostics(diags, line, sess)
         return
       end
 
-      local range = diagnostic.range_of(each)
+      local range = DIAGNOSTIC().range_of(each)
       local element = Element:new {
         text = ('▼ %s: %s'):format(range_to_string(range), markers[each.severity]),
         name = 'diagnostic',
@@ -168,7 +171,7 @@ function components.diagnostics_at(sess)
   ---they'll be indicated at the top.
   ---@param each DiagnosticWith<TaggedText.MsgEmbed>
   local filtered = vim.iter(diagnostics):filter(function(each)
-    return not diagnostic.is_goals_accomplished(each)
+    return not DIAGNOSTIC().is_goals_accomplished(each)
   end)
   return components.interactive_diagnostics(filtered, line, sess), err
 end
