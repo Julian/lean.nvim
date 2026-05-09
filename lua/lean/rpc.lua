@@ -13,17 +13,6 @@ local async = require 'std.async'
 local log = require 'lean.log'
 local lsp = require 'lean.lsp'
 
----@param client vim.lsp.Client
----@param request string LSP request name
----@param params table LSP request parameters
----@return any error
----@return any result
-local function client_request(client, request, params)
-  return async.wrap(function(handler)
-    return client:request(request, params, handler)
-  end, 1)()
-end
-
 local rpc = {}
 
 ---A ring buffer stand-in that silently discards pushes and iterates to nothing.
@@ -324,7 +313,7 @@ function Session:call(pos, method, params)
   end
   log:trace { message = 'calling RPC method', method = method, params = params }
   local start_ns = vim.uv.hrtime()
-  local err, result = client_request(
+  local err, result = lsp.request(
     self.client,
     '$/lean/rpc/call',
     vim.tbl_extend('error', pos, { sessionId = self.session_id, method = method, params = params })
@@ -395,7 +384,7 @@ local function connect(uri)
   async.run(function()
     log:trace { message = 'connecting to RPC', uri = uri }
     local connect_start = vim.uv.hrtime()
-    local err, result = client_request(client, '$/lean/rpc/connect', { uri = uri })
+    local err, result = lsp.request(client, '$/lean/rpc/connect', { uri = uri })
     sess.metrics:record_connect(vim.uv.hrtime() - connect_start)
     sess.connected = true
     if err ~= nil then

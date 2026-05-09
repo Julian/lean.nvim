@@ -7,6 +7,7 @@
 local ms = vim.lsp.protocol.Methods
 
 local Buffer = require 'std.nvim.buffer'
+local async = require 'std.async'
 local std = require 'std.lsp'
 
 local log = require 'lean.log'
@@ -107,5 +108,19 @@ lsp.make_wait_for_diagnostics_params = uri_and_version_params
 
 ---@type fun(number?): WaitForILeansParams
 lsp.make_wait_for_ileans_params = uri_and_version_params
+
+---Send an async LSP request and return the result.
+---
+---Must be called from within a coroutine (e.g. inside `async.run`).
+---@param client vim.lsp.Client
+---@param method string LSP request method
+---@param params table LSP request parameters
+---@return any error
+---@return any result
+function lsp.request(client, method, params)
+  return async.wrap(function(handler)
+    return client:request(method, params, handler)
+  end, 1)()
+end
 
 return lsp

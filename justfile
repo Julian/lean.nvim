@@ -77,6 +77,7 @@ docs:
         {{ lean }}/stderr.lua \
         {{ lean }}/widgets.lua \
         {{ lean }}/lsp.lua \
+        {{ lean }}/module_hierarchy.lua \
         {{ lean }}/diagnostic.lua \
         >{{ doc }}/lean.txt
     vimcats \

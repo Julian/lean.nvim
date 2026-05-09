@@ -74,6 +74,15 @@ function Wait:for_infoview_contents(pattern, iv)
   end)
 end
 
+---Wait for a window's buffer contents to match the given pattern.
+---@param pattern string a Lua pattern matched against the buffer contents (newline-joined)
+---@param win Window
+function Wait:for_window_contents(pattern, win)
+  self:_wait(('window to contain %q'):format(pattern), function()
+    return table.concat(win:buffer():lines(), '\n'):match(pattern)
+  end)
+end
+
 ---Wait for the Lean server to finish processing ileans.
 ---@return vim.lsp.Client
 function Wait:for_ileans()

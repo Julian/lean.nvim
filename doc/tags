@@ -15,6 +15,9 @@ LeanClientConfig	lean.txt	/*LeanClientConfig*
 LeanDiagnosticTag	lean.txt	/*LeanDiagnosticTag*
 LeanDidOpenTextDocumentParams	lean.txt	/*LeanDidOpenTextDocumentParams*
 LeanFileProgressParams	lean.txt	/*LeanFileProgressParams*
+LeanImport	lean.txt	/*LeanImport*
+LeanImportKind	lean.txt	/*LeanImportKind*
+LeanModule	lean.txt	/*LeanModule*
 LeanPublishDiagnosticsParams	lean.txt	/*LeanPublishDiagnosticsParams*
 LeanTextDocumentItem	lean.txt	/*LeanTextDocumentItem*
 NavigationDirection	lean.txt	/*NavigationDirection*
@@ -75,6 +78,7 @@ lean.diagnostic	lean.txt	/*lean.diagnostic*
 lean.infoview	lean.txt	/*lean.infoview*
 lean.init	lean.txt	/*lean.init*
 lean.lsp	lean.txt	/*lean.lsp*
+lean.module_hierarchy	lean.txt	/*lean.module_hierarchy*
 lean.nvim	lean.txt	/*lean.nvim*
 lean.plugin_version	lean.txt	/*lean.plugin_version*
 lean.setup	lean.txt	/*lean.setup*
@@ -84,7 +88,14 @@ lsp.client_for	lean.txt	/*lsp.client_for*
 lsp.goals_accomplished_at	lean.txt	/*lsp.goals_accomplished_at*
 lsp.make_wait_for_diagnostics_params	lean.txt	/*lsp.make_wait_for_diagnostics_params*
 lsp.make_wait_for_ileans_params	lean.txt	/*lsp.make_wait_for_ileans_params*
+lsp.request	lean.txt	/*lsp.request*
 lsp.restart_file	lean.txt	/*lsp.restart_file*
+module_hierarchy.describe_import_kind	lean.txt	/*module_hierarchy.describe_import_kind*
+module_hierarchy.imported_by	lean.txt	/*module_hierarchy.imported_by*
+module_hierarchy.imports	lean.txt	/*module_hierarchy.imports*
+module_hierarchy.prepare	lean.txt	/*module_hierarchy.prepare*
+module_hierarchy.show_imported_by	lean.txt	/*module_hierarchy.show_imported_by*
+module_hierarchy.show_imports	lean.txt	/*module_hierarchy.show_imports*
 stderr.enable	lean.txt	/*stderr.enable*
 stderr.show	lean.txt	/*stderr.show*
 toolchain.gc	elan.txt	/*toolchain.gc*

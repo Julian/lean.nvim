@@ -240,6 +240,13 @@ function lean.setup(opts)
     LeanSorryFill = function()
       require('lean.sorry').fill()
     end,
+
+    LeanModuleImports = function()
+      require('lean.module_hierarchy').show_imports()
+    end,
+    LeanModuleImportedBy = function()
+      require('lean.module_hierarchy').show_imported_by()
+    end,
   }
   for name, fn in pairs(commands) do
     vim.api.nvim_create_user_command(name, fn, {})

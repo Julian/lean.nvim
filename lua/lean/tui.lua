@@ -144,6 +144,8 @@ end
 ---@class FoldableElementArgs: TitledElementArgs
 ---@field open? boolean whether initially open (defaults to true)
 ---@field on_open? fun(body: Element):nil called with the body element each time the section opens
+---@field events? EventCallbacks extra events fired on the whole title row (alongside the built-in click-to-toggle)
+---@field before_arrow? Element rendered before the toggle arrow, but still inside the clickable title row (e.g. tree indentation)
 
 ---Create a foldable element with a title and optional body contents.
 ---
@@ -162,8 +164,14 @@ function Element:foldable(opts)
   local on_close = opts.on_close or function() end
   local open = opts.open ~= false
   local arrow = self:new { text = open and '▼ ' or '▶ ' }
+  local title_row_children = {}
+  if opts.before_arrow then
+    table.insert(title_row_children, opts.before_arrow)
+  end
+  table.insert(title_row_children, arrow)
+  table.insert(title_row_children, opts.title)
   local title_row = self:new {
-    children = { arrow, opts.title },
+    children = title_row_children,
     highlightable = true,
   }
 
@@ -178,7 +186,7 @@ function Element:foldable(opts)
 
   local container = self:new { children = { layout() } }
 
-  title_row.events = {
+  title_row.events = vim.tbl_extend('error', opts.events or {}, {
     click = function(ctx)
       open = not open
       arrow.text = open and '▼ ' or '▶ '
@@ -190,7 +198,7 @@ function Element:foldable(opts)
       container:set_children { layout() }
       ctx.rerender()
     end,
-  }
+  })
 
   return container
 end

@@ -7,6 +7,7 @@ Commands ···································�
 The Infoview ··················································· |lean.infoview|
 Standard error buffers ··········································· |lean.stderr|
 LSP ································································· |lean.lsp|
+Module Hierarchy ······································· |lean.module_hierarchy|
 Diagnostics ·················································· |lean.diagnostic|
 
 ==============================================================================
@@ -398,6 +399,103 @@ lsp.make_wait_for_ileans_params                *lsp.make_wait_for_ileans_params*
 
     Type: ~
         (fun(number?:any):WaitForILeansParams)
+
+
+                                                                   *lsp.request*
+lsp.request({client}, {method}, {params})
+    Send an async LSP request and return the result.
+
+    Must be called from within a coroutine (e.g. inside `async.run`).
+
+    Parameters: ~
+        {client}  (vim.lsp.Client)
+        {method}  (string)          LSP request method
+        {params}  (table)           LSP request parameters
+
+    Returns: ~
+        (any)  error
+        (any)  result
+
+
+==============================================================================
+Module Hierarchy                                         *lean.module_hierarchy*
+
+ Querying the Lean module import graph.
+
+ Provides access to the module hierarchy LSP requests introduced in
+ Lean 4.22, allowing callers to explore what a module imports and what
+ imports it.
+
+LeanModule                                                          *LeanModule*
+
+    Fields: ~
+        {name}   (string)           the human-readable module name
+        {uri}    (lsp.DocumentUri)  the file URI
+        {data?}  (any)              optional server-specific data
+
+
+LeanImportKind                                                  *LeanImportKind*
+
+    Fields: ~
+        {isPrivate}  (boolean)                  whether this is a private import
+        {isAll}      (boolean)                  whether this is an `open ... in` style import
+        {metaKind}   ("nonMeta"|"meta"|"full")  the meta kind of the import
+
+
+LeanImport                                                          *LeanImport*
+
+    Fields: ~
+        {module}  (LeanModule)      the imported module
+        {kind}    (LeanImportKind)  metadata about the import
+
+
+                                         *module_hierarchy.describe_import_kind*
+module_hierarchy.describe_import_kind({kind})
+    Describe the kind of an import in human-readable form.
+
+    Returns nil for a plain import with no special modifiers.
+
+    Parameters: ~
+        {kind}  (LeanImportKind)  @return string? description e.g. "[private, meta]"
+
+
+module_hierarchy.prepare({bufnr?})                    *module_hierarchy.prepare*
+    Get the module corresponding to a buffer's file.
+
+    Parameters: ~
+        {bufnr?}  (number)  the buffer number, defaulting to 0
+                            @return LeanModule? module
+                            @return string? err
+
+
+                                                      *module_hierarchy.imports*
+module_hierarchy.imports({module}, {bufnr?})
+    Get the imports of a module.
+
+    Parameters: ~
+        {module}  (LeanModule)  the module to query
+        {bufnr?}  (number)      a buffer attached to the relevant LSP client
+                                @return LeanImport[]? imports
+                                @return string? err
+
+
+                                                  *module_hierarchy.imported_by*
+module_hierarchy.imported_by({module}, {bufnr?})
+    Get the modules that import a given module.
+
+    Parameters: ~
+        {module}  (LeanModule)  the module to query
+        {bufnr?}  (number)      a buffer attached to the relevant LSP client
+                                @return LeanImport[]? imports
+                                @return string? err
+
+
+module_hierarchy.show_imports()                  *module_hierarchy.show_imports*
+    Show the imports of the current module in a tree view.
+
+
+module_hierarchy.show_imported_by()          *module_hierarchy.show_imported_by*
+    Show the modules that import the current module in a tree view.
 
 
 ==============================================================================
