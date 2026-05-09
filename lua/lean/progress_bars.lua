@@ -3,8 +3,8 @@ local Buffer = require 'std.nvim.buffer'
 local progress = require 'lean.progress'
 
 local progress_bars = {}
-local options = { priority = 10, character = '│' }
-options._DEFAULTS = vim.deepcopy(options)
+progress_bars.options = { priority = 10, character = '│' }
+progress_bars.options._DEFAULTS = vim.deepcopy(progress_bars.options)
 
 local ns = vim.api.nvim_create_namespace 'lean.progress'
 
@@ -18,9 +18,9 @@ local function _update(buffer)
 
     for line = start_line, end_line do
       buffer:set_extmark(ns, line, 0, {
-        sign_text = options.character,
+        sign_text = progress_bars.options.character,
         sign_hl_group = 'leanProgressBar',
-        priority = options.priority,
+        priority = progress_bars.options.priority,
       })
     end
   end
@@ -68,7 +68,11 @@ function progress_bars.clear(bufnr)
 end
 
 function progress_bars.enable(opts)
-  options = vim.tbl_extend('force', options, opts)
+  -- Merge in place so external readers of `progress_bars.options` (e.g.
+  -- module_hierarchy reusing the same character) stay current.
+  for k, v in pairs(opts) do
+    progress_bars.options[k] = v
+  end
   progress_bars.enabled = true
 
   vim.api.nvim_set_hl(0, 'leanProgressBar', { default = true, fg = 'orange', ctermfg = 215 })
