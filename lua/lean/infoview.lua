@@ -1782,6 +1782,7 @@ function Pin:update()
     local tick = self.__tick
     sw:close()
 
+    local previous_data_element = self.__data_element
     self.__data_element = sw:time('content', iv.render_contents, iv, params, sw)
 
     if self.__data_element == components.LSP_HAS_DIED then
@@ -1796,6 +1797,9 @@ function Pin:update()
 
     sw:open 'commit'
     self.loading = false
+    -- Carry over user-toggled foldable state so a refresh doesn't snap
+    -- expanded traces (etc.) back to their server-default collapsed state.
+    Element.transfer_foldable_state(previous_data_element, self.__data_element)
     self.__element:set_children { self.__data_element }
     iv.__last_trace_query = nil
     sw:close()

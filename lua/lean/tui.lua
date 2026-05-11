@@ -51,6 +51,7 @@ local OverlayState -- defined after BufRenderer
 ---@field line_prefix? LinePrefixSpec text prepended to every line within this element
 ---@field private __children Element[] this element's children
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
+---@field private __foldable? Foldable only set on containers returned by `:foldable`
 local Element = {}
 Element.__index = Element
 
@@ -147,6 +148,14 @@ end
 ---@field events? EventCallbacks extra events fired on the whole title row (alongside the built-in click-to-toggle)
 ---@field before_arrow? Element rendered before the toggle arrow, but still inside the clickable title row (e.g. tree indentation)
 
+---A handle attached to a foldable container, exposing its open state and
+---body so they can be inspected or synced from outside (e.g. when a tree
+---rebuild needs to carry user-toggled state forward).
+---@class Foldable
+---@field open boolean current open state
+---@field body Element body element, stable across open/closed layouts
+---@field set_open fun(self: Foldable, open: boolean): nil
+
 ---Create a foldable element with a title and optional body contents.
 ---
 ---Wraps `titled` with a toggle arrow (▼/▶) and click-to-collapse behavior.
@@ -162,8 +171,35 @@ function Element:foldable(opts)
 
   local on_open = opts.on_open or function() end
   local on_close = opts.on_close or function() end
-  local open = opts.open ~= false
-  local arrow = self:new { text = open and '▼ ' or '▶ ' }
+  local initially_open = opts.open ~= false
+  local arrow = self:new { text = initially_open and '▼ ' or '▶ ' }
+  local body = self:new { children = body_elements }
+
+  -- `container` and `layout` are forward-declared so the foldable handle
+  -- can close over them; their values are assigned below before the handle
+  -- is ever exercised.
+  local container
+  local layout
+
+  ---@type Foldable
+  local foldable = {
+    open = initially_open,
+    body = body,
+    set_open = function(handle, new_open)
+      if handle.open == new_open then
+        return
+      end
+      handle.open = new_open
+      arrow.text = new_open and '▼ ' or '▶ '
+      if new_open then
+        on_open(handle.body)
+      else
+        on_close()
+      end
+      container:set_children { layout(new_open) }
+    end,
+  }
+
   local title_row_children = {}
   if opts.before_arrow then
     table.insert(title_row_children, opts.before_arrow)
@@ -173,34 +209,49 @@ function Element:foldable(opts)
   local title_row = self:new {
     children = title_row_children,
     highlightable = true,
+    events = vim.tbl_extend('error', opts.events or {}, {
+      click = function(ctx)
+        foldable:set_open(not foldable.open)
+        ctx.rerender()
+      end,
+    }),
   }
 
-  local body = self:new { children = body_elements }
-
-  local function layout()
+  layout = function(open)
     if open then
       return self:titled { title = title_row, body = { body }, gap = opts.gap }
     end
     return title_row
   end
 
-  local container = self:new { children = { layout() } }
-
-  title_row.events = vim.tbl_extend('error', opts.events or {}, {
-    click = function(ctx)
-      open = not open
-      arrow.text = open and '▼ ' or '▶ '
-      if open then
-        on_open(body)
-      else
-        on_close()
-      end
-      container:set_children { layout() }
-      ctx.rerender()
-    end,
-  })
+  container = self:new { children = { layout(initially_open) } }
+  container.__foldable = foldable
 
   return container
+end
+
+---Copy foldable open-state from `from` onto `onto`, walking children in
+---parallel so corresponding foldables in two structurally-similar trees stay
+---in sync after the second tree replaces the first.
+---@param from Element source element tree (e.g. the previous data element)
+---@param onto Element destination element tree (e.g. the freshly-built one)
+function Element.transfer_foldable_state(from, onto)
+  -- A foldable container's own children depend on its open state, so we
+  -- recurse through its stable `body` rather than `__children`.
+  if from.__foldable then
+    if onto.__foldable then
+      onto.__foldable:set_open(from.__foldable.open)
+      Element.transfer_foldable_state(from.__foldable.body, onto.__foldable.body)
+    end
+    return
+  end
+  for i, child in ipairs(from.__children) do
+    local other = onto.__children[i]
+    if not other then
+      return
+    end
+    Element.transfer_foldable_state(child, other)
+  end
 end
 
 ---Create an element which joins a list-like table of elements with the provided separator.

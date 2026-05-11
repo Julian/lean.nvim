@@ -14,6 +14,44 @@ end
 
 describe('trace', function()
   it(
+    'preserves expanded trace nodes across infoview refreshes',
+    helpers.clean_buffer(
+      [[
+        set_option trace.Meta.isDefEq true in
+        example : (fun x : Nat => x) 0 = 0 := by
+          rfl
+      ]],
+      function()
+        helpers.search 'rfl'
+        helpers.wait_for_line_diagnostics()
+        helpers.wait:for_ready_infoview()
+        vim.b.lean_test_ignore_whitespace = true
+
+        infoview.go_to()
+        helpers.search '▶ [[]'
+        helpers.feed 'K'
+
+        local iv = infoview.get_current_infoview()
+        vim.wait(15000, function()
+          return table.concat(iv:get_lines(), '\n'):find '▼ %['
+        end)
+        assert
+          .message('Expected trace node to expand')
+          .is_truthy(table.concat(iv:get_lines(), '\n'):find '▼ %[')
+
+        -- A refresh (e.g. fired by an LSP DiagnosticChanged notification)
+        -- rebuilds the data tree. The user's expansion must survive it.
+        iv.pin:update()
+        iv:wait()
+
+        assert
+          .message('Expected expanded trace to survive a refresh')
+          .is_truthy(table.concat(iv:get_lines(), '\n'):find '▼ %[')
+      end
+    )
+  )
+
+  it(
     'expands and collapses lazy trace nodes on click',
     helpers.clean_buffer(
       [[

@@ -540,6 +540,64 @@ describe('Element', function()
       assert.are.equal(title, element)
       assert.is.equal('stuff', element:to_string())
     end)
+
+    it('preserves open state when the parent is rebuilt with a fresh foldable', function()
+      -- Models what `Pin:update` does on infoview refresh: it constructs a
+      -- new data tree and replaces the renderer root's children with it.
+      -- A foldable the user had collapsed (or expanded) must not snap back
+      -- to its default state just because the tree was rebuilt.
+      local function build()
+        return Element:foldable {
+          title = Element:new { text = 'title' },
+          body = { Element:new { text = 'body' } },
+        }
+      end
+
+      local old = build()
+      local root = Element:new { children = { old } }
+      assert.is.equal('▼ title\n\nbody', root:to_string())
+
+      local title_row = root:find(function(c)
+        return c.events and c.events.click
+      end)
+      title_row.events.click(NULL_CONTEXT)
+      assert.is.equal('▶ title', root:to_string())
+
+      local fresh = build()
+      Element.transfer_foldable_state(old, fresh)
+      root:set_children { fresh }
+      assert.is.equal('▶ title', root:to_string())
+    end)
+
+    it('transfers nested foldable state across a rebuild', function()
+      local function build()
+        return Element:foldable {
+          title = Element:new { text = 'outer' },
+          body = {
+            Element:foldable {
+              title = Element:new { text = 'inner' },
+              body = { Element:new { text = 'body' } },
+            },
+          },
+        }
+      end
+
+      local old = build()
+      local root = Element:new { children = { old } }
+      assert.is.equal('▼ outer\n\n▼ inner\n\nbody', root:to_string())
+
+      -- Collapse only the inner foldable.
+      local inner_title = old.__foldable.body:find(function(c)
+        return c.events and c.events.click
+      end)
+      inner_title.events.click(NULL_CONTEXT)
+      assert.is.equal('▼ outer\n\n▶ inner', root:to_string())
+
+      local fresh = build()
+      Element.transfer_foldable_state(old, fresh)
+      root:set_children { fresh }
+      assert.is.equal('▼ outer\n\n▶ inner', root:to_string())
+    end)
   end)
 
   describe(':concat', function()
