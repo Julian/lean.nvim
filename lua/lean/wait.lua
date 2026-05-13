@@ -101,4 +101,13 @@ function Wait:for_diagnostics()
   return client
 end
 
+---Wait for at least one progress bar sign to appear on the given buffer.
+---@param bufnr? integer defaults to the current buffer
+function Wait:for_progress_bars(bufnr)
+  local ns = vim.api.nvim_create_namespace 'lean.progress'
+  self:_wait('progress bar signs to appear', function()
+    return #vim.api.nvim_buf_get_extmarks(bufnr or 0, ns, 0, -1, {}) > 0
+  end)
+end
+
 return setmetatable({}, Wait)

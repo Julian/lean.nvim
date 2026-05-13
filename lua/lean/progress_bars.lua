@@ -12,9 +12,14 @@ local ns = vim.api.nvim_create_namespace 'lean.progress'
 local function _update(buffer)
   buffer:clear_namespace(ns)
 
+  -- The buffer may have been edited (shrunk) between the LSP fileProgress
+  -- notification and this scheduled update, and LSP end positions are
+  -- exclusive, so guard against requesting an extmark past the last line.
+  local last_line = buffer:line_count() - 1
+
   for _, proc_info in ipairs(progress.proc_infos[buffer:uri()]) do
     local start_line = proc_info.range.start.line
-    local end_line = proc_info.range['end'].line
+    local end_line = math.min(proc_info.range['end'].line, last_line)
 
     for line = start_line, end_line do
       buffer:set_extmark(ns, line, 0, {
