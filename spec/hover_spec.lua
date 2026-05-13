@@ -81,6 +81,38 @@ describe(
         lean_window:make_current()
       end)
 
+      it('applies Lean syntax highlighting to the signature/type', function()
+        lean_window:make_current()
+        helpers.move_cursor { to = { 1, 7 } }
+
+        local known_windows = { lean_window, current_infoview.window }
+
+        hover()
+        local hover_win = helpers.wait_for_new_window(known_windows)
+
+        local lines = hover_win:buffer():lines()
+        assert.is.equal('Nat : Type', lines[1])
+        local type_col = lines[1]:find 'Type'
+        assert.is_not_nil(type_col)
+
+        -- synstack queries the buffer in the current window, so enter the
+        -- hover window before asking what's at the position.
+        local prev_win = Window:current()
+        hover_win:make_current()
+        local stack = vim.fn.synstack(1, type_col)
+        local names = vim.tbl_map(function(id)
+          return vim.fn.synIDattr(id, 'name')
+        end, stack)
+        prev_win:make_current()
+
+        assert
+          .message(('expected leanSort in synstack, got %s'):format(vim.inspect(names)))
+          .is_true(vim.tbl_contains(names, 'leanSort'))
+
+        hover_win:close()
+        lean_window:make_current()
+      end)
+
       it('supports clicking on types within the hover', function()
         lean_window:make_current()
         helpers.move_cursor { to = { 1, 7 } }

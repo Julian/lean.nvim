@@ -18,6 +18,39 @@ local infoview = require 'lean.infoview'
 local lsp = require 'lean.lsp'
 local rpc = require 'lean.rpc'
 
+---Apply Lean syntax highlighting to lines 1..`last_line` of the given buffer.
+---
+---BufRenderer overwrites the buffer that `open_floating_preview` stylizes, so
+---the standard `lean` code-fence handling done by `stylize_markdown` is gone
+---by the time we return.  This re-enables Lean highlighting (without using
+---treesitter, which has no Lean parser) by including `syntax/lean.vim` as a
+---cluster and scoping it to the signature/type region with a line-bound
+---syntax region.  Subsequent lines (the doc) keep their markdown syntax.
+---
+---@param buffer Buffer
+---@param last_line integer the 1-indexed last line of the Lean code region
+local function apply_lean_syntax(buffer, last_line)
+  buffer:call(function()
+    -- `:syntax include` skips the file if `b:current_syntax` is set, and sets
+    -- it to the included language on success; bracket the include so that
+    -- markdown remains the buffer's effective syntax for the doc lines.
+    vim.b.current_syntax = nil
+    local ok = pcall(vim.cmd.syntax, { 'include', '@LeanHoverCode', 'syntax/lean.vim' })
+    vim.b.current_syntax = 'markdown'
+    if not ok then
+      return
+    end
+    vim.cmd.syntax {
+      'region',
+      'leanHoverCode',
+      [[start=/\%^/]],
+      ([[end=/\%%%dl$/]]):format(last_line),
+      'keepend',
+      'contains=@LeanHoverCode',
+    }
+  end)
+end
+
 ---Extract the signature and documentation from a Lean hover result.
 ---
 ---Lean's hover markdown has the form:
@@ -90,11 +123,15 @@ return function()
       end
     end
 
-    local children = {}
+    -- Group the signature and interactive type together so we can re-apply
+    -- Lean syntax to exactly the lines they occupy after rendering.
+    local lean_code = Element:new { name = 'lean_code' }
     if signature then
-      table.insert(children, Element:new { text = signature .. ' : ' })
+      lean_code:add_child(Element:new { text = signature .. ' : ' })
     end
-    table.insert(children, InteractiveCode(term_goal.type, sess))
+    lean_code:add_child(InteractiveCode(term_goal.type, sess))
+
+    local children = { lean_code }
     if doc then
       table.insert(children, Element:new { text = '\n\n' .. doc })
     end
@@ -111,12 +148,18 @@ return function()
         'markdown',
         { focus_id = 'lean_hover' }
       )
+      local buffer = Buffer:from_bufnr(bufnr)
 
       local renderer = element:renderer {
-        buffer = Buffer:from_bufnr(bufnr),
+        buffer = buffer,
         keymaps = infoview.mappings,
       }
       renderer:render()
+
+      local code_pos = renderer.positions[lean_code]
+      if code_pos then
+        apply_lean_syntax(buffer, code_pos.end_pos[1] + 1)
+      end
     end)
   end)
 end
