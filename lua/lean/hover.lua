@@ -18,22 +18,26 @@ local infoview = require 'lean.infoview'
 local lsp = require 'lean.lsp'
 local rpc = require 'lean.rpc'
 
----Apply Lean syntax highlighting to lines 1..`last_line` of the given buffer.
+---Apply Lean keyword highlighting to lines 1..`last_line` of the hover buffer.
 ---
----BufRenderer overwrites the buffer that `open_floating_preview` stylizes, so
----the standard `lean` code-fence handling done by `stylize_markdown` is gone
----by the time we return.  This re-enables Lean highlighting (without using
----treesitter, which has no Lean parser) by including `syntax/lean.vim` as a
----cluster and scoping it to the signature/type region with a line-bound
----syntax region.  Subsequent lines (the doc) keep their markdown syntax.
+---`open_floating_preview` starts markdown treesitter on the popup; we stop it
+---first because (a) without a Lean TS parser, TS paints fenced/raw content
+---with `@markup.raw.block` which would override our keyword colours, and
+---(b) TS's italic rules would still fire on the type signature (e.g.
+---`u_1, u_2`) regardless of any `:syntax`-engine region we add.  With TS off
+---we rely entirely on `:syntax` for both the markdown doc area and the Lean
+---code area, scoping Lean syntax to the signature/type lines via a region
+---whose `contains=` excludes markdown rules from matching inside.
 ---
 ---@param buffer Buffer
 ---@param last_line integer the 1-indexed last line of the Lean code region
 local function apply_lean_syntax(buffer, last_line)
   buffer:call(function()
-    -- `:syntax include` skips the file if `b:current_syntax` is set, and sets
-    -- it to the included language on success; bracket the include so that
-    -- markdown remains the buffer's effective syntax for the doc lines.
+    pcall(vim.treesitter.stop, buffer.bufnr)
+
+    -- `:syntax include` skips the file when `b:current_syntax` is set and sets
+    -- it to the included language on success; bracket the include so markdown
+    -- remains the buffer's effective syntax for the surrounding doc lines.
     vim.b.current_syntax = nil
     local ok = pcall(vim.cmd.syntax, { 'include', '@LeanHoverCode', 'syntax/lean.vim' })
     vim.b.current_syntax = 'markdown'
@@ -82,10 +86,15 @@ local function extract_hover(result)
   local fence = value:match '^```lean\n(.-)```'
   local signature = fence and vim.trim(fence):match '(.+) : '
 
-  -- Extract documentation after the first *** separator.
+  -- Extract documentation after the first *** separator.  Lean uses `***`
+  -- as a thematic break; we convert to `---` for nicer rendering, but pad
+  -- with a blank line on each side so markdown doesn't read `paragraph\n---`
+  -- as a Setext H2 heading (which is what `---` means immediately after a
+  -- text line).  We normalize surrounding newlines so we never produce more
+  -- than one blank line on either side of the separator.
   local doc = value:match '%*%*%*\n(.+)'
   if doc then
-    doc = vim.trim(doc:gsub('\n%*%*%*\n', '\n---\n'))
+    doc = vim.trim(doc:gsub('\n+%*%*%*\n+', '\n\n---\n\n'))
   end
 
   return signature, doc

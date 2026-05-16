@@ -44,6 +44,7 @@ describe(
             [GMP](https://gmplib.org/)); at runtime, `Nat` values that are sufficiently small are unboxed.
 
             ---
+
             *import Init.Prelude*
           ]],
           buffer = hover_win:buffer(),
@@ -72,6 +73,7 @@ describe(
             arbitrary-precision arithmetic library. The definition provided here is the logical model.
 
             ---
+
             *import Init.Prelude*
           ]],
           buffer = hover_win:buffer(),
