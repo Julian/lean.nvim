@@ -25,6 +25,16 @@ end
 
 local QUERY_ID = 99999
 
+local function send_raw(data)
+  if vim.env.TMUX then
+    -- Wrap in tmux DCS passthrough; inner ESCs must be doubled
+    local escaped = data:gsub('\x1b', '\x1b\x1b')
+    vim.api.nvim_chan_send(2, '\x1bPtmux;' .. escaped .. '\x1b\\')
+  else
+    vim.api.nvim_chan_send(2, data)
+  end
+end
+
 ---Send a Kitty graphics protocol query to probe for support.
 ---The terminal responds with an APC sequence if it supports the protocol.
 ---Requires Neovim to forward APC responses via TermResponse (recent feature).
@@ -48,7 +58,8 @@ local function probe(on_detected)
     end,
   })
   -- Query: transmit a 1x1 transparent pixel with a=q (query).
-  vim.api.nvim_chan_send(2, string.format('\x1b_Gi=%d,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\', QUERY_ID))
+  --vim.api.nvim_chan_send(2, string.format('\x1b_Gi=%d,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\', QUERY_ID))
+  send_raw(string.format('\x1b_Gi=%d,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\', QUERY_ID))
 end
 
 ---Callbacks registered to fire when graphics support is confirmed.
