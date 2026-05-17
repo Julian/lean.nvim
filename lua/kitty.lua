@@ -58,7 +58,6 @@ local function probe(on_detected)
     end,
   })
   -- Query: transmit a 1x1 transparent pixel with a=q (query).
-  --vim.api.nvim_chan_send(2, string.format('\x1b_Gi=%d,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\', QUERY_ID))
   send_raw(string.format('\x1b_Gi=%d,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\', QUERY_ID))
 end
 
