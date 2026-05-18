@@ -15,7 +15,7 @@ repos:
     hooks:
       - id: luacheck
   - repo: https://github.com/JohnnyMorganz/StyLua
-    rev: v2.4.1
+    rev: v2.5.2
     hooks:
       - id: stylua
   - repo: https://github.com/DavidAnson/markdownlint-cli2
@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: markdownlint-cli2
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.24.1
+    rev: v1.25.2
     hooks:
       - id: zizmor
         args: [--pedantic]
