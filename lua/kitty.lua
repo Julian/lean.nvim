@@ -88,7 +88,7 @@ end
 graphics_supported = detect_from_env()
 if graphics_supported then
   notify_available()
-elseif #vim.api.nvim_list_uis() > 0 then
+elseif not vim.env.TMUX and #vim.api.nvim_list_uis() > 0 then
   probe(notify_available)
 else
   vim.api.nvim_create_autocmd('UIEnter', {
@@ -98,7 +98,7 @@ else
         graphics_supported = detect_from_env()
         if graphics_supported then
           notify_available()
-        else
+        elseif not vim.env.TMUX then
           probe(notify_available)
         end
       end
