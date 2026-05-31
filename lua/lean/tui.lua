@@ -52,6 +52,7 @@ local OverlayState -- defined after BufRenderer
 ---@field private __children Element[] this element's children
 ---@field private __async_init? fun(on_result: fun(Element):nil):nil
 ---@field private __foldable? Foldable only set on containers returned by `:foldable`
+---@field __state? ElementStateHandle opt-in handle for carrying user-toggled state across rebuilds
 local Element = {}
 Element.__index = Element
 
@@ -226,22 +227,47 @@ function Element:foldable(opts)
 
   container = self:new { children = { layout(initially_open) } }
   container.__foldable = foldable
+  container.__state = {
+    snapshot = function()
+      return foldable.open
+    end,
+    restore = function(_, saved)
+      foldable:set_open(saved)
+    end,
+    walk = function()
+      return foldable.body
+    end,
+  }
 
   return container
 end
 
----Copy foldable open-state from `from` onto `onto`, walking children in
----parallel so corresponding foldables in two structurally-similar trees stay
----in sync after the second tree replaces the first.
+---@class ElementStateHandle
+---@field snapshot fun(self): any captures the current user-toggled state
+---@field restore fun(self, saved: any): nil reapplies a previously-captured value
+---@field walk? fun(self): Element optional override for state-transfer traversal.
+---       Returned element is recursed into in place of the host element's
+---       `__children`. Use when the host's children are state-dependent
+---       (e.g. a foldable's children change with `open`) so the transfer can
+---       still find a stable subtree.
+
+---Walk two parallel element trees and copy user-toggled state from `from`
+---onto `onto`, so a rebuild doesn't snap user toggles back to defaults.
+---
+---Widgets opt in by attaching a `__state` handle (an `ElementStateHandle`) to
+---the element whose state they own. Foldables register one of these in
+---`Element:foldable`, so foldable open state is preserved automatically.
 ---@param from Element source element tree (e.g. the previous data element)
 ---@param onto Element destination element tree (e.g. the freshly-built one)
-function Element.transfer_foldable_state(from, onto)
-  -- A foldable container's own children depend on its open state, so we
-  -- recurse through its stable `body` rather than `__children`.
-  if from.__foldable then
-    if onto.__foldable then
-      onto.__foldable:set_open(from.__foldable.open)
-      Element.transfer_foldable_state(from.__foldable.body, onto.__foldable.body)
+function Element.transfer_state(from, onto)
+  if from.__state and onto.__state then
+    onto.__state:restore(from.__state:snapshot())
+  end
+  -- If the handle declares a `walk`, the element's own `__children` are
+  -- state-dependent and must be skipped in favour of the walked subtree.
+  if from.__state and from.__state.walk then
+    if onto.__state and onto.__state.walk then
+      Element.transfer_state(from.__state:walk(), onto.__state:walk())
     end
     return
   end
@@ -250,7 +276,7 @@ function Element.transfer_foldable_state(from, onto)
     if not other then
       return
     end
-    Element.transfer_foldable_state(child, other)
+    Element.transfer_state(child, other)
   end
 end
 

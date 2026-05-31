@@ -224,8 +224,44 @@ describe('ProofWidgets widgets', function()
         helpers.search '#html quickFilter'
         assert.infoview_contents.are [[
           ▼ HTML Display
-          Summary
+          ▼ Summary				show more
           filtered content
+        ]]
+
+        infoview.go_to()
+        helpers.search 'show more'
+        helpers.feed '<CR>'
+        assert.infoview_contents.are [[
+          ▼ HTML Display
+          ▼ Summary				show less
+          all content
+        ]]
+
+        helpers.search 'Summary'
+        helpers.feed '<CR>'
+        assert.infoview_contents.are [[
+          ▼ HTML Display
+          ▶ Summary				show less
+        ]]
+      end,
+      fixtures.with_widgets
+    )
+  )
+
+  it(
+    'starts FilterDetails widgets unfiltered when initiallyFiltered is false',
+    helpers.clean_buffer(
+      [[
+        import WithWidgets.FilterDetailsWidget
+
+        #html quickFilterAll
+      ]],
+      function()
+        helpers.search '#html quickFilterAll'
+        assert.infoview_contents.are [[
+          ▼ HTML Display
+          ▼ Summary				show less
+          all content
         ]]
       end,
       fixtures.with_widgets

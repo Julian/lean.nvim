@@ -564,7 +564,7 @@ describe('Element', function()
       assert.is.equal('▶ title', root:to_string())
 
       local fresh = build()
-      Element.transfer_foldable_state(old, fresh)
+      Element.transfer_state(old, fresh)
       root:set_children { fresh }
       assert.is.equal('▶ title', root:to_string())
     end)
@@ -594,9 +594,37 @@ describe('Element', function()
       assert.is.equal('▼ outer\n\n▶ inner', root:to_string())
 
       local fresh = build()
-      Element.transfer_foldable_state(old, fresh)
+      Element.transfer_state(old, fresh)
       root:set_children { fresh }
       assert.is.equal('▼ outer\n\n▶ inner', root:to_string())
+    end)
+
+    it('transfers state via a user-attached __state handle', function()
+      -- Widgets without a built-in handle (foldables have one already) can
+      -- opt into rebuild-survival by attaching a `__state` table with
+      -- `snapshot`/`restore` to an element they own.
+      local function build()
+        local value = 'default'
+        local elem = Element:new { text = value }
+        elem.__state = {
+          snapshot = function()
+            return value
+          end,
+          restore = function(_, saved)
+            value = saved
+            elem.text = saved
+          end,
+        }
+        return elem
+      end
+
+      local old = build()
+      old.__state:restore 'user-set'
+      assert.is.equal('user-set', old:to_string())
+
+      local fresh = build()
+      Element.transfer_state(old, fresh)
+      assert.is.equal('user-set', fresh:to_string())
     end)
   end)
 

@@ -9,3 +9,10 @@ def quickFilter : Html :=
     filtered={.text "filtered content"}
     all={.text "all content"}
     initiallyFiltered={true} />
+
+def quickFilterAll : Html :=
+  <FilterDetails
+    summary={<b>Summary</b>}
+    filtered={.text "filtered content"}
+    all={.text "all content"}
+    initiallyFiltered={false} />

@@ -188,15 +188,8 @@ local Html = inductive('Html', {
         },
       }
     elseif props.summary and props.filtered then
-      local content = props.initiallyFiltered ~= false and props.filtered or props.all
-      return Element:new {
-        children = {
-          self(props.summary, ctx, opts),
-          Element.text '\n',
-          self(content, ctx, opts),
-          Element:new { children = children },
-        },
-      }
+      local FilterDetails = require 'lean.widgets.ProofWidgets.FilterDetails'
+      return Element:new { children = { FilterDetails(ctx, props), unpack(children) } }
     end
 
     return Element:new {

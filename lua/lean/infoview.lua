@@ -1800,7 +1800,7 @@ function Pin:update()
     -- expanded traces (etc.) back to their server-default collapsed state.
     -- The previous element is read here (not before `render_contents` yields)
     -- so an overlapping update that already committed is honored.
-    Element.transfer_foldable_state(self.__data_element, new_data_element)
+    Element.transfer_state(self.__data_element, new_data_element)
     self.__data_element = new_data_element
     self.__element:set_children { self.__data_element }
     iv.__last_trace_query = nil
