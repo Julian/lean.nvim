@@ -599,6 +599,43 @@ describe('Element', function()
       assert.is.equal('▼ outer\n\n▶ inner', root:to_string())
     end)
 
+    it('transfers state across __async_init resolve callbacks', function()
+      -- Models what RefreshComponent needs: between successive resolutions
+      -- of an `__async_init`-driven element, state on the previous resolved
+      -- subtree (cancellation handles, foldable open-state, ...) must
+      -- transfer to the new one — otherwise nested stateful children
+      -- (e.g. RefreshComponent polling loops) get orphaned every frame.
+      local restored = {}
+      local function child_with_state(name)
+        local elem = Element:new { text = name }
+        elem.__state = {
+          snapshot = function()
+            return name
+          end,
+          restore = function(_, saved)
+            table.insert(restored, saved)
+          end,
+        }
+        return elem
+      end
+
+      local resolve
+      local async_elem = Element:new {
+        __async_init = function(rerender)
+          resolve = rerender
+        end,
+      }
+      local buffer = require('std.nvim.buffer').create { scratch = true, listed = false }
+      local renderer = async_elem:renderer { buffer = buffer }
+      renderer:render()
+
+      resolve(child_with_state 'a')
+      resolve(child_with_state 'b')
+      resolve(child_with_state 'c')
+
+      assert.are.same({ 'a', 'b' }, restored)
+    end)
+
     it('transfers state via a user-attached __state handle', function()
       -- Widgets without a built-in handle (foldables have one already) can
       -- opt into rebuild-survival by attaching a `__state` table with

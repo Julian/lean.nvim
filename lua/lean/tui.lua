@@ -551,6 +551,16 @@ function Element:render_lines(renderer)
     if element.__async_init and renderer then
       renderer.pending_elements[element] = true
       element.__async_init(function(resolved_element) ---@type Element resolved_element
+        -- Carry state (foldable open/close, RefreshComponent polling
+        -- cancellation, ...) from the prior resolved subtree to the new
+        -- one. Without this, every async frame would orphan whatever
+        -- `__state` handles lived in the previous subtree — most
+        -- noticeably leaking RefreshComponent polling loops that then
+        -- compound into a render storm.
+        local previous = element.__children[1]
+        if previous then
+          Element.transfer_state(previous, resolved_element)
+        end
         element:set_children { resolved_element }
         renderer.pending_elements[element] = nil
         renderer:render()
