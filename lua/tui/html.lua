@@ -47,8 +47,23 @@ function html.Tag.summary(children)
   }
 end
 
----Render a block-level `<div>` element.
-function html.Tag.div(children)
+---Render a `<div>` element.
+---
+---By default block-level. `display: flex` keeps the container block-level
+---(consecutive flex rows still each start on a new line) but lays the
+---direct children out inline so they sit on the same line. `inline-flex`
+---and `inline` additionally make the container itself inline.
+function html.Tag.div(children, attrs)
+  local display = attrs and attrs.style and attrs.style.display
+  if display == 'flex' or display == 'inline-flex' or display == 'inline' then
+    for _, child in ipairs(children) do
+      child.is_block = false
+    end
+    return Element:new {
+      is_block = display == 'flex',
+      children = children,
+    }
+  end
   return Element:new { is_block = true, children = children }
 end
 

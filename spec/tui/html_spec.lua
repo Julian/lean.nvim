@@ -122,6 +122,40 @@ describe('tui.html', function()
       }
       assert.is.equal('boldplain', el:to_string())
     end)
+
+    it('lays display:flex children inline but keeps the container block-level', function()
+      local el = Tag.div({
+        Tag.span { Element:new { text = '[apply] ' } },
+        Tag.div { Element:new { text = 'result' } },
+      }, { style = { display = 'flex' } })
+      assert.is.equal('[apply] result', el:to_string())
+      assert.is.True(el.is_block)
+    end)
+
+    it('stacks consecutive display:flex divs on separate lines', function()
+      local el = Element:new {
+        children = {
+          Tag.div({
+            Tag.span { Element:new { text = '[apply] ' } },
+            Tag.div { Element:new { text = 'a' } },
+          }, { style = { display = 'flex' } }),
+          Tag.div({
+            Tag.span { Element:new { text = '[apply] ' } },
+            Tag.div { Element:new { text = 'b' } },
+          }, { style = { display = 'flex' } }),
+        },
+      }
+      assert.is.equal('[apply] a\n[apply] b', el:to_string())
+    end)
+
+    it('makes display:inline-flex divs inline as well', function()
+      local el = Tag.div({
+        Element:new { text = 'a' },
+        Tag.div { Element:new { text = 'b' } },
+      }, { style = { display = 'inline-flex' } })
+      assert.is.equal('ab', el:to_string())
+      assert.is_not.True(el.is_block)
+    end)
   end)
 
   describe('<summary>', function()
