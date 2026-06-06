@@ -345,6 +345,25 @@ function html.Tag.pre(children)
   return Element:new { is_block = true, margin = 1, children = children }
 end
 
+---Render a `<details>` foldable as a block element.
+---
+---The foldable itself is pre-built by the dispatcher (which needs the
+---raw Html tree to identify the `<summary>` child) and passed as the
+---one-element `children` list. This handler just wraps it with the
+---tag's box model — same shape as every other Tag.* handler.
+function html.Tag.details(children)
+  return Element:new { is_block = true, margin = 1, children = children }
+end
+
+---Render a `<table>` as a block element.
+---
+---The rendered table is pre-built by the dispatcher (which needs the
+---raw Html tree to walk `<thead>`/`<tbody>`/`<tr>`) and passed as the
+---one-element `children` list.
+function html.Tag.table(children)
+  return Element:new { is_block = true, margin = 1, children = children }
+end
+
 ---Apply a single CSS property to a Neovim highlight attribute table.
 ---
 ---Handles both kebab-case (`background-color`) and camelCase

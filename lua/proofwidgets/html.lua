@@ -189,7 +189,8 @@ local Html = inductive('Html', {
       }
     elseif props.summary and props.filtered then
       local FilterDetails = require 'lean.widgets.ProofWidgets.FilterDetails'
-      return Element:new { children = { FilterDetails(ctx, props), unpack(children) } }
+      -- FilterDetails *is* a <details> upstream, so it inherits its box model.
+      return Tag.details { FilterDetails(ctx, props), unpack(children) }
     end
 
     return Element:new {
@@ -223,23 +224,16 @@ local Html = inductive('Html', {
 
     local result
 
-    -- Structural tags handled here rather than in individual Tag handlers,
-    -- because they need access to the raw Html tree.
+    -- Tags whose handlers need the raw Html tree (to split `<summary>`,
+    -- walk `<thead>`/`<tbody>`/`<tr>`, serialize SVG) get pre-built here
+    -- and handed to the Tag handler as its children list.
     if tag == 'svg' then
       result = Tag.svg(value)
     elseif tag == 'details' then
-      result = Element:new {
-        is_block = true,
-        margin = 1,
-        children = { render_details(self, value, ctx, opts) },
-      }
+      result = Tag.details { render_details(self, value, ctx, opts) }
     elseif tag == 'table' then
       local rows = collect_table_rows(self, children, ctx, opts)
-      result = Element:new {
-        is_block = true,
-        margin = 1,
-        children = { Table.render(rows) },
-      }
+      result = Tag.table { Table.render(rows) }
     else
       if tag == 'pre' then
         opts = vim.tbl_extend('force', opts or {}, { in_pre = true })

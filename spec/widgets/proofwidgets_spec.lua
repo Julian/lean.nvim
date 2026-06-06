@@ -249,6 +249,29 @@ describe('ProofWidgets widgets', function()
   )
 
   it(
+    'separates sibling FilterDetails widgets with a blank line',
+    helpers.clean_buffer(
+      [[
+        import WithWidgets.FilterDetailsWidget
+
+        #html quickMultipleFilters
+      ]],
+      function()
+        helpers.search '#html quickMultipleFilters'
+        assert.infoview_contents.are [[
+          ▼ HTML Display
+          ▼ First				show more
+          first filtered
+
+          ▼ Second				show more
+          second filtered
+        ]]
+      end,
+      fixtures.with_widgets
+    )
+  )
+
+  it(
     'starts FilterDetails widgets unfiltered when initiallyFiltered is false',
     helpers.clean_buffer(
       [[

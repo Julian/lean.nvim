@@ -237,6 +237,34 @@ describe('tui.html', function()
     end)
   end)
 
+  describe('<details>', function()
+    it('wraps its pre-built body as a block with margin', function()
+      local el = Tag.details { Element:new { text = 'body' } }
+      assert.is.equal('body', el:to_string())
+      assert.is.True(el.is_block)
+      assert.is.equal(1, el.margin)
+    end)
+
+    it('separates sibling <details> with a blank line', function()
+      local el = Element:new {
+        children = {
+          Tag.details { Element:new { text = 'A' } },
+          Tag.details { Element:new { text = 'B' } },
+        },
+      }
+      assert.is.equal('A\n\nB', el:to_string())
+    end)
+  end)
+
+  describe('<table>', function()
+    it('wraps its pre-built body as a block with margin', function()
+      local el = Tag.table { Element:new { text = 'rows' } }
+      assert.is.equal('rows', el:to_string())
+      assert.is.True(el.is_block)
+      assert.is.equal(1, el.margin)
+    end)
+  end)
+
   describe('headings', function()
     for level = 1, 6 do
       it('renders <h' .. level .. '> as a block heading', function()

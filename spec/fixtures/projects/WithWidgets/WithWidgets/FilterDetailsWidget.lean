@@ -16,3 +16,17 @@ def quickFilterAll : Html :=
     filtered={.text "filtered content"}
     all={.text "all content"}
     initiallyFiltered={false} />
+
+def quickMultipleFilters : Html :=
+  <span>
+    <FilterDetails
+      summary={<b>First</b>}
+      filtered={.text "first filtered"}
+      all={.text "first all"}
+      initiallyFiltered={true} />
+    <FilterDetails
+      summary={<b>Second</b>}
+      filtered={.text "second filtered"}
+      all={.text "second all"}
+      initiallyFiltered={true} />
+  </span>
