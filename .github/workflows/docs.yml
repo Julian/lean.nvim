@@ -39,8 +39,11 @@ jobs:
         run: just docs
 
       - name: Commit
-        uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9
-        with:
-          branch: ${{ github.head_ref }}
-          commit_message: "Regenerate vimdocs"
-          file_pattern: doc/*.txt
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add doc/*.txt
+          if ! git diff --staged --quiet; then
+            git commit -m "Regenerate vimdocs"
+            git push
+          fi

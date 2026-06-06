@@ -27,6 +27,12 @@ jobs:
           gh api -H 'Accept: application/vnd.github.raw' '/repos/leanprover/vscode-lean4/contents/lean4-unicode-input/src/abbreviations.json' >vscode-lean/abbreviations.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9
-        with:
-          commit_message: Sync abbreviations with the VSCode definitions
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit -m "Sync abbreviations with the VSCode definitions"
+            git push
+          fi
