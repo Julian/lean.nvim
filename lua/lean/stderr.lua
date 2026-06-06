@@ -72,21 +72,29 @@ end
 ---Enable teeing stderr output somewhere (to a second visible buffer by default).
 function stderr.enable(config)
   local on_lines = config.on_lines or stderr.show
-  local old_error = log.error
   stderr_height = config.height or 5
 
   -- TODO: add upstream neovim API
+  --
+  -- Newer nvim (>= 0.13) routes LSP server stderr via the underlying
+  -- `vim.lsp.log._self.error(...)` with first arg `'transport'`; older nvim
+  -- calls `vim.lsp.log.error(...)` with first arg `'rpc'`. Patch the table
+  -- the transport actually reads from in either case.
+  local target = log._self or log
+  local old_error = target.error
+
   local function patch_log_error()
-    if log.error == old_error then
-      log.error = function(...)
+    if target.error == old_error then
+      target.error = function(...)
         local argc = select('#', ...)
         if argc == 0 then
           return true
         end -- always enable error messages
+        local mode = select(1, ...)
         local cmd = select(2, ...)
         if
           argc == 4
-          and select(1, ...) == 'rpc'
+          and (mode == 'rpc' or mode == 'transport')
           and (cmd == 'lake' or cmd == 'lean')
           and select(3, ...) == 'stderr'
         then

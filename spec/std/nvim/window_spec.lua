@@ -458,12 +458,13 @@ describe('Window', function()
 
   describe('config', function()
     it('returns the window configuration', function()
-      local window = Window:current()
+      local window = Window.editor_float { width = 5, height = 5, row = 0, col = 0 }
       local initial = vim.api.nvim_win_get_config(window.id)
       window:set_config { hide = not initial.hide }
       assert.are.equal(not initial.hide, window:config().hide)
       window:set_config { hide = initial.hide }
       assert.are.equal(initial.hide, vim.api.nvim_win_get_config(window.id).hide)
+      window:close()
     end)
   end)
 
