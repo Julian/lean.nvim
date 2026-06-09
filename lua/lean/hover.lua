@@ -55,6 +55,25 @@ local function apply_lean_syntax(buffer, last_line)
   end)
 end
 
+---Find the byte index of the top-level `:` in a Lean signature, i.e. the
+---colon that separates the binder list from the result type.  Bracket-aware
+---so colons inside binders such as `(x : T)` or `{x : T}` are skipped.
+---@param signature string
+---@return integer? index 1-based byte index of the `:` character, or nil if none
+local function top_level_colon(signature)
+  local depth = 0
+  for i = 1, #signature do
+    local c = signature:sub(i, i)
+    if c == '(' or c == '{' or c == '[' then
+      depth = depth + 1
+    elseif c == ')' or c == '}' or c == ']' then
+      depth = depth - 1
+    elseif c == ':' and depth == 0 and signature:sub(i + 1, i + 1) ~= '=' then
+      return i
+    end
+  end
+end
+
 ---Extract the signature and documentation from a Lean hover result.
 ---
 ---Lean's hover markdown has the form:
@@ -68,7 +87,7 @@ end
 ---    *import Module*
 ---
 ---We show the type interactively via RPC, so we extract the expression
----name/signature (everything before the final ` : ` in the code fence)
+---name/signature (everything before the top-level `:` in the code fence)
 ---and the documentation (everything after the first `***` separator).
 ---@param result table the LSP hover result
 ---@return string? signature the expression signature (without the type)
@@ -79,12 +98,20 @@ local function extract_hover(result)
     return
   end
 
-  -- Extract the expression name from inside the code fence.
-  -- The fence contains lines like "Nat.add : Nat → Nat → Nat" or
-  -- "foo (n : Nat) : Nat".  The greedy (.+) finds the last " : ",
-  -- which separates the expression from its type.
+  -- Extract the expression name from inside the code fence.  The fence
+  -- contains lines like `Nat.add : Nat → Nat → Nat` or `foo (n : Nat) : Nat`,
+  -- and for multi-line signatures the top-level `:` can be at end of a line
+  -- with no trailing space.  We walk the fence tracking bracket depth so
+  -- colons inside binders never split the signature.
   local fence = value:match '^```lean\n(.-)```'
-  local signature = fence and vim.trim(fence):match '(.+) : '
+  local signature
+  if fence then
+    local trimmed = vim.trim(fence)
+    local colon = top_level_colon(trimmed)
+    if colon then
+      signature = vim.trim(trimmed:sub(1, colon - 1))
+    end
+  end
 
   -- Extract documentation after the first *** separator.  Lean uses `***`
   -- as a thematic break; we convert to `---` for nicer rendering, but pad

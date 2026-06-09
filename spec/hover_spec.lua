@@ -16,6 +16,9 @@ describe(
     [[
       #check Nat
       #check @Nat.add
+      theorem mlt_521_repro {α : Type} {β : Type} (h_a : α = β) (h_b : β = α) (h_c : α = β) (h_d : β = α) :
+          (∀ x : α, x = x) ∧ (∀ y : β, y = y) ∧ (∀ z : α, z = z) ∧ (∀ w : β, w = w) :=
+        sorry
     ]],
     function()
       local lean_window = Window:current()
@@ -144,6 +147,48 @@ describe(
 
         -- Close the tooltip and hover.
         helpers.feed '<Esc>'
+        hover_win:close()
+        lean_window:make_current()
+      end)
+
+      it('preserves multi-line signatures whose binders contain colons', function()
+        lean_window:make_current()
+        -- Hover on the theorem name in its declaration on line 3.
+        helpers.move_cursor { to = { 3, 10 } }
+
+        local ids = { lean_window.id, current_infoview.window.id }
+
+        hover()
+        -- Poll until the hover window actually contains our theorem signature;
+        -- the interactive-hover RPC can take longer than the default 1s
+        -- `wait_for_new_window` allows.
+        local hover_win
+        local ok = vim.wait(15000, function()
+          hover_win = vim.iter(vim.api.nvim_tabpage_list_wins(0)):find(function(w)
+            if vim.tbl_contains(ids, w) then
+              return false
+            end
+            local buf = vim.api.nvim_win_get_buf(w)
+            local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+            return table.concat(lines, '\n'):match 'mlt_521_repro' ~= nil
+          end)
+          return hover_win ~= nil
+        end)
+        assert.message('Interactive hover never rendered.').is_true(ok)
+        hover_win = Window:from_id(hover_win)
+
+        local contents = table.concat(hover_win:buffer():lines(), '\n')
+
+        -- Regression for #521: the parser used to split the signature at a
+        -- ` : ` inside a binder when Lean wrapped the signature so the
+        -- top-level `:` sat at end-of-line.  The final binder `(h_d : β = α)`
+        -- ended up rendered as `∀ (w : <conclusion type>` instead.
+        assert.has_match('%(h_d : β = α%)', contents)
+        assert.is_nil(
+          contents:match '∀%s*%(w%s*:%s*∀',
+          ('binder `w` was misparsed:\n%s'):format(contents)
+        )
+
         hover_win:close()
         lean_window:make_current()
       end)
