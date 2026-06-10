@@ -89,6 +89,94 @@ describe('Lean core widgets', function()
   )
 
   it(
+    'supports icon suggestions',
+    helpers.clean_buffer(
+      [[
+        import Lean
+
+        open Lean Elab Tactic in
+        elab "iconSuggestion" : tactic => do
+          let widget := MessageData.ofWidget {
+            id := ``Lean.Meta.Hint.textInsertionWidget
+            javascriptHash := Lean.Meta.Hint.textInsertionWidget.javascriptHash
+            props := return json% {
+              range: {
+                "start": {"line": 25, "character": 2},
+                "end": {"line": 25, "character": 16}
+              },
+              suggestion: "trivial",
+              acceptSuggestionProps: {
+                kind: "icon",
+                hoverText: "Apply suggestion",
+                codiconName: "sparkle",
+                gaps: false
+              }
+            }
+          } "[icon]"
+          logInfo m!"Try this: {widget}"
+          evalTactic (← `(tactic| trivial))
+
+        example : True := by
+          iconSuggestion
+      ]],
+      function()
+        -- Force the `[name]` fallback so this test doesn't depend on the
+        -- terminal's graphics support (nor download any icons).
+        local prior_config = vim.g.lean_config
+        vim.g.lean_config =
+          vim.tbl_deep_extend('force', prior_config or {}, { graphics = { enabled = false } })
+
+        helpers.wait:for_diagnostics()
+        helpers.search [[  \zsiconSuggestion]]
+        assert.infoview_contents.are [[
+          Goals accomplished 🎉
+
+          ⊢ True
+
+          ▼ 26:3-26:17: information:
+          Try this: [sparkle]
+        ]]
+
+        infoview.go_to()
+        helpers.search 'sparkle'
+        helpers.feed '<CR>'
+
+        assert.current_window.is(lean_window)
+        assert.contents.are [[
+          import Lean
+
+          open Lean Elab Tactic in
+          elab "iconSuggestion" : tactic => do
+            let widget := MessageData.ofWidget {
+              id := ``Lean.Meta.Hint.textInsertionWidget
+              javascriptHash := Lean.Meta.Hint.textInsertionWidget.javascriptHash
+              props := return json% {
+                range: {
+                  "start": {"line": 25, "character": 2},
+                  "end": {"line": 25, "character": 16}
+                },
+                suggestion: "trivial",
+                acceptSuggestionProps: {
+                  kind: "icon",
+                  hoverText: "Apply suggestion",
+                  codiconName: "sparkle",
+                  gaps: false
+                }
+              }
+            } "[icon]"
+            logInfo m!"Try this: {widget}"
+            evalTactic (← `(tactic| trivial))
+
+          example : True := by
+            trivial
+        ]]
+
+        vim.g.lean_config = prior_config
+      end
+    )
+  )
+
+  it(
     'supports try this widgets with simultaneously added multiple suggestions',
     helpers.clean_buffer(
       [[

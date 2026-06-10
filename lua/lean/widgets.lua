@@ -107,13 +107,20 @@ end
 ---Create a link that applies a text edit to the Lean source buffer.
 ---
 ---Applies the edit and jumps to the Lean window afterwards.
----@param text string the display text for the link
+---@param content string|Element the display text (or element) for the link
 ---@param range lsp.Range the range to replace
 ---@param new_text string the replacement text
 ---@return Element
-function RenderContext:edit_link(text, range, new_text)
+function RenderContext:edit_link(content, range, new_text)
+  local text, children
+  if type(content) == 'string' then
+    text = content
+  else
+    children = { content }
+  end
   return Element.link {
     text = text,
+    children = children,
     name = 'suggestion',
     action = function()
       local bufnr = vim.uri_to_bufnr(self.params.textDocument.uri)
