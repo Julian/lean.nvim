@@ -290,15 +290,28 @@ function ImageSet:place_all(win, positions)
 
   local winid = win.id or win
   local winpos = vim.api.nvim_win_get_position(winid)
-  local topline = vim.fn.getwininfo(winid)[1].topline - 1 -- 0-indexed
+  local wininfo = vim.fn.getwininfo(winid)[1]
+  local topline = wininfo.topline - 1 -- 0-indexed
+  local textoff = wininfo.textoff -- sign/number/fold columns shift text rightwards
   local win_height = vim.api.nvim_win_get_height(winid)
   local cell = kitty.cell_size()
+
+  ---How many screen rows below the window's first line a buffer row starts,
+  ---accounting for any soft-wrapped (or folded) lines in between.
+  ---@param row integer 0-indexed buffer row
+  ---@return integer
+  local function screen_row_of(row)
+    if row <= topline then
+      return row - topline
+    end
+    return vim.api.nvim_win_text_height(winid, { start_row = topline, end_row = row - 1 }).all
+  end
 
   for handle, pos in pairs(positions) do
     local img = self._images[handle]
     if img and img.kitty_id then
       local image_rows = kitty.rows_for_height(img.height)
-      local visible_row = pos.row - topline
+      local visible_row = screen_row_of(pos.row)
 
       if visible_row + image_rows > 0 and visible_row < win_height then
         local src_y = 0
@@ -325,7 +338,7 @@ function ImageSet:place_all(win, positions)
             img.width,
             src_h,
             winpos[1] + place_row + 1,
-            winpos[2] + pos.col + 1,
+            winpos[2] + textoff + pos.col + 1,
             display_rows,
             math.ceil(img.width / cell.width)
           )

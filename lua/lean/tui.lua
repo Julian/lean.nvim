@@ -1098,6 +1098,20 @@ function OverlayState:render()
     win = Window:from_id(wins[1])
   end
 
+  ---Element positions are byte offsets, but kitty places images at screen
+  ---cells, which diverge on lines containing multibyte characters.
+  ---@param pos { start_pos: integer[] }
+  ---@return { row: integer, col: integer }
+  local function display_pos(pos)
+    local row, byte_col = pos.start_pos[1], pos.start_pos[2]
+    local col = byte_col
+    if byte_col > 0 then
+      local line = vim.api.nvim_buf_get_lines(renderer.buffer.bufnr, row, row + 1, false)[1] or ''
+      col = vim.fn.strdisplaywidth(line:sub(1, byte_col))
+    end
+    return { row = row, col = col }
+  end
+
   ---@type table<integer, { row: integer, col: integer }>
   local positions = {}
   local needs_rebuild = not self._images
@@ -1115,14 +1129,14 @@ function OverlayState:render()
           element.overlay.format
         )
         self._handles[element] = handle
-        positions[handle] = { row = pos.start_pos[1], col = pos.start_pos[2] }
+        positions[handle] = display_pos(pos)
       end
     end
   else
     for element, pos in pairs(renderer.positions) do
       local handle = self._handles[element]
       if handle then
-        positions[handle] = { row = pos.start_pos[1], col = pos.start_pos[2] }
+        positions[handle] = display_pos(pos)
       end
     end
   end
