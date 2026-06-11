@@ -13,7 +13,6 @@ local infoview = require 'lean.infoview'
 
 local stderr = {}
 local current = {}
-local stderr_height
 
 ---Open a window for the stderr buffer of the configured height.
 ---@param stderr_buffer Buffer the buffer to open in the new window
@@ -34,7 +33,7 @@ local function open_window(stderr_buffer)
     vim.cmd(('botright sbuffer %d'):format(stderr_buffer.bufnr))
     stderr_window = Window:current()
   end
-  stderr_window:set_height(stderr_height)
+  stderr_window:set_height(require 'lean.config'().stderr.height)
   stderr_buffer.o.filetype = 'leanstderr'
   initial_window:make_current()
   return stderr_window
@@ -69,10 +68,17 @@ function stderr.show(message)
   end)
 end
 
----Enable teeing stderr output somewhere (to a second visible buffer by default).
-function stderr.enable(config)
-  local on_lines = config.on_lines or stderr.show
-  stderr_height = config.height or 5
+local initialized = false
+
+---Start teeing stderr output somewhere (to a second visible buffer by default).
+---
+---Runs automatically via our Lean ftplugin, i.e. lazily when opening Lean
+---buffers.
+function stderr.init()
+  if initialized or require 'lean.config'().stderr.enable == false then
+    return
+  end
+  initialized = true
 
   -- TODO: add upstream neovim API
   --
@@ -83,34 +89,25 @@ function stderr.enable(config)
   local target = log._self or log
   local old_error = target.error
 
-  local function patch_log_error()
-    if target.error == old_error then
-      target.error = function(...)
-        local argc = select('#', ...)
-        if argc == 0 then
-          return true
-        end -- always enable error messages
-        local mode = select(1, ...)
-        local cmd = select(2, ...)
-        if
-          argc == 4
-          and (mode == 'rpc' or mode == 'transport')
-          and (cmd == 'lake' or cmd == 'lean')
-          and select(3, ...) == 'stderr'
-        then
-          local chunk = select(4, ...)
-          on_lines(chunk)
-        end
-        old_error(...)
-      end
+  target.error = function(...)
+    local argc = select('#', ...)
+    if argc == 0 then
+      return true
+    end -- always enable error messages
+    local mode = select(1, ...)
+    local cmd = select(2, ...)
+    if
+      argc == 4
+      and (mode == 'rpc' or mode == 'transport')
+      and (cmd == 'lake' or cmd == 'lean')
+      and select(3, ...) == 'stderr'
+    then
+      local chunk = select(4, ...)
+      local on_lines = require 'lean.config'().stderr.on_lines or stderr.show
+      on_lines(chunk)
     end
+    old_error(...)
   end
-
-  vim.api.nvim_create_autocmd('FileType', {
-    pattern = 'lean',
-    callback = patch_log_error,
-    once = true,
-  })
 end
 
 return stderr

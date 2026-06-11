@@ -15,7 +15,6 @@ local async = require 'std.async'
 
 local Element = require('lean.tui').Element
 local lsp = require 'lean.lsp'
-local progress_bars = require 'lean.progress_bars'
 
 ---Buffer-local key bindings for the hierarchy panel. Defined here (not via
 ---`infoview.mappings`) because that runtime variable is on the deprecation
@@ -220,11 +219,13 @@ local function show_loading(buf, win, kind)
   buf:set_lines(lines)
   buf.o.modifiable = false
 
+  -- Reuse the progress bar sign so loading looks like in-progress Lean files.
+  local options = require 'lean.config'().progress_bars
   for line = 0, height - 1 do
     buf:set_extmark(LOADING_NS, line, 0, {
-      sign_text = progress_bars.options.character,
+      sign_text = options.character,
       sign_hl_group = 'leanProgressBar',
-      priority = progress_bars.options.priority,
+      priority = options.priority,
     })
   end
 end

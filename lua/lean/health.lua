@@ -25,6 +25,17 @@ local function lake_is_runnable()
   vim.health.info(('  `lake --version`:  %s'):format(version))
 end
 
+local function plugin_files_have_run()
+  if require('lean').initialized then
+    vim.health.ok "lean.nvim's plugin files have run."
+  else
+    vim.health.error("lean.nvim's plugin files have not run.", {
+      'If you use a plugin manager which lazily loads lean.nvim, '
+        .. 'ensure it sources our plugin/ directory when loading us.',
+    })
+  end
+end
+
 local function no_timers()
   if not vim.tbl_isempty(vim.fn.timer_info()) then
     vim.health.warn(
@@ -43,6 +54,7 @@ return {
     vim.health.start(('lean.nvim (%s)'):format(version))
     neovim_is_new_enough()
     lake_is_runnable()
+    plugin_files_have_run()
     no_timers()
   end,
 }

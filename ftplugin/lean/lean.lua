@@ -42,6 +42,15 @@ if config.inlay_hint.enabled then
   vim.lsp.inlay_hint.enable(true, { bufnr = 0 })
 end
 
+-- Start the Kitty graphics protocol probe eagerly so it resolves before any
+-- SVG content arrives from the Lean server.
+if config.graphics.enabled then
+  require 'kitty'
+end
+
+require('lean.progress_bars').init(vim.api.nvim_get_current_buf())
+require('lean.stderr').init()
+
 vim.bo.modifiable = config.ft:should_modify()
 
 vim.api.nvim_create_autocmd('DiagnosticChanged', {

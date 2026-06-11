@@ -1,1 +1,1 @@
-vim.filetype.add { extension = { lean = 'lean' } }
+require('lean').init()

@@ -15,9 +15,9 @@
 ---@field infoview? lean.infoview.Config infoview configuration
 ---@field inlay_hint? lean.inlay_hint.Config inlay hint configuration
 ---@field lsp? lean.lsp.Config language server configuration
----@field progress_bars? table progress bar configuration
+---@field progress_bars? lean.progress_bars.Config progress bar configuration
 ---@field signs? lean.diagnostic.SignsConfig diagnostic sign column configuration
----@field stderr? table stderr window configuration
+---@field stderr? lean.stderr.Config stderr window configuration
 ---@field on_imports_out_of_date? fun(integer):nil a callback called when imports are out of date in a buffer
 ---@field debug? lean.debug.Config developer options for debugging and introspection
 
@@ -27,6 +27,8 @@
 ---@field graphics lean.graphics.Config terminal graphics configuration
 ---@field infoview lean.infoview.MergedConfig infoview configuration
 ---@field inlay_hint lean.inlay_hint.Config inlay hint configuration
+---@field progress_bars lean.progress_bars.MergedConfig progress bar configuration
+---@field stderr lean.stderr.MergedConfig stderr window configuration
 ---@field debug lean.debug.MergedConfig debugging and introspection configuration
 ---@field on_imports_out_of_date fun(integer):nil a callback called when imports are out of date in a buffer
 
@@ -110,6 +112,26 @@
 
 ---@class lean.inlay_hint.Config
 ---@field enabled? boolean whether to automatically enable inlay hints
+
+---Progress bars indicate which portions of a file Lean is still processing.
+---@class lean.progress_bars.Config
+---@field enable? boolean whether to show progress bars (default true)
+---@field character? string the character to repeat in the sign column (default '│')
+---@field priority? integer the priority of progress bar signs (default 10)
+
+---@class lean.progress_bars.MergedConfig: lean.progress_bars.Config
+---@field character string the character to repeat in the sign column
+---@field priority integer the priority of progress bar signs
+
+---Standard error output emitted by the Lean language server, which by
+---default is shown in a (small) separate window.
+---@class lean.stderr.Config
+---@field enable? boolean whether to show stderr output somewhere (default true)
+---@field height? integer the height of the stderr window (default 5)
+---@field on_lines? fun(lines: string) a callback for newly emitted lines, replacing the default window
+
+---@class lean.stderr.MergedConfig: lean.stderr.Config
+---@field height integer the height of the stderr window
 
 ---@type lean.MergedConfig
 local DEFAULTS = {
@@ -198,8 +220,17 @@ local DEFAULTS = {
   ---@type lean.inlay_hint.Config
   inlay_hint = { enabled = true },
 
+  ---@type lean.progress_bars.MergedConfig
+  progress_bars = {
+    character = '│',
+    priority = 10,
+  },
+
   ---@type lean.diagnostic.SignsConfig
   signs = { enabled = true },
+
+  ---@type lean.stderr.MergedConfig
+  stderr = { height = 5 },
 }
 
 ---Load our merged configuration merging user configuration with any defaults.

@@ -114,6 +114,136 @@ local lean = {
   },
 }
 
+local commands = {
+  LeanRestartFile = function()
+    require('lean.lsp').restart_file()
+  end,
+  LeanRefreshFileDependencies = function()
+    require('lean.lsp').restart_file()
+  end,
+
+  LeanGoal = function()
+    require('lean.commands').show_goal()
+  end,
+  LeanTermGoal = function()
+    require('lean.commands').show_term_goal()
+  end,
+  LeanLineDiagnostics = function()
+    require('lean.commands').show_line_diagnostics()
+  end,
+
+  LeanHover = function()
+    if require 'lean.config'().lsp.enhanced_handlers.hover then
+      require 'lean.hover'()
+    else
+      vim.lsp.buf.hover()
+    end
+  end,
+
+  LeanGotoInfoview = function()
+    require('lean.infoview').go_to()
+  end,
+  LeanInfoviewToggle = function()
+    require('lean.infoview').toggle()
+  end,
+
+  LeanInfoviewViewOptions = function()
+    require('lean.infoview').select_view_options()
+  end,
+
+  LeanInfoviewPinTogglePause = function()
+    require('lean.infoview').pin_toggle_pause()
+  end,
+  LeanInfoviewAddPin = function()
+    require('lean.infoview').add_pin()
+  end,
+  LeanInfoviewClearPins = function()
+    require('lean.infoview').clear_pins()
+  end,
+
+  LeanInfoviewSetDiffPin = function()
+    require('lean.infoview').set_diff_pin()
+  end,
+  LeanInfoviewClearDiffPin = function()
+    require('lean.infoview').clear_diff_pin()
+  end,
+  LeanInfoviewToggleAutoDiffPin = function()
+    require('lean.infoview').toggle_auto_diff_pin(true)
+  end,
+  LeanInfoviewToggleNoClearAutoDiffPin = function()
+    require('lean.infoview').toggle_auto_diff_pin(false)
+  end,
+
+  LeanInfoviewEnableWidgets = function()
+    require('lean.infoview').enable_widgets()
+  end,
+  LeanInfoviewDisableWidgets = function()
+    require('lean.infoview').disable_widgets()
+  end,
+  LeanInfoviewOpenDebug = function()
+    require('lean.infoview').open_debug()
+  end,
+
+  LeanInfoviewAcceptSuggestion = function()
+    require('lean.infoview').accept_suggestion()
+  end,
+
+  LeanAbbreviationsReverseLookup = function()
+    require('lean.abbreviations').show_reverse_lookup()
+  end,
+
+  LeanSorryFill = function()
+    require('lean.sorry').fill()
+  end,
+
+  LeanModuleImports = function()
+    require('lean.module_hierarchy').show_imports()
+  end,
+  LeanModuleImportedBy = function()
+    require('lean.module_hierarchy').show_imported_by()
+  end,
+}
+
+---Whether `lean.init` has run, i.e. whether our plugin files have been
+---sourced (as they're what is responsible for calling it).
+lean.initialized = false
+
+local telescope_initialized = false
+
+---Initialize lean.nvim's session-global state.
+---
+---Runs automatically via our `plugin/` files, so there's no need to call
+---this function manually.
+---
+---Idempotent, other than retrying integration with optional plugins
+---(e.g. telescope.nvim) which may load after we first run.
+---@private
+function lean.init()
+  -- Telescope may not have been loadable the first time we ran, so retry it
+  -- on each call until it appears.
+  if not telescope_initialized then
+    local ok, telescope = pcall(require, 'telescope')
+    if ok then
+      telescope_initialized = true
+      telescope.load_extension 'lean_abbreviations'
+      telescope.load_extension 'loogle'
+    end
+  end
+
+  if lean.initialized then
+    return
+  end
+  lean.initialized = true
+
+  if require 'lean.config'().lsp.enable ~= false then
+    vim.lsp.enable 'leanls'
+  end
+
+  for name, fn in pairs(commands) do
+    vim.api.nvim_create_user_command(name, fn, {})
+  end
+end
+
 ---Setup function to be run in your init.lua.
 ---@param opts lean.Config Configuration options
 function lean.setup(opts)
@@ -122,137 +252,22 @@ function lean.setup(opts)
   if vim.g.lean_config then
     opts = vim.tbl_deep_extend('force', vim.g.lean_config, opts)
   end
+  vim.g.lean_config = opts
+
+  lean.init()
+
+  -- Our `plugin/` files may already have enabled the server before this
+  -- function ran (with config which didn't yet disable it).
+  if opts.lsp and opts.lsp.enable == false then
+    vim.lsp.enable('leanls', false)
+  end
 
   opts.abbreviations = opts.abbreviations or {}
   if opts.abbreviations.enable ~= false then
     require('lean.abbreviations').enable('*.lean', opts.abbreviations)
   end
 
-  opts.infoview = opts.infoview or {}
-  require('lean.infoview').enable(opts.infoview)
-
-  opts.lsp = opts.lsp or {}
-  if opts.lsp.enable ~= false then
-    vim.lsp.enable 'leanls'
-  end
-
-  opts.progress_bars = opts.progress_bars or {}
-  if opts.progress_bars.enable ~= false then
-    require('lean.progress_bars').enable(opts.progress_bars)
-  end
-
-  opts.stderr = opts.stderr or {}
-  if opts.stderr.enable ~= false then
-    require('lean.stderr').enable(opts.stderr or {})
-  end
-
-  -- Start the Kitty graphics protocol probe eagerly so it resolves before
-  -- any SVG content arrives from the Lean server.
-  opts.graphics = opts.graphics or {}
-  if opts.graphics.enabled ~= false then
-    require 'kitty'
-  end
-
-  local ok, telescope = pcall(require, 'telescope')
-  if ok then
-    telescope.load_extension 'lean_abbreviations'
-    telescope.load_extension 'loogle'
-  end
-
-  local commands = {
-    LeanRestartFile = function()
-      require('lean.lsp').restart_file()
-    end,
-    LeanRefreshFileDependencies = function()
-      require('lean.lsp').restart_file()
-    end,
-
-    LeanGoal = function()
-      require('lean.commands').show_goal()
-    end,
-    LeanTermGoal = function()
-      require('lean.commands').show_term_goal()
-    end,
-    LeanLineDiagnostics = function()
-      require('lean.commands').show_line_diagnostics()
-    end,
-
-    LeanHover = function()
-      if require 'lean.config'().lsp.enhanced_handlers.hover then
-        require 'lean.hover'()
-      else
-        vim.lsp.buf.hover()
-      end
-    end,
-
-    LeanGotoInfoview = function()
-      require('lean.infoview').go_to()
-    end,
-    LeanInfoviewToggle = function()
-      require('lean.infoview').toggle()
-    end,
-
-    LeanInfoviewViewOptions = function()
-      require('lean.infoview').select_view_options()
-    end,
-
-    LeanInfoviewPinTogglePause = function()
-      require('lean.infoview').pin_toggle_pause()
-    end,
-    LeanInfoviewAddPin = function()
-      require('lean.infoview').add_pin()
-    end,
-    LeanInfoviewClearPins = function()
-      require('lean.infoview').clear_pins()
-    end,
-
-    LeanInfoviewSetDiffPin = function()
-      require('lean.infoview').set_diff_pin()
-    end,
-    LeanInfoviewClearDiffPin = function()
-      require('lean.infoview').clear_diff_pin()
-    end,
-    LeanInfoviewToggleAutoDiffPin = function()
-      require('lean.infoview').toggle_auto_diff_pin(true)
-    end,
-    LeanInfoviewToggleNoClearAutoDiffPin = function()
-      require('lean.infoview').toggle_auto_diff_pin(false)
-    end,
-
-    LeanInfoviewEnableWidgets = function()
-      require('lean.infoview').enable_widgets()
-    end,
-    LeanInfoviewDisableWidgets = function()
-      require('lean.infoview').disable_widgets()
-    end,
-    LeanInfoviewOpenDebug = function()
-      require('lean.infoview').open_debug()
-    end,
-
-    LeanInfoviewAcceptSuggestion = function()
-      require('lean.infoview').accept_suggestion()
-    end,
-
-    LeanAbbreviationsReverseLookup = function()
-      require('lean.abbreviations').show_reverse_lookup()
-    end,
-
-    LeanSorryFill = function()
-      require('lean.sorry').fill()
-    end,
-
-    LeanModuleImports = function()
-      require('lean.module_hierarchy').show_imports()
-    end,
-    LeanModuleImportedBy = function()
-      require('lean.module_hierarchy').show_imported_by()
-    end,
-  }
-  for name, fn in pairs(commands) do
-    vim.api.nvim_create_user_command(name, fn, {})
-  end
-
-  vim.g.lean_config = opts
+  require('lean.infoview').enable(opts.infoview or {})
 end
 
 ---Try to find what version of `lean.nvim` this is.

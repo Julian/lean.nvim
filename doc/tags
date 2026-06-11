@@ -96,7 +96,7 @@ module_hierarchy.imports	lean.txt	/*module_hierarchy.imports*
 module_hierarchy.prepare	lean.txt	/*module_hierarchy.prepare*
 module_hierarchy.show_imported_by	lean.txt	/*module_hierarchy.show_imported_by*
 module_hierarchy.show_imports	lean.txt	/*module_hierarchy.show_imports*
-stderr.enable	lean.txt	/*stderr.enable*
+stderr.init	lean.txt	/*stderr.init*
 stderr.show	lean.txt	/*stderr.show*
 toolchain.gc	elan.txt	/*toolchain.gc*
 toolchain.list	elan.txt	/*toolchain.list*

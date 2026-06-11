@@ -315,8 +315,11 @@ stderr.show({message})                                             *stderr.show*
         {message}  (string)  a (possibly multi-line) string from stderr
 
 
-stderr.enable()                                                  *stderr.enable*
-    Enable teeing stderr output somewhere (to a second visible buffer by default).
+stderr.init()                                                      *stderr.init*
+    Start teeing stderr output somewhere (to a second visible buffer by default).
+
+    Runs automatically via our Lean ftplugin, i.e. lazily when opening Lean
+    buffers.
 
 
 ==============================================================================

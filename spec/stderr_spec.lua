@@ -3,13 +3,15 @@ local helpers = require 'spec.helpers'
 
 local received
 
-require('lean').setup {
+-- No `lean.setup` call here -- stderr teeing activates automatically, with
+-- configuration coming directly from `vim.g.lean_config`.
+vim.g.lean_config = vim.tbl_deep_extend('force', vim.g.lean_config or {}, {
   stderr = {
     on_lines = function(chunk)
       table.insert(received, chunk)
     end,
   },
-}
+})
 
 describe('lean.stderr', function()
   before_each(function()

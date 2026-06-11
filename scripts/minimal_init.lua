@@ -14,6 +14,14 @@ if #vim.api.nvim_list_uis() ~= 0 then
   vim.opt.runtimepath:append(lean_nvim_dir)
 end
 
+-- Inanis only adds us to the runtimepath after this file is sourced, so for
+-- requiring lean.nvim modules before then, fall back to `package.path`.
+package.path = ('%s;%s;%s'):format(
+  package.path,
+  vim.fs.joinpath(lean_nvim_dir, 'lua', '?.lua'),
+  vim.fs.joinpath(lean_nvim_dir, 'lua', '?', 'init.lua')
+)
+
 local inspect = vim.env.LEAN_NVIM_LOG_INSPECT and vim.inspect
   or function(data)
     return vim.inspect(data, { newline = ' ', indent = '' })
@@ -49,6 +57,11 @@ vim.cmd [[
   runtime! plugin/switch.vim
   runtime! plugin/tcomment.vim
 ]]
+
+-- Source our plugin files the way a real Neovim startup would.
+-- The test harness runs with --noplugin (and see above re: the runtimepath),
+-- so `runtime!` won't find them.
+vim.cmd.source(vim.fs.joinpath(lean_nvim_dir, 'plugin', 'lean.lua'))
 
 -- The test runner forks subprocesses, so enable coverage here when appropriate
 if vim.env.LEAN_NVIM_COVERAGE then
