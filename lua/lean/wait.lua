@@ -32,15 +32,13 @@ end
 
 ---Wait until the server finishes processing the cursor position.
 ---
----If the position is not yet being processed, waits for processing to
----begin first (up to the full timeout), then waits for it to finish.
+---Handles positions the server hasn't even reported progress for yet, as
+---`progress.at` treats those as still being processed -- but as a
+---consequence cannot be used to wait on *re*-processing of a position the
+---server has already finished with (e.g. after an edit), as that's
+---indistinguishable from the processing having finished.
 function Wait:for_processing()
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
-  if progress.at(params) == nil then
-    vim.wait(self.timeout, function()
-      return progress.at(params) ~= nil
-    end)
-  end
   self:_wait('processing finished', function()
     return progress.at(params) == nil
   end)
