@@ -48,7 +48,9 @@ if config.graphics.enabled then
   require 'kitty'
 end
 
-require('lean.progress_bars').init(vim.api.nvim_get_current_buf())
+local bufnr = vim.api.nvim_get_current_buf()
+require('lean.abbreviations').init(bufnr)
+require('lean.progress_bars').init(bufnr)
 require('lean.stderr').init()
 
 vim.bo.modifiable = config.ft:should_modify()

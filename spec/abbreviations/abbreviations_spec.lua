@@ -9,7 +9,7 @@ local function wait_for_expansion()
   end)
 end
 
-require('lean').setup {}
+-- No `lean.setup` call here -- abbreviations activate automatically.
 
 describe('unicode abbreviation expansion', function()
   it(
@@ -17,6 +17,21 @@ describe('unicode abbreviation expansion', function()
     helpers.clean_buffer(function()
       helpers.insert [[\a]]
       assert.contents.are [[α]]
+    end)
+  )
+
+  it(
+    'expands extra configured abbreviations',
+    helpers.clean_buffer(function()
+      local previous = vim.g.lean_config
+      vim.g.lean_config =
+        vim.tbl_deep_extend('force', previous, { abbreviations = { extra = { zzz = '☃' } } })
+
+      helpers.insert [[\zzz<Tab>]]
+      wait_for_expansion()
+      assert.contents.are [[☃]]
+
+      vim.g.lean_config = previous
     end)
   )
 

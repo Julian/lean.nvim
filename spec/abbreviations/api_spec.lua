@@ -1,7 +1,5 @@
 local abbreviations = require 'lean.abbreviations'
 
-require('lean').setup {}
-
 describe('programmatic API', function()
   it('provides access to loaded abbreviations', function()
     assert.is.equal('α', abbreviations.load()['a'])

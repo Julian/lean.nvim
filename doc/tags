@@ -26,6 +26,7 @@ WaitForDiagnosticsParams	lean.txt	/*WaitForDiagnosticsParams*
 WaitForILeansParams	lean.txt	/*WaitForILeansParams*
 abbreviations.convert	lean.txt	/*abbreviations.convert*
 abbreviations.enable	lean.txt	/*abbreviations.enable*
+abbreviations.init	lean.txt	/*abbreviations.init*
 abbreviations.load	lean.txt	/*abbreviations.load*
 abbreviations.reverse_lookup	lean.txt	/*abbreviations.reverse_lookup*
 abbreviations.show_reverse_lookup	lean.txt	/*abbreviations.show_reverse_lookup*

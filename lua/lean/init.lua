@@ -262,11 +262,6 @@ function lean.setup(opts)
     vim.lsp.enable('leanls', false)
   end
 
-  opts.abbreviations = opts.abbreviations or {}
-  if opts.abbreviations.enable ~= false then
-    require('lean.abbreviations').enable('*.lean', opts.abbreviations)
-  end
-
   require('lean.infoview').enable(opts.infoview or {})
 end
 

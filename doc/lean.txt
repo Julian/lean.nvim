@@ -100,8 +100,24 @@ abbreviations.convert()                                  *abbreviations.convert*
     Convert any abbreviation currently being typed at the cursor.
 
 
-abbreviations.enable()                                    *abbreviations.enable*
+abbreviations.init({bufnr})                                 *abbreviations.init*
+    Set up abbreviation expansion in the given (Lean) buffer.
+
+    Runs automatically via our Lean ftplugin, i.e. lazily when opening Lean
+    buffers.
+
+    Parameters: ~
+        {bufnr}  (integer)
+
+
+abbreviations.enable({pattern})                           *abbreviations.enable*
     Enable abbreviation expansion for buffers matching the given pattern.
+
+    Lean buffers have abbreviations enabled automatically; this can be used to
+    also enable them for other buffers (e.g. `*.md` or `*.txt` files).
+
+    Parameters: ~
+        {pattern}  (string|string[])  an autocommand pattern to match against
 
 
 ==============================================================================
