@@ -1,7 +1,5 @@
 local fixtures = require 'spec.fixtures'
 
-require('lean').setup {}
-
 ---Get all buffer-local autocmds for this buffer.
 ---
 ---Filter out some autocmds which come from Neovim core and seem to pop up

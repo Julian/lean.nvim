@@ -8,8 +8,6 @@ local with_widgets = require('spec.fixtures').with_widgets
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('ImportGraph widgets', function()
   it(
     'supports GoToModule links',

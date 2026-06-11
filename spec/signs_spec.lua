@@ -2,8 +2,6 @@ local helpers = require 'spec.helpers'
 local clean_buffer = helpers.clean_buffer
 local sign_text_at = helpers.sign_text_at
 
-require('lean').setup {}
-
 describe('diagnostic signs', function()
   it(
     'shows severity signs for single-line diagnostics',

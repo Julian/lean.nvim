@@ -8,8 +8,6 @@ local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('infoview jumping', function()
   local lean_window
 

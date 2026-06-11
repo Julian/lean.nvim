@@ -5,8 +5,6 @@
 local helpers = require 'spec.helpers'
 local testing_widgets = require('spec.fixtures').widgets
 
-require('lean').setup {}
-
 describe('widgets', function()
   package.path = package.path .. ';' .. testing_widgets .. '/?.lua'
 

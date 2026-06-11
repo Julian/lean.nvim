@@ -14,7 +14,6 @@ local async = require 'std.async'
 
 local Element = require('lean.tui').Element
 local InteractiveCode = require 'lean.widget.interactive_code'
-local infoview = require 'lean.infoview'
 local lsp = require 'lean.lsp'
 local rpc = require 'lean.rpc'
 
@@ -188,7 +187,7 @@ return function()
 
       local renderer = element:renderer {
         buffer = buffer,
-        keymaps = infoview.mappings,
+        keymaps = require 'lean.config'().infoview.mappings,
       }
       renderer:render()
 

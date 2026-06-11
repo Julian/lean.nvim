@@ -1,8 +1,6 @@
 local helpers = require 'spec.helpers'
 local lean_lsp_diagnostics = require('lean.diagnostic').lsp_diagnostics
 
-require('lean').setup {}
-
 describe('diagnostics', function()
   it(
     'are retrieved from the server',

@@ -1,8 +1,6 @@
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('infoview highlighting', function()
   it(
     'highlights the innermost subexpression',

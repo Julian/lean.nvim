@@ -5,7 +5,8 @@ local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup { infoview = { autoopen = false } }
+vim.g.lean_config =
+  vim.tbl_deep_extend('force', vim.g.lean_config, { infoview = { autoopen = false } })
 
 describe('infoview', function()
   local lean_window

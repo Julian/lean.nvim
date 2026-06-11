@@ -8,8 +8,6 @@ local helpers = require 'spec.helpers'
 local hover = require 'lean.hover'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe(
   'interactive hover',
   helpers.clean_buffer(

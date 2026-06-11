@@ -31,7 +31,7 @@ local function show_popup(element)
 
   local renderer = element:renderer {
     buffer = Buffer:from_bufnr(bufnr),
-    keymaps = infoview.mappings,
+    keymaps = require 'lean.config'().infoview.mappings,
   }
   renderer:render()
 end

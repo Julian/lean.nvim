@@ -20,7 +20,13 @@ Introduction                                                         *lean.init*
 
                                                                      *lean.nvim*
 lean.setup({opts})                                                  *lean.setup*
-    Setup function to be run in your init.lua.
+    Configure lean.nvim.
+
+    Deprecated: set `vim.g.lean_config` instead. Beyond configuration, calling
+    this function (or doing anything at all besides installing lean.nvim) is
+    no longer required, as all of its behavior activates automatically when
+    opening Lean files.
+    @deprecated
 
     Parameters: ~
         {opts}  (lean.Config)  Configuration options
@@ -182,15 +188,21 @@ infoview.close_all()                                        *infoview.close_all*
     Close all open infoviews (across all tabs).
 
 
-infoview.enable({opts})                                        *infoview.enable*
-    Enable and open the infoview across all Lean buffers.
+infoview.init({bufnr})                                           *infoview.init*
+    Set up the infoview in the given (Lean) buffer, opening one if appropriate.
+
+    Runs automatically via our Lean ftplugin, i.e. lazily when opening Lean
+    buffers.
 
     Parameters: ~
-        {opts}  (lean.infoview.Config)
+        {bufnr}  (integer)
 
 
-infoview.set_autoopen()                                  *infoview.set_autoopen*
+infoview.set_autoopen({autoopen})                        *infoview.set_autoopen*
     Set whether a new infoview is automatically opened when entering Lean buffers.
+
+    Parameters: ~
+        {autoopen}  (boolean|fun():boolean)
 
 
 infoview.get_current_infoview()                  *infoview.get_current_infoview*

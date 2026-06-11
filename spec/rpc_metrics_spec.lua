@@ -1,10 +1,10 @@
 local helpers = require 'spec.helpers'
 local rpc = require 'lean.rpc'
 
-require('lean').setup {
+vim.g.lean_config = vim.tbl_deep_extend('force', vim.g.lean_config, {
   progress_bars = { enable = false },
   debug = { rpc_history = 10 },
-}
+})
 
 describe('rpc.sessions', function()
   it(

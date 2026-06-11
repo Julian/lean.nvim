@@ -8,8 +8,6 @@ local helpers = require 'spec.helpers'
 
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('infoview view_options', function()
   describe('use_widgets', function()
     it(

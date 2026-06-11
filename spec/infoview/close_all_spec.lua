@@ -3,8 +3,6 @@ local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('infoview.close_all', function()
   it('closes one infoview', function()
     assert.is.equal(1, #Tab:current():windows())

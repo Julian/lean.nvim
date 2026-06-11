@@ -5,6 +5,11 @@
 local Window = require 'std.nvim.window'
 local helpers = require 'spec.helpers'
 
+-- These tests do not exercise the infoview, so avoid (automatically)
+-- opening ones, reducing load.
+vim.g.lean_config =
+  vim.tbl_deep_extend('force', vim.g.lean_config, { infoview = { autoopen = false } })
+
 describe('clean_buffer <-> assert.contents', function()
   it(
     'creates single line buffers',

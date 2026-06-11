@@ -5,7 +5,8 @@ require 'spec.helpers'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 
-require('lean').setup { infoview = { autoopen = true } }
+vim.g.lean_config =
+  vim.tbl_deep_extend('force', vim.g.lean_config, { infoview = { autoopen = true } })
 
 describe('infoview autoopen', function()
   -- Somewhat follows open_close_spec.lua but here infoviews open automatically

@@ -1,8 +1,6 @@
 local helpers = require 'spec.helpers'
 local clean_buffer = helpers.clean_buffer
 
-require('lean').setup {}
-
 describe('sorry', function()
   it(
     'inserts sorries for each of multiple remaining goals',

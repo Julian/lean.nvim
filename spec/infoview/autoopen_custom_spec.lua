@@ -11,13 +11,13 @@ local infoview = require 'lean.infoview'
 
 local should_autoopen = false
 
-require('lean').setup {
+vim.g.lean_config = vim.tbl_deep_extend('force', vim.g.lean_config, {
   infoview = {
     autoopen = function()
       return should_autoopen
     end,
   },
-}
+})
 
 describe('infoview custom autoopen', function()
   it('uses the configured function to decide whether to autoopen', function()

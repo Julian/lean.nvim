@@ -29,10 +29,12 @@ If you are using neovim 0.12 or later, you can install and configure `lean.nvim`
 ```lua
 vim.pack.add { "https://github.com/Julian/lean.nvim" }
 
-require("lean").setup { mappings = true }
+vim.g.lean_config = { mappings = true }
 ```
 
 (see [the manual](https://github.com/Julian/lean.nvim/wiki/The-lean.nvim-Manual#key-mappings) for information about the `{ mappings = true }` part).
+
+If you previously called `require("lean").setup { ... }`, switch to setting `vim.g.lean_config` as shown above -- `setup` is deprecated, as `lean.nvim` now activates itself automatically when opening Lean files.
 
 If you are using an older neovim, or do not wish to use `vim.pack`, `lean.nvim` can be installed via your favorite plugin manager.
 Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
@@ -68,7 +70,7 @@ In terminals that support the [Kitty graphics protocol](https://sw.kovidgoyal.ne
 SVG rendering requires [resvg](https://github.com/RazrFalcon/resvg) (`brew install resvg` or `cargo install resvg`).
 Raster images (`<img>` tags with data URIs) work without any extra dependencies.
 
-To disable all terminal graphics, pass `graphics = { enabled = false }` in your setup options.
+To disable all terminal graphics, set `graphics = { enabled = false }` in your configuration.
 
 ## Sponsors
 

@@ -2,8 +2,6 @@ local Buffer = require 'std.nvim.buffer'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 ---Check whether any leanInfoHighlighted extmarks exist in the current window's buffer.
 local function has_highlighted_extmarks()
   local extmarks = Buffer:current():extmarks(-1, 0, -1, { details = true })

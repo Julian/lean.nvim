@@ -101,34 +101,20 @@ local function with_current(fn, ...)
   end
 end
 
----@type lean.infoview.Config
-local options = {
-  width = 1 / 3,
-  height = 1 / 3,
-  orientation = 'auto',
-  horizontal_position = 'bottom',
-  separate_tab = false,
+---Our infoview configuration, re-read lazily from `vim.g.lean_config` (via
+---`lean.config`) each time an option is accessed.
+---@type lean.infoview.MergedConfig
+local options = setmetatable({}, {
+  __index = function(_, key)
+    return require 'lean.config'().infoview[key]
+  end,
+})
 
-  autoopen = true,
-  update_cooldown = 50,
-  indicators = 'auto',
-  show_processing = true,
-  show_no_info_message = false,
-
-  mappings = {
-    ['K'] = 'click',
-    ['<CR>'] = 'click',
-    ['gK'] = 'select',
-    ['gd'] = 'go_to_def',
-    ['gD'] = 'go_to_decl',
-    ['gy'] = 'go_to_type',
-    ['<Esc>'] = 'clear_all',
-    ['C'] = 'clear_all',
-    ['<LocalLeader><Tab>'] = 'goto_last_window',
-  },
-}
-
-options._DEFAULTS = vim.deepcopy(options)
+---Whether to automatically open infoviews when entering Lean buffers,
+---normalized to a function and changeable at runtime via
+---`infoview.set_autoopen`. Seeded lazily from configuration on first use.
+---@type nil|fun():boolean
+local autoopen_fn = nil
 
 local FOCUS_AUGROUP = vim.api.nvim_create_augroup('LeanInfoviewFocus', {})
 
@@ -1878,11 +1864,20 @@ end
 --        __update_pin_positions
 local attached_buffers = {}
 
+---Whether an infoview should now automatically open.
+---@return boolean
+local function should_autoopen()
+  if autoopen_fn == nil then
+    infoview.set_autoopen(options.autoopen)
+  end
+  return autoopen_fn()
+end
+
 ---Callback when entering a Lean buffer.
 local function infoview_bufenter()
   -- Open an infoview for the current buffer if it isn't already open.
   local tabpage = vim.api.nvim_get_current_tabpage()
-  if not infoview._by_tabpage[tabpage] and options.autoopen() then
+  if not infoview._by_tabpage[tabpage] and should_autoopen() then
     log:debug { message = 'opening infoview', tabpage = tabpage }
     local new_infoview = Infoview:new {}
     infoview._by_tabpage[tabpage] = new_infoview
@@ -1897,10 +1892,14 @@ local function infoview_bufenter()
   update_current_infoview()
 end
 
----Enable and open the infoview across all Lean buffers.
----@param opts lean.infoview.Config
-function infoview.enable(opts)
-  if opts.mappings ~= nil then
+---Set up the infoview in the given (Lean) buffer, opening one if appropriate.
+---
+---Runs automatically via our Lean ftplugin, i.e. lazily when opening Lean
+---buffers.
+---@param bufnr integer
+function infoview.init(bufnr)
+  local user = vim.g.lean_config
+  if user and user.infoview and user.infoview.mappings ~= nil then
     vim.deprecate(
       "lean.nvim's `infoview.mappings` configuration option",
       'buffer-local `<Plug>(LeanInfoview*)` mappings',
@@ -1908,67 +1907,55 @@ function infoview.enable(opts)
       'lean.nvim'
     )
   end
-  ---@type lean.infoview.MergedConfig
-  options = vim.tbl_extend('force', options, opts)
-  infoview.mappings = options.mappings
-  infoview.enabled = true
-  infoview.set_autoopen(options.autoopen)
 
-  vim.api.nvim_create_autocmd('Filetype', {
-    group = vim.api.nvim_create_augroup('LeanInfoviewInit', {}),
-    pattern = { 'lean' },
-    callback = function(event)
-      local bufnr = event.buf
-      if bufnr == vim.api.nvim_get_current_buf() then
-        -- because FileType can happen after BufEnter
-        infoview_bufenter()
-        local current_infoview = infoview.get_current_infoview()
-        if not current_infoview then
-          return
-        end
-        current_infoview:focus_on_current_buffer()
+  if bufnr == vim.api.nvim_get_current_buf() then
+    -- because FileType can happen after BufEnter
+    infoview_bufenter()
+    local current_infoview = infoview.get_current_infoview()
+    if current_infoview then
+      current_infoview:focus_on_current_buffer()
+    end
+  end
+
+  -- in case we are re-entering a buffer, clear old autocmds first
+  vim.api.nvim_clear_autocmds { group = FOCUS_AUGROUP, buffer = bufnr }
+
+  vim.api.nvim_create_autocmd('LspDetach', {
+    callback = function()
+      local current_infoview = infoview.get_current_infoview()
+      if not current_infoview then
+        return
       end
-
-      -- in case we are re-entering a buffer, clear old autocmds first
-      vim.api.nvim_clear_autocmds { group = FOCUS_AUGROUP, buffer = bufnr }
-
-      vim.api.nvim_create_autocmd('LspDetach', {
-        callback = function()
-          local current_infoview = infoview.get_current_infoview()
-          if not current_infoview then
-            return
-          end
-          current_infoview:died()
-        end,
-        buffer = bufnr,
-        group = FOCUS_AUGROUP,
-      })
-
-      vim.api.nvim_create_autocmd('BufEnter', {
-        callback = infoview_bufenter,
-        buffer = bufnr,
-        group = FOCUS_AUGROUP,
-      })
-
-      -- WinEnter is necessary for the edge case where you have
-      -- a file open in a tab with an infoview and move to a
-      -- new window in a new tab with that same file but no infoview
-      vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter' }, {
-        callback = function()
-          local current_infoview = infoview.get_current_infoview()
-          if not current_infoview then
-            return
-          end
-          current_infoview:focus_on_current_buffer()
-        end,
-        buffer = bufnr,
-        group = FOCUS_AUGROUP,
-      })
+      current_infoview:died()
     end,
+    buffer = bufnr,
+    group = FOCUS_AUGROUP,
+  })
+
+  vim.api.nvim_create_autocmd('BufEnter', {
+    callback = infoview_bufenter,
+    buffer = bufnr,
+    group = FOCUS_AUGROUP,
+  })
+
+  -- WinEnter is necessary for the edge case where you have
+  -- a file open in a tab with an infoview and move to a
+  -- new window in a new tab with that same file but no infoview
+  vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter' }, {
+    callback = function()
+      local current_infoview = infoview.get_current_infoview()
+      if not current_infoview then
+        return
+      end
+      current_infoview:focus_on_current_buffer()
+    end,
+    buffer = bufnr,
+    group = FOCUS_AUGROUP,
   })
 end
 
 ---Set whether a new infoview is automatically opened when entering Lean buffers.
+---@param autoopen boolean|fun():boolean
 function infoview.set_autoopen(autoopen)
   if autoopen == true then
     autoopen = function()
@@ -1979,7 +1966,7 @@ function infoview.set_autoopen(autoopen)
       return false
     end
   end
-  options.autoopen = autoopen
+  autoopen_fn = autoopen
 end
 
 ---Get the infoview corresponding to the current window.

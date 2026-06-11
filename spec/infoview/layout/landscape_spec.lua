@@ -12,7 +12,8 @@ local infoview = require 'lean.infoview'
 vim.o.columns = 80
 vim.o.lines = 24
 
-require('lean').setup { infoview = { autoopen = false } }
+vim.g.lean_config =
+  vim.tbl_deep_extend('force', vim.g.lean_config, { infoview = { autoopen = false } })
 
 describe('infoview window', function()
   it('opens on the right with the cursor in the Lean window', function()

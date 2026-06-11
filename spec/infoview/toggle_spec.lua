@@ -4,8 +4,6 @@ local Window = require 'std.nvim.window'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('Infoview.toggle', function()
   local lean_window
 

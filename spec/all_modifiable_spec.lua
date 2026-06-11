@@ -1,6 +1,6 @@
 local project = require('spec.fixtures').project
 
-require('lean').setup { ft = { nomodifiable = {} } }
+vim.g.lean_config = vim.tbl_deep_extend('force', vim.g.lean_config, { ft = { nomodifiable = {} } })
 
 describe('nomodifable', function()
   it('marks files modifiable', function()

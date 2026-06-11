@@ -7,8 +7,6 @@ local Window = require 'std.nvim.window'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('Lean core widgets', function()
   local lean_window = Window:current()
 

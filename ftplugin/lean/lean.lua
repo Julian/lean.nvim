@@ -58,6 +58,7 @@ end
 
 local bufnr = vim.api.nvim_get_current_buf()
 require('lean.abbreviations').init(bufnr)
+require('lean.infoview').init(bufnr)
 require('lean.progress_bars').init(bufnr)
 require('lean.stderr').init()
 

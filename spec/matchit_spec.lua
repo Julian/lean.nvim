@@ -4,6 +4,11 @@
 
 local helpers = require 'spec.helpers'
 
+-- These tests do not exercise the infoview, so avoid (automatically)
+-- opening ones, reducing load.
+vim.g.lean_config =
+  vim.tbl_deep_extend('force', vim.g.lean_config, { infoview = { autoopen = false } })
+
 describe('matchit', function()
   it(
     'jumps between section start and end',

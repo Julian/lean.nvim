@@ -10,8 +10,6 @@ require 'spec.helpers'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('infoview open/close', function()
   local lean_window
 

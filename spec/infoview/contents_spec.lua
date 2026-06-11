@@ -12,7 +12,8 @@ local helpers = require 'spec.helpers'
 
 local infoview = require 'lean.infoview'
 
-require('lean').setup { progress_bars = { enable = false } }
+vim.g.lean_config =
+  vim.tbl_deep_extend('force', vim.g.lean_config, { progress_bars = { enable = false } })
 
 describe('interactive infoview', function()
   it(

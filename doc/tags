@@ -56,12 +56,12 @@ infoview.close	lean.txt	/*infoview.close*
 infoview.close_all	lean.txt	/*infoview.close_all*
 infoview.contents_at	lean.txt	/*infoview.contents_at*
 infoview.disable_widgets	lean.txt	/*infoview.disable_widgets*
-infoview.enable	lean.txt	/*infoview.enable*
 infoview.enable_widgets	lean.txt	/*infoview.enable_widgets*
 infoview.get_current_infoview	lean.txt	/*infoview.get_current_infoview*
 infoview.go_to	lean.txt	/*infoview.go_to*
 infoview.go_to_goal	lean.txt	/*infoview.go_to_goal*
 infoview.go_to_suggestion	lean.txt	/*infoview.go_to_suggestion*
+infoview.init	lean.txt	/*infoview.init*
 infoview.open	lean.txt	/*infoview.open*
 infoview.open_debug	lean.txt	/*infoview.open_debug*
 infoview.pin_toggle_pause	lean.txt	/*infoview.pin_toggle_pause*

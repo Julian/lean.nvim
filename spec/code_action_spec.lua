@@ -4,8 +4,6 @@
 
 local helpers = require 'spec.helpers'
 
-require('lean').setup {}
-
 describe('code actions', function()
   it(
     'for unknown identifiers add missing imports',

@@ -10,9 +10,9 @@ local infoview = require 'lean.infoview'
 local WIDTH = 20
 local HEIGHT = 10
 
-require('lean').setup {
+vim.g.lean_config = vim.tbl_deep_extend('force', vim.g.lean_config, {
   infoview = { autoopen = false, width = WIDTH, height = HEIGHT },
-}
+})
 
 describe('infoview window', function()
   local lean_window = vim.api.nvim_get_current_win()

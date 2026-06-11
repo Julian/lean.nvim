@@ -11,8 +11,6 @@ local project = require('spec.fixtures').example
 
 local restart_file = require('lean.lsp').restart_file
 
-require('lean').setup {}
-
 describe('restart file', function()
   local dependency = project:child 'Example/RestartFile.lean'
   local dependent = project:child 'Example/RestartFileDependent.lean'

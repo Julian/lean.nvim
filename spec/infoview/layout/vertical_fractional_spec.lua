@@ -8,13 +8,13 @@ local infoview = require 'lean.infoview'
 vim.o.columns = 80
 vim.o.lines = 24
 
-require('lean').setup {
+vim.g.lean_config = vim.tbl_deep_extend('force', vim.g.lean_config, {
   infoview = {
     autoopen = false,
     orientation = 'vertical',
     width = 1 / 2,
   },
-}
+})
 
 describe('infoview window fractional vertical', function()
   it('opens with fractional width', function()

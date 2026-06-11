@@ -12,7 +12,8 @@ local infoview = require 'lean.infoview'
 vim.o.columns = 24
 vim.o.lines = 80
 
-require('lean').setup { infoview = { horizontal_position = 'bottom' } }
+vim.g.lean_config =
+  vim.tbl_deep_extend('force', vim.g.lean_config, { infoview = { horizontal_position = 'bottom' } })
 
 describe('infoview window', function()
   assert.is.equal(1, #vim.api.nvim_tabpage_list_wins(0))

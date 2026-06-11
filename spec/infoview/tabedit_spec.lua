@@ -5,8 +5,6 @@
 
 local helpers = require 'spec.helpers'
 
-require('lean').setup {}
-
 describe('tabedit a lean file', function()
   it('does not error when opening a Lean tab from a non-Lean window', function()
     vim.cmd.tabedit 'openedViaTabedit.lean'

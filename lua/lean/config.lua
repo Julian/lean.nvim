@@ -48,13 +48,32 @@
 ---@field accomplished? string a character which will be placed in the sign column of successful proofs
 
 ---@class lean.infoview.Config
----@field mappings? { [string]: ElementEvent } deprecated, will be removed in v2026.9.1; use `<Plug>(LeanInfoview*)` mappings instead
+---@field autoopen? boolean|fun():boolean whether to automatically open infoviews when entering Lean buffers (default true)
+---@field width? number width of vertical infoviews, as columns or a fraction of the screen if at most 1 (default 1/3)
+---@field height? number height of horizontal infoviews, as lines or a fraction of the screen if at most 1 (default 1/3)
 ---@field orientation? "auto"|"vertical"|"horizontal" what orientation to use for opened infoviews
+---@field horizontal_position? "top"|"bottom" where to position horizontal infoviews (default "bottom")
+---@field separate_tab? boolean open infoviews in a separate tab (default false)
+---@field indicators? "always"|"auto"|"never" when to show pin location indicators (default "auto")
+---@field show_processing? boolean show a processing message while Lean is busy (default true)
+---@field show_no_info_message? boolean show a message when there is no info to show (default false)
+---@field mappings? { [string]: ElementEvent } deprecated, will be removed in v2026.9.1; use `<Plug>(LeanInfoview*)` mappings instead
 ---@field update_cooldown? integer milliseconds to throttle cursor-move updates (default 50, 0 to disable)
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
 
 ---@class lean.infoview.MergedConfig: lean.infoview.Config
+---@field autoopen boolean|fun():boolean whether to automatically open infoviews when entering Lean buffers
+---@field width number width of vertical infoviews
+---@field height number height of horizontal infoviews
+---@field orientation "auto"|"vertical"|"horizontal" what orientation to use for opened infoviews
+---@field horizontal_position "top"|"bottom" where to position horizontal infoviews
+---@field separate_tab boolean open infoviews in a separate tab
+---@field indicators "always"|"auto"|"never" when to show pin location indicators
+---@field show_processing boolean show a processing message while Lean is busy
+---@field show_no_info_message boolean show a message when there is no info to show
+---@field mappings { [string]: ElementEvent } deprecated, will be removed in v2026.9.1
+---@field update_cooldown integer milliseconds to throttle cursor-move updates
 ---@field view_options InfoviewViewOptions
 ---@field severity_markers table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
 
@@ -186,8 +205,31 @@ local DEFAULTS = {
     rpc_history = 0,
   },
 
-  ---@type lean.infoview.Config
+  ---@type lean.infoview.MergedConfig
   infoview = {
+    autoopen = true,
+    width = 1 / 3,
+    height = 1 / 3,
+    orientation = 'auto',
+    horizontal_position = 'bottom',
+    separate_tab = false,
+    indicators = 'auto',
+    show_processing = true,
+    show_no_info_message = false,
+    update_cooldown = 50,
+
+    mappings = {
+      ['K'] = 'click',
+      ['<CR>'] = 'click',
+      ['gK'] = 'select',
+      ['gd'] = 'go_to_def',
+      ['gD'] = 'go_to_decl',
+      ['gy'] = 'go_to_type',
+      ['<Esc>'] = 'clear_all',
+      ['C'] = 'clear_all',
+      ['<LocalLeader><Tab>'] = 'goto_last_window',
+    },
+
     ---@type InfoviewViewOptions
     view_options = {
       use_widgets = true,

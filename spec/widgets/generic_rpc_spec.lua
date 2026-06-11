@@ -6,8 +6,6 @@ local with_widgets = require('spec.fixtures').with_widgets
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('generic mk_rpc_widget%', function()
   it(
     'renders a widget with no Lua module via ofRpcMethod',

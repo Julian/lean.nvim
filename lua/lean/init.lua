@@ -244,9 +244,17 @@ function lean.init()
   end
 end
 
----Setup function to be run in your init.lua.
+---Configure lean.nvim.
+---
+---Deprecated: set `vim.g.lean_config` instead. Beyond configuration, calling
+---this function (or doing anything at all besides installing lean.nvim) is
+---no longer required, as all of its behavior activates automatically when
+---opening Lean files.
+---@deprecated
 ---@param opts lean.Config Configuration options
 function lean.setup(opts)
+  vim.deprecate('require("lean").setup', 'vim.g.lean_config', 'v2026.9.1', 'lean.nvim')
+
   opts = opts or {}
 
   if vim.g.lean_config then
@@ -261,8 +269,6 @@ function lean.setup(opts)
   if opts.lsp and opts.lsp.enable == false then
     vim.lsp.enable('leanls', false)
   end
-
-  require('lean.infoview').enable(opts.infoview or {})
 end
 
 ---Try to find what version of `lean.nvim` this is.

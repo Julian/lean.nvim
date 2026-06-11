@@ -8,8 +8,6 @@ local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe(
   'infoview pins',
   helpers.clean_buffer( -- FIXME: Clearly this shouldn't surround all tests

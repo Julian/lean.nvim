@@ -5,8 +5,6 @@
 local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 
-require('lean').setup {}
-
 describe('LSP', function()
   assert.is.empty(vim.lsp.get_clients { bufnr = 0, name = 'leanls', _uninitialized = true })
 

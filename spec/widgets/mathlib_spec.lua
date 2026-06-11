@@ -6,8 +6,6 @@ local with_widgets = require('spec.fixtures').with_widgets
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('Mathlib widgets', function()
   it(
     'supports conv? widgets',

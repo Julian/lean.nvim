@@ -10,8 +10,6 @@ local Window = require 'std.nvim.window'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe(
   'infoview widgets',
   helpers.clean_buffer('#check Nat', function()

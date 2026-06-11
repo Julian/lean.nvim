@@ -2,8 +2,6 @@ local Element = require('lean.tui').Element
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('Pin.selectable', function()
   it(
     'returns selectable expressions from the infoview',

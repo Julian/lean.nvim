@@ -1,7 +1,7 @@
 local helpers = require 'spec.helpers'
 local clean_buffer = helpers.clean_buffer
 
-require('lean').setup { signs = { enabled = false } }
+vim.g.lean_config = vim.tbl_deep_extend('force', vim.g.lean_config, { signs = { enabled = false } })
 
 describe('diagnostic signs when disabled', function()
   it(

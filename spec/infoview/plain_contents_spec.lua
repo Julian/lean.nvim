@@ -7,7 +7,11 @@ local helpers = require 'spec.helpers'
 
 local infoview = require 'lean.infoview'
 
-require('lean').setup { infoview = { view_options = { use_widgets = false } } }
+vim.g.lean_config = vim.tbl_deep_extend(
+  'force',
+  vim.g.lean_config,
+  { infoview = { view_options = { use_widgets = false } } }
+)
 
 describe('plain infoviews', function()
   it(

@@ -5,8 +5,6 @@
 local Buffer = require 'std.nvim.buffer'
 local fixtures = require 'spec.fixtures'
 
-require('lean').setup {}
-
 local leanls = vim.lsp.config.leanls
 
 describe('root_dir', function()

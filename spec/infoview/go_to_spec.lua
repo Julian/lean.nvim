@@ -8,8 +8,6 @@ require 'spec.helpers'
 local fixtures = require 'spec.fixtures'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 describe('infoview.go_to', function()
   local lean_window = Window:current()
 

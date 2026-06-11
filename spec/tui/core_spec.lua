@@ -10,6 +10,11 @@ local helpers = require 'spec.helpers'
 local tui = require 'lean.tui'
 local Element = tui.Element
 
+-- An auto-opening infoview would otherwise interfere with the window
+-- assertions made here.
+vim.g.lean_config =
+  vim.tbl_deep_extend('force', vim.g.lean_config, { infoview = { autoopen = false } })
+
 ---A silly fake event context.
 ---@type ElementEventContext
 local NULL_CONTEXT = {

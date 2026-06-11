@@ -1,7 +1,5 @@
 local helpers = require 'spec.helpers'
 
-require('lean').setup {}
-
 ---@type lean.Config
 vim.g.lean_config = {
   infoview = {

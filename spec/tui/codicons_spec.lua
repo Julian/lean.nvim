@@ -10,8 +10,6 @@ local kitty = require 'kitty'
 
 require 'spec.helpers'
 
-require('lean').setup {}
-
 local SPARKLE = vim.fn.nr2char(0xEC10, 1)
 
 ---Point the module at a local fake of the codicons repository.

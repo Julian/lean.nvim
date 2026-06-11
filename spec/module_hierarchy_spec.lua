@@ -8,7 +8,8 @@ local Window = require 'std.nvim.window'
 local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 
-require('lean').setup { infoview = { autoopen = false } }
+vim.g.lean_config =
+  vim.tbl_deep_extend('force', vim.g.lean_config, { infoview = { autoopen = false } })
 
 describe('module hierarchy', function()
   it(

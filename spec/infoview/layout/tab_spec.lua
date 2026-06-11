@@ -7,7 +7,11 @@ local Window = require 'std.nvim.window'
 require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup { infoview = { autoopen = false, separate_tab = true } }
+vim.g.lean_config = vim.tbl_deep_extend(
+  'force',
+  vim.g.lean_config,
+  { infoview = { autoopen = false, separate_tab = true } }
+)
 
 describe('infoview window', function()
   it('opens in a new tab with the cursor in the Lean window', function()

@@ -12,7 +12,11 @@ local infoview = require 'lean.infoview'
 vim.o.columns = 24
 vim.o.lines = 80
 
-require('lean').setup { infoview = { autoopen = false, orientation = 'vertical' } }
+vim.g.lean_config = vim.tbl_deep_extend(
+  'force',
+  vim.g.lean_config,
+  { infoview = { autoopen = false, orientation = 'vertical' } }
+)
 
 describe('infoview window', function()
   it('opens on the right of stacked splits at full height', function()

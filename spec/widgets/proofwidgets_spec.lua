@@ -8,8 +8,6 @@ local fixtures = require 'spec.fixtures'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
-require('lean').setup {}
-
 package.path = package.path .. ';' .. fixtures.widgets .. '/?.lua'
 
 ---Open one of the ProofWidgets demos.

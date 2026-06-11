@@ -2,8 +2,6 @@ local helpers = require 'spec.helpers'
 local clean_buffer = helpers.clean_buffer
 local sign_text_at = helpers.sign_text_at
 
-require('lean').setup {}
-
 -- Simulate a user who has configured custom diagnostic sign text via the
 -- standard Neovim API. lean.nvim replaces vim.diagnostic's sign rendering,
 -- but should still respect whatever the user has configured here.
