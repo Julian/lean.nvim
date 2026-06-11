@@ -32,10 +32,18 @@ if vim.g.loaded_matchit and not vim.b.match_words then
     :join ','
 end
 
+local lean = require 'lean'
+
+-- Normally our plugin/ files already ran this, making it a no-op beyond
+-- retrying integration with optional plugins (e.g. telescope.nvim) which may
+-- have loaded after they did -- but it also serves as a safety net for
+-- plugin managers configured to skip sourcing them.
+lean.init()
+
 local config = require 'lean.config'()
 
 if config.mappings == true then
-  require('lean').use_suggested_mappings(0)
+  lean.use_suggested_mappings(0)
 end
 
 if config.inlay_hint.enabled then
