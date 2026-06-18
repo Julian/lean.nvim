@@ -12,9 +12,7 @@ return function(_, props)
       Element.text '\n',
       Element.link {
         text = 'View explanation',
-        action = function()
-          vim.ui.open(props.explanationUrl)
-        end,
+        url = props.explanationUrl,
       },
     },
   }

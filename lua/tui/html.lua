@@ -213,16 +213,16 @@ for level = 1, 6 do
 end
 
 ---Render an `<a>` tag as a clickable link.
+---
+---A link with an `href` opens it via `vim.ui.open` on click and is rendered as
+---an OSC 8 terminal hyperlink whose target is revealed on hover (see
+---`Element.link`); a `title` attribute, if present, takes over that tooltip
+---(wired by the dispatcher). Without an `href` the element is inert.
 ---@param children Element[]
----@param attrs table<string, any>
+---@param attrs? table<string, any>
 function html.Tag.a(children, attrs)
   if attrs and attrs.href then
-    return Element.link {
-      children = children,
-      action = function()
-        vim.ui.open(attrs.href)
-      end,
-    }
+    return Element.link { children = children, url = attrs.href }
   end
   return Element:new { children = children }
 end

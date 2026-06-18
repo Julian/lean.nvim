@@ -305,6 +305,11 @@ describe('tui.html', function()
       assert.are.same({ 'widgetLink' }, el.hlgroups)
     end)
 
+    it('carries the href as its url so it renders as an OSC 8 hyperlink', function()
+      local el = Tag.a({ Element:new { text = 'click me' } }, { href = 'https://example.com' })
+      assert.is.equal('https://example.com', el.url)
+    end)
+
     it('renders as plain container without href', function()
       local el = Tag.a({ Element:new { text = 'no link' } }, {})
       assert.is.equal('no link', el:to_string())

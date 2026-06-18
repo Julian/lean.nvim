@@ -45,6 +45,7 @@ local OverlayState -- defined after BufRenderer
 ---@field name string a named handle for this element, used when path-searching
 ---@field hlgroups? string[]|fun():string[]|nil highlight group(s) or a function returning them
 ---@field tooltip? Element? tooltip
+---@field url? string a URI to associate with this element; rendered as an OSC 8 terminal hyperlink over its range (see `Element.link`)
 ---@field highlightable boolean (for buffer rendering) highlight this element when hovering
 ---@field is_block boolean block-level element — starts on a new line when following content
 ---@field margin integer extra blank lines above and below this block (CSS-like margin; collapses with adjacent margins)
@@ -92,6 +93,7 @@ BufRenderer.__index = BufRenderer
 ---@field hlgroups? string[]|fun():string[]|nil highlight group(s) or a function returning them
 ---@field highlightable boolean? (for buffer rendering) highlight this element when hovering
 ---@field children? Element[] this element's children
+---@field url? string a URI to associate with this element, rendered as an OSC 8 terminal hyperlink
 ---@field is_block? boolean block-level element — starts on a new line when following content
 ---@field margin? integer extra blank lines above and below this block (CSS-like margin; collapses with adjacent margins)
 ---@field line_prefix? LinePrefixSpec text prepended to every line within this element
@@ -106,6 +108,7 @@ function Element:new(args)
     text = args.text or '',
     name = args.name or '',
     hlgroups = args.hlgroups,
+    url = args.url,
     highlightable = args.highlightable or false,
     events = args.events or {},
     __children = args.children or {},
@@ -387,6 +390,7 @@ end
 ---@class ElementLinkArgs
 ---@field action? fun(ctx: ElementEventContext):boolean? a single action, wired to click
 ---@field events? EventCallbacks explicit event callbacks (mutually exclusive with action)
+---@field url? string a URI this link points at (see below)
 ---@field text? string the text to show when rendering this element
 ---@field name? string a named handle for this element, used when path-searching
 ---@field children? Element[] this element's children
@@ -397,26 +401,48 @@ end
 ---URL, etc.).  Styling is always enforced — callers specify content and
 ---behavior, not appearance.
 ---
----Provide either `action` (wired to click) or `events` (explicit map), not both.
+---The in-editor activation is one of, in order of precedence: `events` (an
+---explicit map, e.g. `go_to_def`), `action` (wired to click), or — when neither
+---is given — opening `url` via `vim.ui.open`.  `action` and `events` are
+---mutually exclusive; at least one of the three is required.
+---
+---`url` is orthogonal to the activation: independently of what clicking does, it
+---is rendered as an OSC 8 terminal hyperlink over the link (so supporting
+---terminals make it natively clickable) and, unless the element already has a
+---tooltip, revealed as one. So a link can run a rich in-editor action *and*
+---expose a URL to the terminal.
 ---@param args ElementLinkArgs
 ---@return Element
 function Element.link(args)
   vim.validate('action', args.action, 'function', true)
   vim.validate('events', args.events, 'table', true)
+  vim.validate('url', args.url, 'string', true)
   if args.action and args.events then
     error('Element.link: provide action or events, not both', 2)
   end
-  if not args.action and not args.events then
-    error('Element.link: one of action or events is required', 2)
+  if not (args.action or args.events or args.url) then
+    error('Element.link: one of action, events, or url is required', 2)
   end
-  return Element:new {
+  local events = args.events
+  if not events then
+    local action = args.action or function()
+      vim.ui.open(args.url)
+    end
+    events = { click = action }
+  end
+  local element = Element:new {
     text = args.text,
     name = args.name,
     children = args.children,
-    events = args.events or { click = args.action },
+    events = events,
+    url = args.url,
     highlightable = true,
     hlgroups = { 'widgetLink' },
   }
+  if args.url then
+    element:add_tooltip(Element:new { text = args.url })
+  end
+  return element
 end
 
 ---Create an Element whose click event does nothing.
@@ -495,11 +521,12 @@ end
 
 ---Render the element into lines, highlights, and dimensions in a single pass.
 ---@param renderer? BufRenderer
----@return { lines: string[], highlights: { hlgroup: string, start_pos: integer[], end_pos: integer[] }[], width: integer, height: integer, positions: PositionMap }
+---@return { lines: string[], highlights: { hlgroup: string, start_pos: integer[], end_pos: integer[] }[], urls: { url: string, start_pos: integer[], end_pos: integer[] }[], width: integer, height: integer, positions: PositionMap }
 function Element:render_lines(renderer)
   log:trace { message = 'rendering element to lines', name = self.name }
   local lines = { '' }
   local highlights = {}
+  local urls = {}
   local positions = {} ---@type PositionMap
   local line_idx = 1
   local col = 0
@@ -650,6 +677,12 @@ function Element:render_lines(renderer)
     local end_pos = { line_idx - 1, col }
     positions[element] = { start_pos = start_pos, end_pos = end_pos }
 
+    -- Reuse the position's `start_pos`/`end_pos` tables so the vertical-justify
+    -- shift (which walks `positions`) moves the OSC 8 range along with them.
+    if element.url then
+      urls[#urls + 1] = { url = element.url, start_pos = start_pos, end_pos = end_pos }
+    end
+
     local hlgroups = element.hlgroups
     if type(hlgroups) == 'function' then
       hlgroups = hlgroups(element)
@@ -682,6 +715,7 @@ function Element:render_lines(renderer)
   return {
     lines = lines,
     highlights = highlights,
+    urls = urls,
     width = width,
     height = line_idx,
     positions = positions,
@@ -1245,6 +1279,12 @@ function BufRenderer:render()
         shift(span.start_pos)
         shift(span.end_pos)
       end
+      -- `urls` reuse the position tables shifted just above; `shifted` dedups,
+      -- so this is belt-and-suspenders should that ever stop holding.
+      for _, link in ipairs(result.urls) do
+        shift(link.start_pos)
+        shift(link.end_pos)
+      end
     end
   end
 
@@ -1267,6 +1307,17 @@ function BufRenderer:render()
 
   for _, hl in ipairs(result.highlights) do
     vim.hl.range(self.buffer.bufnr, self.__tui_ns, hl.hlgroup, hl.start_pos, hl.end_pos)
+  end
+
+  -- Associate any link URLs with their text via an extmark; in the TUI Neovim
+  -- emits the OSC 8 control sequence for these, so supporting terminals render
+  -- them as natively clickable hyperlinks.
+  for _, link in ipairs(result.urls) do
+    self.buffer:set_extmark(self.__tui_ns, link.start_pos[1], link.start_pos[2], {
+      end_row = link.end_pos[1],
+      end_col = link.end_pos[2],
+      url = link.url,
+    })
   end
 
   if self.path then

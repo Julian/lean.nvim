@@ -950,10 +950,43 @@ describe('Element', function()
       end, 'Element.link: provide action or events, not both')
     end)
 
-    it('errors when neither action nor events is provided', function()
+    it('errors when none of action, events, or url is provided', function()
       assert.has_error(function()
         Element.link { text = 'inert' }
-      end, 'Element.link: one of action or events is required')
+      end, 'Element.link: one of action, events, or url is required')
+    end)
+
+    it('opens url on click when no action or events are given', function()
+      local opened
+      local original = vim.ui.open
+      vim.ui.open = function(target)
+        opened = target
+      end
+      local element = Element.link { text = 'docs', url = 'https://example.com' }
+      element.events.click(NULL_CONTEXT)
+      vim.ui.open = original
+      assert.are.equal('https://example.com', opened)
+      assert.are.equal('https://example.com', element.url)
+    end)
+
+    it("lets an explicit action win the click while url stays the OSC 8 target", function()
+      local clicked = false
+      local element = Element.link {
+        text = 'jump',
+        url = 'https://example.com',
+        action = function()
+          clicked = true
+        end,
+      }
+      element.events.click(NULL_CONTEXT)
+      assert.is_true(clicked)
+      assert.are.equal('https://example.com', element.url)
+    end)
+
+    it('reveals the url as a tooltip', function()
+      local element = Element.link { text = 'docs', url = 'https://example.com' }
+      assert.is_not_nil(element.tooltip)
+      assert.are.equal('https://example.com', element.tooltip:to_string())
     end)
 
     it('enforces link styling', function()
@@ -1077,6 +1110,24 @@ describe('BufRenderer', function()
       assert.is_true(pad > 0)
       assert.are.same({ pad, 0 }, around.positions[around.element].start_pos)
       around_buffer:force_delete()
+    end)
+  end)
+
+  describe('link urls', function()
+    it('associates a link url with its rendered text via an extmark (OSC 8)', function()
+      local buffer = Buffer.create { scratch = true }
+      local element = Element.link { text = 'docs', url = 'https://example.com' }
+      element:renderer({ buffer = buffer }):render()
+      local marks =
+        buffer:extmarks(vim.api.nvim_create_namespace 'lean.tui', 0, -1, { details = true })
+      local urls = vim
+        .iter(marks)
+        :map(function(mark)
+          return mark[4].url
+        end)
+        :totable()
+      assert.is_true(vim.tbl_contains(urls, 'https://example.com'))
+      buffer:force_delete()
     end)
   end)
 
