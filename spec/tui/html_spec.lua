@@ -226,6 +226,27 @@ describe('tui.html', function()
       assert.is.equal('x + 1', el:to_string())
       assert.are.same({ 'tui.html.code' }, el.hlgroups)
     end)
+
+    it('keeps already-coloured content rather than painting over it', function()
+      local coloured = Element:new { text = 'def', hlgroups = { '@keyword' } }
+      local el = Tag.code { coloured }
+      assert.is.equal('def', el:to_string())
+      assert.is_nil(el.hlgroups)
+    end)
+
+    it('detects colour nested deeper within the content', function()
+      local wrapper = Element:new {
+        children = { Element:new { text = 'x', hlgroups = { '@variable' } } },
+      }
+      local el = Tag.code { wrapper }
+      assert.is_nil(el.hlgroups)
+    end)
+
+    it('tags language-classed code by name and leaves it uncoloured', function()
+      local el = Tag.code({ Element:new { text = 'f x' } }, { class = 'language-lean' })
+      assert.is.equal('tui.html.code.lean', el.name)
+      assert.is_nil(el.hlgroups)
+    end)
   end)
 
   describe('<hr>', function()

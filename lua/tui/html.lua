@@ -93,8 +93,42 @@ html.Tag.strong = html.Tag.b
 ---An alias for `<i>`.
 html.Tag.em = html.Tag.i
 
----Render inline code.
-function html.Tag.code(children)
+---Whether an element (or any descendant) already carries a highlight group.
+---@param element Element
+---@return boolean
+local function is_highlighted(element)
+  if element.hlgroups then
+    return true
+  end
+  for child in element:children() do
+    if is_highlighted(child) then
+      return true
+    end
+  end
+  return false
+end
+
+---Render inline or block code.
+---
+---Code whose children already carry per-token colour keeps those colours
+---untouched -- our `tui.html.code` highlight (`@markup.raw`) would otherwise
+---paint over them. Code carrying a `language-<lang>` class (the CommonMark
+---convention for fenced code) is left uncoloured and tagged via `Element.name`
+---as `tui.html.code.<lang>`, so a host can scope a syntax to the exact span; an
+---`@markup.raw` extmark here would override such a `:syntax` region, since
+---extmarks outrank `:syntax`. Plain code with no language gets the raw look.
+---@param children Element[]
+---@param attrs? table<string, any>
+function html.Tag.code(children, attrs)
+  for _, child in ipairs(children) do
+    if is_highlighted(child) then
+      return Element:new { children = children }
+    end
+  end
+  local lang = attrs and attrs.class and attrs.class:match 'language%-([%w_]+)'
+  if lang then
+    return Element:new { name = 'tui.html.code.' .. lang, children = children }
+  end
   return Element:new { hlgroups = { 'tui.html.code' }, children = children }
 end
 
