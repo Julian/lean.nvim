@@ -315,6 +315,13 @@ describe('tui.html', function()
       assert.is.equal('no link', el:to_string())
       assert.is.falsy(el.events.click)
     end)
+
+    it('treats an empty href as no link', function()
+      local el = Tag.a({ Element:new { text = 'empty' } }, { href = '' })
+      assert.is.equal('empty', el:to_string())
+      assert.is.falsy(el.events.click)
+      assert.is_nil(el.url)
+    end)
   end)
 
   describe('<del>', function()

@@ -221,7 +221,7 @@ end
 ---@param children Element[]
 ---@param attrs? table<string, any>
 function html.Tag.a(children, attrs)
-  if attrs and attrs.href then
+  if attrs and attrs.href and attrs.href ~= '' then
     return Element.link { children = children, url = attrs.href }
   end
   return Element:new { children = children }
