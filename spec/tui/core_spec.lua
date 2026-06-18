@@ -1014,6 +1014,72 @@ describe('BufRenderer', function()
     end)
   end)
 
+  describe('justify_content', function()
+    -- Show the buffer in the current window so the renderer can measure it,
+    -- then render three lines of content and justify them vertically.
+    ---@param justify? JustifyContent
+    ---@return BufRenderer, Buffer, integer window_height
+    local function justified(justify)
+      local buffer = Buffer.create { scratch = true }
+      buffer:make_current()
+      local element = Element:new { name = 'root', text = 'a\nb\nc' }
+      local renderer = element:renderer { buffer = buffer, justify_content = justify }
+      renderer:render()
+      return renderer, buffer, Window:current():height()
+    end
+
+    it("leaves content at the top by default ('start')", function()
+      local renderer, buffer = justified(nil)
+      assert.contents.are { 'a\nb\nc', buffer = buffer }
+      -- The root element still starts at the very first line.
+      assert.are.same({ 0, 0 }, renderer.positions[renderer.element].start_pos)
+      buffer:force_delete()
+    end)
+
+    it("centers content within the window for 'center'", function()
+      local renderer, buffer, height = justified 'center'
+      local pad = math.floor((height - 3) / 2)
+      assert.is_true(pad > 0) -- the test window must be taller than the content
+
+      local lines = buffer:lines()
+      assert.are.equal(pad + 3, #lines)
+      for i = 1, pad do
+        assert.are.equal('', lines[i])
+      end
+      assert.are.equal('a', lines[pad + 1])
+      -- The position map shifts down with the content it describes.
+      assert.are.same({ pad, 0 }, renderer.positions[renderer.element].start_pos)
+      buffer:force_delete()
+    end)
+
+    it("pushes content to the bottom for 'end'", function()
+      local renderer, buffer, height = justified 'end'
+      local pad = height - 3
+      assert.is_true(pad > 0)
+
+      local lines = buffer:lines()
+      assert.are.equal(height, #lines)
+      assert.are.equal('a', lines[pad + 1])
+      assert.are.same({ pad, 0 }, renderer.positions[renderer.element].start_pos)
+      buffer:force_delete()
+    end)
+
+    it('collapses the CSS distribution values to their single-item behaviour', function()
+      -- With a single flex item, `space-between` packs at the start...
+      local between, buffer = justified 'space-between'
+      assert.contents.are { 'a\nb\nc', buffer = buffer }
+      assert.are.same({ 0, 0 }, between.positions[between.element].start_pos)
+      buffer:force_delete()
+
+      -- ...while `space-around`/`space-evenly` centre, like `center`.
+      local around, around_buffer, height = justified 'space-around'
+      local pad = math.floor((height - 3) / 2)
+      assert.is_true(pad > 0)
+      assert.are.same({ pad, 0 }, around.positions[around.element].start_pos)
+      around_buffer:force_delete()
+    end)
+  end)
+
   describe(':buf_position_from_path', function()
     it('returns nil before the first render', function()
       local buffer = Buffer.create { scratch = true }

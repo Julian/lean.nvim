@@ -56,6 +56,10 @@ local OverlayState -- defined after BufRenderer
 local Element = {}
 Element.__index = Element
 
+---A CSS `justify-content` value, accepted in full though several collapse to the
+---same behaviour for our single flex item (see `BufRenderer.justify_content`).
+---@alias JustifyContent 'start'|'center'|'end'|'flex-start'|'flex-end'|'space-between'|'space-around'|'space-evenly'
+
 ---Renders elements within a specific buffer.
 ---@class BufRenderer
 ---@field buffer Buffer Buffer the element renders to
@@ -70,6 +74,7 @@ Element.__index = Element
 ---@field tooltip? BufRenderer currently open tooltip
 ---@field parent? BufRenderer Parent renderer
 ---@field parent_path? PathNode[] Path in parent element, events bubble up to the parent there
+---@field justify_content? JustifyContent CSS `justify-content` along the block (vertical) axis, treating the window as a column flex container holding this content as its single item; defaults to 'start'
 local BufRenderer = {
   __tui_ns = vim.api.nvim_create_namespace 'lean.tui',
   __hl_ns = vim.api.nvim_create_namespace 'lean.highlights',
@@ -1169,6 +1174,23 @@ function OverlayState:render()
   end
 end
 
+-- Where a single flex item lands for each CSS `justify-content` value (see
+-- `BufRenderer.justify_content`). The distribution values (`space-*`) only
+-- differ from the packing ones when there is more than one item, so per the
+-- spec they collapse here to their single-item behaviour: `space-between`
+-- packs at the start; `space-around` and `space-evenly` centre.
+---@type table<JustifyContent, 'start'|'center'|'end'>
+local JUSTIFY_PACKING = {
+  start = 'start',
+  ['flex-start'] = 'start',
+  ['space-between'] = 'start',
+  center = 'center',
+  ['space-around'] = 'center',
+  ['space-evenly'] = 'center',
+  ['end'] = 'end',
+  ['flex-end'] = 'end',
+}
+
 function BufRenderer:render()
   log:trace { message = 'rendering buffer', bufnr = self.buffer.bufnr }
   if not self.buffer:is_loaded() then
@@ -1182,6 +1204,50 @@ function BufRenderer:render()
   self.buffer:clear_namespace(self.__tui_ns)
 
   local result = self.element:render_lines(self)
+
+  local packing = JUSTIFY_PACKING[self.justify_content or 'start']
+
+  if packing == 'center' or packing == 'end' then
+    -- Justify the content along the block (vertical) axis within its window,
+    -- as a column flexbox would. We pad from the top with real blank lines
+    -- rather than virtual lines, which Neovim won't display above the first
+    -- line; that shifts everything down, so the highlights and the position
+    -- map are offset to match. The padding is recomputed on every render, so
+    -- it tracks window resizes.
+    local window = self.buffer:windows():next()
+    local slack = window and (window:height() - result.height) or 0
+    -- Padding can only push content *down*, and a buffer can't scroll above
+    -- its first line, so when the content overflows the window (slack <= 0) it
+    -- stays pinned at the top whatever the packing — the only thing we can
+    -- express. Otherwise 'center' splits the slack and 'end' takes all of it.
+    local pad = packing == 'center' and math.floor(slack / 2) or slack
+    if pad > 0 then
+      local padding = {}
+      for i = 1, pad do
+        padding[i] = ''
+      end
+      result.lines = vim.list_extend(padding, result.lines)
+      -- Each element's highlight shares its `start_pos`/`end_pos` tables with
+      -- its position-map entry (see `render_lines`), so shift each table only
+      -- once, or shared tables would be double-counted.
+      local shifted = {}
+      local function shift(pos)
+        if pos and not shifted[pos] then
+          shifted[pos] = true
+          pos[1] = pos[1] + pad
+        end
+      end
+      for _, hl in ipairs(result.highlights) do
+        shift(hl.start_pos)
+        shift(hl.end_pos)
+      end
+      for _, span in pairs(result.positions) do
+        shift(span.start_pos)
+        shift(span.end_pos)
+      end
+    end
+  end
+
   self.positions = result.positions
   self.width = result.width
   self.height = result.height
