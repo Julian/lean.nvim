@@ -3,8 +3,6 @@ local project = require('spec.fixtures').project
 
 local lean = require 'lean'
 
-lean.setup {}
-
 describe('lean.current_search_paths', function()
   for kind, path in project:files() do
     it(string.format('returns the paths for %s files', kind), function()

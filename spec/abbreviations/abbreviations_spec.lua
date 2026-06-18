@@ -9,8 +9,6 @@ local function wait_for_expansion()
   end)
 end
 
--- No `lean.setup` call here -- abbreviations activate automatically.
-
 describe('unicode abbreviation expansion', function()
   it(
     'autoexpands abbreviations',

@@ -40,8 +40,8 @@ or on each commit automatically if you have run `pre-commit install` in your rep
 You can use
 
 ```sh
-just nvim '{ mappings = true }'
+just nvim
 ```
 
-to get a normal running neovim (again isolated from your own configuration), where the provided argument is a (Lua) table like one would pass to `lean.setup`.
+to get a normal running neovim (again isolated from your own configuration).
 Any further arguments will be passed to `nvim`.

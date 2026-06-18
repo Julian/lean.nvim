@@ -3,8 +3,6 @@ local helpers = require 'spec.helpers'
 
 local received
 
--- No `lean.setup` call here -- stderr teeing activates automatically, with
--- configuration coming directly from `vim.g.lean_config`.
 vim.g.lean_config = vim.tbl_deep_extend('force', vim.g.lean_config or {}, {
   stderr = {
     on_lines = function(chunk)

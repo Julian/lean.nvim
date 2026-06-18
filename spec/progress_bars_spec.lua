@@ -4,8 +4,6 @@ local helpers = require 'spec.helpers'
 local progress = require 'lean.progress'
 local progress_bars = require 'lean.progress_bars'
 
--- No `lean.setup` call here -- progress bars activate automatically.
-
 local PROGRESS_NS = vim.api.nvim_create_namespace 'lean.progress'
 
 ---Return whether there are any progress bar signs in the given buffer.
