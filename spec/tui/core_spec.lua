@@ -969,7 +969,7 @@ describe('Element', function()
       assert.are.equal('https://example.com', element.url)
     end)
 
-    it("lets an explicit action win the click while url stays the OSC 8 target", function()
+    it('lets an explicit action win the click while url stays the OSC 8 target', function()
       local clicked = false
       local element = Element.link {
         text = 'jump',
