@@ -82,7 +82,7 @@ describe(
         assert.infoview_contents.are [[
           Goals accomplished 🎉
 
-          case inl.h
+          case inl
           p q : Prop
           h1 : p
           ⊢ p
@@ -129,7 +129,7 @@ describe(
         assert.infoview_contents.are [[
           Goals accomplished 🎉
 
-          case inl.h
+          case inl
           p q : Prop
           h1 : p
           ⊢ p
@@ -477,7 +477,7 @@ describe(
               helpers.move_cursor { to = { 5, 5 } }
 
               assert.infoview_contents.are [[
-                case inl.h
+                case inl
                 p q : Prop
                 h37 : p
                 ⊢ p

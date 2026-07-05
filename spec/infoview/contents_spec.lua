@@ -207,22 +207,28 @@ describe('interactive infoview', function()
 
   it(
     'shows goals with multibyte characters',
-    helpers.clean_buffer([[def multibyte {𝔽 : Type} : 𝔽 = 𝔽 := rfl]], function()
-      assert.infoview_contents_at({ 1, 48 }).are [[
-          ▼ expected type (1:40-1:43)
+    helpers.clean_buffer(
+      [[
+        set_option linter.defProp false in
+        def multibyte {𝔽 : Type} : 𝔽 = 𝔽 := rfl
+      ]],
+      function()
+        assert.infoview_contents_at({ 2, 48 }).are [[
+          ▼ expected type (2:40-2:43)
           𝔽 : Type
           ⊢ 𝔽 = 𝔽
         ]]
 
-      assert.infoview_contents_at({ 1, 44 }).are [[
+        assert.infoview_contents_at({ 2, 44 }).are [[
       ]]
 
-      assert.infoview_contents_at({ 1, 46 }).are [[
-        ▼ expected type (1:40-1:43)
+        assert.infoview_contents_at({ 2, 46 }).are [[
+        ▼ expected type (2:40-2:43)
         𝔽 : Type
         ⊢ 𝔽 = 𝔽
       ]]
-    end)
+      end
+    )
   )
 
   it(

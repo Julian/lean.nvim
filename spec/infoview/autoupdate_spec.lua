@@ -278,10 +278,14 @@ describe('infoview content (auto-)update', function()
     vim.cmd.edit { fixtures.project.child 'Example.lean', bang = true }
     helpers.move_cursor { to = { 23, 1 } }
     assert.infoview_contents.are [[
+      Goals accomplished 🎉
+
       ⊢ 37 = 37
     ]]
-    vim.api.nvim_buf_set_lines(0, 21, 22, true, { 'def will_be_modified : 2 = 2 := by' })
+    vim.api.nvim_buf_set_lines(0, 21, 22, true, { 'theorem will_be_modified : 2 = 2 := by' })
     assert.infoview_contents.are [[
+      Goals accomplished 🎉
+
       ⊢ 2 = 2
     ]]
   end)

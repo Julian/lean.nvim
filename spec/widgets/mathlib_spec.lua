@@ -52,18 +52,20 @@ describe('Mathlib widgets', function()
   )
 
   it(
-    'supports unfold? widgets',
+    'supports #click_suggestions widgets',
     helpers.clean_buffer(
       [[
-        import Mathlib.Tactic.Widget.InteractiveUnfold
+        import Mathlib.Tactic.ClickSuggestions
+
+        #click_suggestions
 
         def isUninteresting (x : Nat) := x ≠ 37
 
         example : isUninteresting 73 := by
-          unfold?
+          skip
       ]],
       function()
-        helpers.search 'unfold?'
+        helpers.search 'skip'
         assert.infoview_contents.are [[
           ⊢ isUninteresting 73
 
@@ -74,27 +76,33 @@ describe('Mathlib widgets', function()
 
         helpers.search 'Uninteresting'
         helpers.feed 'gK'
+        helpers.wait:for_infoview_contents 'unfold'
 
-        assert.infoview_contents.are [[
-          ⊢ isUninteresting 73
+        helpers.search 'unfold'
+        helpers.feed '<CR>'
+        helpers.wait:for_infoview_contents '≠'
 
-          ▼ Definitional rewrites:
-          • 73 ≠ 37
-          • ¬73 = 37
-          • 73 = 37 → False
-        ]]
+        assert.has_all(infoview.get_current_infoview():get_lines(), {
+          'Suggestions for isUninteresting 73',
+          '[apply] 73 ≠ 37',
+          '[apply] ¬73 = 37',
+          '[apply] 73 = 37 → False',
+        })
 
-        helpers.search '≠'
+        helpers.search 'apply'
         helpers.feed '<CR>'
 
-        -- we're back in the Lean buffer
+        -- we're back in the Lean buffer with the suggestion pasted in
         assert.contents.are [[
-          import Mathlib.Tactic.Widget.InteractiveUnfold
+          import Mathlib.Tactic.ClickSuggestions
+
+          #click_suggestions
 
           def isUninteresting (x : Nat) := x ≠ 37
 
           example : isUninteresting 73 := by
             rw [show isUninteresting 73 = (73 ≠ 37) from rfl]
+            skip
         ]]
       end,
       with_widgets

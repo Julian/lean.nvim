@@ -31,7 +31,7 @@ describe(
 
       -- Two positions with known, distinct goal states.
       local pos_inl = { 4, 5 } -- `| inl h37 =>`: case inl goal + expected type
-      local pos_inl_h = { 5, 5 } -- `apply Or.inr`: case inl.h, ⊢ p
+      local pos_inl_h = { 5, 5 } -- `apply Or.inr`: case inl, ⊢ p
 
       it('shows previous position in diff when cursor moves', function()
         lean_window = Window:current()
@@ -66,7 +66,7 @@ describe(
         -- Move to a new position with a different goal.
         helpers.move_cursor { to = pos_inl_h }
         assert.infoview_contents.are [[
-          case inl.h
+          case inl
           p q : Prop
           h37 : p
           ⊢ p
@@ -98,7 +98,7 @@ describe(
         ]]
 
         assert.diff_contents.are [[
-          case inl.h
+          case inl
           p q : Prop
           h37 : p
           ⊢ p
@@ -123,7 +123,7 @@ describe(
 
         helpers.move_cursor { to = pos_inl_h }
         assert.infoview_contents.are [[
-          case inl.h
+          case inl
           p q : Prop
           h37 : p
           ⊢ p
@@ -168,7 +168,7 @@ describe(
         -- Move to pos_inl_h: diff should update to pos_inl.
         helpers.move_cursor { to = pos_inl_h }
         assert.infoview_contents.are [[
-          case inl.h
+          case inl
           p q : Prop
           h37 : p
           ⊢ p

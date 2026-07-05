@@ -21,7 +21,6 @@ describe(
     function()
       it('filters hypotheses', function()
         assert.infoview_contents_at('eft').are [[
-          case h
           ⊢ n = n
           c : 4 = 4
           b : 3 = 3

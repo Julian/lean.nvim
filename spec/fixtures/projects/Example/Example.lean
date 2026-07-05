@@ -19,5 +19,5 @@ theorem has_multiple_goals (n : Nat) : n = n := by
 
 def has_multibyte_character {𝔽 : Type} : 𝔽 = 𝔽 := rfl
 
-def will_be_modified : 37 = 37 := by
+theorem will_be_modified : 37 = 37 := by
   exact rfl
