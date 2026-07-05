@@ -8,9 +8,13 @@ local lsp_diagnostics = require('lean.diagnostic').lsp_diagnostics
 local interactive_goal = {}
 
 ---A hypothesis name which is accessible according to Lean's naming conventions.
+---
+---Mirrors `Lean.Name.isInaccessibleUserName`: inaccessible names contain a
+---dagger anywhere within them, as shadowed names have further superscript
+---indices appended after theirs (e.g. `x✝¹`).
 ---@param name string
 local function is_accessible(name)
-  return name:sub(-#'✝') ~= '✝'
+  return not name:find('✝', 1, true)
 end
 
 ---Render a hypothesis name.

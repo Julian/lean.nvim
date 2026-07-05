@@ -52,6 +52,34 @@ describe('infoview view_options', function()
   end)
 
   it(
+    'can hide inaccessible names, even shadowed ones with indices',
+    helpers.clean_buffer(
+      [[
+        example : Nat → Nat → Nat → 37 = 37 := by
+          intro n n n
+          sorry
+      ]],
+      function()
+        helpers.search 'sorry'
+        assert.infoview_contents.are [[
+          n✝¹ n✝ n : Nat
+          ⊢ 37 = 37
+        ]]
+
+        local iv = infoview.get_current_infoview()
+        iv.view_options.show_hidden_assumptions = false
+        iv.pin:update()
+        assert.infoview_contents.are [[
+          n : Nat
+          ⊢ 37 = 37
+        ]]
+
+        iv.view_options.show_hidden_assumptions = true
+      end
+    )
+  )
+
+  it(
     'can be selected interactively via <LocalLeader>v from a Lean buffer',
     helpers.clean_buffer(
       [[

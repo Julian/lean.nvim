@@ -729,7 +729,7 @@ function Infoview:select_view_options()
     },
     {
       name = 'show inaccessible names',
-      description = 'Show inaccessible names (those ending in ✝)?',
+      description = 'Show inaccessible names (those containing ✝)?',
       option = 'show_hidden_assumptions',
     },
     {
