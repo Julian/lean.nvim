@@ -21,6 +21,9 @@ local log = require 'lean.log'
 local progress = require 'lean.progress'
 local rpc = require 'lean.rpc'
 
+local wrap_sectioned_content
+local contents_for_interactive_sectioned
+
 ---Convert a buffer position to a human-readable (1, 1)-indexed string.
 ---Takes the workspace into account in order to return a relative path.
 ---@param buffer Buffer
@@ -172,6 +175,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
 ---@field show_let_values boolean show let-value bodies
 ---@field show_term_goals boolean show expected types?
 ---@field reverse boolean order hypotheses bottom-to-top
+---@field sectioned_display boolean display sections with headers (goals, widgets, diagnostics)
 
 ---An individual pin.
 ---@class Pin
@@ -309,6 +313,18 @@ function Infoview:__setup_pin_keymaps(buffer)
       end,
       '[s',
       'Move to the previous suggestion.',
+    },
+    {
+      'HistoryBack',
+      function() self.pin:history_back() end,
+      '[H',
+      'Go back in history',
+    },
+    {
+      'HistoryForward',
+      function() self.pin:history_forward() end,
+      ']H',
+      'Go forward in history',
     },
     {
       'NextLink',
@@ -833,7 +849,12 @@ function Infoview:render_contents(params, sw)
   if vim.b[bufnr].lean_lsp_died then
     return components.LSP_HAS_DIED
   end
-  return self.__contents_for(params, self.view_options, sw)
+  if self.view_options.sectioned_display then
+    local sections = contents_for_interactive_sectioned(params, self.view_options, sw)
+    return wrap_sectioned_content(sections, params)
+  else
+    return self.__contents_for(params, self.view_options, sw)
+  end
 end
 
 ---Wait until the infoview has finished processing.
@@ -1273,6 +1294,8 @@ function Pin:new(obj)
       __renderer = pin_renderer,
       __tick = 0,
       __instrumentation = Instrumentation:new(),
+      history = {},
+      history_index = 0,
       buffer = pin_buffer,
     }),
     self
@@ -1621,6 +1644,26 @@ function Pin:move(buffer, pos)
   self:request_update()
 end
 
+function Pin:history_back()
+  if self.history_index > 1 then
+    self.history_index = self.history_index - 1
+    self.__data_element = self.history[self.history_index]
+    self.__element:set_children { self.__data_element }
+    self:render()
+    vim.cmd('redraw')
+  end
+end
+
+function Pin:history_forward()
+  if self.history_index < #self.history then
+    self.history_index = self.history_index + 1
+    self.__data_element = self.history[self.history_index]
+    self.__element:set_children { self.__data_element }
+    self:render()
+    vim.cmd('redraw')
+  end
+end
+
 ---Wrap content blocks with a clear_all event handler.
 ---
 ---@param blocks Element[]
@@ -1638,6 +1681,10 @@ local function wrap_content_blocks(blocks, params)
     end
   end
 
+  ---Wrap a table of named sections with headers and foldable behaviour.
+  ---@param sections table<string, Element>
+  ---@param params lsp.TextDocumentPositionParams
+  ---@return Element
   local new_data_element
   new_data_element = Element:concat(blocks, '\n\n', {
     ---@type EventCallbacks
@@ -1688,6 +1735,71 @@ local function contents_for_processing(params)
     }
     return wrap_content_blocks(interactive_goal.diagnostics(params), params)
   end
+end
+
+wrap_sectioned_content = function(sections, params)
+  if vim.tbl_isempty(sections) then
+    local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+    if vim.tbl_isempty(vim.lsp.get_clients { bufnr = bufnr, name = 'leanls' }) then
+      return components.LSP_HAS_DIED
+    elseif options.show_no_info_message then
+      return components.NO_INFO
+    else
+      return components.EMPTY
+    end
+  end
+
+  local section_titles = {
+    goals          = 'Goals',
+    term_goals     = 'Expected Type Goals',
+    user_widgets   = 'User Widgets',
+    diagnostics    = 'Diagnostics',
+    processing     = 'Processing…',
+  }
+
+  local children = {}
+  for name, content in pairs(sections) do
+    if content ~= Element.EMPTY then
+      local title = section_titles[name] or name
+      local header = Element:new {
+        name = 'section-header',
+        text = '── ' .. title .. ' ──',
+        hlgroups = { 'Title' },
+      }
+      -- No folding: just concatenate header and content with a newline
+      local section_element = Element:concat({ header, content }, '\n')
+      table.insert(children, section_element)
+    end
+  end
+  return Element:concat(children, '\n\n') or Element.EMPTY
+end
+contents_for_interactive_sectioned = function(params, view_options, sw)
+  local processing_element = contents_for_processing(params)
+  if processing_element then
+    return { processing = processing_element }
+  end
+
+  local sess = sw:time('rpc_open', rpc.open, params)
+
+  local phases = {}
+  table.insert(phases, { 'goals', function() return components.goal_at(sess, view_options) end })
+  if view_options.show_term_goals then
+    table.insert(phases, { 'term_goals', function() return components.term_goal_at(sess, view_options) end })
+  end
+  table.insert(phases, { 'user_widgets', function() return components.user_widgets_at(sess) end })
+  table.insert(phases, { 'diagnostics', function() return components.diagnostics_at(sess) end })
+
+  local results = sw:concurrent('rpcs', phases)
+
+  local sections = {}
+  for i, result in ipairs(results) do
+    local blocks = result[1] or {}
+    if #blocks > 0 then
+      local name = phases[i][1]
+      sections[name] = Element:concat(blocks, '\n\n') or Element.EMPTY
+    end
+  end
+  return sections
 end
 
 ---Render the combined contents of the infoview using interactive widgets.
@@ -1753,7 +1865,7 @@ end
 ---@param view_options InfoviewViewOptions
 ---@param sw std.Stopwatch
 ---@return Element
-function contents_for_plain(params, view_options, sw)
+local function contents_for_plain(params, view_options, sw)
   local element = contents_for_processing(params)
   if element then
     return element
@@ -1817,6 +1929,15 @@ function Pin:update()
 
     sw:open 'commit'
     self.loading = false
+
+    if self.__data_element ~= Element.EMPTY then
+      if #self.history == 0 or self.history[#self.history] ~= self.__data_element then
+        if #self.history >= 30 then table.remove(self.history, 1) end
+        table.insert(self.history, self.__data_element)
+        self.history_index = #self.history
+      end
+    end
+
     -- Carry over user-toggled foldable state so a refresh doesn't snap
     -- expanded traces (etc.) back to their server-default collapsed state.
     -- The previous element is read here (not before `render_contents` yields)
@@ -2259,6 +2380,24 @@ function infoview.contents_at(position, opts)
     error(('infoview.contents_at: timed out after %dms waiting for contents'):format(timeout))
   end
   return result
+end
+
+---Go back in the history of the current pin.
+function infoview.history_back()
+  with_current(function(iv) iv.pin:history_back() end)
+end
+
+---Go forward in the history of the current pin.
+function infoview.history_forward()
+  with_current(function(iv) iv.pin:history_forward() end)
+end
+
+---Toggle sectioned display for the current infoview.
+function infoview.toggle_sectioned_display()
+  with_current(function(iv)
+    iv.view_options.sectioned_display = not iv.view_options.sectioned_display
+    iv.pin:update()
+  end)
 end
 
 return infoview
