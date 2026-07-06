@@ -14,7 +14,9 @@ describe('language server dead', function()
       1
     ]]
 
-    vim.lsp.stop_client(vim.lsp.get_clients { bufnr = 0 })
+    vim.iter(vim.lsp.get_clients { bufnr = 0 }):each(function(client)
+      client:stop()
+    end)
     local succeeded = vim.wait(5000, function()
       return vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0 })
     end)
@@ -47,7 +49,9 @@ describe('language server dead', function()
     end)
     assert.message("Didn't find 2 LSP clients").is_true(succeeded)
 
-    vim.lsp.stop_client(vim.lsp.get_clients { bufnr = 0 })
+    vim.iter(vim.lsp.get_clients { bufnr = 0 }):each(function(client)
+      client:stop()
+    end)
     succeeded = vim.wait(5000, function()
       return #vim.lsp.get_clients {} == 1
     end)
@@ -72,7 +76,9 @@ describe('language server dead', function()
       1
     ]]
     infoview.close()
-    vim.lsp.stop_client(vim.lsp.get_clients { bufnr = 0 })
+    vim.iter(vim.lsp.get_clients { bufnr = 0 }):each(function(client)
+      client:stop()
+    end)
     local succeeded = vim.wait(5000, function()
       return vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0 })
     end)
