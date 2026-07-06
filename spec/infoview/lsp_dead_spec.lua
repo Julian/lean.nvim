@@ -22,6 +22,7 @@ describe('language server dead', function()
     end)
     assert.message("Couldn't kill the LSP!").is_true(succeeded)
 
+    wait:for_infoview_contents '🪦'
     assert.infoview_contents_nowait.are '🪦 The Lean language server is dead.'
     assert.are.same(
       'NormalNC:leanInfoLSPDead',
@@ -30,7 +31,7 @@ describe('language server dead', function()
 
     -- and comes back alive
     vim.cmd.edit()
-    wait:for_processing()
+    wait:for_infoview_contents 'information'
     assert.infoview_contents.are [[
       ▼ 1:1-1:6: information:
       1
@@ -56,6 +57,7 @@ describe('language server dead', function()
       return #vim.lsp.get_clients {} == 1
     end)
     assert.message("Couldn't kill the LSP!").is_true(succeeded)
+    wait:for_infoview_contents '🪦'
     assert.infoview_contents_nowait.are '🪦 The Lean language server is dead.'
 
     -- still alive for the other window
@@ -66,6 +68,7 @@ describe('language server dead', function()
     ]]
 
     vim.cmd.wincmd 'p'
+    wait:for_infoview_contents '🪦'
     assert.infoview_contents_nowait.are '🪦 The Lean language server is dead.'
   end)
 
@@ -85,6 +88,7 @@ describe('language server dead', function()
     assert.message("Couldn't kill the LSP!").is_true(succeeded)
 
     infoview.open()
+    wait:for_infoview_contents '🪦'
     assert.infoview_contents_nowait.are '🪦 The Lean language server is dead.'
   end)
 end)

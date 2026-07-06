@@ -455,6 +455,7 @@ describe('plain infoviews', function()
         return vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0 })
       end)
       assert.message("Couldn't kill the LSP!").is_true(succeeded)
+      helpers.wait:for_infoview_contents '🪦'
       assert.infoview_contents_nowait.are '🪦 The Lean language server is dead.'
     end)
   end)
