@@ -316,13 +316,17 @@ function Infoview:__setup_pin_keymaps(buffer)
     },
     {
       'HistoryBack',
-      function() self.pin:history_back() end,
+      function()
+        self.pin:history_back()
+      end,
       '[H',
       'Go back in history',
     },
     {
       'HistoryForward',
-      function() self.pin:history_forward() end,
+      function()
+        self.pin:history_forward()
+      end,
       ']H',
       'Go forward in history',
     },
@@ -1650,7 +1654,7 @@ function Pin:history_back()
     self.__data_element = self.history[self.history_index]
     self.__element:set_children { self.__data_element }
     self:render()
-    vim.cmd('redraw')
+    vim.cmd 'redraw'
   end
 end
 
@@ -1660,7 +1664,7 @@ function Pin:history_forward()
     self.__data_element = self.history[self.history_index]
     self.__element:set_children { self.__data_element }
     self:render()
-    vim.cmd('redraw')
+    vim.cmd 'redraw'
   end
 end
 
@@ -1750,11 +1754,11 @@ wrap_sectioned_content = function(sections, params)
   end
 
   local section_titles = {
-    goals          = 'Goals',
-    term_goals     = 'Expected Type Goals',
-    user_widgets   = 'User Widgets',
-    diagnostics    = 'Diagnostics',
-    processing     = 'Processing…',
+    goals = 'Goals',
+    term_goals = 'Expected Type Goals',
+    user_widgets = 'User Widgets',
+    diagnostics = 'Diagnostics',
+    processing = 'Processing…',
   }
 
   local children = {}
@@ -1782,12 +1786,32 @@ contents_for_interactive_sectioned = function(params, view_options, sw)
   local sess = sw:time('rpc_open', rpc.open, params)
 
   local phases = {}
-  table.insert(phases, { 'goals', function() return components.goal_at(sess, view_options) end })
+  table.insert(phases, {
+    'goals',
+    function()
+      return components.goal_at(sess, view_options)
+    end,
+  })
   if view_options.show_term_goals then
-    table.insert(phases, { 'term_goals', function() return components.term_goal_at(sess, view_options) end })
+    table.insert(phases, {
+      'term_goals',
+      function()
+        return components.term_goal_at(sess, view_options)
+      end,
+    })
   end
-  table.insert(phases, { 'user_widgets', function() return components.user_widgets_at(sess) end })
-  table.insert(phases, { 'diagnostics', function() return components.diagnostics_at(sess) end })
+  table.insert(phases, {
+    'user_widgets',
+    function()
+      return components.user_widgets_at(sess)
+    end,
+  })
+  table.insert(phases, {
+    'diagnostics',
+    function()
+      return components.diagnostics_at(sess)
+    end,
+  })
 
   local results = sw:concurrent('rpcs', phases)
 
@@ -1932,7 +1956,9 @@ function Pin:update()
 
     if self.__data_element ~= Element.EMPTY then
       if #self.history == 0 or self.history[#self.history] ~= self.__data_element then
-        if #self.history >= 30 then table.remove(self.history, 1) end
+        if #self.history >= 30 then
+          table.remove(self.history, 1)
+        end
         table.insert(self.history, self.__data_element)
         self.history_index = #self.history
       end
@@ -2384,12 +2410,16 @@ end
 
 ---Go back in the history of the current pin.
 function infoview.history_back()
-  with_current(function(iv) iv.pin:history_back() end)
+  with_current(function(iv)
+    iv.pin:history_back()
+  end)
 end
 
 ---Go forward in the history of the current pin.
 function infoview.history_forward()
-  with_current(function(iv) iv.pin:history_forward() end)
+  with_current(function(iv)
+    iv.pin:history_forward()
+  end)
 end
 
 ---Toggle sectioned display for the current infoview.
