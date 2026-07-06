@@ -1474,7 +1474,13 @@ function BufRenderer:hover(force_update_highlight)
 
     self.tooltip:render()
 
-    if not self.tooltip:last_window_valid() then
+    -- The anchor window can be gone by the time an async update lands
+    -- (e.g. the tooltip chain was dismissed while we were rendering).
+    if
+      not self.tooltip:last_window_valid()
+      and self.last_window
+      and self.last_window:is_valid()
+    then
       self.tooltip.last_window = self.last_window:float {
         buffer = self.tooltip.buffer,
         enter = false,

@@ -118,6 +118,13 @@ local autoopen_fn = nil
 
 local FOCUS_AUGROUP = vim.api.nvim_create_augroup('LeanInfoviewFocus', {})
 
+---URIs whose language server has died (and not yet been restarted).
+---
+---Consulted when rendering so that asynchronous updates racing with the
+---server's death can't resurrect stale contents from it.
+---@type table<string, true>
+local dead_uris = {}
+
 ---@class InfoviewViewOptions
 ---@field use_widgets boolean use interactive widgets (true) or plain text (false)
 ---@field show_types boolean show type hypotheses
@@ -783,6 +790,9 @@ end
 ---@param sw std.Stopwatch
 ---@return Element
 function Infoview:render_contents(params, sw)
+  if dead_uris[params.textDocument.uri] then
+    return components.LSP_HAS_DIED
+  end
   return self.__contents_for(params, self.view_options, sw)
 end
 
@@ -933,7 +943,6 @@ end
 
 ---Directly mark that the infoview has died. What a shame.
 function Infoview:died()
-  self.pin.__data_element = components.LSP_HAS_DIED
   local params = self.pin.__position_params
   progress.proc_infos[params.textDocument.uri] = {
     {
@@ -941,6 +950,17 @@ function Infoview:died()
       range = { start = params.position, ['end'] = params.position },
     },
   }
+  -- Invalidate any in-flight (async) update so it can't land after us and
+  -- resurrect stale contents from the now-dead server.
+  self.pin.__tick = self.pin.__tick + 1
+  self.pin.loading = false
+  self.pin.__data_element = components.LSP_HAS_DIED
+  self.pin.__element:set_children { self.pin.__data_element }
+  -- LspDetach can fire in contexts where text changes aren't allowed
+  -- (e.g. during `:edit`), so delay the re-render until it's safe.
+  vim.schedule(function()
+    self.pin:render()
+  end)
   if self.window then
     self.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
   end
@@ -1921,12 +1941,21 @@ function infoview.init(bufnr)
   vim.api.nvim_clear_autocmds { group = FOCUS_AUGROUP, buffer = bufnr }
 
   vim.api.nvim_create_autocmd('LspDetach', {
-    callback = function()
+    callback = function(args)
+      dead_uris[vim.uri_from_bufnr(args.buf)] = true
       local current_infoview = infoview.get_current_infoview()
       if not current_infoview then
         return
       end
       current_infoview:died()
+    end,
+    buffer = bufnr,
+    group = FOCUS_AUGROUP,
+  })
+
+  vim.api.nvim_create_autocmd('LspAttach', {
+    callback = function(args)
+      dead_uris[vim.uri_from_bufnr(args.buf)] = nil
     end,
     buffer = bufnr,
     group = FOCUS_AUGROUP,

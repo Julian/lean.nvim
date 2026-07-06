@@ -177,7 +177,15 @@ describe('unicode abbreviation expansion', function()
     helpers.clean_buffer(function()
       helpers.insert [[foo ε bar]]
       vim.cmd.normal '$'
-      helpers.feed [[q/a\e<Space><CR>ibaz]]
+      if vim.fn.has 'nvim-0.13' ~= 1 then
+        -- The pre-0.13 cmdwin runs a nested modal loop, so the whole
+        -- sequence must be in the typeahead before `q/` starts it.
+        helpers.feed [[q/a\e<Space><CR>ibaz]]
+      else
+        helpers.feed [[q/a\e<Space>]]
+        helpers.feed '<CR>'
+        helpers.feed 'ibaz'
+      end
       assert.current_line.is 'foo bazε bar'
     end)
   )
