@@ -124,7 +124,7 @@ function helpers.wait_for_new_window(known)
     :totable()
 
   local new_window
-  local succeeded = vim.wait(1000, function()
+  local succeeded = vim.wait(TIMEOUT, function()
     new_window = vim.iter(vim.api.nvim_tabpage_list_wins(0)):find(function(window)
       return not vim.tbl_contains(ids, window)
     end)

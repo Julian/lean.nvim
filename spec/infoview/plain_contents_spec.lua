@@ -449,7 +449,7 @@ describe('plain infoviews', function()
       vim.cmd.edit { project.some_existing_file, bang = true }
       helpers.wait:for_lsp()
       vim.iter(vim.lsp.get_clients { bufnr = 0 }):each(function(client)
-        client:stop()
+        client:stop(true)
       end)
       local succeeded = vim.wait(5000, function()
         return vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0 })

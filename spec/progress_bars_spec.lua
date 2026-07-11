@@ -20,7 +20,7 @@ describe('progress bars', function()
 
       -- Kill the LSP while signs are visible.
       for _, client in ipairs(vim.lsp.get_clients { bufnr = 0 }) do
-        client:stop()
+        client:stop(true)
       end
       local succeeded = vim.wait(5000, function()
         return vim.tbl_isempty(vim.lsp.get_clients { bufnr = 0 })
