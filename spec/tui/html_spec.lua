@@ -471,6 +471,39 @@ describe('tui.html', function()
       assert.is.falsy(el.hlgroups)
     end)
 
+    it('converts hsl(...) colors Neovim cannot parse (#533)', function()
+      local el = html._styled(
+        Element:new { text = 'red' },
+        { style = { color = 'hsl(0.000000, 70%, 60%)' } }
+      )
+      local hl = get_hl(el.hlgroups[1])
+      assert.is.equal('number', type(hl.fg))
+    end)
+
+    it('converts rgb(...) colors Neovim cannot parse', function()
+      local el =
+        html._styled(Element:new { text = 'green' }, { style = { color = 'rgb(0, 128, 0)' } })
+      local hl = get_hl(el.hlgroups[1])
+      assert.is.equal('number', type(hl.fg))
+    end)
+
+    it('expands shorthand hex colors Neovim cannot parse', function()
+      local el = html._styled(Element:new { text = 'abc' }, { style = { color = '#abc' } })
+      assert.is.equal(tonumber('aabbcc', 16), get_hl(el.hlgroups[1]).fg)
+    end)
+
+    it('strips the alpha channel from 8-digit hex colors', function()
+      local el = html._styled(Element:new { text = 'a' }, { style = { color = '#12345678' } })
+      assert.is.equal(tonumber('123456', 16), get_hl(el.hlgroups[1]).fg)
+    end)
+
+    it('drops unsupported color values rather than erroring (#533)', function()
+      local el =
+        html._styled(Element:new { text = 'plain' }, { style = { color = 'oklch(0.7 0.1 30)' } })
+      assert.is.equal('plain', el:to_string())
+      assert.is.falsy(el.hlgroups)
+    end)
+
     it('applies strikethrough from text-decoration-line', function()
       local el = html._styled(
         Element:new { text = 'struck' },

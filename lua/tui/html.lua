@@ -398,6 +398,109 @@ function html.Tag.table(children)
   return Element:new { is_block = true, margin = 1, children = children }
 end
 
+---Convert an HSL triple (hue in degrees, saturation & lightness in
+---percent) to a `#rrggbb` hex string Neovim understands.
+---@param h number
+---@param s number
+---@param l number
+---@return string
+local function hsl_to_hex(h, s, l)
+  h = (h % 360) / 360
+  s = math.min(math.max(s, 0), 100) / 100
+  l = math.min(math.max(l, 0), 100) / 100
+
+  local q = l < 0.5 and l * (1 + s) or l + s - l * s
+  local p = 2 * l - q
+  local function channel(t)
+    if t < 0 then
+      t = t + 1
+    elseif t > 1 then
+      t = t - 1
+    end
+    if t < 1 / 6 then
+      return p + (q - p) * 6 * t
+    elseif t < 1 / 2 then
+      return q
+    elseif t < 2 / 3 then
+      return p + (q - p) * (2 / 3 - t) * 6
+    end
+    return p
+  end
+
+  return ('#%02x%02x%02x'):format(
+    math.floor(channel(h + 1 / 3) * 255 + 0.5),
+    math.floor(channel(h) * 255 + 0.5),
+    math.floor(channel(h - 1 / 3) * 255 + 0.5)
+  )
+end
+
+---Pull the leading numbers out of a CSS functional notation's argument
+---list, e.g. `hsl(0.5, 70%, 60%)` → `{ 0.5, 70, 60 }`. Units (`%`,
+---`deg`) and separators (commas or spaces) are ignored.
+---@param notation string
+---@return number[]
+local function css_numbers(notation)
+  local nums = {}
+  for n in notation:gmatch '%d+%.?%d*' do
+    nums[#nums + 1] = tonumber(n)
+  end
+  return nums
+end
+
+---Resolve a CSS color value to a form `nvim_set_hl` accepts, or `nil`
+---when Neovim can't represent it.
+---
+---Neovim understands only `#rrggbb` hex and a fixed table of color
+---names. We convert the CSS forms it doesn't — shorthand/alpha hex,
+---`hsl(...)`, `rgb(...)` — and drop the rest, so an exotic color simply
+---styles nothing rather than crashing the whole render (#533).
+---@param value string
+---@return string?
+local function resolve_color(value)
+  value = vim.trim(value)
+
+  -- Hex: expand `#rgb`/`#rgba` shorthand and strip any alpha channel,
+  -- since Neovim accepts neither, leaving the `#rrggbb` it wants.
+  local hex = value:match '^#(%x+)$'
+  if hex then
+    if #hex == 3 or #hex == 4 then
+      return '#' .. hex:sub(1, 3):gsub('.', '%0%0')
+    elseif #hex == 6 or #hex == 8 then
+      return '#' .. hex:sub(1, 6)
+    end
+    return nil
+  end
+
+  local hsl = value:match '^hsla?%b()$'
+  if hsl then
+    local nums = css_numbers(hsl)
+    if #nums >= 3 then
+      return hsl_to_hex(nums[1], nums[2], nums[3])
+    end
+    return nil
+  end
+
+  local rgb = value:match '^rgba?%b()$'
+  if rgb then
+    local nums = css_numbers(rgb)
+    if #nums >= 3 then
+      return ('#%02x%02x%02x'):format(
+        math.min(math.floor(nums[1]), 255),
+        math.min(math.floor(nums[2]), 255),
+        math.min(math.floor(nums[3]), 255)
+      )
+    end
+    return nil
+  end
+
+  -- Named colors: let Neovim tell us whether it knows them, and drop
+  -- anything it doesn't rather than erroring on it.
+  if vim.api.nvim_get_color_by_name(value) == -1 then
+    return nil
+  end
+  return value
+end
+
 ---Apply a single CSS property to a Neovim highlight attribute table.
 ---
 ---Handles both kebab-case (`background-color`) and camelCase
@@ -411,9 +514,9 @@ local function apply_css_prop(hl, prop, value)
     return '-' .. c:lower()
   end)
   if normalized == 'color' then
-    hl.fg = value
+    hl.fg = resolve_color(value)
   elseif normalized == 'background-color' or normalized == 'background' then
-    hl.bg = value
+    hl.bg = resolve_color(value)
   elseif normalized == 'font-weight' then
     -- CSS bold is the keyword "bold" or a numeric weight >= 700.
     local n = tonumber(value)
