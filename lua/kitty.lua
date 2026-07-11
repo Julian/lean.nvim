@@ -83,27 +83,50 @@ function kitty.on_available(callback)
   end
 end
 
+---Whether we should attempt Kitty graphics detection & output at all.
+---
+---This gates the detection *probe*, which emits escape codes to the terminal.
+---It must be checked wherever detection runs -- not just at one `require`
+---site -- because several modules pull this one in unconditionally, so a
+---single gated `require` cannot suppress the probe.
+---
+---We bail when graphics are disabled in the user's config, and under Zellij,
+---which does not pass the Kitty graphics protocol through: emitting the probe
+---(or any image data) there just paints escape codes into the window, and even
+---a genuine Kitty host terminal can't display through it.
+local function detection_wanted()
+  if require 'lean.config'().graphics.enabled == false then
+    return false
+  end
+  if vim.env.ZELLIJ then
+    return false
+  end
+  return true
+end
+
 -- Detect synchronously from env vars, then also send a probe which can
 -- upgrade detection for terminals we don't recognize by name.
-graphics_supported = detect_from_env()
-if graphics_supported then
-  notify_available()
-elseif not vim.env.TMUX and #vim.api.nvim_list_uis() > 0 then
-  probe(notify_available)
-else
-  vim.api.nvim_create_autocmd('UIEnter', {
-    once = true,
-    callback = function()
-      if not graphics_supported then
-        graphics_supported = detect_from_env()
-        if graphics_supported then
-          notify_available()
-        elseif not vim.env.TMUX then
-          probe(notify_available)
+if detection_wanted() then
+  graphics_supported = detect_from_env()
+  if graphics_supported then
+    notify_available()
+  elseif not vim.env.TMUX and #vim.api.nvim_list_uis() > 0 then
+    probe(notify_available)
+  else
+    vim.api.nvim_create_autocmd('UIEnter', {
+      once = true,
+      callback = function()
+        if not graphics_supported and detection_wanted() then
+          graphics_supported = detect_from_env()
+          if graphics_supported then
+            notify_available()
+          elseif not vim.env.TMUX then
+            probe(notify_available)
+          end
         end
-      end
-    end,
-  })
+      end,
+    })
+  end
 end
 
 ---Check if the terminal supports the Kitty graphics protocol.
