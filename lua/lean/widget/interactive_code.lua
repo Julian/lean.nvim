@@ -39,12 +39,9 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations, self_rend
     element.hlgroups = { 'leanInfoDiff' .. subexpr_info.diffStatus }
   end
 
-  local info_open = false
-
   ---@param ctx ElementEventContext
   local do_reset = function(ctx)
-    info_open = false
-    element:remove_tooltip()
+    ctx.clear_tooltip()
     ctx.rehover()
   end
 
@@ -91,16 +88,15 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations, self_rend
       tooltip = Element.noop(vim.inspect(err))
     else
       tooltip = mk_tooltip(info_popup)
-      info_open = true
     end
 
-    element:add_tooltip(tooltip)
+    ctx.set_tooltip(tooltip)
     ctx.rehover()
   end
 
   ---@param ctx ElementEventContext
   local click = function(ctx)
-    if info_open then
+    if ctx.tooltip_open() then
       return do_reset(ctx)
     else
       return do_open_all(ctx)
@@ -142,9 +138,7 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations, self_rend
   element.events = {
     click = click,
     clear = function(ctx) ---@param ctx ElementEventContext
-      if info_open then
-        do_reset(ctx)
-      end
+      ctx.clear_tooltip()
     end,
     go_to_def = go_to_def,
     go_to_decl = go_to_decl,
@@ -152,6 +146,13 @@ local function render_subexpr_info(subexpr_info, tag, sess, locations, self_rend
   }
 
   if locations then
+    -- The server's canonical identity for this subexpression (mvarId + loc +
+    -- subexprPos). Keying its open tooltip by this makes the tooltip track the
+    -- same logical subexpression across goal rebuilds, and -- crucially -- go
+    -- away rather than show stale when the goal changes to something else at the
+    -- same structural position.
+    element.tooltip_id =
+      vim.json.encode(locations:template_with_subexpr_pos(subexpr_info.subexprPos))
     local diff_hl = element.hlgroups ---@type string[]?
     function element.hlgroups()
       local selected = locations:is_subexpr_selected(subexpr_info.subexprPos)

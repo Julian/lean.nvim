@@ -1643,13 +1643,7 @@ local function wrap_content_blocks(blocks, params)
     ---@type EventCallbacks
     events = {
       clear_all = function(ctx) ---@param ctx ElementEventContext
-        new_data_element:find(function(element) ---@param element Element
-          ---@type fun(ctx):boolean?
-          local clear = element.events['clear']
-          if clear then
-            clear(ctx)
-          end
-        end)
+        ctx.clear_all_tooltips()
         Locations.clear(params)
         ctx.jump_to_last_window()
       end,

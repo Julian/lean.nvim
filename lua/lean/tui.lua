@@ -45,6 +45,7 @@ local OverlayState -- defined after BufRenderer
 ---@field name string a named handle for this element, used when path-searching
 ---@field hlgroups? string[]|fun():string[]|nil highlight group(s) or a function returning them
 ---@field tooltip? Element? tooltip
+---@field tooltip_id? string stable identity for this element's interactive tooltip (a server `GoalsLocation` when available), preferred over its path as a store key
 ---@field url? string a URI to associate with this element; rendered as an OSC 8 terminal hyperlink over its range (see `Element.link`)
 ---@field highlightable boolean (for buffer rendering) highlight this element when hovering
 ---@field is_block boolean block-level element — starts on a new line when following content
@@ -73,6 +74,7 @@ Element.__index = Element
 ---@field keymaps table Extra keymaps (inherited by tooltips)
 ---@field hover_range? integer[][] (0,0)-range of the highlighted node
 ---@field tooltip? BufRenderer currently open tooltip
+---@field tooltips table<string, Element> open interactive tooltip contents, keyed by `path_key`
 ---@field parent? BufRenderer Parent renderer
 ---@field parent_path? PathNode[] Path in parent element, events bubble up to the parent there
 ---@field justify_content? JustifyContent CSS `justify-content` along the block (vertical) axis, treating the window as a column flex container holding this content as its single item; defaults to 'start'
@@ -862,6 +864,10 @@ end
 function BufRenderer:new(obj)
   obj = obj or {}
   obj.pending_elements = {}
+  -- Open interactive tooltips, keyed by `path_key` of the element that owns
+  -- them. Kept here rather than on the elements so a rebuilt element tree
+  -- doesn't strand them (see `make_event_context`).
+  obj.tooltips = {}
   local new_renderer = setmetatable(obj, self)
   new_renderer.__overlays = OverlayState:new(new_renderer)
   obj.buffer.o.modifiable = false
@@ -1388,6 +1394,23 @@ local function path_equal(path_a, path_b)
   return true
 end
 
+---A stable, tree-independent key for a path.
+---
+---It encodes only each node's identity (name and index), the same fields
+---`path_equal` compares, ignoring cursor-specific metadata like offsets. Two
+---structurally identical rebuilds therefore produce the same key, so interaction
+---state keyed by this survives a rebuild without being carried across trees.
+---@param path PathNode[]
+---@return string
+local function path_key(path)
+  local field_sep, node_sep = string.char(31), string.char(30) -- unit/record separators
+  local parts = {}
+  for i, node in ipairs(path) do
+    parts[i] = tostring(node.name) .. field_sep .. tostring(node.idx)
+  end
+  return table.concat(parts, node_sep)
+end
+
 ---@param window Window?
 function BufRenderer:update_cursor(window)
   window = window or Window:current()
@@ -1431,22 +1454,29 @@ function BufRenderer:hover(force_update_highlight)
   end
 
   -- Find innermost highlightable and tooltip-bearing elements in one pass.
-  local hover_element, tt_parent_element
+  -- A tooltip is either static (attached to the element, e.g. a link's URL) or
+  -- an open interactive tooltip, whose content lives in the renderer's store
+  -- keyed by path so it survives element-tree rebuilds.
+  local hover_element, tt_parent_element, new_tooltip_element
   local tt_parent_element_path
   for i = #stack, 1, -1 do
     if not hover_element and stack[i].highlightable then
       hover_element = stack[i]
     end
-    if not tt_parent_element and stack[i].tooltip then
-      tt_parent_element = stack[i]
-      tt_parent_element_path = vim.list_slice(path, 1, i)
+    if not tt_parent_element then
+      local subpath = vim.list_slice(path, 1, i)
+      local key = stack[i].tooltip_id or path_key(subpath)
+      local content = stack[i].tooltip or self.tooltips[key]
+      if content then
+        tt_parent_element = stack[i]
+        tt_parent_element_path = subpath
+        new_tooltip_element = content
+      end
     end
     if hover_element and tt_parent_element then
       break
     end
   end
-
-  local new_tooltip_element = tt_parent_element and tt_parent_element.tooltip
 
   if self.tooltip ~= nil and new_tooltip_element == nil then
     self.tooltip:close()
@@ -1530,7 +1560,7 @@ function BufRenderer:event(event, path, ...)
   path = path or self.path or {}
 
   if
-    not self.element:event(path, event, self:make_event_context(), unpack(args)) and self.parent
+    not self.element:event(path, event, self:make_event_context(path), unpack(args)) and self.parent
   then
     -- bubble up to parent
     return self.parent:event(event, self.parent_path, ...)
@@ -1541,9 +1571,33 @@ end
 ---@field rerender fun():nil
 ---@field rehover fun():nil
 ---@field jump_to_last_window fun():nil Jump to the last window the cursor came from.
+---@field tooltip_open fun():boolean Whether this event's element has an open tooltip.
+---@field set_tooltip fun(content: Element):nil Open (or replace) this event's tooltip.
+---@field clear_tooltip fun():nil Close this event's tooltip, if open.
+---@field clear_all_tooltips fun():nil Close every open tooltip in this renderer.
 
+---@param event_path? PathNode[] the path the event fired at (defaults to the cursor path)
 ---@return ElementEventContext
-function BufRenderer:make_event_context()
+function BufRenderer:make_event_context(event_path)
+  -- Interactive tooltips are owned by the innermost clickable element along the
+  -- event's path, keyed by `path_key` rather than stored on the element itself.
+  -- The key is recomputed against the *current* tree, so a handler whose async
+  -- work resolves after a rebuild still keys the live tree (a rebuild that keeps
+  -- the same content keeps the same key) instead of a stranded element.
+  local function tooltip_key()
+    local path = event_path or self.path
+    if not path then
+      return nil
+    end
+    local element, _, subpath = self.element:find_innermost_along(path, function(_, each)
+      return each.events and each.events.click
+    end)
+    if not element then
+      return nil
+    end
+    return element.tooltip_id or path_key(subpath)
+  end
+
   ---@type ElementEventContext
   return {
     rerender = function()
@@ -1555,6 +1609,33 @@ function BufRenderer:make_event_context()
     jump_to_last_window = function()
       if self:last_window_valid() then
         self.last_window:make_current()
+      end
+    end,
+    tooltip_open = function()
+      local key = tooltip_key()
+      return key ~= nil and self.tooltips[key] ~= nil
+    end,
+    set_tooltip = function(content)
+      local key = tooltip_key()
+      if key then
+        self.tooltips[key] = content
+      end
+    end,
+    clear_tooltip = function()
+      local key = tooltip_key()
+      if key then
+        self.tooltips[key] = nil
+      end
+    end,
+    clear_all_tooltips = function()
+      self.tooltips = {}
+      -- Close the open float directly rather than via `hover`; `close` re-fires
+      -- `clear_all` (through `detach_window`), so clear `self.tooltip` first to
+      -- keep that bounce from recursing back in here.
+      local tooltip = self.tooltip
+      self.tooltip = nil
+      if tooltip then
+        tooltip:close()
       end
     end,
   }
