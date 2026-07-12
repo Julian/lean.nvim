@@ -94,6 +94,8 @@ describe('interactive tooltips', function()
     renderer:render()
 
     assert.is_nil(renderer.tooltip)
+    -- The stranded entry is also pruned from the store, not just left unshown.
+    assert.is_true(vim.tbl_isempty(renderer.tooltips))
 
     buffer:force_delete()
   end)

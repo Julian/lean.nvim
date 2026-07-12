@@ -1241,6 +1241,8 @@ function BufRenderer:render()
     return
   end
 
+  self:prune_tooltips()
+
   self.buffer:clear_namespace(self.__tui_ns)
 
   local result = self.element:render_lines(self)
@@ -1409,6 +1411,35 @@ local function path_key(path)
     parts[i] = tostring(node.name) .. field_sep .. tostring(node.idx)
   end
   return table.concat(parts, node_sep)
+end
+
+---Drop open-tooltip entries whose owning element is no longer in the tree.
+---
+---The store is keyed by identity, not element reference, so a rebuild that
+---replaces the tree strands entries for subexpressions that have since
+---vanished. They can never match a live element (so are never shown), but
+---without this they'd accumulate for the life of the renderer. Recomputing each
+---live element's key the same way `hover` and the event context do keeps this
+---exact -- both server-identity and path-fallback keys are covered.
+function BufRenderer:prune_tooltips()
+  if next(self.tooltips) == nil then
+    return
+  end
+  local live = {}
+  local function collect(element, path)
+    live[element.tooltip_id or path_key(path)] = true
+    for idx, child in ipairs(element.__children) do
+      local child_path = { unpack(path) }
+      child_path[#child_path + 1] = { idx = idx, name = child.name }
+      collect(child, child_path)
+    end
+  end
+  collect(self.element, { { idx = 0, name = self.element.name } })
+  for key in pairs(self.tooltips) do
+    if not live[key] then
+      self.tooltips[key] = nil
+    end
+  end
 end
 
 ---@param window Window?
