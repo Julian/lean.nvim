@@ -280,7 +280,26 @@ local function has_infoview_contents(_, arguments)
   local opts = arguments[2] or {}
   local waiter = opts.timeout and helpers.wait:with_timeout(opts.timeout) or helpers.wait
   waiter:for_ready_infoview(target_infoview)
-  local lines = pin and pin:get_lines() or target_infoview:get_lines()
+
+  local function read()
+    local lines = pin and pin:get_lines() or target_infoview:get_lines()
+    return lines, (table.concat(lines, '\n'):gsub('\n$', ''))
+  end
+
+  local lines, got = read()
+
+  -- Content driven by diagnostics -- the "Goals accomplished 🎉" header, a
+  -- diagnostic's range, and so on -- can land a beat after the pin is otherwise
+  -- "ready", so a single snapshot can miss it. Wait here for the contents to
+  -- settle to what's expected, keeping the wait in one place rather than
+  -- sprinkling one into every affected test. A genuinely wrong expectation still
+  -- fails; it just does so after the timeout rather than immediately.
+  if got ~= expected then
+    vim.wait(waiter.timeout, function()
+      lines, got = read()
+      return got == expected
+    end)
+  end
 
   -- FIXME: We should probably tweak things so that this mistake doesn't
   --        happen and this separate check isn't needed, where you can
@@ -303,7 +322,6 @@ local function has_infoview_contents(_, arguments)
     end
   end
 
-  local got = table.concat(lines, '\n'):gsub('\n$', '')
   assert.is.equal(expected, got)
   return true
 end
