@@ -260,6 +260,29 @@ local function _expected(arguments)
   return expected
 end
 
+---Re-read until the contents settle to what's `expected` (or we time out).
+---
+---Content driven by diagnostics -- a diagnostic's range, the "Goals accomplished
+---🎉" header, and so on -- can land a beat after the infoview is otherwise
+---"ready", so a single snapshot can miss it. Waiting here keeps the wait in one
+---place rather than sprinkling one into every affected test (and every reader).
+---A genuinely wrong expectation still fails; it just does so after the timeout
+---rather than immediately.
+---@param read fun():string re-reads the current contents
+---@param expected string
+---@param timeout number
+---@return string got the last-read contents
+local function settle_to(read, expected, timeout)
+  local got = read()
+  if got ~= expected then
+    vim.wait(timeout, function()
+      got = read()
+      return got == expected
+    end)
+  end
+  return got
+end
+
 ---Assert about the entire buffer contents.
 local function has_buf_contents(_, arguments)
   local buffer = arguments[1].buffer or Buffer:current()
@@ -281,25 +304,11 @@ local function has_infoview_contents(_, arguments)
   local waiter = opts.timeout and helpers.wait:with_timeout(opts.timeout) or helpers.wait
   waiter:for_ready_infoview(target_infoview)
 
-  local function read()
-    local lines = pin and pin:get_lines() or target_infoview:get_lines()
-    return lines, (table.concat(lines, '\n'):gsub('\n$', ''))
-  end
-
-  local lines, got = read()
-
-  -- Content driven by diagnostics -- the "Goals accomplished 🎉" header, a
-  -- diagnostic's range, and so on -- can land a beat after the pin is otherwise
-  -- "ready", so a single snapshot can miss it. Wait here for the contents to
-  -- settle to what's expected, keeping the wait in one place rather than
-  -- sprinkling one into every affected test. A genuinely wrong expectation still
-  -- fails; it just does so after the timeout rather than immediately.
-  if got ~= expected then
-    vim.wait(waiter.timeout, function()
-      lines, got = read()
-      return got == expected
-    end)
-  end
+  local lines
+  local got = settle_to(function()
+    lines = pin and pin:get_lines() or target_infoview:get_lines()
+    return (table.concat(lines, '\n'):gsub('\n$', ''))
+  end, expected, waiter.timeout)
 
   -- FIXME: We should probably tweak things so that this mistake doesn't
   --        happen and this separate check isn't needed, where you can
@@ -372,8 +381,9 @@ function assert.infoview_contents_at(position)
   return {
     are = function(expected)
       expected = _expected { expected }
-      local element = infoview.contents_at(position, { timeout = TIMEOUT })
-      local got = element:to_string()
+      local got = settle_to(function()
+        return infoview.contents_at(position, { timeout = TIMEOUT }):to_string()
+      end, expected, TIMEOUT)
       assert.is.equal(expected, got)
     end,
   }
