@@ -293,6 +293,13 @@ end
 ---@param hash string
 ---@return Element?
 local function of_rpc_method(ctx, props, hash)
+  -- "0" is Lean's sentinel hash for a widget with no JavaScript source (e.g. a
+  -- panel widget saved with null props). Asking the server for that source only
+  -- ever errors ("No widget module with hash 0 registered"), so don't.
+  if hash == '0' then
+    return
+  end
+
   local method = rpc_method_cache[hash]
   if method == nil then
     local source = ctx:source_of(hash)
