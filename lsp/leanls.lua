@@ -286,7 +286,7 @@ return {
     editDelay = 10, -- see #289
     hasWidgets = true,
   },
-  on_init = function(client, response)
+  on_init = function(client, _)
     local original_notify = client.notify
     client.notify = function(_, method, params)
       if method == 'textDocument/didOpen' and not params.dependencyBuildMode then
@@ -294,17 +294,5 @@ return {
       end
       original_notify(_, method, params)
     end
-
-    local version = response.serverInfo.version
-    ---Lean 4.19 introduces silent diagnostics, which we use to differentiate
-    ---between "No goals." and "Goals accomplished. For older versions, we
-    ---always say the latter (which is consistent with `lean.nvim`'s historic
-    ---behavior, albeit not with VSCode's).
-    ---
-    ---Technically this being a global is wrong, and will mean we start
-    ---showing the wrong message if someone opens an older Lean buffer in the
-    ---same session as a newer one...
-    vim.g.lean_no_goals_message = vim.version.ge(version, '0.3.0') and 'No goals.'
-      or 'Goals accomplished 🎉'
   end,
 }

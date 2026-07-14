@@ -78,21 +78,26 @@ end
 ---@param children Element[]? rendered goal elements
 ---@return Element[]? wrapped
 local function wrap_goals(params, goal, children)
-  if goal and #goal > 1 then
-    children = {
-      Element:foldable {
-        title = Element.title(('%d goals'):format(#goal), 'leanInfoMultipleGoals'),
-        body = children,
-        gap = 1,
-      },
-    }
+  local messages = config().infoview.messages.goals
+
+  if goal and #goal >= 1 then
+    local header = messages.some(#goal)
+    if header then
+      children = {
+        Element:foldable {
+          title = Element.title(header, 'leanInfoMultipleGoals'),
+          body = children,
+          gap = 1,
+        },
+      }
+    end
   end
 
   local title
   if lsp.goals_accomplished_at(params) then
-    title = 'Goals accomplished 🎉'
-  elseif goal and #goal == 0 then -- between goals / Lean <4.19 with no markers
-    title = vim.g.lean_no_goals_message or 'No goals.'
+    title = messages.accomplished
+  elseif goal and #goal == 0 then
+    title = messages.none
   else
     return children
   end

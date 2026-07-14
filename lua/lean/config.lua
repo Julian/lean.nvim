@@ -47,6 +47,23 @@
 ---@field unsolved? string a character which will be placed on buffer lines where there is an unsolved goal
 ---@field accomplished? string a character which will be placed in the sign column of successful proofs
 
+---Messages shown in the infoview.
+---@class lean.infoview.messages.Config
+---@field goals? lean.infoview.messages.goals.Config the header shown above the goals
+
+---The header shown above the goals in the infoview.
+---
+---A completed proof and having zero goals are distinct states which happen to
+---share a goal count of zero (they are told apart out of band, via silent
+---diagnostics), so both are named explicitly rather than derived from the
+---count. `some` is a function (not a `[n]`-keyed table) because
+---`vim.g.lean_config` cannot round-trip a table with both integer and string
+---keys.
+---@class lean.infoview.messages.goals.Config
+---@field accomplished? string shown when a proof is complete (default "Goals accomplished 🎉")
+---@field none? string shown when there are no goals, e.g. between goals (default "No goals.")
+---@field some? fun(n: integer): string? the header for `n` (≥ 1) goals, or `nil` for no header (default: no header for a single goal, otherwise "N goals")
+
 ---@class lean.infoview.Config
 ---@field autoopen? boolean|fun():boolean whether to automatically open infoviews when entering Lean buffers (default true)
 ---@field width? number width of vertical infoviews, as columns or a fraction of the screen if at most 1 (default 1/3)
@@ -61,6 +78,7 @@
 ---@field update_cooldown? integer milliseconds to throttle cursor-move updates (default 50, 0 to disable)
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
+---@field messages? lean.infoview.messages.Config the header shown above the goals
 
 ---@class lean.infoview.MergedConfig: lean.infoview.Config
 ---@field autoopen boolean|fun():boolean whether to automatically open infoviews when entering Lean buffers
@@ -76,6 +94,7 @@
 ---@field update_cooldown integer milliseconds to throttle cursor-move updates
 ---@field view_options InfoviewViewOptions
 ---@field severity_markers table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
+---@field messages lean.infoview.messages.Config the header shown above the goals
 
 ---Configuration for the language server.
 ---@class lean.lsp.Config
@@ -217,6 +236,19 @@ local DEFAULTS = {
     show_processing = true,
     show_no_info_message = false,
     update_cooldown = 50,
+
+    messages = {
+      goals = {
+        accomplished = 'Goals accomplished 🎉',
+        none = 'No goals.', -- between goals, or Lean <4.19 with no markers
+        some = function(n)
+          if n == 1 then
+            return nil -- a lone goal needs no header
+          end
+          return ('%d goals'):format(n)
+        end,
+      },
+    },
 
     mappings = {
       ['K'] = 'click',
