@@ -13,8 +13,8 @@ local Buffer = require 'std.nvim.buffer'
 local async = require 'std.async'
 
 local Element = require('lean.tui').Element
-local abbreviations = require 'lean.abbreviations'
 local InteractiveCode = require 'lean.widget.interactive_code'
+local abbreviations = require 'lean.abbreviations'
 local lsp = require 'lean.lsp'
 local rpc = require 'lean.rpc'
 
