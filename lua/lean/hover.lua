@@ -13,6 +13,7 @@ local Buffer = require 'std.nvim.buffer'
 local async = require 'std.async'
 
 local Element = require('lean.tui').Element
+local abbreviations = require 'lean.abbreviations'
 local InteractiveCode = require 'lean.widget.interactive_code'
 local lsp = require 'lean.lsp'
 local rpc = require 'lean.rpc'
@@ -134,6 +135,21 @@ end
 -- https://github.com/leanprover/vscode-lean4/blob/dd686d7/lean4-infoview/src/infoview/interactiveCode.tsx#L112
 return function()
   local params = vim.lsp.util.make_position_params(0, 'utf-16')
+  local abbreviation_hint
+  if require 'lean.config'().abbreviations.show_in_hover then
+    local col = vim.api.nvim_win_get_cursor(0)[2] + 1
+    local char = vim.api.nvim_get_current_line():sub(col)
+    local reverse = abbreviations.reverse_lookup(char)
+    local matches = {}
+    for length = 1, #char do
+      if reverse[length] ~= nil then
+        vim.list_extend(matches, reverse[length])
+      end
+    end
+    if #matches > 0 then
+      abbreviation_hint = 'Abbreviations: ' .. table.concat(matches, ', ')
+    end
+  end
 
   async.run(function()
     local sess = rpc.open(params)
@@ -166,7 +182,11 @@ return function()
     end
     lean_code:add_child(InteractiveCode(term_goal.type, sess))
 
-    local children = { lean_code }
+    local children = {}
+    if abbreviation_hint then
+      table.insert(children, Element:new { text = abbreviation_hint .. '\n' })
+    end
+    table.insert(children, lean_code)
     if doc then
       table.insert(children, Element:new { text = '\n\n' .. doc })
     end
