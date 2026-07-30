@@ -169,6 +169,7 @@ local function insert_char_pre()
       if mappings[lhs] then
         cleanups[lhs] = function()
           vim.api.nvim_buf_set_keymap(buf.bufnr, 'i', lhs, rhs, {
+            noremap = imap.noremap,
             nowait = imap.nowait,
             silent = imap.silent,
             script = imap.script,

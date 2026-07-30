@@ -115,6 +115,7 @@ describe('unicode abbreviation expansion', function()
         wait_for_expansion()
         assert.contents.are [[ε]]
         assert.are.same(vim.b.foo, 1)
+        assert.is.equal(1, vim.fn.maparg('<Tab>', 'i', false, true).noremap)
         helpers.insert [[<Tab>]]
         assert.contents.are [[ε]]
         assert.are.same(vim.b.foo, 2)
