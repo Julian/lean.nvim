@@ -952,7 +952,7 @@ function BufRenderer:new(obj)
   local function dispatch_mouse(event)
     local pos = vim.fn.getmousepos()
     if pos.winid == 0 or pos.line == 0 or vim.api.nvim_win_get_buf(pos.winid) ~= buf.bufnr then
-      vim.api.nvim_feedkeys(vim.keycode("<LeftMouse>"), "nx", false)
+      vim.api.nvim_feedkeys(vim.keycode '<LeftMouse>', 'nx', false)
       return
     end
     local line_len = #buf:line(pos.line - 1)
