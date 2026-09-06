@@ -1042,7 +1042,11 @@ function Infoview:close()
   for _, pin in ipairs(self.pins) do
     pin:__detach_window()
   end
-  self.window:force_close()
+  -- Neovim refuses to close the last window, so in that case, quit instead
+  -- (which is what `:quit` in the infoview would have done).
+  if not pcall(self.window.force_close, self.window) then
+    self.window:quit()
+  end
   self:__was_closed()
 end
 
