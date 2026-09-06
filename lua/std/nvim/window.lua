@@ -192,6 +192,13 @@ function Window:force_close()
   vim.api.nvim_win_close(self.id, true)
 end
 
+---Quit the window, as `:quit` would.
+---
+---Unlike closing, this exits Neovim if the window is the last one.
+function Window:quit()
+  self:call(vim.cmd.quit)
+end
+
 -- Beyond the Neovim API...
 
 ---Move the cursor to a given position.
