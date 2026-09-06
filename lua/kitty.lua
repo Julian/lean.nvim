@@ -129,9 +129,14 @@ if detection_wanted() then
   end
 end
 
----Check if the terminal supports the Kitty graphics protocol.
+---Whether Kitty graphics can be used right now.
+---
+---This is false both when the terminal doesn't support the protocol and
+---when the user has disabled graphics in their config, so callers need only
+---consult this one function before emitting anything to the terminal.
+---@return boolean
 function kitty.available()
-  return graphics_supported
+  return graphics_supported and require 'lean.config'().graphics.enabled ~= false
 end
 
 -- Cell size detection --------------------------------------------------------

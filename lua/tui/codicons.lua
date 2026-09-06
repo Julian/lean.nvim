@@ -144,7 +144,7 @@ end
 ---Whether we can rasterize icons and display them with kitty graphics.
 ---@return boolean
 local function raster_available()
-  return require 'lean.config'().graphics.enabled ~= false and kitty.available() and svg.available()
+  return kitty.available() and svg.available()
 end
 
 ---Rasterized icons we've already built, keyed by name, color and size.

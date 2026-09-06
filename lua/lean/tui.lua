@@ -1097,10 +1097,20 @@ function OverlayState:update()
     end
   end
 
-  -- Wrap the delete+rebuild in synchronized output so the terminal
-  -- renders both as one atomic frame, eliminating flicker.
-  vim.api.nvim_chan_send(2, '\x1b[?2026h')
   self:invalidate()
+
+  -- Only touch the terminal directly if we're actually going to draw
+  -- something. Writing to channel 2 bypasses the TUI, so these bytes race
+  -- Neovim's own output and can corrupt it mid-escape-sequence; doing so
+  -- when graphics are disabled or there's nothing to draw is pure risk.
+  if #current == 0 or not require('kitty').available() then
+    self:render()
+    return
+  end
+
+  -- Wrap the rebuild in synchronized output so the terminal renders the
+  -- delete+retransmit as one atomic frame, eliminating flicker.
+  vim.api.nvim_chan_send(2, '\x1b[?2026h')
   self:render()
   vim.api.nvim_chan_send(2, '\x1b[?2026l')
 end
@@ -1108,11 +1118,6 @@ end
 function OverlayState:render()
   local renderer = self._renderer
   if not renderer.positions then
-    return
-  end
-
-  local config = require 'lean.config'()
-  if config.graphics.enabled == false then
     return
   end
 
