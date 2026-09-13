@@ -80,11 +80,21 @@ end
 -- Neovim's default VimLeavePre sends a graceful shutdown,
 -- but Lean servers can take awhile to wind down.
 -- Let's just be sure they don't stick around by force stopping.
+--
+-- We then wait for them to actually exit, as Neovim stops ignoring SIGPIPE
+-- partway through exiting, so a server dying after that point while we
+-- still have a write pending to it kills us (after tests have passed).
 vim.api.nvim_create_autocmd('VimLeavePre', {
   callback = function()
-    for _, client in ipairs(vim.lsp.get_clients()) do
+    local clients = vim.lsp.get_clients()
+    for _, client in ipairs(clients) do
       client:stop(true)
     end
+    vim.wait(5000, function()
+      return vim.iter(clients):all(function(client)
+        return client.rpc.is_closing()
+      end)
+    end)
   end,
 })
 
