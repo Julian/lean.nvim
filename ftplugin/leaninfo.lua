@@ -7,6 +7,7 @@ vim.wo.colorcolumn = ''
 vim.wo.number = false
 vim.wo.relativenumber = false
 vim.wo.spell = false
+vim.wo.foldmethod = 'manual'
 vim.wo.winfixheight = true
 vim.wo.winfixwidth = true
 
