@@ -543,17 +543,14 @@ describe(
 )
 
 describe('infoview pin extmarks after source buffer unload', function()
-  it(
-    'does not error on :new after closing the source window at EOF',
-    function()
-      helpers.clean_buffer('--\n\n\n', function()
-        infoview.open()
-        helpers.move_cursor { to = { 3, 0 } }
-        vim.cmd.normal 'ZQ'
+  it('does not error on :new after closing the source window at EOF', function()
+    helpers.clean_buffer('--\n\n\n', function()
+      infoview.open()
+      helpers.move_cursor { to = { 3, 0 } }
+      vim.cmd.normal 'ZQ'
 
-        vim.cmd.new()
-        vim.cmd.close()
-      end)()
-    end
-  )
+      vim.cmd.new()
+      vim.cmd.close()
+    end)()
+  end)
 end)
