@@ -57,6 +57,24 @@ local GoalLocation = inductive('GoalLocation', {
 ---@type table<string, { [1]: lsp.Position, [2]: GoalsLocation[] }>
 local selected_at = {}
 
+local function refresh_infoview()
+  local infoview = require('lean.infoview').get_current_infoview()
+  if not infoview or not infoview.window then
+    return
+  end
+
+  -- FIXME: The cursor nonsense is because we're improperly re-rendering
+  --        more than we need to (and moving the cursor to the goal line)
+  local last_window = infoview.last_window
+  if last_window:is_valid() then
+    local cursor = infoview.window:cursor()
+    last_window:call(function()
+      infoview:__update()
+    end)
+    infoview.window:set_cursor(cursor)
+  end
+end
+
 ---Locations within the goal state which have been selected ("shift+click"ed).
 ---@class Locations
 ---@field params lsp.TextDocumentPositionParams
@@ -99,18 +117,7 @@ end
 function Locations.clear(params)
   selected_at[params.textDocument.uri] = nil
 
-  local infoview = require('lean.infoview').get_current_infoview()
-  if not infoview or not infoview.window then
-    return
-  end
-
-  -- FIXME: The cursor nonsense is because we're improperly re-rendering
-  --        more than we need to (and moving the cursor to the goal line)
-  local cursor = infoview.window:cursor()
-  infoview.last_window:call(function()
-    infoview:__update()
-  end)
-  infoview.window:set_cursor(cursor)
+  refresh_infoview()
 end
 
 ---Is the given location selected?
@@ -141,18 +148,7 @@ function Locations:toggle_selection(loc)
   end
   selected_at[self.params.textDocument.uri][2] = new
 
-  local infoview = require('lean.infoview').get_current_infoview()
-  if not infoview then
-    return
-  end
-
-  -- FIXME: The cursor nonsense is because we're improperly re-rendering
-  --        more than we need to (and moving the cursor to the goal line)
-  local cursor = infoview.window:cursor()
-  infoview.last_window:call(function()
-    infoview:__update()
-  end)
-  infoview.window:set_cursor(cursor)
+  refresh_infoview()
 end
 
 ---A Locations object which represents those within the given "template" location.
