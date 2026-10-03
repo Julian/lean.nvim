@@ -1,5 +1,5 @@
 ---@type Log
-local log = vim.schedule_wrap(require 'lean.config'().debug.log)
+local log
 
 ---@class LogMessage: { message: string?, [string]: any }
 ---@alias Log fun(level: integer, data: LogMessage):nil
@@ -33,6 +33,7 @@ local Logger = {
   ---@param level integer
   ---@param data LogMessage
   __call = function(_, level, data)
+    log = log or vim.schedule_wrap(require 'lean.config'().debug.log)
     log(level, data)
   end,
 }
