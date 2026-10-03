@@ -1,10 +1,9 @@
 ---@brief [[
 --- An import graph widget that allows jumping to a module.
----
---- (It's not namespaced, so it shows up here "globally".)
 ---@brief ]]
 
 local Element = require('lean.tui').Element
+local log = require 'lean.log'
 
 ---@class GoToModuleLinkParams
 ---@field modName string the module to jump to
@@ -22,9 +21,16 @@ return function(ctx, props)
           return
         end
         last_window:make_current()
-        local uri, err = ctx:rpc_call('getModuleUri', props.modName)
+        local uri, err = ctx:rpc_call('ImportGraph.Widget.getModuleUri', props.modName)
         if err then
-          return -- FIXME: Yeah, this should go somewhere clearly.
+          vim.schedule(function()
+            log:error {
+              message = 'GoToModule error',
+              err = err,
+              props = props,
+            }
+          end)
+          return
         end
         ---@type lsp.Position
         local start = { line = 0, character = 0 }

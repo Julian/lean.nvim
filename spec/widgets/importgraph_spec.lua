@@ -13,7 +13,8 @@ describe('ImportGraph widgets', function()
     'supports GoToModule links',
     helpers.clean_buffer(
       [[
-        import ImportGraph.Tools
+        import ImportGraph.Tools.FindHome
+        import ImportGraph.Widget.GoToModule
         #find_home Nat.add_one
       ]],
       function()
@@ -21,8 +22,8 @@ describe('ImportGraph widgets', function()
 
         helpers.search 'find_home'
         assert.infoview_contents.are [[
-          ▼ 2:1-2:11: information:
-          [Init.Prelude]
+          ▼ 3:1-3:11: information:
+          [Init.Prelude, Init.Grind.ToInt]
         ]]
 
         infoview.go_to()
