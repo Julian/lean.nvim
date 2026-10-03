@@ -1493,6 +1493,9 @@ function Pin:__update_extmark_style(buffer, line, col)
       return
     end
     buffer = self.__extmark_buffer
+    if not buffer:is_loaded() then
+      return
+    end
     local extmark_pos = buffer:extmark(self.__extmark_ns, self.__extmark, {})
     if vim.tbl_isempty(extmark_pos) then
       return
