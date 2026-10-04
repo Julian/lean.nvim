@@ -17,6 +17,20 @@ describe('lean.stderr', function()
   end)
 
   it(
+    'tees stderr output',
+    helpers.clean_buffer(function()
+      local log = require 'vim.lsp.log'
+      local target = log._self or log
+      target.error('rpc', 'lean', 'stderr', 'hello from fake stderr')
+      assert
+        .message('never received output on stderr, got: ' .. vim.inspect(received))
+        .True(vim.iter(received):any(function(chunk)
+          return chunk:find 'hello from fake stderr' ~= nil
+        end))
+    end)
+  )
+
+  it(
     'captures dbg_trace output within a project',
     helpers.clean_buffer(
       [[

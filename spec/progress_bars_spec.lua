@@ -14,6 +14,32 @@ end
 
 describe('progress bars', function()
   it(
+    'renders progress bars',
+    helpers.clean_buffer('example : 2 = 2 := rfl', function()
+      local buffer = Buffer:current()
+      local uri = buffer:uri()
+      progress.proc_infos[uri] = {
+        {
+          range = {
+            start = { line = 0, character = 0 },
+            ['end'] = { line = 0, character = 22 },
+          },
+        },
+      }
+
+      require('lean.progress_bars').update { textDocument = { uri = uri } }
+      helpers.wait:for_progress_bars(buffer.bufnr)
+
+      local ns = vim.api.nvim_create_namespace 'lean.progress'
+      local marks = vim.api.nvim_buf_get_extmarks(buffer.bufnr, ns, 0, -1, { details = true })
+      assert.are.equal('│', vim.trim(marks[1][4].sign_text))
+
+      require('lean.progress_bars').clear(buffer.bufnr)
+      progress.proc_infos[uri] = nil
+    end)
+  )
+
+  it(
     'are cleared when the LSP server dies',
     helpers.clean_buffer('#eval IO.sleep 5000', function()
       helpers.wait:for_progress_bars()

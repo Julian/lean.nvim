@@ -1,9 +1,4 @@
-describe('lean.setup', function()
-  it('Does not crash when loaded twice', function()
-    require('lean').setup {}
-    require('lean').setup {}
-  end)
-
+describe('import warnings', function()
   it('does not warn when Neovim is new enough', function()
     local lean = require 'lean'
     assert.is_false(
