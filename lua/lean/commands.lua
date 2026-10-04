@@ -23,11 +23,8 @@ local function show_popup(element)
     return
   end
 
-  local bufnr = vim.lsp.util.open_floating_preview(
-    vim.split(str, '\n'),
-    'leaninfo',
-    { focus_id = 'lean_goal', border = 'rounded' }
-  )
+  local bufnr =
+    vim.lsp.util.open_floating_preview(vim.split(str, '\n'), 'leaninfo', { focus_id = 'lean_goal' })
 
   local renderer = element:renderer {
     buffer = Buffer:from_bufnr(bufnr),

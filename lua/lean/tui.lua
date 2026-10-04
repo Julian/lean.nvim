@@ -1552,7 +1552,6 @@ function BufRenderer:hover(force_update_highlight)
         style = 'minimal',
         width = self.tooltip.width,
         height = self.tooltip.height,
-        border = 'rounded',
         bufpos = self.positions[tt_parent_element].start_pos,
         zindex = 50 + self.tooltip.buffer.bufnr, -- later tooltips are guaranteed to have greater buffer handles
       }
@@ -1802,7 +1801,6 @@ local function select_many(choices, opts, on_choices)
   local modal = (opts.relative_window or Window:current()):modal {
     enter = true,
     style = 'minimal',
-    border = 'rounded',
     title = opts.title,
     footer = '<Tab>: toggle, <CR>: confirm, <Esc>: cancel',
     footer_pos = 'center',
