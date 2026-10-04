@@ -1,7 +1,7 @@
 local Element = require('lean.tui').Element
+local async = require 'std.async'
 local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
-local async = require 'std.async'
 
 describe('Pin.selectable', function()
   it(
