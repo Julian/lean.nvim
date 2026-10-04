@@ -19,19 +19,6 @@ Introduction                                                         *lean.init*
  To find out more, see https://github.com/Julian/lean.nvim.
 
                                                                      *lean.nvim*
-lean.setup({opts})                                                  *lean.setup*
-    Configure lean.nvim.
-
-    Deprecated: set `vim.g.lean_config` instead. Beyond configuration, calling
-    this function (or doing anything at all besides installing lean.nvim) is
-    no longer required, as all of its behavior activates automatically when
-    opening Lean files.
-    @deprecated
-
-    Parameters: ~
-        {opts}  (lean.Config)  Configuration options
-
-
 lean.plugin_version()                                      *lean.plugin_version*
     Try to find what version of `lean.nvim` this is.
 
