@@ -104,8 +104,8 @@ describe('interactive infoview', function()
           ⊢ 0 = 0
 
           case succ
-          n✝ : Nat
-          ⊢ n✝ + 1 = n✝ + 1
+          n† : Nat
+          ⊢ n† + 1 = n† + 1
         ]]
       end
     )
@@ -194,8 +194,8 @@ describe('interactive infoview', function()
           ⊢ 0 = 0
 
           case succ
-          n✝ : Nat
-          ⊢ n✝ + 1 = n✝ + 1
+          n† : Nat
+          ⊢ n† + 1 = n† + 1
 
           ▼ expected type (2:9-2:10)
           n : Nat

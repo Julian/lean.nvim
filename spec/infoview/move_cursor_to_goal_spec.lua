@@ -52,7 +52,7 @@ describe(
         current_infoview:move_cursor_to_goal(2)
 
         current_infoview:enter()
-        assert.current_line.is '⊢ n = n ∨ n = 0 ∨ n = n✝ + 1'
+        assert.current_line.is '⊢ n = n ∨ n = 0 ∨ n = n† + 1'
         lean_window:make_current()
       end)
     end

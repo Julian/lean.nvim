@@ -53,7 +53,7 @@ describe('infoview navigation', function()
 
           infoview.next_goal()
           assert.are.equal(
-            'n = n ∨ n = 0 ∨ n = n✝ + 1',
+            'n = n ∨ n = 0 ∨ n = n† + 1',
             current_infoview.window:rest_of_cursor_line()
           )
           lean_window:make_current()

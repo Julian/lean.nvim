@@ -62,7 +62,7 @@ describe('infoview view_options', function()
       function()
         helpers.search 'sorry'
         assert.infoview_contents.are [[
-          n✝¹ n✝ n : Nat
+          n†¹ n† n : Nat
           ⊢ 37 = 37
         ]]
 

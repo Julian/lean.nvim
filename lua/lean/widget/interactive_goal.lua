@@ -11,10 +11,10 @@ local interactive_goal = {}
 ---
 ---Mirrors `Lean.Name.isInaccessibleUserName`: inaccessible names contain a
 ---dagger anywhere within them, as shadowed names have further superscript
----indices appended after theirs (e.g. `x✝¹`).
+---indices appended after theirs (e.g. `x†¹`).
 ---@param name string
 local function is_accessible(name)
-  return not name:find('✝', 1, true)
+  return not name:find('†', 1, true)
 end
 
 ---Render a hypothesis name.

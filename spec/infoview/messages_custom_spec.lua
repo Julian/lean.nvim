@@ -76,8 +76,8 @@ describe('infoview.messages.goals', function()
           ⊢ 0 = 0
 
           case succ
-          n✝ : Nat
-          ⊢ n✝ + 1 = n✝ + 1
+          n† : Nat
+          ⊢ n† + 1 = n† + 1
         ]]
       end
     )
