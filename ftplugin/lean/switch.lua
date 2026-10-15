@@ -1,3 +1,5 @@
+-- Define patterns for the plugin at https://github.com/AndrewRadev/switch.vim if it is loaded.
+
 if not vim.g.loaded_switch then
   return
 end
