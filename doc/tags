@@ -82,7 +82,6 @@ lean.lsp	lean.txt	/*lean.lsp*
 lean.module_hierarchy	lean.txt	/*lean.module_hierarchy*
 lean.nvim	lean.txt	/*lean.nvim*
 lean.plugin_version	lean.txt	/*lean.plugin_version*
-lean.setup	lean.txt	/*lean.setup*
 lean.stderr	lean.txt	/*lean.stderr*
 lean.use_suggested_mappings	lean.txt	/*lean.use_suggested_mappings*
 lsp.client_for	lean.txt	/*lsp.client_for*
