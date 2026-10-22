@@ -23,7 +23,7 @@ describe('ImportGraph widgets', function()
         helpers.search 'find_home'
         assert.infoview_contents.are [[
           ▼ 3:1-3:11: information:
-          [Init.Prelude, Init.Grind.ToInt]
+          [Init.Prelude, ImportGraph.Lean.List]
         ]]
 
         infoview.go_to()

@@ -3,4 +3,4 @@ import ProofWidgets.Component.HtmlDisplay
 
 open ProofWidgets Jsx
 
-def quickMarkdown : Html := <MarkdownDisplay contents={"Hello **markdown**"} />
+def quickMarkdown : ProofWidgets.Html := <MarkdownDisplay contents={"Hello **markdown**"} />

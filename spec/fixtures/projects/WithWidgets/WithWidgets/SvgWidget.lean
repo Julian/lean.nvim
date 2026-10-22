@@ -3,7 +3,7 @@ import ProofWidgets.Component.HtmlDisplay
 
 open ProofWidgets Jsx
 
-def svgCircle : Html :=
+def svgCircle : ProofWidgets.Html :=
   .element "svg"
     #[("xmlns", "http://www.w3.org/2000/svg"), ("width", "200"), ("height", "200")]
     #[.element "circle"

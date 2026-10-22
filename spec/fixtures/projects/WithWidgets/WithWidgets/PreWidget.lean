@@ -2,7 +2,7 @@ import ProofWidgets.Component.HtmlDisplay
 
 open ProofWidgets Jsx
 
-def quickPre : Html :=
+def quickPre : ProofWidgets.Html :=
   <span>
     <pre>{.text "hello\n  indented\n    world"}</pre>
     {.text "hello\n  indented\n    world"}

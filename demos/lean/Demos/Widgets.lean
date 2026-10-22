@@ -14,15 +14,15 @@ private def fmod (a b : Float) : Float :=
   a - (a / b).floor * b
 
 /-- Build the SVG for a single frame, given accumulated points and a hue offset. -/
-private def frame (points : Array (Float × Float)) (hueOffset : Float) : Html :=
+private def frame (points : Array (Float × Float)) (hueOffset : Float) : ProofWidgets.Html :=
   let n := points.size
-  let segments : Array Html := Id.run do
-    let mut segs : Array Html := #[]
+  let segments : Array ProofWidgets.Html := Id.run do
+    let mut segs : Array ProofWidgets.Html := #[]
     for i in List.range (n - 1) do
       let (x1, y1) := points[i]!
       let (x2, y2) := points[i + 1]!
       let hue := fmod (hueOffset + i.toFloat / n.toFloat * 360) 360
-      segs := segs.push <| Html.element "line"
+      segs := segs.push <| ProofWidgets.Html.element "line"
         #[("x1", s!"{x1}"), ("y1", s!"{y1}"),
           ("x2", s!"{x2}"), ("y2", s!"{y2}"),
           ("stroke", s!"hsl({hue}, 85%, 60%)"),
@@ -30,7 +30,7 @@ private def frame (points : Array (Float × Float)) (hueOffset : Float) : Html :
           ("stroke-linecap", "round")]
         #[]
     return segs
-  Html.element "svg"
+  ProofWidgets.Html.element "svg"
     #[("xmlns", "http://www.w3.org/2000/svg"),
       ("width", "400"), ("height", "400"),
       ("viewBox", "0 0 400 400")]
@@ -40,7 +40,7 @@ private def frame (points : Array (Float × Float)) (hueOffset : Float) : Html :
 
 `R` and `r` are the radii of the fixed and rolling circles; `d` is the pen
 offset.  The ratio R/r = 5/3 gives a classic five-petalled rose. -/
-partial def spirograph : CoreM Html := do
+partial def spirograph : CoreM ProofWidgets.Html := do
   let R : Float := 5
   let r : Float := 3
   let d : Float := 5

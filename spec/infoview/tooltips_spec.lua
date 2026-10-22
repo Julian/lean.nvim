@@ -35,7 +35,7 @@ describe(
       helpers.feed '<CR>'
       local tooltip = helpers.wait_for_new_window(known_windows)
       assert.contents.are {
-        'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. ',
+        'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`.',
         buffer = tooltip:buffer(),
       }
 
@@ -151,7 +151,7 @@ describe(
         helpers.feed '<CR>'
         local tooltip = helpers.wait_for_new_window(known_windows)
         assert.contents.are {
-          'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. ',
+          'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`.',
           buffer = tooltip:buffer(),
         }
 

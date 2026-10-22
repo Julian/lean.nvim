@@ -6,7 +6,7 @@ open Lean Server ProofWidgets Jsx
 /-- A minimal mk_rpc_widget% widget for testing the generic ofRpcMethod handler. -/
 @[server_rpc_method]
 def GenericRpcWidget.rpc (props : PanelWidgetProps) :
-    RequestM (RequestTask Html) :=
+    RequestM (RequestTask ProofWidgets.Html) :=
   RequestM.asTask do
     let selected := props.selectedLocations
     if selected.isEmpty then

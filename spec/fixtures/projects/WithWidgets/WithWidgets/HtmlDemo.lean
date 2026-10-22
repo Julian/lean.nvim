@@ -4,7 +4,7 @@ import ProofWidgets.Component.HtmlDisplay
 open ProofWidgets Jsx
 
 /-- Demonstrates the HTML rendering features available in lean.nvim. -/
-def htmlDemo : Html :=
+def htmlDemo : ProofWidgets.Html :=
   <div>
     <h1>HTML Rendering Demo</h1>
 

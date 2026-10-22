@@ -76,20 +76,20 @@ describe('Mathlib widgets', function()
 
         helpers.search 'Uninteresting'
         helpers.feed 'gK'
-        helpers.wait:for_infoview_contents 'unfold'
+        helpers.wait:for_infoview_contents 'Unfold'
 
-        helpers.search 'unfold'
+        helpers.search 'Unfold'
         helpers.feed '<CR>'
         helpers.wait:for_infoview_contents '≠'
 
         assert.has_all(infoview.get_current_infoview():get_lines(), {
           'Suggestions for isUninteresting 73',
-          '[apply] 73 ≠ 37',
-          '[apply] ¬73 = 37',
-          '[apply] 73 = 37 → False',
+          '[rw] 73 ≠ 37',
+          '[rw] ¬73 = 37',
+          '[rw] 73 = 37 → False',
         })
 
-        helpers.search 'apply'
+        helpers.search 'rw'
         helpers.feed '<CR>'
 
         -- we're back in the Lean buffer with the suggestion pasted in

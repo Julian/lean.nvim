@@ -3,21 +3,21 @@ import ProofWidgets.Component.HtmlDisplay
 
 open ProofWidgets Jsx
 
-def quickFilter : Html :=
+def quickFilter : ProofWidgets.Html :=
   <FilterDetails
     summary={<b>Summary</b>}
     filtered={.text "filtered content"}
     all={.text "all content"}
     initiallyFiltered={true} />
 
-def quickFilterAll : Html :=
+def quickFilterAll : ProofWidgets.Html :=
   <FilterDetails
     summary={<b>Summary</b>}
     filtered={.text "filtered content"}
     all={.text "all content"}
     initiallyFiltered={false} />
 
-def quickMultipleFilters : Html :=
+def quickMultipleFilters : ProofWidgets.Html :=
   <span>
     <FilterDetails
       summary={<b>First</b>}

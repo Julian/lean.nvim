@@ -139,7 +139,7 @@ describe(
         local tooltip = helpers.wait_for_new_window(with_hover)
         assert.contents.are {
           -- Trailing space is from the Lean server's formatting.
-          'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. ',
+          'Type : Type 1\n\nA type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`.',
           buffer = tooltip:buffer(),
         }
 
