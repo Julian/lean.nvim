@@ -6,8 +6,8 @@
 local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
 
-local helpers = require 'spec.helpers'
 local fixtures = require 'spec.fixtures'
+local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
 describe('infoview open/close', function()
@@ -264,10 +264,10 @@ describe('infoview open/close', function()
     local empty_tab = Tab:new()
     local empty_window = Window:current()
     source_window:make_current()
-    helpers.feed(':q<CR>')
+    helpers.feed ':q<CR>'
     assert.windows.are { infoview_window }
 
-    helpers.feed(':q<CR>')
+    helpers.feed ':q<CR>'
     assert.is_false(vim.api.nvim_tabpage_is_valid(source_tab.id))
     assert.is.equal(empty_tab.id, Tab:current().id)
     assert.windows.are { empty_window }
