@@ -36,6 +36,7 @@
 ---@field enable? boolean whether to automatically enable expansion
 ---@field leader? string which key to use to trigger abbreviation expansion
 ---@field extra table<string, string> a table of extra abbreviations to enable
+---@field show_in_hover? boolean whether to show matching abbreviations in enhanced hovers
 
 ---@class lean.ft.Config
 ---@field nomodifiable string[] globs to prevent accidental modification
@@ -179,6 +180,7 @@ local DEFAULTS = {
   abbreviations = {
     leader = '\\',
     extra = {},
+    show_in_hover = false,
   },
 
   ---@type lean.ft.MergedConfig
