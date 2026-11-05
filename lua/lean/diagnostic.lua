@@ -232,6 +232,7 @@ end
 function diagnostic.render_signs(buffer, diagnostics)
   local signs_config = vim.diagnostic.config() or {}
   local signs_text = type(signs_config.signs) == 'table' and signs_config.signs.text or nil
+  local last_line = buffer:line_count() - 1
 
   for _, diag in ipairs(diagnostics) do
     local severity = std.severity_lsp_to_vim(diag.severity)
@@ -243,7 +244,7 @@ function diagnostic.render_signs(buffer, diagnostics)
       and diag.fullRange['end'].line > diag.range['end'].line
       and not (
         diag.fullRange.start.line == 0
-        and diag.fullRange['end'].line >= buffer:line_count() - 1
+        and diag.fullRange['end'].line >= last_line
       )
 
     local ok = pcall(function()
@@ -290,7 +291,9 @@ function diagnostic.render_signs(buffer, diagnostics)
       else
         local start_pos = std.position_to_byte0(diag.range.start, buffer.bufnr)
 
-        buffer:set_extmark(diagnostic.signs_ns, start_pos[1], 0, {
+        -- Workaround for the LSP emitting the error after the last newline.
+        -- See https://github.com/Julian/lean.nvim/issues/570
+        buffer:set_extmark(diagnostic.signs_ns, math.min(start_pos[1], last_line), 0, {
           sign_text = severity_sign(severity, signs_text),
           sign_hl_group = hl,
           priority = priority,
