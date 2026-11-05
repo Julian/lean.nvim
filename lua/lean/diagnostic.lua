@@ -242,10 +242,7 @@ function diagnostic.render_signs(buffer, diagnostics)
     -- Does this diagnostic have a multi-line fullRange that differs from range?
     local has_full_range = diag.fullRange
       and diag.fullRange['end'].line > diag.range['end'].line
-      and not (
-        diag.fullRange.start.line == 0
-        and diag.fullRange['end'].line >= last_line
-      )
+      and not (diag.fullRange.start.line == 0 and diag.fullRange['end'].line >= last_line)
 
     local ok = pcall(function()
       if has_full_range then
