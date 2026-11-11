@@ -6,8 +6,8 @@
 local Tab = require 'std.nvim.tab'
 local Window = require 'std.nvim.window'
 
-require 'spec.helpers'
 local fixtures = require 'spec.fixtures'
+local helpers = require 'spec.helpers'
 local infoview = require 'lean.infoview'
 
 describe('infoview open/close', function()
@@ -180,6 +180,24 @@ describe('infoview open/close', function()
       assert.is.equal(2, #Tab:current():windows())
 
       vim.cmd.tabclose()
+    end)
+
+    it('closes a ready infoview via :quit after its source', function()
+      local baseline_tab = Tab:current()
+      vim.cmd.tabedit(fixtures.project.some_existing_file)
+      local source_tab = Tab:current()
+      local infoview_window = infoview.get_current_infoview().window
+      assert.windows.are { Window:current(), infoview_window }
+
+      helpers.search 'apply'
+      helpers.wait:for_ready_infoview()
+
+      vim.cmd.quit()
+      assert.windows.are { infoview_window }
+
+      vim.cmd.quit()
+      assert.is_false(vim.api.nvim_tabpage_is_valid(source_tab.id))
+      assert.current_tabpage.is(baseline_tab)
     end)
   end)
 

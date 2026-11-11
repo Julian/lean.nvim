@@ -125,6 +125,26 @@ describe(
 
       assert.is.equal(1, #Tab:all())
     end)
+
+    it('does not steal focus when moving the source cursor closes a tooltip', function()
+      lean_window:make_current()
+      helpers.move_cursor { to = { 1, 8 } }
+      helpers.wait:for_ready_infoview()
+
+      current_infoview:enter()
+      helpers.move_cursor { to = { 2, 5 } } -- `Type`
+      helpers.feed '<CR>'
+
+      local known_windows = { lean_window, current_infoview.window }
+      helpers.wait_for_new_window(known_windows)
+
+      lean_window:make_current()
+      helpers.move_cursor { to = { 1, 1 } }
+      helpers.wait:for_ready_infoview()
+
+      assert.windows.are(known_windows)
+      assert.current_window.is(lean_window)
+    end)
   end)
 )
 
