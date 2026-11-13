@@ -19,4 +19,9 @@ describe('programmatic API', function()
   it('returns an empty table for non-existing abbreviations', function()
     assert.is.empty(abbreviations.reverse_lookup ' ')
   end)
+
+  it('loads abbreviations when called from outside of lean.nvim', function()
+    package.loaded['lean.abbreviations'] = nil
+    assert.is.equal('α', vim.fn.luaeval "require('lean.abbreviations').load()['a']")
+  end)
 end)
