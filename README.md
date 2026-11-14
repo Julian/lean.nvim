@@ -51,10 +51,12 @@ Here's an example doing so with [lazy.nvim](https://github.com/folke/lazy.nvim):
     -- 'tomtom/tcomment_vim',           -- for commenting
   },
 
-  ---@type lean.Config
-  opts = { -- see the manual for full configuration options
-    mappings = true,
-  }
+  init = function()
+    ---@type lean.Config
+    vim.g.lean_config = { -- see the manual for full configuration options
+      mappings = true,
+    }
+  end,
 }
 ```
 
