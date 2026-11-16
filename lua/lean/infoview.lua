@@ -84,7 +84,7 @@ local function find_descendant_path(element, predicate, path, reverse)
   end
 end
 
-local contents_for_interactive, contents_for_plain
+local contents_for_interactive, contents_for_plain, contents_for_processing
 
 local infoview = {
   -- mapping from infoview IDs to infoviews
@@ -179,6 +179,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
 ---@field buffer Buffer the buffer for this pin's output
 ---@field window Window the window showing this pin's buffer
 ---@field private __data_element Element
+---@field private __settled? { uri: string, element: Element } what was last shown once Lean had finished processing
+---@field private __stale? boolean whether `__settled` is being shown while Lean processes
 ---@field private __element Element
 ---@field private __extmark number
 ---@field private __extmark_buffer Buffer
@@ -827,13 +829,20 @@ end
 ---Render the infoview contents for the given position.
 ---@param params lsp.TextDocumentPositionParams
 ---@param sw std.Stopwatch
+---@param previous? Element what was last shown for this file once Lean had finished processing it
 ---@return Element
-function Infoview:render_contents(params, sw)
+---@return boolean settled whether Lean had finished processing the position
+function Infoview:render_contents(params, sw, previous)
   local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
   if vim.b[bufnr].lean_lsp_died then
-    return components.LSP_HAS_DIED
+    return components.LSP_HAS_DIED, false
   end
-  return self.__contents_for(params, self.view_options, sw)
+  local element = contents_for_processing(params, previous)
+  if element then
+    return element, false
+  end
+  element = self.__contents_for(params, self.view_options, sw)
+  return element, element ~= components.LSP_HAS_DIED
 end
 
 ---Wait until the infoview has finished processing.
@@ -900,12 +909,16 @@ function Infoview:__update_winhighlight()
 
   if self.pin.paused then
     self.window.o.winhighlight = 'NormalNC:leanInfoPaused'
+  elseif self.pin.__data_element == components.LSP_HAS_DIED then
+    self.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
   else
     local params = self.pin.__position_params
     if params then
       local buffer = Buffer:from_uri(params.textDocument.uri)
       if buffer.b.lean_imports_out_of_date then
         self.window.o.winhighlight = 'NormalNC:leanInfoImportsOutOfDate'
+      elseif self.pin.__stale then
+        self.window.o.winhighlight = 'NormalNC:leanInfoProcessing'
       else
         self.window.o.winhighlight = ''
       end
@@ -1660,14 +1673,28 @@ local function wrap_content_blocks(blocks, params)
 end
 
 ---Handle the processing and fatal_error states, returning an element if
----applicable. When Lean is still working, we show a processing indicator
----and top-of-file diagnostics; on fatal error, we show line diagnostics.
+---applicable. When Lean is still working, we show what `on_processing`
+---returns (alone if it's `previous`, otherwise with top-of-file diagnostics);
+---on fatal error, we show line diagnostics.
 ---
 ---@param params lsp.TextDocumentPositionParams
+---@param previous? Element passed to `on_processing`
 ---@return Element? element if processing state was handled
-local function contents_for_processing(params)
+function contents_for_processing(params, previous)
   local processing = progress.at(params)
   if processing == progress.Kind.processing then
+    local shown
+    if options.show_processing ~= nil then -- deprecated
+      shown = options.show_processing and components.PROCESSING or nil
+    else
+      shown = options.on_processing(previous)
+    end
+    if shown ~= nil and shown == previous then
+      return previous
+    elseif type(shown) == 'string' then
+      shown = Element:new { text = shown, name = 'processing' }
+    end
+
     ---@type lsp.TextDocumentPositionParams
     local start = {
       textDocument = params.textDocument,
@@ -1675,7 +1702,7 @@ local function contents_for_processing(params)
     }
     local blocks = vim
       .iter({
-        { options.show_processing and components.PROCESSING or nil },
+        { shown },
         interactive_goal.diagnostics(start),
       })
       :flatten(1)
@@ -1702,11 +1729,6 @@ end
 ---@param sw std.Stopwatch
 ---@return Element
 function contents_for_interactive(params, view_options, sw)
-  local element = contents_for_processing(params)
-  if element then
-    return element
-  end
-
   local sess = sw:time('rpc_open', rpc.open, params)
 
   local phases = {
@@ -1755,11 +1777,6 @@ end
 ---@param sw std.Stopwatch
 ---@return Element
 function contents_for_plain(params, view_options, sw)
-  local element = contents_for_processing(params)
-  if element then
-    return element
-  end
-
   local plain = require 'lean.infoview.plain'
 
   local goals = sw:time('goals', components.plain_goal_at, params) or {}
@@ -1804,11 +1821,9 @@ function Pin:update()
     local tick = self.__tick
     sw:close()
 
-    local new_data_element = sw:time('content', iv.render_contents, iv, params, sw)
-
-    if new_data_element == components.LSP_HAS_DIED then
-      iv.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
-    end
+    local previous = self.__settled and self.__settled.uri == uri and self.__settled.element or nil
+    local new_data_element, settled =
+      sw:time('content', iv.render_contents, iv, params, sw, previous)
 
     if self.__tick ~= tick or not self.__infoview then
       self.__instrumentation:record(sw:finish(), uri, true)
@@ -1824,6 +1839,11 @@ function Pin:update()
     -- so an overlapping update that already committed is honored.
     Element.transfer_state(self.__data_element, new_data_element)
     self.__data_element = new_data_element
+    if settled then
+      self.__settled = { uri = uri, element = new_data_element }
+    end
+    self.__stale = previous ~= nil and new_data_element == previous
+    iv:__update_winhighlight()
     self.__element:set_children { self.__data_element }
     iv.__last_trace_query = nil
     sw:close()
@@ -1940,6 +1960,14 @@ function infoview.init(bufnr)
       "lean.nvim's `infoview.mappings` configuration option",
       'buffer-local `<Plug>(LeanInfoview*)` mappings',
       'v2026.9.1',
+      'lean.nvim'
+    )
+  end
+  if user and user.infoview and user.infoview.show_processing ~= nil then
+    vim.deprecate(
+      "lean.nvim's `infoview.show_processing` configuration option",
+      '`infoview.on_processing`',
+      'v2027.3.1',
       'lean.nvim'
     )
   end
