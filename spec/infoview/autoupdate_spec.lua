@@ -312,4 +312,39 @@ describe('infoview content (auto-)update', function()
       end)
     end)
   )
+
+  it('waits for pending debounced updates in Infoview:wait', function()
+    local original_config = vim.g.lean_config
+    vim.g.lean_config = vim.tbl_deep_extend('force', original_config, {
+      infoview = { update_cooldown = 100 },
+    })
+    local tab = Tab:new()
+
+    helpers.clean_buffer('#check (1 : Nat)\n#check (2 : Nat)\n#check (3 : Nat)', function()
+      helpers.move_cursor { to = { 1, 0 } }
+      assert.infoview_contents.are [[
+        ▼ 1:1-1:7: information:
+        1 : Nat
+      ]]
+
+      local iv = infoview.get_current_infoview()
+
+      -- First move fires immediately on the leading edge and starts the 100ms cooldown.
+      helpers.move_cursor { to = { 2, 0 } }
+      assert.is_true(vim.wait(100, function()
+        return not iv.pin.loading
+      end))
+
+      -- Second move within the cooldown is parked in the debounce timer (`loading == false`).
+      helpers.move_cursor { to = { 3, 0 } }
+      helpers.wait:for_ready_infoview()
+      assert.infoview_contents_nowait.are [[
+        ▼ 3:1-3:7: information:
+        3 : Nat
+      ]]
+    end)()
+
+    tab:close()
+    vim.g.lean_config = original_config
+  end)
 end)

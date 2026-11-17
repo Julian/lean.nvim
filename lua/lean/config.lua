@@ -75,7 +75,7 @@
 ---@field on_processing? fun(previous: Element?): Element|string|nil what to show while Lean is processing, given the last non-empty state shown for the file once it was done (default: `previous`, or "Processing file..." if none)
 ---@field show_processing? boolean deprecated, will be removed in v2027.3.1; use `on_processing` instead
 ---@field show_no_info_message? boolean show a message when there is no info to show (default false)
----@field update_cooldown? integer milliseconds to throttle cursor-move updates (default 50, 0 to disable)
+---@field update_cooldown? integer milliseconds to debounce cursor-move updates (default 50, 0 to disable)
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
 ---@field messages? lean.infoview.messages.Config the header shown above the goals
@@ -90,7 +90,7 @@
 ---@field indicators "always"|"auto"|"never" when to show pin location indicators
 ---@field on_processing fun(previous: Element?): Element|string|nil what to show while Lean is processing
 ---@field show_no_info_message boolean show a message when there is no info to show
----@field update_cooldown integer milliseconds to throttle cursor-move updates
+---@field update_cooldown integer milliseconds to debounce cursor-move updates
 ---@field view_options InfoviewViewOptions
 ---@field severity_markers table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
 ---@field messages lean.infoview.messages.Config the header shown above the goals

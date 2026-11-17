@@ -9,8 +9,8 @@ local Buffer = require 'std.nvim.buffer'
 local Stopwatch = require 'std.stopwatch'
 local Window = require 'std.nvim.window'
 local async = require 'std.async'
-local throttle = require 'std.throttle'
 local byte_col_to_utf16 = require('std.lsp').byte_col_to_utf16
+local debounce = require 'std.debounce'
 
 local Element = require('lean.tui').Element
 local Instrumentation = require 'lean.infoview.instrumentation'
@@ -191,6 +191,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
 ---@field private __infoview Infoview
 ---@field private __renderer BufRenderer
 ---@field private __request_update fun(pin: Pin)
+---@field private __has_pending_update fun(): boolean
 ---@field private __instrumentation PinInstrumentation
 ---@field private __debug? BufRenderer
 ---@field private __debug_autocmd? integer
@@ -861,7 +862,8 @@ function Infoview:wait(timeout_ms)
       .iter(pins)
       :filter(function(pin)
         local processing = progress.at(pin.__position_params)
-        return pin.loading or processing == progress.Kind.processing
+        local pending = not pin.paused and pin:__has_pending_update()
+        return pin.loading or pending or processing == progress.Kind.processing
       end)
       :totable()
     return #pins == 0
@@ -995,7 +997,7 @@ function Infoview:__update()
     self:__update_auto_diff_pin(buffer, pos)
   end
   -- Move the extmark immediately so the pin indicator stays responsive,
-  -- but throttle the LSP request + render so rapid cursor movement
+  -- but debounce the LSP request + render so rapid cursor movement
   -- doesn't flood the server.
   self.pin:__update_extmark(buffer, pos)
   self.pin:request_update()
@@ -1303,9 +1305,12 @@ function Pin:new(obj)
   )
   new_pin.infoview = nil -- don't keep reference in this slot
 
-  new_pin.__request_update = throttle(options.update_cooldown, function(pin)
-    pin:update()
-  end)
+  new_pin.__request_update, new_pin.__has_pending_update = debounce(
+    options.update_cooldown,
+    function(pin)
+      pin:update()
+    end
+  )
 
   new_pin.__infoview:__setup_pin_keymaps(pin_buffer)
 
@@ -1634,7 +1639,7 @@ function Pin:toggle_pause()
   end
 end
 
----Request a throttled update of this pin.
+---Request a debounced update of this pin.
 function Pin:request_update()
   if self.paused then
     self:__update_winhighlight()
@@ -1879,7 +1884,7 @@ function infoview.close_all()
 end
 
 ---@private
----Throttled update of all pins for a URI.
+---Debounced update of all pins for a URI.
 function infoview.__update_pin_by_uri(uri)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
