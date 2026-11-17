@@ -135,6 +135,8 @@ function helpers.wait_for_new_window(known)
 end
 
 local _counter = 0
+local _finished_buffers = {}
+
 ---Even though we can delete a buffer, so should be able to reuse names,
 ---we do this to ensure if a test fails, future ones still get new "files".
 local function unique_name_so_we_have_a_separate_fake_file(project)
@@ -176,11 +178,24 @@ function helpers.clean_buffer(contents, callback, project)
     -- manually trigger it?
     buffer:make_current()
     vim.api.nvim_exec_autocmds('BufEnter', { buffer = buffer.bufnr })
-    buffer:call(callback)
 
-    -- FIXME: Deleting buffers seems good for keeping our tests clean, but is
-    --        broken on 0.11 with impossible to diagnose invalid buffer errors.
-    -- vim.api.nvim_buf_delete(buffer.bufnr, { force = true })
+    -- Unload completed test buffers now that the window and infoview pin have
+    -- moved off them. Unloading while hidden keeps buffer handles valid
+    -- (avoiding Neovim 0.11 invalid-buffer errors from in-flight scheduled
+    -- callbacks) while firing `textDocument/didClose` so Lean's Watchdog
+    -- immediately exits their `FileWorker` OS processes.
+    for i = #_finished_buffers, 1, -1 do
+      local old = _finished_buffers[i]
+      if not old:windows():next() then
+        table.remove(_finished_buffers, i)
+        if old:is_loaded() then
+          old:force_unload()
+        end
+      end
+    end
+
+    buffer:call(callback)
+    table.insert(_finished_buffers, buffer)
   end
 end
 

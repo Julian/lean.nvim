@@ -186,20 +186,18 @@ local function file_progress_handler(err, params)
     }
   end
 
-  require('lean.progress').update(params)
-  require('lean.progress_bars').update(params)
-
-  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
-    log:warning {
-      message = 'updating fileProgress for an unloaded buffer',
-      bufnr = bufnr,
-      err = err,
+  local buffer = Buffer:from_uri(params.textDocument.uri)
+  if not buffer:is_loaded() then
+    log:debug {
+      message = 'ignoring fileProgress for an unloaded buffer',
+      bufnr = buffer.bufnr,
       params = params,
     }
     return
   end
 
+  require('lean.progress').update(params)
+  require('lean.progress_bars').update(params)
   require('lean.infoview').__on_file_progress(params.textDocument.uri)
 end
 
