@@ -181,6 +181,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
 ---@field private __data_element Element
 ---@field private __settled? { uri: string, element: Element } what was last shown once Lean had finished processing
 ---@field private __stale? boolean whether `__settled` is being shown while Lean processes
+---@field private __last_processing? LeanFileProgressKind last observed processing state at this pin's position
 ---@field private __element Element
 ---@field private __extmark number
 ---@field private __extmark_buffer Buffer
@@ -1566,6 +1567,7 @@ function Pin:update_position()
   local uri = buffer:uri()
   ---@type lsp.TextDocumentPositionParams
   self.__position_params = { textDocument = { uri = uri }, position = new_pos }
+  self.__last_processing = progress.at(self.__position_params)
 
   pcall(
     vim.api.nvim_buf_set_name,
@@ -1896,7 +1898,7 @@ function infoview.__on_file_progress(uri)
   for _, each in pairs(infoview._by_tabpage) do
     for _, pin in pairs(each:pins_for(uri)) do
       local current = progress.at(pin.__position_params)
-      if current ~= nil or pin.__last_processing ~= nil then
+      if current ~= nil or pin.__last_processing ~= nil or pin.__stale then
         pin.__last_processing = current
         pin:request_update()
       end

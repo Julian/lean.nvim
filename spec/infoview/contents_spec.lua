@@ -8,6 +8,7 @@
 --- missing some retry logic for the RPC call being made.
 ---@brief ]]
 
+local Buffer = require 'std.nvim.buffer'
 local helpers = require 'spec.helpers'
 
 local infoview = require 'lean.infoview'
@@ -559,6 +560,48 @@ describe('interactive infoview', function()
 
         pin.request_update = original
       end)
+
+      it(
+        'updates when moving from a finished line onto a processing line that then finishes',
+        helpers.clean_buffer('#check (37 : Nat)\n#check (73 : Nat)', function()
+          helpers.move_cursor { to = { 1, 0 } }
+          assert.infoview_contents.are [[
+            ▼ 1:1-1:7: information:
+            37 : Nat
+          ]]
+
+          local uri = Buffer:current():uri()
+          local pin = infoview.get_current_infoview().pin
+
+          -- Line 1 is finished (`__last_processing == nil`), while line 2 is still processing.
+          require('lean.progress').proc_infos[uri] = {
+            {
+              range = { start = { line = 1, character = 0 }, ['end'] = { line = 1, character = 0 } },
+            },
+          }
+          infoview.__on_file_progress(uri)
+
+          helpers.move_cursor { to = { 2, 0 } }
+
+          local update_count = 0
+          local original = pin.request_update
+          pin.request_update = function(self)
+            update_count = update_count + 1
+            return original(self)
+          end
+
+          -- When line 2 finishes processing, the pin must refresh out of its stale state.
+          require('lean.progress').proc_infos[uri] = {}
+          infoview.__on_file_progress(uri)
+          assert.are.equal(1, update_count)
+
+          pin.request_update = original
+          assert.infoview_contents.are [[
+            ▼ 2:1-2:7: information:
+            73 : Nat
+          ]]
+        end)
+      )
     end)
   )
 
