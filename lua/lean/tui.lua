@@ -860,9 +860,23 @@ local function event_plug_name(event)
   return ('<Plug>(LeanInfoview%s)'):format(pascal)
 end
 
+---@type { [string]: ElementEvent }
+local DEFAULT_KEYMAPS = {
+  ['K'] = 'click',
+  ['<CR>'] = 'click',
+  ['gK'] = 'select',
+  ['gd'] = 'go_to_def',
+  ['gD'] = 'go_to_decl',
+  ['gy'] = 'go_to_type',
+  ['<Esc>'] = 'clear_all',
+  ['C'] = 'clear_all',
+  ['<LocalLeader><Tab>'] = 'goto_last_window',
+}
+
 ---Create a new BufRenderer.
 function BufRenderer:new(obj)
   obj = obj or {}
+  obj.keymaps = obj.keymaps or DEFAULT_KEYMAPS
   obj.pending_elements = {}
   -- Open interactive tooltips, keyed by `path_key` of the element that owns
   -- them. Kept here rather than on the elements so a rebuilt element tree

@@ -16,9 +16,7 @@ local async = require 'std.async'
 local Element = require('lean.tui').Element
 local lsp = require 'lean.lsp'
 
----Buffer-local key bindings for the hierarchy panel. Defined here (not via
----`infoview.mappings`) because that runtime variable is on the deprecation
----path -- see commit 892006e9, scheduled for removal in v2026.9.1.
+---Buffer-local key bindings for the hierarchy panel.
 local PANEL_KEYMAPS = {
   ['<Tab>'] = 'click',
   ['<CR>'] = 'go_to_def',

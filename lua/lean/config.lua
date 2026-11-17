@@ -75,7 +75,6 @@
 ---@field on_processing? fun(previous: Element?): Element|string|nil what to show while Lean is processing, given the last non-empty state shown for the file once it was done (default: `previous`, or "Processing file..." if none)
 ---@field show_processing? boolean deprecated, will be removed in v2027.3.1; use `on_processing` instead
 ---@field show_no_info_message? boolean show a message when there is no info to show (default false)
----@field mappings? { [string]: ElementEvent } deprecated, will be removed in v2026.9.1; use `<Plug>(LeanInfoview*)` mappings instead
 ---@field update_cooldown? integer milliseconds to throttle cursor-move updates (default 50, 0 to disable)
 ---@field view_options? InfoviewViewOptions
 ---@field severity_markers? table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
@@ -91,7 +90,6 @@
 ---@field indicators "always"|"auto"|"never" when to show pin location indicators
 ---@field on_processing fun(previous: Element?): Element|string|nil what to show while Lean is processing
 ---@field show_no_info_message boolean show a message when there is no info to show
----@field mappings { [string]: ElementEvent } deprecated, will be removed in v2026.9.1
 ---@field update_cooldown integer milliseconds to throttle cursor-move updates
 ---@field view_options InfoviewViewOptions
 ---@field severity_markers table<lsp.DiagnosticSeverity, string> characters to use for denoting diagnostic severity
@@ -251,18 +249,6 @@ local DEFAULTS = {
           return ('%d goals'):format(n)
         end,
       },
-    },
-
-    mappings = {
-      ['K'] = 'click',
-      ['<CR>'] = 'click',
-      ['gK'] = 'select',
-      ['gd'] = 'go_to_def',
-      ['gD'] = 'go_to_decl',
-      ['gy'] = 'go_to_type',
-      ['<Esc>'] = 'clear_all',
-      ['C'] = 'clear_all',
-      ['<LocalLeader><Tab>'] = 'goto_last_window',
     },
 
     ---@type InfoviewViewOptions

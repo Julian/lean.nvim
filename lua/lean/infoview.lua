@@ -1285,10 +1285,7 @@ function Pin:new(obj)
     end,
   }
 
-  local pin_renderer = pin_element:renderer {
-    buffer = pin_buffer,
-    keymaps = options.mappings,
-  }
+  local pin_renderer = pin_element:renderer { buffer = pin_buffer }
 
   local new_pin = setmetatable(
     vim.tbl_extend('keep', obj, {
@@ -1366,7 +1363,7 @@ function Pin:__open_debug()
       options = { bufhidden = 'hide' },
     }
     local element = Element:new { name = 'debug-timing' }
-    self.__debug = element:renderer { buffer = buffer, keymaps = options.mappings }
+    self.__debug = element:renderer { buffer = buffer }
     self.__debug_expanded = {}
     self.__debug_active_tab = self.__debug_active_tab or 1
   end
@@ -1964,16 +1961,6 @@ end
 ---buffers.
 ---@param bufnr integer
 function infoview.init(bufnr)
-  local user = vim.g.lean_config
-  if user and user.infoview and user.infoview.mappings ~= nil then
-    vim.deprecate(
-      "lean.nvim's `infoview.mappings` configuration option",
-      'buffer-local `<Plug>(LeanInfoview*)` mappings',
-      'v2026.9.1',
-      'lean.nvim'
-    )
-  end
-
   if bufnr == vim.api.nvim_get_current_buf() then
     -- because FileType can happen after BufEnter
     infoview_bufenter()

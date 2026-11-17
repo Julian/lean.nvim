@@ -185,10 +185,7 @@ return function()
       )
       local buffer = Buffer:from_bufnr(bufnr)
 
-      local renderer = element:renderer {
-        buffer = buffer,
-        keymaps = require 'lean.config'().infoview.mappings,
-      }
+      local renderer = element:renderer { buffer = buffer }
       renderer:render()
 
       local code_pos = renderer.positions[lean_code]
