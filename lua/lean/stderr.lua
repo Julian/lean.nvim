@@ -29,6 +29,7 @@ local function open_window(stderr_buffer)
       direction = 'below',
       enter = true,
     }
+    stderr_window.o.winhighlight = '' -- not the infoview's
   else
     vim.cmd(('botright sbuffer %d'):format(stderr_buffer.bufnr))
     stderr_window = Window:current()
