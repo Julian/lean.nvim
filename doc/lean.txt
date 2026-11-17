@@ -171,6 +171,12 @@ FilterSelection                                                *FilterSelection*
         {option}       (string)
 
 
+RenderState                                                        *RenderState*
+
+    Type: ~
+        "settled"|"stale"
+
+
 infoview.close_all()                                        *infoview.close_all*
     Close all open infoviews (across all tabs).
 
