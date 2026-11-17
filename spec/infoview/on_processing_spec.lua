@@ -167,15 +167,21 @@ describe('on_processing', function()
   )
 
   it('upconverts deprecated show_processing and emits a deprecation warning', function()
-    local deprecated
-    vim.deprecate = function(name, alternative, version)
-      deprecated = { name = name, alternative = alternative, version = version }
+    local deprecated = {}
+    vim.deprecate = function(name, alternative, version, plugin, backtrace)
+      if plugin == 'lean.nvim' then
+        table.insert(deprecated, { name = name, alternative = alternative, version = version })
+      else
+        return original_deprecate(name, alternative, version, plugin, backtrace)
+      end
     end
     configure { show_processing = false }
 
     helpers.clean_buffer('--\ndef x := 1\nexample : 2 = 2 := by\n  skip\n  rfl', function()
-      assert.is_truthy(deprecated)
-      assert.is_truthy(deprecated.name:find 'show_processing')
+      assert.is_not_nil(deprecated[1])
+      for _, each in ipairs(deprecated) do
+        assert.is_truthy(each.name:find 'show_processing')
+      end
 
       -- Even after settling on an empty state (`Element.EMPTY`), processing does not tint.
       helpers.move_cursor { to = { 2, 0 } }
