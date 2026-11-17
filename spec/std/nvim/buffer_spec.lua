@@ -97,6 +97,32 @@ describe('Buffer', function()
     end)
   end)
 
+  describe('unload and force_unload', function()
+    it('unloads an unmodified buffer while keeping it valid', function()
+      local buffer = Buffer.create { listed = false }
+      assert.is_true(buffer:is_loaded())
+      buffer:unload()
+      assert.is_false(buffer:is_loaded())
+      assert.is_true(buffer:is_valid())
+      buffer:force_delete()
+    end)
+
+    it('forcibly unloads a modified buffer while keeping it valid', function()
+      local buffer = Buffer.create { listed = false }
+      buffer:set_lines { 'unsaved' }
+
+      assert.has_error(function()
+        buffer:unload()
+      end, 'Failed to unload buffer.')
+
+      assert.is_true(buffer:is_loaded())
+      buffer:force_unload()
+      assert.is_false(buffer:is_loaded())
+      assert.is_true(buffer:is_valid())
+      buffer:force_delete()
+    end)
+  end)
+
   describe('is_valid', function()
     it('returns true for valid buffers and false for invalid ones', function()
       local buffer = Buffer.create {}

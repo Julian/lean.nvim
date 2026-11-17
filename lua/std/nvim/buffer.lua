@@ -164,6 +164,16 @@ function Buffer:force_delete()
   vim.api.nvim_buf_delete(self.bufnr, { force = true })
 end
 
+---Unload the buffer without deleting it.
+function Buffer:unload()
+  vim.api.nvim_buf_delete(self.bufnr, { unload = true })
+end
+
+---Forcibly unload the buffer without deleting it.
+function Buffer:force_unload()
+  vim.api.nvim_buf_delete(self.bufnr, { force = true, unload = true })
+end
+
 ---Make the buffer be the current one.
 function Buffer:make_current()
   vim.api.nvim_set_current_buf(self.bufnr)
