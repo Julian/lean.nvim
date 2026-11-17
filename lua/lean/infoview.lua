@@ -424,6 +424,7 @@ function Infoview:__show_pin_in_main_window(pin)
     self.window:set_buffer(pin.buffer)
     pin.buffer.o.filetype = 'leaninfo'
     pin.window = self.window
+    pin:__update_winhighlight()
     self.__win_event_disable = false
   end
 
@@ -488,6 +489,7 @@ function Infoview:open()
   -- window until we show it.
   self.pin.buffer.o.filetype = 'leaninfo'
   self.pin.window = self.window
+  self.pin:__update_winhighlight()
 
   window_before_split:make_current()
 
@@ -504,6 +506,7 @@ function Infoview:open()
   for _, pin in ipairs(self.pins) do
     if not pin.window or not pin.window:is_valid() then
       pin.window = self:__open_win(pin.buffer)
+      pin:__update_winhighlight()
     end
   end
 
@@ -826,23 +829,25 @@ function Infoview:select_view_options()
   end)
 end
 
+---@alias RenderState 'settled' | 'stale'
+
 ---Render the infoview contents for the given position.
 ---@param params lsp.TextDocumentPositionParams
 ---@param sw std.Stopwatch
 ---@param previous? Element what was last shown for this file once Lean had finished processing it
 ---@return Element
----@return boolean settled whether Lean had finished processing the position
+---@return RenderState? state `'settled'` once done, `'stale'` if reusing `previous`, or `nil` otherwise
 function Infoview:render_contents(params, sw, previous)
   local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
   if vim.b[bufnr].lean_lsp_died then
-    return components.LSP_HAS_DIED, false
+    return components.LSP_HAS_DIED, nil
   end
-  local element = contents_for_processing(params, previous)
+  local element, state = contents_for_processing(params, previous)
   if element then
-    return element, false
+    return element, state
   end
   element = self.__contents_for(params, self.view_options, sw)
-  return element, element ~= components.LSP_HAS_DIED
+  return element, element ~= components.LSP_HAS_DIED and 'settled' or nil
 end
 
 ---Wait until the infoview has finished processing.
@@ -892,6 +897,7 @@ function Infoview:__open_win(buffer)
   elseif not self.__separate_tab then
     new_win:set_height(self.__height)
   end
+  new_win.o.winhighlight = ''
   new_win:set_buffer(buffer)
   buffer.o.filetype = 'leaninfo'
 
@@ -901,23 +907,23 @@ function Infoview:__open_win(buffer)
   return new_win
 end
 
----Update the infoview window's winhighlight.
-function Infoview:__update_winhighlight()
-  if not self.window then
+---Update this pin's window's winhighlight.
+function Pin:__update_winhighlight()
+  if not self.window or not self.window:is_valid() then
     return
   end
 
-  if self.pin.paused then
+  if self.paused then
     self.window.o.winhighlight = 'NormalNC:leanInfoPaused'
-  elseif self.pin.__data_element == components.LSP_HAS_DIED then
+  elseif self.__data_element == components.LSP_HAS_DIED then
     self.window.o.winhighlight = 'NormalNC:leanInfoLSPDead'
   else
-    local params = self.pin.__position_params
+    local params = self.__position_params
     if params then
       local buffer = Buffer:from_uri(params.textDocument.uri)
       if buffer.b.lean_imports_out_of_date then
         self.window.o.winhighlight = 'NormalNC:leanInfoImportsOutOfDate'
-      elseif self.pin.__stale then
+      elseif self.__stale then
         self.window.o.winhighlight = 'NormalNC:leanInfoProcessing'
       else
         self.window.o.winhighlight = ''
@@ -1007,6 +1013,7 @@ function Infoview:__refresh_diff()
 
   if not self.__diff_pin.window then
     self.__diff_pin.window = self:__open_win(self.__diff_pin.buffer)
+    self.__diff_pin:__update_winhighlight()
   end
 
   for _, win in pairs { self.__diff_pin.window, self.window } do
@@ -1140,9 +1147,11 @@ function Infoview:add_pin()
   local old_pin = self.pin
   table.insert(self.pins, old_pin)
   old_pin.window = self:__open_win(old_pin.buffer)
+  old_pin:__update_winhighlight()
   self.pin = Pin:new {
     id = tostring(#self.pins + 1),
     infoview = self,
+    __settled = old_pin.__settled,
   }
   self:__show_pin_in_main_window(self.pin)
   old_pin:__show_extmark(old_pin.id)
@@ -1371,6 +1380,7 @@ function Pin:__open_debug()
     self.window:make_current()
     vim.cmd 'belowright split'
     local new_win = Window:current()
+    new_win.o.winhighlight = ''
     new_win:set_buffer(self.__debug.buffer)
     self.__debug.buffer.o.filetype = 'leaninfo'
     window_before_split:make_current()
@@ -1605,7 +1615,7 @@ end
 ---Stop updating this pin.
 function Pin:pause()
   self.paused = true
-  self.__infoview:__update_winhighlight()
+  self:__update_winhighlight()
 end
 
 ---Restart updating this pin.
@@ -1628,7 +1638,7 @@ end
 ---Request a throttled update of this pin.
 function Pin:request_update()
   if self.paused then
-    self.__infoview:__update_winhighlight()
+    self:__update_winhighlight()
     return
   end
   self.__request_update(self)
@@ -1680,6 +1690,7 @@ end
 ---@param params lsp.TextDocumentPositionParams
 ---@param previous? Element passed to `on_processing`
 ---@return Element? element if processing state was handled
+---@return RenderState? state `'stale'` when `previous` was reused
 function contents_for_processing(params, previous)
   local processing = progress.at(params)
   if processing == progress.Kind.processing then
@@ -1690,7 +1701,9 @@ function contents_for_processing(params, previous)
       shown = options.on_processing(previous)
     end
     if shown ~= nil and shown == previous then
-      return previous
+      return previous, 'stale'
+    elseif shown == '' or shown == Element.EMPTY then
+      shown = nil
     elseif type(shown) == 'string' then
       shown = Element:new { text = shown, name = 'processing' }
     end
@@ -1797,7 +1810,7 @@ function Pin:update()
       return
     end
     if self.paused then
-      iv:__update_winhighlight()
+      self:__update_winhighlight()
       return
     end
 
@@ -1810,20 +1823,15 @@ function Pin:update()
     local uri = params.textDocument.uri
 
     sw:open 'setup'
-    iv:__update_winhighlight()
-
-    if not self.loading then
-      self.loading = true
-      self:render()
-    end
+    self:__update_winhighlight()
+    self.loading = true
 
     self.__tick = self.__tick + 1
     local tick = self.__tick
     sw:close()
 
     local previous = self.__settled and self.__settled.uri == uri and self.__settled.element or nil
-    local new_data_element, settled =
-      sw:time('content', iv.render_contents, iv, params, sw, previous)
+    local new_data_element, state = sw:time('content', iv.render_contents, iv, params, sw, previous)
 
     if self.__tick ~= tick or not self.__infoview then
       self.__instrumentation:record(sw:finish(), uri, true)
@@ -1833,28 +1841,35 @@ function Pin:update()
 
     sw:open 'commit'
     self.loading = false
-    -- Carry over user-toggled foldable state so a refresh doesn't snap
-    -- expanded traces (etc.) back to their server-default collapsed state.
-    -- The previous element is read here (not before `render_contents` yields)
-    -- so an overlapping update that already committed is honored.
-    Element.transfer_state(self.__data_element, new_data_element)
-    self.__data_element = new_data_element
-    if settled then
-      self.__settled = { uri = uri, element = new_data_element }
+    local changed = new_data_element ~= self.__data_element
+    if changed then
+      -- Carry over user-toggled foldable state so a refresh doesn't snap
+      -- expanded traces (etc.) back to their server-default collapsed state.
+      -- The previous element is read here (not before `render_contents` yields)
+      -- so an overlapping update that already committed is honored.
+      Element.transfer_state(self.__data_element, new_data_element)
+      self.__data_element = new_data_element
+      self.__element:set_children { self.__data_element }
+      iv.__last_trace_query = nil
     end
-    self.__stale = previous ~= nil and new_data_element == previous
-    iv:__update_winhighlight()
-    self.__element:set_children { self.__data_element }
-    iv.__last_trace_query = nil
+    if state == 'settled' then
+      local has_info = new_data_element ~= components.EMPTY
+        and new_data_element ~= components.NO_INFO
+      self.__settled = has_info and { uri = uri, element = new_data_element } or nil
+    end
+    self.__stale = state == 'stale'
+    self:__update_winhighlight()
     sw:close()
 
-    sw:time('render', self.render, self)
+    if changed then
+      sw:time('render', self.render, self)
+    end
 
     self.__instrumentation:record(sw:finish(), uri, false)
 
     vim.api.nvim_exec_autocmds('User', { pattern = 'LeanPinRefreshed' })
 
-    if iv.window and not iv.window:is_current() and self == iv.pin then
+    if changed and iv.window and not iv.window:is_current() and self == iv.pin then
       iv:move_cursor_to_goal()
     end
 
@@ -2266,7 +2281,8 @@ function infoview.contents_at(position, opts)
       end
       event.wait()
     end
-    return iv:render_contents(position_params, Stopwatch:new())
+    local element = iv:render_contents(position_params, Stopwatch:new())
+    return element
   end
 
   if callback then

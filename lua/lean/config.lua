@@ -72,7 +72,7 @@
 ---@field horizontal_position? "top"|"bottom" where to position horizontal infoviews (default "bottom")
 ---@field separate_tab? boolean open infoviews in a separate tab (default false)
 ---@field indicators? "always"|"auto"|"never" when to show pin location indicators (default "auto")
----@field on_processing? fun(previous: Element?): Element|string|nil what to show while Lean is processing, given what was last shown for the file once it was done (default: `previous`, or "Processing file..." if none)
+---@field on_processing? fun(previous: Element?): Element|string|nil what to show while Lean is processing, given the last non-empty state shown for the file once it was done (default: `previous`, or "Processing file..." if none)
 ---@field show_processing? boolean deprecated, will be removed in v2027.3.1; use `on_processing` instead
 ---@field show_no_info_message? boolean show a message when there is no info to show (default false)
 ---@field mappings? { [string]: ElementEvent } deprecated, will be removed in v2026.9.1; use `<Plug>(LeanInfoview*)` mappings instead

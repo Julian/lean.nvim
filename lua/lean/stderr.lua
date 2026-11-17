@@ -29,11 +29,11 @@ local function open_window(stderr_buffer)
       direction = 'below',
       enter = true,
     }
-    stderr_window.o.winhighlight = '' -- not the infoview's
   else
     vim.cmd(('botright sbuffer %d'):format(stderr_buffer.bufnr))
     stderr_window = Window:current()
   end
+  stderr_window.o.winhighlight = '' -- don't inherit from split source
   stderr_window:set_height(require 'lean.config'().stderr.height)
   stderr_buffer.o.filetype = 'leanstderr'
   initial_window:make_current()
