@@ -1694,12 +1694,7 @@ end
 function contents_for_processing(params, previous)
   local processing = progress.at(params)
   if processing == progress.Kind.processing then
-    local shown
-    if options.show_processing ~= nil then -- deprecated
-      shown = options.show_processing and components.PROCESSING or nil
-    else
-      shown = options.on_processing(previous)
-    end
+    local shown = options.on_processing(previous)
     if shown ~= nil and shown == previous then
       return previous, 'stale'
     elseif shown == '' or shown == Element.EMPTY then
@@ -1975,14 +1970,6 @@ function infoview.init(bufnr)
       "lean.nvim's `infoview.mappings` configuration option",
       'buffer-local `<Plug>(LeanInfoview*)` mappings',
       'v2026.9.1',
-      'lean.nvim'
-    )
-  end
-  if user and user.infoview and user.infoview.show_processing ~= nil then
-    vim.deprecate(
-      "lean.nvim's `infoview.show_processing` configuration option",
-      '`infoview.on_processing`',
-      'v2027.3.1',
       'lean.nvim'
     )
   end

@@ -314,6 +314,23 @@ local DEFAULTS = {
 ---@return lean.MergedConfig
 return function()
   ---@type lean.Config
-  vim.g.lean_config = vim.g.lean_config or {}
-  return vim.tbl_deep_extend('keep', vim.g.lean_config, DEFAULTS)
+  local user = vim.g.lean_config or {}
+  vim.g.lean_config = user
+  local merged = vim.tbl_deep_extend('keep', user, DEFAULTS)
+  if merged.infoview.show_processing ~= nil then
+    vim.deprecate(
+      "lean.nvim's `infoview.show_processing` configuration option",
+      '`infoview.on_processing`',
+      'v2027.3.1',
+      'lean.nvim',
+      false
+    )
+    if not (user.infoview and user.infoview.on_processing) then
+      local message = merged.infoview.show_processing and 'Processing file...' or nil
+      merged.infoview.on_processing = function()
+        return message
+      end
+    end
+  end
+  return merged
 end

@@ -25,7 +25,6 @@ local components = {
     hlgroups = { 'DiagnosticError' },
   },
   NO_INFO = Element:new { text = 'No info.', name = 'no-info' },
-  PROCESSING = Element:new { text = 'Processing file...', name = 'processing' },
   EMPTY = Element.EMPTY,
 }
 

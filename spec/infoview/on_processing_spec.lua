@@ -166,16 +166,16 @@ describe('on_processing', function()
     )
   )
 
-  it('shows nothing and emits a deprecation warning for show_processing = false', function()
-    local deprecated = {}
+  it('upconverts deprecated show_processing and emits a deprecation warning', function()
+    local deprecated
     vim.deprecate = function(name, alternative, version)
-      table.insert(deprecated, { name = name, alternative = alternative, version = version })
+      deprecated = { name = name, alternative = alternative, version = version }
     end
     configure { show_processing = false }
 
     helpers.clean_buffer('--\ndef x := 1\nexample : 2 = 2 := by\n  skip\n  rfl', function()
-      assert.are.equal(1, #deprecated)
-      assert.truthy(deprecated[1].name:find 'show_processing')
+      assert.is_truthy(deprecated)
+      assert.is_truthy(deprecated.name:find 'show_processing')
 
       -- Even after settling on an empty state (`Element.EMPTY`), processing does not tint.
       helpers.move_cursor { to = { 2, 0 } }
@@ -192,6 +192,12 @@ describe('on_processing', function()
 
       reprocess '#eval IO.sleep 3001'
       helpers.wait:for_infoview_contents '^$'
+      assert.are.equal('', window.o.winhighlight)
+
+      -- And `show_processing = true` upconverts to showing "Processing file..." instead of stale goals.
+      configure { show_processing = true }
+      vim.api.nvim_buf_set_lines(0, 0, 1, false, { '#eval IO.sleep 3002' })
+      helpers.wait:for_infoview_contents '^Processing file%.%.%.$'
       assert.are.equal('', window.o.winhighlight)
     end)()
   end)
