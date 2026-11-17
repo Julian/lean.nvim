@@ -146,6 +146,37 @@ local function unique_name_so_we_have_a_separate_fake_file(project)
   return unique_name
 end
 
+local function to_lines(contents)
+  return vim.split(text.dedent(contents:gsub('^\n', '')):gsub('\n$', ''), '\n')
+end
+
+---Unload completed test buffers now that the window and infoview pin have
+---moved off them. Unloading while hidden keeps buffer handles valid
+---(avoiding Neovim 0.11 invalid-buffer errors from in-flight scheduled
+---callbacks) while firing `textDocument/didClose` so Lean's Watchdog
+---immediately exits their `FileWorker` OS processes.
+local function unload_finished_buffers()
+  for i = #_finished_buffers, 1, -1 do
+    local old = _finished_buffers[i]
+    if not old:windows():next() then
+      table.remove(_finished_buffers, i)
+      if old:is_loaded() then
+        old:force_unload()
+      end
+    end
+  end
+end
+
+local function enter_buffer(buffer)
+  -- isn't it fun how fragile the order of the below lines is, and how
+  -- BufWinEnter seems automatically called by `nvim_set_current_buf`, but
+  -- `BufEnter` seems not automatically called by `nvim_buf_call` so we
+  -- manually trigger it?
+  buffer:make_current()
+  vim.api.nvim_exec_autocmds('BufEnter', { buffer = buffer.bufnr })
+  unload_finished_buffers()
+end
+
 ---Create a clean Lean buffer with the given contents.
 ---
 ---Waits for the LSP to be ready before proceeding with a given callback.
@@ -159,7 +190,7 @@ function helpers.clean_buffer(contents, callback, project)
     callback = contents
     lines = {}
   else
-    lines = vim.split(text.dedent(contents:gsub('^\n', '')):gsub('\n$', ''), '\n')
+    lines = to_lines(contents)
   end
 
   return function()
@@ -172,30 +203,63 @@ function helpers.clean_buffer(contents, callback, project)
     buffer.o.filetype = 'lean'
     buffer:set_lines(lines)
 
-    -- isn't it fun how fragile the order of the below lines is, and how
-    -- BufWinEnter seems automatically called by `nvim_set_current_buf`, but
-    -- `BufEnter` seems not automatically called by `nvim_buf_call` so we
-    -- manually trigger it?
-    buffer:make_current()
-    vim.api.nvim_exec_autocmds('BufEnter', { buffer = buffer.bufnr })
-
-    -- Unload completed test buffers now that the window and infoview pin have
-    -- moved off them. Unloading while hidden keeps buffer handles valid
-    -- (avoiding Neovim 0.11 invalid-buffer errors from in-flight scheduled
-    -- callbacks) while firing `textDocument/didClose` so Lean's Watchdog
-    -- immediately exits their `FileWorker` OS processes.
-    for i = #_finished_buffers, 1, -1 do
-      local old = _finished_buffers[i]
-      if not old:windows():next() then
-        table.remove(_finished_buffers, i)
-        if old:is_loaded() then
-          old:force_unload()
-        end
-      end
-    end
+    enter_buffer(buffer)
 
     buffer:call(callback)
     table.insert(_finished_buffers, buffer)
+  end
+end
+
+---Share a single Lean buffer with a fixed `header` (e.g. `import Lean`) across
+---multiple tests within `scope`.
+---
+---Lean's `FileWorker` caches the elaborated header snapshot, so replacing only
+---the lines after `header` in-place avoids spawning a new `FileWorker` per test
+---while keeping each test's full Lean snippet inline alongside its assertions.
+function helpers.with_shared_header(header, scope, project)
+  local header_lines = to_lines(header)
+
+  return function()
+    local buffer
+
+    local function with_header(contents, callback)
+      local lines = to_lines(contents)
+      assert.are.same(
+        header_lines,
+        vim.list_slice(lines, 1, #header_lines),
+        ('Expected buffer contents to start with %q'):format(header)
+      )
+      local body_lines = vim.list_slice(lines, #header_lines + 1)
+
+      return function()
+        if not buffer then
+          local name = unique_name_so_we_have_a_separate_fake_file(project)
+          buffer = Buffer.create {
+            listed = false,
+            name = name,
+            options = { swapfile = false },
+          }
+          buffer:set_lines(lines)
+          buffer.o.filetype = 'lean'
+          enter_buffer(buffer)
+        else
+          if Buffer:current().bufnr ~= buffer.bufnr then
+            enter_buffer(buffer)
+          end
+          Window:current():move_cursor { 1, 0 }
+          helpers.wait:for_lsp()
+          buffer:set_lines(body_lines, #header_lines, -1)
+        end
+
+        helpers.wait:for_diagnostics()
+        buffer:call(callback)
+      end
+    end
+
+    scope(with_header)
+    if buffer then
+      table.insert(_finished_buffers, buffer)
+    end
   end
 end
 

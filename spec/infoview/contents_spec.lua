@@ -258,264 +258,267 @@ describe('interactive infoview', function()
     end)
   )
 
-  describe('diagnostics', function()
-    it(
-      'shows info messages',
-      helpers.clean_buffer(
-        [[
-          import Lean
-          elab "#infoMessage" : command => Lean.logInfo "Hello"
-          #infoMessage
-        ]],
-        function()
-          assert.infoview_contents_at('^#infoMessage').are [[
-            ▼ 3:1-3:13: information:
-            Hello
-          ]]
-        end
-      )
-    )
-
-    it(
-      'shows warning messages',
-      helpers.clean_buffer(
-        [[
-          import Lean
-          elab "#warningMessage" : command => Lean.logWarning "Hmm..."
-          #warningMessage
-        ]],
-        function()
-          assert.infoview_contents_at('^#warningMessage').are [[
-            ▼ 3:1-3:16: warning:
-            Hmm...
-          ]]
-        end
-      )
-    )
-
-    it(
-      'shows error messages',
-      helpers.clean_buffer(
-        [[
-          import Lean
-          elab "#errorMessage" : command => Lean.logError "Uh oh!"
-          #errorMessage
-        ]],
-        function()
-          assert.infoview_contents_at('^#errorMessage').are [[
-            ▼ 3:1-3:14: error:
-            Uh oh!
-          ]]
-        end
-      )
-    )
-
-    it(
-      'shows the full range',
-      helpers.clean_buffer(
-        [[
-          example : 2 = 2 := by
-            exact (
-              rfl :
-                37
-                =
-                37)
-        ]],
-        function()
-          assert.infoview_contents_at('exact').are [[
-            ⊢ 2 = 2
-
-            ▼ 2:3-6:10: error:
-            Type mismatch
-              rfl
-            has type
-              37 = 37
-            but is expected to have type
-              2 = 2
-          ]]
-        end
-      )
-    )
-
-    it(
-      'shows multiline messages which do not terminate in newlines',
-      helpers.clean_buffer(
-        [[
-          import Lean
-          elab "#multilineNoNewline" : command => do
-            Lean.logInfo "Multiple\nLine\nMessage"
-            Lean.logInfo "Another"
-          #multilineNoNewline
-        ]],
-        function()
-          assert.infoview_contents_at('^#multilineNoNewline').are [[
-            ▼ 5:1-5:20: information:
-            Multiple
-            Line
-            Message
-
-            ▼ 5:1-5:20: information:
-            Another
-          ]]
-        end
-      )
-    )
-
-    it(
-      'shows multiline messages which do terminate in newlines',
-      helpers.clean_buffer(
-        [[
-          import Lean
-          elab "#multilineWithNewline" : command => do
-            Lean.logInfo "Multiple\nLines\n"
-            Lean.logInfo "Another"
-          #multilineWithNewline
-        ]],
-        function()
-          assert.infoview_contents_at('^#multilineWithNewline').are [[
-            ▼ 5:1-5:22: information:
-            Multiple
-            Lines
-
-
-            ▼ 5:1-5:22: information:
-            Another
-          ]]
-        end
-      )
-    )
-
-    it(
-      'shows multiple messages',
-      helpers.clean_buffer(
-        [[
-          import Lean
-          elab "#multipleMessages" : command => do
-            Lean.logInfo "So"
-            Lean.logWarning "Many..."
-            Lean.logError "Messages!"
-          #multipleMessages
-        ]],
-        function()
-          assert.infoview_contents_at('^#multipleMessages').are [[
-            ▼ 6:1-6:18: information:
-            So
-
-            ▼ 6:1-6:18: warning:
-            Many...
-
-            ▼ 6:1-6:18: error:
-            Messages!
-          ]]
-        end
-      )
-    )
-
-    describe('widgets', function()
-      local original = package.path
-      package.path = package.path .. ';' .. require('spec.fixtures').widgets .. '/?.lua'
-
+  describe(
+    'diagnostics',
+    helpers.with_shared_header('import Lean', function(with_lean)
       it(
-        'shows known widget instance diagnostics',
-        helpers.clean_buffer(
+        'shows info messages',
+        with_lean(
           [[
             import Lean
-
-            open Lean
-
-            @[widget_module]
-            def TestingModule : Widget.Module where
-              javascript := "
-                import * as React from 'react'
-                export default function(props) { return React.createElement('h1', {}, props[0]) }
-              "
-
-            elab "#knownWidget" : command => do
-              let widget : MessageData := .ofWidget {
-                id := `showPropWithHover
-                javascriptHash := TestingModule.javascriptHash
-                props := Server.RpcEncodable.rpcEncode ["veryImportantStuff"]
-              } "This will be in the hover."
-              logInfo widget
-
-            #knownWidget
+            elab "#infoMessage" : command => Lean.logInfo "Hello"
+            #infoMessage
           ]],
           function()
-            assert.infoview_contents_at('^#knownWidget').are [[
-              ▼ 20:1-20:13: information:
-              veryImportantStuff
+            assert.infoview_contents_at('^#infoMessage').are [[
+              ▼ 3:1-3:13: information:
+              Hello
             ]]
           end
         )
       )
 
       it(
-        'shows alternate text for unknown widget instance diagnostics',
-        helpers.clean_buffer(
+        'shows warning messages',
+        with_lean(
           [[
             import Lean
-
-            open Lean
-
-            elab "#unknownWidget" : command => do
-              let widget : MessageData := .ofWidget {
-                id := `someUnknownWidget
-                javascriptHash := 0
-                props := Server.RpcEncodable.rpcEncode "veryImportantProp"
-              } "You're gonna see this alternate text."
-              logInfo widget
-
-            #unknownWidget
+            elab "#warningMessage" : command => Lean.logWarning "Hmm..."
+            #warningMessage
           ]],
           function()
-            assert.infoview_contents_at('^#unknownWidget').are [[
-              ▼ 13:1-13:15: information:
-              You're gonna see this alternate text.
+            assert.infoview_contents_at('^#warningMessage').are [[
+              ▼ 3:1-3:16: warning:
+              Hmm...
             ]]
           end
         )
       )
 
-      package.path = original
+      it(
+        'shows error messages',
+        with_lean(
+          [[
+            import Lean
+            elab "#errorMessage" : command => Lean.logError "Uh oh!"
+            #errorMessage
+          ]],
+          function()
+            assert.infoview_contents_at('^#errorMessage').are [[
+              ▼ 3:1-3:14: error:
+              Uh oh!
+            ]]
+          end
+        )
+      )
+
+      it(
+        'shows the full range',
+        helpers.clean_buffer(
+          [[
+            example : 2 = 2 := by
+              exact (
+                rfl :
+                  37
+                  =
+                  37)
+          ]],
+          function()
+            assert.infoview_contents_at('exact').are [[
+              ⊢ 2 = 2
+
+              ▼ 2:3-6:10: error:
+              Type mismatch
+                rfl
+              has type
+                37 = 37
+              but is expected to have type
+                2 = 2
+            ]]
+          end
+        )
+      )
+
+      it(
+        'shows multiline messages which do not terminate in newlines',
+        with_lean(
+          [[
+            import Lean
+            elab "#multilineNoNewline" : command => do
+              Lean.logInfo "Multiple\nLine\nMessage"
+              Lean.logInfo "Another"
+            #multilineNoNewline
+          ]],
+          function()
+            assert.infoview_contents_at('^#multilineNoNewline').are [[
+              ▼ 5:1-5:20: information:
+              Multiple
+              Line
+              Message
+
+              ▼ 5:1-5:20: information:
+              Another
+            ]]
+          end
+        )
+      )
+
+      it(
+        'shows multiline messages which do terminate in newlines',
+        with_lean(
+          [[
+            import Lean
+            elab "#multilineWithNewline" : command => do
+              Lean.logInfo "Multiple\nLines\n"
+              Lean.logInfo "Another"
+            #multilineWithNewline
+          ]],
+          function()
+            assert.infoview_contents_at('^#multilineWithNewline').are [[
+              ▼ 5:1-5:22: information:
+              Multiple
+              Lines
+
+
+              ▼ 5:1-5:22: information:
+              Another
+            ]]
+          end
+        )
+      )
+
+      it(
+        'shows multiple messages',
+        with_lean(
+          [[
+            import Lean
+            elab "#multipleMessages" : command => do
+              Lean.logInfo "So"
+              Lean.logWarning "Many..."
+              Lean.logError "Messages!"
+            #multipleMessages
+          ]],
+          function()
+            assert.infoview_contents_at('^#multipleMessages').are [[
+              ▼ 6:1-6:18: information:
+              So
+
+              ▼ 6:1-6:18: warning:
+              Many...
+
+              ▼ 6:1-6:18: error:
+              Messages!
+            ]]
+          end
+        )
+      )
+
+      describe('widgets', function()
+        local original = package.path
+        package.path = package.path .. ';' .. require('spec.fixtures').widgets .. '/?.lua'
+
+        it(
+          'shows known widget instance diagnostics',
+          with_lean(
+            [[
+              import Lean
+
+              open Lean
+
+              @[widget_module]
+              def TestingModule : Widget.Module where
+                javascript := "
+                  import * as React from 'react'
+                  export default function(props) { return React.createElement('h1', {}, props[0]) }
+                "
+
+              elab "#knownWidget" : command => do
+                let widget : MessageData := .ofWidget {
+                  id := `showPropWithHover
+                  javascriptHash := TestingModule.javascriptHash
+                  props := Server.RpcEncodable.rpcEncode ["veryImportantStuff"]
+                } "This will be in the hover."
+                logInfo widget
+
+              #knownWidget
+            ]],
+            function()
+              assert.infoview_contents_at('^#knownWidget').are [[
+                ▼ 20:1-20:13: information:
+                veryImportantStuff
+              ]]
+            end
+          )
+        )
+
+        it(
+          'shows alternate text for unknown widget instance diagnostics',
+          with_lean(
+            [[
+              import Lean
+
+              open Lean
+
+              elab "#unknownWidget" : command => do
+                let widget : MessageData := .ofWidget {
+                  id := `someUnknownWidget
+                  javascriptHash := 0
+                  props := Server.RpcEncodable.rpcEncode "veryImportantProp"
+                } "You're gonna see this alternate text."
+                logInfo widget
+
+              #unknownWidget
+            ]],
+            function()
+              assert.infoview_contents_at('^#unknownWidget').are [[
+                ▼ 13:1-13:15: information:
+                You're gonna see this alternate text.
+              ]]
+            end
+          )
+        )
+
+        package.path = original
+      end)
+
+      it(
+        'shows diagnostics for files with immediate diagnostics',
+        helpers.clean_buffer('import DoesNotExist', function()
+          -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
+          -- something isn't waiting properly, and nondeterministically we don't
+          -- end up with the right contents in tests :/
+          helpers.wait:for_ready_infoview()
+          vim.wait(10000, function()
+            return infoview.get_current_infoview():get_line(1) ~= nil
+          end)
+          -- the output in this case has the search path in it, so just match a
+          -- bit of our expected contents
+          assert.are.same(
+            [[unknown module prefix 'DoesNotExist']],
+            infoview.get_current_infoview():get_line(1)
+          )
+        end)
+      )
+
+      it(
+        'shows diagnostics for files with broken syntax',
+        helpers.clean_buffer('import 37', function()
+          -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
+          -- called by `assert.infoview_contents`) -- something isn't waiting
+          -- properly, and nondeterministically we don't end up with the right
+          -- contents in tests :/
+          helpers.wait:for_ready_infoview()
+          vim.wait(10000, function()
+            return not vim.deep_equal(infoview.get_current_infoview():get_lines(), { '' })
+          end)
+          assert.infoview_contents.are [[
+            ▼ 1:7-1:10: error:
+            unexpected token; expected identifier
+          ]]
+        end)
+      )
     end)
-
-    it(
-      'shows diagnostics for files with immediate diagnostics',
-      helpers.clean_buffer('import DoesNotExist', function()
-        -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
-        -- something isn't waiting properly, and nondeterministically we don't
-        -- end up with the right contents in tests :/
-        helpers.wait:for_ready_infoview()
-        vim.wait(10000, function()
-          return infoview.get_current_infoview():get_line(1) ~= nil
-        end)
-        -- the output in this case has the search path in it, so just match a
-        -- bit of our expected contents
-        assert.are.same(
-          [[unknown module prefix 'DoesNotExist']],
-          infoview.get_current_infoview():get_line(1)
-        )
-      end)
-    )
-
-    it(
-      'shows diagnostics for files with broken syntax',
-      helpers.clean_buffer('import 37', function()
-        -- FIXME: This is a bug in `wait_for_loading_pins` (which is already
-        -- called by `assert.infoview_contents`) -- something isn't waiting
-        -- properly, and nondeterministically we don't end up with the right
-        -- contents in tests :/
-        helpers.wait:for_ready_infoview()
-        vim.wait(10000, function()
-          return not vim.deep_equal(infoview.get_current_infoview():get_lines(), { '' })
-        end)
-        assert.infoview_contents.are [[
-          ▼ 1:7-1:10: error:
-          unexpected token; expected identifier
-        ]]
-      end)
-    )
-  end)
+  )
 
   describe(
     'processing message',
