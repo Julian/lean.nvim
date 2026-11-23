@@ -95,7 +95,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Upload to LuaRocks
-        uses: nvim-neorocks/luarocks-tag-release@979dba8e38ddbf3cb9b23f27f6702ade2ed870bc
+        uses: nvim-neorocks/luarocks-tag-release@f8019680ab82aef489c506aa229610596dedb761
         env:
           LUAROCKS_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
       - name: Create a GitHub Release
