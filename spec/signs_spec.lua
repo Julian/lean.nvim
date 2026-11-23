@@ -45,6 +45,21 @@ describe('diagnostic signs', function()
   )
 
   it(
+    'places diagnostics at EOF on the last line',
+    clean_buffer(
+      [[
+        example : 1 = 1 := by
+          rw
+      ]],
+      function()
+        vim.cmd.normal { '2gg', bang = true }
+        helpers.wait:for_diagnostics()
+        assert.are.equal('E', sign_text_at(1))
+      end
+    )
+  )
+
+  it(
     'gives higher severity diagnostics higher sign priority',
     clean_buffer('#check (1 : String)', function()
       helpers.wait_for_line_diagnostics()
