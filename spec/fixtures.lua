@@ -29,6 +29,7 @@ local simple_fake_core_lean = Project:new 'SimpleFakeCoreLean'
 local example = Project:new 'Example'
 local standalone = Project:new 'Standalone'
 local with_widgets = Project:new 'WithWidgets'
+local nested_lakefile_lean = Project:new 'Nested'
 
 local fixtures = {
   indent = function()
@@ -57,6 +58,7 @@ local fixtures = {
   example = example,
   standalone = standalone,
   with_widgets = with_widgets,
+  nested_lakefile_lean = nested_lakefile_lean,
 
   project = {
     root = example._root,
