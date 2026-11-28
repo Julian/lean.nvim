@@ -260,7 +260,7 @@ return {
 
     on_dir(
       packages_dir
-        or vim.fs.root(fname, { 'lakefile.toml', 'lakefile.lean', 'lean-toolchain' })
+        or vim.fs.root(fname, { { 'lakefile.toml', 'lakefile.lean', 'lean-toolchain' } })
         -- Only walk parents for core lean4 detection when no Lake project was
         -- found -- this avoids unnecessary fs_stat calls for the common case.
         or vim.iter(vim.fs.parents(fname)):find(is_core_lean4_directory)

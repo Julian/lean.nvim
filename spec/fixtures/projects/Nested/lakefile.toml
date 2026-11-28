@@ -1,0 +1,5 @@
+name = "outer"
+defaultTargets = ["Outer"]
+
+[[lean_lib]]
+name = "Outer"

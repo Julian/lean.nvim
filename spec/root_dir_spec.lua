@@ -48,4 +48,17 @@ describe('root_dir', function()
     local expected = vim.uv.fs_realpath(fixtures.simple_fake_core_lean._root)
     assert.is.same(expected, vim.uv.fs_realpath(resolved_root))
   end)
+
+  it('prefers a nested lakefile.lean project over an outer lakefile.toml one', function()
+    local path = fixtures.nested_lakefile_lean:child 'Inner/Inner.lean'
+    local buffer = Buffer.create { name = path }
+
+    local resolved_root
+    leanls.root_dir(buffer.bufnr, function(dir)
+      resolved_root = dir
+    end)
+
+    local expected = vim.uv.fs_realpath(fixtures.nested_lakefile_lean:child 'Inner')
+    assert.is.same(expected, vim.uv.fs_realpath(resolved_root))
+  end)
 end)
